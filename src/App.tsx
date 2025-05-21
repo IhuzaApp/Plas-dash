@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import React from "react"; // Add explicit React import
 
 // Pages
 import Index from "./pages/Index";
@@ -21,35 +22,41 @@ import Promotions from "./pages/Promotions";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Create the query client inside the component
+const App = () => {
+  // Create a client for React Query
+  const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/shoppers" element={<Shoppers />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/shops" element={<Shops />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/company-wallet" element={<Wallets />} />
-            <Route path="/shopper-wallets" element={<Wallets />} />
-            <Route path="/refunds" element={<Refunds />} />
-            <Route path="/tickets" element={<Tickets />} />
-            <Route path="/delivery-settings" element={<DeliverySettings />} />
-            <Route path="/promotions" element={<Promotions />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="light">
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/shoppers" element={<Shoppers />} />
+                <Route path="/users" element={<Users />} />
+                <Route path="/shops" element={<Shops />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/company-wallet" element={<Wallets />} />
+                <Route path="/shopper-wallets" element={<Wallets />} />
+                <Route path="/refunds" element={<Refunds />} />
+                <Route path="/tickets" element={<Tickets />} />
+                <Route path="/delivery-settings" element={<DeliverySettings />} />
+                <Route path="/promotions" element={<Promotions />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 export default App;
