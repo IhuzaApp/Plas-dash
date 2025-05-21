@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -72,7 +73,9 @@ const Shops = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">View Details</Button>
+                    <Link to={`/shops/${shop.id}`}>
+                      <Button variant="ghost" size="sm">View Details</Button>
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))}

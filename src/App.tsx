@@ -13,6 +13,7 @@ import Orders from "./pages/Orders";
 import Shoppers from "./pages/Shoppers";
 import Users from "./pages/Users";
 import Shops from "./pages/Shops";
+import ShopDetail from "./pages/ShopDetail";
 import Products from "./pages/Products";
 import Wallets from "./pages/Wallets";
 import Refunds from "./pages/Refunds";
@@ -41,6 +42,7 @@ const App = () => {
                 <Route path="/shoppers" element={<Shoppers />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/shops" element={<Shops />} />
+                <Route path="/shops/:id" element={<ShopDetail />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/company-wallet" element={<Wallets />} />
                 <Route path="/shopper-wallets" element={<Wallets />} />
