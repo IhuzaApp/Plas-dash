@@ -64,14 +64,14 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				admin: {
-					primary: "#6E59A5",
-					secondary: "#0EA5E9",
-					accent: "#F97316",
-					background: "#1A1F2C",
-					card: "#222836",
-					success: "#10B981",
-					warning: "#F59E0B",
-					danger: "#EF4444",
+					primary: "#4CAF50",
+					secondary: "#8BC34A",
+					accent: "#2E7D32",
+					background: "#FFFFFF",
+					card: "#F9FAF9",
+					success: "#4CAF50", 
+					warning: "#FF9800",
+					danger: "#F44336",
 				}
 			},
 			borderRadius: {
