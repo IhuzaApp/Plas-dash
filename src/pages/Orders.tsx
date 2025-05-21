@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -14,15 +14,97 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Search, Filter } from "lucide-react";
+import OrderDetailDialog, { OrderDetails } from "@/components/order/OrderDetailDialog";
 
 const Orders = () => {
+  const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Sample orders data with more details
   const orders = [
-    { id: "#ORD-1234", customer: "John Doe", date: "2023-05-20", total: "$45.20", status: "Delivered" },
-    { id: "#ORD-1235", customer: "Jane Smith", date: "2023-05-20", total: "$22.50", status: "In Progress" },
-    { id: "#ORD-1236", customer: "Mike Johnson", date: "2023-05-20", total: "$78.00", status: "Pending" },
-    { id: "#ORD-1237", customer: "Sarah Williams", date: "2023-05-19", total: "$34.75", status: "Delivered" },
-    { id: "#ORD-1238", customer: "Robert Brown", date: "2023-05-19", total: "$56.30", status: "Cancelled" },
+    { 
+      id: "#ORD-1234", 
+      customer: "John Doe", 
+      date: "2023-05-20", 
+      total: "$45.20", 
+      status: "Delivered",
+      address: "123 Main St, New York, NY 10001",
+      phone: "(555) 123-4567",
+      email: "john.doe@example.com",
+      paymentMethod: "Credit Card",
+      items: [
+        { id: "item-1", name: "Organic Apples", quantity: 2, price: "$5.99" },
+        { id: "item-2", name: "Whole Grain Bread", quantity: 1, price: "$3.49" },
+        { id: "item-3", name: "Free Range Eggs", quantity: 1, price: "$4.99" },
+      ]
+    },
+    { 
+      id: "#ORD-1235", 
+      customer: "Jane Smith", 
+      date: "2023-05-20", 
+      total: "$22.50", 
+      status: "In Progress",
+      address: "456 Oak Ave, Boston, MA 02108",
+      phone: "(555) 234-5678",
+      email: "jane.smith@example.com",
+      paymentMethod: "PayPal",
+      items: [
+        { id: "item-4", name: "Almond Milk", quantity: 2, price: "$3.99" },
+        { id: "item-5", name: "Protein Bars", quantity: 3, price: "$2.49" },
+      ]
+    },
+    { 
+      id: "#ORD-1236", 
+      customer: "Mike Johnson", 
+      date: "2023-05-20", 
+      total: "$78.00", 
+      status: "Pending",
+      address: "789 Pine Rd, Chicago, IL 60007",
+      phone: "(555) 345-6789",
+      email: "mike.johnson@example.com",
+      paymentMethod: "Cash on Delivery",
+      items: [
+        { id: "item-6", name: "Fresh Salmon", quantity: 1, price: "$15.99" },
+        { id: "item-7", name: "Organic Vegetables", quantity: 1, price: "$12.50" },
+        { id: "item-8", name: "Red Wine", quantity: 2, price: "$24.99" },
+      ]
+    },
+    { 
+      id: "#ORD-1237", 
+      customer: "Sarah Williams", 
+      date: "2023-05-19", 
+      total: "$34.75", 
+      status: "Delivered",
+      address: "101 Maple St, Austin, TX 78701",
+      phone: "(555) 456-7890",
+      email: "sarah.williams@example.com",
+      paymentMethod: "Credit Card",
+      items: [
+        { id: "item-9", name: "Yoga Mat", quantity: 1, price: "$19.99" },
+        { id: "item-10", name: "Resistance Bands", quantity: 1, price: "$14.76" },
+      ]
+    },
+    { 
+      id: "#ORD-1238", 
+      customer: "Robert Brown", 
+      date: "2023-05-19", 
+      total: "$56.30", 
+      status: "Cancelled",
+      address: "202 Elm Dr, Seattle, WA 98101",
+      phone: "(555) 567-8901",
+      email: "robert.brown@example.com",
+      paymentMethod: "Debit Card",
+      items: [
+        { id: "item-11", name: "Coffee Beans", quantity: 2, price: "$12.99" },
+        { id: "item-12", name: "Coffee Grinder", quantity: 1, price: "$30.32" },
+      ]
+    },
   ];
+
+  const handleViewOrder = (order: OrderDetails) => {
+    setSelectedOrder(order);
+    setIsDialogOpen(true);
+  };
 
   return (
     <AdminLayout>
@@ -73,7 +155,13 @@ const Orders = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">View</Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewOrder(order)}
+                    >
+                      View Details
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -81,6 +169,12 @@ const Orders = () => {
           </Table>
         </Card>
       </div>
+
+      <OrderDetailDialog 
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        order={selectedOrder}
+      />
     </AdminLayout>
   );
 };
