@@ -24,4 +24,3 @@ const PageHeader = ({ title, description, icon, actions }: PageHeaderProps) => {
 };
 
 export default PageHeader;
-

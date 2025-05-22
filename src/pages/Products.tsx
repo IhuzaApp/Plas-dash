@@ -29,7 +29,7 @@ const Products = () => {
       <PageHeader 
         title="Products" 
         description="Manage products across all shops."
-        action={<Button>Add New Product</Button>}
+        actions={<Button>Add New Product</Button>}
       />
       
       <div className="space-y-4">

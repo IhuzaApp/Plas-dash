@@ -37,6 +37,13 @@ const formSchema = z.object({
   stock: z.string().regex(/^\d+$/, {
     message: "Stock must be a number.",
   }),
+  barcode: z.string().optional(),
+  sku: z.string().optional(),
+  unit: z.string().optional(),
+  reorderPoint: z.string().regex(/^\d*$/, {
+    message: "Reorder point must be a number.",
+  }).optional(),
+  supplier: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -58,6 +65,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       category: "",
       price: "",
       stock: "",
+      barcode: "",
+      sku: "",
+      unit: "item",
+      reorderPoint: "5",
+      supplier: "",
       description: "",
     },
   });
@@ -68,64 +80,102 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Product</DialogTitle>
           <DialogDescription>
-            Enter the details of the new product. Click save when you're done.
+            Enter the details of the new inventory item. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Product Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter product name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+            {/* Basic Product Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product Name*</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
+                      <Input placeholder="Enter product name" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="fruits">Fruits</SelectItem>
-                      <SelectItem value="vegetables">Vegetables</SelectItem>
-                      <SelectItem value="dairy">Dairy</SelectItem>
-                      <SelectItem value="bakery">Bakery</SelectItem>
-                      <SelectItem value="meat">Meat</SelectItem>
-                      <SelectItem value="beverages">Beverages</SelectItem>
-                      <SelectItem value="snacks">Snacks</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category*</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="dairy">Dairy</SelectItem>
+                        <SelectItem value="produce">Produce</SelectItem>
+                        <SelectItem value="bakery">Bakery</SelectItem>
+                        <SelectItem value="meat">Meat</SelectItem>
+                        <SelectItem value="grocery">Grocery</SelectItem>
+                        <SelectItem value="frozen">Frozen</SelectItem>
+                        <SelectItem value="beverages">Beverages</SelectItem>
+                        <SelectItem value="snacks">Snacks</SelectItem>
+                        <SelectItem value="household">Household</SelectItem>
+                        <SelectItem value="health">Health & Beauty</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Product Identifiers */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="barcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Barcode (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter barcode" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="sku"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SKU (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter SKU" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Pricing and Stock */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price</FormLabel>
+                    <FormLabel>Price*</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <span className="absolute left-3 top-2.5">$</span>
@@ -142,9 +192,68 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 name="stock"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stock Quantity</FormLabel>
+                    <FormLabel>Stock Quantity*</FormLabel>
                     <FormControl>
                       <Input type="number" min="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Additional Details */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select unit" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="item">Item</SelectItem>
+                        <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                        <SelectItem value="g">Gram (g)</SelectItem>
+                        <SelectItem value="l">Liter (L)</SelectItem>
+                        <SelectItem value="ml">Milliliter (mL)</SelectItem>
+                        <SelectItem value="lb">Pound (lb)</SelectItem>
+                        <SelectItem value="oz">Ounce (oz)</SelectItem>
+                        <SelectItem value="pack">Pack</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="reorderPoint"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reorder Point</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="supplier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supplier</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter supplier name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

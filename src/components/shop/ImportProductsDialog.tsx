@@ -9,9 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileUp, AlertCircle, FileCheck } from "lucide-react";
+import { FileUp, AlertCircle, FileCheck, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface ImportProductsDialogProps {
   open: boolean;
@@ -88,9 +89,14 @@ const ImportProductsDialog: React.FC<ImportProductsDialogProps> = ({
     onSubmit(file);
   };
 
+  const handleDownloadTemplate = () => {
+    // In a real app, this would download an actual Excel template
+    toast.success("Template downloaded successfully");
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[650px]">
         <DialogHeader>
           <DialogTitle>Import Products</DialogTitle>
           <DialogDescription>
@@ -102,9 +108,57 @@ const ImportProductsDialog: React.FC<ImportProductsDialogProps> = ({
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Important</AlertTitle>
           <AlertDescription>
-            The file should include the following columns: product name, category, price, and stock quantity.
+            Make sure your file follows the required format. You can download a template below.
           </AlertDescription>
         </Alert>
+
+        <div className="mb-5">
+          <p className="mb-2 font-semibold">Required columns in your spreadsheet:</p>
+          <div className="border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/3">Column Name</TableHead>
+                  <TableHead className="w-1/3">Data Type</TableHead>
+                  <TableHead className="w-1/3">Required</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Text</TableCell>
+                  <TableCell>Yes</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Text</TableCell>
+                  <TableCell>Yes</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Price</TableCell>
+                  <TableCell>Number (0.00)</TableCell>
+                  <TableCell>Yes</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Stock</TableCell>
+                  <TableCell>Number</TableCell>
+                  <TableCell>Yes</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Barcode</TableCell>
+                  <TableCell>Text</TableCell>
+                  <TableCell>No</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+          
+          <div className="mt-4">
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleDownloadTemplate}>
+              <Download className="h-4 w-4" /> Download Template
+            </Button>
+          </div>
+        </div>
 
         <div
           onDragOver={handleDragOver}

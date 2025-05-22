@@ -14,7 +14,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, Search, Filter, Plus, Edit, Trash } from "lucide-react";
+import { ShoppingBag, Search, Filter, Plus, Edit, Trash, Import, Download } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -22,6 +22,9 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import AddProductDialog from "@/components/shop/AddProductDialog";
+import ImportProductsDialog from "@/components/shop/ImportProductsDialog";
+import { toast } from "sonner";
 
 interface InventoryItem {
   id: string;
@@ -46,6 +49,10 @@ const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [stockStatus, setStockStatus] = useState<string | undefined>(undefined);
+  
+  // Dialog states
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   
   const filteredItems = items.filter(item => {
     return (
@@ -72,6 +79,38 @@ const Inventory = () => {
   
   const categories = Array.from(new Set(items.map(item => item.category)));
   
+  const handleAddProduct = (values: any) => {
+    const newItem: InventoryItem = {
+      id: (items.length + 1).toString(),
+      name: values.name,
+      barcode: Math.floor(1000000000000 + Math.random() * 9000000000000).toString(),
+      category: values.category,
+      price: parseFloat(values.price),
+      stock: parseInt(values.stock),
+      status: parseInt(values.stock) > 10 ? "in-stock" : parseInt(values.stock) > 0 ? "low-stock" : "out-of-stock"
+    };
+    
+    setItems([...items, newItem]);
+    setIsAddProductOpen(false);
+    toast.success("Product added successfully");
+  };
+  
+  const handleImportFile = (file: File) => {
+    // In a real application, this would process the Excel/CSV file
+    console.log("Importing file:", file.name);
+    
+    // Simulate processing delay
+    setTimeout(() => {
+      toast.success(`Successfully imported products from ${file.name}`);
+      setIsImportOpen(false);
+    }, 1500);
+  };
+  
+  const handleExportTemplate = () => {
+    // In a real application, this would generate and download an Excel template
+    toast.success("Template downloaded successfully");
+  };
+  
   return (
     <AdminLayout>
       <PageHeader 
@@ -79,10 +118,20 @@ const Inventory = () => {
         description="Manage inventory levels and product information"
         icon={<ShoppingBag className="h-6 w-6" />}
         actions={
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+              <Import className="mr-2 h-4 w-4" />
+              Import Products
+            </Button>
+            <Button variant="outline" onClick={handleExportTemplate}>
+              <Download className="mr-2 h-4 w-4" />
+              Export Template
+            </Button>
+            <Button onClick={() => setIsAddProductOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Button>
+          </div>
         }
       />
       
@@ -176,6 +225,20 @@ const Inventory = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Add Product Dialog */}
+      <AddProductDialog 
+        open={isAddProductOpen}
+        onOpenChange={setIsAddProductOpen}
+        onSubmit={handleAddProduct}
+      />
+      
+      {/* Import Products Dialog */}
+      <ImportProductsDialog
+        open={isImportOpen}
+        onOpenChange={setIsImportOpen}
+        onSubmit={handleImportFile}
+      />
     </AdminLayout>
   );
 };
