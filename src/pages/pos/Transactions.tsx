@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { format } from "date-fns";
+import OrderDetailDialog, { OrderDetails, OrderItem } from "@/components/order/OrderDetailDialog";
 
 interface Transaction {
   id: string;
@@ -36,6 +37,9 @@ interface Transaction {
 }
 
 const Transactions = () => {
+  const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
   const transactions: Transaction[] = [
     { id: "1", transactionId: "TRX-20250522-001", datetime: new Date(2025, 4, 22, 9, 30), amount: 24.98, items: 5, paymentMethod: "card", status: "completed", cashier: "John Smith" },
     { id: "2", transactionId: "TRX-20250522-002", datetime: new Date(2025, 4, 22, 10, 15), amount: 12.75, items: 2, paymentMethod: "cash", status: "completed", cashier: "John Smith" },
@@ -72,6 +76,72 @@ const Transactions = () => {
         return null;
     }
   };
+
+  // Mock transaction details for the dialog
+  const transactionDetailsMap: Record<string, OrderDetails> = {
+    "1": {
+      id: "TRX-20250522-001",
+      customer: "Walk-in Customer",
+      date: format(new Date(2025, 4, 22, 9, 30), "MMM dd, yyyy HH:mm"),
+      total: "$24.98",
+      status: "Completed",
+      address: "In-store purchase",
+      phone: "N/A",
+      email: "N/A",
+      paymentMethod: "Credit Card (Visa ****4512)",
+      items: [
+        { id: "item1", name: "Whole Milk 1L", quantity: 2, price: "$2.99" },
+        { id: "item2", name: "White Bread", quantity: 1, price: "$3.50" },
+        { id: "item3", name: "Eggs (12)", quantity: 1, price: "$4.99" },
+        { id: "item4", name: "Bananas", quantity: 1, price: "$2.99" },
+      ]
+    },
+    "2": {
+      id: "TRX-20250522-002",
+      customer: "Walk-in Customer",
+      date: format(new Date(2025, 4, 22, 10, 15), "MMM dd, yyyy HH:mm"),
+      total: "$12.75",
+      status: "Completed",
+      address: "In-store purchase",
+      phone: "N/A",
+      email: "N/A",
+      paymentMethod: "Cash",
+      items: [
+        { id: "item1", name: "Potato Chips", quantity: 1, price: "$3.99" },
+        { id: "item2", name: "Soda (2L)", quantity: 1, price: "$2.49" },
+        { id: "item3", name: "Chocolate Bar", quantity: 3, price: "$2.09" },
+      ]
+    },
+    "3": {
+      id: "TRX-20250522-003",
+      customer: "James Brown",
+      date: format(new Date(2025, 4, 22, 11, 45), "MMM dd, yyyy HH:mm"),
+      total: "$47.32",
+      status: "Completed",
+      address: "In-store purchase",
+      phone: "555-123-4567",
+      email: "james@example.com",
+      paymentMethod: "Credit Card (Mastercard ****8821)",
+      items: [
+        { id: "item1", name: "Ground Beef (1lb)", quantity: 2, price: "$8.99" },
+        { id: "item2", name: "Pasta Sauce", quantity: 1, price: "$3.49" },
+        { id: "item3", name: "Spaghetti", quantity: 1, price: "$1.99" },
+        { id: "item4", name: "Garlic Bread", quantity: 1, price: "$4.50" },
+        { id: "item5", name: "Parmesan Cheese", quantity: 1, price: "$5.99" },
+        { id: "item6", name: "Mixed Salad", quantity: 1, price: "$3.99" },
+        { id: "item7", name: "Salad Dressing", quantity: 1, price: "$2.89" },
+        { id: "item8", name: "Ice Cream", quantity: 1, price: "$6.49" },
+      ]
+    },
+    // Add more transaction details as needed for other transactions
+  };
+
+  const handleViewTransaction = (id: string) => {
+    setSelectedTransaction(id);
+    setIsDetailOpen(true);
+  };
+
+  const selectedTransactionDetails = selectedTransaction ? transactionDetailsMap[selectedTransaction] || null : null;
 
   return (
     <AdminLayout>
@@ -144,7 +214,11 @@ const Transactions = () => {
                     <TableCell>{getStatusBadge(transaction.status)}</TableCell>
                     <TableCell>{transaction.cashier}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleViewTransaction(transaction.id)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -155,8 +229,15 @@ const Transactions = () => {
           </div>
         </CardContent>
       </Card>
+      
+      <OrderDetailDialog
+        open={isDetailOpen} 
+        onOpenChange={setIsDetailOpen}
+        order={selectedTransactionDetails}
+      />
     </AdminLayout>
   );
 };
 
 export default Transactions;
+
