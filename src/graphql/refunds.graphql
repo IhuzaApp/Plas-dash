@@ -1,0 +1,14 @@
+query getAllREfunds {
+  Refunds {
+    created_at
+    generated_by
+    id
+    order_id
+    paid
+    reason
+    amount
+    status
+    update_on
+    user_id
+  }
+}

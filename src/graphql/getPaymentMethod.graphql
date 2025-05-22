@@ -1,0 +1,14 @@
+query getPaymentMethod {
+  Payment_Methods {
+    validity
+    user_id
+    update_on
+    number
+    names
+    method
+    is_default
+    id
+    create_at
+    CCV
+  }
+}

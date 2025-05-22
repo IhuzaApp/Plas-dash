@@ -1,0 +1,9 @@
+query GetPlatformSettings {
+  Platform_Settings {
+    id
+    key
+    value
+    created_at
+    updated_at
+  }
+}

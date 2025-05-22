@@ -1,0 +1,24 @@
+query GetCarts {
+  Carts {
+    id
+    user_id
+    total
+    created_at
+    updated_at
+    is_active
+    shop_id
+    User {
+      created_at
+      email
+      gender
+      id
+      is_active
+      name
+      password_hash
+      phone
+      profile_picture
+      role
+      updated_at
+    }
+  }
+}
