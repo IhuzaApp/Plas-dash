@@ -25,6 +25,10 @@ import {
   MessageSquare,
   Clock,
   Percent,
+  ShoppingBag,
+  Receipt,
+  CreditCard,
+  Tag,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -42,6 +46,12 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       { title: "Customers", icon: Users, path: "/users" },
       { title: "Shops", icon: Store, path: "/shops" },
       { title: "Products", icon: ShoppingCart, path: "/products" },
+    ]},
+    { section: "POS", items: [
+      { title: "Checkout", icon: CreditCard, path: "/pos/checkout" },
+      { title: "Inventory", icon: ShoppingBag, path: "/pos/inventory" },
+      { title: "Transactions", icon: Receipt, path: "/pos/transactions" },
+      { title: "Discounts", icon: Tag, path: "/pos/discounts" },
     ]},
     { section: "Finance", items: [
       { title: "Company Wallet", icon: Wallet, path: "/company-wallet" },

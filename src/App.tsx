@@ -23,6 +23,12 @@ import Promotions from "./pages/Promotions";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
+// POS Pages
+import Checkout from "./pages/pos/Checkout";
+import Inventory from "./pages/pos/Inventory";
+import Transactions from "./pages/pos/Transactions";
+import Discounts from "./pages/pos/Discounts";
+
 // Create the query client inside the component
 const App = () => {
   // Create a client for React Query
@@ -51,6 +57,13 @@ const App = () => {
                 <Route path="/delivery-settings" element={<DeliverySettings />} />
                 <Route path="/promotions" element={<Promotions />} />
                 <Route path="/settings" element={<Settings />} />
+                
+                {/* POS Routes */}
+                <Route path="/pos/checkout" element={<Checkout />} />
+                <Route path="/pos/inventory" element={<Inventory />} />
+                <Route path="/pos/transactions" element={<Transactions />} />
+                <Route path="/pos/discounts" element={<Discounts />} />
+                
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
