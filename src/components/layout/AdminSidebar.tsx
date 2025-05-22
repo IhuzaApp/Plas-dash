@@ -29,6 +29,8 @@ import {
   Receipt,
   CreditCard,
   Tag,
+  Coins,
+  LayoutDashboard,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -48,10 +50,14 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       { title: "Products", icon: ShoppingCart, path: "/products" },
     ]},
     { section: "POS", items: [
+      { title: "Company Dashboard", icon: LayoutDashboard, path: "/pos/company-dashboard" },
+      { title: "Shop Dashboard", icon: Store, path: "/pos/shop-dashboard" },
       { title: "Checkout", icon: CreditCard, path: "/pos/checkout" },
       { title: "Inventory", icon: ShoppingBag, path: "/pos/inventory" },
       { title: "Transactions", icon: Receipt, path: "/pos/transactions" },
       { title: "Discounts", icon: Tag, path: "/pos/discounts" },
+      { title: "Financial Overview", icon: Coins, path: "/pos/financial" },
+      { title: "Staff Management", icon: Users, path: "/pos/staff" },
     ]},
     { section: "Finance", items: [
       { title: "Company Wallet", icon: Wallet, path: "/company-wallet" },

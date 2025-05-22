@@ -28,6 +28,10 @@ import Checkout from "./pages/pos/Checkout";
 import Inventory from "./pages/pos/Inventory";
 import Transactions from "./pages/pos/Transactions";
 import Discounts from "./pages/pos/Discounts";
+import FinancialOverview from "./pages/pos/FinancialOverview";
+import ShopDashboard from "./pages/pos/ShopDashboard";
+import CompanyDashboard from "./pages/pos/CompanyDashboard";
+import StaffLogin from "./pages/pos/StaffLogin";
 
 // Create the query client inside the component
 const App = () => {
@@ -63,6 +67,10 @@ const App = () => {
                 <Route path="/pos/inventory" element={<Inventory />} />
                 <Route path="/pos/transactions" element={<Transactions />} />
                 <Route path="/pos/discounts" element={<Discounts />} />
+                <Route path="/pos/financial" element={<FinancialOverview />} />
+                <Route path="/pos/shop-dashboard" element={<ShopDashboard />} />
+                <Route path="/pos/company-dashboard" element={<CompanyDashboard />} />
+                <Route path="/pos/staff" element={<StaffLogin />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
