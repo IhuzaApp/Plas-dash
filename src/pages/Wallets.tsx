@@ -1,4 +1,3 @@
-
 import React from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -22,6 +21,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import ProcessPayoutDrawer from "@/components/wallet/ProcessPayoutDrawer";
 
 const companyData = [
   { name: "Jan", amount: 4000 },
@@ -160,7 +160,9 @@ const Wallets = () => {
           <div className="space-y-4">
             <div className="flex justify-between">
               <h2 className="text-xl font-semibold">Shopper Wallets</h2>
-              <Button>Process Payouts</Button>
+              <ProcessPayoutDrawer>
+                <Button>Process Payouts</Button>
+              </ProcessPayoutDrawer>
             </div>
             
             <Card>
