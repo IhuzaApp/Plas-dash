@@ -1,0 +1,20 @@
+query getShopperInformation {
+  shoppers {
+    Employment_id
+    address
+    background_check_completed
+    created_at
+    driving_license
+    full_name
+    id
+    national_id
+    onboarding_step
+    phone_number
+    profile_photo
+    status
+    transport_mode
+    updated_at
+    user_id
+    active
+  }
+}

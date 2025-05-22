@@ -1,0 +1,14 @@
+query GetAddresses {
+  Addresses {
+    id
+    user_id
+    street
+    city
+    postal_code
+    latitude
+    longitude
+    is_default
+    created_at
+    updated_at
+  }
+}

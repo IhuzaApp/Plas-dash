@@ -1,0 +1,23 @@
+query GetNotifications {
+  Notifications {
+    id
+    user_id
+    type
+    message
+    is_read
+    created_at
+    User {
+      created_at
+      email
+      gender
+      id
+      is_active
+      name
+      password_hash
+      phone
+      profile_picture
+      role
+      updated_at
+    }
+  }
+}
