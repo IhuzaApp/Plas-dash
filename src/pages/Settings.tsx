@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -9,19 +8,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "@/components/ui/sonner";
+import { Settings as SettingsIcon, Store, Building2 } from "lucide-react";
 
 const Settings = () => {
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  
+  const handleSaveChanges = () => {
+    toast.success("Settings saved successfully");
+  };
+  
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
   return (
     <AdminLayout>
       <PageHeader 
         title="System Settings" 
         description="Configure platform settings and preferences."
-        action={<Button>Save All Changes</Button>}
+        actions={<Button onClick={handleSaveChanges}>Save All Changes</Button>}
+        icon={<SettingsIcon className="h-6 w-6" />}
       />
       
       <Tabs defaultValue="general">
         <TabsList className="mb-4">
           <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="supermarket">Supermarket</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
@@ -94,6 +118,113 @@ const Settings = () => {
               <div className="flex items-center space-x-2">
                 <Switch id="new-registrations" defaultChecked />
                 <Label htmlFor="new-registrations">Allow New User Registrations</Label>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="supermarket" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Supermarket Information</CardTitle>
+              <CardDescription>Configure your supermarket details and branding.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <Label>Supermarket Logo</Label>
+                <div className="flex items-center gap-4">
+                  <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Logo preview" className="h-full w-full object-contain" />
+                    ) : (
+                      <Store className="h-10 w-10 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Input 
+                      id="logo" 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleLogoChange}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Recommended size: 512x512px. Max file size: 2MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="market-name">Supermarket Name</Label>
+                  <Input id="market-name" defaultValue="SuperMart" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="market-slogan">Slogan/Tagline</Label>
+                  <Input id="market-slogan" defaultValue="Fresh Food, Great Prices" />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="market-tin">Tax Identification Number (TIN)</Label>
+                  <Input id="market-tin" defaultValue="123-45-6789" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="market-reg">Business Registration Number</Label>
+                  <Input id="market-reg" defaultValue="REG12345678" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="store-hours">Store Hours</Label>
+                <Textarea 
+                  id="store-hours"
+                  defaultValue="Monday-Friday: 8:00 AM - 9:00 PM
+Saturday: 8:00 AM - 10:00 PM
+Sunday: 9:00 AM - 8:00 PM"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Store Type</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="type-grocery" name="store-type" defaultChecked />
+                    <Label htmlFor="type-grocery">Grocery</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="type-convenience" name="store-type" />
+                    <Label htmlFor="type-convenience">Convenience</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="radio" id="type-hypermarket" name="store-type" />
+                    <Label htmlFor="type-hypermarket">Hypermarket</Label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium">Enable Membership System</h3>
+                  <p className="text-sm text-muted-foreground">Allow customers to register for memberships and earn rewards</p>
+                </div>
+                <Switch id="membership-system" defaultChecked />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium">Enable Digital Receipts</h3>
+                  <p className="text-sm text-muted-foreground">Send receipts via email or SMS</p>
+                </div>
+                <Switch id="digital-receipts" defaultChecked />
+              </div>
+
+              <div className="pt-2">
+                <Button onClick={() => setDialogOpen(true)} variant="outline">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Configure Store Branches
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -267,6 +398,38 @@ const Settings = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Store Branches</DialogTitle>
+            <DialogDescription>
+              Configure multiple store locations for your supermarket chain.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Branch Name</Label>
+              <Input placeholder="Main Branch" />
+            </div>
+            <div className="space-y-2">
+              <Label>Branch Address</Label>
+              <Textarea placeholder="123 Main St, City, State" />
+            </div>
+            <div className="space-y-2">
+              <Label>Branch Manager</Label>
+              <Input placeholder="John Doe" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              toast.success("Branch added successfully");
+              setDialogOpen(false);
+            }}>Add Branch</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

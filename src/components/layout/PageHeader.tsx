@@ -5,7 +5,7 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   icon?: ReactNode;
-  actions?: ReactNode;
+  actions?: ReactNode; // Changed from 'action' to 'actions' to fix build errors
 }
 
 const PageHeader = ({ title, description, icon, actions }: PageHeaderProps) => {
