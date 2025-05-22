@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -14,7 +13,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, Search, Filter, Plus, Edit, Trash, Import, Download, ScanBarcode, ScanQrCode, Eye } from "lucide-react";
+import { ShoppingBag, Search, Filter, Plus, Edit, Trash2, Import, Download, ScanBarcode, ScanQrCode, Check, X } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -33,6 +32,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface InventoryItem {
   id: string;
@@ -61,6 +70,20 @@ const Inventory = () => {
   // Dialog states
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  
+  // Edit dialog states
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    category: "",
+    price: "",
+    stock: "",
+  });
+  
+  // Delete confirmation states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   
   // Barcode scanning states
   const [isScanning, setIsScanning] = useState(false);
@@ -154,6 +177,77 @@ const Inventory = () => {
         toast.success(`${type === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`);
       }, 500);
     }, 1500);
+  };
+  
+  // New functions for edit dialog
+  const openEditDialog = (item: InventoryItem) => {
+    setEditingItem(item);
+    setEditFormData({
+      name: item.name,
+      category: item.category,
+      price: item.price.toString(),
+      stock: item.stock.toString(),
+    });
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: value,
+    });
+  };
+  
+  const handleEditSelectChange = (value: string) => {
+    setEditFormData({
+      ...editFormData,
+      category: value,
+    });
+  };
+  
+  const handleEditSave = () => {
+    if (!editingItem) return;
+    
+    const updatedItems = items.map(item => {
+      if (item.id === editingItem.id) {
+        const updatedStock = parseInt(editFormData.stock);
+        const updatedStatus = updatedStock > 10 
+          ? "in-stock" 
+          : updatedStock > 0 
+            ? "low-stock" 
+            : "out-of-stock";
+            
+        return {
+          ...item,
+          name: editFormData.name,
+          category: editFormData.category,
+          price: parseFloat(editFormData.price),
+          stock: updatedStock,
+          status: updatedStatus as "in-stock" | "low-stock" | "out-of-stock",
+        };
+      }
+      return item;
+    });
+    
+    setItems(updatedItems);
+    setIsEditDialogOpen(false);
+    toast.success("Product updated successfully");
+  };
+  
+  // New functions for delete confirmation
+  const openDeleteDialog = (itemId: string) => {
+    setItemToDelete(itemId);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteConfirm = () => {
+    if (!itemToDelete) return;
+    
+    const updatedItems = items.filter(item => item.id !== itemToDelete);
+    setItems(updatedItems);
+    setIsDeleteDialogOpen(false);
+    toast.success("Product deleted successfully");
   };
   
   return (
@@ -266,11 +360,20 @@ const Inventory = () => {
                           >
                             <ScanQrCode className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => openEditDialog(item)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive">
-                            <Trash className="h-4 w-4" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive"
+                            onClick={() => openDeleteDialog(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -302,6 +405,113 @@ const Inventory = () => {
         onOpenChange={setIsImportOpen}
         onSubmit={handleImportFile}
       />
+      
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+            <DialogDescription>
+              Make changes to the product details.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="name" className="text-right">
+                Name
+              </label>
+              <Input
+                id="name"
+                name="name"
+                value={editFormData.name}
+                onChange={handleEditChange}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="category" className="text-right">
+                Category
+              </label>
+              <Select 
+                value={editFormData.category} 
+                onValueChange={handleEditSelectChange}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="price" className="text-right">
+                Price ($)
+              </label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                step="0.01"
+                value={editFormData.price}
+                onChange={handleEditChange}
+                className="col-span-3"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="stock" className="text-right">
+                Stock
+              </label>
+              <Input
+                id="stock"
+                name="stock"
+                type="number"
+                value={editFormData.stock}
+                onChange={handleEditChange}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" onClick={handleEditSave}>
+              <Check className="mr-2 h-4 w-4" />
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product from the inventory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
+              <X className="mr-2 h-4 w-4" />
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       {/* Scanning Dialog */}
       <Dialog open={isScanDialogOpen} onOpenChange={setIsScanDialogOpen}>
