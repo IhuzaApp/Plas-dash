@@ -14,7 +14,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, Search, Filter, Plus, Edit, Trash, Import, Download } from "lucide-react";
+import { ShoppingBag, Search, Filter, Plus, Edit, Trash, Import, Download, ScanBarcode, ScanQrCode, Eye } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -25,6 +25,14 @@ import {
 import AddProductDialog from "@/components/shop/AddProductDialog";
 import ImportProductsDialog from "@/components/shop/ImportProductsDialog";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface InventoryItem {
   id: string;
@@ -53,6 +61,12 @@ const Inventory = () => {
   // Dialog states
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  
+  // Barcode scanning states
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanType, setScanType] = useState<'barcode' | 'qrcode' | null>(null);
+  const [selectedItemForScan, setSelectedItemForScan] = useState<string | null>(null);
+  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   
   const filteredItems = items.filter(item => {
     return (
@@ -109,6 +123,37 @@ const Inventory = () => {
   const handleExportTemplate = () => {
     // In a real application, this would generate and download an Excel template
     toast.success("Template downloaded successfully");
+  };
+  
+  const startScanning = (itemId: string, type: 'barcode' | 'qrcode') => {
+    setSelectedItemForScan(itemId);
+    setScanType(type);
+    setIsScanning(true);
+    setIsScanDialogOpen(true);
+    
+    // In a real application, this would activate the device camera
+    // For this demo, we'll simulate a scan after a short delay
+    setTimeout(() => {
+      const mockData = type === 'barcode' 
+        ? '5901234' + Math.floor(1000000 + Math.random() * 9000000).toString() // Mock barcode
+        : 'https://product-info.example.com/' + Math.floor(10000 + Math.random() * 90000).toString(); // Mock QR code data
+      
+      const updatedItems = items.map(item => {
+        if (item.id === itemId) {
+          return { ...item, barcode: type === 'barcode' ? mockData : mockData };
+        }
+        return item;
+      });
+      
+      setItems(updatedItems);
+      setIsScanning(false);
+      
+      setTimeout(() => {
+        setIsScanDialogOpen(false);
+        setSelectedItemForScan(null);
+        toast.success(`${type === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`);
+      }, 500);
+    }, 1500);
   };
   
   return (
@@ -196,13 +241,31 @@ const Inventory = () => {
                   filteredItems.map(item => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell className="font-mono text-sm">{item.barcode}</TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {item.barcode}
+                      </TableCell>
                       <TableCell>{item.category}</TableCell>
                       <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
                       <TableCell className="text-right">{item.stock}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => startScanning(item.id, 'barcode')}
+                            title="Scan Barcode"
+                          >
+                            <ScanBarcode className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => startScanning(item.id, 'qrcode')}
+                            title="Scan QR Code"
+                          >
+                            <ScanQrCode className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="icon">
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -239,6 +302,47 @@ const Inventory = () => {
         onOpenChange={setIsImportOpen}
         onSubmit={handleImportFile}
       />
+      
+      {/* Scanning Dialog */}
+      <Dialog open={isScanDialogOpen} onOpenChange={setIsScanDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Scanning {scanType === 'barcode' ? 'Barcode' : 'QR Code'}</DialogTitle>
+            <DialogDescription>
+              Point your camera at the {scanType === 'barcode' ? 'barcode' : 'QR code'} to connect it to this inventory item.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-6">
+            {isScanning ? (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="w-full h-[200px] bg-muted flex items-center justify-center rounded-md border-2 border-dashed">
+                  <div className="animate-pulse flex flex-col items-center gap-2">
+                    {scanType === 'barcode' ? 
+                      <ScanBarcode className="h-12 w-12 text-muted-foreground" /> : 
+                      <ScanQrCode className="h-12 w-12 text-muted-foreground" />
+                    }
+                    <p className="text-sm text-muted-foreground">Scanning...</p>
+                  </div>
+                </div>
+                <p className="text-sm text-center">
+                  Please hold steady while we scan the {scanType === 'barcode' ? 'barcode' : 'QR code'}
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <p>Scan completed!</p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsScanDialogOpen(false)} disabled={isScanning}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
