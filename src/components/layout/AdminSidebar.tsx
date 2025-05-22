@@ -113,7 +113,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       <SidebarFooter className="py-4">
         {isSidebarOpen && (
           <div className="px-4 text-xs text-sidebar-foreground/60">
-            v1.0.0 • DeliveryAdmin
+            v1.0.0 • Plas
           </div>
         )}
       </SidebarFooter>
