@@ -76,8 +76,8 @@ const Transactions = () => {
   return (
     <AdminLayout>
       <PageHeader 
-        heading="POS Transactions" 
-        subheading="View and manage all point of sale transactions"
+        title="POS Transactions" 
+        description="View and manage all point of sale transactions"
         icon={<Receipt className="h-6 w-6" />}
       />
 

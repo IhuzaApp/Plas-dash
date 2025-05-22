@@ -75,8 +75,8 @@ const Inventory = () => {
   return (
     <AdminLayout>
       <PageHeader 
-        heading="POS Inventory" 
-        subheading="Manage inventory levels and product information"
+        title="POS Inventory" 
+        description="Manage inventory levels and product information"
         icon={<ShoppingBag className="h-6 w-6" />}
         actions={
           <Button>

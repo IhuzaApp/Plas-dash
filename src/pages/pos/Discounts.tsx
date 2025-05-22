@@ -67,8 +67,8 @@ const Discounts = () => {
   return (
     <AdminLayout>
       <PageHeader 
-        heading="POS Discounts" 
-        subheading="Manage promotional discounts and offers"
+        title="POS Discounts" 
+        description="Manage promotional discounts and offers"
         icon={<Tag className="h-6 w-6" />}
         actions={
           <Button>

@@ -77,8 +77,8 @@ const Checkout = () => {
   return (
     <AdminLayout>
       <PageHeader 
-        heading="POS Checkout" 
-        subheading="Process customer purchases quickly and efficiently"
+        title="POS Checkout" 
+        description="Process customer purchases quickly and efficiently"
         icon={<ShoppingBag className="h-6 w-6" />}
       />
       
