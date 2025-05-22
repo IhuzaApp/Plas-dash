@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -23,6 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScanBarcode, ScanQrCode } from "lucide-react";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -58,6 +60,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   onOpenChange,
   onSubmit
 }) => {
+  const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [scanType, setScanType] = useState<'barcode' | 'qrcode' | null>(null);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -77,6 +82,32 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   function handleSubmit(values: z.infer<typeof formSchema>) {
     onSubmit(values);
   }
+
+  const startScanning = (type: 'barcode' | 'qrcode') => {
+    setScanType(type);
+    setIsScanning(true);
+    
+    // In a real application, this would activate the device camera
+    // For this demo, we'll simulate a scan after a short delay
+    setTimeout(() => {
+      const mockData = type === 'barcode' 
+        ? '5901234123457' // Mock barcode
+        : 'https://product-info.example.com/12345'; // Mock QR code data
+      
+      // Update the form with the scanned data
+      if (type === 'barcode') {
+        form.setValue('barcode', mockData);
+        toast.success("Barcode scanned successfully!");
+      } else {
+        // For QR, we might extract product information from the URL
+        // For demo, we'll just set the barcode field
+        form.setValue('barcode', mockData);
+        toast.success("QR code scanned successfully!");
+      }
+      
+      setIsScanning(false);
+    }, 1500);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,10 +175,37 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 name="barcode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Barcode (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter barcode" {...field} />
-                    </FormControl>
+                    <FormLabel>Barcode</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <div className="relative flex-1">
+                          <Input placeholder="Enter barcode" {...field} />
+                        </div>
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        variant="outline" 
+                        onClick={() => startScanning('barcode')}
+                        disabled={isScanning}
+                      >
+                        <ScanBarcode className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        variant="outline" 
+                        onClick={() => startScanning('qrcode')}
+                        disabled={isScanning}
+                      >
+                        <ScanQrCode className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {isScanning && (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        Scanning {scanType === 'barcode' ? 'barcode' : 'QR code'}...
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

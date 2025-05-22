@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -13,16 +13,33 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, ScanBarcode } from "lucide-react";
+import { toast } from "sonner";
 
 const Products = () => {
-  const products = [
+  const [products, setProducts] = useState([
     { id: 1, name: "Organic Apples", shop: "Fresh Groceries", category: "Fruits", price: "$3.99", stock: 120, status: "In Stock" },
     { id: 2, name: "Whole Grain Bread", shop: "Healthy Options", category: "Bakery", price: "$4.50", stock: 45, status: "In Stock" },
     { id: 3, name: "Free Range Eggs", shop: "Fresh Groceries", category: "Dairy", price: "$5.99", stock: 60, status: "In Stock" },
     { id: 4, name: "Vitamin C Tablets", shop: "City Pharmacy", category: "Supplements", price: "$12.99", stock: 8, status: "Low Stock" },
     { id: 5, name: "Dog Food Premium", shop: "Pet Supplies Co.", category: "Pet Food", price: "$24.99", stock: 0, status: "Out of Stock" },
-  ];
+  ]);
+  
+  const [isScanning, setIsScanning] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const startScanning = () => {
+    setIsScanning(true);
+    
+    // In a real application, this would activate the device camera
+    // For this demo, we'll simulate a scan after a short delay
+    setTimeout(() => {
+      const mockBarcode = '5901234123457'; // Mock barcode
+      setSearchTerm(mockBarcode);
+      toast.success("Barcode scanned: " + mockBarcode);
+      setIsScanning(false);
+    }, 1500);
+  };
 
   return (
     <AdminLayout>
@@ -36,12 +53,32 @@ const Products = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search products..." className="pl-8" />
+            <Input 
+              placeholder="Search products..." 
+              className="pl-8" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={startScanning}
+            disabled={isScanning}
+          >
+            <ScanBarcode className="h-4 w-4" /> 
+            {isScanning ? "Scanning..." : "Scan Barcode"}
+          </Button>
           <Button variant="outline" className="flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
+        
+        {isScanning && (
+          <div className="p-4 text-center bg-muted rounded-md">
+            <p className="text-muted-foreground">Scanning barcode... Please point your camera at a barcode.</p>
+          </div>
+        )}
         
         <Card>
           <Table>
