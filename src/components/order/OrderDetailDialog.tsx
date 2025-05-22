@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { Package, Clock, Truck, Calendar, CreditCard } from "lucide-react";
 
 // Order type definition
 export type OrderItem = {
@@ -58,12 +60,24 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
     }
   };
 
+  // Calculate subtotal, tax, and total
+  const subtotal = order.items.reduce((sum, item) => {
+    const price = parseFloat(item.price.replace('$', ''));
+    return sum + price * item.quantity;
+  }, 0);
+  
+  const tax = subtotal * 0.08; // Assuming 8% tax
+  const total = parseFloat(order.total.replace('$', ''));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Order {order.id}</span>
+            <div className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              <span>Order {order.id}</span>
+            </div>
             <Badge className={getStatusColorClass(order.status)}>{order.status}</Badge>
           </DialogTitle>
           <DialogDescription>
@@ -72,32 +86,89 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
         </DialogHeader>
         
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-medium mb-2">Customer Information</h3>
-              <p>{order.customer}</p>
-              <p>{order.email}</p>
-              <p>{order.phone}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Customer Information
+                </h3>
+                <div className="bg-muted/50 p-3 rounded-md">
+                  <p className="font-medium">{order.customer}</p>
+                  <p>{order.email}</p>
+                  <p>{order.phone}</p>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-2 flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Order Timeline
+                </h3>
+                <div className="bg-muted/50 p-3 rounded-md">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      Ordered
+                    </span>
+                    <span>{order.date}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm mt-2">
+                    <span className="flex items-center gap-1">
+                      <Package className="h-3.5 w-3.5" />
+                      Processing
+                    </span>
+                    <span>{order.date}</span>
+                  </div>
+                  {order.status === "Delivered" && (
+                    <div className="flex justify-between items-center text-sm mt-2">
+                      <span className="flex items-center gap-1">
+                        <Truck className="h-3.5 w-3.5" />
+                        Delivered
+                      </span>
+                      <span>{order.date}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
+            
             <div>
-              <h3 className="font-medium mb-2">Shipping Address</h3>
-              <p>{order.address}</p>
+              <h3 className="font-medium mb-2 flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Delivery Information
+              </h3>
+              <div className="bg-muted/50 p-3 rounded-md">
+                <p className="font-medium">Shipping Address</p>
+                <p className="text-muted-foreground">{order.address}</p>
+                <div className="mt-3">
+                  <p className="font-medium">Delivery Method</p>
+                  <p className="text-muted-foreground">Standard Delivery</p>
+                </div>
+                <div className="mt-3">
+                  <p className="font-medium">Payment Method</p>
+                  <p className="text-muted-foreground">{order.paymentMethod}</p>
+                </div>
+              </div>
             </div>
           </div>
 
           <Separator />
 
           <div>
-            <h3 className="font-medium mb-3">Order Items</h3>
+            <h3 className="font-medium mb-3">Order Items ({order.items.length})</h3>
             <div className="space-y-2">
               {order.items.map((item) => (
                 <Card key={item.id}>
                   <CardContent className="p-4 flex justify-between items-center">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium">{item.name}</p>
                       <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
                     </div>
-                    <p>{item.price}</p>
+                    <div className="text-right">
+                      <p>{item.price} each</p>
+                      <p className="font-medium">${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)} total</p>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -106,13 +177,22 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
 
           <Separator />
 
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-muted-foreground">Payment Method</p>
-              <p>{order.paymentMethod}</p>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <p className="text-muted-foreground">Subtotal</p>
+              <p>${subtotal.toFixed(2)}</p>
             </div>
-            <div className="text-right">
-              <p className="text-muted-foreground">Total Amount</p>
+            <div className="flex justify-between items-center">
+              <p className="text-muted-foreground">Tax (8%)</p>
+              <p>${tax.toFixed(2)}</p>
+            </div>
+            <div className="flex justify-between items-center">
+              <p className="text-muted-foreground">Delivery Fee</p>
+              <p>${(total - subtotal - tax).toFixed(2)}</p>
+            </div>
+            <Separator />
+            <div className="flex justify-between items-center pt-2">
+              <p className="font-medium">Total Amount</p>
               <p className="text-xl font-bold">{order.total}</p>
             </div>
           </div>

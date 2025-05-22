@@ -13,14 +13,14 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Package } from "lucide-react";
 import OrderDetailDialog, { OrderDetails } from "@/components/order/OrderDetailDialog";
 
 const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Sample orders data with more details
+  // Sample orders data with more supermarket-specific details
   const orders = [
     { 
       id: "#ORD-1234", 
@@ -33,9 +33,10 @@ const Orders = () => {
       email: "john.doe@example.com",
       paymentMethod: "Credit Card",
       items: [
-        { id: "item-1", name: "Organic Apples", quantity: 2, price: "$5.99" },
+        { id: "item-1", name: "Organic Apples (2kg)", quantity: 2, price: "$5.99" },
         { id: "item-2", name: "Whole Grain Bread", quantity: 1, price: "$3.49" },
-        { id: "item-3", name: "Free Range Eggs", quantity: 1, price: "$4.99" },
+        { id: "item-3", name: "Free Range Eggs (12pk)", quantity: 1, price: "$4.99" },
+        { id: "item-4", name: "Fresh Orange Juice (1L)", quantity: 2, price: "$3.99" },
       ]
     },
     { 
@@ -49,8 +50,9 @@ const Orders = () => {
       email: "jane.smith@example.com",
       paymentMethod: "PayPal",
       items: [
-        { id: "item-4", name: "Almond Milk", quantity: 2, price: "$3.99" },
-        { id: "item-5", name: "Protein Bars", quantity: 3, price: "$2.49" },
+        { id: "item-4", name: "Almond Milk (1L)", quantity: 2, price: "$3.99" },
+        { id: "item-5", name: "Protein Bars (Box of 6)", quantity: 3, price: "$2.49" },
+        { id: "item-6", name: "Baby Formula (900g)", quantity: 1, price: "$24.99" },
       ]
     },
     { 
@@ -64,9 +66,10 @@ const Orders = () => {
       email: "mike.johnson@example.com",
       paymentMethod: "Cash on Delivery",
       items: [
-        { id: "item-6", name: "Fresh Salmon", quantity: 1, price: "$15.99" },
-        { id: "item-7", name: "Organic Vegetables", quantity: 1, price: "$12.50" },
-        { id: "item-8", name: "Red Wine", quantity: 2, price: "$24.99" },
+        { id: "item-6", name: "Fresh Salmon Fillet (500g)", quantity: 1, price: "$15.99" },
+        { id: "item-7", name: "Organic Vegetables Bundle", quantity: 1, price: "$12.50" },
+        { id: "item-8", name: "Red Wine (Cabernet)", quantity: 2, price: "$24.99" },
+        { id: "item-9", name: "Dishwashing Liquid", quantity: 1, price: "$3.49" },
       ]
     },
     { 
@@ -80,8 +83,10 @@ const Orders = () => {
       email: "sarah.williams@example.com",
       paymentMethod: "Credit Card",
       items: [
-        { id: "item-9", name: "Yoga Mat", quantity: 1, price: "$19.99" },
-        { id: "item-10", name: "Resistance Bands", quantity: 1, price: "$14.76" },
+        { id: "item-9", name: "Laundry Detergent (2L)", quantity: 1, price: "$12.99" },
+        { id: "item-10", name: "Paper Towels (8 rolls)", quantity: 1, price: "$8.76" },
+        { id: "item-11", name: "Toilet Paper (12 rolls)", quantity: 1, price: "$10.99" },
+        { id: "item-12", name: "Hand Soap", quantity: 2, price: "$2.99" },
       ]
     },
     { 
@@ -95,8 +100,28 @@ const Orders = () => {
       email: "robert.brown@example.com",
       paymentMethod: "Debit Card",
       items: [
-        { id: "item-11", name: "Coffee Beans", quantity: 2, price: "$12.99" },
+        { id: "item-11", name: "Coffee Beans (Premium, 500g)", quantity: 2, price: "$12.99" },
         { id: "item-12", name: "Coffee Grinder", quantity: 1, price: "$30.32" },
+        { id: "item-13", name: "French Press", quantity: 1, price: "$15.99" },
+      ]
+    },
+    { 
+      id: "#ORD-1239", 
+      customer: "Emily Johnson", 
+      date: "2023-05-18", 
+      total: "$125.60", 
+      status: "Delivered",
+      address: "303 Birch Blvd, Denver, CO 80201",
+      phone: "(555) 678-9012",
+      email: "emily.johnson@example.com",
+      paymentMethod: "Credit Card",
+      items: [
+        { id: "item-14", name: "Rice Cooker", quantity: 1, price: "$49.99" },
+        { id: "item-15", name: "Jasmine Rice (5kg)", quantity: 1, price: "$18.49" },
+        { id: "item-16", name: "Soy Sauce (500ml)", quantity: 2, price: "$4.99" },
+        { id: "item-17", name: "Mixed Spices Set", quantity: 1, price: "$22.99" },
+        { id: "item-18", name: "Cooking Oil (2L)", quantity: 1, price: "$8.99" },
+        { id: "item-19", name: "Coconut Milk (400ml)", quantity: 3, price: "$2.49" },
       ]
     },
   ];
@@ -110,15 +135,16 @@ const Orders = () => {
     <AdminLayout>
       <PageHeader 
         title="Orders" 
-        description="Manage and track all customer orders."
-        action={<Button>Export Data</Button>}
+        description="Manage and track all supermarket orders and deliveries."
+        icon={<Package className="h-6 w-6" />}
+        actions={<Button>Export Data</Button>}
       />
       
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search orders..." className="pl-8" />
+            <Input placeholder="Search orders by ID, customer name or products..." className="pl-8" />
           </div>
           <Button variant="outline" className="flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filter
