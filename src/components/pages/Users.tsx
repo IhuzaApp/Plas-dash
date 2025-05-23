@@ -1,4 +1,3 @@
-
 import React from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -29,7 +28,7 @@ const Users = () => {
       <PageHeader 
         title="Customers" 
         description="View and manage customer accounts."
-        action={<Button>Export Data</Button>}
+        actions={<Button>Export Data</Button>}
       />
       
       <div className="space-y-4">

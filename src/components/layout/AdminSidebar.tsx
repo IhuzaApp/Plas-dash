@@ -1,6 +1,5 @@
-
 import React from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import {
   Sidebar,
   SidebarContent,
@@ -98,7 +97,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
                 {section.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <Link to={item.path} className={`flex items-center ${isSidebarOpen ? 'px-3' : 'justify-center'}`}>
+                      <Link href={item.path} className={`flex items-center ${isSidebarOpen ? 'px-3' : 'justify-center'}`}>
                         <item.icon className="h-5 w-5 mr-2" />
                         {isSidebarOpen && <span>{item.title}</span>}
                       </Link>

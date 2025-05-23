@@ -1,22 +1,52 @@
-import { useQuery, useMutation, DocumentNode, QueryHookOptions, MutationHookOptions } from '@apollo/client';
+import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
+import { request, gql } from 'graphql-request';
+
+const HASURA_ENDPOINT = process.env.HASURA_GRAPHQL_URL || '';
+const HASURA_ADMIN_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET || '';
 
 // Generic query hook with better typing
-export const useGraphqlQuery = <TData = any, TVariables = Record<string, any>>(
-  query: DocumentNode,
-  options?: QueryHookOptions<TData, TVariables>
+export const useGraphqlQuery = <TData = any, TVariables extends Record<string, any> = Record<string, any>>(
+  query: string,
+  options?: Omit<UseQueryOptions<TData, Error, TData>, 'queryKey' | 'queryFn'> & {
+    variables?: TVariables;
+  }
 ) => {
-  return useQuery<TData, TVariables>(query, {
-    fetchPolicy: 'cache-and-network',
+  return useQuery<TData, Error>({
+    queryKey: [query, options?.variables],
+    queryFn: async () => {
+      const response = await request<TData>(
+        HASURA_ENDPOINT,
+        gql`${query}`,
+        options?.variables || {},
+        {
+          'x-hasura-admin-secret': HASURA_ADMIN_SECRET,
+        }
+      );
+      return response;
+    },
     ...options,
   });
 };
 
 // Generic mutation hook with better typing
-export const useGraphqlMutation = <TData = any, TVariables = Record<string, any>>(
-  mutation: DocumentNode,
-  options?: MutationHookOptions<TData, TVariables>
+export const useGraphqlMutation = <TData = any, TVariables extends Record<string, any> = Record<string, any>>(
+  mutation: string,
+  options?: Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'>
 ) => {
-  return useMutation<TData, TVariables>(mutation, options);
+  return useMutation<TData, Error, TVariables>({
+    mutationFn: async (variables) => {
+      const response = await request<TData>(
+        HASURA_ENDPOINT,
+        gql`${mutation}`,
+        variables,
+        {
+          'x-hasura-admin-secret': HASURA_ADMIN_SECRET,
+        }
+      );
+      return response;
+    },
+    ...options,
+  });
 };
 
 // Types for our GraphQL schema
@@ -43,7 +73,13 @@ export interface Product {
   quantity: number;
   measurement_unit: string;
   image: string;
-  category: string;
+  category: {
+    id: string;
+    name: string;
+    description: string;
+    image: string;
+    is_active: boolean;
+  };
   created_at: string;
   updated_at: string;
   is_active: boolean;
@@ -56,7 +92,14 @@ export interface Shop {
   id: string;
   name: string;
   description: string;
-  category_id: string;
+  category: {
+    id: string;
+    name: string;
+    description: string;
+    image: string;
+    is_active: boolean;
+    created_at: string;
+  };
   image: string;
   address: string;
   latitude: string;
@@ -65,6 +108,28 @@ export interface Shop {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  Products?: Product[];
+  Orders?: {
+    OrderID: string;
+    id: string;
+    found: boolean;
+    discount: string;
+    delivery_time: string;
+    delivery_notes?: string;
+    delivery_fee: string;
+    delivery_address_id: string;
+    created_at: string;
+    combined_order_id?: string;
+    delivery_photo_url?: string;
+    updated_at: string;
+    total: string;
+    status: string;
+    shopper_id: string;
+    shop_id: string;
+    service_fee: string;
+    voucher_code?: string;
+    user_id: string;
+  }[];
 }
 
 export interface Order {

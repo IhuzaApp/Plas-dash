@@ -3,9 +3,9 @@ import { User } from '../hooks/useGraphql';
 import { useUsers } from '../hooks/useHasuraApi';
 
 export function UsersList() {
-  const { loading, error, data } = useUsers();
+  const { isLoading, error, data } = useUsers();
 
-  if (loading) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
   return (

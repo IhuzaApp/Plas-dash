@@ -1,7 +1,5 @@
-import { gql } from '@apollo/client';
-
 // Cart mutations
-export const ADD_CART = gql`
+export const ADD_CART = `
   mutation AddCart(
     $total: String = ""
     $shop_id: uuid = ""
@@ -20,7 +18,7 @@ export const ADD_CART = gql`
   }
 `;
 
-export const ADD_ITEMS_TO_CART = gql`
+export const ADD_ITEMS_TO_CART = `
   mutation AddItemsToCart(
     $total: String = ""
     $is_active: Boolean = true
@@ -41,7 +39,7 @@ export const ADD_ITEMS_TO_CART = gql`
 `;
 
 // Invoice mutations
-export const ADD_INVOICE_DETAILS = gql`
+export const ADD_INVOICE_DETAILS = `
   mutation addInvoiceDetails(
     $customer_id: uuid = ""
     $delivery_fee: String = ""
@@ -76,7 +74,7 @@ export const ADD_INVOICE_DETAILS = gql`
 `;
 
 // Wallet mutations
-export const CREATE_WALLET = gql`
+export const CREATE_WALLET = `
   mutation createWallet($shopper_id: uuid!) {
     insert_Wallets_one(
       object: {
@@ -94,7 +92,7 @@ export const CREATE_WALLET = gql`
   }
 `;
 
-export const UPDATE_WALLET_BALANCES = gql`
+export const UPDATE_WALLET_BALANCES = `
   mutation updateWalletBalances(
     $wallet_id: uuid!
     $available_balance: String!
@@ -117,7 +115,7 @@ export const UPDATE_WALLET_BALANCES = gql`
 `;
 
 // Wallet Transaction mutations
-export const CREATE_WALLET_TRANSACTION = gql`
+export const CREATE_WALLET_TRANSACTION = `
   mutation createWalletTransaction(
     $amount: String!
     $type: String!
@@ -145,7 +143,7 @@ export const CREATE_WALLET_TRANSACTION = gql`
   }
 `;
 
-export const CREATE_MULTIPLE_WALLET_TRANSACTIONS = gql`
+export const CREATE_MULTIPLE_WALLET_TRANSACTIONS = `
   mutation createMultipleWalletTransactions(
     $transactions: [Wallet_Transactions_insert_input!]!
   ) {
@@ -165,7 +163,7 @@ export const CREATE_MULTIPLE_WALLET_TRANSACTIONS = gql`
 `;
 
 // Shopper mutations
-export const REGISTER_SHOPPER = gql`
+export const REGISTER_SHOPPER = `
   mutation RegisterShopper(
     $full_name: String!
     $address: String!
