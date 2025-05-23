@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "next/navigation";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -19,9 +18,26 @@ import {
 import AddProductDialog from "@/components/shop/AddProductDialog";
 import ImportProductsDialog from "@/components/shop/ImportProductsDialog";
 import { toast } from "sonner";
+import * as z from "zod";
+
+const productFormSchema = z.object({
+  name: z.string(),
+  category: z.string(),
+  price: z.string(),
+  stock: z.string(),
+  barcode: z.string().optional(),
+  sku: z.string().optional(),
+  unit: z.string().optional(),
+  reorderPoint: z.string().optional(),
+  supplier: z.string().optional(),
+  description: z.string().optional(),
+});
+
+type ProductFormData = z.infer<typeof productFormSchema>;
 
 const ShopDetail = () => {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id?.toString() || "";
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
 
@@ -51,13 +67,13 @@ const ShopDetail = () => {
     { id: 5, name: "Organic Spinach", category: "Vegetables", price: "$2.99", stock: 80, status: "In Stock" },
   ];
 
-  const handleAddProduct = (formData) => {
+  const handleAddProduct = (formData: ProductFormData) => {
     console.log("Adding product:", formData);
     toast.success("Product added successfully");
     setIsAddProductOpen(false);
   };
 
-  const handleImportProducts = (file) => {
+  const handleImportProducts = (file: File) => {
     console.log("Importing products from file:", file);
     toast.success("Products imported successfully");
     setIsImportOpen(false);
@@ -68,7 +84,7 @@ const ShopDetail = () => {
       <PageHeader 
         title={shopData.name} 
         description={`View and manage details for ${shopData.name}`}
-        action={
+        actions={
           <div className="flex gap-2">
             <Button onClick={() => setIsAddProductOpen(true)} className="flex items-center gap-2">
               <Plus className="h-4 w-4" /> Add Product

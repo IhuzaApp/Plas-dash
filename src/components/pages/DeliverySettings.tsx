@@ -1,4 +1,3 @@
-
 import React from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -15,7 +14,7 @@ const DeliverySettings = () => {
       <PageHeader 
         title="Delivery Settings" 
         description="Configure delivery options and pricing rules."
-        action={<Button>Save Changes</Button>}
+        actions={<Button>Save Changes</Button>}
       />
       
       <Tabs defaultValue="general">

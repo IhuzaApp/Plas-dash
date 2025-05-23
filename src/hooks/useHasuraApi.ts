@@ -1,4 +1,5 @@
-import { useGraphqlQuery, useGraphqlMutation, User, Product, Shop, Order, Cart, Address, Invoice, Wallet, WalletTransaction, Refund } from './useGraphql';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { hasuraRequest } from '../lib/hasura';
 import {
   GET_USERS,
   GET_PRODUCTS,
@@ -23,81 +24,122 @@ import {
   REGISTER_SHOPPER
 } from '../lib/graphql/mutations';
 
+// Import types
+import type { User, Product, Shop, Order, Cart, Address, Invoice, Wallet, WalletTransaction, Refund } from './useGraphql';
+
 // Type-safe hook for Users
 export function useUsers() {
-  return useGraphqlQuery<{ Users: User[] }>(GET_USERS);
+  return useQuery<{ Users: User[] }, Error>({
+    queryKey: ['users'],
+    queryFn: () => hasuraRequest(GET_USERS, {})
+  });
 }
 
 // Type-safe hook for Products
 export function useProducts() {
-  return useGraphqlQuery<{ Products: Product[] }>(GET_PRODUCTS);
+  return useQuery<{ Products: Product[] }, Error>({
+    queryKey: ['products'],
+    queryFn: () => hasuraRequest(GET_PRODUCTS, {})
+  });
 }
 
 // Type-safe hook for Shops
 export function useShops() {
-  return useGraphqlQuery<{ Shops: Shop[] }>(GET_SHOPS);
+  return useQuery<{ Shops: Shop[] }, Error>({
+    queryKey: ['shops'],
+    queryFn: () => hasuraRequest(GET_SHOPS, {})
+  });
 }
 
 // Type-safe hook for Orders
 export function useOrders() {
-  return useGraphqlQuery<{ Orders: Order[] }>(GET_ORDERS);
+  return useQuery<{ Orders: Order[] }, Error>({
+    queryKey: ['orders'],
+    queryFn: () => hasuraRequest(GET_ORDERS, {})
+  });
 }
 
 // Type-safe hook for Carts
 export function useCarts() {
-  return useGraphqlQuery<{ Carts: Cart[] }>(GET_CARTS);
+  return useQuery<{ Carts: Cart[] }, Error>({
+    queryKey: ['carts'],
+    queryFn: () => hasuraRequest(GET_CARTS, {})
+  });
 }
 
 // Type-safe hook for Addresses
 export function useAddresses() {
-  return useGraphqlQuery<{ Addresses: Address[] }>(GET_ADDRESSES);
+  return useQuery<{ Addresses: Address[] }, Error>({
+    queryKey: ['addresses'],
+    queryFn: () => hasuraRequest(GET_ADDRESSES, {})
+  });
 }
 
 // Type-safe hook for Invoices
 export function useInvoices() {
-  return useGraphqlQuery<{ Invoices: Invoice[] }>(GET_INVOICE_DETAILS);
+  return useQuery<{ Invoices: Invoice[] }, Error>({
+    queryKey: ['invoices'],
+    queryFn: () => hasuraRequest(GET_INVOICE_DETAILS, {})
+  });
 }
 
 // Type-safe hook for Wallets
 export function useWallets() {
-  return useGraphqlQuery<{ Wallets: Wallet[] }>(GET_ALL_WALLETS);
+  return useQuery<{ Wallets: Wallet[] }, Error>({
+    queryKey: ['wallets'],
+    queryFn: () => hasuraRequest(GET_ALL_WALLETS, {})
+  });
 }
 
 // Type-safe hook for Shopper's wallet
 export function useShopperWallet(shopperId: string) {
-  return useGraphqlQuery<{ Wallets: Wallet[] }>(GET_SHOPPER_WALLET, {
-    variables: { shopper_id: shopperId }
+  return useQuery<{ Wallets: Wallet[] }, Error>({
+    queryKey: ['wallet', shopperId],
+    queryFn: () => hasuraRequest(GET_SHOPPER_WALLET, { shopper_id: shopperId })
   });
 }
 
 // Type-safe hook for Wallet Transactions
 export function useWalletTransactions() {
-  return useGraphqlQuery<{ Wallet_Transactions: WalletTransaction[] }>(GET_ALL_WALLET_TRANSACTIONS);
+  return useQuery<{ Wallet_Transactions: WalletTransaction[] }, Error>({
+    queryKey: ['wallet-transactions'],
+    queryFn: () => hasuraRequest(GET_ALL_WALLET_TRANSACTIONS, {})
+  });
 }
 
 // Type-safe hook for Refunds
 export function useRefunds() {
-  return useGraphqlQuery<{ Refunds: Refund[] }>(GET_ALL_REFUNDS);
+  return useQuery<{ Refunds: Refund[] }, Error>({
+    queryKey: ['refunds'],
+    queryFn: () => hasuraRequest(GET_ALL_REFUNDS, {})
+  });
 }
 
 // Type-safe mutation hooks
 export function useAddCart() {
-  return useGraphqlMutation<
+  return useMutation<
     { insert_Carts: { affected_rows: number } },
+    Error,
     { total: string; shop_id: string; user_id: string }
-  >(ADD_CART);
+  >({
+    mutationFn: (variables) => hasuraRequest(ADD_CART, variables)
+  });
 }
 
 export function useAddItemsToCart() {
-  return useGraphqlMutation<
+  return useMutation<
     { insert_Carts: { affected_rows: number } },
+    Error,
     { total: string; is_active: boolean; shop_id: string; user_id: string }
-  >(ADD_ITEMS_TO_CART);
+  >({
+    mutationFn: (variables) => hasuraRequest(ADD_ITEMS_TO_CART, variables)
+  });
 }
 
 export function useAddInvoiceDetails() {
-  return useGraphqlMutation<
+  return useMutation<
     { insert_Invoices: { affected_rows: number } },
+    Error,
     {
       customer_id: string;
       delivery_fee: string;
@@ -111,26 +153,35 @@ export function useAddInvoiceDetails() {
       tax: string;
       total_amount: string;
     }
-  >(ADD_INVOICE_DETAILS);
+  >({
+    mutationFn: (variables) => hasuraRequest(ADD_INVOICE_DETAILS, variables)
+  });
 }
 
 export function useCreateWallet() {
-  return useGraphqlMutation<
+  return useMutation<
     { insert_Wallets_one: Wallet },
+    Error,
     { shopper_id: string }
-  >(CREATE_WALLET);
+  >({
+    mutationFn: (variables) => hasuraRequest(CREATE_WALLET, variables)
+  });
 }
 
 export function useUpdateWalletBalances() {
-  return useGraphqlMutation<
+  return useMutation<
     { update_Wallets_by_pk: Wallet },
+    Error,
     { wallet_id: string; available_balance: string; reserved_balance: string }
-  >(UPDATE_WALLET_BALANCES);
+  >({
+    mutationFn: (variables) => hasuraRequest(UPDATE_WALLET_BALANCES, variables)
+  });
 }
 
 export function useCreateWalletTransaction() {
-  return useGraphqlMutation<
+  return useMutation<
     { insert_Wallet_Transactions_one: WalletTransaction },
+    Error,
     {
       amount: string;
       type: string;
@@ -138,12 +189,25 @@ export function useCreateWalletTransaction() {
       wallet_id: string;
       related_order_id?: string;
     }
-  >(CREATE_WALLET_TRANSACTION);
+  >({
+    mutationFn: (variables) => hasuraRequest(CREATE_WALLET_TRANSACTION, variables)
+  });
+}
+
+export function useCreateMultipleWalletTransactions() {
+  return useMutation<
+    { insert_Wallet_Transactions: { returning: WalletTransaction[]; affected_rows: number } },
+    Error,
+    { transactions: any[] }
+  >({
+    mutationFn: (variables) => hasuraRequest(CREATE_MULTIPLE_WALLET_TRANSACTIONS, variables)
+  });
 }
 
 export function useRegisterShopper() {
-  return useGraphqlMutation<
+  return useMutation<
     { insert_shoppers_one: { id: string; status: string; active: boolean; onboarding_step: string } },
+    Error,
     {
       full_name: string;
       address: string;
@@ -154,5 +218,7 @@ export function useRegisterShopper() {
       profile_photo?: string;
       user_id: string;
     }
-  >(REGISTER_SHOPPER);
+  >({
+    mutationFn: (variables) => hasuraRequest(REGISTER_SHOPPER, variables)
+  });
 } 

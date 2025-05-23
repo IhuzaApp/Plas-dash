@@ -1,7 +1,5 @@
-import { gql } from '@apollo/client';
-
 // User queries
-export const GET_USERS = gql`
+export const GET_USERS = `
   query GetUsers {
     Users {
       id
@@ -19,7 +17,7 @@ export const GET_USERS = gql`
 `;
 
 // Products queries
-export const GET_PRODUCTS = gql`
+export const GET_PRODUCTS = `
   query GetProducts {
     Products {
       id
@@ -70,13 +68,20 @@ export const GET_PRODUCTS = gql`
 `;
 
 // Shops queries
-export const GET_SHOPS = gql`
+export const GET_SHOPS = `
   query GetShops {
     Shops {
       id
       name
       description
-      category_id
+      category {
+        id
+        name
+        description
+        image
+        is_active
+        created_at
+      }
       image
       address
       latitude
@@ -85,12 +90,53 @@ export const GET_SHOPS = gql`
       created_at
       updated_at
       is_active
+      Products {
+        id
+        name
+        description
+        image
+        is_active
+        measurement_unit
+        price
+        quantity
+        shop_id
+        updated_at
+        created_at
+        category {
+          id
+          name
+          description
+          image
+          is_active
+        }
+      }
+      Orders {
+        OrderID
+        id
+        found
+        discount
+        delivery_time
+        delivery_notes
+        delivery_fee
+        delivery_address_id
+        created_at
+        combined_order_id
+        delivery_photo_url
+        updated_at
+        total
+        status
+        shopper_id
+        shop_id
+        service_fee
+        voucher_code
+        user_id
+      }
     }
   }
 `;
 
 // Orders queries
-export const GET_ORDERS = gql`
+export const GET_ORDERS = `
   query GetOrders {
     Orders {
       id
@@ -146,7 +192,7 @@ export const GET_ORDERS = gql`
 `;
 
 // Carts queries
-export const GET_CARTS = gql`
+export const GET_CARTS = `
   query GetCarts {
     Carts {
       id
@@ -174,7 +220,7 @@ export const GET_CARTS = gql`
 `;
 
 // Addresses queries
-export const GET_ADDRESSES = gql`
+export const GET_ADDRESSES = `
   query GetAddresses {
     Addresses {
       id
@@ -192,7 +238,7 @@ export const GET_ADDRESSES = gql`
 `;
 
 // Invoices queries
-export const GET_INVOICE_DETAILS = gql`
+export const GET_INVOICE_DETAILS = `
   query GetInvoiceDetails {
     Invoices {
       created_at
@@ -213,7 +259,7 @@ export const GET_INVOICE_DETAILS = gql`
 `;
 
 // Wallet queries
-export const GET_ALL_WALLETS = gql`
+export const GET_ALL_WALLETS = `
   query getAllwallets {
     Wallets {
       shopper_id
@@ -247,7 +293,7 @@ export const GET_ALL_WALLETS = gql`
   }
 `;
 
-export const GET_SHOPPER_WALLET = gql`
+export const GET_SHOPPER_WALLET = `
   query getShopperWallet($shopper_id: uuid!) {
     Wallets(where: { shopper_id: { _eq: $shopper_id } }) {
       id
@@ -260,7 +306,7 @@ export const GET_SHOPPER_WALLET = gql`
 `;
 
 // Wallet Transactions queries
-export const GET_ALL_WALLET_TRANSACTIONS = gql`
+export const GET_ALL_WALLET_TRANSACTIONS = `
   query getAllWallettTtransactions {
     Wallet_Transactions {
       wallet_id
@@ -302,7 +348,7 @@ export const GET_ALL_WALLET_TRANSACTIONS = gql`
 `;
 
 // Refunds queries
-export const GET_ALL_REFUNDS = gql`
+export const GET_ALL_REFUNDS = `
   query getAllREfunds {
     Refunds {
       created_at
@@ -319,7 +365,7 @@ export const GET_ALL_REFUNDS = gql`
   }
 `;
 
-export const GET_USER_BY_ID = gql`
+export const GET_USER_BY_ID = `
   query GetUserById($id: Int!) {
     users_by_pk(id: $id) {
       id

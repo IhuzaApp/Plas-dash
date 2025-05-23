@@ -1,4 +1,3 @@
-
 import React from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -29,7 +28,7 @@ const Shoppers = () => {
       <PageHeader 
         title="Shoppers" 
         description="Manage your delivery personnel and track their performance."
-        action={<Button>Add New Shopper</Button>}
+        actions={<Button>Add New Shopper</Button>}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

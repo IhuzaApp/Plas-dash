@@ -296,7 +296,7 @@ const Inventory = () => {
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={undefined}>All Categories</SelectItem>
+                  <SelectItem value="">All Categories</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
@@ -308,7 +308,7 @@ const Inventory = () => {
                   <SelectValue placeholder="Stock Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={undefined}>All Status</SelectItem>
+                  <SelectItem value="">All Status</SelectItem>
                   <SelectItem value="in-stock">In Stock</SelectItem>
                   <SelectItem value="low-stock">Low Stock</SelectItem>
                   <SelectItem value="out-of-stock">Out of Stock</SelectItem>

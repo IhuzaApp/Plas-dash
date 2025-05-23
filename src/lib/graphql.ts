@@ -1,36 +1,15 @@
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
-import config from './config';
+import { QueryClient } from '@tanstack/react-query';
 
-// Create an HTTP link to the Hasura GraphQL endpoint
-const httpLink = createHttpLink({
-  uri: config.hasuraGraphqlUrl,
-});
-
-// Set up the authentication link to include the auth token in requests
-const authLink = setContext((_, { headers }) => {
-  // Get the authentication token from local storage if it exists
-  const token = localStorage.getItem('authToken');
-  
-  // Return the headers to the context so httpLink can read them
-  return {
-    headers: {
-      ...headers,
-      authorization: token ? `Bearer ${token}` : '',
-      'x-hasura-admin-secret': config.hasuraAdminSecret,
-    }
-  };
-});
-
-// Create the Apollo Client instance
-const client = new ApolloClient({
-  link: authLink.concat(httpLink),
-  cache: new InMemoryCache(),
+// Create a client
+export const queryClient = new QueryClient({
   defaultOptions: {
-    watchQuery: {
-      fetchPolicy: 'cache-and-network',
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
     },
   },
 });
 
-export default client; 
+// Export the Hasura endpoint and admin secret for use in hooks
+export const HASURA_ENDPOINT = process.env.HASURA_GRAPHQL_URL || '';
+export const HASURA_ADMIN_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET || ''; 

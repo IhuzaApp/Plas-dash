@@ -1,4 +1,3 @@
-
 import React from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -84,7 +83,7 @@ const Promotions = () => {
       <PageHeader 
         title="Promotions" 
         description="Manage discounts, offers and promotional campaigns."
-        action={
+        actions={
           <Button className="gap-2">
             <Plus className="h-4 w-4" /> Create Promotion
           </Button>

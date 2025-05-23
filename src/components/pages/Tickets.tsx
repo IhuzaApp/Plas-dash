@@ -1,4 +1,3 @@
-
 import React from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -29,7 +28,7 @@ const Tickets = () => {
       <PageHeader 
         title="Support Tickets" 
         description="Manage customer support requests and inquiries."
-        action={<Button>Create New Ticket</Button>}
+        actions={<Button>Create New Ticket</Button>}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
