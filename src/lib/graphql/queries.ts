@@ -388,4 +388,33 @@ export const GET_SHOP_BY_ID = `
       }
     }
   }
+`;
+
+// Shoppers queries
+export const GET_SHOPPERS = `
+  query GetShoppers {
+    shoppers {
+      Employment_id
+      address
+      background_check_completed
+      created_at
+      driving_license
+      full_name
+      id
+      national_id
+      onboarding_step
+      phone_number
+      profile_photo
+      status
+      transport_mode
+      updated_at
+      user_id
+      active
+      User {
+        id
+        email
+        is_active
+      }
+    }
+  }
 `; 

@@ -13,7 +13,8 @@ import {
   GET_ALL_WALLET_TRANSACTIONS,
   GET_ALL_REFUNDS,
   GET_CATEGORIES,
-  GET_SHOP_BY_ID
+  GET_SHOP_BY_ID,
+  GET_SHOPPERS
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -79,6 +80,30 @@ interface ShopDetails extends Shop {
   created_at: string;
   updated_at: string;
   Products: ShopProduct[];
+}
+
+interface Shopper {
+  Employment_id: string;
+  address: string;
+  background_check_completed: boolean;
+  created_at: string;
+  driving_license: string | null;
+  full_name: string;
+  id: string;
+  national_id: string;
+  onboarding_step: string;
+  phone_number: string;
+  profile_photo: string | null;
+  status: string;
+  transport_mode: string;
+  updated_at: string;
+  user_id: string;
+  active: boolean;
+  User: {
+    id: string;
+    email: string;
+    is_active: boolean;
+  };
 }
 
 // Type-safe hook for Users
@@ -293,5 +318,13 @@ export function useShopById(id: string) {
     queryKey: ['shop', id],
     queryFn: () => hasuraRequest(GET_SHOP_BY_ID, { id }),
     enabled: !!id
+  });
+}
+
+// Type-safe hook for Shoppers
+export function useShoppers() {
+  return useQuery<{ shoppers: Shopper[] }, Error>({
+    queryKey: ['shoppers'],
+    queryFn: () => hasuraRequest(GET_SHOPPERS, {})
   });
 } 
