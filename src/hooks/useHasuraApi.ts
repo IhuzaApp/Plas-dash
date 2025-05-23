@@ -106,6 +106,43 @@ interface Shopper {
   };
 }
 
+interface OrderType {
+  id: string;
+  user_id: string;
+  shopper_id: string;
+  total: string;
+  status: string;
+  delivery_address_id: string;
+  delivery_photo_url: string;
+  delivery_notes: string;
+  created_at: string;
+  updated_at: string;
+  delivery_time: string | null;
+  combined_order_id: string | null;
+  OrderID: string;
+  shop_id: string;
+  delivery_fee: string;
+  service_fee: string;
+  discount: string;
+  voucher_code: string | null;
+  User: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  Order_Items: Array<{
+    id: string;
+    product_id: string;
+    quantity: number;
+    price: string;
+  }>;
+  Address: {
+    street: string;
+    city: string;
+    postal_code: string;
+  };
+}
+
 // Type-safe hook for Users
 export function useUsers() {
   return useQuery<{ Users: User[] }, Error>({
@@ -134,7 +171,7 @@ export function useShops() {
 
 // Type-safe hook for Orders
 export function useOrders() {
-  return useQuery<{ Orders: Order[] }, Error>({
+  return useQuery<{ Orders: OrderType[] }, Error>({
     queryKey: ['orders'],
     queryFn: () => hasuraRequest(GET_ORDERS, {})
   });

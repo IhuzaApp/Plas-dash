@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -12,9 +12,10 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, Loader2 } from "lucide-react";
 import { useShops } from "@/hooks/useHasuraApi";
+import Pagination from "@/components/ui/pagination";
 
 interface Shop {
   id: string;
@@ -39,6 +40,23 @@ interface Shop {
 
 const Shops = () => {
   const { data, isLoading, isError, error } = useShops();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Filter shops based on search term
+  const filteredShops = data?.Shops.filter(shop => 
+    searchTerm === "" || 
+    shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shop.category?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  // Calculate pagination
+  const totalItems = filteredShops.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentShops = filteredShops.slice(startIndex, endIndex);
   
   return (
     <AdminLayout>
@@ -52,7 +70,15 @@ const Shops = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search shops..." className="pl-8" />
+            <Input 
+              placeholder="Search shops..." 
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
+            />
           </div>
           <Button variant="outline" className="flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filter
@@ -91,14 +117,14 @@ const Shops = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : !data?.Shops?.length ? (
+              ) : currentShops.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     No shops found.
                   </TableCell>
                 </TableRow>
               ) : (
-                data.Shops.map((shop) => (
+                currentShops.map((shop) => (
                   <TableRow key={shop.id}>
                     <TableCell className="font-medium">{shop.name}</TableCell>
                     <TableCell>
@@ -123,6 +149,19 @@ const Shops = () => {
               )}
             </TableBody>
           </Table>
+          {!isLoading && !isError && currentShops.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1); // Reset to first page when changing page size
+              }}
+              totalItems={totalItems}
+            />
+          )}
         </Card>
       </div>
     </AdminLayout>

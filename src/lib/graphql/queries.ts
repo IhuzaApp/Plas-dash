@@ -120,42 +120,28 @@ export const GET_ORDERS = `
       updated_at
       delivery_time
       combined_order_id
-      Address {
-        city
-        created_at
-        id
-        is_default
-        latitude
-        longitude
-        postal_code
-        street
-        updated_at
-        user_id
-      }
-      Delivery_Issues {
-        created_at
-        description
-        id
-        issue_type
-        order_id
-        shopper_id
-        status
-        updated_at
-      }
-      Order_Items {
-        created_at
-        id
-        order_id
-        price
-        product_id
-        quantity
-      }
+      OrderID
+      shop_id
       delivery_fee
       service_fee
       discount
       voucher_code
-      OrderID
-      shop_id
+      User {
+        id
+        name
+        email
+      }
+      Order_Items {
+        id
+        product_id
+        quantity
+        price
+      }
+      Address {
+        street
+        city
+        postal_code
+      }
     }
   }
 `;
