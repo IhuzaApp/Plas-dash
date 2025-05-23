@@ -67,70 +67,39 @@ export const GET_PRODUCTS = `
   }
 `;
 
+// Categories queries
+export const GET_CATEGORIES = `
+  query GetCategories {
+    Categories {
+      id
+      name
+      is_active
+    }
+  }
+`;
+
 // Shops queries
 export const GET_SHOPS = `
   query GetShops {
     Shops {
       id
       name
-      description
-      category {
+      category_id
+      category: Category {
         id
         name
-        description
-        image
-        is_active
-        created_at
       }
-      image
-      address
-      latitude
-      longitude
-      operating_hours
-      created_at
-      updated_at
-      is_active
-      Products {
-        id
-        name
-        description
-        image
-        is_active
-        measurement_unit
-        price
-        quantity
-        shop_id
-        updated_at
-        created_at
-        category {
-          id
-          name
-          description
-          image
-          is_active
+      Products_aggregate {
+        aggregate {
+          count
         }
       }
-      Orders {
-        OrderID
-        id
-        found
-        discount
-        delivery_time
-        delivery_notes
-        delivery_fee
-        delivery_address_id
-        created_at
-        combined_order_id
-        delivery_photo_url
-        updated_at
-        total
-        status
-        shopper_id
-        shop_id
-        service_fee
-        voucher_code
-        user_id
+      Orders_aggregate {
+        aggregate {
+          count
+        }
       }
+      is_active
     }
   }
 `;

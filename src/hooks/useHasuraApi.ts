@@ -11,7 +11,8 @@ import {
   GET_ALL_WALLETS,
   GET_SHOPPER_WALLET,
   GET_ALL_WALLET_TRANSACTIONS,
-  GET_ALL_REFUNDS
+  GET_ALL_REFUNDS,
+  GET_CATEGORIES
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -25,7 +26,34 @@ import {
 } from '../lib/graphql/mutations';
 
 // Import types
-import type { User, Product, Shop, Order, Cart, Address, Invoice, Wallet, WalletTransaction, Refund } from './useGraphql';
+import type { User, Product, Order, Cart, Address, Invoice, Wallet, WalletTransaction, Refund } from './useGraphql';
+
+interface Category {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
+
+interface Shop {
+  id: string;
+  name: string;
+  category_id: string;
+  category: {
+    id: string;
+    name: string;
+  } | null;
+  Products_aggregate: {
+    aggregate: {
+      count: number;
+    };
+  };
+  Orders_aggregate: {
+    aggregate: {
+      count: number;
+    };
+  };
+  is_active: boolean;
+}
 
 // Type-safe hook for Users
 export function useUsers() {
@@ -47,7 +75,9 @@ export function useProducts() {
 export function useShops() {
   return useQuery<{ Shops: Shop[] }, Error>({
     queryKey: ['shops'],
-    queryFn: () => hasuraRequest(GET_SHOPS, {})
+    queryFn: () => hasuraRequest(GET_SHOPS, {}),
+    retry: 2,
+    retryDelay: 1000
   });
 }
 
@@ -220,5 +250,13 @@ export function useRegisterShopper() {
     }
   >({
     mutationFn: (variables) => hasuraRequest(REGISTER_SHOPPER, variables)
+  });
+}
+
+// Type-safe hook for Categories
+export function useCategories() {
+  return useQuery<{ Categories: Category[] }, Error>({
+    queryKey: ['categories'],
+    queryFn: () => hasuraRequest(GET_CATEGORIES, {})
   });
 } 

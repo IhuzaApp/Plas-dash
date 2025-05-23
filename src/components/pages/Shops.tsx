@@ -19,15 +19,26 @@ import { useShops } from "@/hooks/useHasuraApi";
 interface Shop {
   id: string;
   name: string;
+  category_id: string;
   category: {
     id: string;
     name: string;
   } | null;
+  Products_aggregate: {
+    aggregate: {
+      count: number;
+    };
+  };
+  Orders_aggregate: {
+    aggregate: {
+      count: number;
+    };
+  };
   is_active: boolean;
 }
 
 const Shops = () => {
-  const { data, isLoading, isError } = useShops();
+  const { data, isLoading, isError, error } = useShops();
   
   return (
     <AdminLayout>
@@ -56,7 +67,6 @@ const Shops = () => {
                 <TableHead>Category</TableHead>
                 <TableHead>Products</TableHead>
                 <TableHead>Orders</TableHead>
-                <TableHead>Rating</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -64,19 +74,26 @@ const Shops = () => {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-red-500">
-                    Error loading shops. Please try again.
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    <div className="text-red-500">
+                      Error loading shops. Please try again.
+                      {error && (
+                        <div className="text-sm mt-2">
+                          Error details: {error.message}
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : !data?.Shops?.length ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     No shops found.
                   </TableCell>
                 </TableRow>
@@ -87,9 +104,8 @@ const Shops = () => {
                     <TableCell>
                       {shop.category?.name || 'Uncategorized'}
                     </TableCell>
-                    <TableCell>0</TableCell>
-                    <TableCell>0</TableCell>
-                    <TableCell>⭐ 0</TableCell>
+                    <TableCell>{shop.Products_aggregate.aggregate.count}</TableCell>
+                    <TableCell>{shop.Orders_aggregate.aggregate.count}</TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         shop.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
