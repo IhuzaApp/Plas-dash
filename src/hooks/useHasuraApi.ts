@@ -12,7 +12,8 @@ import {
   GET_SHOPPER_WALLET,
   GET_ALL_WALLET_TRANSACTIONS,
   GET_ALL_REFUNDS,
-  GET_CATEGORIES
+  GET_CATEGORIES,
+  GET_SHOP_BY_ID
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -53,6 +54,31 @@ interface Shop {
     };
   };
   is_active: boolean;
+}
+
+interface ShopProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  quantity: number;
+  measurement_unit: string;
+  image: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ShopDetails extends Shop {
+  description: string;
+  address: string;
+  operating_hours: string;
+  latitude: number;
+  longitude: number;
+  image: string;
+  created_at: string;
+  updated_at: string;
+  Products: ShopProduct[];
 }
 
 // Type-safe hook for Users
@@ -258,5 +284,14 @@ export function useCategories() {
   return useQuery<{ Categories: Category[] }, Error>({
     queryKey: ['categories'],
     queryFn: () => hasuraRequest(GET_CATEGORIES, {})
+  });
+}
+
+// Type-safe hook for Shop details
+export function useShopById(id: string) {
+  return useQuery<{ Shops_by_pk: ShopDetails }, Error>({
+    queryKey: ['shop', id],
+    queryFn: () => hasuraRequest(GET_SHOP_BY_ID, { id }),
+    enabled: !!id
   });
 } 

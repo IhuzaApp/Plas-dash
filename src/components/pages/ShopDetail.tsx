@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Plus, FileUp } from "lucide-react";
+import { Search, Filter, Plus, FileUp, Loader2 } from "lucide-react";
 import { 
   Table, 
   TableBody, 
@@ -17,8 +17,19 @@ import {
 } from "@/components/ui/table";
 import AddProductDialog from "@/components/shop/AddProductDialog";
 import ImportProductsDialog from "@/components/shop/ImportProductsDialog";
+import { useShopById } from "@/hooks/useHasuraApi";
 import { toast } from "sonner";
 import * as z from "zod";
+
+interface OperatingHours {
+  monday: string;
+  tuesday: string;
+  wednesday: string;
+  thursday: string;
+  friday: string;
+  saturday: string;
+  sunday: string;
+}
 
 const productFormSchema = z.object({
   name: z.string(),
@@ -35,37 +46,30 @@ const productFormSchema = z.object({
 
 type ProductFormData = z.infer<typeof productFormSchema>;
 
+const formatOperatingHours = (hours: OperatingHours | string | null) => {
+  if (!hours) return 'Not specified';
+  if (typeof hours === 'string') return hours;
+
+  return (
+    <div className="space-y-1">
+      {Object.entries(hours).map(([day, time]) => (
+        <div key={day} className="grid grid-cols-2 gap-2">
+          <span className="capitalize">{day}:</span>
+          <span>{time || 'Closed'}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const ShopDetail = () => {
   const params = useParams();
   const id = params?.id?.toString() || "";
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
 
-  // Mock shop data - in a real app, you would fetch this from an API
-  const shopData = {
-    id: Number(id),
-    name: id === "1" ? "Fresh Groceries" : id === "2" ? "Quick Mart" : id === "3" ? "Healthy Options" : id === "4" ? "City Pharmacy" : "Pet Supplies Co.",
-    category: id === "1" ? "Grocery" : id === "2" ? "Convenience" : id === "3" ? "Health Food" : id === "4" ? "Pharmacy" : "Pet Store",
-    description: "A premium shop offering high quality products to customers across the city.",
-    address: "123 Market Street, Downtown",
-    phone: "+1 (555) 123-4567",
-    email: "contact@example.com",
-    website: "www.example.com",
-    openingHours: "9:00 AM - 9:00 PM",
-    rating: 4.8,
-    products: 156,
-    orders: 532,
-    status: "Active",
-  };
-
-  // Mock product data
-  const products = [
-    { id: 1, name: "Organic Apples", category: "Fruits", price: "$3.99", stock: 120, status: "In Stock" },
-    { id: 2, name: "Whole Grain Bread", category: "Bakery", price: "$4.50", stock: 45, status: "In Stock" },
-    { id: 3, name: "Free Range Eggs", category: "Dairy", price: "$5.99", stock: 60, status: "In Stock" },
-    { id: 4, name: "Almond Milk", category: "Dairy", price: "$3.99", stock: 35, status: "In Stock" },
-    { id: 5, name: "Organic Spinach", category: "Vegetables", price: "$2.99", stock: 80, status: "In Stock" },
-  ];
+  const { data, isLoading, isError, error } = useShopById(id);
+  const shop = data?.Shops_by_pk;
 
   const handleAddProduct = (formData: ProductFormData) => {
     console.log("Adding product:", formData);
@@ -79,11 +83,42 @@ const ShopDetail = () => {
     setIsImportOpen(false);
   };
 
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)]">
+          <p className="text-red-500">Error loading shop details.</p>
+          {error && <p className="text-sm mt-2">{error.message}</p>}
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!shop) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+          <p className="text-muted-foreground">Shop not found.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <PageHeader 
-        title={shopData.name} 
-        description={`View and manage details for ${shopData.name}`}
+        title={shop.name} 
+        description={`View and manage details for ${shop.name}`}
         actions={
           <div className="flex gap-2">
             <Button onClick={() => setIsAddProductOpen(true)} className="flex items-center gap-2">
@@ -115,29 +150,25 @@ const ShopDetail = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Category:</p>
-                      <p>{shopData.category}</p>
+                      <p>{shop.category?.name || 'Uncategorized'}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Status:</p>
                       <p>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          shopData.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                          shop.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
                         }`}>
-                          {shopData.status}
+                          {shop.is_active ? "Active" : "Inactive"}
                         </span>
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Rating:</p>
-                      <p>⭐ {shopData.rating}</p>
-                    </div>
-                    <div>
                       <p className="text-sm font-medium text-muted-foreground">Products:</p>
-                      <p>{shopData.products}</p>
+                      <p>{shop.Products_aggregate.aggregate.count}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Orders:</p>
-                      <p>{shopData.orders}</p>
+                      <p>{shop.Orders_aggregate.aggregate.count}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -147,39 +178,35 @@ const ShopDetail = () => {
                 <CardHeader>
                   <CardTitle>Contact Information</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-4">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Address:</p>
-                    <p>{shopData.address}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Phone:</p>
-                    <p>{shopData.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Email:</p>
-                    <p>{shopData.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Website:</p>
-                    <p>{shopData.website}</p>
+                    <p>{shop.address || 'Not specified'}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Opening Hours:</p>
-                    <p>{shopData.openingHours}</p>
+                    {formatOperatingHours(shop.operating_hours)}
                   </div>
+                  {shop.latitude && shop.longitude && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Location:</p>
+                      <p>{shop.latitude}, {shop.longitude}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>About the Shop</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>{shopData.description}</p>
-              </CardContent>
-            </Card>
+            {shop.description && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>About the Shop</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>{shop.description}</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
           
           <TabsContent value="products" className="space-y-4 pt-4">
@@ -198,34 +225,40 @@ const ShopDetail = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product Name</TableHead>
-                    <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Stock</TableHead>
+                    <TableHead>Unit</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>{product.price}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          product.status === "In Stock" ? "bg-green-100 text-green-800" : 
-                          product.status === "Low Stock" ? "bg-yellow-100 text-yellow-800" : 
-                          "bg-red-100 text-red-800"
-                        }`}>
-                          {product.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">Edit</Button>
+                  {shop.Products.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        No products found.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    shop.Products.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{product.price}</TableCell>
+                        <TableCell>{product.quantity}</TableCell>
+                        <TableCell>{product.measurement_unit}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            product.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {product.is_active ? "Active" : "Inactive"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">View Details</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </Card>
@@ -233,20 +266,16 @@ const ShopDetail = () => {
           
           <TabsContent value="orders" className="pt-4">
             <Card>
-              <CardContent className="py-8">
-                <div className="flex flex-col items-center justify-center">
-                  <p className="text-muted-foreground">Orders details will be displayed here</p>
-                </div>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">Orders feature coming soon.</p>
               </CardContent>
             </Card>
           </TabsContent>
           
           <TabsContent value="analytics" className="pt-4">
             <Card>
-              <CardContent className="py-8">
-                <div className="flex flex-col items-center justify-center">
-                  <p className="text-muted-foreground">Shop analytics will be displayed here</p>
-                </div>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">Analytics feature coming soon.</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -258,7 +287,7 @@ const ShopDetail = () => {
         onOpenChange={setIsAddProductOpen}
         onSubmit={handleAddProduct}
       />
-
+      
       <ImportProductsDialog
         open={isImportOpen}
         onOpenChange={setIsImportOpen}

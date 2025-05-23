@@ -342,4 +342,50 @@ export const GET_USER_BY_ID = `
       email
     }
   }
+`;
+
+// Shop details query
+export const GET_SHOP_BY_ID = `
+  query GetShopById($id: uuid!) {
+    Shops_by_pk(id: $id) {
+      id
+      name
+      description
+      address
+      operating_hours
+      latitude
+      longitude
+      image
+      is_active
+      created_at
+      updated_at
+      category_id
+      category: Category {
+        id
+        name
+      }
+      Products {
+        id
+        name
+        description
+        price
+        quantity
+        measurement_unit
+        image
+        is_active
+        created_at
+        updated_at
+      }
+      Products_aggregate {
+        aggregate {
+          count
+        }
+      }
+      Orders_aggregate {
+        aggregate {
+          count
+        }
+      }
+    }
+  }
 `; 
