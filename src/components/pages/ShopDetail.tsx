@@ -20,6 +20,7 @@ import ImportProductsDialog from "@/components/shop/ImportProductsDialog";
 import { useShopById } from "@/hooks/useHasuraApi";
 import { toast } from "sonner";
 import * as z from "zod";
+import Pagination from "@/components/ui/pagination";
 
 interface OperatingHours {
   monday: string;
@@ -67,6 +68,9 @@ const ShopDetail = () => {
   const id = params?.id?.toString() || "";
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const { data, isLoading, isError, error } = useShopById(id);
   const shop = data?.Shops_by_pk;
@@ -82,6 +86,20 @@ const ShopDetail = () => {
     toast.success("Products imported successfully");
     setIsImportOpen(false);
   };
+
+  // Filter products based on search term
+  const filteredProducts = shop?.Products.filter(product => 
+    searchTerm === "" || 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.measurement_unit?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  // Calculate pagination
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
   if (isLoading) {
     return (
@@ -198,14 +216,14 @@ const ShopDetail = () => {
             </div>
             
             {shop.description && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>About the Shop</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <Card>
+              <CardHeader>
+                <CardTitle>About the Shop</CardTitle>
+              </CardHeader>
+              <CardContent>
                   <p>{shop.description}</p>
-                </CardContent>
-              </Card>
+              </CardContent>
+            </Card>
             )}
           </TabsContent>
           
@@ -213,7 +231,15 @@ const ShopDetail = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search products..." className="pl-8" />
+                <Input 
+                  placeholder="Search products..." 
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1); // Reset to first page on search
+                  }}
+                />
               </div>
               <Button variant="outline" className="flex items-center gap-2">
                 <Filter className="h-4 w-4" /> Filter
@@ -233,34 +259,45 @@ const ShopDetail = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {shop.Products.length === 0 ? (
+                  {currentProducts.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                         No products found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    shop.Products.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{product.price}</TableCell>
-                        <TableCell>{product.quantity}</TableCell>
-                        <TableCell>{product.measurement_unit}</TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    currentProducts.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell>{product.price}</TableCell>
+                      <TableCell>{product.quantity}</TableCell>
+                      <TableCell>{product.measurement_unit}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             product.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                          }`}>
+                        }`}>
                             {product.is_active ? "Active" : "Inactive"}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
                           <Button variant="ghost" size="sm">View Details</Button>
-                        </TableCell>
-                      </TableRow>
+                      </TableCell>
+                    </TableRow>
                     ))
                   )}
                 </TableBody>
               </Table>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1); // Reset to first page when changing page size
+                }}
+                totalItems={totalItems}
+              />
             </Card>
           </TabsContent>
           
@@ -287,7 +324,7 @@ const ShopDetail = () => {
         onOpenChange={setIsAddProductOpen}
         onSubmit={handleAddProduct}
       />
-      
+
       <ImportProductsDialog
         open={isImportOpen}
         onOpenChange={setIsImportOpen}

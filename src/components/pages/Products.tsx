@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -12,21 +11,35 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
-import { Search, Filter, ScanBarcode } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Search, Filter, ScanBarcode, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useProducts } from "@/hooks/useHasuraApi";
+import { format } from "date-fns";
+import Pagination from "@/components/ui/pagination";
 
 const Products = () => {
-  const [products, setProducts] = useState([
-    { id: 1, name: "Organic Apples", shop: "Fresh Groceries", category: "Fruits", price: "$3.99", stock: 120, status: "In Stock" },
-    { id: 2, name: "Whole Grain Bread", shop: "Healthy Options", category: "Bakery", price: "$4.50", stock: 45, status: "In Stock" },
-    { id: 3, name: "Free Range Eggs", shop: "Fresh Groceries", category: "Dairy", price: "$5.99", stock: 60, status: "In Stock" },
-    { id: 4, name: "Vitamin C Tablets", shop: "City Pharmacy", category: "Supplements", price: "$12.99", stock: 8, status: "Low Stock" },
-    { id: 5, name: "Dog Food Premium", shop: "Pet Supplies Co.", category: "Pet Food", price: "$24.99", stock: 0, status: "Out of Stock" },
-  ]);
+  const { data, isLoading, isError, error } = useProducts();
+  const products = data?.Products || [];
   
   const [isScanning, setIsScanning] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const formatCurrency = (amount: string) => {
+    const num = parseFloat(amount);
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(num);
+  };
+
+  const getStockStatus = (quantity: number) => {
+    if (quantity <= 0) return { label: "Out of Stock", class: "bg-red-100 text-red-800" };
+    if (quantity <= 10) return { label: "Low Stock", class: "bg-yellow-100 text-yellow-800" };
+    return { label: "In Stock", class: "bg-green-100 text-green-800" };
+  };
 
   const startScanning = () => {
     setIsScanning(true);
@@ -41,6 +54,46 @@ const Products = () => {
     }, 1500);
   };
 
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)]">
+          <p className="text-red-500">Error loading products.</p>
+          {error && <p className="text-sm mt-2">{error.message}</p>}
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const activeProducts = products.filter(p => p.is_active);
+  const lowStockProducts = products.filter(p => p.quantity <= 10 && p.quantity > 0);
+  const outOfStockProducts = products.filter(p => p.quantity <= 0);
+
+  // Filter products based on search term
+  const filteredProducts = products.filter(product => 
+    searchTerm === "" || 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.Shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toString().toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Calculate pagination
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
   return (
     <AdminLayout>
       <PageHeader 
@@ -48,6 +101,33 @@ const Products = () => {
         description="Manage products across all shops."
         actions={<Button>Add New Product</Button>}
       />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{products.length}</div>
+            <p className="text-muted-foreground">Total Products</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{activeProducts.length}</div>
+            <p className="text-muted-foreground">Active Products</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{lowStockProducts.length}</div>
+            <p className="text-muted-foreground">Low Stock</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{outOfStockProducts.length}</div>
+            <p className="text-muted-foreground">Out of Stock</p>
+          </CardContent>
+        </Card>
+      </div>
       
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -57,7 +137,10 @@ const Products = () => {
               placeholder="Search products..." 
               className="pl-8" 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
             />
           </div>
           <Button 
@@ -94,29 +177,47 @@ const Products = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.shop}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell>{product.price}</TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      product.status === "In Stock" ? "bg-green-100 text-green-800" :
-                      product.status === "Low Stock" ? "bg-yellow-100 text-yellow-800" :
-                      "bg-red-100 text-red-800"
-                    }`}>
-                      {product.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">Edit</Button>
+              {currentProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                    No products found.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                currentProducts.map((product) => {
+                  const stockStatus = getStockStatus(product.quantity);
+                  return (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell>{product.Shop?.name || 'N/A'}</TableCell>
+                      <TableCell>{typeof product.category === 'string' ? product.category : product.category.name}</TableCell>
+                      <TableCell>{formatCurrency(product.price)}</TableCell>
+                      <TableCell>{product.quantity} {product.measurement_unit}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.class}`}>
+                          {stockStatus.label}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">Edit</Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1); // Reset to first page when changing page size
+            }}
+            totalItems={totalItems}
+          />
         </Card>
       </div>
     </AdminLayout>

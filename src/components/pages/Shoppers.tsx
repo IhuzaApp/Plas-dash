@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -16,10 +16,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useShoppers } from "@/hooks/useHasuraApi";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Pagination from "@/components/ui/pagination";
 
 const Shoppers = () => {
   const { data, isLoading, isError, error } = useShoppers();
   const shoppers = data?.shoppers || [];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const getInitials = (name: string) => {
     return name
@@ -32,6 +36,22 @@ const Shoppers = () => {
   const activeShoppers = shoppers.filter(s => s.active && s.status === "approved");
   const pendingShoppers = shoppers.filter(s => s.status === "pending");
   const backgroundCheckedShoppers = shoppers.filter(s => s.background_check_completed);
+
+  // Filter shoppers based on search term
+  const filteredShoppers = shoppers.filter(shopper => 
+    searchTerm === "" || 
+    shopper.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shopper.phone_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shopper.Employment_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    shopper.transport_mode.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Calculate pagination
+  const totalItems = filteredShoppers.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentShoppers = filteredShoppers.slice(startIndex, endIndex);
 
   if (isLoading) {
     return (
@@ -93,7 +113,15 @@ const Shoppers = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search shoppers..." className="pl-8" />
+            <Input 
+              placeholder="Search shoppers..." 
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
+            />
           </div>
           <Button variant="outline" className="flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filter
@@ -114,15 +142,15 @@ const Shoppers = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {shoppers.length === 0 ? (
+              {currentShoppers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                     No shoppers found.
                   </TableCell>
                 </TableRow>
               ) : (
-                shoppers.map((shopper) => (
-                  <TableRow key={shopper.id}>
+                currentShoppers.map((shopper) => (
+                <TableRow key={shopper.id}>
                     <TableCell className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={shopper.profile_photo || undefined} />
@@ -149,26 +177,37 @@ const Shoppers = () => {
                         }
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  <TableCell>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         shopper.background_check_completed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                      }`}>
+                    }`}>
                         {shopper.background_check_completed ? "Completed" : "Pending"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
+                    </span>
+                  </TableCell>
+                  <TableCell>
                       <span className="capitalize">{shopper.onboarding_step}</span>
-                    </TableCell>
-                    <TableCell className="text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                       <Link href={`/shoppers/${shopper.id}`}>
                         <Button variant="ghost" size="sm">View Profile</Button>
                       </Link>
-                    </TableCell>
-                  </TableRow>
+                  </TableCell>
+                </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1); // Reset to first page when changing page size
+            }}
+            totalItems={totalItems}
+          />
         </Card>
       </div>
     </AdminLayout>

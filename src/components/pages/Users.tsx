@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,14 @@ import { Search, Filter, Loader2 } from "lucide-react";
 import { useUsers } from "@/hooks/useHasuraApi";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import Pagination from "@/components/ui/pagination";
 
 const Users = () => {
   const { data, isLoading, isError, error } = useUsers();
   const users = data?.Users || [];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const getInitials = (name: string) => {
     return name
@@ -32,6 +36,22 @@ const Users = () => {
   const activeUsers = users.filter(user => user.is_active);
   const adminUsers = users.filter(user => user.role === 'admin');
   const customerUsers = users.filter(user => user.role === 'customer');
+
+  // Filter users based on search term
+  const filteredUsers = users.filter(user => 
+    searchTerm === "" || 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Calculate pagination
+  const totalItems = filteredUsers.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
   if (isLoading) {
     return (
@@ -93,13 +113,21 @@ const Users = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search users..." className="pl-8" />
+            <Input 
+              placeholder="Search users..." 
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
+            />
           </div>
           <Button variant="outline" className="flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
-        
+    
         <Card>
           <Table>
             <TableHeader>
@@ -113,15 +141,15 @@ const Users = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.length === 0 ? (
+              {currentUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     No users found.
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user) => (
-                  <TableRow key={user.id}>
+                currentUsers.map((user) => (
+                <TableRow key={user.id}>
                     <TableCell className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={user.profile_picture || undefined} />
@@ -135,25 +163,36 @@ const Users = () => {
                     <TableCell>
                       <span className="capitalize">{user.role}</span>
                     </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  <TableCell>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         user.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                      }`}>
+                    }`}>
                         {user.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </TableCell>
+                    </span>
+                  </TableCell>
                     <TableCell>{user.phone}</TableCell>
                     <TableCell>
                       {format(new Date(user.created_at), 'MMM d, yyyy')}
                     </TableCell>
-                    <TableCell className="text-right">
+                  <TableCell className="text-right">
                       <Button variant="ghost" size="sm">View Profile</Button>
-                    </TableCell>
-                  </TableRow>
+                  </TableCell>
+                </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1); // Reset to first page when changing page size
+            }}
+            totalItems={totalItems}
+          />
         </Card>
       </div>
     </AdminLayout>
