@@ -36,8 +36,8 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <TooltipProvider>
-              {children}
-              <Toaster />
+            {children}
+            <Toaster />
               <Sonner />
             </TooltipProvider>
           </ThemeProvider>
