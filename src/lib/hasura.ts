@@ -1,4 +1,4 @@
-import { HASURA_ENDPOINT, HASURA_ADMIN_SECRET } from './graphql';
+import { HASURA_GRAPHQL_URL, HASURA_GRAPHQL_ADMIN_SECRET } from './graphql';
 
 interface HasuraConfig {
   url: string;
@@ -6,8 +6,8 @@ interface HasuraConfig {
 }
 
 const hasuraConfig: HasuraConfig = {
-  url: HASURA_ENDPOINT,
-  adminSecret: HASURA_ADMIN_SECRET,
+  url: HASURA_GRAPHQL_URL,
+  adminSecret: HASURA_GRAPHQL_ADMIN_SECRET,
 };
 
 export async function hasuraRequest<T>(query: string, variables = {}) {
