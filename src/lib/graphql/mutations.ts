@@ -196,4 +196,55 @@ export const REGISTER_SHOPPER = `
       onboarding_step
     }
   }
+`;
+
+// Product mutations
+export const ADD_PRODUCT = `
+  mutation AddProduct(
+    $name: String!
+    $description: String
+    $price: String!
+    $quantity: Int!
+    $measurement_unit: String!
+    $shop_id: uuid!
+    $category: String!
+    $barcode: String
+    $sku: String
+    $reorder_point: Int
+    $supplier: String
+    $is_active: Boolean = true
+  ) {
+    insert_Products_one(
+      object: {
+        name: $name
+        description: $description
+        price: $price
+        quantity: $quantity
+        measurement_unit: $measurement_unit
+        shop_id: $shop_id
+        category: $category
+        barcode: $barcode
+        sku: $sku
+        reorder_point: $reorder_point
+        supplier: $supplier
+        is_active: $is_active
+      }
+    ) {
+      id
+      name
+      description
+      price
+      quantity
+      measurement_unit
+      shop_id
+      category
+      barcode
+      sku
+      reorder_point
+      supplier
+      is_active
+      created_at
+      updated_at
+    }
+  }
 `; 

@@ -96,8 +96,8 @@ const Inventory = () => {
       (searchTerm === "" || 
        item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
        item.barcode.includes(searchTerm)) &&
-      (category === undefined || item.category === category) &&
-      (stockStatus === undefined || item.status === stockStatus)
+      (category === undefined || category === "all" || item.category === category) &&
+      (stockStatus === undefined || stockStatus === "all" || item.status === stockStatus)
     );
   });
   
@@ -296,7 +296,7 @@ const Inventory = () => {
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
@@ -308,7 +308,7 @@ const Inventory = () => {
                   <SelectValue placeholder="Stock Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="in-stock">In Stock</SelectItem>
                   <SelectItem value="low-stock">Low Stock</SelectItem>
                   <SelectItem value="out-of-stock">Out of Stock</SelectItem>

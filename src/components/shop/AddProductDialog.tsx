@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -25,82 +24,84 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScanBarcode, ScanQrCode } from "lucide-react";
 import { toast } from "sonner";
+import { useShops } from "@/hooks/useHasuraApi";
 
+// Match the API types exactly
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Product name must be at least 2 characters.",
-  }),
-  category: z.string({
-    required_error: "Please select a category.",
-  }),
-  price: z.string().regex(/^\d+(\.\d{1,2})?$/, {
-    message: "Please enter a valid price (e.g. 10.99)",
-  }),
-  stock: z.string().regex(/^\d+$/, {
-    message: "Stock must be a number.",
-  }),
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().optional(),
+  price: z.string().min(1, "Price is required"),
+  quantity: z.number().int().min(0, "Quantity must be a positive number"),
+  measurement_unit: z.string().min(1, "Measurement unit is required"),
+  category: z.string().min(1, "Category is required"),
+  is_active: z.boolean().default(true),
   barcode: z.string().optional(),
   sku: z.string().optional(),
-  unit: z.string().optional(),
-  reorderPoint: z.string().regex(/^\d*$/, {
-    message: "Reorder point must be a number.",
-  }).optional(),
   supplier: z.string().optional(),
-  description: z.string().optional(),
+  reorder_point: z.number().int().min(0).optional(),
+  shop_id: z.string().optional(),
 });
+
+type FormData = z.infer<typeof formSchema>;
 
 interface AddProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: z.infer<typeof formSchema>) => void;
+  onSubmit: (data: FormData) => void;
+  shopId?: string;
 }
 
 const AddProductDialog: React.FC<AddProductDialogProps> = ({
   open,
   onOpenChange,
-  onSubmit
+  onSubmit,
+  shopId
 }) => {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanType, setScanType] = useState<'barcode' | 'qrcode' | null>(null);
+  const { data: shopsData } = useShops();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      category: "",
-      price: "",
-      stock: "",
-      barcode: "",
-      sku: "",
-      unit: "item",
-      reorderPoint: "5",
-      supplier: "",
       description: "",
+      price: "",
+      quantity: 0,
+      measurement_unit: "item",
+      category: "",
+      is_active: true,
+      barcode: undefined,
+      sku: undefined,
+      supplier: undefined,
+      reorder_point: undefined,
+      shop_id: shopId,
     },
   });
 
-  function handleSubmit(values: z.infer<typeof formSchema>) {
-    onSubmit(values);
+  function handleSubmit(values: FormData) {
+    const formattedValues = {
+      ...values,
+      quantity: Math.max(0, Number(values.quantity) || 0),
+      reorder_point: typeof values.reorder_point === 'number' ? values.reorder_point : undefined,
+      shop_id: shopId || values.shop_id,
+    };
+    onSubmit(formattedValues);
   }
 
   const startScanning = (type: 'barcode' | 'qrcode') => {
     setScanType(type);
     setIsScanning(true);
     
-    // In a real application, this would activate the device camera
-    // For this demo, we'll simulate a scan after a short delay
     setTimeout(() => {
       const mockData = type === 'barcode' 
-        ? '5901234123457' // Mock barcode
-        : 'https://product-info.example.com/12345'; // Mock QR code data
+        ? '5901234123457'
+        : 'https://product-info.example.com/12345';
       
-      // Update the form with the scanned data
       if (type === 'barcode') {
         form.setValue('barcode', mockData);
         toast.success("Barcode scanned successfully!");
       } else {
-        // For QR, we might extract product information from the URL
-        // For demo, we'll just set the barcode field
         form.setValue('barcode', mockData);
         toast.success("QR code scanned successfully!");
       }
@@ -120,7 +121,33 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            {/* Basic Product Info */}
+            {!shopId && (
+              <FormField
+                control={form.control}
+                name="shop_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Shop*</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a shop" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {shopsData?.Shops.map((shop) => (
+                          <SelectItem key={shop.id} value={shop.id}>
+                            {shop.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -168,7 +195,6 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
               />
             </div>
 
-            {/* Product Identifiers */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -179,7 +205,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                     <div className="flex gap-2">
                       <FormControl>
                         <div className="relative flex-1">
-                          <Input placeholder="Enter barcode" {...field} />
+                          <Input placeholder="Enter barcode" {...field} value={field.value || ''} />
                         </div>
                       </FormControl>
                       <Button 
@@ -216,9 +242,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 name="sku"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SKU (Optional)</FormLabel>
+                    <FormLabel>SKU</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter SKU" {...field} />
+                      <Input placeholder="Enter SKU" {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -226,7 +252,6 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
               />
             </div>
 
-            {/* Pricing and Stock */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -236,8 +261,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                     <FormLabel>Price*</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-2.5">$</span>
-                        <Input placeholder="0.00" className="pl-6" {...field} />
+                        <span className="absolute left-3 top-2.5">RWF</span>
+                        <Input placeholder="0" className="pl-12" {...field} />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -247,12 +272,22 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
               <FormField
                 control={form.control}
-                name="stock"
-                render={({ field }) => (
+                name="quantity"
+                render={({ field: { onChange, value, ...field } }) => (
                   <FormItem>
-                    <FormLabel>Stock Quantity*</FormLabel>
+                    <FormLabel>Quantity*</FormLabel>
                     <FormControl>
-                      <Input type="number" min="0" {...field} />
+                      <Input 
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        {...field}
+                        value={value}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0);
+                          onChange(val);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -260,14 +295,13 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
               />
             </div>
 
-            {/* Additional Details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
-                name="unit"
+                name="measurement_unit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unit</FormLabel>
+                    <FormLabel>Measurement Unit*</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -292,12 +326,22 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
               <FormField
                 control={form.control}
-                name="reorderPoint"
-                render={({ field }) => (
+                name="reorder_point"
+                render={({ field: { onChange, value, ...field } }) => (
                   <FormItem>
                     <FormLabel>Reorder Point</FormLabel>
                     <FormControl>
-                      <Input type="number" min="0" {...field} />
+                      <Input 
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        {...field}
+                        value={value ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? undefined : Math.max(0, parseInt(e.target.value, 10));
+                          onChange(val);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -311,7 +355,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter supplier name" {...field} />
+                      <Input 
+                        placeholder="Enter supplier name" 
+                        {...field} 
+                        value={field.value || ''} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -327,7 +375,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Enter product description (optional)" 
+                      placeholder="Enter product description" 
                       className="resize-none" 
                       {...field} 
                     />

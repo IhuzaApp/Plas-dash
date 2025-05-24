@@ -403,4 +403,21 @@ export const GET_SHOPPERS = `
       }
     }
   }
+`;
+
+// System Configuration query
+export const GET_SYSTEM_CONFIG = `
+  query GetSystemConfig {
+    System_configuratioins {
+      baseDeliveryFee
+      currency
+      discounts
+      id
+      serviceFee
+      shoppingTime
+      unitsSurcharge
+      extraUnits
+      cappedDistanceFee
+    }
+  }
 `; 

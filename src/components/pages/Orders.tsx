@@ -184,24 +184,24 @@ const Orders = () => {
                 </TableRow>
               ) : (
                 currentOrders.map((order) => (
-                  <TableRow key={order.id}>
+                <TableRow key={order.id}>
                     <TableCell className="font-medium">#{order.OrderID}</TableCell>
                     <TableCell>
                       <div className="font-medium">{order.User?.name || 'N/A'}</div>
                       <div className="text-sm text-muted-foreground">{order.User?.email || 'N/A'}</div>
                     </TableCell>
-                    <TableCell>
+                  <TableCell>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                        {order.status}
-                      </span>
-                    </TableCell>
+                      {order.status}
+                    </span>
+                  </TableCell>
                     <TableCell>{order.Order_Items?.length || 0} items</TableCell>
                     <TableCell>{formatCurrency(order.total)}</TableCell>
                     <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy')}</TableCell>
-                    <TableCell className="text-right">
+                  <TableCell className="text-right">
                       <Button variant="ghost" size="sm">View Details</Button>
-                    </TableCell>
-                  </TableRow>
+                  </TableCell>
+                </TableRow>
                 ))
               )}
             </TableBody>
