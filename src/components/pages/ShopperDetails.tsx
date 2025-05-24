@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,7 +15,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Loader2, Star, CheckCircle, XCircle, AlertCircle, FileText } from "lucide-react";
+import { Loader2, Star, CheckCircle, XCircle, AlertCircle, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { 
   useShopperDetails, 
   useShopperWallet, 
@@ -44,6 +44,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+const ITEMS_PER_PAGE = 10;
+
 type uuid = string;
 
 interface ShopperDetailsProps {
@@ -63,6 +65,10 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const wallet = walletData?.Wallets[0];
   const orders = ordersData?.Orders || [];
   const detailedShopper = fullDetails?.shoppers[0];
+
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [ratingsPage, setRatingsPage] = useState(1);
 
   const getInitials = (name: string) => {
     return name
@@ -152,6 +158,59 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
     const sum = ratings.reduce((acc, rating) => acc + rating.rating, 0);
     return (sum / ratings.length).toFixed(1);
   };
+
+  // Pagination calculations
+  const paginateData = <T extends any>(data: T[], page: number): T[] => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return data.slice(start, start + ITEMS_PER_PAGE);
+  };
+
+  const getPageCount = (totalItems: number) => Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  const renderPagination = (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => {
+    const pageCount = getPageCount(totalItems);
+    if (pageCount <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-center space-x-2 py-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </Button>
+        <div className="flex items-center space-x-1">
+          {Array.from({ length: pageCount }, (_, i) => i + 1).map((page) => (
+            <Button
+              key={page}
+              variant={currentPage === page ? "default" : "outline"}
+              size="sm"
+              onClick={() => onPageChange(page)}
+            >
+              {page}
+            </Button>
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === pageCount}
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
+
+  // Get paginated data
+  const paginatedOrders = paginateData(orders, ordersPage);
+  const paginatedTransactions = paginateData(wallet?.Wallet_Transactions || [], transactionsPage);
+  const paginatedRatings = paginateData(detailedShopper?.User?.Ratings || [], ratingsPage);
 
   return (
     <AdminLayout>
@@ -401,6 +460,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
             <TabsTrigger value="wallet">Wallet & Earnings</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="transactions">Transaction History</TabsTrigger>
+            <TabsTrigger value="ratings">Ratings & Reviews</TabsTrigger>
           </TabsList>
 
           {/* Wallet Tab */}
@@ -460,7 +520,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map((order) => (
+                  {paginatedOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">#{order.OrderID}</TableCell>
                       <TableCell>{format(new Date(order.created_at), "MMM d, yyyy HH:mm")}</TableCell>
@@ -483,6 +543,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   ))}
                 </TableBody>
               </Table>
+              {renderPagination(ordersPage, orders.length, setOrdersPage)}
             </Card>
           </TabsContent>
 
@@ -501,7 +562,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {wallet?.Wallet_Transactions?.map((transaction) => (
+                  {paginatedTransactions.map((transaction) => (
                     <TableRow key={transaction.id}>
                       <TableCell className="font-medium">
                         {formatTransactionId(transaction.id, transaction.type, transaction.created_at)}
@@ -531,6 +592,71 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   ))}
                 </TableBody>
               </Table>
+              {renderPagination(transactionsPage, wallet?.Wallet_Transactions?.length || 0, setTransactionsPage)}
+            </Card>
+          </TabsContent>
+
+          {/* Ratings Tab */}
+          <TabsContent value="ratings">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                  <span>
+                    {calculateAverageRating(detailedShopper?.User?.Ratings || [])}
+                    <span className="text-sm text-muted-foreground ml-2">
+                      ({detailedShopper?.User?.Ratings?.length || 0} reviews)
+                    </span>
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {paginatedRatings.map((rating) => (
+                    <div key={rating.id} className="border-b pb-6">
+                      <div className="flex justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium">{rating.rating}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(rating.created_at), "MMM d, yyyy")}
+                        </span>
+                      </div>
+                      <p className="text-sm mb-4">{rating.review}</p>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-muted p-3 rounded-lg">
+                          <p className="text-sm text-muted-foreground">Delivery Experience</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium">{rating.delivery_experience}/5</span>
+                          </div>
+                        </div>
+                        <div className="bg-muted p-3 rounded-lg">
+                          <p className="text-sm text-muted-foreground">Packaging Quality</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium">{rating.packaging_quality}/5</span>
+                          </div>
+                        </div>
+                        <div className="bg-muted p-3 rounded-lg">
+                          <p className="text-sm text-muted-foreground">Professionalism</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium">{rating.professionalism}/5</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!detailedShopper?.User?.Ratings || detailedShopper.User.Ratings.length === 0) && (
+                    <div className="text-center text-muted-foreground py-8">
+                      No ratings yet
+                    </div>
+                  )}
+                </div>
+                {renderPagination(ratingsPage, detailedShopper?.User?.Ratings?.length || 0, setRatingsPage)}
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
