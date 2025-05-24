@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScanBarcode, ScanQrCode } from "lucide-react";
 import { toast } from "sonner";
-import { useShops } from "@/hooks/useHasuraApi";
+import { useShops, useSystemConfig } from "@/hooks/useHasuraApi";
 
 // Match the API types exactly
 const formSchema = z.object({
@@ -60,6 +60,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanType, setScanType] = useState<'barcode' | 'qrcode' | null>(null);
   const { data: shopsData } = useShops();
+  const { data: systemConfig } = useSystemConfig();
+  const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -261,7 +263,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                     <FormLabel>Price*</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-2.5">RWF</span>
+                        <span className="absolute left-3 top-2.5">{currency}</span>
                         <Input placeholder="0" className="pl-12" {...field} />
                       </div>
                     </FormControl>

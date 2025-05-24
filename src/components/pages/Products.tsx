@@ -14,13 +14,14 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, ScanBarcode, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useProducts, useAddProduct } from "@/hooks/useHasuraApi";
+import { useProducts, useAddProduct, useSystemConfig } from "@/hooks/useHasuraApi";
 import { format } from "date-fns";
 import Pagination from "@/components/ui/pagination";
 import AddProductDialog from "@/components/shop/AddProductDialog";
 
 const Products = () => {
   const { data, isLoading, isError, error, refetch } = useProducts();
+  const { data: systemConfig } = useSystemConfig();
   const products = data?.Products || [];
   const addProduct = useAddProduct();
   
@@ -32,9 +33,12 @@ const Products = () => {
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
+    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(num);
   };
 

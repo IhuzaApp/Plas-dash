@@ -1,4 +1,3 @@
-
 import React from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
+import { useSystemConfig } from "@/hooks/useHasuraApi";
 
 interface SalesData {
   id: string;
@@ -38,9 +38,20 @@ const monthlySales: SalesData[] = [
 const currentYear = new Date().getFullYear();
 
 const FinancialOverview = () => {
+  const { data: systemConfig } = useSystemConfig();
   const totalRevenue = monthlySales.reduce((sum, month) => sum + month.revenue, 0);
   const totalSales = monthlySales.reduce((sum, month) => sum + month.sales, 0);
   const averageSaleValue = totalRevenue / totalSales;
+  
+  const formatCurrency = (amount: number) => {
+    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
   
   return (
     <AdminLayout>
@@ -58,7 +69,7 @@ const FinancialOverview = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
               +12.5% from previous year
             </p>
@@ -84,7 +95,7 @@ const FinancialOverview = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${averageSaleValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(averageSaleValue)}</div>
             <p className="text-xs text-muted-foreground">
               +3.8% from previous year
             </p>
@@ -119,9 +130,9 @@ const FinancialOverview = () => {
                     {monthlySales.map((month) => (
                       <TableRow key={month.id}>
                         <TableCell>{format(month.date, "MMMM yyyy")}</TableCell>
-                        <TableCell className="text-right">${month.revenue.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(month.revenue)}</TableCell>
                         <TableCell className="text-right">{month.sales.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">${month.averageValue.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(month.averageValue)}</TableCell>
                         <TableCell>
                           {month.trend === "up" ? (
                             <div className="flex items-center text-green-500">

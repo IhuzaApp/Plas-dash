@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, Loader2, Phone, AlertCircle } from "lucide-react";
-import { useOrders } from "@/hooks/useHasuraApi";
+import { useOrders, useSystemConfig } from "@/hooks/useHasuraApi";
 import { format, differenceInMinutes } from "date-fns";
 import Pagination from "@/components/ui/pagination";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -21,8 +21,24 @@ import { toast } from "sonner";
 import OrderDetailsDrawer from "@/components/drawers/OrderDetailsDrawer";
 import { Order } from "@/types/order";
 
+// Function to generate a short ID from a UUID or longer ID
+const generateShortId = (id: string) => {
+  // If it's a UUID, take the first 8 characters
+  if (id.includes('-')) {
+    return id.split('-')[0];
+  }
+  // If it's a number, ensure it's at least 4 digits with leading zeros
+  const numId = parseInt(id);
+  if (!isNaN(numId)) {
+    return numId.toString().padStart(4, '0');
+  }
+  // For any other format, take first 8 characters
+  return id.slice(0, 8);
+};
+
 const Orders = () => {
   const { data, isLoading, isError, error } = useOrders();
+  const { data: systemConfig } = useSystemConfig();
   const orders: Order[] = data?.Orders || [];
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,9 +48,10 @@ const Orders = () => {
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
+    const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: currency
     }).format(num);
   };
 
@@ -236,7 +253,7 @@ const Orders = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{formatCurrency(totalRevenue.toString())}</div>
-            <p className="text-muted-foreground">Total Revenue</p>
+            <p className="text-muted-foreground">Total Sales</p>
           </CardContent>
         </Card>
       </div>
@@ -288,7 +305,16 @@ const Orders = () => {
                 <TableRow key={order.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          #{order.OrderID}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="text-primary hover:underline">
+                                #{generateShortId(order.OrderID?.toString() || order.id)}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Full ID: {order.OrderID || order.id}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {warnings.length > 0 && (
                             <TooltipProvider>
                               <Tooltip>

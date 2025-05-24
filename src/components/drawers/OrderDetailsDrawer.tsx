@@ -12,15 +12,33 @@ import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Order } from "@/types/order";
+import { useSystemConfig } from "@/hooks/useHasuraApi";
 import { useOrderPayments } from "@/hooks/useShoppers";
 import { Loader2 } from "lucide-react";
 import type { WalletTransaction, Refund } from "@/hooks/useShoppers";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OrderDetailsDrawerProps {
   order: Order | null;
   open: boolean;
   onClose: () => void;
 }
+
+// Function to generate a short ID from a UUID or longer ID
+const generateShortId = (id: string) => {
+  if (!id) return 'N/A';
+  // If it's a UUID, take the first 8 characters
+  if (id.includes('-')) {
+    return id.split('-')[0];
+  }
+  // If it's a number, ensure it's at least 4 digits with leading zeros
+  const numId = parseInt(id);
+  if (!isNaN(numId)) {
+    return numId.toString().padStart(4, '0');
+  }
+  // For any other format, take first 8 characters
+  return id.slice(0, 8);
+};
 
 const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
   order,
@@ -30,14 +48,16 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
   if (!order) return null;
 
   const { data: paymentData, isLoading: isLoadingPayments } = useOrderPayments(order.id);
+  const { data: systemConfig } = useSystemConfig();
   const transactions = (paymentData?.Wallet_Transactions || []) as WalletTransaction[];
   const refunds = (paymentData?.Refunds || []) as Refund[];
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
+    const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: currency,
     }).format(num);
   };
 
@@ -85,7 +105,16 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
       <SheetContent className="sm:max-w-[600px] overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center justify-between">
-            <span>Order #{order.OrderID}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger className="text-primary hover:underline">
+                  Order #{generateShortId(order.OrderID?.toString() || order.id)}
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Full ID: {order.OrderID || order.id}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
           </SheetTitle>
           <SheetDescription>
@@ -122,7 +151,16 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                     {index > 0 && <Separator className="my-4" />}
                     <div className="flex justify-between">
                       <div>
-                        <p className="font-medium">Product ID: {item.product_id}</p>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger className="text-primary hover:underline">
+                              <p className="font-medium">Product #{generateShortId(item.product_id)}</p>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Full Product ID: {item.product_id}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <p className="text-sm text-muted-foreground">
                           Quantity: {item.quantity}
                         </p>
@@ -187,7 +225,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                         >
                           <div>
                             <p className="font-medium">
-                              {transaction.Wallet?.User?.name || "Unknown"}
+                              {transaction.type || "Payment"}
                             </p>
                             <p className="text-muted-foreground">
                               {formatDateTime(transaction.created_at)}
