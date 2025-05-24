@@ -206,21 +206,21 @@ const Products = () => {
                 currentProducts.map((product) => {
                   const stockStatus = getStockStatus(product.quantity);
                   return (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
+                <TableRow key={product.id}>
+                  <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.Shop?.name || 'N/A'}</TableCell>
                       <TableCell>{typeof product.category === 'string' ? product.category : product.category.name}</TableCell>
                       <TableCell>{formatCurrency(product.price)}</TableCell>
                       <TableCell>{product.quantity} {product.measurement_unit}</TableCell>
-                      <TableCell>
+                  <TableCell>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.class}`}>
                           {stockStatus.label}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">Edit</Button>
-                      </TableCell>
-                    </TableRow>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm">Edit</Button>
+                  </TableCell>
+                </TableRow>
                   );
                 })
               )}

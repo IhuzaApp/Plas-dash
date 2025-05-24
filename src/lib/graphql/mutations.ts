@@ -75,16 +75,16 @@ export const ADD_INVOICE_DETAILS = `
 
 // Wallet mutations
 export const CREATE_WALLET = `
-  mutation createWallet($shopper_id: uuid!) {
+  mutation createWallet($user_id: uuid!) {
     insert_Wallets_one(
       object: {
-        shopper_id: $shopper_id
+        user_id: $user_id
         available_balance: "0"
         reserved_balance: "0"
       }
     ) {
       id
-      shopper_id
+      user_id
       available_balance
       reserved_balance
       last_updated
@@ -194,6 +194,29 @@ export const REGISTER_SHOPPER = `
       status
       active
       onboarding_step
+    }
+  }
+`;
+
+export const UPDATE_SHOPPER_STATUS = `
+  mutation UpdateShopperStatus(
+    $shopper_id: uuid!
+    $status: String!
+    $active: Boolean!
+    $background_check_completed: Boolean!
+  ) {
+    update_shoppers_by_pk(
+      pk_columns: { id: $shopper_id }
+      _set: {
+        status: $status
+        active: $active
+        background_check_completed: $background_check_completed
+      }
+    ) {
+      id
+      status
+      active
+      background_check_completed
     }
   }
 `;
