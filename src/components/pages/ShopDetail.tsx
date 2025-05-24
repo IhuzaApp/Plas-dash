@@ -17,10 +17,11 @@ import {
 } from "@/components/ui/table";
 import AddProductDialog from "@/components/shop/AddProductDialog";
 import ImportProductsDialog from "@/components/shop/ImportProductsDialog";
-import { useShopById } from "@/hooks/useHasuraApi";
+import { useShopById, useAddProduct, useSystemConfig } from "@/hooks/useHasuraApi";
 import { toast } from "sonner";
 import * as z from "zod";
 import Pagination from "@/components/ui/pagination";
+import { formatCurrency } from "@/lib/utils";
 
 interface OperatingHours {
   monday: string;
@@ -33,16 +34,17 @@ interface OperatingHours {
 }
 
 const productFormSchema = z.object({
-  name: z.string(),
-  category: z.string(),
-  price: z.string(),
-  stock: z.string(),
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().optional(),
+  price: z.string().min(1, "Price is required"),
+  quantity: z.number().int().min(0, "Quantity must be a positive number"),
+  measurement_unit: z.string().min(1, "Measurement unit is required"),
+  category: z.string().min(1, "Category is required"),
+  is_active: z.boolean().default(true),
   barcode: z.string().optional(),
   sku: z.string().optional(),
-  unit: z.string().optional(),
-  reorderPoint: z.string().optional(),
   supplier: z.string().optional(),
-  description: z.string().optional(),
+  reorder_point: z.number().int().min(0).optional(),
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
@@ -52,14 +54,14 @@ const formatOperatingHours = (hours: OperatingHours | string | null) => {
   if (typeof hours === 'string') return hours;
 
   return (
-    <div className="space-y-1">
+    <ol className="space-y-1">
       {Object.entries(hours).map(([day, time]) => (
-        <div key={day} className="grid grid-cols-2 gap-2">
+        <li key={day} className="grid grid-cols-2 gap-2">
           <span className="capitalize">{day}:</span>
           <span>{time || 'Closed'}</span>
-        </div>
+        </li>
       ))}
-    </div>
+    </ol>
   );
 };
 
@@ -72,13 +74,36 @@ const ShopDetail = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const { data, isLoading, isError, error } = useShopById(id);
+  const { data, isLoading, isError, error, refetch } = useShopById(id);
   const shop = data?.Shops_by_pk;
+  const addProduct = useAddProduct();
+  const { data: configData } = useSystemConfig();
+  const config = configData?.System_configuratioins[0];
 
-  const handleAddProduct = (formData: ProductFormData) => {
-    console.log("Adding product:", formData);
-    toast.success("Product added successfully");
-    setIsAddProductOpen(false);
+  const handleAddProduct = async (formData: ProductFormData) => {
+    try {
+      await addProduct.mutateAsync({
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        quantity: formData.quantity,
+        measurement_unit: formData.measurement_unit,
+        shop_id: id,
+        category: formData.category,
+        barcode: formData.barcode,
+        sku: formData.sku,
+        reorder_point: formData.reorder_point,
+        supplier: formData.supplier,
+        is_active: formData.is_active
+      });
+
+      toast.success("Product added successfully");
+      setIsAddProductOpen(false);
+      refetch(); // Refresh the shop data to show the new product
+    } catch (error) {
+      console.error('Error adding product:', error);
+      toast.error("Failed to add product. Please try again.");
+    }
   };
 
   const handleImportProducts = (file: File) => {
@@ -101,7 +126,7 @@ const ShopDetail = () => {
   const endIndex = startIndex + pageSize;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
-  if (isLoading) {
+  if (isLoading || !config) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -269,7 +294,7 @@ const ShopDetail = () => {
                     currentProducts.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.price}</TableCell>
+                      <TableCell>{formatCurrency(product.price, config)}</TableCell>
                       <TableCell>{product.quantity}</TableCell>
                       <TableCell>{product.measurement_unit}</TableCell>
                       <TableCell>
@@ -323,6 +348,7 @@ const ShopDetail = () => {
         open={isAddProductOpen} 
         onOpenChange={setIsAddProductOpen}
         onSubmit={handleAddProduct}
+        shopId={id}
       />
 
       <ImportProductsDialog

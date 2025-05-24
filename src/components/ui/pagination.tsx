@@ -75,7 +75,7 @@ const Pagination = ({
             disabled={currentPage === 1}
           >
             <span className="sr-only">Go to previous page</span>
-            <ChevronLeft className="h-4 w-4" />
+    <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
@@ -84,7 +84,7 @@ const Pagination = ({
             disabled={currentPage === totalPages}
           >
             <span className="sr-only">Go to next page</span>
-            <ChevronRight className="h-4 w-4" />
+    <ChevronRight className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"

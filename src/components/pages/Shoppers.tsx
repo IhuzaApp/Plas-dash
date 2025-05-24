@@ -189,7 +189,7 @@ const Shoppers = () => {
                   </TableCell>
                   <TableCell className="text-right">
                       <Link href={`/shoppers/${shopper.id}`}>
-                        <Button variant="ghost" size="sm">View Profile</Button>
+                    <Button variant="ghost" size="sm">View Profile</Button>
                       </Link>
                   </TableCell>
                 </TableRow>

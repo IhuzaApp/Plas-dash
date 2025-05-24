@@ -12,20 +12,23 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, ScanBarcode, Loader2 } from "lucide-react";
+import { Search, Filter, ScanBarcode, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useProducts } from "@/hooks/useHasuraApi";
+import { useProducts, useAddProduct } from "@/hooks/useHasuraApi";
 import { format } from "date-fns";
 import Pagination from "@/components/ui/pagination";
+import AddProductDialog from "@/components/shop/AddProductDialog";
 
 const Products = () => {
-  const { data, isLoading, isError, error } = useProducts();
+  const { data, isLoading, isError, error, refetch } = useProducts();
   const products = data?.Products || [];
+  const addProduct = useAddProduct();
   
   const [isScanning, setIsScanning] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -52,6 +55,18 @@ const Products = () => {
       toast.success("Barcode scanned: " + mockBarcode);
       setIsScanning(false);
     }, 1500);
+  };
+
+  const handleAddProduct = async (formData: any) => {
+    try {
+      await addProduct.mutateAsync(formData);
+      toast.success("Product added successfully");
+      setIsAddProductOpen(false);
+      refetch(); // Refresh the products list
+    } catch (error) {
+      console.error('Error adding product:', error);
+      toast.error("Failed to add product. Please try again.");
+    }
   };
 
   if (isLoading) {
@@ -99,7 +114,11 @@ const Products = () => {
       <PageHeader 
         title="Products" 
         description="Manage products across all shops."
-        actions={<Button>Add New Product</Button>}
+        actions={
+          <Button onClick={() => setIsAddProductOpen(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" /> Add New Product
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -220,6 +239,12 @@ const Products = () => {
           />
         </Card>
       </div>
+
+      <AddProductDialog 
+        open={isAddProductOpen}
+        onOpenChange={setIsAddProductOpen}
+        onSubmit={handleAddProduct}
+      />
     </AdminLayout>
   );
 };

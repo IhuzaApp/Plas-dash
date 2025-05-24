@@ -14,7 +14,8 @@ import {
   GET_ALL_REFUNDS,
   GET_CATEGORIES,
   GET_SHOP_BY_ID,
-  GET_SHOPPERS
+  GET_SHOPPERS,
+  GET_SYSTEM_CONFIG
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -24,7 +25,8 @@ import {
   UPDATE_WALLET_BALANCES,
   CREATE_WALLET_TRANSACTION,
   CREATE_MULTIPLE_WALLET_TRANSACTIONS,
-  REGISTER_SHOPPER
+  REGISTER_SHOPPER,
+  ADD_PRODUCT
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -141,6 +143,18 @@ interface OrderType {
     city: string;
     postal_code: string;
   };
+}
+
+export interface SystemConfig {
+  baseDeliveryFee: number;
+  currency: string;
+  discounts: any;
+  id: string;
+  serviceFee: number;
+  shoppingTime: number;
+  unitsSurcharge: number;
+  extraUnits: number;
+  cappedDistanceFee: number;
 }
 
 // Type-safe hook for Users
@@ -363,5 +377,38 @@ export function useShoppers() {
   return useQuery<{ shoppers: Shopper[] }, Error>({
     queryKey: ['shoppers'],
     queryFn: () => hasuraRequest(GET_SHOPPERS, {})
+  });
+}
+
+// Type-safe hook for adding a product
+export function useAddProduct() {
+  return useMutation<
+    { insert_Products_one: ShopProduct },
+    Error,
+    {
+      name: string;
+      description?: string;
+      price: string;
+      quantity: number;
+      measurement_unit: string;
+      shop_id: string;
+      category: string;
+      barcode?: string;
+      sku?: string;
+      reorder_point?: number;
+      supplier?: string;
+      is_active?: boolean;
+    }
+  >({
+    mutationFn: (variables) => hasuraRequest(ADD_PRODUCT, variables)
+  });
+}
+
+// Type-safe hook for system configuration
+export function useSystemConfig() {
+  return useQuery<{ System_configuratioins: SystemConfig[] }, Error>({
+    queryKey: ['system-config'],
+    queryFn: () => hasuraRequest(GET_SYSTEM_CONFIG, {}),
+    staleTime: Infinity // Configuration rarely changes, so we can cache it indefinitely
   });
 } 

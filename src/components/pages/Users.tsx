@@ -127,7 +127,7 @@ const Users = () => {
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
-    
+        
         <Card>
           <Table>
             <TableHeader>
@@ -173,7 +173,7 @@ const Users = () => {
                     <TableCell>{user.phone}</TableCell>
                     <TableCell>
                       {format(new Date(user.created_at), 'MMM d, yyyy')}
-                    </TableCell>
+                  </TableCell>
                   <TableCell className="text-right">
                       <Button variant="ghost" size="sm">View Profile</Button>
                   </TableCell>
