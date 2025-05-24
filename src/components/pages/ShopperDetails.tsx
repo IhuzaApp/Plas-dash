@@ -54,7 +54,8 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const { data: shopperData, isLoading: isLoadingShopper } = useShopperDetails(shopperId);
   const { data: walletData, isLoading: isLoadingWallet } = useShopperWallet(shopperId);
   const { data: ordersData, isLoading: isLoadingOrders } = useShopperOrders(shopperId);
-  const { data: fullDetails, isLoading: isLoadingFullDetails } = useShopperFullDetails(shopperId);
+  const userId = shopperData?.shoppers[0]?.user_id;
+  const { data: fullDetails, isLoading: isLoadingFullDetails } = useShopperFullDetails(userId || '');
   const updateShopperStatus = useUpdateShopperStatus();
 
   const shopper = shopperData?.shoppers[0];
@@ -232,9 +233,19 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                               <p className="text-sm text-muted-foreground">National ID</p>
                               <p className="font-medium">{detailedShopper.national_id}</p>
                             </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Driving License</p>
-                              <p className="font-medium">{detailedShopper.driving_license || 'Not provided'}</p>
+                            <div className="col-span-2">
+                              <p className="text-sm text-muted-foreground mb-2">Driving License</p>
+                              {detailedShopper.driving_license ? (
+                                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border">
+                                  <img 
+                                    src={detailedShopper.driving_license} 
+                                    alt="Driving License"
+                                    className="object-contain w-full h-full"
+                                  />
+                                </div>
+                              ) : (
+                                <p className="font-medium text-muted-foreground">Not provided</p>
+                              )}
                             </div>
                           </div>
                         </CardContent>
