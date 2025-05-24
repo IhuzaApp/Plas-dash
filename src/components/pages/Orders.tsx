@@ -137,8 +137,18 @@ const Orders = () => {
   const filteredOrders = orders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
     
+    // Direct ID match (case-insensitive)
+    if (order.id?.toLowerCase() === searchLower) {
+      return true;
+    }
+    
     // Direct OrderID match (case-insensitive)
     if (order.OrderID?.toString().toLowerCase() === searchLower) {
+      return true;
+    }
+    
+    // Partial ID match
+    if (order.id?.toLowerCase().includes(searchLower)) {
       return true;
     }
     
@@ -236,8 +246,8 @@ const Orders = () => {
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search by Order ID, customer name, or status..." 
-              className="pl-8" 
+              placeholder="Search by Order ID, UUID, customer name or email..." 
+              className="pl-8"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
