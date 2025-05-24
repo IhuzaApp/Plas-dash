@@ -23,7 +23,7 @@ import { Order } from "@/types/order";
 
 const Orders = () => {
   const { data, isLoading, isError, error } = useOrders();
-  const orders = data?.Orders || [];
+  const orders: Order[] = data?.Orders || [];
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -38,8 +38,11 @@ const Orders = () => {
     }).format(num);
   };
 
-  const handleCallShopper = (phone: string) => {
-    // In a real app, this would integrate with a calling system
+  const handleCallShopper = (phone: string | undefined) => {
+    if (!phone) {
+      toast.error("Shopper phone number not available");
+      return;
+    }
     toast.info(`Calling shopper at ${phone}...`);
   };
 
@@ -131,13 +134,24 @@ const Orders = () => {
   const totalRevenue = orders.reduce((acc, order) => acc + parseFloat(order.total), 0);
 
   // Filter orders based on search term
-  const filteredOrders = orders.filter(order => 
-    searchTerm === "" || 
-    order.OrderID?.toString().includes(searchTerm) ||
-    order.User?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.User?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOrders = orders.filter(order => {
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Direct OrderID match (case-insensitive)
+    if (order.OrderID?.toString().toLowerCase() === searchLower) {
+      return true;
+    }
+    
+    // Partial OrderID match
+    if (order.OrderID?.toString().toLowerCase().includes(searchLower)) {
+      return true;
+    }
+    
+    // Other fields match
+    return order.User?.name?.toLowerCase().includes(searchLower) ||
+           order.User?.email?.toLowerCase().includes(searchLower) ||
+           order.status.toLowerCase().includes(searchLower);
+  });
 
   // Calculate pagination
   const totalItems = filteredOrders.length;
@@ -222,7 +236,7 @@ const Orders = () => {
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search orders..." 
+              placeholder="Search by Order ID, customer name, or status..." 
               className="pl-8" 
               value={searchTerm}
               onChange={(e) => {
