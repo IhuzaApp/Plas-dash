@@ -28,6 +28,15 @@ const Users = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  // Calculate user statistics
+  const totalUsers = users.length;
+  const activeUsers = users.filter(user => user.is_active).length;
+  const adminUsers = 0; // Currently set to 0 as requested
+  const customerUsers = users.filter(user => 
+    user.is_active && // User is active
+    (!user.shopper || !user.shopper.active) // Either no shopper record or shopper.active is false
+  ).length;
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -36,16 +45,12 @@ const Users = () => {
       .toUpperCase();
   };
 
-  const activeUsers = users.filter(user => user.is_active);
-  const adminUsers = users.filter(user => user.role === 'admin');
-  const customerUsers = users.filter(user => user.role === 'customer');
-
   // Filter users based on search term
   const filteredUsers = users.filter(user => 
     searchTerm === "" || 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -103,25 +108,25 @@ const Users = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{users.length}</div>
+            <div className="text-2xl font-bold">{totalUsers}</div>
             <p className="text-muted-foreground">Total Users</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{activeUsers.length}</div>
+            <div className="text-2xl font-bold">{activeUsers}</div>
             <p className="text-muted-foreground">Active Users</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{adminUsers.length}</div>
+            <div className="text-2xl font-bold">{adminUsers}</div>
             <p className="text-muted-foreground">Admins</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{customerUsers.length}</div>
+            <div className="text-2xl font-bold">{customerUsers}</div>
             <p className="text-muted-foreground">Customers</p>
           </CardContent>
         </Card>
@@ -167,7 +172,7 @@ const Users = () => {
                 </TableRow>
               ) : (
                 currentUsers.map((user) => (
-                <TableRow key={user.id}>
+                  <TableRow key={user.id}>
                     <TableCell className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={user.profile_picture || undefined} />
@@ -179,16 +184,16 @@ const Users = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="capitalize">{user.role}</span>
+                      <span className="capitalize">{user.role || 'User'}</span>
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        user.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                       }`}>
-                          {user.is_active ? "Active" : "Inactive"}
+                        {user.is_active ? "Active" : "Inactive"}
                       </span>
                     </TableCell>
-                    <TableCell>{user.phone}</TableCell>
+                    <TableCell>{user.phone || 'N/A'}</TableCell>
                     <TableCell>
                       {format(new Date(user.created_at), 'MMM d, yyyy')}
                     </TableCell>
@@ -201,12 +206,15 @@ const Users = () => {
                         View Profile
                       </Button>
                     </TableCell>
-                </TableRow>
+                  </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
-          <div className="p-4 border-t">
+        </Card>
+
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -219,7 +227,7 @@ const Users = () => {
               totalItems={totalItems}
             />
           </div>
-        </Card>
+        )}
       </div>
 
       <UserDetailsDrawer
