@@ -42,6 +42,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useSystemConfig } from "@/hooks/useHasuraApi";
 
 interface InventoryItem {
   id: string;
@@ -54,6 +55,7 @@ interface InventoryItem {
 }
 
 const Inventory = () => {
+  const { data: systemConfig } = useSystemConfig();
   const [items, setItems] = useState<InventoryItem[]>([
     { id: "1", name: "Milk 1L", barcode: "5901234123457", category: "Dairy", price: 2.99, stock: 25, status: "in-stock" },
     { id: "2", name: "Bread", barcode: "4003994155486", category: "Bakery", price: 1.50, stock: 12, status: "in-stock" },
@@ -250,6 +252,16 @@ const Inventory = () => {
     toast.success("Product deleted successfully");
   };
   
+  const formatCurrency = (amount: number) => {
+    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+  
   return (
     <AdminLayout>
       <PageHeader 
@@ -339,7 +351,7 @@ const Inventory = () => {
                         {item.barcode}
                       </TableCell>
                       <TableCell>{item.category}</TableCell>
-                      <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
                       <TableCell className="text-right">{item.stock}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
                       <TableCell className="text-right">

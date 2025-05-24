@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ProcessPayoutDrawer from "@/components/wallet/ProcessPayoutDrawer";
+import { useWalletTransactions, useSystemConfig } from "@/hooks/useHasuraApi";
+import { Loader2 } from "lucide-react";
+import Pagination from "@/components/ui/pagination";
 
 const companyData = [
   { name: "Jan", amount: 4000 },
@@ -30,14 +36,6 @@ const companyData = [
   { name: "Apr", amount: 2780 },
   { name: "May", amount: 6890 },
   { name: "Jun", amount: 8390 },
-];
-
-const transactions = [
-  { id: "TRX-1234", date: "2023-05-20", description: "Platform Fee", amount: "$2,450.00", type: "Credit" },
-  { id: "TRX-1235", date: "2023-05-19", description: "Shopper Payment", amount: "$1,200.00", type: "Debit" },
-  { id: "TRX-1236", date: "2023-05-18", description: "Sales Commission", amount: "$345.50", type: "Credit" },
-  { id: "TRX-1237", date: "2023-05-17", description: "Refund Processing", amount: "$120.00", type: "Debit" },
-  { id: "TRX-1238", date: "2023-05-16", description: "Platform Fee", amount: "$1,850.00", type: "Credit" },
 ];
 
 const shopperWallets = [
@@ -49,6 +47,67 @@ const shopperWallets = [
 ];
 
 const Wallets = () => {
+  const { data: transactionsData, isLoading: isLoadingTransactions } = useWalletTransactions();
+  const { data: systemConfig } = useSystemConfig();
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const formatCurrency = (amount: string) => {
+    const num = parseFloat(amount);
+    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(num);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
+      case "completed":
+      case "success":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "failed":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getTypeBadge = (type: string) => {
+    const typeLower = type.toLowerCase();
+    switch (typeLower) {
+      case "reserve":
+        return "bg-blue-100 text-blue-800";
+      case "earnings":
+        return "bg-green-100 text-green-800";
+      case "payment":
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const filteredTransactions = transactionsData?.Wallet_Transactions.filter(transaction => {
+    return (
+      (statusFilter === "all" || transaction.status.toLowerCase() === statusFilter.toLowerCase()) &&
+      (typeFilter === "all" || transaction.type.toLowerCase() === typeFilter.toLowerCase())
+    );
+  }) || [];
+
+  // Calculate pagination
+  const totalItems = filteredTransactions.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
+
   return (
     <AdminLayout>
       <PageHeader 
@@ -119,8 +178,32 @@ const Wallets = () => {
             </Card>
             
             <Card className="col-span-1 md:col-span-2">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Recent Transactions</CardTitle>
+                <div className="flex gap-2">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Filter by type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="reserve">Reserve</SelectItem>
+                      <SelectItem value="earnings">Earnings</SelectItem>
+                      <SelectItem value="payment">Payment</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -128,29 +211,67 @@ const Wallets = () => {
                     <TableRow>
                       <TableHead>Transaction ID</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead>Description</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Order ID</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell className="font-medium">{transaction.id}</TableCell>
-                        <TableCell>{transaction.date}</TableCell>
-                        <TableCell>{transaction.description}</TableCell>
-                        <TableCell>{transaction.amount}</TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            transaction.type === "Credit" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                          }`}>
-                            {transaction.type}
-                          </span>
+                    {isLoadingTransactions ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24">
+                          <div className="flex items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+                          </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : filteredTransactions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                          No transactions found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      currentTransactions.map((transaction) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell className="font-medium">#{transaction.id.slice(-8)}</TableCell>
+                          <TableCell>{format(new Date(transaction.created_at), "MMM d, yyyy HH:mm")}</TableCell>
+                          <TableCell>{formatCurrency(transaction.amount)}</TableCell>
+                          <TableCell>
+                            <Badge className={getTypeBadge(transaction.type)}>
+                              {transaction.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getStatusBadge(transaction.status)}>
+                              {transaction.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {transaction.Order ? `#${transaction.Order.OrderID}` : 'N/A'}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
+                {!isLoadingTransactions && filteredTransactions.length > 0 && (
+                  <div className="mt-4">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                      totalItems={totalItems}
+                      pageSize={itemsPerPage}
+                      onPageSizeChange={(newPageSize) => {
+                        setCurrentPage(1);
+                        // Since itemsPerPage is a constant, we don't actually change it
+                        // but we need to provide this prop to satisfy the type
+                      }}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

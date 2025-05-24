@@ -24,6 +24,7 @@ import {
   useShopperFullDetails,
   type Order 
 } from "@/hooks/useShoppers";
+import { useSystemConfig } from "@/hooks/useHasuraApi";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const { data: shopperData, isLoading: isLoadingShopper } = useShopperDetails(shopperId);
   const { data: walletData, isLoading: isLoadingWallet } = useShopperWallet(shopperId);
   const { data: ordersData, isLoading: isLoadingOrders } = useShopperOrders(shopperId);
+  const { data: systemConfig } = useSystemConfig();
   const userId = shopperData?.shoppers[0]?.user_id;
   const { data: fullDetails, isLoading: isLoadingFullDetails } = useShopperFullDetails(userId || '');
   const updateShopperStatus = useUpdateShopperStatus();
@@ -111,9 +113,10 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
+    const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: currency
     }).format(num);
   };
 
