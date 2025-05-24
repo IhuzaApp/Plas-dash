@@ -256,6 +256,18 @@ export const GET_SHOPPER_WALLET = `
       available_balance
       reserved_balance
       last_updated
+      Wallet_Transactions {
+        id
+        amount
+        type
+        status
+        created_at
+        related_order_id
+        Order {
+          OrderID
+          status
+        }
+      }
     }
   }
 `;
@@ -418,6 +430,142 @@ export const GET_SYSTEM_CONFIG = `
       unitsSurcharge
       extraUnits
       cappedDistanceFee
+    }
+  }
+`;
+
+// Shopper Details Query
+export const GET_SHOPPER_DETAILS = `
+  query getShopperDetails($user_id: uuid!) {
+    Users(where: { id: { _eq: $user_id } }) {
+      id
+      name
+      email
+      phone
+      profile_picture
+      created_at
+      is_active
+    }
+    shoppers(where: { user_id: { _eq: $user_id } }) {
+      id
+      user_id
+      full_name
+      phone_number
+      Employment_id
+      profile_photo
+      transport_mode
+      active
+      status
+      background_check_completed
+      onboarding_step
+      created_at
+    }
+  }
+`;
+
+// Shopper Orders Query
+export const GET_SHOPPER_ORDERS = `
+  query getShopperOrders($user_id: uuid!) {
+    Orders(
+      where: { shopper_id: { _eq: $user_id } }
+      order_by: { created_at: desc }
+    ) {
+      id
+      OrderID
+      status
+      total
+      created_at
+      updated_at
+      delivery_time
+      delivery_fee
+      service_fee
+      discount
+      delivery_notes
+      delivery_photo_url
+      User {
+        name
+      }
+      Shop {
+        id
+        name
+      }
+      Address {
+        street
+        city
+        postal_code
+      }
+    }
+  }
+`;
+
+// Order Payments Query
+export const GET_ORDER_PAYMENTS = `
+  query getOrderPayments($order_id: uuid!) {
+    Wallet_Transactions(where: { related_order_id: { _eq: $order_id } }) {
+      id
+      amount
+      type
+      status
+      created_at
+      Wallet {
+        User {
+          name
+        }
+      }
+    }
+    Refunds(where: { order_id: { _eq: $order_id } }) {
+      id
+      amount
+      reason
+      status
+      paid
+      created_at
+      update_on
+    }
+  }
+`;
+
+export const GET_SHOPPER_FULL_DETAILS = `
+  query getShopperFullDetails($shopper_id: uuid!) {
+    shoppers(where: { id: { _eq: $shopper_id } }) {
+      active
+      address
+      background_check_completed
+      created_at
+      driving_license
+      full_name
+      id
+      national_id
+      onboarding_step
+      phone_number
+      profile_photo
+      status
+      transport_mode
+      updated_at
+      user_id
+      Employment_id
+      User {
+        gender
+        email
+        name
+        phone
+        profile_picture
+        role
+        Ratings {
+          created_at
+          customer_id
+          delivery_experience
+          id
+          order_id
+          packaging_quality
+          professionalism
+          rating
+          review
+          reviewed_at
+          shopper_id
+          updated_at
+        }
+      }
     }
   }
 `; 

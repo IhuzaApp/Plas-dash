@@ -37,7 +37,7 @@ export default function ImportProductsDialog({
         <DialogHeader>
           <DialogTitle>Import Products</DialogTitle>
         </DialogHeader>
-        
+
         <div
           {...getRootProps()}
           className={`

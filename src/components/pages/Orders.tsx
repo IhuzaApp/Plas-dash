@@ -12,10 +12,14 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, Loader2 } from "lucide-react";
+import { Search, Filter, Loader2, Phone, AlertCircle } from "lucide-react";
 import { useOrders } from "@/hooks/useHasuraApi";
-import { format } from "date-fns";
+import { format, differenceInMinutes } from "date-fns";
 import Pagination from "@/components/ui/pagination";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import OrderDetailsDrawer from "@/components/drawers/OrderDetailsDrawer";
+import { Order } from "@/types/order";
 
 const Orders = () => {
   const { data, isLoading, isError, error } = useOrders();
@@ -23,6 +27,8 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -32,8 +38,61 @@ const Orders = () => {
     }).format(num);
   };
 
-  const getStatusColor = (status: string) => {
-    const statusLower = status.toLowerCase();
+  const handleCallShopper = (phone: string) => {
+    // In a real app, this would integrate with a calling system
+    toast.info(`Calling shopper at ${phone}...`);
+  };
+
+  const getOrderWarnings = (order: any) => {
+    const warnings = [];
+    const timeSinceUpdate = differenceInMinutes(new Date(), new Date(order.updated_at));
+    const statusLower = order.status.toLowerCase();
+
+    // Check for unassigned orders (10+ minutes)
+    if (!order.shopper_id && timeSinceUpdate > 10) {
+      warnings.push({
+        type: 'unassigned',
+        message: 'Order unassigned for over 10 minutes',
+        severity: 'high'
+      });
+    }
+
+    // Check for long shopping time (60+ minutes)
+    if (statusLower === 'shopping' && timeSinceUpdate > 60) {
+      warnings.push({
+        type: 'shopping',
+        message: 'Shopping taking over 60 minutes',
+        severity: 'medium'
+      });
+    }
+
+    // Check for long delivery time (50+ minutes)
+    if (statusLower === 'on_the_way' && timeSinceUpdate > 50) {
+      warnings.push({
+        type: 'delivery',
+        message: 'Delivery taking over 50 minutes',
+        severity: 'high'
+      });
+    }
+
+    return warnings;
+  };
+
+  const getStatusColor = (order: any) => {
+    const statusLower = order.status.toLowerCase();
+    const warnings = getOrderWarnings(order);
+    
+    // If there are any high severity warnings, show red
+    if (warnings.some(w => w.severity === 'high')) {
+      return 'bg-red-100 text-red-800';
+    }
+    
+    // If there are any medium severity warnings, show orange
+    if (warnings.some(w => w.severity === 'medium')) {
+      return 'bg-orange-100 text-orange-800';
+    }
+    
+    // Default status colors
     switch (statusLower) {
       case 'delivered':
         return 'bg-green-100 text-green-800';
@@ -45,10 +104,15 @@ const Orders = () => {
       case 'accepted':
       case 'picked_up':
       case 'on_the_way':
+      case 'shopping':
         return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    return format(new Date(dateString), 'MMM d, yyyy HH:mm');
   };
 
   const pendingOrders = orders.filter(order => 
@@ -81,6 +145,16 @@ const Orders = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const currentOrders = filteredOrders.slice(startIndex, endIndex);
+
+  const handleViewDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setIsDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false);
+    setSelectedOrder(null);
+  };
 
   if (isLoading) {
     return (
@@ -171,38 +245,80 @@ const Orders = () => {
                 <TableHead>Status</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Last Updated</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                     No orders found.
                   </TableCell>
                 </TableRow>
               ) : (
-                currentOrders.map((order) => (
+                currentOrders.map((order) => {
+                  const warnings = getOrderWarnings(order);
+                  return (
                 <TableRow key={order.id}>
-                    <TableCell className="font-medium">#{order.OrderID}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">{order.User?.name || 'N/A'}</div>
-                      <div className="text-sm text-muted-foreground">{order.User?.email || 'N/A'}</div>
-                    </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          #{order.OrderID}
+                          {warnings.length > 0 && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <AlertCircle className="h-4 w-4 text-red-500" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <ul className="list-disc pl-4">
+                                    {warnings.map((warning, idx) => (
+                                      <li key={idx}>{warning.message}</li>
+                                    ))}
+                                  </ul>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{order.User?.name || 'N/A'}</div>
+                        <div className="text-sm text-muted-foreground">{order.User?.email || 'N/A'}</div>
+                      </TableCell>
                   <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order)}`}>
                       {order.status}
                     </span>
                   </TableCell>
-                    <TableCell>{order.Order_Items?.length || 0} items</TableCell>
-                    <TableCell>{formatCurrency(order.total)}</TableCell>
-                    <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy')}</TableCell>
-                  <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">View Details</Button>
+                      <TableCell>{order.Order_Items?.length || 0} items</TableCell>
+                      <TableCell>{formatCurrency(order.total)}</TableCell>
+                      <TableCell>{formatDateTime(order.created_at)}</TableCell>
+                      <TableCell>{formatDateTime(order.updated_at)}</TableCell>
+                      <TableCell className="text-right space-x-2">
+                        {order.shopper_id && (warnings.some(w => w.type === 'shopping' || w.type === 'delivery')) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleCallShopper(order.shopper?.phone)}
+                            className="text-yellow-600 hover:text-yellow-700"
+                          >
+                            <Phone className="h-4 w-4 mr-1" />
+                            Call Shopper
+                          </Button>
+                        )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                          onClick={() => handleViewDetails(order)}
+                    >
+                      View Details
+                    </Button>
                   </TableCell>
                 </TableRow>
-                ))
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -213,12 +329,18 @@ const Orders = () => {
             onPageChange={setCurrentPage}
             onPageSizeChange={(size) => {
               setPageSize(size);
-              setCurrentPage(1); // Reset to first page when changing page size
+              setCurrentPage(1);
             }}
             totalItems={totalItems}
           />
         </Card>
       </div>
+
+      <OrderDetailsDrawer
+        order={selectedOrder}
+        open={isDrawerOpen}
+        onClose={handleCloseDrawer}
+      />
     </AdminLayout>
   );
 };

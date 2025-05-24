@@ -188,7 +188,7 @@ const Shoppers = () => {
                       <span className="capitalize">{shopper.onboarding_step}</span>
                   </TableCell>
                   <TableCell className="text-right">
-                      <Link href={`/shoppers/${shopper.id}`}>
+                      <Link href={`/shoppers/${shopper.user_id}`}>
                     <Button variant="ghost" size="sm">View Profile</Button>
                       </Link>
                   </TableCell>
