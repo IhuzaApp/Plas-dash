@@ -234,7 +234,7 @@ const Tickets: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <PageHeader 
+      <PageHeader 
           title="Tickets"
           description="Manage support tickets and delivery issues"
         />
@@ -289,11 +289,11 @@ const Tickets: React.FC = () => {
                     <div className="flex items-center">
                       <div className="w-2 h-2 rounded-full bg-red-500 mr-2" />
                       Urgent
-                    </div>
+      </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+          </div>
             <Button
               variant="outline"
               size="icon"
@@ -301,26 +301,26 @@ const Tickets: React.FC = () => {
               disabled={isRefreshing}
             >
               <RefreshCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
+          </Button>
+        </div>
+        
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Title</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
                   <TableHead>Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
                 {filteredTickets.map((ticket: CombinedTicket) => (
-                  <TableRow key={ticket.id}>
+                <TableRow key={ticket.id}>
                     <TableCell className="font-medium">
                       {ticket.type === 'support' ? `#${ticket.ticket_num}` : ticket.id.slice(0, 8)}
                     </TableCell>
@@ -330,7 +330,7 @@ const Tickets: React.FC = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>{getTicketTitle(ticket)}</TableCell>
-                    <TableCell>
+                  <TableCell>
                       <Badge 
                         variant="outline" 
                         className={`capitalize ${getPriorityColor(ticket.priority)}`}
@@ -342,13 +342,13 @@ const Tickets: React.FC = () => {
                             ticket.priority.toLowerCase() === 'medium' ? 'bg-yellow-500' :
                             'bg-green-500'
                           }`} />
-                          {ticket.priority}
+                      {ticket.priority}
                         </div>
                       </Badge>
-                    </TableCell>
-                    <TableCell>
+                  </TableCell>
+                  <TableCell>
                       <Badge className={`capitalize ${getStatusColor(ticket.status)}`}>
-                        {ticket.status}
+                      {ticket.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -356,8 +356,8 @@ const Tickets: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       {format(new Date(getTicketUpdateDate(ticket)), "MMM d, yyyy HH:mm")}
-                    </TableCell>
-                    <TableCell className="text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                       {ticket.status === 'pending' || ticket.status === 'open' ? (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -399,13 +399,13 @@ const Tickets: React.FC = () => {
                           View Details
                         </Button>
                       )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
             {renderPagination()}
-          </Card>
+        </Card>
         </div>
       </div>
 

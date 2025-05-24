@@ -2,16 +2,69 @@
 export const GET_USERS = `
   query GetUsers {
     Users {
-      id
-      name
       email
-      phone
-      role
-      password_hash
       created_at
-      updated_at
-      profile_picture
+      id
+      gender
       is_active
+      name
+      Addresses {
+        city
+        created_at
+        id
+        latitude
+        is_default
+        longitude
+        postal_code
+        street
+        updated_at
+        user_id
+      }
+      Invoices {
+        created_at
+        customer_id
+        delivery_fee
+        discount
+        id
+        invoice_items
+        invoice_number
+        order_id
+        service_fee
+        status
+        subtotal
+        tax
+        total_amount
+      }
+      Wallets {
+        available_balance
+        id
+        last_updated
+        reserved_balance
+        shopper_id
+      }
+      password_hash
+      phone
+      profile_picture
+      role
+      updated_at
+      shopper {
+        Employment_id
+        active
+        address
+        background_check_completed
+        created_at
+        driving_license
+        full_name
+        id
+        national_id
+        onboarding_step
+        phone_number
+        profile_photo
+        status
+        transport_mode
+        updated_at
+        user_id
+      }
     }
   }
 `;
@@ -333,11 +386,40 @@ export const GET_ALL_REFUNDS = `
 `;
 
 export const GET_USER_BY_ID = `
-  query GetUserById($id: Int!) {
-    users_by_pk(id: $id) {
+  query GetUserById($id: uuid!) {
+    Users_by_pk(id: $id) {
       id
       name
       email
+      phone
+      role
+      created_at
+      updated_at
+      profile_picture
+      is_active
+      address
+      is_shopper
+      Shopper {
+        id
+        rating
+        total_orders
+        transport_mode
+        background_check_completed
+        Employment_id
+      }
+      Orders(order_by: { created_at: desc }, limit: 5) {
+        id
+        OrderID
+        status
+        total
+        created_at
+      }
+      ActivityLogs(order_by: { created_at: desc }, limit: 10) {
+        id
+        type
+        description
+        created_at
+      }
     }
   }
 `;
@@ -614,7 +696,33 @@ export const GET_USER_DETAILS = `
       name
       email
       phone
+      role
+      is_active
       created_at
+      profile_picture
+      address
+      is_shopper
+      Shopper {
+        id
+        rating
+        total_orders
+        transport_mode
+        background_check_completed
+        Employment_id
+      }
+      Orders(order_by: { created_at: desc }, limit: 5) {
+        id
+        OrderID
+        status
+        total
+        created_at
+      }
+      ActivityLogs(order_by: { created_at: desc }, limit: 10) {
+        id
+        type
+        description
+        created_at
+      }
     }
   }
 `;

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { 
-  GET_SHOPPER_DETAILS, 
+  GET_SHOPPER_ONBOARDING_DETAILS, 
   GET_SHOPPER_WALLET, 
   GET_SHOPPER_ORDERS,
   GET_ORDER_PAYMENTS,
@@ -169,7 +169,7 @@ interface ShopperFullDetailsResponse {
 export function useShopperDetails(userId: uuid) {
   return useQuery<ShopperResponse>({
     queryKey: ['shopper', userId],
-    queryFn: () => hasuraRequest(GET_SHOPPER_DETAILS, { user_id: userId }),
+    queryFn: () => hasuraRequest(GET_SHOPPER_ONBOARDING_DETAILS, { user_id: userId }),
     enabled: !!userId,
   });
 }
