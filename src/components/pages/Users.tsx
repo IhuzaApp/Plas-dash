@@ -17,6 +17,7 @@ import { useUsers } from "@/hooks/useHasuraApi";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import Pagination from "@/components/ui/pagination";
+import UserDetailsDrawer from "@/components/drawers/UserDetailsDrawer";
 
 const Users = () => {
   const { data, isLoading, isError, error } = useUsers();
@@ -24,6 +25,8 @@ const Users = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const getInitials = (name: string) => {
     return name
@@ -53,6 +56,16 @@ const Users = () => {
   const endIndex = startIndex + pageSize;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
+  const handleViewProfile = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false);
+    setSelectedUserId(null);
+  };
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -78,8 +91,13 @@ const Users = () => {
     <AdminLayout>
       <PageHeader 
         title="Users" 
-        description="Manage your system users and their roles."
-        actions={<Button>Add New User</Button>}
+        description="View and manage user accounts."
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline">Export</Button>
+            <Button>Add User</Button>
+          </div>
+        }
       />
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -163,38 +181,52 @@ const Users = () => {
                     <TableCell>
                       <span className="capitalize">{user.role}</span>
                     </TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                    }`}>
-                        {user.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      }`}>
+                          {user.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </TableCell>
                     <TableCell>{user.phone}</TableCell>
                     <TableCell>
                       {format(new Date(user.created_at), 'MMM d, yyyy')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">View Profile</Button>
-                  </TableCell>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleViewProfile(user.id)}
+                      >
+                        View Profile
+                      </Button>
+                    </TableCell>
                 </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setCurrentPage(1); // Reset to first page when changing page size
-            }}
-            totalItems={totalItems}
-          />
+          <div className="p-4 border-t">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+              totalItems={totalItems}
+            />
+          </div>
         </Card>
       </div>
+
+      <UserDetailsDrawer
+        userId={selectedUserId}
+        open={isDrawerOpen}
+        onClose={handleCloseDrawer}
+      />
     </AdminLayout>
   );
 };

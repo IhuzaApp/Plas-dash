@@ -161,7 +161,16 @@ export interface SystemConfig {
 export function useUsers() {
   return useQuery<{ Users: User[] }, Error>({
     queryKey: ['users'],
-    queryFn: () => hasuraRequest(GET_USERS, {})
+    queryFn: () => hasuraRequest(GET_USERS, {}),
+    select: (data) => ({
+      Users: data.Users.map(user => ({
+        ...user,
+        Addresses: user.Addresses || [],
+        Invoices: user.Invoices || [],
+        Wallets: user.Wallets || [],
+        shopper: user.shopper || null
+      }))
+    })
   });
 }
 

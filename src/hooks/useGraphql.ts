@@ -56,12 +56,95 @@ export interface User {
   email: string;
   phone: string;
   role: string;
-  password_hash?: string;
+  gender: string | null;
   created_at: string;
   updated_at: string;
-  profile_picture?: string;
+  profile_picture: string | null;
+  password_hash: string;
   is_active: boolean;
-  gender?: string;
+  Addresses: Array<{
+    id: string;
+    user_id: string;
+    street: string;
+    city: string;
+    postal_code: string;
+    latitude: string;
+    longitude: string;
+    is_default: boolean;
+    created_at: string;
+    updated_at: string;
+  }>;
+  Invoices: Array<{
+    id: string;
+    customer_id: string;
+    order_id: string;
+    invoice_number: string;
+    invoice_items: any;
+    subtotal: string;
+    tax: string;
+    discount: string;
+    delivery_fee: string;
+    service_fee: string;
+    total_amount: string;
+    status: string;
+    created_at: string;
+  }>;
+  Wallets: Array<{
+    id: string;
+    shopper_id: string;
+    available_balance: string;
+    reserved_balance: string;
+    last_updated: string;
+  }>;
+  shopper: {
+    id: string;
+    user_id: string;
+    Employment_id: string;
+    full_name: string;
+    phone_number: string;
+    address: string;
+    profile_photo: string | null;
+    driving_license: string | null;
+    national_id: string;
+    transport_mode: string;
+    background_check_completed: boolean;
+    active: boolean;
+    status: string;
+    onboarding_step: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  Orders: Array<{
+    id: string;
+    OrderID: string;
+    status: string;
+    total: string;
+    created_at: string;
+    delivery_fee: string;
+    service_fee: string;
+    discount: string;
+    delivery_time: string | null;
+    delivery_notes: string | null;
+    delivery_photo_url: string | null;
+    delivery_address_id: string;
+    combined_order_id: string | null;
+    shop_id: string;
+    shopper_id: string;
+    user_id: string;
+    voucher_code: string | null;
+    found: boolean;
+    updated_at: string;
+  }>;
+  Shopper_Availabilities: Array<{
+    id: string;
+    user_id: string;
+    day_of_week: string;
+    start_time: string;
+    end_time: string;
+    is_available: boolean;
+    created_at: string;
+    updated_at: string;
+  }>;
 }
 
 export interface Product {
