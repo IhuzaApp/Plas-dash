@@ -270,4 +270,30 @@ export const ADD_PRODUCT = `
       updated_at
     }
   }
+`;
+
+export const UPDATE_TICKET = `
+  mutation UpdateTicket($id: uuid!, $status: String!, $update_on: timestamptz!) {
+    update_tickets_by_pk(
+      pk_columns: { id: $id }
+      _set: { status: $status, update_on: $update_on }
+    ) {
+      id
+      status
+      update_on
+    }
+  }
+`;
+
+export const UPDATE_DELIVERY_ISSUE = `
+  mutation UpdateDeliveryIssue($id: uuid!, $status: String!, $updated_at: timestamptz!) {
+    update_Delivery_Issues_by_pk(
+      pk_columns: { id: $id }
+      _set: { status: $status, updated_at: $updated_at }
+    ) {
+      id
+      status
+      updated_at
+    }
+  }
 `; 

@@ -435,8 +435,8 @@ export const GET_SYSTEM_CONFIG = `
 `;
 
 // Shopper Details Query
-export const GET_SHOPPER_DETAILS = `
-  query getShopperDetails($user_id: uuid!) {
+export const GET_SHOPPER_ONBOARDING_DETAILS = `
+  query getShopperOnboardingDetails($user_id: uuid!) {
     Users(where: { id: { _eq: $user_id } }) {
       id
       name
@@ -564,6 +564,86 @@ export const GET_SHOPPER_FULL_DETAILS = `
           reviewed_at
           shopper_id
           updated_at
+        }
+      }
+    }
+  }
+`;
+
+export const GET_ALL_TICKETS = `
+  query GetAllTickets($limit: Int!, $offset: Int!) {
+    tickets(limit: $limit, offset: $offset, order_by: { created_on: desc }) {
+      created_on
+      id
+      other_user_id
+      priority
+      status
+      subject
+      ticket_num
+      update_on
+      user_id
+    }
+    tickets_aggregate {
+      aggregate {
+        count
+      }
+    }
+    Delivery_Issues(limit: $limit, offset: $offset, order_by: { created_at: desc }) {
+      created_at
+      description
+      id
+      issue_type
+      order_id
+      priority
+      shopper_id
+      status
+      updated_at
+    }
+    Delivery_Issues_aggregate {
+      aggregate {
+        count
+      }
+    }
+  }
+`;
+
+export const GET_USER_DETAILS = `
+  query GetUserDetails($userId: uuid!) {
+    Users_by_pk(id: $userId) {
+      id
+      name
+      email
+      phone
+      created_at
+    }
+  }
+`;
+
+export const GET_TICKET_SHOPPER_DETAILS = `
+  query GetTicketShopperDetails($shopperId: uuid!) {
+    shoppers(where: { id: { _eq: $shopperId } }) {
+      id
+      full_name
+      phone_number
+      profile_photo
+      transport_mode
+      User {
+        id
+        name
+        email
+        phone
+        created_at
+      }
+      Orders_aggregate {
+        aggregate {
+          count
+        }
+      }
+      Ratings_aggregate {
+        aggregate {
+          avg {
+            rating
+          }
         }
       }
     }
