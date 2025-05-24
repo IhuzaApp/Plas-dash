@@ -526,8 +526,8 @@ export const GET_ORDER_PAYMENTS = `
 `;
 
 export const GET_SHOPPER_FULL_DETAILS = `
-  query getShopperFullDetails($shopper_id: uuid!) {
-    shoppers(where: { id: { _eq: $shopper_id } }) {
+  query getShopperFullDetails($user_id: uuid!) {
+    shoppers(where: { user_id: { _eq: $user_id } }) {
       active
       address
       background_check_completed

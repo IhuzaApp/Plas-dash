@@ -215,10 +215,10 @@ export function useUpdateShopperStatus() {
 }
 
 // Hook for fetching detailed shopper information
-export function useShopperFullDetails(shopperId: uuid) {
+export function useShopperFullDetails(userId: uuid) {
   return useQuery<ShopperFullDetailsResponse>({
-    queryKey: ['shopper-full-details', shopperId],
-    queryFn: () => hasuraRequest(GET_SHOPPER_FULL_DETAILS, { shopper_id: shopperId }),
-    enabled: !!shopperId,
+    queryKey: ['shopper-full-details', userId],
+    queryFn: () => hasuraRequest(GET_SHOPPER_FULL_DETAILS, { user_id: userId }),
+    enabled: !!userId,
   });
 } 
