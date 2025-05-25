@@ -270,33 +270,35 @@ export const GET_INVOICE_DETAILS = `
 export const GET_ALL_WALLETS = `
   query getAllwallets {
     Wallets {
+      id
       shopper_id
       reserved_balance
-      last_updated
-      id
       available_balance
+      last_updated
       User {
-        created_at
-        email
-        gender
         id
-        is_active
         name
-        password_hash
+        email
         phone
         profile_picture
-        role
-        updated_at
+        is_active
       }
       Wallet_Transactions {
-        amount
-        created_at
         id
-        related_order_id
-        status
+        amount
         type
-        wallet_id
+        status
+        created_at
       }
+    }
+    Orders(where: { status: { _neq: "cancelled" } }) {
+      id
+      shopper_id
+      total
+      status
+      delivery_fee
+      service_fee
+      created_at
     }
   }
 `;
