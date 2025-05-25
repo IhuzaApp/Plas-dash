@@ -337,31 +337,24 @@ export const GET_ALL_WALLET_TRANSACTIONS = `
       created_at
       amount
       Wallet {
-        shopper_id
-        reserved_balance
-        last_updated
         id
         available_balance
+        reserved_balance
+        last_updated
+        User {
+          id
+          name
+          email
+          phone
+          gender
+          profile_picture
+          is_active
+        }
       }
       Order {
         OrderID
-        updated_at
-        user_id
-        voucher_code
-        total
         status
-        shopper_id
-        shop_id
-        service_fee
-        id
-        discount
-        delivery_time
-        delivery_photo_url
-        delivery_notes
-        delivery_fee
-        delivery_address_id
-        created_at
-        combined_order_id
+        total
       }
     }
   }

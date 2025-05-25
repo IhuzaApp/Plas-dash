@@ -13,6 +13,12 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   AreaChart,
   Area,
   XAxis,
@@ -26,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ProcessPayoutDrawer from "@/components/wallet/ProcessPayoutDrawer";
 import { useWalletTransactions, useSystemConfig } from "@/hooks/useHasuraApi";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye } from "lucide-react";
 import Pagination from "@/components/ui/pagination";
 
 const companyData = [
@@ -46,12 +52,153 @@ const shopperWallets = [
   { id: 5, shopper: "James Wilson", balance: "$1,890.25", earnings: "$15,780.00", pendingPayment: "$180.00", status: "Active" },
 ];
 
+// Helper functions moved outside components
+const getStatusBadge = (status: string) => {
+  const statusLower = status.toLowerCase();
+  switch (statusLower) {
+    case "completed":
+    case "success":
+      return "bg-green-100 text-green-800";
+    case "pending":
+      return "bg-yellow-100 text-yellow-800";
+    case "failed":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+const getTypeBadge = (type: string) => {
+  const typeLower = type.toLowerCase();
+  switch (typeLower) {
+    case "reserve":
+      return "bg-blue-100 text-blue-800";
+    case "earnings":
+      return "bg-green-100 text-green-800";
+    case "payment":
+      return "bg-purple-100 text-purple-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+const TransactionDetailsDialog = ({ 
+  isOpen, 
+  onClose, 
+  transaction,
+  formatCurrency 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  transaction: any;
+  formatCurrency: (amount: string) => string;
+}) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Transaction Details</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <div className="font-semibold">Transaction ID:</div>
+            <div className="col-span-3">#{transaction.id}</div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <div className="font-semibold">Date:</div>
+            <div className="col-span-3">
+              {format(new Date(transaction.created_at), "PPpp")}
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <div className="font-semibold">Amount:</div>
+            <div className="col-span-3">{formatCurrency(transaction.amount)}</div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <div className="font-semibold">Type:</div>
+            <div className="col-span-3">
+              <Badge className={getTypeBadge(transaction.type)}>
+                {transaction.type}
+              </Badge>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <div className="font-semibold">Status:</div>
+            <div className="col-span-3">
+              <Badge className={getStatusBadge(transaction.status)}>
+                {transaction.status}
+              </Badge>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <div className="font-semibold">Wallet:</div>
+            <div className="col-span-3">
+              Wallet #{transaction.wallet_id}
+              <div className="text-sm text-muted-foreground">
+                Balance: {formatCurrency(transaction.Wallet?.available_balance || "0")}
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <div className="font-semibold">Wallet Owner:</div>
+            <div className="col-span-3">
+              {transaction.Wallet?.User ? (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    {transaction.Wallet.User.profile_picture && (
+                      <img 
+                        src={transaction.Wallet.User.profile_picture} 
+                        alt="Profile" 
+                        className="w-6 h-6 rounded-full"
+                      />
+                    )}
+                    <span>{transaction.Wallet.User.name}</span>
+                    {!transaction.Wallet.User.is_active && (
+                      <Badge variant="outline" className="text-red-500">Inactive</Badge>
+                    )}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Email: {transaction.Wallet.User.email}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Phone: {transaction.Wallet.User.phone}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Gender: {transaction.Wallet.User.gender}
+                  </div>
+                </div>
+              ) : (
+                'N/A'
+              )}
+            </div>
+          </div>
+          {transaction.Order && (
+            <>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-semibold">Related Order:</div>
+                <div className="col-span-3">#{transaction.Order.OrderID}</div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-semibold">Order Status:</div>
+                <div className="col-span-3">
+                  <Badge>{transaction.Order.status}</Badge>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const Wallets = () => {
   const { data: transactionsData, isLoading: isLoadingTransactions } = useWalletTransactions();
   const { data: systemConfig } = useSystemConfig();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const itemsPerPage = 5;
 
   const formatCurrency = (amount: string) => {
@@ -63,35 +210,6 @@ const Wallets = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(num);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusLower = status.toLowerCase();
-    switch (statusLower) {
-      case "completed":
-      case "success":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "failed":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getTypeBadge = (type: string) => {
-    const typeLower = type.toLowerCase();
-    switch (typeLower) {
-      case "reserve":
-        return "bg-blue-100 text-blue-800";
-      case "earnings":
-        return "bg-green-100 text-green-800";
-      case "payment":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
   };
 
   const filteredTransactions = transactionsData?.Wallet_Transactions.filter(transaction => {
@@ -215,12 +333,13 @@ const Wallets = () => {
                       <TableHead>Type</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Order ID</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoadingTransactions ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24">
+                        <TableCell colSpan={7} className="h-24">
                           <div className="flex items-center justify-center">
                             <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
                           </div>
@@ -228,7 +347,7 @@ const Wallets = () => {
                       </TableRow>
                     ) : filteredTransactions.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                           No transactions found
                         </TableCell>
                       </TableRow>
@@ -251,6 +370,16 @@ const Wallets = () => {
                           <TableCell>
                             {transaction.Order ? `#${transaction.Order.OrderID}` : 'N/A'}
                           </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedTransaction(transaction)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View More
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -271,6 +400,15 @@ const Wallets = () => {
                       }}
                     />
                   </div>
+                )}
+
+                {selectedTransaction && (
+                  <TransactionDetailsDialog
+                    isOpen={!!selectedTransaction}
+                    onClose={() => setSelectedTransaction(null)}
+                    transaction={selectedTransaction}
+                    formatCurrency={formatCurrency}
+                  />
                 )}
               </CardContent>
             </Card>
