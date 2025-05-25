@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import {
   Drawer,
   DrawerClose,
@@ -27,8 +26,19 @@ import * as z from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { CreditCard, DollarSign, Wallet } from "lucide-react";
+import { useWallets, useSystemConfig } from "@/hooks/useHasuraApi";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
+  userId: z.string({
+    required_error: "Please select a user",
+  }),
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
     message: "Amount must be a positive number",
   }),
@@ -41,20 +51,44 @@ interface ProcessPayoutDrawerProps {
 }
 
 const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
+  const { data: walletsData, isLoading: isLoadingWallets } = useWallets();
+  const { data: systemConfig } = useSystemConfig();
+  const [selectedWallet, setSelectedWallet] = useState<any>(null);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      userId: "",
       amount: "",
       paymentMethod: "bank",
       notes: "",
     },
   });
 
+  const formatCurrency = (amount: string) => {
+    const num = parseFloat(amount);
+    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(num);
+  };
+
+  const handleUserChange = (userId: string) => {
+    const wallet = walletsData?.Wallets.find(
+      (w: any) => w.User?.id === userId
+    );
+    setSelectedWallet(wallet);
+    if (wallet) {
+      form.setValue("amount", wallet.available_balance || "0");
+    }
+  };
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     // Here you would handle the payout processing
-    // For now, we'll just log the values and close the drawer
-    // In a real app, you would call an API to process the payment
   }
 
   return (
@@ -72,16 +106,65 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-6">
               <FormField
                 control={form.control}
+                name="userId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select User</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handleUserChange(value);
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a user" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {walletsData?.Wallets.map((wallet: any) => (
+                          wallet.User && (
+                            <SelectItem key={wallet.User.id} value={wallet.User.id}>
+                              <div className="flex items-center gap-2">
+                                {wallet.User.profile_picture && (
+                                  <img
+                                    src={wallet.User.profile_picture}
+                                    alt="Profile"
+                                    className="w-6 h-6 rounded-full"
+                                  />
+                                )}
+                                <div>
+                                  <div className="font-medium">{wallet.User.name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    Balance: {formatCurrency(wallet.available_balance || "0")}
+                                  </div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          )
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Total Amount</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                          {systemConfig?.System_configuratioins[0]?.currency || 'RWF'}
+                        </span>
                         <Input
                           placeholder="0.00"
-                          className="pl-10"
+                          className="pl-16"
                           {...field}
                         />
                       </div>

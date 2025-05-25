@@ -31,9 +31,10 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ProcessPayoutDrawer from "@/components/wallet/ProcessPayoutDrawer";
-import { useWalletTransactions, useSystemConfig } from "@/hooks/useHasuraApi";
+import { useWalletTransactions, useSystemConfig, useWallets } from "@/hooks/useHasuraApi";
 import { Loader2, Eye } from "lucide-react";
 import Pagination from "@/components/ui/pagination";
+import { formatDistanceToNow } from "date-fns";
 
 const companyData = [
   { name: "Jan", amount: 4000 },
@@ -200,6 +201,7 @@ const Wallets = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const itemsPerPage = 5;
+  const { data: walletsData, isLoading: isLoadingWallets } = useWallets();
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -225,6 +227,34 @@ const Wallets = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+  const calculateTotalEarnings = (orders: any[], shopperId: string) => {
+    if (!orders || !Array.isArray(orders)) return 0;
+    
+    const shopperOrders = orders.filter(order => order.shopper_id === shopperId);
+    
+    return shopperOrders.reduce((total, order) => {
+      const status = order.status.toLowerCase();
+      if (status === "completed" || status === "delivered") {
+        const deliveryFee = parseFloat(order.delivery_fee || "0");
+        const serviceFee = parseFloat(order.service_fee || "0");
+        console.log('Order fees:', {
+          orderId: order.id,
+          shopperId: order.shopper_id,
+          deliveryFee,
+          serviceFee,
+          status: order.status,
+          total: deliveryFee + serviceFee
+        });
+        return total + deliveryFee + serviceFee;
+      }
+      return total;
+    }, 0);
+  };
+
+  const calculatePendingPayment = (availableBalance: string) => {
+    return parseFloat(availableBalance);
+  };
 
   return (
     <AdminLayout>
@@ -430,31 +460,104 @@ const Wallets = () => {
                   <TableRow>
                     <TableHead>Shopper</TableHead>
                     <TableHead>Current Balance</TableHead>
+                    <TableHead>Reserved Balance</TableHead>
                     <TableHead>Total Earnings</TableHead>
                     <TableHead>Pending Payment</TableHead>
+                    <TableHead>Last Updated</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {shopperWallets.map((wallet) => (
-                    <TableRow key={wallet.id}>
-                      <TableCell className="font-medium">{wallet.shopper}</TableCell>
-                      <TableCell>{wallet.balance}</TableCell>
-                      <TableCell>{wallet.earnings}</TableCell>
-                      <TableCell>{wallet.pendingPayment}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          wallet.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                        }`}>
-                          {wallet.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">View History</Button>
+                  {isLoadingWallets ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="h-24">
+                        <div className="flex items-center justify-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : walletsData?.Wallets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                        No wallets found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    walletsData?.Wallets.map((wallet: any) => {
+                      const user = wallet.User;
+                      if (!user) return null;
+
+                      const allOrders = (walletsData as any)?.Orders || [];
+                      
+                      console.log('Processing wallet:', {
+                        userId: user.id,
+                        shopperId: wallet.shopper_id,
+                        orders: allOrders
+                      });
+                      
+                      const totalEarnings = calculateTotalEarnings(allOrders, wallet.shopper_id);
+                      const pendingPayment = calculatePendingPayment(wallet.available_balance || "0");
+                      
+                      const completedOrders = allOrders.filter(
+                        (order: any) => 
+                          order.shopper_id === wallet.shopper_id && 
+                          order.status.toLowerCase() === "delivered"
+                      );
+
+                      const totalOrders = allOrders.filter(
+                        (order: any) => order.shopper_id === wallet.shopper_id
+                      );
+
+                      return (
+                        <TableRow key={wallet.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {user.profile_picture && (
+                                <img 
+                                  src={user.profile_picture} 
+                                  alt="Profile" 
+                                  className="w-8 h-8 rounded-full"
+                                />
+                              )}
+                              <div>
+                                <div className="font-medium">{user.name}</div>
+                                <div className="text-sm text-muted-foreground">{user.email}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{formatCurrency(wallet.available_balance || "0")}</TableCell>
+                          <TableCell>{formatCurrency(wallet.reserved_balance || "0")}</TableCell>
+                          <TableCell>
+                            <div className="font-medium">{formatCurrency(totalEarnings.toString())}</div>
+                            <div className="text-xs text-muted-foreground">
+                              From {completedOrders.length} delivered orders
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Total orders: {totalOrders.length}
+                            </div>
+                          </TableCell>
+                          <TableCell>{formatCurrency(pendingPayment.toString())}</TableCell>
+                          <TableCell>
+                            {wallet.last_updated ? 
+                              formatDistanceToNow(new Date(wallet.last_updated), { addSuffix: true }) :
+                              'Never'
+                            }
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={user.is_active ? "default" : "secondary"}>
+                              {user.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">
+                              View History
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </Card>
