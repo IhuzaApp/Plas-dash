@@ -274,19 +274,19 @@ const Wallets = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm font-medium text-muted-foreground">Total Balance</div>
-                <div className="text-3xl font-bold">$45,245.00</div>
+                <div className="text-3xl font-bold">{formatCurrency("45245.00")}</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm font-medium text-muted-foreground">Monthly Revenue</div>
-                <div className="text-3xl font-bold">$12,345.00</div>
+                <div className="text-3xl font-bold">{formatCurrency("12345.00")}</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm font-medium text-muted-foreground">Pending Payouts</div>
-                <div className="text-3xl font-bold">$5,280.00</div>
+                <div className="text-3xl font-bold">{formatCurrency("5280.00")}</div>
               </CardContent>
             </Card>
           </div>
