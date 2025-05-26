@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import {
   CommandDialog,
@@ -286,6 +288,11 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
     setSearchValue("");
   };
 
+  const runCommand = React.useCallback((command: () => unknown) => {
+    onOpenChange(false);
+    command();
+  }, [onOpenChange]);
+
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <DialogTitle className="sr-only">Search</DialogTitle>
@@ -393,6 +400,46 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
             ))}
           </CommandGroup>
         )}
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Suggestions">
+          <CommandItem
+            onSelect={() => runCommand(() => router.push('/orders'))}
+          >
+            Orders
+          </CommandItem>
+          <CommandItem
+            onSelect={() => runCommand(() => router.push('/shoppers'))}
+          >
+            Shoppers
+          </CommandItem>
+          <CommandItem
+            onSelect={() => runCommand(() => router.push('/users'))}
+          >
+            Users
+          </CommandItem>
+          <CommandItem
+            onSelect={() => runCommand(() => router.push('/shops'))}
+          >
+            Shops
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Settings">
+          <CommandItem
+            onSelect={() => runCommand(() => router.push('/settings'))}
+          >
+            Settings
+          </CommandItem>
+          <CommandItem
+            onSelect={() => runCommand(() => router.push('/help'))}
+          >
+            Help
+          </CommandItem>
+        </CommandGroup>
       </CommandList>
     </CommandDialog>
   );

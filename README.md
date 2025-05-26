@@ -131,6 +131,67 @@ Manage system-wide configurations:
 - Notification preferences
 - API integrations
 
+## TopShoppers Performance Metrics
+
+The TopShoppers component displays the best-performing delivery personnel based on several key metrics:
+
+### Delivery Time Target
+- Maximum acceptable delivery time: 1 hour and 30 minutes (90 minutes)
+- Each delivery is tracked from order creation to completion
+
+### Performance Calculation
+1. **On-Time Delivery Percentage**
+   - Primary ranking metric
+   - Calculated as: (Number of on-time deliveries / Total deliveries) × 100
+   - On-time means delivered within 90 minutes
+
+2. **Order Volume**
+   - Secondary ranking metric
+   - Total number of completed deliveries
+   - Used as a tiebreaker for same on-time percentage
+
+3. **Customer Rating**
+   - Tertiary ranking metric
+   - Average of all order ratings
+   - Used as final tiebreaker
+
+### Performance Badges
+
+Shoppers are awarded badges based on their on-time delivery percentage:
+
+| Badge | Threshold | Description | Visual Indicator |
+|-------|-----------|-------------|------------------|
+| 🏆 Elite | 95%+ | Exceptional performance, consistently delivers on time | Green badge |
+| ⭐ Great | 90-94% | Very reliable, rarely delivers late | Blue badge |
+| 👍 Good | 80-89% | Meets expectations, generally reliable | Yellow badge |
+| ⚠️ Needs Work | 70-79% | Below target, improvement needed | Orange badge |
+| ❌ Poor | <70% | Significantly below expectations | Red badge |
+
+### Time Period Filters
+Users can view performance over different time periods:
+- Last 7 days
+- Last 14 days
+- Last 30 days
+- Last 90 days
+
+### Display Information
+For each top shopper, the following information is shown:
+- Name and profile picture
+- Performance badge
+- Online/offline status
+- Total orders completed
+- On-time delivery percentage
+- Total earnings
+- Average customer rating
+
+### Ranking Algorithm
+Shoppers are ranked using the following priority:
+1. Highest on-time delivery percentage
+2. Most orders delivered (for same on-time percentage)
+3. Highest average rating (for same order count)
+
+Only active shoppers with completed deliveries in the selected time period are included in the rankings.
+
 ## Contributing
 
 1. Fork the repository

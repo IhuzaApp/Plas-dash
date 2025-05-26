@@ -752,3 +752,37 @@ export const GET_TICKET_SHOPPER_DETAILS = `
     }
   }
 `;
+
+export const GET_TOP_SHOPPERS = `
+  query TopShoppers($start: timestamptz!, $end: timestamptz!) {
+    Users(
+      where: {
+        shopper: {active: {_eq: true}}
+      }
+    ) {
+      id
+      name
+      profile_picture
+      shopper {
+        id
+        active
+        status
+      }
+      Orders(
+        where: {
+          created_at: {_gte: $start, _lte: $end},
+          status: {_eq: "delivered"}
+        }
+      ) {
+        id
+        created_at
+        updated_at
+        delivery_fee
+        service_fee
+        Ratings {
+          rating
+        }
+      }
+    }
+  }
+`;
