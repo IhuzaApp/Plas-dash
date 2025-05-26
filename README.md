@@ -1,108 +1,148 @@
-# Welcome to your Lovable project
+# Plas Dashboard
 
-## Project info
+A modern, feature-rich dashboard for managing delivery operations, point of sale, and financial transactions.
 
-**URL**: https://lovable.dev/projects/49c5cd38-095d-43d5-bcdc-7f3bd9c89d8b
+## Features
 
-## How can I edit this code?
+- 📊 **Real-time Analytics Dashboard**
+  - Order statistics and trends
+  - Revenue tracking
+  - Shopper performance metrics
 
-There are several ways of editing your application.
+- 🛍️ **Order Management**
+  - Real-time order tracking
+  - Order details and history
+  - Status updates and notifications
 
-**Use Lovable**
+- 💰 **Financial Management**
+  - Wallet management
+  - Refund processing
+  - Transaction history
+  - Financial reporting
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/49c5cd38-095d-43d5-bcdc-7f3bd9c89d8b) and start prompting.
+- 🏪 **Point of Sale (POS)**
+  - Shop management
+  - Inventory tracking
+  - Staff management
+  - Transaction processing
 
-Changes made via Lovable will be committed automatically to this repo.
+- 🚚 **Delivery Operations**
+  - Shopper management
+  - Delivery zone configuration
+  - Pricing and fee structure
+  - Scheduled deliveries
 
-**Use your preferred IDE**
+- 🎯 **Customer Support**
+  - Ticket management
+  - Customer feedback
+  - Issue resolution tracking
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Framework**: Next.js 14
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: Radix UI
+- **State Management**: TanStack Query
+- **API**: GraphQL with Hasura
+- **Authentication**: Built-in auth system
+- **Charts**: Recharts
+- **Forms**: React Hook Form + Zod
 
-Follow these steps:
+## Getting Started
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Prerequisites
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Node.js 18+ 
+- Yarn package manager
+- Hasura GraphQL endpoint
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/plas-dash.git
+   cd plas-dash
+   ```
+
+2. Install dependencies:
+   ```bash
+   yarn install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Fill in your environment variables:
+   ```env
+   HASURA_GRAPHQL_URL=your_hasura_endpoint
+   HASURA_GRAPHQL_ADMIN_SECRET=your_admin_secret
+   ```
+
+4. Start the development server:
+   ```bash
+   yarn dev
+   ```
+
+### Available Scripts
+
+- `yarn dev` - Start development server
+- `yarn build` - Build for production
+- `yarn start` - Start production server
+- `yarn lint` - Run ESLint
+- `yarn format` - Format code with Prettier
+- `yarn format:check` - Check code formatting
+
+## Project Structure
+
+```
+src/
+├── app/                 # Next.js app router pages
+├── components/
+│   ├── dashboard/      # Dashboard-specific components
+│   ├── layout/         # Layout components
+│   ├── pages/          # Page components
+│   └── ui/             # Reusable UI components
+├── hooks/              # Custom React hooks
+├── lib/                # Utility functions and configurations
+├── graphql/            # GraphQL queries and mutations
+└── styles/             # Global styles and Tailwind config
 ```
 
-**Edit a file directly in GitHub**
+## Configuration
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Delivery Settings
 
-**Use GitHub Codespaces**
+Configure delivery-related settings in the admin panel:
+- Base delivery fee
+- Service fee
+- Distance surcharge
+- Rush hour settings
+- Delivery zones
+- Time slots
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### System Settings
 
-## What technologies are used for this project?
+Manage system-wide configurations:
+- Currency settings
+- Payment methods
+- User roles
+- Notification preferences
+- API integrations
 
-This project is built with:
+## Contributing
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-- Apollo Client
-- GraphQL with Hasura
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## GraphQL with Hasura Setup
+## License
 
-This project uses Apollo Client to connect to a Hasura GraphQL API. Here's how it's configured:
+This project is proprietary software. All rights reserved.
 
-### Environment Variables
+## Support
 
-Create a `.env` file in the root directory with the following variables:
-
-```
-VITE_HASURA_GRAPHQL_URL=your-hasura-endpoint
-VITE_HASURA_ADMIN_SECRET=your-hasura-admin-secret
-```
-
-### GraphQL Client
-
-The Apollo Client is configured in `src/lib/graphql.ts` and is automatically connected to your React application in `src/main.tsx`.
-
-### Making GraphQL Queries
-
-Sample queries are located in `src/lib/graphql/queries.ts`. Use the custom hooks in `src/hooks/useGraphql.ts` to execute queries and mutations:
-
-```tsx
-// Example usage in a component
-import { useGraphqlQuery } from '../hooks/useGraphql';
-import { GET_USERS } from '../lib/graphql/queries';
-
-function MyComponent() {
-  const { loading, error, data } = useGraphqlQuery(GET_USERS);
-
-  // Use the data...
-}
-```
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/49c5cd38-095d-43d5-bcdc-7f3bd9c89d8b) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+For support, please contact our team at support@example.com or open an issue in the repository.
