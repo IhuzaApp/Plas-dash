@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { subDays, parseISO, differenceInMinutes } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
+import { useSystemConfig } from '@/hooks/useHasuraApi';
 
 interface Rating {
   rating: number;
@@ -119,6 +120,7 @@ const getPerformanceTier = (onTimePercentage: number) => {
 
 const TopShoppers = () => {
   const [selectedRange, setSelectedRange] = React.useState('30');
+  const { data: systemConfig } = useSystemConfig();
 
   // Calculate date range
   const dateRange = React.useMemo(() => {
@@ -139,6 +141,14 @@ const TopShoppers = () => {
       return response;
     },
   });
+
+  const formatCurrency = (amount: number) => {
+    const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  };
 
   const calculateShopperPerformance = (shoppers: TopShopperData['Users']): ShopperPerformance[] => {
     return shoppers
@@ -291,7 +301,7 @@ const TopShoppers = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-medium">${shopper.totalEarnings.toFixed(2)}</div>
+                  <div className="font-medium">{formatCurrency(shopper.totalEarnings)}</div>
                   <div className="text-xs text-muted-foreground flex items-center justify-end">
                     <span className="mr-1">⭐</span>
                     {shopper.averageRating === null ? 'New' : shopper.averageRating.toFixed(1)}
