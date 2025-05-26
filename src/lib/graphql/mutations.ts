@@ -296,4 +296,17 @@ export const UPDATE_DELIVERY_ISSUE = `
       updated_at
     }
   }
+`;
+
+export const UPDATE_REFUND_STATUS = `
+  mutation UpdateRefundStatus($id: uuid!, $status: String!, $update_on: timestamptz!) {
+    update_Refunds_by_pk(
+      pk_columns: { id: $id }
+      _set: { status: $status, update_on: $update_on }
+    ) {
+      id
+      status
+      update_on
+    }
+  }
 `; 
