@@ -19,6 +19,14 @@ import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import UserDetailsDrawer from '@/components/drawers/UserDetailsDrawer';
 
+// Add styles for the highlight effect
+const styles = `
+  .bg-green-100 {
+    background-color: rgba(167, 243, 208, 0.5) !important;
+    transition: background-color 1s ease-in-out;
+  }
+`;
+
 const Users = () => {
   const { data, isLoading, isError, error } = useUsers();
   const users = data?.Users || [];
@@ -96,6 +104,7 @@ const Users = () => {
 
   return (
     <AdminLayout>
+      <style>{styles}</style>
       <PageHeader
         title="Users"
         description="View and manage user accounts."
@@ -174,7 +183,11 @@ const Users = () => {
                 </TableRow>
               ) : (
                 currentUsers.map(user => (
-                  <TableRow key={user.id}>
+                  <TableRow 
+                    key={user.id}
+                    id={`user-${user.id}`}
+                    className="transition-all duration-1000 hover:bg-muted/50"
+                  >
                     <TableCell className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={user.profile_picture || undefined} />

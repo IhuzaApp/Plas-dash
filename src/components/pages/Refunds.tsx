@@ -3,12 +3,12 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
@@ -112,11 +112,11 @@ const Refunds = () => {
 
   return (
     <AdminLayout>
-      <PageHeader
-        title="Refund Claims"
+      <PageHeader 
+        title="Refund Claims" 
         description="Manage and process customer refund requests."
       />
-
+      
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
@@ -163,7 +163,7 @@ const Refunds = () => {
           </CardContent>
         </Card>
       </div>
-
+      
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
@@ -182,7 +182,7 @@ const Refunds = () => {
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
-
+        
         <Card>
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
@@ -190,19 +190,19 @@ const Refunds = () => {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Refund ID</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Refund ID</TableHead>
                     <TableHead>Order ID</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
                     <TableHead>Payment Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
                   {currentRefunds.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center">
@@ -211,18 +211,18 @@ const Refunds = () => {
                     </TableRow>
                   ) : (
                     currentRefunds.map(refund => (
-                      <TableRow key={refund.id}>
+                <TableRow key={refund.id}>
                         <TableCell className="font-medium">{refund.id.slice(0, 8)}</TableCell>
                         <TableCell>{refund.order_id.slice(0, 8)}</TableCell>
                         <TableCell>{formatCurrency(refund.amount)}</TableCell>
                         <TableCell>{format(new Date(refund.created_at), 'MMM dd, yyyy')}</TableCell>
-                        <TableCell>
+                  <TableCell>
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(refund.status)}`}
                           >
-                            {refund.status}
-                          </span>
-                        </TableCell>
+                      {refund.status}
+                    </span>
+                  </TableCell>
                         <TableCell>
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -234,7 +234,7 @@ const Refunds = () => {
                             {refund.paid ? 'Paid' : 'Pending'}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right">
+                  <TableCell className="text-right">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -242,12 +242,12 @@ const Refunds = () => {
                           >
                             Details
                           </Button>
-                        </TableCell>
-                      </TableRow>
+                  </TableCell>
+                </TableRow>
                     ))
                   )}
-                </TableBody>
-              </Table>
+            </TableBody>
+          </Table>
 
               <div className="p-4 border-t">
                 <div className="flex justify-between items-center">
