@@ -4,4 +4,4 @@ const config = {
   hasuraAdminSecret: process.env.HASURA_GRAPHQL_ADMIN_SECRET,
 };
 
-export default config; 
+export default config;

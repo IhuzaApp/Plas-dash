@@ -11,19 +11,18 @@ import { useState } from 'react';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        refetchOnWindowFocus: false,
-        retry: 1,
-      },
-    },
-  }));
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      })
+  );
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -36,8 +35,8 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <TooltipProvider>
-            {children}
-            <Toaster />
+              {children}
+              <Toaster />
               <Sonner />
             </TooltipProvider>
           </ThemeProvider>
@@ -45,4 +44,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-} 
+}

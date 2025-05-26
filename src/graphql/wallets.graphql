@@ -42,11 +42,7 @@ query getShopperWallet($shopper_id: uuid!) {
 
 mutation createWallet($shopper_id: uuid!) {
   insert_Wallets_one(
-    object: {
-      shopper_id: $shopper_id
-      available_balance: "0"
-      reserved_balance: "0"
-    }
+    object: { shopper_id: $shopper_id, available_balance: "0", reserved_balance: "0" }
   ) {
     id
     shopper_id

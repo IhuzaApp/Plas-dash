@@ -1,58 +1,57 @@
-
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const orderStatusColors: Record<string, string> = {
-  completed: "bg-green-500",
-  active: "bg-blue-500",
-  pending: "bg-yellow-500",
-  cancelled: "bg-red-500",
+  completed: 'bg-green-500',
+  active: 'bg-blue-500',
+  pending: 'bg-yellow-500',
+  cancelled: 'bg-red-500',
 };
 
 interface Order {
   id: string;
   customer: string;
   total: string;
-  status: "completed" | "active" | "pending" | "cancelled";
+  status: 'completed' | 'active' | 'pending' | 'cancelled';
   date: string;
 }
 
 const recentOrders: Order[] = [
   {
-    id: "ORD-7892",
-    customer: "John Smith",
-    total: "$56.34",
-    status: "completed",
-    date: "Just now",
+    id: 'ORD-7892',
+    customer: 'John Smith',
+    total: '$56.34',
+    status: 'completed',
+    date: 'Just now',
   },
   {
-    id: "ORD-7891",
-    customer: "Jane Davis",
-    total: "$125.99",
-    status: "active",
-    date: "5 min ago",
+    id: 'ORD-7891',
+    customer: 'Jane Davis',
+    total: '$125.99',
+    status: 'active',
+    date: '5 min ago',
   },
   {
-    id: "ORD-7890",
-    customer: "Robert Johnson",
-    total: "$42.50",
-    status: "pending",
-    date: "10 min ago",
+    id: 'ORD-7890',
+    customer: 'Robert Johnson',
+    total: '$42.50',
+    status: 'pending',
+    date: '10 min ago',
   },
   {
-    id: "ORD-7889",
-    customer: "Emily Wilson",
-    total: "$75.20",
-    status: "completed",
-    date: "25 min ago",
+    id: 'ORD-7889',
+    customer: 'Emily Wilson',
+    total: '$75.20',
+    status: 'completed',
+    date: '25 min ago',
   },
   {
-    id: "ORD-7888",
-    customer: "Michael Brown",
-    total: "$19.99",
-    status: "cancelled",
-    date: "1 hour ago",
+    id: 'ORD-7888',
+    customer: 'Michael Brown',
+    total: '$19.99',
+    status: 'cancelled',
+    date: '1 hour ago',
   },
 ];
 
@@ -64,7 +63,7 @@ const RecentOrders = () => {
       </CardHeader>
       <CardContent className="px-0">
         <div className="space-y-0">
-          {recentOrders.map((order) => (
+          {recentOrders.map(order => (
             <div
               key={order.id}
               className="flex items-center justify-between px-6 py-3 hover:bg-muted/50"
@@ -79,15 +78,11 @@ const RecentOrders = () => {
                     {order.status}
                   </Badge>
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {order.customer}
-                </span>
+                <span className="text-sm text-muted-foreground">{order.customer}</span>
               </div>
               <div className="text-right">
                 <div className="font-medium">{order.total}</div>
-                <div className="text-xs text-muted-foreground">
-                  {order.date}
-                </div>
+                <div className="text-xs text-muted-foreground">{order.date}</div>
               </div>
             </div>
           ))}

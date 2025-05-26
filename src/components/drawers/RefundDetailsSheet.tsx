@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Sheet,
   SheetContent,
@@ -6,18 +6,18 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from "@/components/ui/sheet";
-import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { hasuraRequest } from "@/lib/hasura";
-import { UPDATE_REFUND_STATUS } from "@/lib/graphql/mutations";
-import { toast } from "sonner";
-import { Loader2, CheckCircle2, XCircle, Search } from "lucide-react";
-import { useSystemConfig } from "@/hooks/useHasuraApi";
+} from '@/components/ui/sheet';
+import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { hasuraRequest } from '@/lib/hasura';
+import { UPDATE_REFUND_STATUS } from '@/lib/graphql/mutations';
+import { toast } from 'sonner';
+import { Loader2, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
 
 interface RefundDetailsSheetProps {
   refund: {
@@ -43,11 +43,7 @@ interface UpdateRefundResponse {
   };
 }
 
-const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({
-  refund,
-  open,
-  onClose,
-}) => {
+const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({ refund, open, onClose }) => {
   const queryClient = useQueryClient();
   const { data: systemConfig } = useSystemConfig();
 
@@ -58,7 +54,7 @@ const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(num);
   };
 
@@ -75,11 +71,11 @@ const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["refunds"] });
-      toast.success("Refund status updated successfully");
+      queryClient.invalidateQueries({ queryKey: ['refunds'] });
+      toast.success('Refund status updated successfully');
     },
-    onError: (error) => {
-      toast.error("Failed to update refund status: " + error.message);
+    onError: error => {
+      toast.error('Failed to update refund status: ' + error.message);
     },
   });
 
@@ -90,19 +86,19 @@ const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({
 
   if (!refund) return null;
 
-  const isPending = refund.status.toLowerCase() === "pending";
-  const isInReview = refund.status.toLowerCase() === "in_review";
+  const isPending = refund.status.toLowerCase() === 'pending';
+  const isInReview = refund.status.toLowerCase() === 'in_review';
 
   const getStatusBadgeStyle = (status: string) => {
     switch (status.toLowerCase()) {
-      case "approved":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "in_review":
-        return "bg-blue-100 text-blue-800";
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      case 'in_review':
+        return 'bg-blue-100 text-blue-800';
       default:
-        return "bg-yellow-100 text-yellow-800";
+        return 'bg-yellow-100 text-yellow-800';
     }
   };
 
@@ -111,9 +107,7 @@ const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Refund Details</SheetTitle>
-          <SheetDescription>
-            Refund request details and status information
-          </SheetDescription>
+          <SheetDescription>Refund request details and status information</SheetDescription>
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
@@ -156,21 +150,19 @@ const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Status</span>
-                <Badge className={getStatusBadgeStyle(refund.status)}>
-                  {refund.status}
-                </Badge>
+                <Badge className={getStatusBadgeStyle(refund.status)}>{refund.status}</Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Payment Status</span>
-                <Badge variant={refund.paid ? "default" : "outline"}>
-                  {refund.paid ? "Paid" : "Pending"}
+                <Badge variant={refund.paid ? 'default' : 'outline'}>
+                  {refund.paid ? 'Paid' : 'Pending'}
                 </Badge>
               </div>
               {isPending && (
                 <div className="flex gap-2 mt-4 justify-end">
                   <Button
                     size="sm"
-                    onClick={() => handleUpdateStatus("in_review")}
+                    onClick={() => handleUpdateStatus('in_review')}
                     disabled={isUpdating}
                   >
                     {isUpdating ? (
@@ -188,7 +180,7 @@ const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({
                     variant="outline"
                     size="sm"
                     className="text-red-600 hover:text-red-700"
-                    onClick={() => handleUpdateStatus("rejected")}
+                    onClick={() => handleUpdateStatus('rejected')}
                     disabled={isUpdating}
                   >
                     {isUpdating ? (
@@ -201,7 +193,7 @@ const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({
                   <Button
                     size="sm"
                     className="bg-green-600 hover:bg-green-700"
-                    onClick={() => handleUpdateStatus("approved")}
+                    onClick={() => handleUpdateStatus('approved')}
                     disabled={isUpdating}
                   >
                     {isUpdating ? (
@@ -238,4 +230,4 @@ const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({
   );
 };
 
-export default RefundDetailsSheet; 
+export default RefundDetailsSheet;

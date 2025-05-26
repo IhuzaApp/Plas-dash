@@ -1,16 +1,13 @@
-import React, { useEffect } from "react";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import React, { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 const NotFound = () => {
   const pathname = usePathname();
 
   useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      pathname
-    );
+    console.error('404 Error: User attempted to access non-existent route:', pathname);
   }, [pathname]);
 
   return (

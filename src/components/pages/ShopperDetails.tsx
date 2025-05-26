@@ -1,30 +1,39 @@
-import React, { useState } from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { format } from "date-fns";
-import { Loader2, Star, CheckCircle, XCircle, AlertCircle, FileText, ChevronLeft, ChevronRight } from "lucide-react";
-import { 
-  useShopperDetails, 
-  useShopperWallet, 
+import React, { useState } from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { format } from 'date-fns';
+import {
+  Loader2,
+  Star,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
+import {
+  useShopperDetails,
+  useShopperWallet,
   useShopperOrders,
   useUpdateShopperStatus,
   useShopperFullDetails,
-  type Order 
-} from "@/hooks/useShoppers";
-import { useSystemConfig } from "@/hooks/useHasuraApi";
+  type Order,
+} from '@/hooks/useShoppers';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,7 +52,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -59,7 +68,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const { data: ordersData, isLoading: isLoadingOrders } = useShopperOrders(shopperId);
   const { data: systemConfig } = useSystemConfig();
   const userId = shopperData?.shoppers[0]?.user_id;
-  const { data: fullDetails, isLoading: isLoadingFullDetails } = useShopperFullDetails(userId || '');
+  const { data: fullDetails, isLoading: isLoadingFullDetails } = useShopperFullDetails(
+    userId || ''
+  );
   const updateShopperStatus = useUpdateShopperStatus();
 
   const shopper = shopperData?.shoppers[0];
@@ -73,11 +84,13 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const [ratingsPage, setRatingsPage] = useState(1);
 
   const getInitials = (name: string) => {
-    return name
-      ?.split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase() || 'NA';
+    return (
+      name
+        ?.split(' ')
+        .map(part => part[0])
+        .join('')
+        .toUpperCase() || 'NA'
+    );
   };
 
   const formatTransactionId = (id: string, type: string, created_at: string) => {
@@ -87,7 +100,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
     const day = date.getDate().toString().padStart(2, '0');
     const typePrefix = type.slice(0, 3).toUpperCase();
     const shortId = id.slice(-4);
-    
+
     return `TXN${year}${month}${day}-${typePrefix}-${shortId}`;
   };
 
@@ -116,7 +129,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
     const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency
+      currency: currency,
     }).format(num);
   };
 
@@ -136,7 +149,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
         shopper_id: shopper.id,
         status: 'approved',
         active: true,
-        background_check_completed: true
+        background_check_completed: true,
       });
     } catch (error) {
       console.error('Error approving shopper:', error);
@@ -149,7 +162,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
         shopper_id: shopper.id,
         status: 'rejected',
         active: false,
-        background_check_completed: false
+        background_check_completed: false,
       });
     } catch (error) {
       console.error('Error rejecting shopper:', error);
@@ -170,7 +183,11 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
 
   const getPageCount = (totalItems: number) => Math.ceil(totalItems / ITEMS_PER_PAGE);
 
-  const renderPagination = (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => {
+  const renderPagination = (
+    currentPage: number,
+    totalItems: number,
+    onPageChange: (page: number) => void
+  ) => {
     const pageCount = getPageCount(totalItems);
     if (pageCount <= 1) return null;
 
@@ -186,10 +203,10 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
           Previous
         </Button>
         <div className="flex items-center space-x-1">
-          {Array.from({ length: pageCount }, (_, i) => i + 1).map((page) => (
+          {Array.from({ length: pageCount }, (_, i) => i + 1).map(page => (
             <Button
               key={page}
-              variant={currentPage === page ? "default" : "outline"}
+              variant={currentPage === page ? 'default' : 'outline'}
               size="sm"
               onClick={() => onPageChange(page)}
             >
@@ -219,7 +236,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header Section */}
-        <PageHeader 
+        <PageHeader
           title={shopper.full_name}
           description={`${user.email} • ${user.phone}`}
           actions={
@@ -238,7 +255,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                       Complete information about the shopper including ratings and reviews
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   {isLoadingFullDetails ? (
                     <div className="flex items-center justify-center h-40">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -266,7 +283,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Gender</p>
-                              <p className="font-medium capitalize">{detailedShopper.User.gender}</p>
+                              <p className="font-medium capitalize">
+                                {detailedShopper.User.gender}
+                              </p>
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Address</p>
@@ -274,7 +293,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                             </div>
                             <div>
                               <p className="text-sm text-muted-foreground">Transport Mode</p>
-                              <p className="font-medium capitalize">{detailedShopper.transport_mode}</p>
+                              <p className="font-medium capitalize">
+                                {detailedShopper.transport_mode}
+                              </p>
                             </div>
                           </div>
                         </CardContent>
@@ -299,8 +320,8 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                               <p className="text-sm text-muted-foreground mb-2">Driving License</p>
                               {detailedShopper.driving_license ? (
                                 <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border">
-                                  <img 
-                                    src={detailedShopper.driving_license} 
+                                  <img
+                                    src={detailedShopper.driving_license}
                                     alt="Driving License"
                                     className="object-contain w-full h-full"
                                   />
@@ -332,7 +353,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                           </div>
 
                           <div className="space-y-4">
-                            {detailedShopper.User.Ratings.map((rating) => (
+                            {detailedShopper.User.Ratings.map(rating => (
                               <div key={rating.id} className="border-b pb-4">
                                 <div className="flex justify-between mb-2">
                                   <div className="flex items-center gap-2">
@@ -340,7 +361,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                                     <span className="font-medium">{rating.rating}</span>
                                   </div>
                                   <span className="text-sm text-muted-foreground">
-                                    {format(new Date(rating.created_at), "MMM d, yyyy")}
+                                    {format(new Date(rating.created_at), 'MMM d, yyyy')}
                                   </span>
                                 </div>
                                 <p className="text-sm mb-2">{rating.review}</p>
@@ -384,7 +405,8 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Reject Shopper Application</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to reject this shopper application? This action cannot be undone.
+                          Are you sure you want to reject this shopper application? This action
+                          cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -406,7 +428,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Approve Shopper Application</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will approve the shopper application and allow them to start accepting orders. Please ensure you have reviewed all the necessary documents.
+                          This will approve the shopper application and allow them to start
+                          accepting orders. Please ensure you have reviewed all the necessary
+                          documents.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -420,7 +444,11 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                 </>
               )}
               {shopper.status === 'approved' && (
-                <Button variant="outline" className="bg-red-50 text-red-600 hover:bg-red-100" onClick={() => handleReject()}>
+                <Button
+                  variant="outline"
+                  className="bg-red-50 text-red-600 hover:bg-red-100"
+                  onClick={() => handleReject()}
+                >
                   Suspend Account
                 </Button>
               )}
@@ -435,18 +463,32 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
             <div className="flex items-start gap-6">
               <Avatar className="h-20 w-20">
                 <AvatarImage src={user.profile_picture || shopper.profile_photo || undefined} />
-                <AvatarFallback className="text-lg">{getInitials(shopper.full_name)}</AvatarFallback>
+                <AvatarFallback className="text-lg">
+                  {getInitials(shopper.full_name)}
+                </AvatarFallback>
               </Avatar>
               <div className="space-y-1">
                 <h2 className="text-2xl font-bold">{shopper.full_name}</h2>
                 <p className="text-muted-foreground">{shopper.Employment_id}</p>
                 <p className="text-muted-foreground">{shopper.phone_number}</p>
                 <div className="flex gap-2 mt-2">
-                  <Badge className={user.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-                    {user.is_active ? "Active" : "Inactive"}
+                  <Badge
+                    className={
+                      user.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }
+                  >
+                    {user.is_active ? 'Active' : 'Inactive'}
                   </Badge>
-                  <Badge className={shopper.background_check_completed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                    {shopper.background_check_completed ? "Background Check Completed" : "Background Check Pending"}
+                  <Badge
+                    className={
+                      shopper.background_check_completed
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }
+                  >
+                    {shopper.background_check_completed
+                      ? 'Background Check Completed'
+                      : 'Background Check Pending'}
                   </Badge>
                   <Badge variant="outline" className="capitalize">
                     {shopper.transport_mode}
@@ -474,7 +516,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(wallet?.available_balance || "0")}</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(wallet?.available_balance || '0')}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -483,7 +527,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   <CardTitle className="text-sm font-medium">Reserved Balance</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(wallet?.reserved_balance || "0")}</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(wallet?.reserved_balance || '0')}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -492,7 +538,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(totalEarnings.toString())}</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(totalEarnings.toString())}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -501,7 +549,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   <CardTitle className="text-sm font-medium">Pending Payouts</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(pendingPayouts.toString())}</div>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(pendingPayouts.toString())}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -523,24 +573,32 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedOrders.map((order) => (
+                  {paginatedOrders.map(order => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">#{order.OrderID}</TableCell>
-                      <TableCell>{format(new Date(order.created_at), "MMM d, yyyy HH:mm")}</TableCell>
+                      <TableCell>
+                        {format(new Date(order.created_at), 'MMM d, yyyy HH:mm')}
+                      </TableCell>
                       <TableCell>{order.User?.name}</TableCell>
                       <TableCell>
-                        <Badge className={
-                          order.status === "delivered" ? "bg-green-100 text-green-800" :
-                          order.status === "cancelled" ? "bg-red-100 text-red-800" :
-                          "bg-blue-100 text-blue-800"
-                        }>
+                        <Badge
+                          className={
+                            order.status === 'delivered'
+                              ? 'bg-green-100 text-green-800'
+                              : order.status === 'cancelled'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-blue-100 text-blue-800'
+                          }
+                        >
                           {order.status}
                         </Badge>
                       </TableCell>
                       <TableCell>{formatCurrency(order.total)}</TableCell>
                       <TableCell>{order.Shop?.name}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">View Details</Button>
+                        <Button variant="ghost" size="sm">
+                          View Details
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -565,20 +623,30 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedTransactions.map((transaction) => (
+                  {paginatedTransactions.map(transaction => (
                     <TableRow key={transaction.id}>
                       <TableCell className="font-medium">
-                        {formatTransactionId(transaction.id, transaction.type, transaction.created_at)}
+                        {formatTransactionId(
+                          transaction.id,
+                          transaction.type,
+                          transaction.created_at
+                        )}
                       </TableCell>
-                      <TableCell>{format(new Date(transaction.created_at), "MMM d, yyyy HH:mm")}</TableCell>
+                      <TableCell>
+                        {format(new Date(transaction.created_at), 'MMM d, yyyy HH:mm')}
+                      </TableCell>
                       <TableCell className="capitalize">{transaction.type}</TableCell>
                       <TableCell>{formatCurrency(transaction.amount)}</TableCell>
                       <TableCell>
-                        <Badge className={
-                          transaction.status === "completed" ? "bg-green-100 text-green-800" :
-                          transaction.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                          "bg-red-100 text-red-800"
-                        }>
+                        <Badge
+                          className={
+                            transaction.status === 'completed'
+                              ? 'bg-green-100 text-green-800'
+                              : transaction.status === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                          }
+                        >
                           {transaction.status}
                         </Badge>
                       </TableCell>
@@ -588,14 +656,18 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                             #{transaction.Order.OrderID} ({transaction.Order.status})
                           </Button>
                         ) : (
-                          "N/A"
+                          'N/A'
                         )}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              {renderPagination(transactionsPage, wallet?.Wallet_Transactions?.length || 0, setTransactionsPage)}
+              {renderPagination(
+                transactionsPage,
+                wallet?.Wallet_Transactions?.length || 0,
+                setTransactionsPage
+              )}
             </Card>
           </TabsContent>
 
@@ -615,7 +687,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {paginatedRatings.map((rating) => (
+                  {paginatedRatings.map(rating => (
                     <div key={rating.id} className="border-b pb-6">
                       <div className="flex justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -623,7 +695,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                           <span className="font-medium">{rating.rating}</span>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                          {format(new Date(rating.created_at), "MMM d, yyyy")}
+                          {format(new Date(rating.created_at), 'MMM d, yyyy')}
                         </span>
                       </div>
                       <p className="text-sm mb-4">{rating.review}</p>
@@ -652,13 +724,16 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                       </div>
                     </div>
                   ))}
-                  {(!detailedShopper?.User?.Ratings || detailedShopper.User.Ratings.length === 0) && (
-                    <div className="text-center text-muted-foreground py-8">
-                      No ratings yet
-                    </div>
+                  {(!detailedShopper?.User?.Ratings ||
+                    detailedShopper.User.Ratings.length === 0) && (
+                    <div className="text-center text-muted-foreground py-8">No ratings yet</div>
                   )}
                 </div>
-                {renderPagination(ratingsPage, detailedShopper?.User?.Ratings?.length || 0, setRatingsPage)}
+                {renderPagination(
+                  ratingsPage,
+                  detailedShopper?.User?.Ratings?.length || 0,
+                  setRatingsPage
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -668,4 +743,4 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   );
 };
 
-export default ShopperDetails; 
+export default ShopperDetails;

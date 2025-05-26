@@ -1,19 +1,19 @@
-import React from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coins, TrendingUp, TrendingDown, Calendar } from "lucide-react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
-import { useSystemConfig } from "@/hooks/useHasuraApi";
+import React from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Coins, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format } from 'date-fns';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
 
 interface SalesData {
   id: string;
@@ -21,18 +21,60 @@ interface SalesData {
   revenue: number;
   sales: number;
   averageValue: number;
-  trend: "up" | "down" | "neutral";
+  trend: 'up' | 'down' | 'neutral';
 }
 
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const monthlySales: SalesData[] = [
-  { id: "1", date: new Date(2025, 0, 1), revenue: 42500, sales: 850, averageValue: 50, trend: "up" },
-  { id: "2", date: new Date(2025, 1, 1), revenue: 39800, sales: 780, averageValue: 51, trend: "down" },
-  { id: "3", date: new Date(2025, 2, 1), revenue: 41200, sales: 805, averageValue: 51.2, trend: "up" },
-  { id: "4", date: new Date(2025, 3, 1), revenue: 44300, sales: 856, averageValue: 51.8, trend: "up" },
-  { id: "5", date: new Date(2025, 4, 1), revenue: 47500, sales: 909, averageValue: 52.3, trend: "up" },
-  { id: "6", date: new Date(2025, 5, 1), revenue: 49200, sales: 935, averageValue: 52.6, trend: "up" },
+  {
+    id: '1',
+    date: new Date(2025, 0, 1),
+    revenue: 42500,
+    sales: 850,
+    averageValue: 50,
+    trend: 'up',
+  },
+  {
+    id: '2',
+    date: new Date(2025, 1, 1),
+    revenue: 39800,
+    sales: 780,
+    averageValue: 51,
+    trend: 'down',
+  },
+  {
+    id: '3',
+    date: new Date(2025, 2, 1),
+    revenue: 41200,
+    sales: 805,
+    averageValue: 51.2,
+    trend: 'up',
+  },
+  {
+    id: '4',
+    date: new Date(2025, 3, 1),
+    revenue: 44300,
+    sales: 856,
+    averageValue: 51.8,
+    trend: 'up',
+  },
+  {
+    id: '5',
+    date: new Date(2025, 4, 1),
+    revenue: 47500,
+    sales: 909,
+    averageValue: 52.3,
+    trend: 'up',
+  },
+  {
+    id: '6',
+    date: new Date(2025, 5, 1),
+    revenue: 49200,
+    sales: 935,
+    averageValue: 52.6,
+    trend: 'up',
+  },
 ];
 
 const currentYear = new Date().getFullYear();
@@ -42,21 +84,21 @@ const FinancialOverview = () => {
   const totalRevenue = monthlySales.reduce((sum, month) => sum + month.revenue, 0);
   const totalSales = monthlySales.reduce((sum, month) => sum + month.sales, 0);
   const averageSaleValue = totalRevenue / totalSales;
-  
+
   const formatCurrency = (amount: number) => {
     const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   };
-  
+
   return (
     <AdminLayout>
-      <PageHeader 
-        title="POS Financial Overview" 
+      <PageHeader
+        title="POS Financial Overview"
         description="Track sales performance and financial metrics"
         icon={<Coins className="h-6 w-6" />}
       />
@@ -70,9 +112,7 @@ const FinancialOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
-              +12.5% from previous year
-            </p>
+            <p className="text-xs text-muted-foreground">+12.5% from previous year</p>
           </CardContent>
         </Card>
         <Card>
@@ -83,9 +123,7 @@ const FinancialOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalSales.toLocaleString()} items</div>
-            <p className="text-xs text-muted-foreground">
-              +8.2% from previous year
-            </p>
+            <p className="text-xs text-muted-foreground">+8.2% from previous year</p>
           </CardContent>
         </Card>
         <Card>
@@ -96,9 +134,7 @@ const FinancialOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(averageSaleValue)}</div>
-            <p className="text-xs text-muted-foreground">
-              +3.8% from previous year
-            </p>
+            <p className="text-xs text-muted-foreground">+3.8% from previous year</p>
           </CardContent>
         </Card>
       </div>
@@ -127,25 +163,27 @@ const FinancialOverview = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {monthlySales.map((month) => (
+                    {monthlySales.map(month => (
                       <TableRow key={month.id}>
-                        <TableCell>{format(month.date, "MMMM yyyy")}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(month.revenue)}</TableCell>
+                        <TableCell>{format(month.date, 'MMMM yyyy')}</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(month.revenue)}
+                        </TableCell>
                         <TableCell className="text-right">{month.sales.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(month.averageValue)}</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(month.averageValue)}
+                        </TableCell>
                         <TableCell>
-                          {month.trend === "up" ? (
+                          {month.trend === 'up' ? (
                             <div className="flex items-center text-green-500">
                               <TrendingUp className="mr-1 h-4 w-4" /> Up
                             </div>
-                          ) : month.trend === "down" ? (
+                          ) : month.trend === 'down' ? (
                             <div className="flex items-center text-red-500">
                               <TrendingDown className="mr-1 h-4 w-4" /> Down
                             </div>
                           ) : (
-                            <div className="flex items-center text-gray-500">
-                              — Stable
-                            </div>
+                            <div className="flex items-center text-gray-500">— Stable</div>
                           )}
                         </TableCell>
                       </TableRow>

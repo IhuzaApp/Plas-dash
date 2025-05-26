@@ -1,27 +1,27 @@
-import React, { useState } from "react";
-import Link from "next/link";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { useShoppers } from "@/hooks/useHasuraApi";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Pagination from "@/components/ui/pagination";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Filter, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useShoppers } from '@/hooks/useHasuraApi';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Pagination from '@/components/ui/pagination';
 
 const Shoppers = () => {
   const { data, isLoading, isError, error } = useShoppers();
   const shoppers = data?.shoppers || [];
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -33,17 +33,18 @@ const Shoppers = () => {
       .toUpperCase();
   };
 
-  const activeShoppers = shoppers.filter(s => s.active && s.status === "approved");
-  const pendingShoppers = shoppers.filter(s => s.status === "pending");
+  const activeShoppers = shoppers.filter(s => s.active && s.status === 'approved');
+  const pendingShoppers = shoppers.filter(s => s.status === 'pending');
   const backgroundCheckedShoppers = shoppers.filter(s => s.background_check_completed);
 
   // Filter shoppers based on search term
-  const filteredShoppers = shoppers.filter(shopper => 
-    searchTerm === "" || 
-    shopper.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shopper.phone_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shopper.Employment_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shopper.transport_mode.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredShoppers = shoppers.filter(
+    shopper =>
+      searchTerm === '' ||
+      shopper.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shopper.phone_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shopper.Employment_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shopper.transport_mode.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Calculate pagination
@@ -76,12 +77,12 @@ const Shoppers = () => {
 
   return (
     <AdminLayout>
-      <PageHeader 
-        title="Shoppers" 
+      <PageHeader
+        title="Shoppers"
         description="Manage your delivery personnel and track their performance."
         actions={<Button>Add New Shopper</Button>}
       />
-      
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
@@ -108,16 +109,16 @@ const Shoppers = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search shoppers..." 
+            <Input
+              placeholder="Search shoppers..."
               className="pl-8"
               value={searchTerm}
-              onChange={(e) => {
+              onChange={e => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1); // Reset to first page on search
               }}
@@ -127,7 +128,7 @@ const Shoppers = () => {
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
-        
+
         <Card>
           <Table>
             <TableHeader>
@@ -149,8 +150,8 @@ const Shoppers = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                currentShoppers.map((shopper) => (
-                <TableRow key={shopper.id}>
+                currentShoppers.map(shopper => (
+                  <TableRow key={shopper.id}>
                     <TableCell className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={shopper.profile_photo || undefined} />
@@ -166,33 +167,44 @@ const Shoppers = () => {
                       <span className="capitalize">{shopper.transport_mode}</span>
                     </TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        shopper.status === "approved" && shopper.active ? "bg-green-100 text-green-800" :
-                        shopper.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                        "bg-gray-100 text-gray-800"
-                      }`}>
-                        {shopper.status === "approved" 
-                          ? (shopper.active ? "Active" : "Inactive")
-                          : shopper.status.charAt(0).toUpperCase() + shopper.status.slice(1)
-                        }
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          shopper.status === 'approved' && shopper.active
+                            ? 'bg-green-100 text-green-800'
+                            : shopper.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {shopper.status === 'approved'
+                          ? shopper.active
+                            ? 'Active'
+                            : 'Inactive'
+                          : shopper.status.charAt(0).toUpperCase() + shopper.status.slice(1)}
                       </span>
                     </TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        shopper.background_check_completed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                    }`}>
-                        {shopper.background_check_completed ? "Completed" : "Pending"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          shopper.background_check_completed
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {shopper.background_check_completed ? 'Completed' : 'Pending'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
                       <span className="capitalize">{shopper.onboarding_step}</span>
-                  </TableCell>
-                  <TableCell className="text-right">
+                    </TableCell>
+                    <TableCell className="text-right">
                       <Link href={`/shoppers/${shopper.user_id}`}>
-                    <Button variant="ghost" size="sm">View Profile</Button>
+                        <Button variant="ghost" size="sm">
+                          View Profile
+                        </Button>
                       </Link>
-                  </TableCell>
-                </TableRow>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
             </TableBody>
@@ -202,7 +214,7 @@ const Shoppers = () => {
             totalPages={totalPages}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => {
+            onPageSizeChange={size => {
               setPageSize(size);
               setCurrentPage(1); // Reset to first page when changing page size
             }}

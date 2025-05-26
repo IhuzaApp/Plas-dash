@@ -40,7 +40,9 @@
   right: 0px;
   width: 100px;
   height: 100%;
-  box-shadow: 0 0 10px #2563eb, 0 0 5px #2563eb; /* Match bar color */
+  box-shadow:
+    0 0 10px #2563eb,
+    0 0 5px #2563eb; /* Match bar color */
   opacity: 1;
   transform: rotate(3deg) translate(0px, -4px);
 }
@@ -53,4 +55,4 @@
   100% {
     transform: rotate(360deg);
   }
-} 
+}

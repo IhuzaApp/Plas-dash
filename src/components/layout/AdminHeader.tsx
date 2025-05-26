@@ -1,14 +1,8 @@
-
-import React from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Bell,
-  Menu,
-  Search,
-  User,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import ThemeToggle from "./ThemeToggle";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Bell, Menu, Search, User } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import ThemeToggle from './ThemeToggle';
 
 interface AdminHeaderProps {
   toggleSidebar: () => void;
@@ -31,10 +25,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
         <div className="hidden md:flex items-center max-w-md w-full">
           <div className="relative w-full">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              className="pl-8 bg-background"
-            />
+            <Input placeholder="Search..." className="pl-8 bg-background" />
           </div>
         </div>
       </div>

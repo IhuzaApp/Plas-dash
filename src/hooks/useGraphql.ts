@@ -5,7 +5,10 @@ const HASURA_ENDPOINT = process.env.HASURA_GRAPHQL_URL || '';
 const HASURA_ADMIN_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET || '';
 
 // Generic query hook with better typing
-export const useGraphqlQuery = <TData = any, TVariables extends Record<string, any> = Record<string, any>>(
+export const useGraphqlQuery = <
+  TData = any,
+  TVariables extends Record<string, any> = Record<string, any>,
+>(
   query: string,
   options?: Omit<UseQueryOptions<TData, Error, TData>, 'queryKey' | 'queryFn'> & {
     variables?: TVariables;
@@ -16,7 +19,9 @@ export const useGraphqlQuery = <TData = any, TVariables extends Record<string, a
     queryFn: async () => {
       const response = await request<TData>(
         HASURA_ENDPOINT,
-        gql`${query}`,
+        gql`
+          ${query}
+        `,
         options?.variables || {},
         {
           'x-hasura-admin-secret': HASURA_ADMIN_SECRET,
@@ -29,15 +34,20 @@ export const useGraphqlQuery = <TData = any, TVariables extends Record<string, a
 };
 
 // Generic mutation hook with better typing
-export const useGraphqlMutation = <TData = any, TVariables extends Record<string, any> = Record<string, any>>(
+export const useGraphqlMutation = <
+  TData = any,
+  TVariables extends Record<string, any> = Record<string, any>,
+>(
   mutation: string,
   options?: Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'>
 ) => {
   return useMutation<TData, Error, TVariables>({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await request<TData>(
         HASURA_ENDPOINT,
-        gql`${mutation}`,
+        gql`
+          ${mutation}
+        `,
         variables,
         {
           'x-hasura-admin-secret': HASURA_ADMIN_SECRET,
@@ -342,4 +352,4 @@ export interface DeliveryIssue {
   status: string;
   created_at: string;
   updated_at: string;
-} 
+}

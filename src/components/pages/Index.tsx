@@ -1,11 +1,10 @@
-
-import React from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import StatCard from "@/components/dashboard/StatCard";
-import RecentOrders from "@/components/dashboard/RecentOrders";
-import TopShoppers from "@/components/dashboard/TopShoppers";
-import RevenueChart from "@/components/dashboard/RevenueChart";
-import { ShoppingCart, User, DollarSign, Package } from "lucide-react";
+import React from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import StatCard from '@/components/dashboard/StatCard';
+import RecentOrders from '@/components/dashboard/RecentOrders';
+import TopShoppers from '@/components/dashboard/TopShoppers';
+import RevenueChart from '@/components/dashboard/RevenueChart';
+import { ShoppingCart, User, DollarSign, Package } from 'lucide-react';
 
 const Index = () => {
   return (
@@ -13,9 +12,7 @@ const Index = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Overview of your delivery service platform.
-          </p>
+          <p className="text-muted-foreground">Overview of your delivery service platform.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

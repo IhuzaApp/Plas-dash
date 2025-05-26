@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Drawer,
   DrawerClose,
@@ -8,10 +8,10 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/components/ui/drawer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/drawer';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Form,
   FormControl,
@@ -19,30 +19,30 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import { CreditCard, DollarSign, Wallet } from "lucide-react";
-import { useWallets, useSystemConfig } from "@/hooks/useHasuraApi";
+} from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
+import { CreditCard, DollarSign, Wallet } from 'lucide-react';
+import { useWallets, useSystemConfig } from '@/hooks/useHasuraApi';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 const formSchema = z.object({
   userId: z.string({
-    required_error: "Please select a user",
+    required_error: 'Please select a user',
   }),
-  amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-    message: "Amount must be a positive number",
+  amount: z.string().refine(val => !isNaN(Number(val)) && Number(val) > 0, {
+    message: 'Amount must be a positive number',
   }),
-  paymentMethod: z.enum(["bank", "card", "wallet"]),
+  paymentMethod: z.enum(['bank', 'card', 'wallet']),
   notes: z.string().optional(),
 });
 
@@ -58,10 +58,10 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      userId: "",
-      amount: "",
-      paymentMethod: "bank",
-      notes: "",
+      userId: '',
+      amount: '',
+      paymentMethod: 'bank',
+      notes: '',
     },
   });
 
@@ -72,17 +72,15 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(num);
   };
 
   const handleUserChange = (userId: string) => {
-    const wallet = walletsData?.Wallets.find(
-      (w: any) => w.User?.id === userId
-    );
+    const wallet = walletsData?.Wallets.find((w: any) => w.User?.id === userId);
     setSelectedWallet(wallet);
     if (wallet) {
-      form.setValue("amount", wallet.available_balance || "0");
+      form.setValue('amount', wallet.available_balance || '0');
     }
   };
 
@@ -111,7 +109,7 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                   <FormItem>
                     <FormLabel>Select User</FormLabel>
                     <Select
-                      onValueChange={(value) => {
+                      onValueChange={value => {
                         field.onChange(value);
                         handleUserChange(value);
                       }}
@@ -123,27 +121,28 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {walletsData?.Wallets.map((wallet: any) => (
-                          wallet.User && (
-                            <SelectItem key={wallet.User.id} value={wallet.User.id}>
-                              <div className="flex items-center gap-2">
-                                {wallet.User.profile_picture && (
-                                  <img
-                                    src={wallet.User.profile_picture}
-                                    alt="Profile"
-                                    className="w-6 h-6 rounded-full"
-                                  />
-                                )}
-                                <div>
-                                  <div className="font-medium">{wallet.User.name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    Balance: {formatCurrency(wallet.available_balance || "0")}
+                        {walletsData?.Wallets.map(
+                          (wallet: any) =>
+                            wallet.User && (
+                              <SelectItem key={wallet.User.id} value={wallet.User.id}>
+                                <div className="flex items-center gap-2">
+                                  {wallet.User.profile_picture && (
+                                    <img
+                                      src={wallet.User.profile_picture}
+                                      alt="Profile"
+                                      className="w-6 h-6 rounded-full"
+                                    />
+                                  )}
+                                  <div>
+                                    <div className="font-medium">{wallet.User.name}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      Balance: {formatCurrency(wallet.available_balance || '0')}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </SelectItem>
-                          )
-                        ))}
+                              </SelectItem>
+                            )
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -162,11 +161,7 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
                           {systemConfig?.System_configuratioins[0]?.currency || 'RWF'}
                         </span>
-                        <Input
-                          placeholder="0.00"
-                          className="pl-16"
-                          {...field}
-                        />
+                        <Input placeholder="0.00" className="pl-16" {...field} />
                       </div>
                     </FormControl>
                     <FormMessage />

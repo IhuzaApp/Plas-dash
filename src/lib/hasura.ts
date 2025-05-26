@@ -40,4 +40,4 @@ export async function hasuraRequest<T>(query: string, variables = {}) {
   }
 
   return data.data as T;
-} 
+}

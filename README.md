@@ -90,7 +90,7 @@ import { GET_USERS } from '../lib/graphql/queries';
 
 function MyComponent() {
   const { loading, error, data } = useGraphqlQuery(GET_USERS);
-  
+
   // Use the data...
 }
 ```

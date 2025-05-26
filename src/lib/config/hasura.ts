@@ -26,4 +26,4 @@ if (!hasuraConfig.adminSecret) {
   throw new Error('HASURA_GRAPHQL_ADMIN_SECRET is not defined in environment variables');
 }
 
-export default hasuraConfig; 
+export default hasuraConfig;

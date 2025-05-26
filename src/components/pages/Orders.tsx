@@ -1,25 +1,25 @@
-import React, { useState } from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, Loader2, Phone, AlertCircle } from "lucide-react";
-import { useOrders, useSystemConfig } from "@/hooks/useHasuraApi";
-import { format, differenceInMinutes } from "date-fns";
-import Pagination from "@/components/ui/pagination";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { toast } from "sonner";
-import OrderDetailsDrawer from "@/components/drawers/OrderDetailsDrawer";
-import { Order } from "@/types/order";
+import React, { useState } from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Filter, Loader2, Phone, AlertCircle } from 'lucide-react';
+import { useOrders, useSystemConfig } from '@/hooks/useHasuraApi';
+import { format, differenceInMinutes } from 'date-fns';
+import Pagination from '@/components/ui/pagination';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
+import OrderDetailsDrawer from '@/components/drawers/OrderDetailsDrawer';
+import { Order } from '@/types/order';
 
 // Function to generate a short ID from a UUID or longer ID
 const generateShortId = (id: string) => {
@@ -40,7 +40,7 @@ const Orders = () => {
   const { data, isLoading, isError, error } = useOrders();
   const { data: systemConfig } = useSystemConfig();
   const orders: Order[] = data?.Orders || [];
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -51,13 +51,13 @@ const Orders = () => {
     const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency
+      currency: currency,
     }).format(num);
   };
 
   const handleCallShopper = (phone: string | undefined) => {
     if (!phone) {
-      toast.error("Shopper phone number not available");
+      toast.error('Shopper phone number not available');
       return;
     }
     toast.info(`Calling shopper at ${phone}...`);
@@ -73,7 +73,7 @@ const Orders = () => {
       warnings.push({
         type: 'unassigned',
         message: 'Order unassigned for over 10 minutes',
-        severity: 'high'
+        severity: 'high',
       });
     }
 
@@ -82,7 +82,7 @@ const Orders = () => {
       warnings.push({
         type: 'shopping',
         message: 'Shopping taking over 60 minutes',
-        severity: 'medium'
+        severity: 'medium',
       });
     }
 
@@ -91,7 +91,7 @@ const Orders = () => {
       warnings.push({
         type: 'delivery',
         message: 'Delivery taking over 50 minutes',
-        severity: 'high'
+        severity: 'high',
       });
     }
 
@@ -101,17 +101,17 @@ const Orders = () => {
   const getStatusColor = (order: any) => {
     const statusLower = order.status.toLowerCase();
     const warnings = getOrderWarnings(order);
-    
+
     // If there are any high severity warnings, show red
     if (warnings.some(w => w.severity === 'high')) {
       return 'bg-red-100 text-red-800';
     }
-    
+
     // If there are any medium severity warnings, show orange
     if (warnings.some(w => w.severity === 'medium')) {
       return 'bg-orange-100 text-orange-800';
     }
-    
+
     // Default status colors
     switch (statusLower) {
       case 'delivered':
@@ -135,13 +135,9 @@ const Orders = () => {
     return format(new Date(dateString), 'MMM d, yyyy HH:mm');
   };
 
-  const pendingOrders = orders.filter(order => 
-    order.status === 'PENDING'
-  );
+  const pendingOrders = orders.filter(order => order.status === 'PENDING');
 
-  const deliveredOrders = orders.filter(order => 
-    order.status.toLowerCase() === 'delivered'
-  );
+  const deliveredOrders = orders.filter(order => order.status.toLowerCase() === 'delivered');
 
   const inProgressOrders = orders.filter(order => {
     const statusLower = order.status.toLowerCase();
@@ -153,31 +149,33 @@ const Orders = () => {
   // Filter orders based on search term
   const filteredOrders = orders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
-    
+
     // Direct ID match (case-insensitive)
     if (order.id?.toLowerCase() === searchLower) {
       return true;
     }
-    
+
     // Direct OrderID match (case-insensitive)
     if (order.OrderID?.toString().toLowerCase() === searchLower) {
       return true;
     }
-    
+
     // Partial ID match
     if (order.id?.toLowerCase().includes(searchLower)) {
       return true;
     }
-    
+
     // Partial OrderID match
     if (order.OrderID?.toString().toLowerCase().includes(searchLower)) {
       return true;
     }
-    
+
     // Other fields match
-    return order.User?.name?.toLowerCase().includes(searchLower) ||
-           order.User?.email?.toLowerCase().includes(searchLower) ||
-           order.status.toLowerCase().includes(searchLower);
+    return (
+      order.User?.name?.toLowerCase().includes(searchLower) ||
+      order.User?.email?.toLowerCase().includes(searchLower) ||
+      order.status.toLowerCase().includes(searchLower)
+    );
   });
 
   // Calculate pagination
@@ -220,8 +218,8 @@ const Orders = () => {
 
   return (
     <AdminLayout>
-      <PageHeader 
-        title="Orders" 
+      <PageHeader
+        title="Orders"
         description="View and manage customer orders."
         actions={
           <div className="flex gap-2">
@@ -230,7 +228,7 @@ const Orders = () => {
           </div>
         }
       />
-      
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
@@ -257,16 +255,16 @@ const Orders = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by Order ID, UUID, customer name or email..." 
+            <Input
+              placeholder="Search by Order ID, UUID, customer name or email..."
               className="pl-8"
               value={searchTerm}
-              onChange={(e) => {
+              onChange={e => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1); // Reset to first page on search
               }}
@@ -276,7 +274,7 @@ const Orders = () => {
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
-        
+
         <Card>
           <Table>
             <TableHeader>
@@ -299,10 +297,10 @@ const Orders = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                currentOrders.map((order) => {
+                currentOrders.map(order => {
                   const warnings = getOrderWarnings(order);
                   return (
-                <TableRow key={order.id}>
+                    <TableRow key={order.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <TooltipProvider>
@@ -335,38 +333,39 @@ const Orders = () => {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">{order.User?.name || 'N/A'}</div>
-                        <div className="text-sm text-muted-foreground">{order.User?.email || 'N/A'}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {order.User?.email || 'N/A'}
+                        </div>
                       </TableCell>
-                  <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order)}`}>
-                      {order.status}
-                    </span>
-                  </TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order)}`}
+                        >
+                          {order.status}
+                        </span>
+                      </TableCell>
                       <TableCell>{order.Order_Items?.length || 0} items</TableCell>
                       <TableCell>{formatCurrency(order.total)}</TableCell>
                       <TableCell>{formatDateTime(order.created_at)}</TableCell>
                       <TableCell>{formatDateTime(order.updated_at)}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        {order.shopper_id && (warnings.some(w => w.type === 'shopping' || w.type === 'delivery')) && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleCallShopper(order.shopper?.phone)}
-                            className="text-yellow-600 hover:text-yellow-700"
-                          >
-                            <Phone className="h-4 w-4 mr-1" />
-                            Call Shopper
-                          </Button>
-                        )}
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                          onClick={() => handleViewDetails(order)}
-                    >
-                      View Details
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                        {order.shopper_id &&
+                          warnings.some(w => w.type === 'shopping' || w.type === 'delivery') && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCallShopper(order.shopper?.phone)}
+                              className="text-yellow-600 hover:text-yellow-700"
+                            >
+                              <Phone className="h-4 w-4 mr-1" />
+                              Call Shopper
+                            </Button>
+                          )}
+                        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(order)}>
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
@@ -377,7 +376,7 @@ const Orders = () => {
             totalPages={totalPages}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => {
+            onPageSizeChange={size => {
               setPageSize(size);
               setCurrentPage(1);
             }}
@@ -386,11 +385,7 @@ const Orders = () => {
         </Card>
       </div>
 
-      <OrderDetailsDrawer
-        order={selectedOrder}
-        open={isDrawerOpen}
-        onClose={handleCloseDrawer}
-      />
+      <OrderDetailsDrawer order={selectedOrder} open={isDrawerOpen} onClose={handleCloseDrawer} />
     </AdminLayout>
   );
 };

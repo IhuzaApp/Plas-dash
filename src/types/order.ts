@@ -54,4 +54,4 @@ export interface Order {
   Order_Items: OrderItem[];
   Address: Address;
   shopper?: Shopper;
-} 
+}

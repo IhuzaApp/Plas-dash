@@ -41,13 +41,13 @@ const Pagination = ({
           <p className="text-sm font-medium">Items per page</p>
           <Select
             value={pageSize.toString()}
-            onValueChange={(value) => onPageSizeChange(Number(value))}
+            onValueChange={value => onPageSizeChange(Number(value))}
           >
             <SelectTrigger className="h-8 w-[70px]">
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {pageSizeOptions.map((size) => (
+              {pageSizeOptions.map(size => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
@@ -75,7 +75,7 @@ const Pagination = ({
             disabled={currentPage === 1}
           >
             <span className="sr-only">Go to previous page</span>
-    <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
@@ -84,7 +84,7 @@ const Pagination = ({
             disabled={currentPage === totalPages}
           >
             <span className="sr-only">Go to next page</span>
-    <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"

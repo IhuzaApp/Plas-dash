@@ -1,28 +1,28 @@
-import React, { useState } from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, Loader2 } from "lucide-react";
-import { useUsers } from "@/hooks/useHasuraApi";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
-import Pagination from "@/components/ui/pagination";
-import UserDetailsDrawer from "@/components/drawers/UserDetailsDrawer";
+import React, { useState } from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Filter, Loader2 } from 'lucide-react';
+import { useUsers } from '@/hooks/useHasuraApi';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { format } from 'date-fns';
+import Pagination from '@/components/ui/pagination';
+import UserDetailsDrawer from '@/components/drawers/UserDetailsDrawer';
 
 const Users = () => {
   const { data, isLoading, isError, error } = useUsers();
   const users = data?.Users || [];
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -32,9 +32,10 @@ const Users = () => {
   const totalUsers = users.length;
   const activeUsers = users.filter(user => user.is_active).length;
   const adminUsers = 0; // Currently set to 0 as requested
-  const customerUsers = users.filter(user => 
-    user.is_active && // User is active
-    (!user.shopper || !user.shopper.active) // Either no shopper record or shopper.active is false
+  const customerUsers = users.filter(
+    user =>
+      user.is_active && // User is active
+      (!user.shopper || !user.shopper.active) // Either no shopper record or shopper.active is false
   ).length;
 
   const getInitials = (name: string) => {
@@ -46,12 +47,13 @@ const Users = () => {
   };
 
   // Filter users based on search term
-  const filteredUsers = users.filter(user => 
-    searchTerm === "" || 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    user =>
+      searchTerm === '' ||
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Calculate pagination
@@ -94,8 +96,8 @@ const Users = () => {
 
   return (
     <AdminLayout>
-      <PageHeader 
-        title="Users" 
+      <PageHeader
+        title="Users"
         description="View and manage user accounts."
         actions={
           <div className="flex gap-2">
@@ -104,7 +106,7 @@ const Users = () => {
           </div>
         }
       />
-      
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
@@ -131,16 +133,16 @@ const Users = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search users..." 
+            <Input
+              placeholder="Search users..."
               className="pl-8"
               value={searchTerm}
-              onChange={(e) => {
+              onChange={e => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1); // Reset to first page on search
               }}
@@ -150,7 +152,7 @@ const Users = () => {
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
-        
+
         <Card>
           <Table>
             <TableHeader>
@@ -171,7 +173,7 @@ const Users = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                currentUsers.map((user) => (
+                currentUsers.map(user => (
                   <TableRow key={user.id}>
                     <TableCell className="flex items-center gap-3">
                       <Avatar>
@@ -187,22 +189,18 @@ const Users = () => {
                       <span className="capitalize">{user.role || 'User'}</span>
                     </TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                      }`}>
-                        {user.is_active ? "Active" : "Inactive"}
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {user.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </TableCell>
                     <TableCell>{user.phone || 'N/A'}</TableCell>
-                    <TableCell>
-                      {format(new Date(user.created_at), 'MMM d, yyyy')}
-                    </TableCell>
+                    <TableCell>{format(new Date(user.created_at), 'MMM d, yyyy')}</TableCell>
                     <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleViewProfile(user.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleViewProfile(user.id)}>
                         View Profile
                       </Button>
                     </TableCell>
@@ -220,7 +218,7 @@ const Users = () => {
               totalPages={totalPages}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
-              onPageSizeChange={(size) => {
+              onPageSizeChange={size => {
                 setPageSize(size);
                 setCurrentPage(1);
               }}
@@ -230,11 +228,7 @@ const Users = () => {
         )}
       </div>
 
-      <UserDetailsDrawer
-        userId={selectedUserId}
-        open={isDrawerOpen}
-        onClose={handleCloseDrawer}
-      />
+      <UserDetailsDrawer userId={selectedUserId} open={isDrawerOpen} onClose={handleCloseDrawer} />
     </AdminLayout>
   );
 };

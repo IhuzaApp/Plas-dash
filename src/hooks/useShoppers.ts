@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
-import { 
-  GET_SHOPPER_ONBOARDING_DETAILS, 
-  GET_SHOPPER_WALLET, 
+import {
+  GET_SHOPPER_ONBOARDING_DETAILS,
+  GET_SHOPPER_WALLET,
   GET_SHOPPER_ORDERS,
   GET_ORDER_PAYMENTS,
-  GET_SHOPPER_FULL_DETAILS
+  GET_SHOPPER_FULL_DETAILS,
 } from '@/lib/graphql/queries';
 import { UPDATE_SHOPPER_STATUS } from '@/lib/graphql/mutations';
 
@@ -204,9 +204,9 @@ export function useOrderPayments(orderId: uuid) {
 // Hook for updating shopper status
 export function useUpdateShopperStatus() {
   const queryClient = useQueryClient();
-  
+
   return useMutation<UpdateShopperStatusResponse, Error, UpdateShopperStatusVariables>({
-    mutationFn: (variables) => hasuraRequest(UPDATE_SHOPPER_STATUS, variables),
+    mutationFn: variables => hasuraRequest(UPDATE_SHOPPER_STATUS, variables),
     onSuccess: () => {
       // Invalidate relevant queries to trigger refetch
       queryClient.invalidateQueries({ queryKey: ['shopper'] });
@@ -221,4 +221,4 @@ export function useShopperFullDetails(userId: uuid) {
     queryFn: () => hasuraRequest(GET_SHOPPER_FULL_DETAILS, { user_id: userId }),
     enabled: !!userId,
   });
-} 
+}

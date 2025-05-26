@@ -1,6 +1,6 @@
-import React from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import React from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarHeader,
   SidebarFooter,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 import {
   BarChart,
   Package,
@@ -35,12 +35,12 @@ import {
   HelpCircle,
   LogOut,
   Loader2,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
@@ -55,12 +55,12 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   // Handle navigation state
   useEffect(() => {
     if (!isNavigating) return;
-    
+
     const timeoutId = setTimeout(() => {
       setIsNavigating(false);
       setNavigatingTo(null);
     }, 1000); // Reset after 1 second if navigation hasn't completed
-    
+
     return () => clearTimeout(timeoutId);
   }, [isNavigating]);
 
@@ -78,105 +78,102 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   };
 
   const menuItems = [
-    { 
-      section: "Overview",
+    {
+      section: 'Overview',
       icon: LayoutDashboard,
-      items: [
-        { title: "Dashboard", icon: BarChart, path: "/", badge: "New" },
-      ]
+      items: [{ title: 'Dashboard', icon: BarChart, path: '/', badge: 'New' }],
     },
-    { 
-      section: "Operations",
+    {
+      section: 'Operations',
       icon: ShoppingCart,
       items: [
-        { title: "Orders", icon: Package, path: "/orders", badge: "5" },
-        { title: "Shoppers", icon: User, path: "/shoppers" },
-        { title: "Customers", icon: Users, path: "/users" },
-        { title: "Shops", icon: Store, path: "/shops" },
-        { title: "Products", icon: ShoppingCart, path: "/products" },
-      ]
+        { title: 'Orders', icon: Package, path: '/orders', badge: '5' },
+        { title: 'Shoppers', icon: User, path: '/shoppers' },
+        { title: 'Customers', icon: Users, path: '/users' },
+        { title: 'Shops', icon: Store, path: '/shops' },
+        { title: 'Products', icon: ShoppingCart, path: '/products' },
+      ],
     },
-    { 
-      section: "Point of Sale",
+    {
+      section: 'Point of Sale',
       icon: CreditCard,
       items: [
-        { title: "Company Dashboard", icon: LayoutDashboard, path: "/pos/company-dashboard" },
-        { title: "Shop Dashboard", icon: Store, path: "/pos/shop-dashboard" },
-        { title: "Checkout", icon: CreditCard, path: "/pos/checkout" },
-        { title: "Inventory", icon: ShoppingBag, path: "/pos/inventory" },
-        { title: "Transactions", icon: Receipt, path: "/pos/transactions" },
-        { title: "Discounts", icon: Tag, path: "/pos/discounts" },
-        { title: "Financial Overview", icon: Coins, path: "/pos/financial" },
-        { title: "Staff Management", icon: Users, path: "/pos/staff" },
-      ]
+        { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
+        { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
+        { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
+        { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
+        { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
+        { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
+        { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
+        { title: 'Staff Management', icon: Users, path: '/pos/staff' },
+      ],
     },
-    { 
-      section: "Finance",
+    {
+      section: 'Finance',
       icon: Wallet,
       items: [
-        { title: "Company Wallet", icon: Wallet, path: "/company-wallet" },
-        { title: "Shopper Wallets", icon: Wallet, path: "/shopper-wallets" },
-        { title: "Refund Claims", icon: Wallet, path: "/refunds", badge: "3" },
-      ]
+        { title: 'Company Wallet', icon: Wallet, path: '/company-wallet' },
+        { title: 'Shopper Wallets', icon: Wallet, path: '/shopper-wallets' },
+        { title: 'Refund Claims', icon: Wallet, path: '/refunds', badge: '3' },
+      ],
     },
-    { 
-      section: "Support & Help",
+    {
+      section: 'Support & Help',
       icon: MessageSquare,
       items: [
-        { title: "Tickets", icon: MessageSquare, path: "/tickets", badge: "2" },
-        { title: "Help Center", icon: HelpCircle, path: "/help" },
-      ]
+        { title: 'Tickets', icon: MessageSquare, path: '/tickets', badge: '2' },
+        { title: 'Help Center', icon: HelpCircle, path: '/help' },
+      ],
     },
-    { 
-      section: "Settings",
+    {
+      section: 'Settings',
       icon: Settings,
       items: [
-        { title: "Delivery Settings", icon: Clock, path: "/delivery-settings" },
-        { title: "Promotions", icon: Percent, path: "/promotions" },
-        { title: "System Settings", icon: Settings, path: "/settings" },
-      ]
+        { title: 'Delivery Settings', icon: Clock, path: '/delivery-settings' },
+        { title: 'Promotions', icon: Percent, path: '/promotions' },
+        { title: 'System Settings', icon: Settings, path: '/settings' },
+      ],
     },
   ];
 
   const renderMenuItem = (item: any) => {
     const isActive = pathname === item.path;
     const isLoading = isNavigating && navigatingTo === item.path;
-    
+
     return (
       <TooltipProvider key={item.title} delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <button 
+                <button
                   onClick={() => handleNavigation(item.path)}
                   className={cn(
-                    "flex items-center w-full",
-                    isSidebarOpen ? "px-3" : "justify-center",
-                    isActive 
-                      ? "bg-primary/10 text-primary font-medium" 
-                      : "hover:bg-primary/5 text-muted-foreground hover:text-primary",
-                    "rounded-md py-2 transition-all duration-200 group"
+                    'flex items-center w-full',
+                    isSidebarOpen ? 'px-3' : 'justify-center',
+                    isActive
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'hover:bg-primary/5 text-muted-foreground hover:text-primary',
+                    'rounded-md py-2 transition-all duration-200 group'
                   )}
                 >
                   {isLoading ? (
-                    <Loader2 className={cn(
-                      "h-5 w-5 animate-spin",
-                      isSidebarOpen ? "mr-2" : ""
-                    )} />
+                    <Loader2 className={cn('h-5 w-5 animate-spin', isSidebarOpen ? 'mr-2' : '')} />
                   ) : (
-                    <item.icon className={cn(
-                      "h-5 w-5",
-                      isSidebarOpen ? "mr-2" : "",
-                      isActive ? "text-primary" : "group-hover:text-primary"
-                    )} />
+                    <item.icon
+                      className={cn(
+                        'h-5 w-5',
+                        isSidebarOpen ? 'mr-2' : '',
+                        isActive ? 'text-primary' : 'group-hover:text-primary'
+                      )}
+                    />
                   )}
                   {isSidebarOpen && (
                     <div className="flex items-center justify-between w-full">
                       <span>{item.title}</span>
                       {item.badge && !isLoading && (
-                        <Badge 
-                          variant={item.badge === "New" ? "default" : "secondary"}
+                        <Badge
+                          variant={item.badge === 'New' ? 'default' : 'secondary'}
                           className="ml-2 px-2 py-0.5 text-xs"
                         >
                           {item.badge}
@@ -188,15 +185,15 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </TooltipTrigger>
-          <TooltipContent 
-            side="right" 
-            className={cn("bg-primary text-primary-foreground", isSidebarOpen ? "hidden" : "block")}
+          <TooltipContent
+            side="right"
+            className={cn('bg-primary text-primary-foreground', isSidebarOpen ? 'hidden' : 'block')}
           >
             <div className="flex items-center">
               <span>{item.title}</span>
               {item.badge && !isLoading && (
-                <Badge 
-                  variant={item.badge === "New" ? "default" : "secondary"}
+                <Badge
+                  variant={item.badge === 'New' ? 'default' : 'secondary'}
                   className="ml-2 px-2 py-0.5 text-xs"
                 >
                   {item.badge}
@@ -210,16 +207,20 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   };
 
   return (
-    <Sidebar className={cn(
-      "fixed left-0 top-0 bottom-0 z-40 transition-all duration-300",
-      isSidebarOpen ? "w-64" : "w-20",
-      "border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-    )}>
+    <Sidebar
+      className={cn(
+        'fixed left-0 top-0 bottom-0 z-40 transition-all duration-300',
+        isSidebarOpen ? 'w-64' : 'w-20',
+        'border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'
+      )}
+    >
       <SidebarHeader className="h-14 flex items-center px-4 border-b">
-        <div className={cn(
-          "flex items-center w-full",
-          isSidebarOpen ? "justify-start" : "justify-center"
-        )}>
+        <div
+          className={cn(
+            'flex items-center w-full',
+            isSidebarOpen ? 'justify-start' : 'justify-center'
+          )}
+        >
           {isSidebarOpen ? (
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold mr-2">
@@ -238,7 +239,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        {menuItems.map((section) => (
+        {menuItems.map(section => (
           <SidebarGroup key={section.section}>
             {isSidebarOpen && (
               <SidebarGroupLabel className="flex items-center text-xs font-medium text-muted-foreground/70">
@@ -247,9 +248,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu>
-                {section.items.map(renderMenuItem)}
-              </SidebarMenu>
+              <SidebarMenu>{section.items.map(renderMenuItem)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
@@ -263,7 +262,11 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
                 <p className="font-medium">Plas Dashboard</p>
                 <p className="text-xs">v1.2.0</p>
               </div>
-              <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-destructive/10 hover:text-destructive"
+              >
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
@@ -274,7 +277,11 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:bg-destructive/10 hover:text-destructive"
+            >
               <LogOut className="h-5 w-5" />
             </Button>
           </div>

@@ -21,7 +21,7 @@ const nextConfig = {
           '**/.next/**',
           '**/out/**',
           '**/.git/**',
-          '**/src/pages/**'
+          '**/src/pages/**',
         ],
         aggregateTimeout: 300,
         poll: 1000,
@@ -36,6 +36,6 @@ const nextConfig = {
     // number of pages that should be kept simultaneously without being disposed
     pagesBufferLength: 2,
   },
-}
+};
 
-module.exports = nextConfig 
+module.exports = nextConfig;

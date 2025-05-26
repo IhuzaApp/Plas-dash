@@ -46,4 +46,4 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router, handleStart, handleComplete, handleError]);
 
   return <Component {...pageProps} />;
-} 
+}
