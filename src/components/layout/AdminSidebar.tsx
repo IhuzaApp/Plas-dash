@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -34,11 +34,13 @@ import {
   Bell,
   HelpCircle,
   LogOut,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
@@ -46,6 +48,34 @@ interface AdminSidebarProps {
 
 const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+
+  // Handle navigation state
+  useEffect(() => {
+    if (!isNavigating) return;
+    
+    const timeoutId = setTimeout(() => {
+      setIsNavigating(false);
+      setNavigatingTo(null);
+    }, 1000); // Reset after 1 second if navigation hasn't completed
+    
+    return () => clearTimeout(timeoutId);
+  }, [isNavigating]);
+
+  // Reset navigation state when pathname changes
+  useEffect(() => {
+    setIsNavigating(false);
+    setNavigatingTo(null);
+  }, [pathname]);
+
+  const handleNavigation = (path: string) => {
+    if (path === pathname) return;
+    setIsNavigating(true);
+    setNavigatingTo(path);
+    router.push(path);
+  };
 
   const menuItems = [
     { 
@@ -110,6 +140,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
 
   const renderMenuItem = (item: any) => {
     const isActive = pathname === item.path;
+    const isLoading = isNavigating && navigatingTo === item.path;
     
     return (
       <TooltipProvider key={item.title} delayDuration={0}>
@@ -117,8 +148,8 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
           <TooltipTrigger asChild>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link 
-                  href={item.path} 
+                <button 
+                  onClick={() => handleNavigation(item.path)}
                   className={cn(
                     "flex items-center w-full",
                     isSidebarOpen ? "px-3" : "justify-center",
@@ -128,15 +159,22 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
                     "rounded-md py-2 transition-all duration-200 group"
                   )}
                 >
-                  <item.icon className={cn(
-                    "h-5 w-5",
-                    isSidebarOpen ? "mr-2" : "",
-                    isActive ? "text-primary" : "group-hover:text-primary"
-                  )} />
+                  {isLoading ? (
+                    <Loader2 className={cn(
+                      "h-5 w-5 animate-spin",
+                      isSidebarOpen ? "mr-2" : ""
+                    )} />
+                  ) : (
+                    <item.icon className={cn(
+                      "h-5 w-5",
+                      isSidebarOpen ? "mr-2" : "",
+                      isActive ? "text-primary" : "group-hover:text-primary"
+                    )} />
+                  )}
                   {isSidebarOpen && (
                     <div className="flex items-center justify-between w-full">
                       <span>{item.title}</span>
-                      {item.badge && (
+                      {item.badge && !isLoading && (
                         <Badge 
                           variant={item.badge === "New" ? "default" : "secondary"}
                           className="ml-2 px-2 py-0.5 text-xs"
@@ -146,7 +184,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
                       )}
                     </div>
                   )}
-                </Link>
+                </button>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </TooltipTrigger>
@@ -156,7 +194,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
           >
             <div className="flex items-center">
               <span>{item.title}</span>
-              {item.badge && (
+              {item.badge && !isLoading && (
                 <Badge 
                   variant={item.badge === "New" ? "default" : "secondary"}
                   className="ml-2 px-2 py-0.5 text-xs"
