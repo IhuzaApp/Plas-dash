@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -18,22 +18,28 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScanBarcode, ScanQrCode } from "lucide-react";
-import { toast } from "sonner";
-import { useShops, useSystemConfig } from "@/hooks/useHasuraApi";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ScanBarcode, ScanQrCode } from 'lucide-react';
+import { toast } from 'sonner';
+import { useShops, useSystemConfig } from '@/hooks/useHasuraApi';
 
 // Match the API types exactly
 const formSchema = z.object({
-  name: z.string().min(1, "Product name is required"),
+  name: z.string().min(1, 'Product name is required'),
   description: z.string().optional(),
-  price: z.string().min(1, "Price is required"),
-  quantity: z.number().int().min(0, "Quantity must be a positive number"),
-  measurement_unit: z.string().min(1, "Measurement unit is required"),
-  category: z.string().min(1, "Category is required"),
+  price: z.string().min(1, 'Price is required'),
+  quantity: z.number().int().min(0, 'Quantity must be a positive number'),
+  measurement_unit: z.string().min(1, 'Measurement unit is required'),
+  category: z.string().min(1, 'Category is required'),
   is_active: z.boolean().default(true),
   barcode: z.string().optional(),
   sku: z.string().optional(),
@@ -55,7 +61,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   open,
   onOpenChange,
   onSubmit,
-  shopId
+  shopId,
 }) => {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanType, setScanType] = useState<'barcode' | 'qrcode' | null>(null);
@@ -66,12 +72,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      price: "",
+      name: '',
+      description: '',
+      price: '',
       quantity: 0,
-      measurement_unit: "item",
-      category: "",
+      measurement_unit: 'item',
+      category: '',
       is_active: true,
       barcode: undefined,
       sku: undefined,
@@ -94,20 +100,19 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const startScanning = (type: 'barcode' | 'qrcode') => {
     setScanType(type);
     setIsScanning(true);
-    
+
     setTimeout(() => {
-      const mockData = type === 'barcode' 
-        ? '5901234123457'
-        : 'https://product-info.example.com/12345';
-      
+      const mockData =
+        type === 'barcode' ? '5901234123457' : 'https://product-info.example.com/12345';
+
       if (type === 'barcode') {
         form.setValue('barcode', mockData);
-        toast.success("Barcode scanned successfully!");
+        toast.success('Barcode scanned successfully!');
       } else {
         form.setValue('barcode', mockData);
-        toast.success("QR code scanned successfully!");
+        toast.success('QR code scanned successfully!');
       }
-      
+
       setIsScanning(false);
     }, 1500);
   };
@@ -137,7 +142,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {shopsData?.Shops.map((shop) => (
+                        {shopsData?.Shops.map(shop => (
                           <SelectItem key={shop.id} value={shop.id}>
                             {shop.name}
                           </SelectItem>
@@ -164,7 +169,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="category"
@@ -210,19 +215,19 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                           <Input placeholder="Enter barcode" {...field} value={field.value || ''} />
                         </div>
                       </FormControl>
-                      <Button 
-                        type="button" 
-                        size="icon" 
-                        variant="outline" 
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
                         onClick={() => startScanning('barcode')}
                         disabled={isScanning}
                       >
                         <ScanBarcode className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        type="button" 
-                        size="icon" 
-                        variant="outline" 
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
                         onClick={() => startScanning('qrcode')}
                         disabled={isScanning}
                       >
@@ -279,14 +284,17 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Quantity*</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         type="number"
                         min="0"
                         placeholder="0"
                         {...field}
                         value={value}
-                        onChange={(e) => {
-                          const val = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0);
+                        onChange={e => {
+                          const val =
+                            e.target.value === ''
+                              ? 0
+                              : Math.max(0, parseInt(e.target.value, 10) || 0);
                           onChange(val);
                         }}
                       />
@@ -333,14 +341,17 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Reorder Point</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         type="number"
                         min="0"
                         placeholder="0"
                         {...field}
                         value={value ?? ''}
-                        onChange={(e) => {
-                          const val = e.target.value === '' ? undefined : Math.max(0, parseInt(e.target.value, 10));
+                        onChange={e => {
+                          const val =
+                            e.target.value === ''
+                              ? undefined
+                              : Math.max(0, parseInt(e.target.value, 10));
                           onChange(val);
                         }}
                       />
@@ -357,10 +368,10 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Enter supplier name" 
-                        {...field} 
-                        value={field.value || ''} 
+                      <Input
+                        placeholder="Enter supplier name"
+                        {...field}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -376,10 +387,10 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Enter product description" 
-                      className="resize-none" 
-                      {...field} 
+                    <Textarea
+                      placeholder="Enter product description"
+                      className="resize-none"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />

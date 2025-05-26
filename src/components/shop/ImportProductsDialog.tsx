@@ -1,8 +1,14 @@
-import React, { useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useDropzone } from "react-dropzone";
-import { Upload } from "lucide-react";
+import React, { useCallback } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useDropzone } from 'react-dropzone';
+import { Upload } from 'lucide-react';
 
 interface ImportProductsDialogProps {
   open: boolean;
@@ -15,18 +21,21 @@ export default function ImportProductsDialog({
   onOpenChange,
   onSubmit,
 }: ImportProductsDialogProps) {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      onSubmit(acceptedFiles[0]);
-    }
-  }, [onSubmit]);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) {
+        onSubmit(acceptedFiles[0]);
+      }
+    },
+    [onSubmit]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       'text/csv': ['.csv'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'application/vnd.ms-excel': ['.xls']
+      'application/vnd.ms-excel': ['.xls'],
     },
     maxFiles: 1,
   });
@@ -52,7 +61,9 @@ export default function ImportProductsDialog({
             <p className="mt-4 text-sm text-muted-foreground">Drop the file here...</p>
           ) : (
             <>
-              <p className="mt-4 text-sm font-medium">Drag & drop a file here, or click to select</p>
+              <p className="mt-4 text-sm font-medium">
+                Drag & drop a file here, or click to select
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Supports CSV, Excel (.xlsx, .xls)
               </p>

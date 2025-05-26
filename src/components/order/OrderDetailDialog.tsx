@@ -1,18 +1,17 @@
-
-import React from "react";
+import React from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { Package, Clock, Truck, Calendar, CreditCard } from "lucide-react";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { Package, Clock, Truck, Calendar, CreditCard } from 'lucide-react';
 
 // Order type definition
 export type OrderItem = {
@@ -47,16 +46,16 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
   // Function to get status color class
   const getStatusColorClass = (status: string) => {
     switch (status) {
-      case "Delivered":
-        return "bg-green-100 text-green-800";
-      case "In Progress":
-        return "bg-blue-100 text-blue-800";
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "Cancelled":
-        return "bg-red-100 text-red-800";
+      case 'Delivered':
+        return 'bg-green-100 text-green-800';
+      case 'In Progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'Pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Cancelled':
+        return 'bg-red-100 text-red-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -65,7 +64,7 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
     const price = parseFloat(item.price.replace('$', ''));
     return sum + price * item.quantity;
   }, 0);
-  
+
   const tax = subtotal * 0.08; // Assuming 8% tax
   const total = parseFloat(order.total.replace('$', ''));
 
@@ -84,7 +83,7 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
             Placed on {order.date} by {order.customer}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -99,7 +98,7 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
                   <p>{order.phone}</p>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="font-medium mb-2 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
@@ -120,7 +119,7 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
                     </span>
                     <span>{order.date}</span>
                   </div>
-                  {order.status === "Delivered" && (
+                  {order.status === 'Delivered' && (
                     <div className="flex justify-between items-center text-sm mt-2">
                       <span className="flex items-center gap-1">
                         <Truck className="h-3.5 w-3.5" />
@@ -132,7 +131,7 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
                 </div>
               </div>
             </div>
-            
+
             <div>
               <h3 className="font-medium mb-2 flex items-center gap-2">
                 <Truck className="h-4 w-4" />
@@ -158,7 +157,7 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
           <div>
             <h3 className="font-medium mb-3">Order Items ({order.items.length})</h3>
             <div className="space-y-2">
-              {order.items.map((item) => (
+              {order.items.map(item => (
                 <Card key={item.id}>
                   <CardContent className="p-4 flex justify-between items-center">
                     <div className="flex-1">
@@ -167,7 +166,10 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
                     </div>
                     <div className="text-right">
                       <p>{item.price} each</p>
-                      <p className="font-medium">${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)} total</p>
+                      <p className="font-medium">
+                        ${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}{' '}
+                        total
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -198,7 +200,9 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
             <Button>Print Receipt</Button>
           </div>
         </div>

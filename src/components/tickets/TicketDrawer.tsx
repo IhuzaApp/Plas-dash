@@ -1,18 +1,24 @@
-import React from "react";
+import React from 'react';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { format } from "date-fns";
-import { AlertCircle, CheckCircle, Clock, User, Mail, Phone, Star, Package } from "lucide-react";
-import { type CombinedTicket, getTicketDate, getTicketTitle, getTicketUpdateDate, useUpdateAnyTicket } from "@/hooks/useTickets";
-import { useUserDetails, useShopperDetails } from "@/hooks/useUsers";
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { format } from 'date-fns';
+import { AlertCircle, CheckCircle, Clock, User, Mail, Phone, Star, Package } from 'lucide-react';
+import {
+  type CombinedTicket,
+  getTicketDate,
+  getTicketTitle,
+  getTicketUpdateDate,
+  useUpdateAnyTicket,
+} from '@/hooks/useTickets';
+import { useUserDetails, useShopperDetails } from '@/hooks/useUsers';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,8 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface TicketDrawerProps {
   ticket: CombinedTicket | null;
@@ -32,11 +38,7 @@ interface TicketDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const TicketDrawer: React.FC<TicketDrawerProps> = ({
-  ticket,
-  open,
-  onOpenChange,
-}) => {
+const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, open, onOpenChange }) => {
   const { updateTicketStatus, isLoading: isUpdating } = useUpdateAnyTicket();
   const { data: userData, isLoading: isLoadingUser } = useUserDetails(
     ticket?.type === 'support' ? ticket.user_id : undefined
@@ -102,7 +104,7 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({
           )}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            <span>Member since {format(new Date(user.created_at), "PP")}</span>
+            <span>Member since {format(new Date(user.created_at), 'PP')}</span>
           </div>
         </div>
       );
@@ -113,7 +115,7 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({
       const user = shopper.User;
       const rating = shopper.Ratings_aggregate?.aggregate?.avg?.rating || 0;
       const totalOrders = shopper.Orders_aggregate?.aggregate?.count || 0;
-      
+
       return (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -140,17 +142,13 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            <span>Member since {format(new Date(user.created_at), "PP")}</span>
+            <span>Member since {format(new Date(user.created_at), 'PP')}</span>
           </div>
         </div>
       );
     }
 
-    return (
-      <div className="text-sm text-muted-foreground">
-        No user information available
-      </div>
-    );
+    return <div className="text-sm text-muted-foreground">No user information available</div>;
   };
 
   return (
@@ -166,7 +164,7 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({
             </Badge>
           </SheetTitle>
           <SheetDescription>
-            Created {format(new Date(getTicketDate(ticket)), "PPpp")}
+            Created {format(new Date(getTicketDate(ticket)), 'PPpp')}
           </SheetDescription>
         </SheetHeader>
 
@@ -190,11 +188,11 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <span>Created: {format(new Date(getTicketDate(ticket)), "PPpp")}</span>
+              <span>Created: {format(new Date(getTicketDate(ticket)), 'PPpp')}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <span>Updated: {format(new Date(getTicketUpdateDate(ticket)), "PPpp")}</span>
+              <span>Updated: {format(new Date(getTicketUpdateDate(ticket)), 'PPpp')}</span>
             </div>
           </div>
 
@@ -238,7 +236,8 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Mark Ticket as Resolved?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will close the ticket and mark it as resolved. This action cannot be undone.
+                      This will close the ticket and mark it as resolved. This action cannot be
+                      undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -247,7 +246,7 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({
                       onClick={() => handleUpdateStatus('resolved')}
                       className="bg-green-600 hover:bg-green-700"
                     >
-                      {isUpdating ? "Updating..." : "Confirm Resolution"}
+                      {isUpdating ? 'Updating...' : 'Confirm Resolution'}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -266,4 +265,4 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({
   );
 };
 
-export default TicketDrawer; 
+export default TicketDrawer;

@@ -8,4 +8,4 @@ const Checkout = dynamic(() => import('@/components/pages/pos/Checkout'), {
 
 export default function CheckoutPage() {
   return <Checkout />;
-} 
+}

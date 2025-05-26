@@ -1,26 +1,33 @@
-import React, { useState } from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/sonner";
-import { Settings as SettingsIcon, Store, Building2 } from "lucide-react";
+import React, { useState } from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { toast } from '@/components/ui/sonner';
+import { Settings as SettingsIcon, Store, Building2 } from 'lucide-react';
 
 const Settings = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  
+
   const handleSaveChanges = () => {
-    toast.success("Settings saved successfully");
+    toast.success('Settings saved successfully');
   };
-  
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -32,16 +39,16 @@ const Settings = () => {
       reader.readAsDataURL(file);
     }
   };
-  
+
   return (
     <AdminLayout>
-      <PageHeader 
-        title="System Settings" 
+      <PageHeader
+        title="System Settings"
         description="Configure platform settings and preferences."
         actions={<Button onClick={handleSaveChanges}>Save All Changes</Button>}
         icon={<SettingsIcon className="h-6 w-6" />}
       />
-      
+
       <Tabs defaultValue="general">
         <TabsList className="mb-4">
           <TabsTrigger value="general">General</TabsTrigger>
@@ -51,12 +58,14 @@ const Settings = () => {
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="api">API</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="general" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Company Information</CardTitle>
-              <CardDescription>Update your company details and contact information.</CardDescription>
+              <CardDescription>
+                Update your company details and contact information.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -69,7 +78,7 @@ const Settings = () => {
                   <Input id="contact-email" type="email" defaultValue="support@deliveryadmin.com" />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
@@ -80,14 +89,17 @@ const Settings = () => {
                   <Input id="website" defaultValue="https://deliveryadmin.com" />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="address">Address</Label>
-                <Textarea id="address" defaultValue="123 Delivery Street, Suite 100, San Francisco, CA 94107" />
+                <Textarea
+                  id="address"
+                  defaultValue="123 Delivery Street, Suite 100, San Francisco, CA 94107"
+                />
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Platform Settings</CardTitle>
@@ -104,17 +116,17 @@ const Settings = () => {
                   <Input id="currency" defaultValue="USD ($)" />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="date-format">Date Format</Label>
                 <Input id="date-format" defaultValue="MM/DD/YYYY" />
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Switch id="maintenance" />
                 <Label htmlFor="maintenance">Enable Maintenance Mode</Label>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Switch id="new-registrations" defaultChecked />
                 <Label htmlFor="new-registrations">Allow New User Registrations</Label>
@@ -122,7 +134,7 @@ const Settings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="supermarket" className="space-y-6">
           <Card>
             <CardHeader>
@@ -135,18 +147,17 @@ const Settings = () => {
                 <div className="flex items-center gap-4">
                   <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
                     {logoPreview ? (
-                      <img src={logoPreview} alt="Logo preview" className="h-full w-full object-contain" />
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="h-full w-full object-contain"
+                      />
                     ) : (
                       <Store className="h-10 w-10 text-muted-foreground" />
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Input 
-                      id="logo" 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleLogoChange}
-                    />
+                    <Input id="logo" type="file" accept="image/*" onChange={handleLogoChange} />
                     <p className="text-xs text-muted-foreground">
                       Recommended size: 512x512px. Max file size: 2MB.
                     </p>
@@ -164,7 +175,7 @@ const Settings = () => {
                   <Input id="market-slogan" defaultValue="Fresh Food, Great Prices" />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="market-tin">Tax Identification Number (TIN)</Label>
@@ -178,7 +189,7 @@ const Settings = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="store-hours">Store Hours</Label>
-                <Textarea 
+                <Textarea
                   id="store-hours"
                   defaultValue="Monday-Friday: 8:00 AM - 9:00 PM
 Saturday: 8:00 AM - 10:00 PM
@@ -207,7 +218,9 @@ Sunday: 9:00 AM - 8:00 PM"
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-medium">Enable Membership System</h3>
-                  <p className="text-sm text-muted-foreground">Allow customers to register for memberships and earn rewards</p>
+                  <p className="text-sm text-muted-foreground">
+                    Allow customers to register for memberships and earn rewards
+                  </p>
                 </div>
                 <Switch id="membership-system" defaultChecked />
               </div>
@@ -229,7 +242,7 @@ Sunday: 9:00 AM - 8:00 PM"
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="appearance" className="space-y-6">
           <Card>
             <CardHeader>
@@ -254,14 +267,18 @@ Sunday: 9:00 AM - 8:00 PM"
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Primary Color</Label>
                 <div className="flex gap-2">
-                  <input type="color" className="w-10 h-10 rounded cursor-pointer" defaultValue="#9b87f5" />
+                  <input
+                    type="color"
+                    className="w-10 h-10 rounded cursor-pointer"
+                    defaultValue="#9b87f5"
+                  />
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Switch id="compact-mode" />
                 <Label htmlFor="compact-mode">Enable Compact Mode</Label>
@@ -269,7 +286,7 @@ Sunday: 9:00 AM - 8:00 PM"
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="notifications" className="space-y-6">
           <Card>
             <CardHeader>
@@ -294,7 +311,7 @@ Sunday: 9:00 AM - 8:00 PM"
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Push Notifications</h3>
                 <div className="space-y-2">
@@ -312,15 +329,19 @@ Sunday: 9:00 AM - 8:00 PM"
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="notification-email">Notification Email</Label>
-                <Input id="notification-email" type="email" defaultValue="alerts@deliveryadmin.com" />
+                <Input
+                  id="notification-email"
+                  type="email"
+                  defaultValue="alerts@deliveryadmin.com"
+                />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="security" className="space-y-6">
           <Card>
             <CardHeader>
@@ -335,20 +356,22 @@ Sunday: 9:00 AM - 8:00 PM"
                 </div>
                 <Switch id="2fa" defaultChecked />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-medium">Session Timeout</h3>
-                  <p className="text-sm text-muted-foreground">Automatically log out inactive users</p>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically log out inactive users
+                  </p>
                 </div>
                 <Switch id="session-timeout" defaultChecked />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="timeout-duration">Timeout Duration (minutes)</Label>
                 <Input id="timeout-duration" type="number" defaultValue="30" />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-medium">Password Requirements</h3>
@@ -359,7 +382,7 @@ Sunday: 9:00 AM - 8:00 PM"
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="api" className="space-y-6">
           <Card>
             <CardHeader>
@@ -370,21 +393,26 @@ Sunday: 9:00 AM - 8:00 PM"
               <div className="space-y-2">
                 <Label htmlFor="api-key">API Key</Label>
                 <div className="flex gap-2">
-                  <Input id="api-key" readOnly defaultValue="sk_live_51Abcde1234567890" className="font-mono" />
+                  <Input
+                    id="api-key"
+                    readOnly
+                    defaultValue="sk_live_51Abcde1234567890"
+                    className="font-mono"
+                  />
                   <Button variant="outline">Regenerate</Button>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="webhook-url">Webhook URL</Label>
                 <Input id="webhook-url" defaultValue="https://yourapp.com/api/webhook" />
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Switch id="api-active" defaultChecked />
                 <Label htmlFor="api-active">API Access Enabled</Label>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>API Rate Limiting</Label>
                 <div className="flex gap-4 items-center">
@@ -422,11 +450,17 @@ Sunday: 9:00 AM - 8:00 PM"
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              toast.success("Branch added successfully");
-              setDialogOpen(false);
-            }}>Add Branch</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                toast.success('Branch added successfully');
+                setDialogOpen(false);
+              }}
+            >
+              Add Branch
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

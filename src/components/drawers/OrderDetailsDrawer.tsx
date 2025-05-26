@@ -1,22 +1,22 @@
-import React from "react";
+import React from 'react';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from "@/components/ui/sheet";
-import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Order } from "@/types/order";
-import { useSystemConfig } from "@/hooks/useHasuraApi";
-import { useOrderPayments } from "@/hooks/useShoppers";
-import { Loader2 } from "lucide-react";
-import type { WalletTransaction, Refund } from "@/hooks/useShoppers";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+} from '@/components/ui/sheet';
+import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Order } from '@/types/order';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
+import { useOrderPayments } from '@/hooks/useShoppers';
+import { Loader2 } from 'lucide-react';
+import type { WalletTransaction, Refund } from '@/hooks/useShoppers';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface OrderDetailsDrawerProps {
   order: Order | null;
@@ -40,11 +40,7 @@ const generateShortId = (id: string) => {
   return id.slice(0, 8);
 };
 
-const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
-  order,
-  open,
-  onClose,
-}) => {
+const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, onClose }) => {
   if (!order) return null;
 
   const { data: paymentData, isLoading: isLoadingPayments } = useOrderPayments(order.id);
@@ -55,48 +51,48 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
     const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
       currency: currency,
     }).format(num);
   };
 
   const formatDateTime = (dateString: string) => {
-    return format(new Date(dateString), "MMM d, yyyy HH:mm");
+    return format(new Date(dateString), 'MMM d, yyyy HH:mm');
   };
 
   const getStatusColor = (status: string) => {
     const statusLower = status.toLowerCase();
     switch (statusLower) {
-      case "delivered":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      case "shopping":
-      case "in_progress":
-      case "accepted":
-      case "picked_up":
-      case "on_the_way":
-        return "bg-blue-100 text-blue-800";
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'shopping':
+      case 'in_progress':
+      case 'accepted':
+      case 'picked_up':
+      case 'on_the_way':
+        return 'bg-blue-100 text-blue-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPaymentStatusColor = (status: string) => {
     const statusLower = status.toLowerCase();
     switch (statusLower) {
-      case "completed":
-      case "success":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "failed":
-        return "bg-red-100 text-red-800";
+      case 'completed':
+      case 'success':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
       default:
-        return "bg-gray-100 text-gray-800";
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -117,9 +113,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
             </TooltipProvider>
             <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
           </SheetTitle>
-          <SheetDescription>
-            Created on {formatDateTime(order.created_at)}
-          </SheetDescription>
+          <SheetDescription>Created on {formatDateTime(order.created_at)}</SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6">
@@ -130,7 +124,10 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
               <div className="flex items-center space-x-4">
                 <Avatar>
                   <AvatarFallback>
-                    {order.User?.name?.split(" ").map((n) => n[0]).join("")}
+                    {order.User?.name
+                      ?.split(' ')
+                      .map(n => n[0])
+                      .join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div>
@@ -154,20 +151,18 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger className="text-primary hover:underline">
-                              <p className="font-medium">Product #{generateShortId(item.product_id)}</p>
+                              <p className="font-medium">
+                                Product #{generateShortId(item.product_id)}
+                              </p>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>Full Product ID: {item.product_id}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
-                        <p className="text-sm text-muted-foreground">
-                          Quantity: {item.quantity}
-                        </p>
+                        <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
                       </div>
-                      <p className="font-medium">
-                        {formatCurrency(item.price)}
-                      </p>
+                      <p className="font-medium">{formatCurrency(item.price)}</p>
                     </div>
                   </div>
                 ))}
@@ -192,7 +187,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                   <span>Service Fee</span>
                   <span>{formatCurrency(order.service_fee)}</span>
                 </div>
-                {order.discount !== "0" && (
+                {order.discount !== '0' && (
                   <div className="flex justify-between text-green-600">
                     <span>Discount</span>
                     <span>-{formatCurrency(order.discount)}</span>
@@ -224,9 +219,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                           className="flex justify-between items-center text-sm border rounded-md p-2"
                         >
                           <div>
-                            <p className="font-medium">
-                              {transaction.type || "Payment"}
-                            </p>
+                            <p className="font-medium">{transaction.type || 'Payment'}</p>
                             <p className="text-muted-foreground">
                               {formatDateTime(transaction.created_at)}
                             </p>
@@ -267,10 +260,10 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                               -{formatCurrency(refund.amount)}
                             </p>
                             <Badge
-                              variant={refund.paid ? "default" : "outline"}
+                              variant={refund.paid ? 'default' : 'outline'}
                               className={getPaymentStatusColor(refund.status)}
                             >
-                              {refund.status} {refund.paid ? "(Paid)" : ""}
+                              {refund.status} {refund.paid ? '(Paid)' : ''}
                             </Badge>
                           </div>
                         </div>
@@ -293,7 +286,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
                 </p>
                 <p className="text-sm">
                   <span className="font-medium">Delivery Notes: </span>
-                  {order.delivery_notes || "No special instructions"}
+                  {order.delivery_notes || 'No special instructions'}
                 </p>
                 {order.delivery_time && (
                   <p className="text-sm">
@@ -314,4 +307,4 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({
   );
 };
 
-export default OrderDetailsDrawer; 
+export default OrderDetailsDrawer;

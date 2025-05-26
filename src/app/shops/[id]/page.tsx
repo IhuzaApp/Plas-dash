@@ -8,4 +8,4 @@ const ShopDetail = dynamic(() => import('@/components/pages/ShopDetail'), {
 
 export default function ShopDetailPage() {
   return <ShopDetail />;
-} 
+}

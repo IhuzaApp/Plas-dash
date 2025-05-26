@@ -1,29 +1,36 @@
-import React, { useState } from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React, { useState } from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { format } from "date-fns";
-import { Loader2, ChevronLeft, ChevronRight, CheckCircle, RefreshCcw, Search } from "lucide-react";
-import { useTickets, getTicketTitle, getTicketDate, getTicketUpdateDate, useUpdateAnyTicket, type CombinedTicket } from "@/hooks/useTickets";
-import TicketDrawer from "@/components/tickets/TicketDrawer";
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { format } from 'date-fns';
+import { Loader2, ChevronLeft, ChevronRight, CheckCircle, RefreshCcw, Search } from 'lucide-react';
+import {
+  useTickets,
+  getTicketTitle,
+  getTicketDate,
+  getTicketUpdateDate,
+  useUpdateAnyTicket,
+  type CombinedTicket,
+} from '@/hooks/useTickets';
+import TicketDrawer from '@/components/tickets/TicketDrawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -42,14 +49,14 @@ const Tickets: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { data, isLoading, refetch } = useTickets({
     page: currentPage,
-    limit: ITEMS_PER_PAGE
+    limit: ITEMS_PER_PAGE,
   });
   const { updateTicketStatus, isLoading: isUpdating } = useUpdateAnyTicket();
   const [selectedTicket, setSelectedTicket] = useState<CombinedTicket | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   if (isLoading) {
@@ -63,10 +70,7 @@ const Tickets: React.FC = () => {
   }
 
   // Combine and sort all tickets by date
-  const allTickets = [
-    ...(data?.tickets || []),
-    ...(data?.Delivery_Issues || [])
-  ].sort((a, b) => {
+  const allTickets = [...(data?.tickets || []), ...(data?.Delivery_Issues || [])].sort((a, b) => {
     const dateA = new Date(getTicketDate(a));
     const dateB = new Date(getTicketDate(b));
     return dateB.getTime() - dateA.getTime();
@@ -74,13 +78,15 @@ const Tickets: React.FC = () => {
 
   // Filter tickets based on search query and filters
   const filteredTickets = allTickets.filter(ticket => {
-    const matchesSearch = searchQuery.toLowerCase() === "" ||
+    const matchesSearch =
+      searchQuery.toLowerCase() === '' ||
       getTicketTitle(ticket).toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (ticket.type === 'support' && ticket.ticket_num.toLowerCase().includes(searchQuery.toLowerCase()));
+      (ticket.type === 'support' &&
+        ticket.ticket_num.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesType = typeFilter === "all" || ticket.type === typeFilter;
-    const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter;
+    const matchesType = typeFilter === 'all' || ticket.type === typeFilter;
+    const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
 
     return matchesSearch && matchesType && matchesPriority;
   });
@@ -108,7 +114,9 @@ const Tickets: React.FC = () => {
     return (
       <div className="flex items-center justify-between py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, data?.totalCount || 0)} of {data?.totalCount || 0} tickets
+          Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+          {Math.min(currentPage * ITEMS_PER_PAGE, data?.totalCount || 0)} of {data?.totalCount || 0}{' '}
+          tickets
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -124,7 +132,7 @@ const Tickets: React.FC = () => {
             {startPage > 1 && (
               <>
                 <Button
-                  variant={currentPage === 1 ? "default" : "outline"}
+                  variant={currentPage === 1 ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setCurrentPage(1)}
                 >
@@ -133,13 +141,10 @@ const Tickets: React.FC = () => {
                 {startPage > 2 && <span className="px-2">...</span>}
               </>
             )}
-            {Array.from(
-              { length: endPage - startPage + 1 },
-              (_, i) => startPage + i
-            ).map((page) => (
+            {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map(page => (
               <Button
                 key={page}
-                variant={currentPage === page ? "default" : "outline"}
+                variant={currentPage === page ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setCurrentPage(page)}
               >
@@ -150,7 +155,7 @@ const Tickets: React.FC = () => {
               <>
                 {endPage < totalPages - 1 && <span className="px-2">...</span>}
                 <Button
-                  variant={currentPage === totalPages ? "default" : "outline"}
+                  variant={currentPage === totalPages ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setCurrentPage(totalPages)}
                 >
@@ -193,9 +198,9 @@ const Tickets: React.FC = () => {
 
   const getAcceptanceMessage = (ticket: CombinedTicket) => {
     if (ticket.type === 'support') {
-      return "You will be responsible for handling this customer support ticket.";
+      return 'You will be responsible for handling this customer support ticket.';
     }
-    return "You will be responsible for resolving this delivery issue.";
+    return 'You will be responsible for resolving this delivery issue.';
   };
 
   const getPriorityColor = (priority: string) => {
@@ -234,10 +239,7 @@ const Tickets: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-      <PageHeader 
-          title="Tickets"
-          description="Manage support tickets and delivery issues"
-        />
+        <PageHeader title="Tickets" description="Manage support tickets and delivery issues" />
 
         <div className="flex flex-col space-y-4">
           <div className="flex items-center justify-between">
@@ -247,7 +249,7 @@ const Tickets: React.FC = () => {
                 <Input
                   placeholder="Search by title or ID..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -289,38 +291,33 @@ const Tickets: React.FC = () => {
                     <div className="flex items-center">
                       <div className="w-2 h-2 rounded-full bg-red-500 mr-2" />
                       Urgent
-      </div>
+                    </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
-          </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-            >
+            </div>
+            <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
               <RefreshCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-        
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
+            </Button>
+          </div>
+
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Title</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
                   <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredTickets.map((ticket: CombinedTicket) => (
-                <TableRow key={ticket.id}>
+                  <TableRow key={ticket.id}>
                     <TableCell className="font-medium">
                       {ticket.type === 'support' ? `#${ticket.ticket_num}` : ticket.id.slice(0, 8)}
                     </TableCell>
@@ -330,49 +327,62 @@ const Tickets: React.FC = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>{getTicketTitle(ticket)}</TableCell>
-                  <TableCell>
-                      <Badge 
-                        variant="outline" 
+                    <TableCell>
+                      <Badge
+                        variant="outline"
                         className={`capitalize ${getPriorityColor(ticket.priority)}`}
                       >
                         <div className="flex items-center gap-1.5">
-                          <div className={`w-1.5 h-1.5 rounded-full ${
-                            ticket.priority.toLowerCase() === 'urgent' ? 'bg-red-500' :
-                            ticket.priority.toLowerCase() === 'high' ? 'bg-orange-500' :
-                            ticket.priority.toLowerCase() === 'medium' ? 'bg-yellow-500' :
-                            'bg-green-500'
-                          }`} />
-                      {ticket.priority}
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              ticket.priority.toLowerCase() === 'urgent'
+                                ? 'bg-red-500'
+                                : ticket.priority.toLowerCase() === 'high'
+                                  ? 'bg-orange-500'
+                                  : ticket.priority.toLowerCase() === 'medium'
+                                    ? 'bg-yellow-500'
+                                    : 'bg-green-500'
+                            }`}
+                          />
+                          {ticket.priority}
                         </div>
                       </Badge>
-                  </TableCell>
-                  <TableCell>
+                    </TableCell>
+                    <TableCell>
                       <Badge className={`capitalize ${getStatusColor(ticket.status)}`}>
-                      {ticket.status}
+                        {ticket.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {format(new Date(getTicketDate(ticket)), "MMM d, yyyy HH:mm")}
+                      {format(new Date(getTicketDate(ticket)), 'MMM d, yyyy HH:mm')}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(getTicketUpdateDate(ticket)), "MMM d, yyyy HH:mm")}
-                  </TableCell>
-                  <TableCell className="text-right">
+                      {format(new Date(getTicketUpdateDate(ticket)), 'MMM d, yyyy HH:mm')}
+                    </TableCell>
+                    <TableCell className="text-right">
                       {ticket.status === 'pending' || ticket.status === 'open' ? (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="bg-blue-50 text-blue-600 hover:bg-blue-100">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            >
                               Accept {ticket.type === 'support' ? 'Ticket' : 'Issue'}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Accept {ticket.type === 'support' ? `Ticket #${ticket.ticket_num}` : `Issue #${ticket.id.slice(0, 8)}`}
+                                Accept{' '}
+                                {ticket.type === 'support'
+                                  ? `Ticket #${ticket.ticket_num}`
+                                  : `Issue #${ticket.id.slice(0, 8)}`}
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to accept this {ticket.type === 'support' ? 'ticket' : 'issue'}? 
-                                You will be responsible for handling it.
+                                Are you sure you want to accept this{' '}
+                                {ticket.type === 'support' ? 'ticket' : 'issue'}? You will be
+                                responsible for handling it.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -382,14 +392,14 @@ const Tickets: React.FC = () => {
                                 className="bg-blue-600 hover:bg-blue-700"
                                 disabled={isUpdating}
                               >
-                                {isUpdating ? "Accepting..." : "Accept"}
+                                {isUpdating ? 'Accepting...' : 'Accept'}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
                       ) : (
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             setSelectedTicket(ticket);
@@ -399,21 +409,17 @@ const Tickets: React.FC = () => {
                           View Details
                         </Button>
                       )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
             {renderPagination()}
-        </Card>
+          </Card>
         </div>
       </div>
 
-      <TicketDrawer
-        ticket={selectedTicket}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-      />
+      <TicketDrawer ticket={selectedTicket} open={drawerOpen} onOpenChange={setDrawerOpen} />
     </AdminLayout>
   );
 };

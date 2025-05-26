@@ -162,16 +162,18 @@ export function useUserDetails(userId?: string) {
     queryKey: ['user', userId],
     queryFn: () => hasuraRequest(GET_USER_BY_ID, { id: userId }),
     enabled: !!userId,
-    select: (data) => ({
-      Users_by_pk: data.Users_by_pk ? {
-        ...data.Users_by_pk,
-        Addresses: data.Users_by_pk.Addresses || [],
-        Invoices: data.Users_by_pk.Invoices || [],
-        Wallets: data.Users_by_pk.Wallets || [],
-        Orders: data.Users_by_pk.Orders || [],
-        Shopper_Availabilities: data.Users_by_pk.Shopper_Availabilities || []
-      } : null
-    })
+    select: data => ({
+      Users_by_pk: data.Users_by_pk
+        ? {
+            ...data.Users_by_pk,
+            Addresses: data.Users_by_pk.Addresses || [],
+            Invoices: data.Users_by_pk.Invoices || [],
+            Wallets: data.Users_by_pk.Wallets || [],
+            Orders: data.Users_by_pk.Orders || [],
+            Shopper_Availabilities: data.Users_by_pk.Shopper_Availabilities || [],
+          }
+        : null,
+    }),
   });
 }
 
@@ -181,4 +183,4 @@ export function useShopperDetails(shopperId: string | undefined) {
     queryFn: () => hasuraRequest(GET_TICKET_SHOPPER_DETAILS, { shopperId }),
     enabled: !!shopperId,
   });
-} 
+}

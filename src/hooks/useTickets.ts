@@ -62,29 +62,30 @@ interface UseTicketsParams {
 export function useTickets({ page, limit }: UseTicketsParams) {
   const queryClient = useQueryClient();
   const offset = (page - 1) * limit;
-  
+
   const query = useQuery<TicketsResponse, Error, TransformedTicketsResponse>({
     queryKey: ['tickets', page, limit],
     queryFn: () => hasuraRequest(GET_ALL_TICKETS, { limit, offset }),
-    select: (data) => {
+    select: data => {
       // Transform tickets to add type
       const supportTickets = data.tickets.map(ticket => ({
         ...ticket,
-        type: 'support' as const
+        type: 'support' as const,
       }));
 
       // Transform delivery issues to add type
       const deliveryIssues = data.Delivery_Issues.map(issue => ({
         ...issue,
-        type: 'delivery' as const
+        type: 'delivery' as const,
       }));
 
       return {
         tickets: supportTickets,
         Delivery_Issues: deliveryIssues,
-        totalCount: data.tickets_aggregate.aggregate.count + data.Delivery_Issues_aggregate.aggregate.count
+        totalCount:
+          data.tickets_aggregate.aggregate.count + data.Delivery_Issues_aggregate.aggregate.count,
       };
-    }
+    },
   });
 
   const refetch = () => {
@@ -133,10 +134,9 @@ interface UpdateDeliveryIssueVariables {
 // Hook for updating tickets
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
-  
+
   return useMutation<unknown, Error, UpdateTicketVariables>({
-    mutationFn: (variables: UpdateTicketVariables) => 
-      hasuraRequest(UPDATE_TICKET, variables),
+    mutationFn: (variables: UpdateTicketVariables) => hasuraRequest(UPDATE_TICKET, variables),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
@@ -146,9 +146,9 @@ export function useUpdateTicket() {
 // Hook for updating delivery issues
 export function useUpdateDeliveryIssue() {
   const queryClient = useQueryClient();
-  
+
   return useMutation<unknown, Error, UpdateDeliveryIssueVariables>({
-    mutationFn: (variables: UpdateDeliveryIssueVariables) => 
+    mutationFn: (variables: UpdateDeliveryIssueVariables) =>
       hasuraRequest(UPDATE_DELIVERY_ISSUE, variables),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
@@ -163,24 +163,24 @@ export function useUpdateAnyTicket() {
 
   const updateTicketStatus = async (ticket: CombinedTicket, newStatus: string) => {
     const now = new Date().toISOString();
-    
+
     if (ticket.type === 'support') {
       return updateTicket.mutateAsync({
         id: ticket.id,
         status: newStatus,
-        update_on: now
+        update_on: now,
       });
     } else {
       return updateDeliveryIssue.mutateAsync({
         id: ticket.id,
         status: newStatus,
-        updated_at: now
+        updated_at: now,
       });
     }
   };
 
   return {
     updateTicketStatus,
-    isLoading: updateTicket.isPending || updateDeliveryIssue.isPending
+    isLoading: updateTicket.isPending || updateDeliveryIssue.isPending,
   };
-} 
+}

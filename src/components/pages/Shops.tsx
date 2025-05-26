@@ -1,21 +1,21 @@
-import React, { useState } from "react";
-import Link from "next/link";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, Loader2 } from "lucide-react";
-import { useShops } from "@/hooks/useHasuraApi";
-import Pagination from "@/components/ui/pagination";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Filter, Loader2 } from 'lucide-react';
+import { useShops } from '@/hooks/useHasuraApi';
+import Pagination from '@/components/ui/pagination';
 
 interface Shop {
   id: string;
@@ -40,16 +40,18 @@ interface Shop {
 
 const Shops = () => {
   const { data, isLoading, isError, error } = useShops();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
   // Filter shops based on search term
-  const filteredShops = data?.Shops.filter(shop => 
-    searchTerm === "" || 
-    shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shop.category?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredShops =
+    data?.Shops.filter(
+      shop =>
+        searchTerm === '' ||
+        shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        shop.category?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   // Calculate pagination
   const totalItems = filteredShops.length;
@@ -57,24 +59,24 @@ const Shops = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const currentShops = filteredShops.slice(startIndex, endIndex);
-  
+
   return (
     <AdminLayout>
-      <PageHeader 
-        title="Shops" 
+      <PageHeader
+        title="Shops"
         description="Manage partner shops and their products."
         actions={<Button>Add New Shop</Button>}
       />
-      
+
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search shops..." 
+            <Input
+              placeholder="Search shops..."
               className="pl-8"
               value={searchTerm}
-              onChange={(e) => {
+              onChange={e => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1); // Reset to first page on search
               }}
@@ -84,7 +86,7 @@ const Shops = () => {
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
-        
+
         <Card>
           <Table>
             <TableHeader>
@@ -109,11 +111,7 @@ const Shops = () => {
                   <TableCell colSpan={6} className="h-24 text-center">
                     <div className="text-red-500">
                       Error loading shops. Please try again.
-                      {error && (
-                        <div className="text-sm mt-2">
-                          Error details: {error.message}
-                        </div>
-                      )}
+                      {error && <div className="text-sm mt-2">Error details: {error.message}</div>}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -124,24 +122,28 @@ const Shops = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                currentShops.map((shop) => (
+                currentShops.map(shop => (
                   <TableRow key={shop.id}>
                     <TableCell className="font-medium">{shop.name}</TableCell>
-                    <TableCell>
-                      {shop.category?.name || 'Uncategorized'}
-                    </TableCell>
+                    <TableCell>{shop.category?.name || 'Uncategorized'}</TableCell>
                     <TableCell>{shop.Products_aggregate.aggregate.count}</TableCell>
                     <TableCell>{shop.Orders_aggregate.aggregate.count}</TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        shop.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {shop.is_active ? "Active" : "Inactive"}
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          shop.is_active
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {shop.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/shops/${shop.id}`}>
-                        <Button variant="ghost" size="sm">View Details</Button>
+                        <Button variant="ghost" size="sm">
+                          View Details
+                        </Button>
                       </Link>
                     </TableCell>
                   </TableRow>
@@ -155,7 +157,7 @@ const Shops = () => {
               totalPages={totalPages}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
-              onPageSizeChange={(size) => {
+              onPageSizeChange={size => {
                 setPageSize(size);
                 setCurrentPage(1); // Reset to first page when changing page size
               }}

@@ -1,12 +1,11 @@
-
-import React, { useState } from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Search, Plus, Eye, Key, Clock } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import React, { useState } from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Users, Search, Plus, Eye, Key, Clock } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -14,8 +13,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { format } from "date-fns";
+} from '@/components/ui/table';
+import { format } from 'date-fns';
 
 interface StaffMember {
   id: string;
@@ -23,28 +22,93 @@ interface StaffMember {
   position: string;
   email: string;
   store: string;
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
   lastLogin: Date | null;
 }
 
 const StaffLogin = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
 
   const staff: StaffMember[] = [
-    { id: "1", name: "John Smith", position: "Cashier", email: "john.smith@example.com", store: "Central Store", status: "active", lastLogin: new Date(2025, 4, 22, 8, 3) },
-    { id: "2", name: "Emma Johnson", position: "Manager", email: "emma.johnson@example.com", store: "Central Store", status: "active", lastLogin: new Date(2025, 4, 22, 7, 55) },
-    { id: "3", name: "David Wilson", position: "Stock Clerk", email: "david.wilson@example.com", store: "Central Store", status: "active", lastLogin: new Date(2025, 4, 22, 8, 10) },
-    { id: "4", name: "Sarah Martinez", position: "Cashier", email: "sarah.martinez@example.com", store: "Central Store", status: "active", lastLogin: new Date(2025, 4, 22, 9, 15) },
-    { id: "5", name: "Michael Brown", position: "Cashier", email: "michael.brown@example.com", store: "Westside Market", status: "active", lastLogin: new Date(2025, 4, 22, 8, 0) },
-    { id: "6", name: "Jessica Lee", position: "Manager", email: "jessica.lee@example.com", store: "Westside Market", status: "active", lastLogin: new Date(2025, 4, 22, 7, 45) },
-    { id: "7", name: "Robert Garcia", position: "Stock Clerk", email: "robert.garcia@example.com", store: "Northgate Shop", status: "inactive", lastLogin: new Date(2025, 4, 21, 17, 30) },
-    { id: "8", name: "Jennifer Lopez", position: "Manager", email: "jennifer.lopez@example.com", store: "Northgate Shop", status: "active", lastLogin: new Date(2025, 4, 22, 8, 5) },
+    {
+      id: '1',
+      name: 'John Smith',
+      position: 'Cashier',
+      email: 'john.smith@example.com',
+      store: 'Central Store',
+      status: 'active',
+      lastLogin: new Date(2025, 4, 22, 8, 3),
+    },
+    {
+      id: '2',
+      name: 'Emma Johnson',
+      position: 'Manager',
+      email: 'emma.johnson@example.com',
+      store: 'Central Store',
+      status: 'active',
+      lastLogin: new Date(2025, 4, 22, 7, 55),
+    },
+    {
+      id: '3',
+      name: 'David Wilson',
+      position: 'Stock Clerk',
+      email: 'david.wilson@example.com',
+      store: 'Central Store',
+      status: 'active',
+      lastLogin: new Date(2025, 4, 22, 8, 10),
+    },
+    {
+      id: '4',
+      name: 'Sarah Martinez',
+      position: 'Cashier',
+      email: 'sarah.martinez@example.com',
+      store: 'Central Store',
+      status: 'active',
+      lastLogin: new Date(2025, 4, 22, 9, 15),
+    },
+    {
+      id: '5',
+      name: 'Michael Brown',
+      position: 'Cashier',
+      email: 'michael.brown@example.com',
+      store: 'Westside Market',
+      status: 'active',
+      lastLogin: new Date(2025, 4, 22, 8, 0),
+    },
+    {
+      id: '6',
+      name: 'Jessica Lee',
+      position: 'Manager',
+      email: 'jessica.lee@example.com',
+      store: 'Westside Market',
+      status: 'active',
+      lastLogin: new Date(2025, 4, 22, 7, 45),
+    },
+    {
+      id: '7',
+      name: 'Robert Garcia',
+      position: 'Stock Clerk',
+      email: 'robert.garcia@example.com',
+      store: 'Northgate Shop',
+      status: 'inactive',
+      lastLogin: new Date(2025, 4, 21, 17, 30),
+    },
+    {
+      id: '8',
+      name: 'Jennifer Lopez',
+      position: 'Manager',
+      email: 'jennifer.lopez@example.com',
+      store: 'Northgate Shop',
+      status: 'active',
+      lastLogin: new Date(2025, 4, 22, 8, 5),
+    },
   ];
-  
-  const filteredStaff = staff.filter(member => 
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.store.toLowerCase().includes(searchTerm.toLowerCase())
+
+  const filteredStaff = staff.filter(
+    member =>
+      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.store.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const recentLogins = staff
@@ -54,8 +118,8 @@ const StaffLogin = () => {
 
   return (
     <AdminLayout>
-      <PageHeader 
-        title="POS Staff Management" 
+      <PageHeader
+        title="POS Staff Management"
         description="Manage staff accounts and monitor login activity"
         icon={<Users className="h-6 w-6" />}
         actions={
@@ -75,11 +139,11 @@ const StaffLogin = () => {
           <CardContent>
             <div className="flex items-center mb-4 relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search by name, email, or store..." 
+              <Input
+                placeholder="Search by name, email, or store..."
                 className="pl-10"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
 
@@ -107,14 +171,16 @@ const StaffLogin = () => {
                       <TableCell>{member.position}</TableCell>
                       <TableCell>{member.store}</TableCell>
                       <TableCell>
-                        {member.status === "active" ? (
+                        {member.status === 'active' ? (
                           <Badge className="bg-green-500">Active</Badge>
                         ) : (
                           <Badge variant="outline">Inactive</Badge>
                         )}
                       </TableCell>
                       <TableCell>
-                        {member.lastLogin ? format(member.lastLogin, "MMM dd, yyyy HH:mm") : "Never"}
+                        {member.lastLogin
+                          ? format(member.lastLogin, 'MMM dd, yyyy HH:mm')
+                          : 'Never'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
@@ -149,7 +215,8 @@ const StaffLogin = () => {
                   <div>
                     <div className="font-medium">{member.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {member.lastLogin && format(member.lastLogin, "MMM dd, yyyy HH:mm")} at {member.store}
+                      {member.lastLogin && format(member.lastLogin, 'MMM dd, yyyy HH:mm')} at{' '}
+                      {member.store}
                     </div>
                   </div>
                 </div>

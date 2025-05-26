@@ -1,32 +1,32 @@
-import React, { useState } from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Search, Filter, ScanBarcode, Loader2, Plus } from "lucide-react";
-import { toast } from "sonner";
-import { useProducts, useAddProduct, useSystemConfig } from "@/hooks/useHasuraApi";
-import { format } from "date-fns";
-import Pagination from "@/components/ui/pagination";
-import AddProductDialog from "@/components/shop/AddProductDialog";
+import React, { useState } from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Filter, ScanBarcode, Loader2, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { useProducts, useAddProduct, useSystemConfig } from '@/hooks/useHasuraApi';
+import { format } from 'date-fns';
+import Pagination from '@/components/ui/pagination';
+import AddProductDialog from '@/components/shop/AddProductDialog';
 
 const Products = () => {
   const { data, isLoading, isError, error, refetch } = useProducts();
   const { data: systemConfig } = useSystemConfig();
   const products = data?.Products || [];
   const addProduct = useAddProduct();
-  
+
   const [isScanning, setIsScanning] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
@@ -38,25 +38,25 @@ const Products = () => {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(num);
   };
 
   const getStockStatus = (quantity: number) => {
-    if (quantity <= 0) return { label: "Out of Stock", class: "bg-red-100 text-red-800" };
-    if (quantity <= 10) return { label: "Low Stock", class: "bg-yellow-100 text-yellow-800" };
-    return { label: "In Stock", class: "bg-green-100 text-green-800" };
+    if (quantity <= 0) return { label: 'Out of Stock', class: 'bg-red-100 text-red-800' };
+    if (quantity <= 10) return { label: 'Low Stock', class: 'bg-yellow-100 text-yellow-800' };
+    return { label: 'In Stock', class: 'bg-green-100 text-green-800' };
   };
 
   const startScanning = () => {
     setIsScanning(true);
-    
+
     // In a real application, this would activate the device camera
     // For this demo, we'll simulate a scan after a short delay
     setTimeout(() => {
       const mockBarcode = '5901234123457'; // Mock barcode
       setSearchTerm(mockBarcode);
-      toast.success("Barcode scanned: " + mockBarcode);
+      toast.success('Barcode scanned: ' + mockBarcode);
       setIsScanning(false);
     }, 1500);
   };
@@ -64,12 +64,12 @@ const Products = () => {
   const handleAddProduct = async (formData: any) => {
     try {
       await addProduct.mutateAsync(formData);
-      toast.success("Product added successfully");
+      toast.success('Product added successfully');
       setIsAddProductOpen(false);
       refetch(); // Refresh the products list
     } catch (error) {
       console.error('Error adding product:', error);
-      toast.error("Failed to add product. Please try again.");
+      toast.error('Failed to add product. Please try again.');
     }
   };
 
@@ -99,11 +99,12 @@ const Products = () => {
   const outOfStockProducts = products.filter(p => p.quantity <= 0);
 
   // Filter products based on search term
-  const filteredProducts = products.filter(product => 
-    searchTerm === "" || 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.Shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toString().toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter(
+    product =>
+      searchTerm === '' ||
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.Shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Calculate pagination
@@ -115,8 +116,8 @@ const Products = () => {
 
   return (
     <AdminLayout>
-      <PageHeader 
-        title="Products" 
+      <PageHeader
+        title="Products"
         description="Manage products across all shops."
         actions={
           <Button onClick={() => setIsAddProductOpen(true)} className="flex items-center gap-2">
@@ -151,41 +152,43 @@ const Products = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search products..." 
-              className="pl-8" 
+            <Input
+              placeholder="Search products..."
+              className="pl-8"
               value={searchTerm}
-              onChange={(e) => {
+              onChange={e => {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1); // Reset to first page on search
               }}
             />
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="flex items-center gap-2"
             onClick={startScanning}
             disabled={isScanning}
           >
-            <ScanBarcode className="h-4 w-4" /> 
-            {isScanning ? "Scanning..." : "Scan Barcode"}
+            <ScanBarcode className="h-4 w-4" />
+            {isScanning ? 'Scanning...' : 'Scan Barcode'}
           </Button>
           <Button variant="outline" className="flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
-        
+
         {isScanning && (
           <div className="p-4 text-center bg-muted rounded-md">
-            <p className="text-muted-foreground">Scanning barcode... Please point your camera at a barcode.</p>
+            <p className="text-muted-foreground">
+              Scanning barcode... Please point your camera at a barcode.
+            </p>
           </div>
         )}
-        
+
         <Card>
           <Table>
             <TableHeader>
@@ -207,24 +210,34 @@ const Products = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                currentProducts.map((product) => {
+                currentProducts.map(product => {
                   const stockStatus = getStockStatus(product.quantity);
                   return (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.Shop?.name || 'N/A'}</TableCell>
-                      <TableCell>{typeof product.category === 'string' ? product.category : product.category.name}</TableCell>
+                      <TableCell>
+                        {typeof product.category === 'string'
+                          ? product.category
+                          : product.category.name}
+                      </TableCell>
                       <TableCell>{formatCurrency(product.price)}</TableCell>
-                      <TableCell>{product.quantity} {product.measurement_unit}</TableCell>
-                  <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.class}`}>
+                      <TableCell>
+                        {product.quantity} {product.measurement_unit}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.class}`}
+                        >
                           {stockStatus.label}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">Edit</Button>
-                  </TableCell>
-                </TableRow>
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
+                          Edit
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
@@ -235,7 +248,7 @@ const Products = () => {
             totalPages={totalPages}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => {
+            onPageSizeChange={size => {
               setPageSize(size);
               setCurrentPage(1); // Reset to first page when changing page size
             }}
@@ -244,7 +257,7 @@ const Products = () => {
         </Card>
       </div>
 
-      <AddProductDialog 
+      <AddProductDialog
         open={isAddProductOpen}
         onOpenChange={setIsAddProductOpen}
         onSubmit={handleAddProduct}

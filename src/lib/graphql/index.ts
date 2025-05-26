@@ -5,4 +5,4 @@ export * from './queries';
 export * from './mutations';
 
 // Export the GraphQL client
-export { queryClient } from '../graphql'; 
+export { queryClient } from '../graphql';

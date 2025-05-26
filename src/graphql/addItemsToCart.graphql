@@ -5,12 +5,7 @@ mutation AddItemsToCart(
   $user_id: uuid = ""
 ) {
   insert_Carts(
-    objects: {
-      total: $total
-      is_active: $is_active
-      shop_id: $shop_id
-      user_id: $user_id
-    }
+    objects: { total: $total, is_active: $is_active, shop_id: $shop_id, user_id: $user_id }
   ) {
     affected_rows
   }

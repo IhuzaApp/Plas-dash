@@ -1,12 +1,19 @@
-
-import React from "react";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LayoutDashboard, TrendingUp, TrendingDown, Store, ShoppingBag, Users, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
+import React from 'react';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  LayoutDashboard,
+  TrendingUp,
+  TrendingDown,
+  Store,
+  ShoppingBag,
+  Users,
+  Clock,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import {
   Table,
   TableBody,
@@ -14,7 +21,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
 interface StorePerformance {
   id: string;
@@ -23,26 +30,66 @@ interface StorePerformance {
   revenue: number;
   target: number;
   performance: number;
-  trend: "up" | "down" | "neutral";
+  trend: 'up' | 'down' | 'neutral';
 }
 
 const storePerformance: StorePerformance[] = [
-  { id: "1", name: "Central Store", location: "Downtown", revenue: 54280, target: 50000, performance: 108.6, trend: "up" },
-  { id: "2", name: "Westside Market", location: "West Hills", revenue: 42150, target: 45000, performance: 93.7, trend: "down" },
-  { id: "3", name: "Northgate Shop", location: "North End", revenue: 48900, target: 47000, performance: 104, trend: "up" },
-  { id: "4", name: "Eastside Express", location: "East Valley", revenue: 37820, target: 40000, performance: 94.6, trend: "down" },
-  { id: "5", name: "South Point", location: "South District", revenue: 41260, target: 38000, performance: 108.6, trend: "up" },
+  {
+    id: '1',
+    name: 'Central Store',
+    location: 'Downtown',
+    revenue: 54280,
+    target: 50000,
+    performance: 108.6,
+    trend: 'up',
+  },
+  {
+    id: '2',
+    name: 'Westside Market',
+    location: 'West Hills',
+    revenue: 42150,
+    target: 45000,
+    performance: 93.7,
+    trend: 'down',
+  },
+  {
+    id: '3',
+    name: 'Northgate Shop',
+    location: 'North End',
+    revenue: 48900,
+    target: 47000,
+    performance: 104,
+    trend: 'up',
+  },
+  {
+    id: '4',
+    name: 'Eastside Express',
+    location: 'East Valley',
+    revenue: 37820,
+    target: 40000,
+    performance: 94.6,
+    trend: 'down',
+  },
+  {
+    id: '5',
+    name: 'South Point',
+    location: 'South District',
+    revenue: 41260,
+    target: 38000,
+    performance: 108.6,
+    trend: 'up',
+  },
 ];
 
 const CompanyDashboard = () => {
   const totalRevenue = storePerformance.reduce((sum, store) => sum + store.revenue, 0);
   const totalTarget = storePerformance.reduce((sum, store) => sum + store.target, 0);
   const overallPerformance = (totalRevenue / totalTarget) * 100;
-  
+
   return (
     <AdminLayout>
-      <PageHeader 
-        title="Company Admin Dashboard" 
+      <PageHeader
+        title="Company Admin Dashboard"
         description="Overview of all stores and company-wide metrics"
         icon={<LayoutDashboard className="h-6 w-6" />}
       />
@@ -59,11 +106,13 @@ const CompanyDashboard = () => {
             <div className="flex items-center mt-1">
               {overallPerformance > 100 ? (
                 <div className="text-xs text-green-500 flex items-center">
-                  <TrendingUp className="h-3 w-3 mr-1" /> {(overallPerformance - 100).toFixed(1)}% above target
+                  <TrendingUp className="h-3 w-3 mr-1" /> {(overallPerformance - 100).toFixed(1)}%
+                  above target
                 </div>
               ) : (
                 <div className="text-xs text-red-500 flex items-center">
-                  <TrendingDown className="h-3 w-3 mr-1" /> {(100 - overallPerformance).toFixed(1)}% below target
+                  <TrendingDown className="h-3 w-3 mr-1" /> {(100 - overallPerformance).toFixed(1)}%
+                  below target
                 </div>
               )}
             </div>
@@ -78,23 +127,17 @@ const CompanyDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              All stores operational
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">All stores operational</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Staff
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Staff</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">42</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              28 active today
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">28 active today</p>
           </CardContent>
         </Card>
 
@@ -106,9 +149,7 @@ const CompanyDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$287,590</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              +$12,450 from last month
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">+$12,450 from last month</p>
           </CardContent>
         </Card>
       </div>
@@ -119,7 +160,7 @@ const CompanyDashboard = () => {
           <TabsTrigger value="inventory">Inventory Overview</TabsTrigger>
           <TabsTrigger value="staff">Staff Management</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="stores">
           <Card>
             <CardHeader>
@@ -140,26 +181,30 @@ const CompanyDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {storePerformance.map((store) => (
+                    {storePerformance.map(store => (
                       <TableRow key={store.id}>
                         <TableCell className="font-medium">{store.name}</TableCell>
                         <TableCell>{store.location}</TableCell>
-                        <TableCell className="text-right">${store.revenue.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">${store.target.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">{store.performance.toFixed(1)}%</TableCell>
+                        <TableCell className="text-right">
+                          ${store.revenue.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ${store.target.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {store.performance.toFixed(1)}%
+                        </TableCell>
                         <TableCell>
-                          {store.trend === "up" ? (
+                          {store.trend === 'up' ? (
                             <div className="flex items-center text-green-500">
                               <TrendingUp className="mr-1 h-4 w-4" /> Up
                             </div>
-                          ) : store.trend === "down" ? (
+                          ) : store.trend === 'down' ? (
                             <div className="flex items-center text-red-500">
                               <TrendingDown className="mr-1 h-4 w-4" /> Down
                             </div>
                           ) : (
-                            <div className="flex items-center text-gray-500">
-                              — Stable
-                            </div>
+                            <div className="flex items-center text-gray-500">— Stable</div>
                           )}
                         </TableCell>
                       </TableRow>
@@ -170,7 +215,7 @@ const CompanyDashboard = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="inventory">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
@@ -187,7 +232,7 @@ const CompanyDashboard = () => {
                     </div>
                     <Progress value={98} className="h-2" />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span>White Bread</span>
@@ -195,7 +240,7 @@ const CompanyDashboard = () => {
                     </div>
                     <Progress value={78} className="h-2" />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span>Eggs (12)</span>
@@ -203,7 +248,7 @@ const CompanyDashboard = () => {
                     </div>
                     <Progress value={70} className="h-2" />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span>Chicken Breast (500g)</span>
@@ -211,7 +256,7 @@ const CompanyDashboard = () => {
                     </div>
                     <Progress value={59} className="h-2" />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span>Bananas (kg)</span>
@@ -239,7 +284,7 @@ const CompanyDashboard = () => {
                     </div>
                     <Badge className="bg-green-100 text-green-800">Normal</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
@@ -249,7 +294,7 @@ const CompanyDashboard = () => {
                     </div>
                     <Badge className="bg-green-100 text-green-800">Normal</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -259,7 +304,7 @@ const CompanyDashboard = () => {
                     </div>
                     <Badge className="bg-yellow-100 text-yellow-800">Delayed</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
@@ -269,7 +314,7 @@ const CompanyDashboard = () => {
                     </div>
                     <Badge className="bg-green-100 text-green-800">Normal</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
@@ -284,7 +329,7 @@ const CompanyDashboard = () => {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="staff">
           <Card>
             <CardHeader>
@@ -357,7 +402,7 @@ const CompanyDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
@@ -369,7 +414,7 @@ const CompanyDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">

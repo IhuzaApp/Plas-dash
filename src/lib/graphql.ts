@@ -12,4 +12,4 @@ export const queryClient = new QueryClient({
 
 // Export the Hasura endpoint and admin secret for use in hooks
 export const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL || '';
-export const HASURA_GRAPHQL_ADMIN_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET || ''; 
+export const HASURA_GRAPHQL_ADMIN_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET || '';

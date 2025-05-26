@@ -1,6 +1,5 @@
-
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AreaChart,
   Area,
@@ -9,16 +8,16 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
+} from 'recharts';
 
 const data = [
-  { name: "Mon", revenue: 4000, orders: 24 },
-  { name: "Tue", revenue: 3000, orders: 18 },
-  { name: "Wed", revenue: 5000, orders: 27 },
-  { name: "Thu", revenue: 2780, orders: 17 },
-  { name: "Fri", revenue: 6890, orders: 34 },
-  { name: "Sat", revenue: 8390, orders: 42 },
-  { name: "Sun", revenue: 7200, orders: 38 },
+  { name: 'Mon', revenue: 4000, orders: 24 },
+  { name: 'Tue', revenue: 3000, orders: 18 },
+  { name: 'Wed', revenue: 5000, orders: 27 },
+  { name: 'Thu', revenue: 2780, orders: 17 },
+  { name: 'Fri', revenue: 6890, orders: 34 },
+  { name: 'Sat', revenue: 8390, orders: 42 },
+  { name: 'Sun', revenue: 7200, orders: 38 },
 ];
 
 const RevenueChart = () => {

@@ -15,7 +15,7 @@ import {
   GET_CATEGORIES,
   GET_SHOP_BY_ID,
   GET_SHOPPERS,
-  GET_SYSTEM_CONFIG
+  GET_SYSTEM_CONFIG,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -26,11 +26,21 @@ import {
   CREATE_WALLET_TRANSACTION,
   CREATE_MULTIPLE_WALLET_TRANSACTIONS,
   REGISTER_SHOPPER,
-  ADD_PRODUCT
+  ADD_PRODUCT,
 } from '../lib/graphql/mutations';
 
 // Import types
-import type { User, Product, Order, Cart, Address, Invoice, Wallet, WalletTransaction, Refund } from './useGraphql';
+import type {
+  User,
+  Product,
+  Order,
+  Cart,
+  Address,
+  Invoice,
+  Wallet,
+  WalletTransaction,
+  Refund,
+} from './useGraphql';
 
 interface Category {
   id: string;
@@ -162,15 +172,15 @@ export function useUsers() {
   return useQuery<{ Users: User[] }, Error>({
     queryKey: ['users'],
     queryFn: () => hasuraRequest(GET_USERS, {}),
-    select: (data) => ({
+    select: data => ({
       Users: data.Users.map(user => ({
         ...user,
         Addresses: user.Addresses || [],
         Invoices: user.Invoices || [],
         Wallets: user.Wallets || [],
-        shopper: user.shopper || null
-      }))
-    })
+        shopper: user.shopper || null,
+      })),
+    }),
   });
 }
 
@@ -178,7 +188,7 @@ export function useUsers() {
 export function useProducts() {
   return useQuery<{ Products: Product[] }, Error>({
     queryKey: ['products'],
-    queryFn: () => hasuraRequest(GET_PRODUCTS, {})
+    queryFn: () => hasuraRequest(GET_PRODUCTS, {}),
   });
 }
 
@@ -188,7 +198,7 @@ export function useShops() {
     queryKey: ['shops'],
     queryFn: () => hasuraRequest(GET_SHOPS, {}),
     retry: 2,
-    retryDelay: 1000
+    retryDelay: 1000,
   });
 }
 
@@ -196,7 +206,7 @@ export function useShops() {
 export function useOrders() {
   return useQuery<{ Orders: OrderType[] }, Error>({
     queryKey: ['orders'],
-    queryFn: () => hasuraRequest(GET_ORDERS, {})
+    queryFn: () => hasuraRequest(GET_ORDERS, {}),
   });
 }
 
@@ -204,7 +214,7 @@ export function useOrders() {
 export function useCarts() {
   return useQuery<{ Carts: Cart[] }, Error>({
     queryKey: ['carts'],
-    queryFn: () => hasuraRequest(GET_CARTS, {})
+    queryFn: () => hasuraRequest(GET_CARTS, {}),
   });
 }
 
@@ -212,7 +222,7 @@ export function useCarts() {
 export function useAddresses() {
   return useQuery<{ Addresses: Address[] }, Error>({
     queryKey: ['addresses'],
-    queryFn: () => hasuraRequest(GET_ADDRESSES, {})
+    queryFn: () => hasuraRequest(GET_ADDRESSES, {}),
   });
 }
 
@@ -220,7 +230,7 @@ export function useAddresses() {
 export function useInvoices() {
   return useQuery<{ Invoices: Invoice[] }, Error>({
     queryKey: ['invoices'],
-    queryFn: () => hasuraRequest(GET_INVOICE_DETAILS, {})
+    queryFn: () => hasuraRequest(GET_INVOICE_DETAILS, {}),
   });
 }
 
@@ -228,7 +238,7 @@ export function useInvoices() {
 export function useWallets() {
   return useQuery<{ Wallets: Wallet[] }, Error>({
     queryKey: ['wallets'],
-    queryFn: () => hasuraRequest(GET_ALL_WALLETS, {})
+    queryFn: () => hasuraRequest(GET_ALL_WALLETS, {}),
   });
 }
 
@@ -236,7 +246,7 @@ export function useWallets() {
 export function useShopperWallet(shopperId: string) {
   return useQuery<{ Wallets: Wallet[] }, Error>({
     queryKey: ['wallet', shopperId],
-    queryFn: () => hasuraRequest(GET_SHOPPER_WALLET, { shopper_id: shopperId })
+    queryFn: () => hasuraRequest(GET_SHOPPER_WALLET, { shopper_id: shopperId }),
   });
 }
 
@@ -244,7 +254,7 @@ export function useShopperWallet(shopperId: string) {
 export function useWalletTransactions() {
   return useQuery<{ Wallet_Transactions: WalletTransaction[] }, Error>({
     queryKey: ['wallet-transactions'],
-    queryFn: () => hasuraRequest(GET_ALL_WALLET_TRANSACTIONS, {})
+    queryFn: () => hasuraRequest(GET_ALL_WALLET_TRANSACTIONS, {}),
   });
 }
 
@@ -252,7 +262,7 @@ export function useWalletTransactions() {
 export function useRefunds() {
   return useQuery<{ Refunds: Refund[] }, Error>({
     queryKey: ['refunds'],
-    queryFn: () => hasuraRequest(GET_ALL_REFUNDS, {})
+    queryFn: () => hasuraRequest(GET_ALL_REFUNDS, {}),
   });
 }
 
@@ -263,7 +273,7 @@ export function useAddCart() {
     Error,
     { total: string; shop_id: string; user_id: string }
   >({
-    mutationFn: (variables) => hasuraRequest(ADD_CART, variables)
+    mutationFn: variables => hasuraRequest(ADD_CART, variables),
   });
 }
 
@@ -273,7 +283,7 @@ export function useAddItemsToCart() {
     Error,
     { total: string; is_active: boolean; shop_id: string; user_id: string }
   >({
-    mutationFn: (variables) => hasuraRequest(ADD_ITEMS_TO_CART, variables)
+    mutationFn: variables => hasuraRequest(ADD_ITEMS_TO_CART, variables),
   });
 }
 
@@ -295,17 +305,13 @@ export function useAddInvoiceDetails() {
       total_amount: string;
     }
   >({
-    mutationFn: (variables) => hasuraRequest(ADD_INVOICE_DETAILS, variables)
+    mutationFn: variables => hasuraRequest(ADD_INVOICE_DETAILS, variables),
   });
 }
 
 export function useCreateWallet() {
-  return useMutation<
-    { insert_Wallets_one: Wallet },
-    Error,
-    { shopper_id: string }
-  >({
-    mutationFn: (variables) => hasuraRequest(CREATE_WALLET, variables)
+  return useMutation<{ insert_Wallets_one: Wallet }, Error, { shopper_id: string }>({
+    mutationFn: variables => hasuraRequest(CREATE_WALLET, variables),
   });
 }
 
@@ -315,7 +321,7 @@ export function useUpdateWalletBalances() {
     Error,
     { wallet_id: string; available_balance: string; reserved_balance: string }
   >({
-    mutationFn: (variables) => hasuraRequest(UPDATE_WALLET_BALANCES, variables)
+    mutationFn: variables => hasuraRequest(UPDATE_WALLET_BALANCES, variables),
   });
 }
 
@@ -331,7 +337,7 @@ export function useCreateWalletTransaction() {
       related_order_id?: string;
     }
   >({
-    mutationFn: (variables) => hasuraRequest(CREATE_WALLET_TRANSACTION, variables)
+    mutationFn: variables => hasuraRequest(CREATE_WALLET_TRANSACTION, variables),
   });
 }
 
@@ -341,13 +347,15 @@ export function useCreateMultipleWalletTransactions() {
     Error,
     { transactions: any[] }
   >({
-    mutationFn: (variables) => hasuraRequest(CREATE_MULTIPLE_WALLET_TRANSACTIONS, variables)
+    mutationFn: variables => hasuraRequest(CREATE_MULTIPLE_WALLET_TRANSACTIONS, variables),
   });
 }
 
 export function useRegisterShopper() {
   return useMutation<
-    { insert_shoppers_one: { id: string; status: string; active: boolean; onboarding_step: string } },
+    {
+      insert_shoppers_one: { id: string; status: string; active: boolean; onboarding_step: string };
+    },
     Error,
     {
       full_name: string;
@@ -360,7 +368,7 @@ export function useRegisterShopper() {
       user_id: string;
     }
   >({
-    mutationFn: (variables) => hasuraRequest(REGISTER_SHOPPER, variables)
+    mutationFn: variables => hasuraRequest(REGISTER_SHOPPER, variables),
   });
 }
 
@@ -368,7 +376,7 @@ export function useRegisterShopper() {
 export function useCategories() {
   return useQuery<{ Categories: Category[] }, Error>({
     queryKey: ['categories'],
-    queryFn: () => hasuraRequest(GET_CATEGORIES, {})
+    queryFn: () => hasuraRequest(GET_CATEGORIES, {}),
   });
 }
 
@@ -377,7 +385,7 @@ export function useShopById(id: string) {
   return useQuery<{ Shops_by_pk: ShopDetails }, Error>({
     queryKey: ['shop', id],
     queryFn: () => hasuraRequest(GET_SHOP_BY_ID, { id }),
-    enabled: !!id
+    enabled: !!id,
   });
 }
 
@@ -385,7 +393,7 @@ export function useShopById(id: string) {
 export function useShoppers() {
   return useQuery<{ shoppers: Shopper[] }, Error>({
     queryKey: ['shoppers'],
-    queryFn: () => hasuraRequest(GET_SHOPPERS, {})
+    queryFn: () => hasuraRequest(GET_SHOPPERS, {}),
   });
 }
 
@@ -409,7 +417,7 @@ export function useAddProduct() {
       is_active?: boolean;
     }
   >({
-    mutationFn: (variables) => hasuraRequest(ADD_PRODUCT, variables)
+    mutationFn: variables => hasuraRequest(ADD_PRODUCT, variables),
   });
 }
 
@@ -418,6 +426,6 @@ export function useSystemConfig() {
   return useQuery<{ System_configuratioins: SystemConfig[] }, Error>({
     queryKey: ['system-config'],
     queryFn: () => hasuraRequest(GET_SYSTEM_CONFIG, {}),
-    staleTime: Infinity // Configuration rarely changes, so we can cache it indefinitely
+    staleTime: Infinity, // Configuration rarely changes, so we can cache it indefinitely
   });
-} 
+}
