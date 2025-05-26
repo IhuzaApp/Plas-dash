@@ -7,14 +7,82 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { useSystemConfig } from "@/hooks/useHasuraApi";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { hasuraRequest } from "@/lib/hasura";
+
+const UPDATE_SYSTEM_CONFIG = `
+  mutation UpdateSystemConfig($id: uuid!, $config: System_configuratioins_set_input!) {
+    update_System_configuratioins_by_pk(pk_columns: {id: $id}, _set: $config) {
+      id
+    }
+  }
+`;
 
 const DeliverySettings = () => {
+  const { data: systemConfig, isLoading } = useSystemConfig();
+  const config = systemConfig?.System_configuratioins[0];
+  const queryClient = useQueryClient();
+
+  const { mutate: updateConfig, isPending: isUpdating } = useMutation({
+    mutationFn: async (values: any) => {
+      if (!config?.id) throw new Error("No configuration found");
+      return hasuraRequest(UPDATE_SYSTEM_CONFIG, {
+        id: config.id,
+        config: values
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-config'] });
+      toast.success("Settings updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update settings: " + error.message);
+    }
+  });
+
+  const handleSave = () => {
+    if (!config) return;
+    
+    const formElements = document.querySelectorAll('input');
+    const values: any = {};
+    
+    formElements.forEach((element: any) => {
+      if (element.type === 'checkbox') {
+        values[element.id] = element.checked;
+      } else if (element.type === 'number') {
+        values[element.id] = element.value;
+      } else {
+        values[element.id] = element.value;
+      }
+    });
+
+    updateConfig(values);
+  };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <PageHeader 
         title="Delivery Settings" 
         description="Configure delivery options and pricing rules."
-        actions={<Button>Save Changes</Button>}
+        actions={
+          <Button onClick={handleSave} disabled={isUpdating}>
+            {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Changes
+          </Button>
+        }
       />
       
       <Tabs defaultValue="general">
@@ -35,63 +103,44 @@ const DeliverySettings = () => {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="max-distance">Maximum Delivery Distance (miles)</Label>
-                    <Input id="max-distance" type="number" defaultValue="10" />
+                    <Label htmlFor="shoppingTime">Shopping Time (minutes)</Label>
+                    <Input 
+                      id="shoppingTime" 
+                      type="number" 
+                      defaultValue={config?.shoppingTime} 
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="min-order">Minimum Order Amount ($)</Label>
-                    <Input id="min-order" type="number" defaultValue="15" />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="default-fee">Default Delivery Fee ($)</Label>
-                    <Input id="default-fee" type="number" defaultValue="4.99" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="buffer-time">Order Preparation Buffer (minutes)</Label>
-                    <Input id="buffer-time" type="number" defaultValue="30" />
+                    <Label htmlFor="currency">Currency</Label>
+                    <Input 
+                      id="currency" 
+                      defaultValue={config?.currency} 
+                    />
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-2">
-                  <Switch id="rush-hour" defaultChecked />
-                  <Label htmlFor="rush-hour">Enable Rush Hour Surcharge</Label>
+                  <Switch 
+                    id="enableRush" 
+                    defaultChecked={config?.enableRush} 
+                  />
+                  <Label htmlFor="enableRush">Enable Rush Hour Surcharge</Label>
                 </div>
                 
                 <div className="flex items-center space-x-2">
-                  <Switch id="auto-assign" defaultChecked />
-                  <Label htmlFor="auto-assign">Auto-assign Orders to Shoppers</Label>
+                  <Switch 
+                    id="allowScheduledDeliveries" 
+                    defaultChecked={config?.allowScheduledDeliveries} 
+                  />
+                  <Label htmlFor="allowScheduledDeliveries">Allow Scheduled Deliveries</Label>
                 </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Advanced Settings</CardTitle>
-                <CardDescription>Configure additional delivery options.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="batch-orders">Maximum Orders per Batch</Label>
-                    <Input id="batch-orders" type="number" defaultValue="3" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="reassign-time">Order Reassignment Time (minutes)</Label>
-                    <Input id="reassign-time" type="number" defaultValue="5" />
-                  </div>
-                </div>
-                
+
                 <div className="flex items-center space-x-2">
-                  <Switch id="contactless" defaultChecked />
-                  <Label htmlFor="contactless">Enable Contactless Delivery Option</Label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Switch id="scheduled" defaultChecked />
-                  <Label htmlFor="scheduled">Allow Scheduled Deliveries</Label>
+                  <Switch 
+                    id="discounts" 
+                    defaultChecked={config?.discounts} 
+                  />
+                  <Label htmlFor="discounts">Enable Discounts</Label>
                 </div>
               </CardContent>
             </Card>
@@ -107,34 +156,87 @@ const DeliverySettings = () => {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="base-fee">Base Delivery Fee ($)</Label>
-                  <Input id="base-fee" type="number" defaultValue="3.99" />
+                  <Label htmlFor="baseDeliveryFee">Base Delivery Fee</Label>
+                  <Input 
+                    id="baseDeliveryFee" 
+                    type="number" 
+                    defaultValue={config?.baseDeliveryFee} 
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="service-fee">Service Fee (%)</Label>
-                  <Input id="service-fee" type="number" defaultValue="5" />
+                  <Label htmlFor="serviceFee">Service Fee (%)</Label>
+                  <Input 
+                    id="serviceFee" 
+                    type="number" 
+                    defaultValue={config?.serviceFee} 
+                  />
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="distance-fee">Per Mile Fee ($)</Label>
-                  <Input id="distance-fee" type="number" defaultValue="0.50" />
+                  <Label htmlFor="distanceSurcharge">Distance Surcharge</Label>
+                  <Input 
+                    id="distanceSurcharge" 
+                    type="number" 
+                    defaultValue={config?.distanceSurcharge} 
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="min-tip">Suggested Minimum Tip ($)</Label>
-                  <Input id="min-tip" type="number" defaultValue="2" />
+                  <Label htmlFor="cappedDistanceFee">Capped Distance Fee</Label>
+                  <Input 
+                    id="cappedDistanceFee" 
+                    type="number" 
+                    defaultValue={config?.cappedDistanceFee} 
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="unitsSurcharge">Units Surcharge</Label>
+                  <Input 
+                    id="unitsSurcharge" 
+                    type="number" 
+                    defaultValue={config?.unitsSurcharge} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="extraUnits">Extra Units Fee</Label>
+                  <Input 
+                    id="extraUnits" 
+                    type="number" 
+                    defaultValue={config?.extraUnits} 
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="suggestedMinimumTip">Suggested Minimum Tip</Label>
+                  <Input 
+                    id="suggestedMinimumTip" 
+                    type="number" 
+                    defaultValue={config?.suggestedMinimumTip} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rushHourSurcharge">Rush Hour Surcharge</Label>
+                  <Input 
+                    id="rushHourSurcharge" 
+                    type="number" 
+                    defaultValue={config?.rushHourSurcharge} 
+                  />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="rush-fee">Rush Hour Surcharge ($)</Label>
-                <Input id="rush-fee" type="number" defaultValue="2.50" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="rush-hours">Rush Hours (comma separated, 24h format)</Label>
-                <Input id="rush-hours" defaultValue="11:30-13:30, 17:00-19:00" />
+                <Label htmlFor="rushHours">Rush Hours (comma separated, 24h format)</Label>
+                <Input 
+                  id="rushHours" 
+                  defaultValue={config?.rushHours || ""} 
+                  placeholder="11:30-13:30, 17:00-19:00"
+                />
               </div>
             </CardContent>
           </Card>
@@ -175,3 +277,4 @@ const DeliverySettings = () => {
 };
 
 export default DeliverySettings;
+
