@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -18,6 +18,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +32,7 @@ import {
 import { ScanBarcode, ScanQrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { useShops, useSystemConfig } from '@/hooks/useHasuraApi';
+import { Switch } from '@/components/ui/switch';
 
 // Match the API types exactly
 const formSchema = z.object({
@@ -46,14 +48,21 @@ const formSchema = z.object({
   supplier: z.string().optional(),
   reorder_point: z.number().int().min(0).optional(),
   shop_id: z.string().optional(),
+  // UI-only fields (not sent to database)
+  has_commission: z.boolean().default(true),
+  commission_percentage: z.number().min(0).max(100).optional(),
+  final_price: z.string().min(1, 'Final price is required'),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
+// Define the type for the data that will be sent to the API
+type ProductSubmitData = Omit<FormData, 'has_commission' | 'commission_percentage'>;
+
 interface AddProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: ProductSubmitData) => void;
   shopId?: string;
 }
 
@@ -68,6 +77,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const { data: shopsData } = useShops();
   const { data: systemConfig } = useSystemConfig();
   const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+  const defaultCommission = systemConfig?.System_configuratioins[0]?.productCommissionPercentage || 0;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -84,15 +94,69 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       supplier: undefined,
       reorder_point: undefined,
       shop_id: shopId,
+      has_commission: true,
+      commission_percentage: defaultCommission,
+      final_price: '',
     },
   });
 
+  // Watch price and commission-related fields to calculate final price
+  const price = form.watch('price');
+  const hasCommission = form.watch('has_commission');
+  const commissionPercentage = defaultCommission; // Always use default commission
+
+  // Calculate final price whenever price or commission changes
+  useEffect(() => {
+    const calculateFinalPrice = () => {
+      if (price) {
+        const basePrice = parseFloat(price);
+        if (!isNaN(basePrice)) {
+          let finalPrice;
+          if (hasCommission) {
+            // When commission is enabled, calculate with default commission rate
+            finalPrice = basePrice * (1 + (defaultCommission / 100));
+          } else {
+            // When commission is disabled, final price is exactly the same as base price
+            finalPrice = basePrice;
+          }
+          form.setValue('final_price', finalPrice.toFixed(2));
+        }
+      } else {
+        // If no base price, set final price to empty
+        form.setValue('final_price', '');
+      }
+    };
+
+    calculateFinalPrice();
+  }, [price, hasCommission, defaultCommission, form]);
+
+  // Update commission percentage when has_commission changes
+  useEffect(() => {
+    if (hasCommission) {
+      form.setValue('commission_percentage', defaultCommission);
+    } else {
+      form.setValue('commission_percentage', 0);
+      // When turning off commission, set final price to match base price exactly
+      if (price) {
+        form.setValue('final_price', price);
+      }
+    }
+  }, [hasCommission, defaultCommission, form, price]);
+
   function handleSubmit(values: FormData) {
+    // Destructure to remove has_commission and commission_percentage
+    const {
+      has_commission,
+      commission_percentage,
+      ...productData
+    } = values;
+
     const formattedValues = {
-      ...values,
+      ...productData,
       quantity: Math.max(0, Number(values.quantity) || 0),
       reorder_point: typeof values.reorder_point === 'number' ? values.reorder_point : undefined,
       shop_id: shopId || values.shop_id,
+      total: values.price, // Store original price in total field
     };
     onSubmit(formattedValues);
   }
@@ -265,7 +329,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price*</FormLabel>
+                    <FormLabel>Base Price*</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <span className="absolute left-3 top-2.5">{currency}</span>
@@ -277,6 +341,85 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 )}
               />
 
+              {hasCommission && (
+                <FormField
+                  control={form.control}
+                  name="final_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Final Price</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5">{currency}</span>
+                          <Input placeholder="0" className="pl-12" {...field} disabled />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Final price after applying commission
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="has_commission"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Apply Commission</FormLabel>
+                      <FormDescription>
+                        Enable to apply commission percentage to this product
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          // Reset final price to base price when commission is turned off
+                          if (!checked) {
+                            form.setValue('final_price', form.getValues('price'));
+                            form.setValue('commission_percentage', defaultCommission);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {hasCommission && (
+                <FormField
+                  control={form.control}
+                  name="commission_percentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Commission Percentage</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          disabled
+                          className="bg-muted"
+                          {...field}
+                          value={defaultCommission}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Default system commission rate
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="quantity"
@@ -303,9 +446,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="measurement_unit"
@@ -360,6 +501,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   </FormItem>
                 )}
               />
+            </div>
 
               <FormField
                 control={form.control}
@@ -378,7 +520,6 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   </FormItem>
                 )}
               />
-            </div>
 
             <FormField
               control={form.control}
