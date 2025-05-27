@@ -236,6 +236,8 @@ export const ADD_PRODUCT = `
     $reorder_point: Int
     $supplier: String
     $is_active: Boolean = true
+    $final_price: String!
+    $total: String!
   ) {
     insert_Products_one(
       object: {
@@ -251,6 +253,8 @@ export const ADD_PRODUCT = `
         reorder_point: $reorder_point
         supplier: $supplier
         is_active: $is_active
+        final_price: $final_price
+        total: $total
       }
     ) {
       id
@@ -266,6 +270,8 @@ export const ADD_PRODUCT = `
       reorder_point
       supplier
       is_active
+      final_price
+      total
       created_at
       updated_at
     }

@@ -80,6 +80,10 @@ interface ShopProduct {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  has_commission: boolean;
+  commission_percentage: number | null;
+  final_price: string;
+  total: string;
 }
 
 interface ShopDetails extends Shop {
@@ -423,6 +427,10 @@ export function useAddProduct() {
       reorder_point?: number;
       supplier?: string;
       is_active?: boolean;
+      has_commission?: boolean;
+      commission_percentage?: number;
+      final_price: string;
+      total: string;
     }
   >({
     mutationFn: variables => hasuraRequest(ADD_PRODUCT, variables),
