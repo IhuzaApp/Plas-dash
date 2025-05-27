@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 const UPDATE_SYSTEM_CONFIG = `
   mutation UpdateSystemConfig($id: uuid!, $config: System_configuratioins_set_input!) {
@@ -32,6 +33,14 @@ const COMMISSION_PERCENTAGE_OPTIONS = [
   { value: '35', label: '35%' },
   { value: '40', label: '40%' },
 ];
+
+const InputDescription = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <p className="text-sm text-muted-foreground">
+      {children}
+    </p>
+  );
+};
 
 const DeliverySettings = () => {
   const { data: systemConfig, isLoading } = useSystemConfig();
@@ -96,7 +105,14 @@ const DeliverySettings = () => {
 
   const handleSave = () => {
     if (!config) return;
-    updateConfig(formValues);
+    
+    // Convert numeric values to strings before sending to API
+    const formattedValues = Object.entries(formValues).reduce((acc, [key, value]) => {
+      acc[key] = typeof value === 'number' ? value.toString() : value;
+      return acc;
+    }, {} as Record<string, string>);
+
+    updateConfig(formattedValues);
   };
 
   if (isLoading) {
@@ -181,6 +197,9 @@ const DeliverySettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="baseDeliveryFee">Base Delivery Fee</Label>
+                  <InputDescription>
+                    The minimum fee charged for any delivery, regardless of distance or order size.
+                  </InputDescription>
                   <Input
                     id="baseDeliveryFee"
                     type="number"
@@ -190,6 +209,9 @@ const DeliverySettings = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="serviceFee">Service Fee (%)</Label>
+                  <InputDescription>
+                    Percentage charged on the order subtotal to cover platform operational costs.
+                  </InputDescription>
                   <Input
                     id="serviceFee"
                     type="number"
@@ -202,6 +224,9 @@ const DeliverySettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="productCommissionPercentage">Product Commission</Label>
+                  <InputDescription>
+                    Percentage earned by the platform from each product sale. Applied to product price before other fees.
+                  </InputDescription>
                   <Select
                     value={formValues.productCommissionPercentage?.toString() || ''}
                     onValueChange={(value) => handleSelectChange('productCommissionPercentage', value)}
@@ -220,6 +245,9 @@ const DeliverySettings = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="deliveryCommissionPercentage">Delivery Commission</Label>
+                  <InputDescription>
+                    Percentage of the delivery fee retained by the platform. Rest goes to the delivery partner.
+                  </InputDescription>
                   <Select
                     value={formValues.deliveryCommissionPercentage?.toString() || ''}
                     onValueChange={(value) => handleSelectChange('deliveryCommissionPercentage', value)}
@@ -241,6 +269,9 @@ const DeliverySettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="distanceSurcharge">Distance Surcharge</Label>
+                  <InputDescription>
+                    Additional fee charged per kilometer beyond the base delivery radius.
+                  </InputDescription>
                   <Input
                     id="distanceSurcharge"
                     type="number"
@@ -250,6 +281,9 @@ const DeliverySettings = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cappedDistanceFee">Capped Distance Fee</Label>
+                  <InputDescription>
+                    Maximum total distance fee that can be charged on a single order.
+                  </InputDescription>
                   <Input
                     id="cappedDistanceFee"
                     type="number"
@@ -262,6 +296,9 @@ const DeliverySettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="unitsSurcharge">Units Surcharge</Label>
+                  <InputDescription>
+                    Additional fee charged per unit beyond the base included units.
+                  </InputDescription>
                   <Input
                     id="unitsSurcharge"
                     type="number"
@@ -271,6 +308,9 @@ const DeliverySettings = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="extraUnits">Extra Units Fee</Label>
+                  <InputDescription>
+                    Fee charged for each additional unit beyond the standard limit.
+                  </InputDescription>
                   <Input
                     id="extraUnits"
                     type="number"
@@ -283,6 +323,9 @@ const DeliverySettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="suggestedMinimumTip">Suggested Minimum Tip</Label>
+                  <InputDescription>
+                    Default tip amount suggested to customers during checkout.
+                  </InputDescription>
                   <Input
                     id="suggestedMinimumTip"
                     type="number"
@@ -292,6 +335,9 @@ const DeliverySettings = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="rushHourSurcharge">Rush Hour Surcharge</Label>
+                  <InputDescription>
+                    Additional fee applied during peak delivery hours.
+                  </InputDescription>
                   <Input
                     id="rushHourSurcharge"
                     type="number"
@@ -303,6 +349,9 @@ const DeliverySettings = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="rushHours">Rush Hours (comma separated, 24h format)</Label>
+                <InputDescription>
+                  Define peak hours when rush hour surcharge applies. Format: HH:MM-HH:MM, separate multiple ranges with commas.
+                </InputDescription>
                 <Input
                   id="rushHours"
                   value={formValues.rushHours || ''}
