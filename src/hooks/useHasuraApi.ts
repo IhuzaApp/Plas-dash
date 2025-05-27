@@ -165,6 +165,14 @@ export interface SystemConfig {
   unitsSurcharge: number;
   extraUnits: number;
   cappedDistanceFee: number;
+  distanceSurcharge: number;
+  suggestedMinimumTip: number;
+  rushHourSurcharge: number;
+  rushHours: string;
+  productCommissionPercentage: number;
+  deliveryCommissionPercentage: number;
+  enableRush: boolean;
+  allowScheduledDeliveries: boolean;
 }
 
 // Type-safe hook for Users

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const UPDATE_SYSTEM_CONFIG = `
   mutation UpdateSystemConfig($id: uuid!, $config: System_configuratioins_set_input!) {
@@ -21,10 +22,41 @@ const UPDATE_SYSTEM_CONFIG = `
   }
 `;
 
+const COMMISSION_PERCENTAGE_OPTIONS = [
+  { value: '5', label: '5%' },
+  { value: '10', label: '10%' },
+  { value: '15', label: '15%' },
+  { value: '20', label: '20%' },
+  { value: '25', label: '25%' },
+  { value: '30', label: '30%' },
+  { value: '35', label: '35%' },
+  { value: '40', label: '40%' },
+];
+
 const DeliverySettings = () => {
   const { data: systemConfig, isLoading } = useSystemConfig();
   const config = systemConfig?.System_configuratioins[0];
   const queryClient = useQueryClient();
+  const [hasChanges, setHasChanges] = useState(false);
+  const [formValues, setFormValues] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (config) {
+      setFormValues({
+        baseDeliveryFee: config.baseDeliveryFee,
+        serviceFee: config.serviceFee,
+        distanceSurcharge: config.distanceSurcharge,
+        cappedDistanceFee: config.cappedDistanceFee,
+        unitsSurcharge: config.unitsSurcharge,
+        extraUnits: config.extraUnits,
+        suggestedMinimumTip: config.suggestedMinimumTip,
+        rushHourSurcharge: config.rushHourSurcharge,
+        rushHours: config.rushHours,
+        productCommissionPercentage: config.productCommissionPercentage || 0,
+        deliveryCommissionPercentage: config.deliveryCommissionPercentage || 0,
+      });
+    }
+  }, [config]);
 
   const { mutate: updateConfig, isPending: isUpdating } = useMutation({
     mutationFn: async (values: any) => {
@@ -37,29 +69,34 @@ const DeliverySettings = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-config'] });
       toast.success('Settings updated successfully');
+      setHasChanges(false);
     },
     onError: error => {
       toast.error('Failed to update settings: ' + error.message);
     },
   });
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value, type } = e.target;
+    const newValue = type === 'number' ? parseFloat(value) : value;
+    setFormValues(prev => ({
+      ...prev,
+      [id]: newValue
+    }));
+    setHasChanges(true);
+  };
+
+  const handleSelectChange = (id: string, value: string) => {
+    setFormValues(prev => ({
+      ...prev,
+      [id]: parseFloat(value)
+    }));
+    setHasChanges(true);
+  };
+
   const handleSave = () => {
     if (!config) return;
-
-    const formElements = document.querySelectorAll('input');
-    const values: any = {};
-
-    formElements.forEach((element: any) => {
-      if (element.type === 'checkbox') {
-        values[element.id] = element.checked;
-      } else if (element.type === 'number') {
-        values[element.id] = element.value;
-      } else {
-        values[element.id] = element.value;
-      }
-    });
-
-    updateConfig(values);
+    updateConfig(formValues);
   };
 
   if (isLoading) {
@@ -78,7 +115,7 @@ const DeliverySettings = () => {
         title="Delivery Settings"
         description="Configure delivery options and pricing rules."
         actions={
-          <Button onClick={handleSave} disabled={isUpdating}>
+          <Button onClick={handleSave} disabled={isUpdating || !hasChanges}>
             {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Changes
           </Button>
@@ -147,12 +184,57 @@ const DeliverySettings = () => {
                   <Input
                     id="baseDeliveryFee"
                     type="number"
-                    defaultValue={config?.baseDeliveryFee}
+                    value={formValues.baseDeliveryFee || ''}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="serviceFee">Service Fee (%)</Label>
-                  <Input id="serviceFee" type="number" defaultValue={config?.serviceFee} />
+                  <Input
+                    id="serviceFee"
+                    type="number"
+                    value={formValues.serviceFee || ''}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="productCommissionPercentage">Product Commission</Label>
+                  <Select
+                    value={formValues.productCommissionPercentage?.toString() || ''}
+                    onValueChange={(value) => handleSelectChange('productCommissionPercentage', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select product commission" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMMISSION_PERCENTAGE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryCommissionPercentage">Delivery Commission</Label>
+                  <Select
+                    value={formValues.deliveryCommissionPercentage?.toString() || ''}
+                    onValueChange={(value) => handleSelectChange('deliveryCommissionPercentage', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select delivery commission" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMMISSION_PERCENTAGE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -162,7 +244,8 @@ const DeliverySettings = () => {
                   <Input
                     id="distanceSurcharge"
                     type="number"
-                    defaultValue={config?.distanceSurcharge}
+                    value={formValues.distanceSurcharge || ''}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div className="space-y-2">
@@ -170,7 +253,8 @@ const DeliverySettings = () => {
                   <Input
                     id="cappedDistanceFee"
                     type="number"
-                    defaultValue={config?.cappedDistanceFee}
+                    value={formValues.cappedDistanceFee || ''}
+                    onChange={handleInputChange}
                   />
                 </div>
               </div>
@@ -178,11 +262,21 @@ const DeliverySettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="unitsSurcharge">Units Surcharge</Label>
-                  <Input id="unitsSurcharge" type="number" defaultValue={config?.unitsSurcharge} />
+                  <Input
+                    id="unitsSurcharge"
+                    type="number"
+                    value={formValues.unitsSurcharge || ''}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="extraUnits">Extra Units Fee</Label>
-                  <Input id="extraUnits" type="number" defaultValue={config?.extraUnits} />
+                  <Input
+                    id="extraUnits"
+                    type="number"
+                    value={formValues.extraUnits || ''}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
 
@@ -192,7 +286,8 @@ const DeliverySettings = () => {
                   <Input
                     id="suggestedMinimumTip"
                     type="number"
-                    defaultValue={config?.suggestedMinimumTip}
+                    value={formValues.suggestedMinimumTip || ''}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div className="space-y-2">
@@ -200,7 +295,8 @@ const DeliverySettings = () => {
                   <Input
                     id="rushHourSurcharge"
                     type="number"
-                    defaultValue={config?.rushHourSurcharge}
+                    value={formValues.rushHourSurcharge || ''}
+                    onChange={handleInputChange}
                   />
                 </div>
               </div>
@@ -209,7 +305,8 @@ const DeliverySettings = () => {
                 <Label htmlFor="rushHours">Rush Hours (comma separated, 24h format)</Label>
                 <Input
                   id="rushHours"
-                  defaultValue={config?.rushHours || ''}
+                  value={formValues.rushHours || ''}
+                  onChange={handleInputChange}
                   placeholder="11:30-13:30, 17:00-19:00"
                 />
               </div>

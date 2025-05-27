@@ -507,6 +507,14 @@ export const GET_SYSTEM_CONFIG = `
       unitsSurcharge
       extraUnits
       cappedDistanceFee
+      distanceSurcharge
+      suggestedMinimumTip
+      rushHourSurcharge
+      rushHours
+      productCommissionPercentage
+      deliveryCommissionPercentage
+      enableRush
+      allowScheduledDeliveries
     }
   }
 `;
