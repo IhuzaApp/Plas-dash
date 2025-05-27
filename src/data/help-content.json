@@ -31,6 +31,11 @@
           "id": "track-order",
           "title": "Tracking Orders",
           "content": "Track your orders in real-time:\n\n- View current order status\n- See estimated delivery times\n- Contact assigned shoppers\n- Get delivery confirmations"
+        },
+        {
+          "id": "delivery-settings",
+          "title": "Understanding Delivery Settings",
+          "content": "Our delivery system is highly configurable to meet your business needs:\n\n### Base Fees\n- **Delivery Fee**: Standard charge for delivery service\n- **Service Fee**: Additional fee for platform usage\n- **Distance Surcharge**: Extra charges based on delivery distance\n\n### Time-Based Settings\n- **Rush Hour Pricing**: Increased rates during peak hours\n- **Off-Peak Discounts**: Reduced rates during slower periods\n- **Maximum Delivery Time**: Standard 90-minute delivery window\n\n### Delivery Zones\n1. **Zone Configuration**\n   - Define service areas\n   - Set zone-specific pricing\n   - Configure coverage boundaries\n\n2. **Zone Types**\n   - Urban (high density)\n   - Suburban (medium density)\n   - Rural (extended range)\n\n### Time Slots\n- **Scheduling Windows**\n   - Morning slots (6 AM - 12 PM)\n   - Afternoon slots (12 PM - 6 PM)\n   - Evening slots (6 PM - 10 PM)\n\n- **Capacity Management**\n   - Shopper availability\n   - Order volume limits\n   - Buffer time between deliveries\n\n### Special Conditions\n1. **Weather Adjustments**\n   - Rain/snow surcharge\n   - Extreme weather protocols\n   - Safety guidelines\n\n2. **Holiday Settings**\n   - Special holiday rates\n   - Modified delivery times\n   - Service availability\n\n3. **Priority Delivery**\n   - Express delivery options\n   - Premium service fees\n   - Guaranteed delivery times"
         }
       ]
     },

@@ -786,3 +786,69 @@ export const GET_TOP_SHOPPERS = `
     }
   }
 `;
+
+export const GET_PROMOTIONS = `
+  query GetPromotions {
+    promotions {
+      id
+      name
+      code
+      discount
+      period
+      status
+      usage
+      created_at
+      update_on
+    }
+  }
+`;
+
+export const CREATE_PROMOTION = `
+  mutation CreatePromotion($name: String!, $code: String!, $discount: String!, $period: String!, $usage: String!, $status: String!) {
+    insert_promotions_one(object: {
+      name: $name,
+      code: $code,
+      discount: $discount,
+      period: $period,
+      usage: $usage,
+      status: $status
+    }) {
+      id
+      name
+      code
+      discount
+      period
+      status
+      usage
+      created_at
+      update_on
+    }
+  }
+`;
+
+export const UPDATE_PROMOTION = `
+  mutation UpdatePromotion($id: uuid!, $name: String!, $code: String!, $discount: String!, $period: String!, $usage: String!, $status: String!) {
+    update_promotions_by_pk(
+      pk_columns: { id: $id },
+      _set: {
+        name: $name,
+        code: $code,
+        discount: $discount,
+        period: $period,
+        usage: $usage,
+        status: $status,
+        update_on: "now()"
+      }
+    ) {
+      id
+      name
+      code
+      discount
+      period
+      status
+      usage
+      created_at
+      update_on
+    }
+  }
+`;
