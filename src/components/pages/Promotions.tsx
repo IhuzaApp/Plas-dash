@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
-import { Search, Filter, Plus, Loader2, RefreshCw } from 'lucide-react';
+import { Search, Filter, Plus, Loader2, RefreshCw, CalendarIcon, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { GET_PROMOTIONS, CREATE_PROMOTION, UPDATE_PROMOTION } from '@/lib/graphql/queries';
@@ -44,6 +44,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from 'sonner';
+import { format, addDays } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Promotion {
   id: string;
@@ -53,6 +62,7 @@ interface Promotion {
   period: string;
   status: string;
   usage: string;
+  current_usage?: number;
   created_at: string;
   update_on: string;
 }
@@ -70,6 +80,17 @@ const DISCOUNT_OPTIONS = [
   { value: '30%', label: '30% off' },
   { value: '40%', label: '40% off' },
   { value: '50%', label: '50% off' },
+];
+
+const USAGE_LIMIT_OPTIONS = [
+  { value: '5', label: '0/5 uses' },
+  { value: '10', label: '0/10 uses' },
+  { value: '25', label: '0/25 uses' },
+  { value: '50', label: '0/50 uses' },
+  { value: '100', label: '0/100 uses' },
+  { value: '200', label: '0/200 uses' },
+  { value: '500', label: '0/500 uses' },
+  { value: '1000', label: '0/1000 uses' },
 ];
 
 const generatePromotionCode = () => {
@@ -107,6 +128,8 @@ type PromotionFormValues = z.infer<typeof promotionFormSchema>;
 const Promotions = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
+  const [date, setDate] = useState<DateRange | undefined>();
+  const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -116,6 +139,20 @@ const Promotions = () => {
       return response.promotions;
     },
   });
+
+  const filteredPromotions = useMemo(() => {
+    if (!data || !searchQuery.trim()) return data;
+
+    const query = searchQuery.toLowerCase().trim();
+    return data.filter((promotion) => {
+      return (
+        promotion.name.toLowerCase().includes(query) ||
+        promotion.code.toLowerCase().includes(query) ||
+        promotion.status.toLowerCase().includes(query) ||
+        promotion.discount.toLowerCase().includes(query)
+      );
+    });
+  }, [data, searchQuery]);
 
   const createMutation = useMutation({
     mutationFn: async (values: PromotionFormValues) => {
@@ -200,6 +237,58 @@ const Promotions = () => {
     form.setValue('code', newCode);
   };
 
+  const formatUsageDisplay = (usage: string, currentUsage: number = 0) => {
+    return `${currentUsage}/${usage}`;
+  };
+
+  const formatPeriod = (period: string) => {
+    try {
+      const [start, end] = period.split(' to ');
+      return `${format(new Date(start), 'MMMM d, yyyy')} - ${format(new Date(end), 'MMMM d, yyyy')}`;
+    } catch (e) {
+      return period;
+    }
+  };
+
+  const handleDateRangeChange = (newDate: DateRange | undefined) => {
+    setDate(newDate);
+    if (newDate?.from && newDate?.to) {
+      const formattedDate = `${format(newDate.from, 'yyyy-MM-dd')} to ${format(newDate.to, 'yyyy-MM-dd')}`;
+      form.setValue('period', formattedDate);
+    }
+  };
+
+  const handleStatusChange = (value: string) => {
+    form.setValue('status', value);
+    
+    if (value === 'active') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day
+
+      // Get current end date from form or use existing date state
+      let endDate: Date | undefined;
+      if (form.getValues('period')) {
+        const [_, existingEnd] = form.getValues('period').split(' to ');
+        endDate = new Date(existingEnd);
+      } else if (date?.to) {
+        endDate = date.to;
+      }
+
+      // If no end date is set, default to tomorrow
+      if (!endDate) {
+        endDate = addDays(today, 1);
+      }
+
+      const newDateRange = {
+        from: today,
+        to: endDate
+      };
+      setDate(newDateRange);
+      const formattedDate = `${format(today, 'yyyy-MM-dd')} to ${format(endDate, 'yyyy-MM-dd')}`;
+      form.setValue('period', formattedDate);
+    }
+  };
+
   return (
     <AdminLayout>
       <PageHeader
@@ -216,7 +305,22 @@ const Promotions = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search promotions..." className="pl-8" />
+            <Input
+              placeholder="Search promotions by name, code, status, or discount..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-2 h-5 w-5 p-0"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           <Button variant="outline" className="flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filter
@@ -245,7 +349,21 @@ const Promotions = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : data?.map(promotion => (
+              ) : filteredPromotions?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Search className="h-8 w-8" />
+                      <p>No promotions found</p>
+                      {searchQuery && (
+                        <p className="text-sm">
+                          Try adjusting your search query
+                        </p>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredPromotions?.map(promotion => (
                 <TableRow key={promotion.id}>
                   <TableCell className="font-medium">{promotion.name}</TableCell>
                   <TableCell>
@@ -254,8 +372,10 @@ const Promotions = () => {
                     </span>
                   </TableCell>
                   <TableCell>{promotion.discount}</TableCell>
-                  <TableCell>{promotion.period}</TableCell>
-                  <TableCell>{promotion.usage}</TableCell>
+                  <TableCell>{formatPeriod(promotion.period)}</TableCell>
+                  <TableCell>
+                    {formatUsageDisplay(promotion.usage, promotion.current_usage)}
+                  </TableCell>
                   <TableCell>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -358,13 +478,66 @@ const Promotions = () => {
                 />
                 <FormField
                   control={form.control}
-                  name="period"
+                  name="status"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        onValueChange={handleStatusChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="scheduled">Scheduled</SelectItem>
+                          <SelectItem value="expired">Expired</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="period"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
                       <FormLabel>Period</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. 2024-03-01 to 2024-04-01" {...field} />
-                      </FormControl>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                formatPeriod(field.value)
+                              ) : (
+                                <span>Pick a date range</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={date?.from}
+                            selected={date}
+                            onSelect={handleDateRangeChange}
+                            numberOfMonths={2}
+                            disabled={(date) => date < new Date()}
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -375,29 +548,21 @@ const Promotions = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Usage Limit</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Enter usage limit" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
+                            <SelectValue placeholder="Select usage limit" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="scheduled">Scheduled</SelectItem>
-                          <SelectItem value="expired">Expired</SelectItem>
+                          {USAGE_LIMIT_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
