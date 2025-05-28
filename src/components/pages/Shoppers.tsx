@@ -68,7 +68,7 @@ const Shoppers = () => {
     return (
       <AdminLayout>
         <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)]">
-          <p className="text-red-500">Error loading shoppers.</p>
+          <p className="text-red-500">Error loading plasas.</p>
           {error && <p className="text-sm mt-2">{error.message}</p>}
         </div>
       </AdminLayout>
@@ -78,22 +78,22 @@ const Shoppers = () => {
   return (
     <AdminLayout>
       <PageHeader
-        title="Shoppers"
+        title="Plasas"
         description="Manage your delivery personnel and track their performance."
-        actions={<Button>Add New Shopper</Button>}
+        actions={<Button>Add New Plasa</Button>}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{shoppers.length}</div>
-            <p className="text-muted-foreground">Total Shoppers</p>
+            <p className="text-muted-foreground">Total Plasas</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{activeShoppers.length}</div>
-            <p className="text-muted-foreground">Active Shoppers</p>
+            <p className="text-muted-foreground">Active Plasas</p>
           </CardContent>
         </Card>
         <Card>
@@ -146,7 +146,7 @@ const Shoppers = () => {
               {currentShoppers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                    No shoppers found.
+                    No plasas found.
                   </TableCell>
                 </TableRow>
               ) : (
