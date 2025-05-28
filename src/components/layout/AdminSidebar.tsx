@@ -90,7 +90,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       icon: ShoppingCart,
       items: [
         { title: 'Orders', icon: Package, path: '/orders', badge: '5' },
-        { title: 'Shoppers', icon: User, path: '/shoppers' },
+        { title: 'Plasas', icon: User, path: '/shoppers' },
         { title: 'Customers', icon: Users, path: '/users' },
         { title: 'Shops', icon: Store, path: '/shops' },
         { title: 'Products', icon: ShoppingCart, path: '/products' },
@@ -115,7 +115,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       icon: Wallet,
       items: [
         { title: 'Company Wallet', icon: Wallet, path: '/company-wallet' },
-        { title: 'Shopper Wallets', icon: Wallet, path: '/shopper-wallets' },
+        { title: 'Plasa Wallets', icon: Wallet, path: '/shopper-wallets' },
         { title: 'Refund Claims', icon: Wallet, path: '/refunds', badge: '3' },
       ],
     },

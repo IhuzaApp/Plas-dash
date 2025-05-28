@@ -118,7 +118,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
     return (
       <AdminLayout>
         <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)]">
-          <p className="text-red-500">Shopper not found.</p>
+          <p className="text-red-500">Plasa not found.</p>
         </div>
       </AdminLayout>
     );
@@ -250,9 +250,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Shopper Details</DialogTitle>
+                    <DialogTitle>Plasa Details</DialogTitle>
                     <DialogDescription>
-                      Complete information about the shopper including ratings and reviews
+                      Complete information about the plasa including ratings and reviews
                     </DialogDescription>
                   </DialogHeader>
 
@@ -403,10 +403,10 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Reject Shopper Application</AlertDialogTitle>
+                        <AlertDialogTitle>Reject Plasa Application</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to reject this shopper application? This action
-                          cannot be undone.
+                          Are you sure you want to reject this plasa application? This action cannot
+                          be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

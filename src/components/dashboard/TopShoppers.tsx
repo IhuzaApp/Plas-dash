@@ -229,7 +229,7 @@ const TopShoppers = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Top Shoppers</CardTitle>
+          <CardTitle>Top Plasas</CardTitle>
           <CardDescription>Performance in the last {selectedRange} days</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-10">
@@ -265,13 +265,13 @@ const TopShoppers = () => {
             </SelectContent>
           </Select>
         </div>
-        <CardDescription>Top performing shoppers in the last {selectedRange} days</CardDescription>
+        <CardDescription>Top performing plasas in the last {selectedRange} days</CardDescription>
       </CardHeader>
       <CardContent className="px-0">
         <div className="space-y-0">
           {sortedShoppers.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
-              No active shoppers found in this period
+              No active plasas found in this period
             </div>
           ) : (
             sortedShoppers.map(shopper => (
