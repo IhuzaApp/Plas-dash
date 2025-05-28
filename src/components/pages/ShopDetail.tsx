@@ -95,6 +95,8 @@ const ShopDetail = () => {
         reorder_point: formData.reorder_point,
         supplier: formData.supplier,
         is_active: formData.is_active,
+        final_price: formData.price,
+        total: formData.price,
       });
 
       toast.success('Product added successfully');
@@ -288,7 +290,8 @@ const ShopDetail = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product Name</TableHead>
-                    <TableHead>Price</TableHead>
+                    <TableHead>Base Price</TableHead>
+                    <TableHead>Final Price</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Unit</TableHead>
                     <TableHead>Status</TableHead>
@@ -307,6 +310,7 @@ const ShopDetail = () => {
                       <TableRow key={product.id}>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell>{formatCurrency(product.price, config)}</TableCell>
+                        <TableCell>{formatCurrency(product.final_price, config)}</TableCell>
                         <TableCell>{product.quantity}</TableCell>
                         <TableCell>{product.measurement_unit}</TableCell>
                         <TableCell>

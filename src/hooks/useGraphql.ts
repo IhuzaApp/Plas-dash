@@ -163,6 +163,7 @@ export interface Product {
   description: string;
   shop_id: string;
   price: string;
+  final_price: string;
   quantity: number;
   measurement_unit: string;
   image: string;
