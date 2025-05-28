@@ -24,7 +24,7 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetClose,
-} from "@/components/ui/sheet";
+} from '@/components/ui/sheet';
 import {
   Form,
   FormControl,
@@ -32,27 +32,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+} from '@/components/ui/select';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 import { toast } from 'sonner';
-import { format, addDays } from "date-fns";
-import { DateRange } from "react-day-picker";
-import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { format, addDays } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface Promotion {
   id: string;
@@ -104,22 +100,22 @@ const generatePromotionCode = () => {
 
 const promotionFormSchema = z.object({
   name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
+    message: 'Name must be at least 2 characters.',
   }),
   code: z.string().min(4, {
-    message: "Code must be at least 4 characters.",
+    message: 'Code must be at least 4 characters.',
   }),
   discount: z.string().min(1, {
-    message: "Discount is required.",
+    message: 'Discount is required.',
   }),
   period: z.string().min(1, {
-    message: "Period is required.",
+    message: 'Period is required.',
   }),
   usage: z.string().min(1, {
-    message: "Usage limit is required.",
+    message: 'Usage limit is required.',
   }),
   status: z.string().min(1, {
-    message: "Status is required.",
+    message: 'Status is required.',
   }),
 });
 
@@ -144,7 +140,7 @@ const Promotions = () => {
     if (!data || !searchQuery.trim()) return data;
 
     const query = searchQuery.toLowerCase().trim();
-    return data.filter((promotion) => {
+    return data.filter(promotion => {
       return (
         promotion.name.toLowerCase().includes(query) ||
         promotion.code.toLowerCase().includes(query) ||
@@ -164,7 +160,7 @@ const Promotions = () => {
       toast.success('Promotion created successfully');
       setIsDrawerOpen(false);
     },
-    onError: (error) => {
+    onError: error => {
       toast.error('Failed to create promotion');
       console.error('Create promotion error:', error);
     },
@@ -180,7 +176,7 @@ const Promotions = () => {
       toast.success('Promotion updated successfully');
       setIsDrawerOpen(false);
     },
-    onError: (error) => {
+    onError: error => {
       toast.error('Failed to update promotion');
       console.error('Update promotion error:', error);
     },
@@ -189,12 +185,12 @@ const Promotions = () => {
   const form = useForm<PromotionFormValues>({
     resolver: zodResolver(promotionFormSchema),
     defaultValues: {
-      name: "",
-      code: "",
-      discount: "",
-      period: "",
-      usage: "",
-      status: "active",
+      name: '',
+      code: '',
+      discount: '',
+      period: '',
+      usage: '',
+      status: 'active',
     },
   });
 
@@ -222,12 +218,12 @@ const Promotions = () => {
   const handleCreate = () => {
     setSelectedPromotion(null);
     form.reset({
-      name: "",
-      code: "",
-      discount: "",
-      period: "",
-      usage: "",
-      status: "active",
+      name: '',
+      code: '',
+      discount: '',
+      period: '',
+      usage: '',
+      status: 'active',
     });
     setIsDrawerOpen(true);
   };
@@ -260,7 +256,7 @@ const Promotions = () => {
 
   const handleStatusChange = (value: string) => {
     form.setValue('status', value);
-    
+
     if (value === 'active') {
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Reset time to start of day
@@ -281,7 +277,7 @@ const Promotions = () => {
 
       const newDateRange = {
         from: today,
-        to: endDate
+        to: endDate,
       };
       setDate(newDateRange);
       const formattedDate = `${format(today, 'yyyy-MM-dd')} to ${format(endDate, 'yyyy-MM-dd')}`;
@@ -309,7 +305,7 @@ const Promotions = () => {
               placeholder="Search promotions by name, code, status, or discount..."
               className="pl-8"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
             />
             {searchQuery && (
               <Button
@@ -355,47 +351,45 @@ const Promotions = () => {
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Search className="h-8 w-8" />
                       <p>No promotions found</p>
-                      {searchQuery && (
-                        <p className="text-sm">
-                          Try adjusting your search query
-                        </p>
-                      )}
+                      {searchQuery && <p className="text-sm">Try adjusting your search query</p>}
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : filteredPromotions?.map(promotion => (
-                <TableRow key={promotion.id}>
-                  <TableCell className="font-medium">{promotion.name}</TableCell>
-                  <TableCell>
-                    <span className="font-mono bg-muted px-2 py-1 rounded text-xs">
-                      {promotion.code}
-                    </span>
-                  </TableCell>
-                  <TableCell>{promotion.discount}</TableCell>
-                  <TableCell>{formatPeriod(promotion.period)}</TableCell>
-                  <TableCell>
-                    {formatUsageDisplay(promotion.usage, promotion.current_usage)}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        promotion.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : promotion.status === 'scheduled'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {promotion.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(promotion)}>
-                      Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              ) : (
+                filteredPromotions?.map(promotion => (
+                  <TableRow key={promotion.id}>
+                    <TableCell className="font-medium">{promotion.name}</TableCell>
+                    <TableCell>
+                      <span className="font-mono bg-muted px-2 py-1 rounded text-xs">
+                        {promotion.code}
+                      </span>
+                    </TableCell>
+                    <TableCell>{promotion.discount}</TableCell>
+                    <TableCell>{formatPeriod(promotion.period)}</TableCell>
+                    <TableCell>
+                      {formatUsageDisplay(promotion.usage, promotion.current_usage)}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          promotion.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : promotion.status === 'scheduled'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {promotion.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(promotion)}>
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </Card>
@@ -406,7 +400,9 @@ const Promotions = () => {
           <SheetHeader>
             <SheetTitle>{selectedPromotion ? 'Edit Promotion' : 'Create Promotion'}</SheetTitle>
             <SheetDescription>
-              {selectedPromotion ? 'Update the promotion details below.' : 'Add a new promotion to your store.'}
+              {selectedPromotion
+                ? 'Update the promotion details below.'
+                : 'Add a new promotion to your store.'}
             </SheetDescription>
           </SheetHeader>
           <div className="py-4">
@@ -455,17 +451,14 @@ const Promotions = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Discount</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select discount percentage" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {DISCOUNT_OPTIONS.map((option) => (
+                          {DISCOUNT_OPTIONS.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -482,10 +475,7 @@ const Promotions = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={handleStatusChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={handleStatusChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -513,8 +503,8 @@ const Promotions = () => {
                             <Button
                               variant="outline"
                               className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
+                                'w-full pl-3 text-left font-normal',
+                                !field.value && 'text-muted-foreground'
                               )}
                             >
                               {field.value ? (
@@ -534,7 +524,7 @@ const Promotions = () => {
                             selected={date}
                             onSelect={handleDateRangeChange}
                             numberOfMonths={2}
-                            disabled={(date) => date < new Date()}
+                            disabled={date => date < new Date()}
                           />
                         </PopoverContent>
                       </Popover>
@@ -548,17 +538,14 @@ const Promotions = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Usage Limit</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select usage limit" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {USAGE_LIMIT_OPTIONS.map((option) => (
+                          {USAGE_LIMIT_OPTIONS.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>

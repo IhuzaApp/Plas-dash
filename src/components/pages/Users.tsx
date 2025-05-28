@@ -183,7 +183,7 @@ const Users = () => {
                 </TableRow>
               ) : (
                 currentUsers.map(user => (
-                  <TableRow 
+                  <TableRow
                     key={user.id}
                     id={`user-${user.id}`}
                     className="transition-all duration-1000 hover:bg-muted/50"

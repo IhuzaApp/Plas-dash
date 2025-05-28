@@ -1,12 +1,12 @@
-import { Metadata } from "next";
-import helpContent from "@/data/help-content.json";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, HelpCircle } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import Markdown from "react-markdown";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
+import { Metadata } from 'next';
+import helpContent from '@/data/help-content.json';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, HelpCircle } from 'lucide-react';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import Markdown from 'react-markdown';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface ArticlePageProps {
   params: {
@@ -16,12 +16,12 @@ interface ArticlePageProps {
 }
 
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
-  const category = helpContent.categories.find((c) => c.id === params.category);
-  const article = category?.articles.find((a) => a.id === params.article);
+  const category = helpContent.categories.find(c => c.id === params.category);
+  const article = category?.articles.find(a => a.id === params.article);
 
   if (!article) {
     return {
-      title: "Article Not Found",
+      title: 'Article Not Found',
     };
   }
 
@@ -32,8 +32,8 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 }
 
 export default function ArticlePage({ params }: ArticlePageProps) {
-  const category = helpContent.categories.find((c) => c.id === params.category);
-  const article = category?.articles.find((a) => a.id === params.article);
+  const category = helpContent.categories.find(c => c.id === params.category);
+  const article = category?.articles.find(a => a.id === params.article);
 
   if (!category || !article) {
     notFound();
@@ -66,8 +66,8 @@ export default function ArticlePage({ params }: ArticlePageProps) {
           <h2 className="text-xl font-semibold mb-4">Related Articles</h2>
           <ul className="space-y-2">
             {category.articles
-              .filter((a) => a.id !== article.id)
-              .map((relatedArticle) => (
+              .filter(a => a.id !== article.id)
+              .map(relatedArticle => (
                 <li key={relatedArticle.id}>
                   <Link
                     href={`/help/${category.id}/${relatedArticle.id}`}
@@ -91,4 +91,4 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       </div>
     </AdminLayout>
   );
-} 
+}

@@ -1,17 +1,17 @@
-import { Metadata } from "next";
-import helpContent from "@/data/help-content.json";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Icons } from "@/components/ui/icons";
-import Link from "next/link";
-import AdminLayout from "@/components/layout/AdminLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import { HelpCircle } from "lucide-react";
+import { Metadata } from 'next';
+import helpContent from '@/data/help-content.json';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Icons } from '@/components/ui/icons';
+import Link from 'next/link';
+import AdminLayout from '@/components/layout/AdminLayout';
+import PageHeader from '@/components/layout/PageHeader';
+import { HelpCircle } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: "Help Center",
-  description: "Get help and learn how to use the dashboard effectively",
+  title: 'Help Center',
+  description: 'Get help and learn how to use the dashboard effectively',
 };
 
 export default function HelpCenter() {
@@ -26,16 +26,13 @@ export default function HelpCenter() {
       <div className="space-y-8">
         {/* Search Section */}
         <div className="flex items-center gap-2 max-w-lg">
-          <Input 
-            placeholder="Search help articles..." 
-            className="w-full"
-          />
+          <Input placeholder="Search help articles..." className="w-full" />
           <Button>Search</Button>
         </div>
 
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {helpContent.categories.map((category) => {
+          {helpContent.categories.map(category => {
             const Icon = Icons[category.icon as keyof typeof Icons];
             return (
               <Card key={category.id} className="hover:shadow-lg transition-shadow">
@@ -44,15 +41,13 @@ export default function HelpCenter() {
                     {Icon && <Icon className="h-6 w-6 text-primary" />}
                     <CardTitle>{category.title}</CardTitle>
                   </div>
-                  <CardDescription>
-                    {category.articles.length} articles
-                  </CardDescription>
+                  <CardDescription>{category.articles.length} articles</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {category.articles.map((article) => (
+                    {category.articles.map(article => (
                       <li key={article.id}>
-                        <Link 
+                        <Link
                           href={`/help/${category.id}/${article.id}`}
                           className="text-sm text-muted-foreground hover:text-primary hover:underline"
                         >
@@ -92,4 +87,4 @@ export default function HelpCenter() {
       </div>
     </AdminLayout>
   );
-} 
+}

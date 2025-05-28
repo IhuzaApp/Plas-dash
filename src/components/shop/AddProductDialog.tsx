@@ -77,7 +77,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const { data: shopsData } = useShops();
   const { data: systemConfig } = useSystemConfig();
   const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
-  const defaultCommission = systemConfig?.System_configuratioins[0]?.productCommissionPercentage || 0;
+  const defaultCommission =
+    systemConfig?.System_configuratioins[0]?.productCommissionPercentage || 0;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -114,7 +115,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
           let finalPrice;
           if (hasCommission) {
             // When commission is enabled, calculate with default commission rate
-            finalPrice = basePrice * (1 + (commissionPercentage / 100));
+            finalPrice = basePrice * (1 + commissionPercentage / 100);
           } else {
             // When commission is disabled, final price is exactly the same as base price
             finalPrice = basePrice;
@@ -145,11 +146,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   function handleSubmit(values: FormData) {
     // Destructure to remove has_commission and commission_percentage
-    const {
-      has_commission,
-      commission_percentage,
-      ...productData
-    } = values;
+    const { has_commission, commission_percentage, ...productData } = values;
 
     const formattedValues = {
       ...productData,
@@ -353,9 +350,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                           <Input placeholder="0" className="pl-12" {...field} disabled />
                         </div>
                       </FormControl>
-                      <FormDescription>
-                        Final price after applying commission
-                      </FormDescription>
+                      <FormDescription>Final price after applying commission</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -378,7 +373,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                     <FormControl>
                       <Switch
                         checked={field.value}
-                        onCheckedChange={(checked) => {
+                        onCheckedChange={checked => {
                           field.onChange(checked);
                           // Reset final price to base price when commission is turned off
                           if (!checked) {
@@ -405,13 +400,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                           disabled
                           className="bg-muted"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          onChange={e => field.onChange(Number(e.target.value))}
                           value={Number(field.value) || 0}
                         />
                       </FormControl>
-                      <FormDescription>
-                        Default system commission rate
-                      </FormDescription>
+                      <FormDescription>Default system commission rate</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -503,23 +496,19 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
               />
             </div>
 
-              <FormField
-                control={form.control}
-                name="supplier"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Supplier</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter supplier name"
-                        {...field}
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="supplier"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Supplier</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter supplier name" {...field} value={field.value || ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
