@@ -78,6 +78,7 @@ export const GET_PRODUCTS = `
       description
       shop_id
       price
+      final_price
       quantity
       measurement_unit
       image
@@ -444,6 +445,7 @@ export const GET_SHOP_BY_ID = `
         name
         description
         price
+        final_price
         quantity
         measurement_unit
         image
