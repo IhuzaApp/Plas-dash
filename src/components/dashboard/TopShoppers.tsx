@@ -5,9 +5,15 @@ import { useQuery } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { GET_TOP_SHOPPERS } from '@/lib/graphql/queries';
 import { Loader2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { subDays, parseISO, differenceInMinutes } from 'date-fns';
-import { Badge } from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 
 interface Rating {
@@ -72,9 +78,7 @@ const formatDeliveryTime = (minutes: number): string => {
   } else {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = Math.round(minutes % 60);
-    return remainingMinutes > 0 
-      ? `${hours}h ${remainingMinutes}min`
-      : `${hours}h`;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
   }
 };
 
@@ -86,35 +90,36 @@ const PERFORMANCE_TIERS = {
   EXCELLENT: {
     threshold: 95,
     label: '🏆 Elite',
-    class: 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
+    class: 'bg-green-500/10 text-green-500 hover:bg-green-500/20',
   },
   GREAT: {
     threshold: 90,
     label: '⭐ Great',
-    class: 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
+    class: 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20',
   },
   GOOD: {
     threshold: 80,
     label: '👍 Good',
-    class: 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
+    class: 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20',
   },
   NEEDS_IMPROVEMENT: {
     threshold: 70,
     label: '⚠️ Needs Work',
-    class: 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
+    class: 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20',
   },
   POOR: {
     threshold: 0,
     label: '❌ Poor',
-    class: 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
-  }
+    class: 'bg-red-500/10 text-red-500 hover:bg-red-500/20',
+  },
 };
 
 const getPerformanceTier = (onTimePercentage: number) => {
   if (onTimePercentage >= PERFORMANCE_TIERS.EXCELLENT.threshold) return PERFORMANCE_TIERS.EXCELLENT;
   if (onTimePercentage >= PERFORMANCE_TIERS.GREAT.threshold) return PERFORMANCE_TIERS.GREAT;
   if (onTimePercentage >= PERFORMANCE_TIERS.GOOD.threshold) return PERFORMANCE_TIERS.GOOD;
-  if (onTimePercentage >= PERFORMANCE_TIERS.NEEDS_IMPROVEMENT.threshold) return PERFORMANCE_TIERS.NEEDS_IMPROVEMENT;
+  if (onTimePercentage >= PERFORMANCE_TIERS.NEEDS_IMPROVEMENT.threshold)
+    return PERFORMANCE_TIERS.NEEDS_IMPROVEMENT;
   return PERFORMANCE_TIERS.POOR;
 };
 
@@ -128,7 +133,7 @@ const TopShoppers = () => {
     const startDate = subDays(endDate, parseInt(selectedRange));
     return {
       start: startDate.toISOString(),
-      end: endDate.toISOString()
+      end: endDate.toISOString(),
     };
   }, [selectedRange]);
 
@@ -155,7 +160,7 @@ const TopShoppers = () => {
       .filter(user => user.shopper?.active) // Only include active shoppers
       .map(user => {
         const orders = user.Orders;
-        
+
         // Calculate delivery performance
         const deliveryTimes = orders.map(order => {
           const minutes = differenceInMinutes(
@@ -170,15 +175,17 @@ const TopShoppers = () => {
         const onTimeDeliveryPercentage = (onTimeDeliveries / orders.length) * 100;
 
         // Calculate average delivery time
-        const averageDeliveryTime = deliveryTimes.length > 0
-          ? deliveryTimes.reduce((sum, time) => sum + time, 0) / deliveryTimes.length
-          : 0;
+        const averageDeliveryTime =
+          deliveryTimes.length > 0
+            ? deliveryTimes.reduce((sum, time) => sum + time, 0) / deliveryTimes.length
+            : 0;
 
         // Calculate average rating (null if no ratings)
         const ratings = orders.flatMap(order => order.Ratings.map(r => r.rating));
-        const averageRating = ratings.length > 0
-          ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
-          : null;
+        const averageRating =
+          ratings.length > 0
+            ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+            : null;
 
         // Calculate total earnings
         const totalEarnings = orders.reduce((sum, order) => {
@@ -196,7 +203,7 @@ const TopShoppers = () => {
           totalEarnings,
           onTimeDeliveryPercentage,
           averageDeliveryTime,
-          averageRating
+          averageRating,
         };
       })
       .filter(shopper => shopper.totalOrders > 0) // Only include shoppers with orders
@@ -234,7 +241,7 @@ const TopShoppers = () => {
 
   const shoppers = data?.Users || [];
   console.log('Processing shoppers:', shoppers.length);
-  
+
   // Calculate performance metrics and sort shoppers
   const sortedShoppers = calculateShopperPerformance(shoppers);
 
@@ -258,9 +265,7 @@ const TopShoppers = () => {
             </SelectContent>
           </Select>
         </div>
-        <CardDescription>
-          Top performing shoppers in the last {selectedRange} days
-        </CardDescription>
+        <CardDescription>Top performing shoppers in the last {selectedRange} days</CardDescription>
       </CardHeader>
       <CardContent className="px-0">
         <div className="space-y-0">
@@ -280,23 +285,30 @@ const TopShoppers = () => {
                       <AvatarImage src={shopper.profilePicture} />
                     ) : (
                       <AvatarFallback className="bg-primary/10 text-primary">
-                        {shopper.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        {shopper.name
+                          .split(' ')
+                          .map(n => n[0])
+                          .join('')
+                          .toUpperCase()}
                       </AvatarFallback>
                     )}
                   </Avatar>
                   <div>
                     <div className="font-medium flex items-center gap-2">
                       {shopper.name}
-                      <span className={`w-2 h-2 rounded-full ${statusColors[shopper.shopperStatus]}`} />
-                      <Badge 
-                        variant="secondary" 
+                      <span
+                        className={`w-2 h-2 rounded-full ${statusColors[shopper.shopperStatus]}`}
+                      />
+                      <Badge
+                        variant="secondary"
                         className={getPerformanceTier(shopper.onTimeDeliveryPercentage).class}
                       >
                         {getPerformanceTier(shopper.onTimeDeliveryPercentage).label}
                       </Badge>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {shopper.totalOrders} orders • {formatPercentage(shopper.onTimeDeliveryPercentage)} on time
+                      {shopper.totalOrders} orders •{' '}
+                      {formatPercentage(shopper.onTimeDeliveryPercentage)} on time
                     </div>
                   </div>
                 </div>

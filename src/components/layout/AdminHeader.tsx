@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,8 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
       <div className="container flex h-14 items-center">
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="w-full flex-1 md:w-auto md:flex-none">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="relative h-9 w-full justify-start text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64"
               onClick={() => setOpen(true)}
             >
@@ -38,7 +38,9 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
               variant="ghost"
               size="icon"
               className="relative"
-              onClick={() => {/* Handle notifications */}}
+              onClick={() => {
+                /* Handle notifications */
+              }}
             >
               <Bell className="h-4 w-4" />
               <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">

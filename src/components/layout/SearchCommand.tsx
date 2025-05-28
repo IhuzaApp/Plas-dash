@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React from 'react';
 import {
@@ -9,7 +9,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
+} from '@/components/ui/command';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
@@ -24,7 +24,7 @@ import {
   User,
   Receipt,
   AlertCircle,
-} from "lucide-react";
+} from 'lucide-react';
 import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 // Import existing queries
@@ -156,52 +156,53 @@ interface SearchCommandProps {
 
 const navigationItems = [
   {
-    title: "Dashboard",
+    title: 'Dashboard',
     icon: Search,
-    path: "/",
+    path: '/',
   },
   {
-    title: "Orders",
+    title: 'Orders',
     icon: Package,
-    path: "/orders",
+    path: '/orders',
   },
   {
-    title: "Products",
+    title: 'Products',
     icon: ShoppingBag,
-    path: "/products",
+    path: '/products',
   },
   {
-    title: "Shops",
+    title: 'Shops',
     icon: Store,
-    path: "/shops",
+    path: '/shops',
   },
   {
-    title: "Users",
+    title: 'Users',
     icon: Users,
-    path: "/users",
-    searchTerms: ["users", "customers", "shoppers", "people", "accounts"],
+    path: '/users',
+    searchTerms: ['users', 'customers', 'shoppers', 'people', 'accounts'],
   },
   {
-    title: "Tickets",
+    title: 'Tickets',
     icon: MessageSquare,
-    path: "/tickets",
+    path: '/tickets',
   },
   {
-    title: "Refunds",
+    title: 'Refunds',
     icon: Receipt,
-    path: "/refunds",
+    path: '/refunds',
   },
 ];
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const router = useRouter();
-  const [searchValue, setSearchValue] = React.useState("");
+  const [searchValue, setSearchValue] = React.useState('');
 
   const filteredNavigationItems = React.useMemo(() => {
     if (!searchValue) return navigationItems;
-    return navigationItems.filter(item => 
-      item.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-      item.searchTerms?.some(term => term.includes(searchValue.toLowerCase()))
+    return navigationItems.filter(
+      item =>
+        item.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item.searchTerms?.some(term => term.includes(searchValue.toLowerCase()))
     );
   }, [searchValue]);
 
@@ -209,20 +210,22 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
     queryKey: ['global-search', searchValue],
     queryFn: async () => {
       if (!searchValue || searchValue.length < 2) return null;
-      
+
       const searchPattern = `%${searchValue.trim().toLowerCase()}%`;
       console.log('Search value:', searchValue);
       console.log('Search pattern:', searchPattern);
-      
+
       try {
-        const response = await hasuraRequest<SearchResult>(SEARCH_QUERY, { searchTerm: searchPattern });
+        const response = await hasuraRequest<SearchResult>(SEARCH_QUERY, {
+          searchTerm: searchPattern,
+        });
         console.log('Raw response:', response);
-        
+
         // Return the response directly since hasuraRequest already returns the data
         return {
           Users: response?.Users || [],
           Products: response?.Products || [],
-          Shops: response?.Shops || []
+          Shops: response?.Shops || [],
         };
       } catch (error) {
         console.error('Search error:', error);
@@ -230,12 +233,12 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
         return {
           Users: [],
           Products: [],
-          Shops: []
+          Shops: [],
         };
       }
     },
     enabled: searchValue.length >= 2,
-    retry: 1
+    retry: 1,
   });
 
   // Add debug logging for the data
@@ -247,13 +250,13 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         onOpenChange(true);
       }
     };
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
   }, [onOpenChange]);
 
   const handleSelect = (path: string, userId?: string) => {
@@ -267,13 +270,13 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
           userRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
           // Add multiple classes for the highlight effect
           userRow.classList.add('bg-green-100', 'transition-all', 'duration-1000');
-          
+
           // Find and click the View Profile button
           const viewProfileButton = userRow.querySelector('button');
           if (viewProfileButton) {
             viewProfileButton.click();
           }
-          
+
           // Remove highlight after a few seconds
           setTimeout(() => {
             userRow.classList.remove('bg-green-100');
@@ -285,13 +288,16 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
       router.push(path);
     }
     onOpenChange(false);
-    setSearchValue("");
+    setSearchValue('');
   };
 
-  const runCommand = React.useCallback((command: () => unknown) => {
-    onOpenChange(false);
-    command();
-  }, [onOpenChange]);
+  const runCommand = React.useCallback(
+    (command: () => unknown) => {
+      onOpenChange(false);
+      command();
+    },
+    [onOpenChange]
+  );
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
@@ -299,9 +305,9 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
       <DialogDescription className="sr-only">
         Search across users, products, shops, and more
       </DialogDescription>
-      
-      <CommandInput 
-        placeholder="Search users, products, shops..." 
+
+      <CommandInput
+        placeholder="Search users, products, shops..."
         value={searchValue}
         onValueChange={setSearchValue}
       />
@@ -321,7 +327,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
 
         {/* Quick Navigation */}
         <CommandGroup heading="Quick Navigation">
-          {filteredNavigationItems.map((item) => (
+          {filteredNavigationItems.map(item => (
             <CommandItem
               key={item.path}
               value={item.title}
@@ -338,7 +344,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
         {/* Users */}
         {data?.Users && data.Users.length > 0 && (
           <CommandGroup heading="Users">
-            {data.Users.map((user) => (
+            {data.Users.map(user => (
               <CommandItem
                 key={user.id}
                 value={`${user.name} ${user.email}`}
@@ -359,7 +365,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
         {/* Products */}
         {data?.Products && data.Products.length > 0 && (
           <CommandGroup heading="Products">
-            {data.Products.map((product) => (
+            {data.Products.map(product => (
               <CommandItem
                 key={product.id}
                 value={product.name}
@@ -369,7 +375,8 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                 <div className="flex flex-col">
                   <span>{product.name}</span>
                   <span className="text-xs text-muted-foreground">
-                    {product.Shop.name} • {product.measurement_unit}: {product.quantity} • ${product.price}
+                    {product.Shop.name} • {product.measurement_unit}: {product.quantity} • $
+                    {product.price}
                   </span>
                 </div>
               </CommandItem>
@@ -380,7 +387,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
         {/* Shops */}
         {data?.Shops && data.Shops.length > 0 && (
           <CommandGroup heading="Shops">
-            {data.Shops.map((shop) => (
+            {data.Shops.map(shop => (
               <CommandItem
                 key={shop.id}
                 value={shop.name}
@@ -404,43 +411,25 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
         <CommandSeparator />
 
         <CommandGroup heading="Suggestions">
-          <CommandItem
-            onSelect={() => runCommand(() => router.push('/orders'))}
-          >
+          <CommandItem onSelect={() => runCommand(() => router.push('/orders'))}>
             Orders
           </CommandItem>
-          <CommandItem
-            onSelect={() => runCommand(() => router.push('/shoppers'))}
-          >
+          <CommandItem onSelect={() => runCommand(() => router.push('/shoppers'))}>
             Shoppers
           </CommandItem>
-          <CommandItem
-            onSelect={() => runCommand(() => router.push('/users'))}
-          >
-            Users
-          </CommandItem>
-          <CommandItem
-            onSelect={() => runCommand(() => router.push('/shops'))}
-          >
-            Shops
-          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => router.push('/users'))}>Users</CommandItem>
+          <CommandItem onSelect={() => runCommand(() => router.push('/shops'))}>Shops</CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
 
         <CommandGroup heading="Settings">
-          <CommandItem
-            onSelect={() => runCommand(() => router.push('/settings'))}
-          >
+          <CommandItem onSelect={() => runCommand(() => router.push('/settings'))}>
             Settings
           </CommandItem>
-          <CommandItem
-            onSelect={() => runCommand(() => router.push('/help'))}
-          >
-            Help
-          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => router.push('/help'))}>Help</CommandItem>
         </CommandGroup>
       </CommandList>
     </CommandDialog>
   );
-} 
+}

@@ -12,7 +12,13 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 const UPDATE_SYSTEM_CONFIG = `
@@ -35,11 +41,7 @@ const COMMISSION_PERCENTAGE_OPTIONS = [
 ];
 
 const InputDescription = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <p className="text-sm text-muted-foreground">
-      {children}
-    </p>
-  );
+  return <p className="text-sm text-muted-foreground">{children}</p>;
 };
 
 const DeliverySettings = () => {
@@ -90,7 +92,7 @@ const DeliverySettings = () => {
     const newValue = type === 'number' ? parseFloat(value) : value;
     setFormValues(prev => ({
       ...prev,
-      [id]: newValue
+      [id]: newValue,
     }));
     setHasChanges(true);
   };
@@ -98,19 +100,22 @@ const DeliverySettings = () => {
   const handleSelectChange = (id: string, value: string) => {
     setFormValues(prev => ({
       ...prev,
-      [id]: parseFloat(value)
+      [id]: parseFloat(value),
     }));
     setHasChanges(true);
   };
 
   const handleSave = () => {
     if (!config) return;
-    
+
     // Convert numeric values to strings before sending to API
-    const formattedValues = Object.entries(formValues).reduce((acc, [key, value]) => {
-      acc[key] = typeof value === 'number' ? value.toString() : value;
-      return acc;
-    }, {} as Record<string, string>);
+    const formattedValues = Object.entries(formValues).reduce(
+      (acc, [key, value]) => {
+        acc[key] = typeof value === 'number' ? value.toString() : value;
+        return acc;
+      },
+      {} as Record<string, string>
+    );
 
     updateConfig(formattedValues);
   };
@@ -225,17 +230,20 @@ const DeliverySettings = () => {
                 <div className="space-y-2">
                   <Label htmlFor="productCommissionPercentage">Product Commission</Label>
                   <InputDescription>
-                    Percentage earned by the platform from each product sale. Applied to product price before other fees.
+                    Percentage earned by the platform from each product sale. Applied to product
+                    price before other fees.
                   </InputDescription>
                   <Select
                     value={formValues.productCommissionPercentage?.toString() || ''}
-                    onValueChange={(value) => handleSelectChange('productCommissionPercentage', value)}
+                    onValueChange={value =>
+                      handleSelectChange('productCommissionPercentage', value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select product commission" />
                     </SelectTrigger>
                     <SelectContent>
-                      {COMMISSION_PERCENTAGE_OPTIONS.map((option) => (
+                      {COMMISSION_PERCENTAGE_OPTIONS.map(option => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -246,17 +254,20 @@ const DeliverySettings = () => {
                 <div className="space-y-2">
                   <Label htmlFor="deliveryCommissionPercentage">Delivery Commission</Label>
                   <InputDescription>
-                    Percentage of the delivery fee retained by the platform. Rest goes to the delivery partner.
+                    Percentage of the delivery fee retained by the platform. Rest goes to the
+                    delivery partner.
                   </InputDescription>
                   <Select
                     value={formValues.deliveryCommissionPercentage?.toString() || ''}
-                    onValueChange={(value) => handleSelectChange('deliveryCommissionPercentage', value)}
+                    onValueChange={value =>
+                      handleSelectChange('deliveryCommissionPercentage', value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select delivery commission" />
                     </SelectTrigger>
                     <SelectContent>
-                      {COMMISSION_PERCENTAGE_OPTIONS.map((option) => (
+                      {COMMISSION_PERCENTAGE_OPTIONS.map(option => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -350,7 +361,8 @@ const DeliverySettings = () => {
               <div className="space-y-2">
                 <Label htmlFor="rushHours">Rush Hours (comma separated, 24h format)</Label>
                 <InputDescription>
-                  Define peak hours when rush hour surcharge applies. Format: HH:MM-HH:MM, separate multiple ranges with commas.
+                  Define peak hours when rush hour surcharge applies. Format: HH:MM-HH:MM, separate
+                  multiple ranges with commas.
                 </InputDescription>
                 <Input
                   id="rushHours"
