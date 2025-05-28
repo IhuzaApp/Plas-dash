@@ -95,7 +95,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       reorder_point: undefined,
       shop_id: shopId,
       has_commission: true,
-      commission_percentage: defaultCommission,
+      commission_percentage: Number(defaultCommission) || 0,
       final_price: '',
     },
   });
@@ -103,7 +103,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   // Watch price and commission-related fields to calculate final price
   const price = form.watch('price');
   const hasCommission = form.watch('has_commission');
-  const commissionPercentage = defaultCommission; // Always use default commission
+  const commissionPercentage = Number(defaultCommission) || 0; // Convert to number
 
   // Calculate final price whenever price or commission changes
   useEffect(() => {
@@ -114,7 +114,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
           let finalPrice;
           if (hasCommission) {
             // When commission is enabled, calculate with default commission rate
-            finalPrice = basePrice * (1 + (defaultCommission / 100));
+            finalPrice = basePrice * (1 + (commissionPercentage / 100));
           } else {
             // When commission is disabled, final price is exactly the same as base price
             finalPrice = basePrice;
@@ -128,12 +128,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     };
 
     calculateFinalPrice();
-  }, [price, hasCommission, defaultCommission, form]);
+  }, [price, hasCommission, commissionPercentage, form]);
 
   // Update commission percentage when has_commission changes
   useEffect(() => {
     if (hasCommission) {
-      form.setValue('commission_percentage', defaultCommission);
+      form.setValue('commission_percentage', Number(defaultCommission) || 0);
     } else {
       form.setValue('commission_percentage', 0);
       // When turning off commission, set final price to match base price exactly
@@ -383,7 +383,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                           // Reset final price to base price when commission is turned off
                           if (!checked) {
                             form.setValue('final_price', form.getValues('price'));
-                            form.setValue('commission_percentage', defaultCommission);
+                            form.setValue('commission_percentage', Number(defaultCommission) || 0);
                           }
                         }}
                       />
@@ -405,7 +405,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                           disabled
                           className="bg-muted"
                           {...field}
-                          value={defaultCommission}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          value={Number(field.value) || 0}
                         />
                       </FormControl>
                       <FormDescription>
