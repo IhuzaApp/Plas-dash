@@ -196,7 +196,8 @@ const Products = () => {
                 <TableHead>Product Name</TableHead>
                 <TableHead>Shop</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead>Base Price</TableHead>
+                <TableHead>Final Price</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -222,6 +223,7 @@ const Products = () => {
                           : product.category.name}
                       </TableCell>
                       <TableCell>{formatCurrency(product.price)}</TableCell>
+                      <TableCell>{formatCurrency(product.final_price)}</TableCell>
                       <TableCell>
                         {product.quantity} {product.measurement_unit}
                       </TableCell>

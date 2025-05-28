@@ -156,7 +156,6 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       quantity: Math.max(0, Number(values.quantity) || 0),
       reorder_point: typeof values.reorder_point === 'number' ? values.reorder_point : undefined,
       shop_id: shopId || values.shop_id,
-      total: values.price, // Store original price in total field
     };
     onSubmit(formattedValues);
   }
