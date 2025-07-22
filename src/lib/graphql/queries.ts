@@ -196,6 +196,22 @@ export const GET_ORDERS = `
         city
         postal_code
       }
+      Shop {
+        address
+        created_at
+        category_id
+        description
+        id
+        image
+        is_active
+        latitude
+        logo
+        longitude
+        name
+        operating_hours
+        phone
+        updated_at
+      }
     }
   }
 `;
