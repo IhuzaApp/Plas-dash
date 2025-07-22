@@ -4,6 +4,7 @@ import StatCard from '@/components/dashboard/StatCard';
 import RecentOrders from '@/components/dashboard/RecentOrders';
 import TopShoppers from '@/components/dashboard/TopShoppers';
 import RevenueChart from '@/components/dashboard/RevenueChart';
+import OrdersOverdueCard from '@/components/dashboard/OrdersOverdueCard';
 import { ShoppingCart, User, DollarSign, Package } from 'lucide-react';
 
 const Index = () => {
@@ -48,10 +49,12 @@ const Index = () => {
 
         <RevenueChart />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <RecentOrders />
+          <OrdersOverdueCard />
           <TopShoppers />
         </div>
+      
       </div>
     </AdminLayout>
   );
