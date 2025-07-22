@@ -862,3 +862,39 @@ export const UPDATE_PROMOTION = `
     }
   }
 `;
+
+// Revenue queries
+export const GET_ALL_REVENUE = `
+  query getAllRevenue {
+    Revenue {
+      amount
+      commission_percentage
+      created_at
+      id
+      order_id
+      products
+      shop_id
+      shopper_id
+      type
+      shopper {
+        Employment_id
+        active
+        address
+        background_check_completed
+        created_at
+        driving_license
+        full_name
+        id
+        national_id
+        onboarding_step
+        phone_number
+        profile_photo
+        status
+        telegram_id
+        transport_mode
+        updated_at
+        user_id
+      }
+    }
+  }
+`;

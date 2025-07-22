@@ -36,58 +36,12 @@ import { useWalletTransactions, useSystemConfig, useWallets } from '@/hooks/useH
 import { Loader2, Eye } from 'lucide-react';
 import Pagination from '@/components/ui/pagination';
 import { formatDistanceToNow } from 'date-fns';
-
-const companyData = [
-  { name: 'Jan', amount: 4000 },
-  { name: 'Feb', amount: 3000 },
-  { name: 'Mar', amount: 5000 },
-  { name: 'Apr', amount: 2780 },
-  { name: 'May', amount: 6890 },
-  { name: 'Jun', amount: 8390 },
-];
-
-const shopperWallets = [
-  {
-    id: 1,
-    shopper: 'Alex Johnson',
-    balance: '$1,245.00',
-    earnings: '$12,450.00',
-    pendingPayment: '$245.00',
-    status: 'Active',
-  },
-  {
-    id: 2,
-    shopper: 'Maria Garcia',
-    balance: '$850.75',
-    earnings: '$8,950.00',
-    pendingPayment: '$0.00',
-    status: 'Active',
-  },
-  {
-    id: 3,
-    shopper: 'David Kim',
-    balance: '$0.00',
-    earnings: '$7,800.00',
-    pendingPayment: '$420.00',
-    status: 'Inactive',
-  },
-  {
-    id: 4,
-    shopper: 'Lisa Chen',
-    balance: '$523.50',
-    earnings: '$9,340.00',
-    pendingPayment: '$100.00',
-    status: 'Active',
-  },
-  {
-    id: 5,
-    shopper: 'James Wilson',
-    balance: '$1,890.25',
-    earnings: '$15,780.00',
-    pendingPayment: '$180.00',
-    status: 'Active',
-  },
-];
+import { useGraphqlQuery } from '@/hooks/useGraphql';
+import { GET_ALL_REVENUE, GET_ALL_REFUNDS } from '@/lib/graphql/queries';
+import { isThisMonth, isThisWeek, isThisYear, parseISO } from 'date-fns';
+import RevenueStats from '@/components/dashboard/RevenueStats';
+import RevenueOverview from '@/components/dashboard/RevenueOverview';
+import RecentTransactions from '@/components/dashboard/RecentTransactions';
 
 // Helper functions moved outside components
 const getStatusBadge = (status: string) => {
@@ -234,6 +188,35 @@ const Wallets = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const itemsPerPage = 5;
   const { data: walletsData, isLoading: isLoadingWallets } = useWallets();
+  const { data: revenueData, isLoading: isLoadingRevenue } = useGraphqlQuery<any>(GET_ALL_REVENUE);
+  const { data: refundsData, isLoading: isLoadingRefunds } = useGraphqlQuery<any>(GET_ALL_REFUNDS);
+  const [revenueFilter, setRevenueFilter] = useState<'month' | 'week' | 'year'>('month');
+
+  // Helper to filter revenue by selected period
+  const filterRevenueByPeriod = (r: any) => {
+    const date = parseISO(r.created_at);
+    if (revenueFilter === 'month') return isThisMonth(date);
+    if (revenueFilter === 'week') return isThisWeek(date);
+    if (revenueFilter === 'year') return isThisYear(date);
+    return true;
+  };
+
+  const allRevenue: any[] = revenueData?.Revenue || [];
+  const totalRevenue = allRevenue.reduce((sum: number, r: any) => sum + parseFloat(r.amount), 0);
+  const filteredRevenue = allRevenue.filter(filterRevenueByPeriod);
+  const filteredRevenueTotal = filteredRevenue.reduce((sum: number, r: any) => sum + parseFloat(r.amount), 0);
+
+  // Revenue by type breakdown
+  const revenueByType: Record<string, number> = filteredRevenue.reduce((acc: Record<string, number>, r: any) => {
+    const type = r.type || 'other';
+    const amount = parseFloat(r.amount);
+    acc[type] = (acc[type] || 0) + amount;
+    return acc;
+  }, {});
+
+  // Pending payouts: sum of all refund amounts
+  const allRefunds: any[] = refundsData?.Refunds || [];
+  const pendingPayouts = allRefunds.reduce((sum: number, r: any) => sum + parseFloat(r.amount), 0);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -301,180 +284,36 @@ const Wallets = () => {
         </TabsList>
 
         <TabsContent value="company">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm font-medium text-muted-foreground">Total Balance</div>
-                <div className="text-3xl font-bold">{formatCurrency('45245.00')}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm font-medium text-muted-foreground">Monthly Revenue</div>
-                <div className="text-3xl font-bold">{formatCurrency('12345.00')}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm font-medium text-muted-foreground">Pending Payouts</div>
-                <div className="text-3xl font-bold">{formatCurrency('5280.00')}</div>
-              </CardContent>
-            </Card>
-          </div>
-
+          <RevenueStats
+            isLoadingRevenue={isLoadingRevenue}
+            isLoadingRefunds={isLoadingRefunds}
+            totalRevenue={totalRevenue}
+            filteredRevenueTotal={filteredRevenueTotal}
+            pendingPayouts={pendingPayouts}
+            revenueByType={revenueByType}
+            revenueFilter={revenueFilter}
+            setRevenueFilter={setRevenueFilter}
+            formatCurrency={formatCurrency}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="col-span-1 md:col-span-2">
-              <CardHeader>
-                <CardTitle>Revenue Overview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={companyData}
-                      margin={{
-                        top: 10,
-                        right: 30,
-                        left: 0,
-                        bottom: 0,
-                      }}
-                    >
-                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Area
-                        type="monotone"
-                        dataKey="amount"
-                        stroke="hsl(var(--primary))"
-                        fill="hsl(var(--primary))"
-                        fillOpacity={0.2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="col-span-1 md:col-span-2">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Recent Transactions</CardTitle>
-                <div className="flex gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Filter by type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="reserve">Reserve</SelectItem>
-                      <SelectItem value="earnings">Earnings</SelectItem>
-                      <SelectItem value="payment">Payment</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Transaction ID</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Order ID</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoadingTransactions ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="h-24">
-                          <div className="flex items-center justify-center">
-                            <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredTransactions.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                          No transactions found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      currentTransactions.map(transaction => (
-                        <TableRow key={transaction.id}>
-                          <TableCell className="font-medium">#{transaction.id.slice(-8)}</TableCell>
-                          <TableCell>
-                            {format(new Date(transaction.created_at), 'MMM d, yyyy HH:mm')}
-                          </TableCell>
-                          <TableCell>{formatCurrency(transaction.amount)}</TableCell>
-                          <TableCell>
-                            <Badge className={getTypeBadge(transaction.type)}>
-                              {transaction.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getStatusBadge(transaction.status)}>
-                              {transaction.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {transaction.Order ? `#${transaction.Order.OrderID}` : 'N/A'}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedTransaction(transaction)}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View More
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-                {!isLoadingTransactions && filteredTransactions.length > 0 && (
-                  <div className="mt-4">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                      totalItems={totalItems}
-                      pageSize={itemsPerPage}
-                      onPageSizeChange={newPageSize => {
-                        setCurrentPage(1);
-                        // Since itemsPerPage is a constant, we don't actually change it
-                        // but we need to provide this prop to satisfy the type
-                      }}
-                    />
-                  </div>
-                )}
-
-                {selectedTransaction && (
-                  <TransactionDetailsDialog
-                    isOpen={!!selectedTransaction}
-                    onClose={() => setSelectedTransaction(null)}
-                    transaction={selectedTransaction}
-                    formatCurrency={formatCurrency}
-                  />
-                )}
-              </CardContent>
-            </Card>
+            <RevenueOverview filteredRevenue={filteredRevenue} />
+            <RecentTransactions
+              isLoadingTransactions={isLoadingTransactions}
+              filteredTransactions={filteredTransactions}
+              currentTransactions={currentTransactions}
+              totalPages={totalPages}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              typeFilter={typeFilter}
+              setTypeFilter={setTypeFilter}
+              formatCurrency={formatCurrency}
+              selectedTransaction={selectedTransaction}
+              setSelectedTransaction={setSelectedTransaction}
+            />
           </div>
         </TabsContent>
 
