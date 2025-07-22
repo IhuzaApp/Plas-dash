@@ -302,18 +302,18 @@ const Wallets = () => {
               filteredTransactions={filteredTransactions}
               currentTransactions={currentTransactions}
               totalPages={totalPages}
-              currentPage={currentPage}
+                      currentPage={currentPage}
               setCurrentPage={setCurrentPage}
-              totalItems={totalItems}
+                      totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
               typeFilter={typeFilter}
               setTypeFilter={setTypeFilter}
-              formatCurrency={formatCurrency}
+                    formatCurrency={formatCurrency}
               selectedTransaction={selectedTransaction}
               setSelectedTransaction={setSelectedTransaction}
-            />
+                  />
           </div>
         </TabsContent>
 
