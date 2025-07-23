@@ -879,6 +879,36 @@ export const UPDATE_PROMOTION = `
   }
 `;
 
+// Tickets queries
+export const GET_TICKETS = `
+  query getTickets {
+    tickets {
+      created_on
+      id
+      other_user_id
+      priority
+      subject
+      status
+      ticket_num
+      update_on
+      user_id
+      User {
+        is_active
+        id
+        gender
+        email
+        created_at
+        name
+        password_hash
+        phone
+        profile_picture
+        updated_at
+        role
+      }
+    }
+  }
+`;
+
 // Revenue queries
 export const GET_ALL_REVENUE = `
   query getAllRevenue {
