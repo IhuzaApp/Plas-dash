@@ -3,10 +3,7 @@ import { useParams } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Search, Filter, Plus, FileUp, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -15,12 +12,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, Filter, Loader2, Package, User, Calendar, DollarSign, MapPin, Plus, FileUp } from 'lucide-react';
+import { useShopById, useAddProduct, useUpdateProduct, useSystemConfig } from '@/hooks/useHasuraApi';
+import { format } from 'date-fns';
+import Pagination from '@/components/ui/pagination';
+import { z } from 'zod';
 import AddProductDialog from '@/components/shop/AddProductDialog';
 import ImportProductsDialog from '@/components/shop/ImportProductsDialog';
-import { useShopById, useAddProduct, useSystemConfig } from '@/hooks/useHasuraApi';
+import EditProductDialog from '@/components/shop/EditProductDialog';
 import { toast } from 'sonner';
-import * as z from 'zod';
-import Pagination from '@/components/ui/pagination';
 import { formatCurrency } from '@/lib/utils';
 
 interface OperatingHours {
@@ -70,6 +73,8 @@ const ShopDetail = () => {
   const id = params?.id?.toString() || '';
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isEditProductOpen, setIsEditProductOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -77,6 +82,7 @@ const ShopDetail = () => {
   const { data, isLoading, isError, error, refetch } = useShopById(id);
   const shop = data?.Shops_by_pk;
   const addProduct = useAddProduct();
+  const updateProduct = useUpdateProduct();
   const { data: configData } = useSystemConfig();
   const config = configData?.System_configuratioins[0];
 
@@ -112,6 +118,32 @@ const ShopDetail = () => {
     console.log('Importing products from file:', file);
     toast.success('Products imported successfully');
     setIsImportOpen(false);
+  };
+
+  const handleEditProduct = (product: any) => {
+    setSelectedProduct(product);
+    setIsEditProductOpen(true);
+  };
+
+  const handleUpdateProduct = async (formData: any) => {
+    try {
+      // Add the product ID to the form data
+      const updateData = {
+        id: selectedProduct.id,
+        ...formData,
+      };
+      
+      // Call the update mutation
+      await updateProduct.mutateAsync(updateData);
+      
+      toast.success('Product updated successfully!');
+      setIsEditProductOpen(false);
+      setSelectedProduct(null);
+      refetch(); // Refresh the shop data to show the updated product
+    } catch (error) {
+      toast.error('Failed to update product');
+      console.error('Error updating product:', error);
+    }
   };
 
   // Filter products based on search term
@@ -325,8 +357,12 @@ const ShopDetail = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">
-                            View Details
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditProduct(product)}
+                          >
+                            Edit
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -349,11 +385,82 @@ const ShopDetail = () => {
           </TabsContent>
 
           <TabsContent value="orders" className="pt-4">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">Orders feature coming soon.</p>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search orders..."
+                    className="pl-8"
+                  />
+                </div>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" /> Filter
+                </Button>
+              </div>
+
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Items</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {shop?.Orders && shop.Orders.length > 0 ? (
+                      shop.Orders.map(order => (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                              #{order.OrderID}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">{order.User?.name || 'N/A'}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {order.User?.email || 'N/A'}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              className={
+                                order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-blue-100 text-blue-800'
+                              }
+                            >
+                              {order.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{order.Order_Items?.length || 0} items</TableCell>
+                          <TableCell>{formatCurrency(order.total, config)}</TableCell>
+                          <TableCell>{format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">
+                              View Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                          No orders found for this shop.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="analytics" className="pt-4">
@@ -377,6 +484,13 @@ const ShopDetail = () => {
         open={isImportOpen}
         onOpenChange={setIsImportOpen}
         onSubmit={handleImportProducts}
+      />
+
+      <EditProductDialog
+        open={isEditProductOpen}
+        onOpenChange={setIsEditProductOpen}
+        onSubmit={handleUpdateProduct}
+        product={selectedProduct}
       />
     </AdminLayout>
   );

@@ -154,6 +154,28 @@ export const GET_SHOPS = `
         }
       }
       is_active
+      Orders(order_by: { created_at: desc }, limit: 10) {
+        id
+        OrderID
+        status
+        total
+        created_at
+        delivery_fee
+        service_fee
+        User {
+          id
+          name
+          email
+        }
+        Order_Items {
+          id
+          quantity
+          price
+          Product {
+            name
+          }
+        }
+      }
     }
   }
 `;
@@ -477,6 +499,36 @@ export const GET_SHOP_BY_ID = `
       Orders_aggregate {
         aggregate {
           count
+        }
+      }
+      Orders(order_by: { created_at: desc }) {
+        id
+        OrderID
+        status
+        total
+        created_at
+        updated_at
+        delivery_fee
+        service_fee
+        User {
+          id
+          name
+          email
+          phone
+        }
+        Order_Items {
+          id
+          quantity
+          price
+          Product {
+            name
+            image
+          }
+        }
+        Address {
+          street
+          city
+          postal_code
         }
       }
     }
@@ -1074,3 +1126,6 @@ export const GET_ALL_REVENUE = `
     }
   }
 `;
+
+// Re-export UPDATE_PRODUCT mutation
+export { UPDATE_PRODUCT } from './mutations';

@@ -275,6 +275,48 @@ export const ADD_PRODUCT = `
   }
 `;
 
+export const UPDATE_PRODUCT = `
+  mutation UpdateProduct(
+    $id: uuid!
+    $name: String
+    $description: String
+    $price: String
+    $quantity: Int
+    $measurement_unit: String
+    $final_price: String
+  ) {
+    update_Products_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        name: $name
+        description: $description
+        price: $price
+        quantity: $quantity
+        measurement_unit: $measurement_unit
+        final_price: $final_price
+        updated_at: "now()"
+      }
+    ) {
+      id
+      name
+      description
+      price
+      quantity
+      measurement_unit
+      shop_id
+      category
+      barcode
+      sku
+      reorder_point
+      supplier
+      is_active
+      final_price
+      created_at
+      updated_at
+    }
+  }
+`;
+
 export const UPDATE_TICKET = `
   mutation UpdateTicket($id: uuid!, $status: String!, $update_on: timestamptz!) {
     update_tickets_by_pk(
