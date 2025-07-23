@@ -185,12 +185,6 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
   onSubmit,
   employee,
 }) => {
-  console.log('=== EDIT STAFF DIALOG DEBUG ===');
-  console.log('1. Dialog open:', open);
-  console.log('2. Employee data:', employee);
-  console.log('3. Employee type:', typeof employee);
-  console.log('4. Employee keys:', employee ? Object.keys(employee) : 'No employee');
-
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -204,92 +198,26 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
     },
   });
 
-  console.log('5. Form default values:', form.getValues());
-
-  // Update form when employee changes
   React.useEffect(() => {
-    console.log('=== FORM RESET DEBUG ===');
-    console.log('6. Employee in useEffect:', employee);
-    
-    if (employee) {
-      console.log('7. Employee.fullnames:', employee.fullnames);
-      console.log('8. Employee.email:', employee.email);
-      console.log('9. Employee.phone:', employee.phone);
-      console.log('10. Employee.Address:', employee.Address);
-      console.log('11. Employee.Position:', employee.Position);
-      console.log('12. Employee.active:', employee.active);
-      console.log('13. Employee.roleType:', employee.roleType);
-      console.log('14. Employee.employeeID:', employee.employeeID);
-      console.log('15. Employee.orgEmployeeRoles:', employee.orgEmployeeRoles);
-      console.log('16. Full employee object:', JSON.stringify(employee, null, 2));
-
+    if (open && employee) {
       const formData = {
         fullnames: employee.fullnames || '',
         email: employee.email || '',
         phone: employee.phone || '',
         Address: employee.Address || '',
-        position: employee.Position || '', // Now we have the actual Position
+        position: employee.Position || '',
         active: employee.active ?? true,
-        roleType: (employee.roleType as 'globalAdmin' | 'systemAdmin' | 'basicAdmin' | 'custom') || 'basicAdmin', // Now we have the actual roleType
+        roleType: (employee.roleType as 'globalAdmin' | 'systemAdmin' | 'basicAdmin' | 'custom') || 'basicAdmin',
       };
 
-      console.log('17. Form data to reset:', formData);
-      console.log('18. Form data type check:', {
-        fullnames: typeof formData.fullnames,
-        email: typeof formData.email,
-        phone: typeof formData.phone,
-        Address: typeof formData.Address,
-        position: typeof formData.position,
-        active: typeof formData.active,
-        roleType: typeof formData.roleType,
-      });
-
-      // Validate the data against the schema before resetting
-      try {
-        const validatedData = formSchema.parse(formData);
-        console.log('19. ✅ Schema validation passed:', validatedData);
-        form.reset(validatedData);
-      } catch (error) {
-        console.error('20. ❌ Schema validation failed:', error);
-        console.error('21. Validation error details:', {
-          error: error instanceof Error ? error.message : String(error),
-          formData,
-        });
-        
-        // Use safe defaults if validation fails
-        const safeData = {
-          fullnames: '',
-          email: '',
-          phone: '',
-          Address: '',
-          position: '',
-          active: true,
-          roleType: 'basicAdmin' as const,
-        };
-        console.log('22. Using safe defaults:', safeData);
-        form.reset(safeData);
-      }
+      form.reset(formData);
     }
-  }, [employee, form]);
+  }, [open, employee, form]);
 
   const roleType = form.watch('roleType');
-  console.log('23. Current roleType:', roleType);
 
   function handleSubmit(values: FormData) {
-    console.log('=== FORM SUBMIT DEBUG ===');
-    console.log('24. Form values:', values);
-    console.log('25. Form values type check:', {
-      fullnames: typeof values.fullnames,
-      email: typeof values.email,
-      phone: typeof values.phone,
-      Address: typeof values.Address,
-      position: typeof values.position,
-      active: typeof values.active,
-      roleType: typeof values.roleType,
-    });
-
     if (!employee) {
-      console.log('26. ❌ No employee data');
       return;
     }
     
@@ -322,32 +250,9 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
       })
     );
     
-    console.log('27. Original employee data:', {
-      fullnames: employee.fullnames,
-      email: employee.email,
-      phone: employee.phone,
-      Address: employee.Address,
-      Position: employee.Position,
-      active: employee.active,
-      roleType: employee.roleType,
-    });
-    
-    console.log('28. Changes detected:', changes);
-    console.log('29. Filtered changes (no null/undefined):', filteredChanges);
-    console.log('30. Final changes (no empty strings):', finalChanges);
-    console.log('31. Final changes keys:', Object.keys(finalChanges));
-    console.log('32. Final changes values:', Object.values(finalChanges));
-    console.log('33. Final changes types:', Object.entries(finalChanges).map(([k, v]) => `${k}: ${typeof v}`));
-    
     // Get permissions based on role type
     const permissions = getPermissionsForRole(roleType);
     
-    console.log('29. Submitting data:', {
-      id: employee.id,
-      employee: finalChanges,
-      permissions,
-    });
-
     onSubmit({
       id: employee.id,
       employee: finalChanges,
@@ -356,11 +261,8 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
   }
 
   if (!employee) {
-    console.log('28. ❌ No employee, returning null');
     return null;
   }
-
-  console.log('29. Rendering dialog with employee:', employee.id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
