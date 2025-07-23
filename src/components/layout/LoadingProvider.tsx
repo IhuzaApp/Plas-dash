@@ -15,17 +15,23 @@ const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) => {
     if (!isLoading) return null;
 
     return (
-      <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-sm text-muted-foreground">Loading...</p>
+      <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center justify-center h-full w-full">
+          <div className="text-center">
+            <div className="text-6xl font-bold text-primary animate-pulse mb-4">
+              Plas 
+            </div>
+            <p className="text-lg text-muted-foreground font-medium">
+              Wait...
+            </p>
+          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full h-full">
       <LoadingOverlay />
       {children}
     </div>

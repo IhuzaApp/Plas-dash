@@ -27,6 +27,7 @@ import {
   CREATE_MULTIPLE_WALLET_TRANSACTIONS,
   REGISTER_SHOPPER,
   ADD_PRODUCT,
+  UPDATE_PRODUCT,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -67,6 +68,28 @@ interface Shop {
     };
   };
   is_active: boolean;
+  Orders: Array<{
+    id: string;
+    OrderID: string;
+    status: string;
+    total: string;
+    created_at: string;
+    delivery_fee: string;
+    service_fee: string;
+    User: {
+      id: string;
+      name: string;
+      email: string;
+    };
+    Order_Items: Array<{
+      id: string;
+      quantity: number;
+      price: string;
+      Product: {
+        name: string;
+      };
+    }>;
+  }>;
 }
 
 interface ShopProduct {
@@ -96,6 +119,36 @@ interface ShopDetails extends Shop {
   created_at: string;
   updated_at: string;
   Products: ShopProduct[];
+  Orders: Array<{
+    id: string;
+    OrderID: string;
+    status: string;
+    total: string;
+    created_at: string;
+    updated_at: string;
+    delivery_fee: string;
+    service_fee: string;
+    User: {
+      id: string;
+      name: string;
+      email: string;
+      phone: string;
+    };
+    Order_Items: Array<{
+      id: string;
+      quantity: number;
+      price: string;
+      Product: {
+        name: string;
+        image: string;
+      };
+    }>;
+    Address: {
+      street: string;
+      city: string;
+      postal_code: string;
+    };
+  }>;
 }
 
 interface Shopper {
@@ -434,6 +487,25 @@ export function useAddProduct() {
     }
   >({
     mutationFn: variables => hasuraRequest(ADD_PRODUCT, variables),
+  });
+}
+
+// Type-safe hook for updating a product
+export function useUpdateProduct() {
+  return useMutation<
+    { update_Products_by_pk: ShopProduct },
+    Error,
+    {
+      id: string;
+      name?: string;
+      description?: string;
+      price?: string;
+      quantity?: number;
+      measurement_unit?: string;
+      final_price?: string;
+    }
+  >({
+    mutationFn: variables => hasuraRequest(UPDATE_PRODUCT, variables),
   });
 }
 
