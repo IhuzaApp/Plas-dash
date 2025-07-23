@@ -3,6 +3,7 @@ import { usePathname } from 'next/navigation';
 import Head from 'next/head';
 import { Toaster } from '@/components/ui/toaster';
 import LoadingProvider from './LoadingProvider';
+import LoginModal from '../modals/LoginModal';
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -38,6 +39,37 @@ const getPageTitle = (pathname: string | null) => {
 export default function RootLayout({ children }: RootLayoutProps) {
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check for session in localStorage and expiration (8 hours)
+    const sessionStr = localStorage.getItem('orgEmployeeSession');
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr);
+        const now = Date.now();
+        const expiresAt = session.expiresAt || 0;
+        if (expiresAt && now < expiresAt) {
+          setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem('orgEmployeeSession');
+          setIsAuthenticated(false);
+        }
+      } catch {
+        localStorage.removeItem('orgEmployeeSession');
+        setIsAuthenticated(false);
+      }
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, []);
+
+  const handleLoginSuccess = (sessionData: any) => {
+    // Set session expiration to 8 hours from now
+    const expiresAt = Date.now() + 8 * 60 * 60 * 1000;
+    localStorage.setItem('orgEmployeeSession', JSON.stringify({ ...sessionData, expiresAt }));
+    setIsAuthenticated(true);
+  };
 
   return (
     <>
@@ -48,8 +80,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <link key="favicon" rel="icon" href="/favicon.ico" />
       </Head>
       <LoadingProvider>
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background relative">
           {children}
+          {!isAuthenticated && (
+            <div className="fixed inset-0 z-40 bg-white/30 backdrop-blur-md pointer-events-none" />
+          )}
+          {!isAuthenticated && (
+            <LoginModal onLoginSuccess={handleLoginSuccess} />
+          )}
           <Toaster />
         </div>
       </LoadingProvider>
