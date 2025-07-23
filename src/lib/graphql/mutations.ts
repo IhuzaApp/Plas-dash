@@ -355,3 +355,55 @@ export const UPDATE_REFUND_STATUS = `
     }
   }
 `;
+
+// Staff Management Mutations
+export const ADD_ORG_EMPLOYEE = `
+  mutation AddOrgEmployee($Address: String = "", $dob: String = "", $email: String = "", $fullnames: String = "", $gender: String = "", $password: String = "", $phone: String = "", $restaurant_id: uuid = "", $shop_id: uuid = "") {
+    insert_orgEmployees(objects: {Address: $Address, active: false, dob: $dob, email: $email, fullnames: $fullnames, gender: $gender, multAuthEnabled: false, password: $password, phone: $phone, restaurant_id: $restaurant_id, shop_id: $shop_id}) {
+      affected_rows
+      returning {
+        id
+        employeeID
+        fullnames
+        email
+        phone
+        Address
+        active
+        shop_id
+        restaurant_id
+      }
+    }
+  }
+`;
+
+export const ADD_ORG_EMPLOYEE_ID = `
+  mutation addOrgEmployeeID($orgEmployeeID: uuid = "", $privillages: jsonb = "") {
+    insert_orgEmployeeRoles(objects: {orgEmployeeID: $orgEmployeeID, privillages: $privillages}) {
+      affected_rows
+    }
+  }
+`;
+
+export const UPDATE_ORG_EMPLOYEE_ROLE = `
+  mutation UpdateOrgEmployeeRole($id: uuid!, $privillages: jsonb!) {
+    update_orgEmployeeRoles(where: {orgEmployeeID: {_eq: $id}}, _set: {privillages: $privillages}) {
+      affected_rows
+    }
+  }
+`;
+
+export const UPDATE_ORG_EMPLOYEE = `
+  mutation UpdateOrgEmployee($id: uuid!, $fullnames: String!, $email: String!, $phone: String!, $Address: String!, $active: Boolean!) {
+    update_orgEmployees(where: {id: {_eq: $id}}, _set: {fullnames: $fullnames, email: $email, phone: $phone, Address: $Address, active: $active}) {
+      affected_rows
+    }
+  }
+`;
+
+export const DELETE_ORG_EMPLOYEE = `
+  mutation DeleteOrgEmployee($id: uuid!) {
+    delete_orgEmployees(where: {id: {_eq: $id}}) {
+      affected_rows
+    }
+  }
+`;
