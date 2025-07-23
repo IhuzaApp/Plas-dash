@@ -30,7 +30,7 @@ import {
   ADD_PRODUCT,
   UPDATE_PRODUCT,
   ADD_ORG_EMPLOYEE,
-  ADD_ORG_EMPLOYEE_ID,
+  ADD_ORG_EMPLOYEE_ROLES,
   UPDATE_ORG_EMPLOYEE_ROLE,
   UPDATE_ORG_EMPLOYEE,
   DELETE_ORG_EMPLOYEE,
@@ -526,13 +526,14 @@ export function useSystemConfig() {
 
 // Staff Management Types
 export interface OrgEmployee {
-  id: string;
-  employeeID: string;
+  id: string;                    // Primary key (UUID, auto-generated)
+  employeeID: string;            // Business identifier (employee number)
   fullnames: string;
   email: string;
   phone: string;
   Address: string;
-  position: string;
+  Position: string;
+  roleType: string;
   active: boolean;
   shop_id: string;
   restaurant_id: string | null;
@@ -551,114 +552,58 @@ export interface OrgEmployee {
 export interface OrgEmployeeRole {
   id: string;
   orgEmployeeID: string;
-  privillages: {
-    // Dashboard permissions
-    dashboard: {
-      view: boolean;
-      edit: boolean;
-    };
-    // Point of Sale permissions
-    pos: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
-      checkout: boolean;
-      refund: boolean;
-    };
-    // Product management permissions
-    products: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
-    };
-    // Order management permissions
-    orders: {
-      view: boolean;
-      edit: boolean;
-      delete: boolean;
-    };
-    // Customer management permissions
-    customers: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
-    };
-    // Inventory management permissions
-    inventory: {
-      view: boolean;
-      edit: boolean;
-      stock: boolean;
-    };
-    // Sales reports permissions
-    reports: {
-      view: boolean;
-      export: boolean;
-    };
-    // Settings permissions (shop-specific)
-    settings: {
-      view: boolean;
-      edit: boolean;
-    };
-    // Staff management permissions
-    staff: {
-      view: boolean;
-      create: boolean;
-      edit: boolean;
-      delete: boolean;
-    };
-    // System admin permissions
-    systemAdmin: boolean;
-    // Global admin permissions
-    globalAdmin: boolean;
-  };
+  privillages: string[]; // Array of permission strings
   created_on: string;
   update_on: string;
 }
 
-// Default role templates
+// Default role templates as arrays
 export const DEFAULT_ROLES = {
-  globalAdmin: {
-    dashboard: { view: true, edit: true },
-    pos: { view: true, create: true, edit: true, delete: true, checkout: true, refund: true },
-    products: { view: true, create: true, edit: true, delete: true },
-    orders: { view: true, edit: true, delete: true },
-    customers: { view: true, create: true, edit: true, delete: true },
-    inventory: { view: true, edit: true, stock: true },
-    reports: { view: true, export: true },
-    settings: { view: true, edit: true },
-    staff: { view: true, create: true, edit: true, delete: true },
-    systemAdmin: true,
-    globalAdmin: true,
-  },
-  systemAdmin: {
-    dashboard: { view: true, edit: true },
-    pos: { view: true, create: true, edit: true, delete: false, checkout: true, refund: true },
-    products: { view: true, create: true, edit: true, delete: true },
-    orders: { view: true, edit: true, delete: false },
-    customers: { view: true, create: true, edit: true, delete: false },
-    inventory: { view: true, edit: true, stock: true },
-    reports: { view: true, export: true },
-    settings: { view: true, edit: false },
-    staff: { view: true, create: true, edit: true, delete: false },
-    systemAdmin: true,
-    globalAdmin: false,
-  },
-  basicAdmin: {
-    dashboard: { view: true, edit: false },
-    pos: { view: true, create: true, edit: false, delete: false, checkout: true, refund: false },
-    products: { view: true, create: true, edit: true, delete: false },
-    orders: { view: true, edit: true, delete: false },
-    customers: { view: true, create: true, edit: true, delete: false },
-    inventory: { view: true, edit: false, stock: true },
-    reports: { view: true, export: false },
-    settings: { view: true, edit: false },
-    staff: { view: true, create: false, edit: false, delete: false },
-    systemAdmin: false,
-    globalAdmin: false,
-  },
+  globalAdmin: [
+    'dashboard:view', 'dashboard:edit',
+    'pos:view', 'pos:create', 'pos:edit', 'pos:delete', 'pos:checkout', 'pos:refund',
+    'products:view', 'products:create', 'products:edit', 'products:delete',
+    'orders:view', 'orders:edit', 'orders:delete',
+    'customers:view', 'customers:create', 'customers:edit', 'customers:delete',
+    'inventory:view', 'inventory:edit', 'inventory:stock',
+    'reports:view', 'reports:export',
+    'settings:view', 'settings:edit',
+    'staff:view', 'staff:create', 'staff:edit', 'staff:delete',
+    'systemAdmin', 'globalAdmin'
+  ],
+  systemAdmin: [
+    'dashboard:view', 'dashboard:edit',
+    'pos:view', 'pos:create', 'pos:edit', 'pos:checkout', 'pos:refund',
+    'products:view', 'products:create', 'products:edit', 'products:delete',
+    'orders:view', 'orders:edit',
+    'customers:view', 'customers:create', 'customers:edit',
+    'inventory:view', 'inventory:edit', 'inventory:stock',
+    'reports:view', 'reports:export',
+    'settings:view',
+    'staff:view', 'staff:create', 'staff:edit',
+    'systemAdmin'
+  ],
+  basicAdmin: [
+    'dashboard:view',
+    'pos:view', 'pos:create', 'pos:checkout',
+    'products:view', 'products:create', 'products:edit',
+    'orders:view', 'orders:edit',
+    'customers:view', 'customers:create', 'customers:edit',
+    'inventory:view', 'inventory:stock',
+    'reports:view',
+    'settings:view',
+    'staff:view'
+  ],
+};
+
+// Helper function to check if permission exists in array
+export const hasPermission = (permissions: string[], permission: string): boolean => {
+  return permissions.includes(permission);
+};
+
+// Helper function to get permissions for a role type
+export const getPermissionsForRole = (roleType: string): string[] => {
+  return DEFAULT_ROLES[roleType as keyof typeof DEFAULT_ROLES] || [];
 };
 
 // Type-safe hook for getting employees by shop
@@ -680,8 +625,9 @@ export function useAddEmployee() {
       email: string;
       phone: string;
       Address: string;
-      position: string;
+      Position: string;
       password: string;
+      roleType: string;
       shop_id: string;
       dob?: string;
       gender?: string;
@@ -698,10 +644,10 @@ export function useAddEmployeeRole() {
     Error,
     {
       orgEmployeeID: string;
-      privillages: OrgEmployeeRole['privillages'];
+      privillages: string[];
     }
   >({
-    mutationFn: variables => hasuraRequest(ADD_ORG_EMPLOYEE_ID, variables),
+    mutationFn: variables => hasuraRequest(ADD_ORG_EMPLOYEE_ROLES, variables),
   });
 }
 
@@ -712,7 +658,7 @@ export function useUpdateEmployeeRole() {
     Error,
     {
       id: string;
-      privillages: OrgEmployeeRole['privillages'];
+      privillages: string[];
     }
   >({
     mutationFn: variables => hasuraRequest(UPDATE_ORG_EMPLOYEE_ROLE, variables),
@@ -726,12 +672,13 @@ export function useUpdateEmployee() {
     Error,
     {
       id: string;
-      fullnames: string;
-      email: string;
-      phone: string;
-      Address: string;
-      position: string;
-      active: boolean;
+      fullnames?: string;
+      email?: string;
+      phone?: string;
+      Address?: string;
+      Position?: string;
+      roleType?: string;
+      active?: boolean;
     }
   >({
     mutationFn: variables => hasuraRequest(UPDATE_ORG_EMPLOYEE, variables),

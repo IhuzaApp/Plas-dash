@@ -1,4 +1,4 @@
-mutation AddOrgEmployee($Address: String = "", $dob: String = "", $email: String = "", $fullnames: String = "", $gender: String = "", $password: String = "", $phone: String = "", $restaurant_id: uuid = "", $shop_id: uuid = "", $Position: String = "", $roleType: String = "") {
+mutation AddOrgEmployee($Address: String = "", $dob: String = "", $email: String = "", $fullnames: String = "", $gender: String = "", $password: String = "", $phone: String = "", $restaurant_id: uuid, $shop_id: uuid!, $Position: String = "", $roleType: String = "") {
   insert_orgEmployees(objects: {Address: $Address, active: false, dob: $dob, email: $email, fullnames: $fullnames, gender: $gender, multAuthEnabled: false, password: $password, phone: $phone, restaurant_id: $restaurant_id, shop_id: $shop_id, Position: $Position, generatePassword: false, roleType: $roleType}) {
     affected_rows
     returning {
@@ -11,12 +11,13 @@ mutation AddOrgEmployee($Address: String = "", $dob: String = "", $email: String
       active
       shop_id
       restaurant_id
+      Position
+      roleType
     }
   }
 }
 
-
-mutation addOrgEmployeeID($orgEmployeeID: uuid = "", $privillages: jsonb = "") {
+mutation addOrgEmployeeRoles($orgEmployeeID: uuid = "", $privillages: jsonb = "") {
   insert_orgEmployeeRoles(objects: {orgEmployeeID: $orgEmployeeID, privillages: $privillages}) {
     affected_rows
   }
@@ -28,8 +29,8 @@ mutation UpdateOrgEmployeeRole($id: uuid!, $privillages: jsonb!) {
   }
 }
 
-mutation UpdateOrgEmployee($id: uuid!, $fullnames: String!, $email: String!, $phone: String!, $Address: String!, $active: Boolean!) {
-  update_orgEmployees(where: {id: {_eq: $id}}, _set: {fullnames: $fullnames, email: $email, phone: $phone, Address: $Address, active: $active}) {
+mutation UpdateOrgEmployee($id: uuid!, $fullnames: String, $email: String, $phone: String, $Address: String, $Position: String, $active: Boolean, $roleType: String) {
+  update_orgEmployees(where: {id: {_eq: $id}}, _set: {fullnames: $fullnames, email: $email, phone: $phone, Address: $Address, Position: $Position, active: $active, roleType: $roleType}) {
     affected_rows
   }
 }
@@ -57,6 +58,8 @@ query getOrgEmployeeDetails {
     restaurant_id
     shop_id
     updated_on
+    Position
+    roleType
     orgEmployeeRoles {
       created_on
       id
@@ -112,6 +115,8 @@ query getOrgEmployeesByShop($shop_id: uuid!) {
     restaurant_id
     shop_id
     updated_on
+    Position
+    roleType
     orgEmployeeRoles {
       created_on
       id
@@ -123,12 +128,6 @@ query getOrgEmployeesByShop($shop_id: uuid!) {
       id
       name
     }
-  }
-}
-
-mutation addOrgEmployeeRoles($privillages: jsonb = "", $orgEmployeeID: uuid = "") {
-  insert_orgEmployeeRoles(objects: {privillages: $privillages, orgEmployeeID: $orgEmployeeID}) {
-    affected_rows
   }
 }
 

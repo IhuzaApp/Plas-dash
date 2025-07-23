@@ -1149,6 +1149,8 @@ export const GET_ORG_EMPLOYEES_BY_SHOP = `
       restaurant_id
       shop_id
       updated_on
+      Position
+      roleType
       orgEmployeeRoles {
         created_on
         id

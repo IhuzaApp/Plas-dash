@@ -27,6 +27,26 @@ import AddStaffDialog from '@/components/shop/AddStaffDialog';
 import EditStaffDialog from '@/components/shop/EditStaffDialog';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { hasuraRequest } from '@/lib/hasura';
+
+// Helper function to get GraphQL type for each field
+function getGraphQLType(fieldName: string): string {
+  switch (fieldName) {
+    case 'id':
+      return 'uuid!';
+    case 'active':
+      return 'Boolean';
+    case 'fullnames':
+    case 'email':
+    case 'phone':
+    case 'Address':
+    case 'Position':
+    case 'roleType':
+      return 'String';
+    default:
+      return 'String';
+  }
+}
 
 interface OperatingHours {
   monday: string;
@@ -188,33 +208,114 @@ const ShopDetail = () => {
       phone: string;
       Address: string;
       gender: string;
-      position: string;
+      Position: string;
       password: string;
+      roleType: string;
     };
-    permissions: any;
+    permissions: string[];
   }) => {
     try {
-      // Add employee
-      const employeeResult = await addEmployee.mutateAsync({
-        ...data.employee,
+      // Validate shop_id
+      if (!id || id === '') {
+        toast.error('Invalid shop ID');
+        return;
+      }
+
+      console.log('=== STAFF ADDITION DEBUG ===');
+      console.log('1. Shop ID:', id);
+      console.log('2. Shop ID type:', typeof id);
+      console.log('3. Shop ID length:', id.length);
+      console.log('4. Raw employee data:', data.employee);
+      console.log('5. Permissions:', data.permissions);
+
+      // Prepare employee data, filtering out empty values
+      const employeeData = {
+        fullnames: data.employee.fullnames,
+        email: data.employee.email,
+        phone: data.employee.phone,
+        Address: data.employee.Address,
+        Position: data.employee.Position,
+        password: data.employee.password,
+        roleType: data.employee.roleType,
         shop_id: id,
+        // Only include non-empty optional fields
+        ...(data.employee.gender && { gender: data.employee.gender }),
+        // Don't include restaurant_id if it's empty
+        // Don't include dob if it's empty
+      };
+
+      console.log('6. Filtered employee data:', employeeData);
+      console.log('7. Employee data keys:', Object.keys(employeeData));
+      console.log('8. Employee data values:', Object.values(employeeData));
+      console.log('9. Employee data JSON:', JSON.stringify(employeeData, null, 2));
+
+      // Check for any empty values
+      const emptyFields = Object.entries(employeeData).filter(([key, value]) => {
+        if (typeof value === 'string' && value === '') {
+          console.log(`⚠️ Empty field found: ${key} = "${value}"`);
+          return true;
+        }
+        return false;
       });
+      
+      if (emptyFields.length > 0) {
+        console.log('❌ Empty fields detected:', emptyFields);
+        toast.error(`Empty fields detected: ${emptyFields.map(([key]) => key).join(', ')}`);
+        return;
+      }
+
+      console.log('10. About to call addEmployee.mutateAsync...');
+
+      // Add employee
+      const employeeResult = await addEmployee.mutateAsync(employeeData);
+
+      console.log('11. Employee result:', employeeResult);
+      console.log('12. Employee result type:', typeof employeeResult);
+      console.log('13. Employee result keys:', Object.keys(employeeResult));
 
       if (employeeResult.insert_orgEmployees.returning.length > 0) {
         const employeeId = employeeResult.insert_orgEmployees.returning[0].id;
         
+        console.log('14. Employee ID for role:', employeeId);
+        console.log('15. Employee ID type:', typeof employeeId);
+        console.log('16. Employee ID length:', employeeId.length);
+
+        if (!employeeId || employeeId === '') {
+          console.log('❌ Empty employee ID received from database');
+          toast.error('Failed to get employee ID from database');
+          return;
+        }
+
+        console.log('17. About to call addEmployeeRole.mutateAsync...');
+
         // Add employee role
         await addEmployeeRole.mutateAsync({
           orgEmployeeID: employeeId,
           privillages: data.permissions,
         });
 
+        console.log('18. Employee role added successfully');
+
         toast.success('Staff member added successfully');
         setIsAddStaffOpen(false);
         refetchEmployees();
+      } else {
+        console.log('❌ No employee returned from database');
+        toast.error('No employee data returned from database');
       }
     } catch (error) {
-      console.error('Error adding staff member:', error);
+      console.error('=== ERROR DETAILS ===');
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      console.error('Full error object:', error);
+      
+      if (error instanceof Error && error.message.includes('uuid')) {
+        console.error('🔍 UUID Error detected - checking all UUID fields...');
+        console.error('Shop ID:', id);
+        console.error('Shop ID is UUID:', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+      }
+      
       toast.error('Failed to add staff member. Please try again.');
     }
   };
@@ -226,28 +327,80 @@ const ShopDetail = () => {
 
   const handleUpdateStaff = async (data: {
     id: string;
-    employee: {
+    employee: Partial<{
       fullnames: string;
       email: string;
       phone: string;
       Address: string;
-      position: string;
+      Position: string;
+      roleType: string;
       active: boolean;
-    };
-    permissions: any;
+    }>;
+    permissions: string[];
   }) => {
     try {
-      // Update employee
-      await updateEmployee.mutateAsync({
-        id: data.id,
-        ...data.employee,
-      });
+      console.log('=== STAFF UPDATE DEBUG ===');
+      console.log('1. Update data received:', data);
+      console.log('2. Employee changes:', data.employee);
+      console.log('3. Permissions:', data.permissions);
+      
+      // Only update employee if there are changes
+      if (Object.keys(data.employee).length > 0) {
+        console.log('4. Updating employee with changes:', data.employee);
+        console.log('4a. Employee changes keys:', Object.keys(data.employee));
+        console.log('4b. Employee changes values:', Object.values(data.employee));
+        console.log('4c. Employee changes types:', Object.entries(data.employee).map(([k, v]) => `${k}: ${typeof v} = ${v}`));
+        
+        // Validate that we have actual values (not null, undefined, or empty strings)
+        const validChanges = Object.fromEntries(
+          Object.entries(data.employee).filter(([_, value]) => {
+            if (value === null || value === undefined) {
+              console.log(`❌ Filtering out null/undefined value for field`);
+              return false;
+            }
+            if (typeof value === 'string' && value.trim() === '') {
+              console.log(`❌ Filtering out empty string for field`);
+              return false;
+            }
+            return true;
+          })
+        );
+        
+        console.log('4d. Valid changes after filtering:', validChanges);
+        
+        if (Object.keys(validChanges).length === 0) {
+          console.log('4e. ⚠️ No valid changes after filtering, skipping employee update');
+        } else {
+          // Create dynamic mutation that only sets provided fields
+          const setFields = Object.keys(validChanges).map(key => `${key}: $${key}`).join(', ');
+          const variables = Object.keys(validChanges).map(key => `$${key}: ${getGraphQLType(key)}`).join(', ');
+          
+          const dynamicMutation = `
+            mutation UpdateOrgEmployee($id: uuid!, ${variables}) {
+              update_orgEmployees(where: {id: {_eq: $id}}, _set: {${setFields}}) {
+                affected_rows
+              }
+            }
+          `;
+          
+          console.log('4f. Dynamic mutation:', dynamicMutation);
+          console.log('4g. Mutation variables:', { id: data.id, ...validChanges });
+          
+          // Use the dynamic mutation directly
+          await hasuraRequest(dynamicMutation, { id: data.id, ...validChanges });
+          console.log('5. ✅ Employee update completed');
+        }
+      } else {
+        console.log('4. ⏭️ No employee changes, skipping employee update');
+      }
 
-      // Update employee role
+      // Always update employee role (permissions might have changed)
+      console.log('6. Updating employee role with permissions:', data.permissions);
       await updateEmployeeRole.mutateAsync({
         id: data.id,
         privillages: data.permissions,
       });
+      console.log('7. ✅ Employee role update completed');
 
       toast.success('Staff member updated successfully');
       setIsEditStaffOpen(false);
@@ -616,7 +769,7 @@ const ShopDetail = () => {
                 </Button>
               </div>
 
-              <Card>
+            <Card>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -639,29 +792,17 @@ const ShopDetail = () => {
                       </TableRow>
                     ) : (
                       currentStaff.map(employee => {
-                        const permissions = employee.orgEmployeeRoles[0]?.privillages;
-                        let roleBadge = 'Custom';
+                        const permissions = employee.orgEmployeeRoles[0]?.privillages || [];
+                        let roleBadge = employee.roleType || 'Custom';
                         let roleVariant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
                         
-                        if (permissions?.globalAdmin) {
+                        if (permissions.includes('globalAdmin')) {
                           roleBadge = 'Global Admin';
                           roleVariant = 'destructive';
-                        } else if (permissions?.systemAdmin) {
+                        } else if (permissions.includes('systemAdmin')) {
                           roleBadge = 'System Admin';
                           roleVariant = 'default';
-                        } else if (permissions && JSON.stringify(permissions) === JSON.stringify({
-                          dashboard: { view: true, edit: false },
-                          pos: { view: true, create: true, edit: false, delete: false, checkout: true, refund: false },
-                          products: { view: true, create: true, edit: true, delete: false },
-                          orders: { view: true, edit: true, delete: false },
-                          customers: { view: true, create: true, edit: true, delete: false },
-                          inventory: { view: true, edit: false, stock: true },
-                          reports: { view: true, export: false },
-                          settings: { view: true, edit: false },
-                          staff: { view: true, create: false, edit: false, delete: false },
-                          systemAdmin: false,
-                          globalAdmin: false,
-                        })) {
+                        } else if (employee.roleType === 'basicAdmin') {
                           roleBadge = 'Basic Admin';
                           roleVariant = 'secondary';
                         }
@@ -678,7 +819,7 @@ const ShopDetail = () => {
                             <TableCell>{employee.phone}</TableCell>
                             <TableCell>
                               <Badge variant="outline" className="capitalize">
-                                {employee.position}
+                                {employee.Position}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -731,7 +872,7 @@ const ShopDetail = () => {
                   }}
                   totalItems={totalStaffItems}
                 />
-              </Card>
+            </Card>
             </div>
           </TabsContent>
 
