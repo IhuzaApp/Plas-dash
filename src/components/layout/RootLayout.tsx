@@ -1,5 +1,8 @@
+import React from 'react';
 import { usePathname } from 'next/navigation';
 import Head from 'next/head';
+import { Toaster } from '@/components/ui/toaster';
+import LoadingProvider from './LoadingProvider';
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -44,7 +47,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta key="description" name="description" content="Plas Admin Dashboard" />
         <link key="favicon" rel="icon" href="/favicon.ico" />
       </Head>
-      {children}
+      <LoadingProvider>
+        <div className="min-h-screen bg-background">
+          {children}
+          <Toaster />
+        </div>
+      </LoadingProvider>
     </>
   );
 }
