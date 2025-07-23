@@ -486,30 +486,105 @@ export const GET_SHOP_BY_ID = `
 // Shoppers queries
 export const GET_SHOPPERS = `
   query GetShoppers {
-    shoppers {
-      Employment_id
-      address
-      background_check_completed
-      created_at
-      driving_license
-      full_name
+  shoppers {
+    Employment_id
+    address
+    background_check_completed
+    created_at
+    driving_license
+    full_name
+    id
+    national_id
+    onboarding_step
+    phone_number
+    profile_photo
+    status
+    transport_mode
+    updated_at
+    user_id
+    active
+    User {
       id
-      national_id
-      onboarding_step
-      phone_number
-      profile_photo
-      status
-      transport_mode
+      email
+      is_active
+      created_at
+      gender
+      name
+      password_hash
+      phone
+      profile_picture
       updated_at
-      user_id
-      active
-      User {
+      role
+      Ratings {
+        created_at
+        customer_id
+        delivery_experience
         id
-        email
-        is_active
+        order_id
+        packaging_quality
+        professionalism
+        rating
+        reel_order_id
+        review
+        reviewed_at
+        shopper_id
+        updated_at
+      }
+      tickets {
+        created_on
+        id
+        other_user_id
+        priority
+        status
+        subject
+        ticket_num
+        update_on
+        user_id
+      }
+      Invoices {
+        Proof
+        created_at
+        customer_id
+        delivery_fee
+        discount
+        id
+        invoice_items
+        invoice_number
+        order_id
+        reel_order_id
+        service_fee
+        status
+        subtotal
+        tax
+        total_amount
+      }
+      Delivery_Issues {
+        created_at
+        description
+        id
+        issue_type
+        order_id
+        priority
+        shopper_id
+        status
+        updated_at
       }
     }
+    telegram_id
+    Revenues {
+      amount
+      commission_percentage
+      created_at
+      id
+      order_id
+      products
+      shop_id
+      shopper_id
+      type
+    }
   }
+}
+
 `;
 
 // System Configuration query
@@ -629,30 +704,33 @@ export const GET_ORDER_PAYMENTS = `
 `;
 
 export const GET_SHOPPER_FULL_DETAILS = `
-  query getShopperFullDetails($user_id: uuid!) {
+  query getShopperFullDetails($user_id: uuid = "") {
     shoppers(where: { user_id: { _eq: $user_id } }) {
-      active
+      Employment_id
       address
       background_check_completed
       created_at
       driving_license
       full_name
       id
-      national_id
       onboarding_step
       phone_number
-      profile_photo
       status
       transport_mode
       updated_at
       user_id
-      Employment_id
+      active
       User {
-        gender
+        id
         email
+        is_active
+        created_at
+        gender
         name
+        password_hash
         phone
         profile_picture
+        updated_at
         role
         Ratings {
           created_at
@@ -663,11 +741,63 @@ export const GET_SHOPPER_FULL_DETAILS = `
           packaging_quality
           professionalism
           rating
+          reel_order_id
           review
           reviewed_at
           shopper_id
           updated_at
         }
+        tickets {
+          created_on
+          id
+          other_user_id
+          priority
+          status
+          subject
+          ticket_num
+          update_on
+          user_id
+        }
+        Invoices {
+          Proof
+          created_at
+          customer_id
+          delivery_fee
+          discount
+          id
+          invoice_items
+          invoice_number
+          order_id
+          reel_order_id
+          service_fee
+          status
+          subtotal
+          tax
+          total_amount
+        }
+        Delivery_Issues {
+          created_at
+          description
+          id
+          issue_type
+          order_id
+          priority
+          shopper_id
+          status
+          updated_at
+        }
+      }
+      telegram_id
+      Revenues {
+        amount
+        commission_percentage
+        created_at
+        id
+        order_id
+        products
+        shop_id
+        shopper_id
+        type
       }
     }
   }

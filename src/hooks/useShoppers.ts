@@ -152,6 +152,9 @@ interface DetailedUser extends User {
   gender: string;
   role: string;
   Ratings: Rating[];
+  tickets?: any[];
+  Delivery_Issues?: any[];
+  Invoices?: any[];
 }
 
 interface DetailedShopper extends Shopper {
@@ -159,6 +162,7 @@ interface DetailedShopper extends Shopper {
   driving_license: string | null;
   national_id: string;
   User: DetailedUser;
+  Revenues?: any[];
 }
 
 interface ShopperFullDetailsResponse {
