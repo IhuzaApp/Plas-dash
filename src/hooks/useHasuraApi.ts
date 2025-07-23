@@ -16,6 +16,7 @@ import {
   GET_SHOP_BY_ID,
   GET_SHOPPERS,
   GET_SYSTEM_CONFIG,
+  GET_ORG_EMPLOYEES_BY_SHOP,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -28,6 +29,11 @@ import {
   REGISTER_SHOPPER,
   ADD_PRODUCT,
   UPDATE_PRODUCT,
+  ADD_ORG_EMPLOYEE,
+  ADD_ORG_EMPLOYEE_ID,
+  UPDATE_ORG_EMPLOYEE_ROLE,
+  UPDATE_ORG_EMPLOYEE,
+  DELETE_ORG_EMPLOYEE,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -515,5 +521,230 @@ export function useSystemConfig() {
     queryKey: ['system-config'],
     queryFn: () => hasuraRequest(GET_SYSTEM_CONFIG, {}),
     staleTime: Infinity, // Configuration rarely changes, so we can cache it indefinitely
+  });
+}
+
+// Staff Management Types
+export interface OrgEmployee {
+  id: string;
+  employeeID: string;
+  fullnames: string;
+  email: string;
+  phone: string;
+  Address: string;
+  position: string;
+  active: boolean;
+  shop_id: string;
+  restaurant_id: string | null;
+  created_on: string;
+  updated_on: string;
+  dob: string;
+  gender: string;
+  multAuthEnabled: boolean;
+  orgEmployeeRoles: OrgEmployeeRole[];
+  Shops: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface OrgEmployeeRole {
+  id: string;
+  orgEmployeeID: string;
+  privillages: {
+    // Dashboard permissions
+    dashboard: {
+      view: boolean;
+      edit: boolean;
+    };
+    // Point of Sale permissions
+    pos: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+      checkout: boolean;
+      refund: boolean;
+    };
+    // Product management permissions
+    products: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    // Order management permissions
+    orders: {
+      view: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    // Customer management permissions
+    customers: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    // Inventory management permissions
+    inventory: {
+      view: boolean;
+      edit: boolean;
+      stock: boolean;
+    };
+    // Sales reports permissions
+    reports: {
+      view: boolean;
+      export: boolean;
+    };
+    // Settings permissions (shop-specific)
+    settings: {
+      view: boolean;
+      edit: boolean;
+    };
+    // Staff management permissions
+    staff: {
+      view: boolean;
+      create: boolean;
+      edit: boolean;
+      delete: boolean;
+    };
+    // System admin permissions
+    systemAdmin: boolean;
+    // Global admin permissions
+    globalAdmin: boolean;
+  };
+  created_on: string;
+  update_on: string;
+}
+
+// Default role templates
+export const DEFAULT_ROLES = {
+  globalAdmin: {
+    dashboard: { view: true, edit: true },
+    pos: { view: true, create: true, edit: true, delete: true, checkout: true, refund: true },
+    products: { view: true, create: true, edit: true, delete: true },
+    orders: { view: true, edit: true, delete: true },
+    customers: { view: true, create: true, edit: true, delete: true },
+    inventory: { view: true, edit: true, stock: true },
+    reports: { view: true, export: true },
+    settings: { view: true, edit: true },
+    staff: { view: true, create: true, edit: true, delete: true },
+    systemAdmin: true,
+    globalAdmin: true,
+  },
+  systemAdmin: {
+    dashboard: { view: true, edit: true },
+    pos: { view: true, create: true, edit: true, delete: false, checkout: true, refund: true },
+    products: { view: true, create: true, edit: true, delete: true },
+    orders: { view: true, edit: true, delete: false },
+    customers: { view: true, create: true, edit: true, delete: false },
+    inventory: { view: true, edit: true, stock: true },
+    reports: { view: true, export: true },
+    settings: { view: true, edit: false },
+    staff: { view: true, create: true, edit: true, delete: false },
+    systemAdmin: true,
+    globalAdmin: false,
+  },
+  basicAdmin: {
+    dashboard: { view: true, edit: false },
+    pos: { view: true, create: true, edit: false, delete: false, checkout: true, refund: false },
+    products: { view: true, create: true, edit: true, delete: false },
+    orders: { view: true, edit: true, delete: false },
+    customers: { view: true, create: true, edit: true, delete: false },
+    inventory: { view: true, edit: false, stock: true },
+    reports: { view: true, export: false },
+    settings: { view: true, edit: false },
+    staff: { view: true, create: false, edit: false, delete: false },
+    systemAdmin: false,
+    globalAdmin: false,
+  },
+};
+
+// Type-safe hook for getting employees by shop
+export function useEmployeesByShop(shopId: string) {
+  return useQuery<{ orgEmployees: OrgEmployee[] }, Error>({
+    queryKey: ['employees', shopId],
+    queryFn: () => hasuraRequest(GET_ORG_EMPLOYEES_BY_SHOP, { shop_id: shopId }),
+    enabled: !!shopId,
+  });
+}
+
+// Type-safe hook for adding an employee
+export function useAddEmployee() {
+  return useMutation<
+    { insert_orgEmployees: { affected_rows: number; returning: OrgEmployee[] } },
+    Error,
+    {
+      fullnames: string;
+      email: string;
+      phone: string;
+      Address: string;
+      position: string;
+      password: string;
+      shop_id: string;
+      dob?: string;
+      gender?: string;
+    }
+  >({
+    mutationFn: variables => hasuraRequest(ADD_ORG_EMPLOYEE, variables),
+  });
+}
+
+// Type-safe hook for adding employee role
+export function useAddEmployeeRole() {
+  return useMutation<
+    { insert_orgEmployeeRoles: { affected_rows: number } },
+    Error,
+    {
+      orgEmployeeID: string;
+      privillages: OrgEmployeeRole['privillages'];
+    }
+  >({
+    mutationFn: variables => hasuraRequest(ADD_ORG_EMPLOYEE_ID, variables),
+  });
+}
+
+// Type-safe hook for updating employee role
+export function useUpdateEmployeeRole() {
+  return useMutation<
+    { update_orgEmployeeRoles: { affected_rows: number } },
+    Error,
+    {
+      id: string;
+      privillages: OrgEmployeeRole['privillages'];
+    }
+  >({
+    mutationFn: variables => hasuraRequest(UPDATE_ORG_EMPLOYEE_ROLE, variables),
+  });
+}
+
+// Type-safe hook for updating employee
+export function useUpdateEmployee() {
+  return useMutation<
+    { update_orgEmployees: { affected_rows: number } },
+    Error,
+    {
+      id: string;
+      fullnames: string;
+      email: string;
+      phone: string;
+      Address: string;
+      position: string;
+      active: boolean;
+    }
+  >({
+    mutationFn: variables => hasuraRequest(UPDATE_ORG_EMPLOYEE, variables),
+  });
+}
+
+// Type-safe hook for deleting employee
+export function useDeleteEmployee() {
+  return useMutation<
+    { delete_orgEmployees: { affected_rows: number } },
+    Error,
+    { id: string }
+  >({
+    mutationFn: variables => hasuraRequest(DELETE_ORG_EMPLOYEE, variables),
   });
 }

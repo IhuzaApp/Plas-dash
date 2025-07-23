@@ -15,14 +15,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Filter, Loader2, Package, User, Calendar, DollarSign, MapPin, Plus, FileUp } from 'lucide-react';
-import { useShopById, useAddProduct, useUpdateProduct, useSystemConfig } from '@/hooks/useHasuraApi';
+import { Search, Filter, Loader2, Package, User, Calendar, DollarSign, MapPin, Plus, FileUp, Users, Edit, Trash2 } from 'lucide-react';
+import { useShopById, useAddProduct, useUpdateProduct, useSystemConfig, useEmployeesByShop, useAddEmployee, useAddEmployeeRole, useUpdateEmployee, useUpdateEmployeeRole, useDeleteEmployee, OrgEmployee } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { z } from 'zod';
 import AddProductDialog from '@/components/shop/AddProductDialog';
 import ImportProductsDialog from '@/components/shop/ImportProductsDialog';
 import EditProductDialog from '@/components/shop/EditProductDialog';
+import AddStaffDialog from '@/components/shop/AddStaffDialog';
+import EditStaffDialog from '@/components/shop/EditStaffDialog';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 
@@ -78,6 +80,14 @@ const ShopDetail = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  
+  // Staff management state
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+  const [isEditStaffOpen, setIsEditStaffOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<OrgEmployee | null>(null);
+  const [staffSearchTerm, setStaffSearchTerm] = useState('');
+  const [staffCurrentPage, setStaffCurrentPage] = useState(1);
+  const [staffPageSize, setStaffPageSize] = useState(10);
 
   const { data, isLoading, isError, error, refetch } = useShopById(id);
   const shop = data?.Shops_by_pk;
@@ -85,6 +95,14 @@ const ShopDetail = () => {
   const updateProduct = useUpdateProduct();
   const { data: configData } = useSystemConfig();
   const config = configData?.System_configuratioins[0];
+  
+  // Staff management hooks
+  const { data: employeesData, refetch: refetchEmployees } = useEmployeesByShop(id);
+  const addEmployee = useAddEmployee();
+  const addEmployeeRole = useAddEmployeeRole();
+  const updateEmployee = useUpdateEmployee();
+  const updateEmployeeRole = useUpdateEmployeeRole();
+  const deleteEmployee = useDeleteEmployee();
 
   const handleAddProduct = async (formData: ProductFormData) => {
     try {
@@ -162,6 +180,114 @@ const ShopDetail = () => {
   const endIndex = startIndex + pageSize;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
+  // Staff management handlers
+  const handleAddStaff = async (data: {
+    employee: {
+      fullnames: string;
+      email: string;
+      phone: string;
+      Address: string;
+      gender: string;
+      position: string;
+      password: string;
+    };
+    permissions: any;
+  }) => {
+    try {
+      // Add employee
+      const employeeResult = await addEmployee.mutateAsync({
+        ...data.employee,
+        shop_id: id,
+      });
+
+      if (employeeResult.insert_orgEmployees.returning.length > 0) {
+        const employeeId = employeeResult.insert_orgEmployees.returning[0].id;
+        
+        // Add employee role
+        await addEmployeeRole.mutateAsync({
+          orgEmployeeID: employeeId,
+          privillages: data.permissions,
+        });
+
+        toast.success('Staff member added successfully');
+        setIsAddStaffOpen(false);
+        refetchEmployees();
+      }
+    } catch (error) {
+      console.error('Error adding staff member:', error);
+      toast.error('Failed to add staff member. Please try again.');
+    }
+  };
+
+  const handleEditStaff = (employee: OrgEmployee) => {
+    setSelectedEmployee(employee);
+    setIsEditStaffOpen(true);
+  };
+
+  const handleUpdateStaff = async (data: {
+    id: string;
+    employee: {
+      fullnames: string;
+      email: string;
+      phone: string;
+      Address: string;
+      position: string;
+      active: boolean;
+    };
+    permissions: any;
+  }) => {
+    try {
+      // Update employee
+      await updateEmployee.mutateAsync({
+        id: data.id,
+        ...data.employee,
+      });
+
+      // Update employee role
+      await updateEmployeeRole.mutateAsync({
+        id: data.id,
+        privillages: data.permissions,
+      });
+
+      toast.success('Staff member updated successfully');
+      setIsEditStaffOpen(false);
+      setSelectedEmployee(null);
+      refetchEmployees();
+    } catch (error) {
+      console.error('Error updating staff member:', error);
+      toast.error('Failed to update staff member. Please try again.');
+    }
+  };
+
+  const handleDeleteStaff = async (employeeId: string) => {
+    if (confirm('Are you sure you want to delete this staff member?')) {
+      try {
+        await deleteEmployee.mutateAsync({ id: employeeId });
+        toast.success('Staff member deleted successfully');
+        refetchEmployees();
+      } catch (error) {
+        console.error('Error deleting staff member:', error);
+        toast.error('Failed to delete staff member. Please try again.');
+      }
+    }
+  };
+
+  // Filter staff based on search term
+  const filteredStaff = employeesData?.orgEmployees.filter(
+    employee =>
+      staffSearchTerm === '' ||
+      employee.fullnames.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
+      employee.email.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
+      employee.phone.includes(staffSearchTerm)
+  ) || [];
+
+  // Calculate staff pagination
+  const totalStaffItems = filteredStaff.length;
+  const totalStaffPages = Math.ceil(totalStaffItems / staffPageSize);
+  const staffStartIndex = (staffCurrentPage - 1) * staffPageSize;
+  const staffEndIndex = staffStartIndex + staffPageSize;
+  const currentStaff = filteredStaff.slice(staffStartIndex, staffEndIndex);
+
   if (isLoading || !config) {
     return (
       <AdminLayout>
@@ -216,10 +342,11 @@ const ShopDetail = () => {
 
       <div className="space-y-6">
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:w-1/2">
+          <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:w-3/4">
             <TabsTrigger value="info">Shop Info</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="staff">Staff</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
@@ -463,6 +590,151 @@ const ShopDetail = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="staff" className="pt-4">
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search staff members..."
+                    className="pl-8"
+                    value={staffSearchTerm}
+                    onChange={e => {
+                      setStaffSearchTerm(e.target.value);
+                      setStaffCurrentPage(1);
+                    }}
+                  />
+                </div>
+                <Button 
+                  onClick={() => setIsAddStaffOpen(true)} 
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" /> Add Staff
+                </Button>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" /> Filter
+                </Button>
+              </div>
+
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Position</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentStaff.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                          No staff members found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      currentStaff.map(employee => {
+                        const permissions = employee.orgEmployeeRoles[0]?.privillages;
+                        let roleBadge = 'Custom';
+                        let roleVariant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
+                        
+                        if (permissions?.globalAdmin) {
+                          roleBadge = 'Global Admin';
+                          roleVariant = 'destructive';
+                        } else if (permissions?.systemAdmin) {
+                          roleBadge = 'System Admin';
+                          roleVariant = 'default';
+                        } else if (permissions && JSON.stringify(permissions) === JSON.stringify({
+                          dashboard: { view: true, edit: false },
+                          pos: { view: true, create: true, edit: false, delete: false, checkout: true, refund: false },
+                          products: { view: true, create: true, edit: true, delete: false },
+                          orders: { view: true, edit: true, delete: false },
+                          customers: { view: true, create: true, edit: true, delete: false },
+                          inventory: { view: true, edit: false, stock: true },
+                          reports: { view: true, export: false },
+                          settings: { view: true, edit: false },
+                          staff: { view: true, create: false, edit: false, delete: false },
+                          systemAdmin: false,
+                          globalAdmin: false,
+                        })) {
+                          roleBadge = 'Basic Admin';
+                          roleVariant = 'secondary';
+                        }
+
+                        return (
+                          <TableRow key={employee.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                {employee.fullnames}
+                              </div>
+                            </TableCell>
+                            <TableCell>{employee.email}</TableCell>
+                            <TableCell>{employee.phone}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="capitalize">
+                                {employee.position}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={roleVariant}>
+                                {roleBadge}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={employee.active ? 'default' : 'secondary'}
+                                className={employee.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                              >
+                                {employee.active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{format(new Date(employee.created_on), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleEditStaff(employee)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleDeleteStaff(employee.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+                <Pagination
+                  currentPage={staffCurrentPage}
+                  totalPages={totalStaffPages}
+                  pageSize={staffPageSize}
+                  onPageChange={setStaffCurrentPage}
+                  onPageSizeChange={size => {
+                    setStaffPageSize(size);
+                    setStaffCurrentPage(1);
+                  }}
+                  totalItems={totalStaffItems}
+                />
+              </Card>
+            </div>
+          </TabsContent>
+
           <TabsContent value="analytics" className="pt-4">
             <Card>
               <CardContent className="pt-6">
@@ -491,6 +763,20 @@ const ShopDetail = () => {
         onOpenChange={setIsEditProductOpen}
         onSubmit={handleUpdateProduct}
         product={selectedProduct}
+      />
+
+      <AddStaffDialog
+        open={isAddStaffOpen}
+        onOpenChange={setIsAddStaffOpen}
+        onSubmit={handleAddStaff}
+        shopId={id}
+      />
+
+      <EditStaffDialog
+        open={isEditStaffOpen}
+        onOpenChange={setIsEditStaffOpen}
+        onSubmit={handleUpdateStaff}
+        employee={selectedEmployee}
       />
     </AdminLayout>
   );

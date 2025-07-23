@@ -1129,3 +1129,37 @@ export const GET_ALL_REVENUE = `
 
 // Re-export UPDATE_PRODUCT mutation
 export { UPDATE_PRODUCT } from './mutations';
+
+// Staff Management Queries
+export const GET_ORG_EMPLOYEES_BY_SHOP = `
+  query getOrgEmployeesByShop($shop_id: uuid!) {
+    orgEmployees(where: {shop_id: {_eq: $shop_id}}) {
+      Address
+      active
+      created_on
+      dob
+      email
+      employeeID
+      fullnames
+      gender
+      id
+      multAuthEnabled
+      password
+      phone
+      restaurant_id
+      shop_id
+      updated_on
+      orgEmployeeRoles {
+        created_on
+        id
+        orgEmployeeID
+        privillages
+        update_on
+      }
+      Shops {
+        id
+        name
+      }
+    }
+  }
+`;
