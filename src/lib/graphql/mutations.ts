@@ -359,7 +359,7 @@ export const UPDATE_REFUND_STATUS = `
 // Staff Management Mutations
 export const ADD_ORG_EMPLOYEE = `
   mutation AddOrgEmployee($Address: String = "", $dob: String = "", $email: String = "", $fullnames: String = "", $gender: String = "", $password: String = "", $phone: String = "", $restaurant_id: uuid, $shop_id: uuid!, $Position: String = "", $roleType: String = "") {
-    insert_orgEmployees(objects: {Address: $Address, active: false, dob: $dob, email: $email, fullnames: $fullnames, gender: $gender, multAuthEnabled: false, password: $password, phone: $phone, restaurant_id: $restaurant_id, shop_id: $shop_id, Position: $Position, generatePassword: false, roleType: $roleType}) {
+    insert_orgEmployees(objects: {Address: $Address, active: true, dob: $dob, email: $email, fullnames: $fullnames, gender: $gender, multAuthEnabled: false, password: $password, phone: $phone, restaurant_id: $restaurant_id, shop_id: $shop_id, Position: $Position, generatePassword: false, roleType: $roleType}) {
       affected_rows
       returning {
         id

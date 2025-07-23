@@ -1133,7 +1133,7 @@ export { UPDATE_PRODUCT } from './mutations';
 // Staff Management Queries
 export const GET_ORG_EMPLOYEES_BY_SHOP = `
   query getOrgEmployeesByShop($shop_id: uuid!) {
-    orgEmployees(where: {shop_id: {_eq: $shop_id}}) {
+    orgEmployees(where: {shop_id: {_eq: $shop_id}, active: {_eq: true}}) {
       Address
       active
       created_on
