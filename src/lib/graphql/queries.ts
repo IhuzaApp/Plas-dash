@@ -1165,3 +1165,35 @@ export const GET_ORG_EMPLOYEES_BY_SHOP = `
     }
   }
 `;
+
+// Get orgEmployee by identity (for login)
+export const GET_ORG_EMPLOYEE_BY_IDENTITY = `
+  query loginOrgEmployee($identity: String = "") {
+    orgEmployees(where: {_or: [
+      {fullnames: {_eq: $identity}},
+      {email: {_eq: $identity}},
+      {phone: {_eq: $identity}}
+    ]}) {
+      Address
+      Position
+      active
+      created_on
+      dob
+      email
+      employeeID
+      fullnames
+      gender
+      generatePassword
+      id
+      last_login
+      multAuthEnabled
+      password
+      phone
+      restaurant_id
+      roleType
+      shop_id
+      updated_on
+      online
+    }
+  }
+`;

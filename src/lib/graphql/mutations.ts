@@ -409,3 +409,14 @@ export const DELETE_ORG_EMPLOYEE = `
     }
   }
 `;
+
+// Update orgEmployee last_login and online
+export const UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE = `
+  mutation updateOrgEmployeeLastLoginAndOnline($id: uuid!, $last_login: String!, $online: Boolean!) {
+    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { last_login: $last_login, online: $online }) {
+      id
+      last_login
+      online
+    }
+  }
+`;

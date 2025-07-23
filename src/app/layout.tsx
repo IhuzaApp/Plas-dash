@@ -9,10 +9,11 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import '@/styles/globals.css';
 import '@/styles/nprogress.css';
 import { useState } from 'react';
+import RootLayout from '@/components/layout/RootLayout';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function AppRootLayout({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             disableTransitionOnChange
           >
             <TooltipProvider>
-              {children}
+              <RootLayout>{children}</RootLayout>
               <Toaster />
               <Sonner />
             </TooltipProvider>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import bcrypt from 'bcryptjs';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -79,86 +80,87 @@ const generateRandomPassword = () => {
   return password;
 };
 
+// Permission groups for roles and custom permissions
+const permissionGroups = [
+  {
+    title: 'Dashboard',
+    permissions: [
+      { key: 'dashboard:view', label: 'View Dashboard' },
+      { key: 'dashboard:edit', label: 'Edit Dashboard' },
+    ],
+  },
+  {
+    title: 'Point of Sale',
+    permissions: [
+      { key: 'pos:view', label: 'View POS' },
+      { key: 'pos:create', label: 'Create POS' },
+      { key: 'pos:edit', label: 'Edit POS' },
+      { key: 'pos:delete', label: 'Delete POS' },
+      { key: 'pos:checkout', label: 'Checkout' },
+      { key: 'pos:refund', label: 'Refund' },
+    ],
+  },
+  {
+    title: 'Product Management',
+    permissions: [
+      { key: 'products:view', label: 'View Products' },
+      { key: 'products:create', label: 'Create Products' },
+      { key: 'products:edit', label: 'Edit Products' },
+      { key: 'products:delete', label: 'Delete Products' },
+    ],
+  },
+  {
+    title: 'Order Management',
+    permissions: [
+      { key: 'orders:view', label: 'View Orders' },
+      { key: 'orders:edit', label: 'Edit Orders' },
+      { key: 'orders:delete', label: 'Delete Orders' },
+    ],
+  },
+  {
+    title: 'Customer Management',
+    permissions: [
+      { key: 'customers:view', label: 'View Customers' },
+      { key: 'customers:create', label: 'Create Customers' },
+      { key: 'customers:edit', label: 'Edit Customers' },
+      { key: 'customers:delete', label: 'Delete Customers' },
+    ],
+  },
+  {
+    title: 'Inventory Management',
+    permissions: [
+      { key: 'inventory:view', label: 'View Inventory' },
+      { key: 'inventory:edit', label: 'Edit Inventory' },
+      { key: 'inventory:stock', label: 'Manage Stock' },
+    ],
+  },
+  {
+    title: 'Reports',
+    permissions: [
+      { key: 'reports:view', label: 'View Reports' },
+      { key: 'reports:export', label: 'Export Reports' },
+    ],
+  },
+  {
+    title: 'Settings',
+    permissions: [
+      { key: 'settings:view', label: 'View Settings' },
+      { key: 'settings:edit', label: 'Edit Settings' },
+    ],
+  },
+  {
+    title: 'Staff Management',
+    permissions: [
+      { key: 'staff:view', label: 'View Staff' },
+      { key: 'staff:create', label: 'Create Staff' },
+      { key: 'staff:edit', label: 'Edit Staff' },
+      { key: 'staff:delete', label: 'Delete Staff' },
+    ],
+  },
+];
+
 // Permission display component
 const PermissionDisplay = ({ permissions }: { permissions: string[] }) => {
-  const permissionGroups = [
-    {
-      title: 'Dashboard',
-      permissions: [
-        { key: 'dashboard:view', label: 'View Dashboard' },
-        { key: 'dashboard:edit', label: 'Edit Dashboard' },
-      ],
-    },
-    {
-      title: 'Point of Sale',
-      permissions: [
-        { key: 'pos:view', label: 'View POS' },
-        { key: 'pos:create', label: 'Create POS' },
-        { key: 'pos:edit', label: 'Edit POS' },
-        { key: 'pos:delete', label: 'Delete POS' },
-        { key: 'pos:checkout', label: 'Checkout' },
-        { key: 'pos:refund', label: 'Refund' },
-      ],
-    },
-    {
-      title: 'Product Management',
-      permissions: [
-        { key: 'products:view', label: 'View Products' },
-        { key: 'products:create', label: 'Create Products' },
-        { key: 'products:edit', label: 'Edit Products' },
-        { key: 'products:delete', label: 'Delete Products' },
-      ],
-    },
-    {
-      title: 'Order Management',
-      permissions: [
-        { key: 'orders:view', label: 'View Orders' },
-        { key: 'orders:edit', label: 'Edit Orders' },
-        { key: 'orders:delete', label: 'Delete Orders' },
-      ],
-    },
-    {
-      title: 'Customer Management',
-      permissions: [
-        { key: 'customers:view', label: 'View Customers' },
-        { key: 'customers:create', label: 'Create Customers' },
-        { key: 'customers:edit', label: 'Edit Customers' },
-        { key: 'customers:delete', label: 'Delete Customers' },
-      ],
-    },
-    {
-      title: 'Inventory Management',
-      permissions: [
-        { key: 'inventory:view', label: 'View Inventory' },
-        { key: 'inventory:edit', label: 'Edit Inventory' },
-        { key: 'inventory:stock', label: 'Manage Stock' },
-      ],
-    },
-    {
-      title: 'Reports',
-      permissions: [
-        { key: 'reports:view', label: 'View Reports' },
-        { key: 'reports:export', label: 'Export Reports' },
-      ],
-    },
-    {
-      title: 'Settings',
-      permissions: [
-        { key: 'settings:view', label: 'View Settings' },
-        { key: 'settings:edit', label: 'Edit Settings' },
-      ],
-    },
-    {
-      title: 'Staff Management',
-      permissions: [
-        { key: 'staff:view', label: 'View Staff' },
-        { key: 'staff:create', label: 'Create Staff' },
-        { key: 'staff:edit', label: 'Edit Staff' },
-        { key: 'staff:delete', label: 'Delete Staff' },
-      ],
-    },
-  ];
-
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
@@ -206,6 +208,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
   shopId,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [customPermissions, setCustomPermissions] = useState<string[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -233,15 +236,25 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
     }
   }, [generatePassword, form]);
 
+  function handlePermissionToggle(permission: string) {
+    setCustomPermissions(prev =>
+      prev.includes(permission)
+        ? prev.filter(p => p !== permission)
+        : [...prev, permission]
+    );
+  }
+
   function handleSubmit(values: FormData) {
     const { position, ...employeeData } = values;
-
-    // Get permissions based on role type
-    const permissions = getPermissionsForRole(roleType);
-
+    // Use custom permissions if custom role, otherwise use default
+    const permissions =
+      roleType === 'custom' ? customPermissions : getPermissionsForRole(roleType);
+    // Hash the password before submitting
+    const hashedPassword = bcrypt.hashSync(employeeData.password, 10);
     onSubmit({
       employee: {
         ...employeeData,
+        password: hashedPassword,
         Position: position,
       },
       permissions,
@@ -521,31 +534,92 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                               <span>Basic operations</span>
                             </div>
                           </SelectItem>
+                          <SelectItem value="custom">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Custom</Badge>
+                              <span>Custom permissions</span>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        Choose a predefined role with preset permissions
+                        Choose a predefined role with preset permissions or select custom to pick specific permissions
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Show permissions for selected role */}
-                <div className="space-y-4">
-                  <Separator />
-                  <div>
-                    <h4 className="font-medium mb-3">
-                      Permissions for{' '}
-                      {roleType === 'globalAdmin'
-                        ? 'Global Admin'
-                        : roleType === 'systemAdmin'
-                          ? 'System Admin'
-                          : 'Basic Admin'}
-                    </h4>
-                    <PermissionDisplay permissions={getPermissionsForRole(roleType)} />
+                {/* Show permissions for selected role or custom selection */}
+                {roleType === 'custom' ? (
+                  <div className="space-y-4">
+                    <Separator />
+                    <div>
+                      <h4 className="font-medium mb-3">Select Custom Permissions</h4>
+                      {/* Custom permission selection UI */}
+                      <div className="space-y-4">
+                        <div className="grid gap-4">
+                          {permissionGroups.map(group => (
+                            <div key={group.title} className="space-y-2">
+                              <h4 className="font-medium text-sm">{group.title}</h4>
+                              <div className="grid grid-cols-2 gap-2">
+                                {group.permissions.map(permission => (
+                                  <label key={permission.key} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={customPermissions.includes(permission.key)}
+                                      onChange={() => handlePermissionToggle(permission.key)}
+                                      className="accent-primary"
+                                    />
+                                    <span className="text-xs text-muted-foreground">{permission.label}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm">System Permissions</h4>
+                            <div className="grid grid-cols-2 gap-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={customPermissions.includes('systemAdmin')}
+                                  onChange={() => handlePermissionToggle('systemAdmin')}
+                                  className="accent-primary"
+                                />
+                                <span className="text-xs text-muted-foreground">System Admin</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={customPermissions.includes('globalAdmin')}
+                                  onChange={() => handlePermissionToggle('globalAdmin')}
+                                  className="accent-primary"
+                                />
+                                <span className="text-xs text-muted-foreground">Global Admin</span>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    <Separator />
+                    <div>
+                      <h4 className="font-medium mb-3">
+                        Permissions for{' '}
+                        {roleType === 'globalAdmin'
+                          ? 'Global Admin'
+                          : roleType === 'systemAdmin'
+                            ? 'System Admin'
+                            : 'Basic Admin'}
+                      </h4>
+                      <PermissionDisplay permissions={getPermissionsForRole(roleType)} />
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

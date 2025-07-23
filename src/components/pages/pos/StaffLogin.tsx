@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { format } from 'date-fns';
+import AddStaffDialog from '@/components/shop/AddStaffDialog';
 
 interface StaffMember {
   id: string;
@@ -28,6 +29,13 @@ interface StaffMember {
 
 const StaffLogin = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+
+  // Placeholder onSubmit handler
+  const handleAddStaff = (data: any) => {
+    // TODO: Implement actual add staff logic (API call, etc.)
+    setIsAddStaffOpen(false);
+  };
 
   const staff: StaffMember[] = [
     {
@@ -123,7 +131,7 @@ const StaffLogin = () => {
         description="Manage staff accounts and monitor login activity"
         icon={<Users className="h-6 w-6" />}
         actions={
-          <Button>
+          <Button onClick={() => setIsAddStaffOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Staff
           </Button>
@@ -225,6 +233,12 @@ const StaffLogin = () => {
           </CardContent>
         </Card>
       </div>
+      <AddStaffDialog
+        open={isAddStaffOpen}
+        onOpenChange={setIsAddStaffOpen}
+        onSubmit={handleAddStaff}
+        shopId={''} // TODO: Pass correct shopId if needed
+      />
     </AdminLayout>
   );
 };

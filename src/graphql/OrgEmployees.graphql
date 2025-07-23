@@ -182,3 +182,36 @@ query getOrgEmployeesByShop($shop_id: uuid!) {
     }
   }
 }
+
+# Login query for orgEmployee authentication
+query loginOrgEmployee($identifier: String!, $password: String!) {
+  orgEmployees(
+    where: {
+      _and: [
+        { password: { _eq: $password } },
+        { _or: [
+          { email: { _eq: $identifier } },
+          { phone: { _eq: $identifier } },
+          { fullnames: { _eq: $identifier } },
+          { employeeID: { _eq: $identifier } }
+        ]}
+      ]
+    }
+  ) {
+    id
+    employeeID
+    fullnames
+    email
+    phone
+    Address
+    active
+    shop_id
+    restaurant_id
+    Position
+    roleType
+    orgEmployeeRoles {
+      id
+      privillages
+    }
+  }
+}

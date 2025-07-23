@@ -48,6 +48,11 @@ interface AdminSidebarProps {
   isSidebarOpen: boolean;
 }
 
+const handleLogout = () => {
+  localStorage.removeItem('orgEmployeeSession');
+  window.location.reload();
+};
+
 const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -268,6 +273,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
                 variant="ghost"
                 size="icon"
                 className="hover:bg-destructive/10 hover:text-destructive"
+                onClick={handleLogout}
               >
                 <LogOut className="h-5 w-5" />
               </Button>
@@ -283,6 +289,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
               variant="ghost"
               size="icon"
               className="hover:bg-destructive/10 hover:text-destructive"
+              onClick={handleLogout}
             >
               <LogOut className="h-5 w-5" />
             </Button>
