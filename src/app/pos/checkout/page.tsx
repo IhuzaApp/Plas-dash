@@ -1,11 +1,12 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-
-const Checkout = dynamic(() => import('@/components/pages/pos/Checkout'), {
-  ssr: false,
-});
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import Checkout from '@/components/pages/pos/Checkout';
 
 export default function CheckoutPage() {
-  return <Checkout />;
+  return (
+    <ProtectedRoute requiredPrivilege="checkout:view">
+      <Checkout />
+    </ProtectedRoute>
+  );
 }

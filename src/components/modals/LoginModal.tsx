@@ -48,7 +48,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
     try {
       const session = await loginOrgEmployee(data.identifier, data.password);
       await updateLastLoginAndOnline(session.id);
-      onLoginSuccess(session);
+      // Save orgEmployeeRoles in session for sidebar privilege filtering
+      onLoginSuccess({ ...session, orgEmployeeRoles: session.orgEmployeeRoles });
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
