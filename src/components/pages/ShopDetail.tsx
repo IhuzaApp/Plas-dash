@@ -15,7 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Filter, Loader2, Package, User, Calendar, DollarSign, MapPin, Plus, FileUp, Users, Edit, Trash2 } from 'lucide-react';
+import { Search, Filter, Loader2, Package, User, Calendar, DollarSign, MapPin, Plus, FileUp, Users, Edit, Trash2, UserX } from 'lucide-react';
 import { useShopById, useAddProduct, useUpdateProduct, useSystemConfig, useEmployeesByShop, useAddEmployee, useAddEmployeeRole, useUpdateEmployee, useUpdateEmployeeRole, useDeleteEmployee, OrgEmployee } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
@@ -413,14 +413,31 @@ const ShopDetail = () => {
   };
 
   const handleDeleteStaff = async (employeeId: string) => {
-    if (confirm('Are you sure you want to delete this staff member?')) {
+    if (confirm('Are you sure you want to deactivate this staff member? They will no longer be able to access the system.')) {
       try {
-        await deleteEmployee.mutateAsync({ id: employeeId });
-        toast.success('Staff member deleted successfully');
+        console.log('=== SOFT DELETE STAFF DEBUG ===');
+        console.log('1. Deactivating employee ID:', employeeId);
+        
+        // Use soft delete by setting active to false
+        const softDeleteMutation = `
+          mutation SoftDeleteOrgEmployee($id: uuid!) {
+            update_orgEmployees(where: {id: {_eq: $id}}, _set: {active: false}) {
+              affected_rows
+            }
+          }
+        `;
+        
+        console.log('2. Soft delete mutation:', softDeleteMutation);
+        console.log('3. Variables:', { id: employeeId });
+        
+        await hasuraRequest(softDeleteMutation, { id: employeeId });
+        
+        console.log('4. ✅ Staff member deactivated successfully');
+        toast.success('Staff member deactivated successfully');
         refetchEmployees();
       } catch (error) {
-        console.error('Error deleting staff member:', error);
-        toast.error('Failed to delete staff member. Please try again.');
+        console.error('Error deactivating staff member:', error);
+        toast.error('Failed to deactivate staff member. Please try again.');
       }
     }
   };
@@ -849,9 +866,10 @@ const ShopDetail = () => {
                                   variant="ghost" 
                                   size="sm"
                                   onClick={() => handleDeleteStaff(employee.id)}
-                                  className="text-red-600 hover:text-red-700"
+                                  className="text-orange-600 hover:text-orange-700"
+                                  title="Deactivate staff member"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <UserX className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
