@@ -44,6 +44,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   React.useEffect(() => {
     // Check for session in localStorage and expiration (8 hours)
     const sessionStr = localStorage.getItem('orgEmployeeSession');
+    console.log('orgEmployeeSession:', sessionStr);
     if (sessionStr) {
       try {
         const session = JSON.parse(sessionStr);

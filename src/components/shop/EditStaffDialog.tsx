@@ -69,21 +69,16 @@ interface EditStaffDialogProps {
 const PermissionDisplay = ({ permissions }: { permissions: string[] }) => {
   const permissionGroups = [
     {
-      title: 'Dashboard',
-      permissions: [
-        { key: 'dashboard:view', label: 'View Dashboard' },
-        { key: 'dashboard:edit', label: 'Edit Dashboard' },
-      ],
-    },
-    {
       title: 'Point of Sale',
       permissions: [
-        { key: 'pos:view', label: 'View POS' },
-        { key: 'pos:create', label: 'Create POS' },
-        { key: 'pos:edit', label: 'Edit POS' },
-        { key: 'pos:delete', label: 'Delete POS' },
+        { key: 'dashboard:view', label: 'Company Dashboard' },
+        { key: 'shopDashboard:view', label: 'Shop Dashboard' },
         { key: 'pos:checkout', label: 'Checkout' },
-        { key: 'pos:refund', label: 'Refund' },
+        { key: 'inventory:view', label: 'Inventory' },
+        { key: 'transactions:view', label: 'Transactions' },
+        { key: 'discounts:view', label: 'Discounts' },
+        { key: 'financial:view', label: 'Financial Overview' },
+        { key: 'staff:view', label: 'Staff Management' },
       ],
     },
     {

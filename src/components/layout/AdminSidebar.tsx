@@ -59,6 +59,31 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
 
+  // Get orgEmployee session, roleType, and privillages
+  let roleType = undefined;
+  let privillages: string[] = [];
+  let session = undefined;
+  if (typeof window !== 'undefined') {
+    const sessionStr = localStorage.getItem('orgEmployeeSession');
+    if (sessionStr) {
+      try {
+        session = JSON.parse(sessionStr);
+        roleType = session.roleType;
+        // Support both array and object for orgEmployeeRoles
+        if (session.orgEmployeeRoles) {
+          if (Array.isArray(session.orgEmployeeRoles)) {
+            privillages = session.orgEmployeeRoles[0]?.privillages || [];
+          } else if (session.orgEmployeeRoles.privillages) {
+            privillages = session.orgEmployeeRoles.privillages;
+          }
+        }
+      } catch {}
+    }
+  }
+  console.log('Sidebar Debug - session:', session);
+  console.log('Sidebar Debug - roleType:', roleType);
+  console.log('Sidebar Debug - privillages:', privillages);
+
   // Handle navigation state
   useEffect(() => {
     if (!isNavigating) return;
@@ -142,6 +167,56 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       ],
     },
   ];
+
+  // Map menu items to required privileges
+  const menuPrivileges: Record<string, string> = {
+    Dashboard: 'dashboard:view',
+    Orders: 'orders:view',
+    Plasas: 'shoppers:view',
+    Customers: 'customers:view',
+    Shops: 'shops:view',
+    Products: 'products:view',
+    'Company Dashboard': 'companyDashboard:view',
+    'Shop Dashboard': 'shopDashboard:view',
+    Checkout: 'checkout:view',
+    Inventory: 'inventory:view',
+    Transactions: 'transactions:view',
+    Discounts: 'discounts:view',
+    'Financial Overview': 'financial:view',
+    'Staff Management': 'staff:view',
+    'Company Wallet': 'wallet:view',
+    'Plasa Wallets': 'wallet:view',
+    'Refund Claims': 'refunds:view',
+    Tickets: 'tickets:view',
+    'Help Center': 'help:view',
+    'Delivery Settings': 'settings:view',
+    Promotions: 'promotions:view',
+    'System Settings': 'settings:edit',
+    // Section-level privileges
+    'Support & Help': 'support:view',
+    Settings: 'settings:view',
+    Finance: 'finance:view',
+    Operations: 'operations:view',
+    Overview: 'dashboard:view',
+    // Add more as needed
+  };
+
+  // Filter menu items by privillages, but allow globalAdmin to see everything
+  const filteredMenuItems =
+    roleType === 'globalAdmin'
+      ? menuItems
+      : privillages.includes('sidebar:view')
+        ? menuItems
+            .map(section => ({
+              ...section,
+              items: section.items.filter(item => {
+                const required = menuPrivileges[item.title] || menuPrivileges[section.section];
+                return !required || privillages.includes(required);
+              }),
+            }))
+            .filter(section => section.items.length > 0)
+        : [];
+  console.log('Sidebar Debug - filteredMenuItems:', filteredMenuItems);
 
   const renderMenuItem = (item: any) => {
     const isActive = pathname === item.path;
@@ -246,7 +321,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        {menuItems.map(section => (
+        {filteredMenuItems.map(section => (
           <SidebarGroup key={section.section}>
             {isSidebarOpen && (
               <SidebarGroupLabel className="flex items-center text-xs font-medium text-muted-foreground/70">
