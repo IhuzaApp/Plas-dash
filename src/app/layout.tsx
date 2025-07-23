@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import '@/styles/globals.css';
+import '@/styles/nprogress.css';
 import { useState } from 'react';
 
 const inter = Inter({ subsets: ['latin'] });
