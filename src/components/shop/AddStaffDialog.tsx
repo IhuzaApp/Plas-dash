@@ -228,7 +228,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
   }, [generatePassword, form]);
 
   function handleSubmit(values: FormData) {
-    const { roleType, generatePassword, position, ...employeeData } = values;
+    const { position, ...employeeData } = values;
     
     // Get permissions based on role type
     const permissions = getPermissionsForRole(roleType);
@@ -237,7 +237,6 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
       employee: {
         ...employeeData,
         Position: position,
-        roleType,
       },
       permissions,
     });
