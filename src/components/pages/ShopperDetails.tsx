@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import {
   useShopperDetails,
   useShopperWallet,
@@ -28,6 +29,7 @@ interface ShopperDetailsProps {
 }
 
 const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
+  const router = useRouter();
   const { data: shopperData, isLoading: isLoadingShopper } = useShopperDetails(shopperId);
   const { data: walletData, isLoading: isLoadingWallet } = useShopperWallet(shopperId);
   const { data: ordersData, isLoading: isLoadingOrders } = useShopperOrders(shopperId);
@@ -37,6 +39,10 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
     userId || ''
   );
   const updateShopperStatus = useUpdateShopperStatus();
+
+  const handleBackToShoppers = () => {
+    router.push('/shoppers');
+  };
 
   const shopper = shopperData?.shoppers[0];
   const user = shopperData?.Users[0];
@@ -214,6 +220,19 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* Back Button */}
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackToShoppers}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Shoppers
+          </Button>
+        </div>
+
         {/* Header Section */}
         <PageHeader
           title={shopper.full_name}
