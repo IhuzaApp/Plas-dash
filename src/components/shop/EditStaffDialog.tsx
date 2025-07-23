@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -32,8 +32,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
-import { DEFAULT_ROLES, OrgEmployee, OrgEmployeeRole } from '@/hooks/useHasuraApi';
+import { OrgEmployee, getPermissionsForRole } from '@/hooks/useHasuraApi';
 
 const formSchema = z.object({
   fullnames: z.string().min(1, 'Full name is required'),
@@ -43,59 +42,6 @@ const formSchema = z.object({
   position: z.string().min(1, 'Position is required'),
   active: z.boolean(),
   roleType: z.enum(['globalAdmin', 'systemAdmin', 'basicAdmin', 'custom']),
-  // Custom permissions
-  permissions: z.object({
-    dashboard: z.object({
-      view: z.boolean(),
-      edit: z.boolean(),
-    }),
-    pos: z.object({
-      view: z.boolean(),
-      create: z.boolean(),
-      edit: z.boolean(),
-      delete: z.boolean(),
-      checkout: z.boolean(),
-      refund: z.boolean(),
-    }),
-    products: z.object({
-      view: z.boolean(),
-      create: z.boolean(),
-      edit: z.boolean(),
-      delete: z.boolean(),
-    }),
-    orders: z.object({
-      view: z.boolean(),
-      edit: z.boolean(),
-      delete: z.boolean(),
-    }),
-    customers: z.object({
-      view: z.boolean(),
-      create: z.boolean(),
-      edit: z.boolean(),
-      delete: z.boolean(),
-    }),
-    inventory: z.object({
-      view: z.boolean(),
-      edit: z.boolean(),
-      stock: z.boolean(),
-    }),
-    reports: z.object({
-      view: z.boolean(),
-      export: z.boolean(),
-    }),
-    settings: z.object({
-      view: z.boolean(),
-      edit: z.boolean(),
-    }),
-    staff: z.object({
-      view: z.boolean(),
-      create: z.boolean(),
-      edit: z.boolean(),
-      delete: z.boolean(),
-    }),
-    systemAdmin: z.boolean(),
-    globalAdmin: z.boolean(),
-  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -105,105 +51,97 @@ interface EditStaffDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: {
     id: string;
-    employee: {
+    employee: Partial<{
       fullnames: string;
       email: string;
       phone: string;
       Address: string;
-      position: string;
+      Position: string;
+      roleType: string;
       active: boolean;
-    };
-    permissions: OrgEmployeeRole['privillages'];
+    }>;
+    permissions: string[];
   }) => void;
   employee: OrgEmployee | null;
 }
 
 // Permission display component
-const PermissionDisplay = ({ permissions }: { permissions: any }) => {
+const PermissionDisplay = ({ permissions }: { permissions: string[] }) => {
   const permissionGroups = [
     {
       title: 'Dashboard',
       permissions: [
-        { key: 'view', label: 'View Dashboard' },
-        { key: 'edit', label: 'Edit Dashboard' },
+        { key: 'dashboard:view', label: 'View Dashboard' },
+        { key: 'dashboard:edit', label: 'Edit Dashboard' },
       ],
-      section: 'dashboard'
     },
     {
       title: 'Point of Sale',
       permissions: [
-        { key: 'view', label: 'View POS' },
-        { key: 'create', label: 'Create POS' },
-        { key: 'edit', label: 'Edit POS' },
-        { key: 'delete', label: 'Delete POS' },
-        { key: 'checkout', label: 'Checkout' },
-        { key: 'refund', label: 'Refund' },
+        { key: 'pos:view', label: 'View POS' },
+        { key: 'pos:create', label: 'Create POS' },
+        { key: 'pos:edit', label: 'Edit POS' },
+        { key: 'pos:delete', label: 'Delete POS' },
+        { key: 'pos:checkout', label: 'Checkout' },
+        { key: 'pos:refund', label: 'Refund' },
       ],
-      section: 'pos'
     },
     {
       title: 'Product Management',
       permissions: [
-        { key: 'view', label: 'View Products' },
-        { key: 'create', label: 'Create Products' },
-        { key: 'edit', label: 'Edit Products' },
-        { key: 'delete', label: 'Delete Products' },
+        { key: 'products:view', label: 'View Products' },
+        { key: 'products:create', label: 'Create Products' },
+        { key: 'products:edit', label: 'Edit Products' },
+        { key: 'products:delete', label: 'Delete Products' },
       ],
-      section: 'products'
     },
     {
       title: 'Order Management',
       permissions: [
-        { key: 'view', label: 'View Orders' },
-        { key: 'edit', label: 'Edit Orders' },
-        { key: 'delete', label: 'Delete Orders' },
+        { key: 'orders:view', label: 'View Orders' },
+        { key: 'orders:edit', label: 'Edit Orders' },
+        { key: 'orders:delete', label: 'Delete Orders' },
       ],
-      section: 'orders'
     },
     {
       title: 'Customer Management',
       permissions: [
-        { key: 'view', label: 'View Customers' },
-        { key: 'create', label: 'Create Customers' },
-        { key: 'edit', label: 'Edit Customers' },
-        { key: 'delete', label: 'Delete Customers' },
+        { key: 'customers:view', label: 'View Customers' },
+        { key: 'customers:create', label: 'Create Customers' },
+        { key: 'customers:edit', label: 'Edit Customers' },
+        { key: 'customers:delete', label: 'Delete Customers' },
       ],
-      section: 'customers'
     },
     {
       title: 'Inventory Management',
       permissions: [
-        { key: 'view', label: 'View Inventory' },
-        { key: 'edit', label: 'Edit Inventory' },
-        { key: 'stock', label: 'Manage Stock' },
+        { key: 'inventory:view', label: 'View Inventory' },
+        { key: 'inventory:edit', label: 'Edit Inventory' },
+        { key: 'inventory:stock', label: 'Manage Stock' },
       ],
-      section: 'inventory'
     },
     {
       title: 'Reports',
       permissions: [
-        { key: 'view', label: 'View Reports' },
-        { key: 'export', label: 'Export Reports' },
+        { key: 'reports:view', label: 'View Reports' },
+        { key: 'reports:export', label: 'Export Reports' },
       ],
-      section: 'reports'
     },
     {
       title: 'Settings',
       permissions: [
-        { key: 'view', label: 'View Settings' },
-        { key: 'edit', label: 'Edit Settings' },
+        { key: 'settings:view', label: 'View Settings' },
+        { key: 'settings:edit', label: 'Edit Settings' },
       ],
-      section: 'settings'
     },
     {
       title: 'Staff Management',
       permissions: [
-        { key: 'view', label: 'View Staff' },
-        { key: 'create', label: 'Create Staff' },
-        { key: 'edit', label: 'Edit Staff' },
-        { key: 'delete', label: 'Delete Staff' },
+        { key: 'staff:view', label: 'View Staff' },
+        { key: 'staff:create', label: 'Create Staff' },
+        { key: 'staff:edit', label: 'Edit Staff' },
+        { key: 'staff:delete', label: 'Delete Staff' },
       ],
-      section: 'staff'
     },
   ];
 
@@ -211,12 +149,12 @@ const PermissionDisplay = ({ permissions }: { permissions: any }) => {
     <div className="space-y-4">
       <div className="grid gap-4">
         {permissionGroups.map((group) => (
-          <div key={group.section} className="space-y-2">
+          <div key={group.title} className="space-y-2">
             <h4 className="font-medium text-sm">{group.title}</h4>
             <div className="grid grid-cols-2 gap-2">
               {group.permissions.map((permission) => (
                 <div key={permission.key} className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${permissions[group.section]?.[permission.key] ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <div className={`w-2 h-2 rounded-full ${permissions.includes(permission.key) ? 'bg-green-500' : 'bg-gray-300'}`} />
                   <span className="text-xs text-muted-foreground">{permission.label}</span>
                 </div>
               ))}
@@ -227,11 +165,11 @@ const PermissionDisplay = ({ permissions }: { permissions: any }) => {
           <h4 className="font-medium text-sm">System Permissions</h4>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${permissions.systemAdmin ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <div className={`w-2 h-2 rounded-full ${permissions.includes('systemAdmin') ? 'bg-green-500' : 'bg-gray-300'}`} />
               <span className="text-xs text-muted-foreground">System Admin</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${permissions.globalAdmin ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <div className={`w-2 h-2 rounded-full ${permissions.includes('globalAdmin') ? 'bg-green-500' : 'bg-gray-300'}`} />
               <span className="text-xs text-muted-foreground">Global Admin</span>
             </div>
           </div>
@@ -247,6 +185,12 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
   onSubmit,
   employee,
 }) => {
+  console.log('=== EDIT STAFF DIALOG DEBUG ===');
+  console.log('1. Dialog open:', open);
+  console.log('2. Employee data:', employee);
+  console.log('3. Employee type:', typeof employee);
+  console.log('4. Employee keys:', employee ? Object.keys(employee) : 'No employee');
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -257,94 +201,166 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
       position: '',
       active: true,
       roleType: 'basicAdmin',
-      permissions: DEFAULT_ROLES.basicAdmin,
     },
   });
 
-  // Update form when employee changes
-  useEffect(() => {
-    if (employee) {
-      const currentPermissions = employee.orgEmployeeRoles[0]?.privillages || DEFAULT_ROLES.basicAdmin;
-      
-      // Determine role type based on permissions
-      let roleType: 'globalAdmin' | 'systemAdmin' | 'basicAdmin' | 'custom' = 'custom';
-      if (JSON.stringify(currentPermissions) === JSON.stringify(DEFAULT_ROLES.globalAdmin)) {
-        roleType = 'globalAdmin';
-      } else if (JSON.stringify(currentPermissions) === JSON.stringify(DEFAULT_ROLES.systemAdmin)) {
-        roleType = 'systemAdmin';
-      } else if (JSON.stringify(currentPermissions) === JSON.stringify(DEFAULT_ROLES.basicAdmin)) {
-        roleType = 'basicAdmin';
-      }
+  console.log('5. Form default values:', form.getValues());
 
-      form.reset({
-        fullnames: employee.fullnames,
-        email: employee.email,
-        phone: employee.phone,
-        Address: employee.Address,
-        position: employee.position || '',
-        active: employee.active,
-        roleType,
-        permissions: currentPermissions,
+  // Update form when employee changes
+  React.useEffect(() => {
+    console.log('=== FORM RESET DEBUG ===');
+    console.log('6. Employee in useEffect:', employee);
+    
+    if (employee) {
+      console.log('7. Employee.fullnames:', employee.fullnames);
+      console.log('8. Employee.email:', employee.email);
+      console.log('9. Employee.phone:', employee.phone);
+      console.log('10. Employee.Address:', employee.Address);
+      console.log('11. Employee.Position:', employee.Position);
+      console.log('12. Employee.active:', employee.active);
+      console.log('13. Employee.roleType:', employee.roleType);
+      console.log('14. Employee.employeeID:', employee.employeeID);
+      console.log('15. Employee.orgEmployeeRoles:', employee.orgEmployeeRoles);
+      console.log('16. Full employee object:', JSON.stringify(employee, null, 2));
+
+      const formData = {
+        fullnames: employee.fullnames || '',
+        email: employee.email || '',
+        phone: employee.phone || '',
+        Address: employee.Address || '',
+        position: employee.Position || '', // Now we have the actual Position
+        active: employee.active ?? true,
+        roleType: (employee.roleType as 'globalAdmin' | 'systemAdmin' | 'basicAdmin' | 'custom') || 'basicAdmin', // Now we have the actual roleType
+      };
+
+      console.log('17. Form data to reset:', formData);
+      console.log('18. Form data type check:', {
+        fullnames: typeof formData.fullnames,
+        email: typeof formData.email,
+        phone: typeof formData.phone,
+        Address: typeof formData.Address,
+        position: typeof formData.position,
+        active: typeof formData.active,
+        roleType: typeof formData.roleType,
       });
+
+      // Validate the data against the schema before resetting
+      try {
+        const validatedData = formSchema.parse(formData);
+        console.log('19. ✅ Schema validation passed:', validatedData);
+        form.reset(validatedData);
+      } catch (error) {
+        console.error('20. ❌ Schema validation failed:', error);
+        console.error('21. Validation error details:', {
+          error: error instanceof Error ? error.message : String(error),
+          formData,
+        });
+        
+        // Use safe defaults if validation fails
+        const safeData = {
+          fullnames: '',
+          email: '',
+          phone: '',
+          Address: '',
+          position: '',
+          active: true,
+          roleType: 'basicAdmin' as const,
+        };
+        console.log('22. Using safe defaults:', safeData);
+        form.reset(safeData);
+      }
     }
   }, [employee, form]);
 
   const roleType = form.watch('roleType');
-
-  // Update permissions when role type changes
-  useEffect(() => {
-    if (roleType !== 'custom') {
-      form.setValue('permissions', DEFAULT_ROLES[roleType]);
-    }
-  }, [roleType, form]);
+  console.log('23. Current roleType:', roleType);
 
   function handleSubmit(values: FormData) {
-    if (!employee) return;
+    console.log('=== FORM SUBMIT DEBUG ===');
+    console.log('24. Form values:', values);
+    console.log('25. Form values type check:', {
+      fullnames: typeof values.fullnames,
+      email: typeof values.email,
+      phone: typeof values.phone,
+      Address: typeof values.Address,
+      position: typeof values.position,
+      active: typeof values.active,
+      roleType: typeof values.roleType,
+    });
+
+    if (!employee) {
+      console.log('26. ❌ No employee data');
+      return;
+    }
     
-    const { roleType, permissions, ...employeeData } = values;
+    const { position, ...employeeData } = values;
     
+    // Smart update: Only include fields that have changed
+    const changes: any = {};
+    
+    // Check each field and only include if it changed
+    if (values.fullnames !== employee.fullnames) changes.fullnames = values.fullnames;
+    if (values.email !== employee.email) changes.email = values.email;
+    if (values.phone !== employee.phone) changes.phone = values.phone;
+    if (values.Address !== employee.Address) changes.Address = values.Address;
+    if (values.position !== employee.Position) changes.Position = values.position;
+    if (values.active !== employee.active) changes.active = values.active;
+    if (values.roleType !== employee.roleType) changes.roleType = values.roleType;
+    
+    // Filter out null and undefined values
+    const filteredChanges = Object.fromEntries(
+      Object.entries(changes).filter(([_, value]) => value !== null && value !== undefined)
+    );
+    
+    // Also filter out empty strings to prevent null value errors
+    const finalChanges = Object.fromEntries(
+      Object.entries(filteredChanges).filter(([_, value]) => {
+        if (typeof value === 'string') {
+          return value.trim() !== '';
+        }
+        return true;
+      })
+    );
+    
+    console.log('27. Original employee data:', {
+      fullnames: employee.fullnames,
+      email: employee.email,
+      phone: employee.phone,
+      Address: employee.Address,
+      Position: employee.Position,
+      active: employee.active,
+      roleType: employee.roleType,
+    });
+    
+    console.log('28. Changes detected:', changes);
+    console.log('29. Filtered changes (no null/undefined):', filteredChanges);
+    console.log('30. Final changes (no empty strings):', finalChanges);
+    console.log('31. Final changes keys:', Object.keys(finalChanges));
+    console.log('32. Final changes values:', Object.values(finalChanges));
+    console.log('33. Final changes types:', Object.entries(finalChanges).map(([k, v]) => `${k}: ${typeof v}`));
+    
+    // Get permissions based on role type
+    const permissions = getPermissionsForRole(roleType);
+    
+    console.log('29. Submitting data:', {
+      id: employee.id,
+      employee: finalChanges,
+      permissions,
+    });
+
     onSubmit({
       id: employee.id,
-      employee: employeeData,
+      employee: finalChanges,
       permissions,
     });
   }
 
-  const PermissionToggle = ({ 
-    section, 
-    permission, 
-    label, 
-    description 
-  }: { 
-    section: keyof FormData['permissions']; 
-    permission: string; 
-    label: string; 
-    description?: string;
-  }) => (
-    <FormField
-      control={form.control}
-      name={`permissions.${section}.${permission}` as any}
-      render={({ field }) => (
-        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <FormLabel className="text-base">{label}</FormLabel>
-            {description && (
-              <FormDescription>{description}</FormDescription>
-            )}
-          </div>
-          <FormControl>
-            <Switch
-              checked={field.value}
-              onCheckedChange={field.onChange}
-              disabled={roleType !== 'custom'}
-            />
-          </FormControl>
-        </FormItem>
-      )}
-    />
-  );
+  if (!employee) {
+    console.log('28. ❌ No employee, returning null');
+    return null;
+  }
 
-  if (!employee) return null;
+  console.log('29. Rendering dialog with employee:', employee.id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -352,7 +368,7 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Edit Staff Member</DialogTitle>
           <DialogDescription>
-            Update staff member information and permissions.
+            Update staff member information and role.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -508,291 +524,24 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                               <span>Basic operations</span>
                             </div>
                           </SelectItem>
-                          <SelectItem value="custom">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline">Custom</Badge>
-                              <span>Custom permissions</span>
-                            </div>
-                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        Choose a predefined role or create custom permissions
+                        Choose a predefined role with preset permissions
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Show permissions for predefined roles */}
-                {roleType !== 'custom' && (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div>
-                      <h4 className="font-medium mb-3">Permissions for {roleType === 'globalAdmin' ? 'Global Admin' : roleType === 'systemAdmin' ? 'System Admin' : 'Basic Admin'}</h4>
-                      <PermissionDisplay permissions={DEFAULT_ROLES[roleType]} />
-                    </div>
+                {/* Show permissions for selected role */}
+                <div className="space-y-4">
+                  <Separator />
+                  <div>
+                    <h4 className="font-medium mb-3">Permissions for {roleType === 'globalAdmin' ? 'Global Admin' : roleType === 'systemAdmin' ? 'System Admin' : 'Basic Admin'}</h4>
+                    <PermissionDisplay permissions={getPermissionsForRole(roleType)} />
                   </div>
-                )}
-
-                {roleType === 'custom' && (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div className="grid gap-4">
-                      <div>
-                        <h4 className="font-medium mb-2">Dashboard</h4>
-                        <div className="space-y-2">
-                          <PermissionToggle
-                            section="dashboard"
-                            permission="view"
-                            label="View Dashboard"
-                            description="Can view dashboard and analytics"
-                          />
-                          <PermissionToggle
-                            section="dashboard"
-                            permission="edit"
-                            label="Edit Dashboard"
-                            description="Can modify dashboard settings"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">Point of Sale</h4>
-                        <div className="space-y-2">
-                          <PermissionToggle
-                            section="pos"
-                            permission="view"
-                            label="View POS"
-                          />
-                          <PermissionToggle
-                            section="pos"
-                            permission="create"
-                            label="Create POS"
-                          />
-                          <PermissionToggle
-                            section="pos"
-                            permission="edit"
-                            label="Edit POS"
-                          />
-                          <PermissionToggle
-                            section="pos"
-                            permission="delete"
-                            label="Delete POS"
-                          />
-                          <PermissionToggle
-                            section="pos"
-                            permission="checkout"
-                            label="Checkout"
-                          />
-                          <PermissionToggle
-                            section="pos"
-                            permission="refund"
-                            label="Refund"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">Product Management</h4>
-                        <div className="space-y-2">
-                          <PermissionToggle
-                            section="products"
-                            permission="view"
-                            label="View Products"
-                          />
-                          <PermissionToggle
-                            section="products"
-                            permission="create"
-                            label="Create Products"
-                          />
-                          <PermissionToggle
-                            section="products"
-                            permission="edit"
-                            label="Edit Products"
-                          />
-                          <PermissionToggle
-                            section="products"
-                            permission="delete"
-                            label="Delete Products"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">Order Management</h4>
-                        <div className="space-y-2">
-                          <PermissionToggle
-                            section="orders"
-                            permission="view"
-                            label="View Orders"
-                          />
-                          <PermissionToggle
-                            section="orders"
-                            permission="edit"
-                            label="Edit Orders"
-                          />
-                          <PermissionToggle
-                            section="orders"
-                            permission="delete"
-                            label="Delete Orders"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">Customer Management</h4>
-                        <div className="space-y-2">
-                          <PermissionToggle
-                            section="customers"
-                            permission="view"
-                            label="View Customers"
-                          />
-                          <PermissionToggle
-                            section="customers"
-                            permission="create"
-                            label="Create Customers"
-                          />
-                          <PermissionToggle
-                            section="customers"
-                            permission="edit"
-                            label="Edit Customers"
-                          />
-                          <PermissionToggle
-                            section="customers"
-                            permission="delete"
-                            label="Delete Customers"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">Inventory Management</h4>
-                        <div className="space-y-2">
-                          <PermissionToggle
-                            section="inventory"
-                            permission="view"
-                            label="View Inventory"
-                          />
-                          <PermissionToggle
-                            section="inventory"
-                            permission="edit"
-                            label="Edit Inventory"
-                          />
-                          <PermissionToggle
-                            section="inventory"
-                            permission="stock"
-                            label="Manage Stock"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">Reports</h4>
-                        <div className="space-y-2">
-                          <PermissionToggle
-                            section="reports"
-                            permission="view"
-                            label="View Reports"
-                          />
-                          <PermissionToggle
-                            section="reports"
-                            permission="export"
-                            label="Export Reports"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">Settings</h4>
-                        <div className="space-y-2">
-                          <PermissionToggle
-                            section="settings"
-                            permission="view"
-                            label="View Settings"
-                          />
-                          <PermissionToggle
-                            section="settings"
-                            permission="edit"
-                            label="Edit Settings"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">Staff Management</h4>
-                        <div className="space-y-2">
-                          <PermissionToggle
-                            section="staff"
-                            permission="view"
-                            label="View Staff"
-                          />
-                          <PermissionToggle
-                            section="staff"
-                            permission="create"
-                            label="Create Staff"
-                          />
-                          <PermissionToggle
-                            section="staff"
-                            permission="edit"
-                            label="Edit Staff"
-                          />
-                          <PermissionToggle
-                            section="staff"
-                            permission="delete"
-                            label="Delete Staff"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium mb-2">System Permissions</h4>
-                        <div className="space-y-2">
-                          <FormField
-                            control={form.control}
-                            name="permissions.systemAdmin"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                  <FormLabel className="text-base">System Admin</FormLabel>
-                                  <FormDescription>
-                                    Full system administration privileges
-                                  </FormDescription>
-                                </div>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="permissions.globalAdmin"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                  <FormLabel className="text-base">Global Admin</FormLabel>
-                                  <FormDescription>
-                                    Highest level of system access
-                                  </FormDescription>
-                                </div>
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                </div>
               </CardContent>
             </Card>
 
