@@ -97,8 +97,8 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
       const basePrice = parseFloat(product.price);
       const finalPrice = parseFloat(product.final_price);
       const hasCommission = basePrice !== finalPrice;
-      const commissionPercentage = hasCommission 
-        ? ((finalPrice - basePrice) / basePrice) * 100 
+      const commissionPercentage = hasCommission
+        ? ((finalPrice - basePrice) / basePrice) * 100
         : Number(defaultCommission) || 0;
 
       form.reset({
@@ -218,12 +218,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Base Price ({currency})*</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                      />
+                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -237,17 +232,9 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Final Price ({currency})*</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                        readOnly
-                      />
+                      <Input type="number" step="0.01" placeholder="0.00" {...field} readOnly />
                     </FormControl>
-                    <FormDescription>
-                      Calculated automatically based on commission
-                    </FormDescription>
+                    <FormDescription>Calculated automatically based on commission</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -313,15 +300,10 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">Apply Commission</FormLabel>
-                      <FormDescription>
-                        Enable to add commission to the base price
-                      </FormDescription>
+                      <FormDescription>Enable to add commission to the base price</FormDescription>
                     </div>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -343,9 +325,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
                           onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                         />
                       </FormControl>
-                      <FormDescription>
-                        Default: {defaultCommission}%
-                      </FormDescription>
+                      <FormDescription>Default: {defaultCommission}%</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -366,4 +346,4 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
   );
 };
 
-export default EditProductDialog; 
+export default EditProductDialog;

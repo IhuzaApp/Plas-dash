@@ -14,7 +14,17 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Loader2, ChevronDown, ChevronRight, Package, User, Calendar, DollarSign } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  Loader2,
+  ChevronDown,
+  ChevronRight,
+  Package,
+  User,
+  Calendar,
+  DollarSign,
+} from 'lucide-react';
 import { useShops } from '@/hooks/useHasuraApi';
 import Pagination from '@/components/ui/pagination';
 import { format } from 'date-fns';
@@ -101,10 +111,13 @@ const Shops = () => {
       processing: { color: 'bg-blue-100 text-blue-800', label: 'Processing' },
       delivered: { color: 'bg-green-100 text-green-800', label: 'Delivered' },
       cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled' },
-      'out_for_delivery': { color: 'bg-purple-100 text-purple-800', label: 'Out for Delivery' },
+      out_for_delivery: { color: 'bg-purple-100 text-purple-800', label: 'Out for Delivery' },
     };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || { color: 'bg-gray-100 text-gray-800', label: status };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || {
+      color: 'bg-gray-100 text-gray-800',
+      label: status,
+    };
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
@@ -222,7 +235,7 @@ const Shops = () => {
                         </Link>
                       </TableCell>
                     </TableRow>
-                    
+
                     {/* Expanded Orders Section */}
                     {expandedShops.has(shop.id) && shop.Orders.length > 0 && (
                       <TableRow>
@@ -241,13 +254,15 @@ const Shops = () => {
                                       {getStatusBadge(order.status)}
                                     </div>
                                     <div className="text-right">
-                                      <div className="font-semibold">{formatCurrency(order.total)}</div>
+                                      <div className="font-semibold">
+                                        {formatCurrency(order.total)}
+                                      </div>
                                       <div className="text-xs text-muted-foreground">
                                         {format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}
                                       </div>
                                     </div>
                                   </div>
-                                  
+
                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                     <div className="flex items-center gap-2">
                                       <User className="h-4 w-4 text-muted-foreground" />
@@ -262,14 +277,21 @@ const Shops = () => {
                                       <span>{order.Order_Items.length} items</span>
                                     </div>
                                   </div>
-                                  
+
                                   {order.Order_Items.length > 0 && (
                                     <div className="mt-3 pt-3 border-t">
-                                      <div className="text-xs font-medium text-muted-foreground mb-2">Items:</div>
+                                      <div className="text-xs font-medium text-muted-foreground mb-2">
+                                        Items:
+                                      </div>
                                       <div className="space-y-1">
                                         {order.Order_Items.slice(0, 3).map(item => (
-                                          <div key={item.id} className="flex justify-between text-xs">
-                                            <span>{item.Product.name} x{item.quantity}</span>
+                                          <div
+                                            key={item.id}
+                                            className="flex justify-between text-xs"
+                                          >
+                                            <span>
+                                              {item.Product.name} x{item.quantity}
+                                            </span>
                                             <span>{formatCurrency(item.price)}</span>
                                           </div>
                                         ))}

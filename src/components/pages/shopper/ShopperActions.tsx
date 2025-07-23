@@ -84,9 +84,7 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Gender</p>
-                      <p className="font-medium capitalize">
-                        {detailedShopper.User.gender}
-                      </p>
+                      <p className="font-medium capitalize">{detailedShopper.User.gender}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Address</p>
@@ -94,9 +92,7 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Transport Mode</p>
-                      <p className="font-medium capitalize">
-                        {detailedShopper.transport_mode}
-                      </p>
+                      <p className="font-medium capitalize">{detailedShopper.transport_mode}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -187,9 +183,7 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
               </Card>
             </div>
           ) : (
-            <div className="text-center text-muted-foreground">
-              Failed to load shopper details
-            </div>
+            <div className="text-center text-muted-foreground">Failed to load shopper details</div>
           )}
         </DialogContent>
       </Dialog>
@@ -206,8 +200,8 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
               <AlertDialogHeader>
                 <AlertDialogTitle>Reject Plasa Application</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to reject this plasa application? This action cannot
-                  be undone.
+                  Are you sure you want to reject this plasa application? This action cannot be
+                  undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -221,17 +215,14 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700">
-                Approve Application
-              </Button>
+              <Button className="bg-green-600 hover:bg-green-700">Approve Application</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Approve Shopper Application</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will approve the shopper application and allow them to start
-                  accepting orders. Please ensure you have reviewed all the necessary
-                  documents.
+                  This will approve the shopper application and allow them to start accepting
+                  orders. Please ensure you have reviewed all the necessary documents.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -258,4 +249,4 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
   );
 };
 
-export default ShopperActions; 
+export default ShopperActions;

@@ -1,7 +1,20 @@
 import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Loader2, Eye } from 'lucide-react';
 import Pagination from '@/components/ui/pagination';
@@ -138,18 +151,12 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                 </TableCell>
                 <TableCell>{formatCurrency(transaction.amount)}</TableCell>
                 <TableCell>
-                  <Badge className={getTypeBadge(transaction.type)}>
-                    {transaction.type}
-                  </Badge>
+                  <Badge className={getTypeBadge(transaction.type)}>{transaction.type}</Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge className={getStatusBadge(transaction.status)}>
-                    {transaction.status}
-                  </Badge>
+                  <Badge className={getStatusBadge(transaction.status)}>{transaction.status}</Badge>
                 </TableCell>
-                <TableCell>
-                  {transaction.Order ? `#${transaction.Order.OrderID}` : 'N/A'}
-                </TableCell>
+                <TableCell>{transaction.Order ? `#${transaction.Order.OrderID}` : 'N/A'}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
@@ -193,4 +200,4 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
   </Card>
 );
 
-export default RecentTransactions; 
+export default RecentTransactions;

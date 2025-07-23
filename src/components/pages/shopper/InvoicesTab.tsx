@@ -27,7 +27,11 @@ interface InvoicesTabProps {
   totalInvoices: number;
   setInvoicesPage: (page: number) => void;
   formatCurrency: (amount: string) => string;
-  renderPagination: (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => React.ReactNode;
+  renderPagination: (
+    currentPage: number,
+    totalItems: number,
+    onPageChange: (page: number) => void
+  ) => React.ReactNode;
 }
 
 const InvoicesTab: React.FC<InvoicesTabProps> = ({
@@ -43,35 +47,35 @@ const InvoicesTab: React.FC<InvoicesTabProps> = ({
     try {
       // Import jsPDF dynamically to avoid SSR issues
       const { jsPDF } = await import('jspdf');
-      
+
       // Create new PDF document
       const doc = new jsPDF();
-      
+
       // Set font
       doc.setFont('helvetica');
-      
+
       // Header
       doc.setFontSize(20);
       doc.text('INVOICE', 105, 20, { align: 'center' });
-      
+
       // Invoice details
       doc.setFontSize(12);
       doc.text(`Invoice #: ${invoice.invoice_number}`, 20, 40);
       doc.text(`Order ID: ${invoice.order_id}`, 20, 50);
       doc.text(`Date: ${format(new Date(invoice.created_at), 'MMM d, yyyy')}`, 20, 60);
       doc.text(`Status: ${invoice.status.toUpperCase()}`, 20, 70);
-      
+
       // Items table header
       doc.setFontSize(14);
       doc.text('Items', 20, 90);
-      
+
       doc.setFontSize(10);
       doc.text('Item', 20, 100);
       doc.text('Unit', 80, 100);
       doc.text('Qty', 110, 100);
       doc.text('Price', 130, 100);
       doc.text('Total', 160, 100);
-      
+
       // Items
       let yPosition = 110;
       if (invoice.invoice_items && invoice.invoice_items.length > 0) {
@@ -84,31 +88,30 @@ const InvoicesTab: React.FC<InvoicesTabProps> = ({
           yPosition += 10;
         });
       }
-      
+
       // Summary
       doc.setFontSize(12);
       doc.text('Summary', 20, yPosition + 10);
-      
+
       doc.setFontSize(10);
       doc.text('Products Total:', 120, yPosition + 20);
       doc.text(formatCurrency(invoice.subtotal), 160, yPosition + 20);
-      
+
       doc.text('Tax:', 120, yPosition + 30);
       doc.text(formatCurrency(invoice.tax), 160, yPosition + 30);
-      
+
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.text('Total:', 120, yPosition + 40);
       doc.text(formatCurrency(invoice.subtotal), 160, yPosition + 40);
-      
+
       // Footer
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.text('Thank you for your business!', 105, 280, { align: 'center' });
-      
+
       // Save the PDF
       doc.save(`invoice-${invoice.invoice_number}.pdf`);
-      
     } catch (error) {
       console.error('Error generating PDF:', error);
       // Fallback to text download if PDF generation fails
@@ -121,11 +124,15 @@ Date: ${format(new Date(invoice.created_at), 'MMM d, yyyy')}
 Status: ${invoice.status.toUpperCase()}
 
 ITEMS:
-${invoice.invoice_items && invoice.invoice_items.length > 0 
-  ? invoice.invoice_items.map((item: any) => 
-      `${item.name || 'N/A'} - ${item.unit || 'N/A'} - Qty: ${item.quantity || '0'} - Price: ${formatCurrency(item.unit_price?.toString() || '0')} - Total: ${formatCurrency(item.total?.toString() || '0')}`
-    ).join('\n')
-  : 'No items found'
+${
+  invoice.invoice_items && invoice.invoice_items.length > 0
+    ? invoice.invoice_items
+        .map(
+          (item: any) =>
+            `${item.name || 'N/A'} - ${item.unit || 'N/A'} - Qty: ${item.quantity || '0'} - Price: ${formatCurrency(item.unit_price?.toString() || '0')} - Total: ${formatCurrency(item.total?.toString() || '0')}`
+        )
+        .join('\n')
+    : 'No items found'
 }
 
 SUMMARY:
@@ -212,9 +219,7 @@ Thank you for your business!
                     </Badge>
                   </TableCell>
                   <TableCell className="font-medium">{formatCurrency(invoice.subtotal)}</TableCell>
-                  <TableCell>
-                    {format(new Date(invoice.created_at), 'MMM d, yyyy')}
-                  </TableCell>
+                  <TableCell>{format(new Date(invoice.created_at), 'MMM d, yyyy')}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Dialog>
@@ -228,7 +233,8 @@ Thank you for your business!
                           <DialogHeader>
                             <DialogTitle>Invoice Details</DialogTitle>
                             <DialogDescription>
-                              Invoice #{invoice.invoice_number} - {format(new Date(invoice.created_at), 'MMM d, yyyy')}
+                              Invoice #{invoice.invoice_number} -{' '}
+                              {format(new Date(invoice.created_at), 'MMM d, yyyy')}
                             </DialogDescription>
                           </DialogHeader>
                           <div className="mt-4 space-y-4">
@@ -268,7 +274,9 @@ Thank you for your business!
                               </div>
                               <div>
                                 <p className="text-sm font-medium text-gray-600">Created Date</p>
-                                <p className="text-lg">{format(new Date(invoice.created_at), 'MMM d, yyyy HH:mm')}</p>
+                                <p className="text-lg">
+                                  {format(new Date(invoice.created_at), 'MMM d, yyyy HH:mm')}
+                                </p>
                               </div>
                             </div>
 
@@ -280,11 +288,21 @@ Thank you for your business!
                                   <table className="w-full">
                                     <thead className="bg-gray-50">
                                       <tr>
-                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Item</th>
-                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Unit</th>
-                                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-600">Quantity</th>
-                                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-600">Unit Price</th>
-                                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-600">Total</th>
+                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">
+                                          Item
+                                        </th>
+                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">
+                                          Unit
+                                        </th>
+                                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-600">
+                                          Quantity
+                                        </th>
+                                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-600">
+                                          Unit Price
+                                        </th>
+                                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-600">
+                                          Total
+                                        </th>
                                       </tr>
                                     </thead>
                                     <tbody>
@@ -292,9 +310,15 @@ Thank you for your business!
                                         <tr key={index} className="border-t">
                                           <td className="px-4 py-2 text-sm">{item.name}</td>
                                           <td className="px-4 py-2 text-sm">{item.unit}</td>
-                                          <td className="px-4 py-2 text-sm text-right">{item.quantity}</td>
-                                          <td className="px-4 py-2 text-sm text-right">{formatCurrency(item.unit_price)}</td>
-                                          <td className="px-4 py-2 text-sm text-right font-medium">{formatCurrency(item.total)}</td>
+                                          <td className="px-4 py-2 text-sm text-right">
+                                            {item.quantity}
+                                          </td>
+                                          <td className="px-4 py-2 text-sm text-right">
+                                            {formatCurrency(item.unit_price)}
+                                          </td>
+                                          <td className="px-4 py-2 text-sm text-right font-medium">
+                                            {formatCurrency(item.total)}
+                                          </td>
                                         </tr>
                                       ))}
                                     </tbody>
@@ -309,7 +333,9 @@ Thank you for your business!
                               <div className="space-y-2">
                                 <div className="flex justify-between">
                                   <span className="text-gray-600">Products Total:</span>
-                                  <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
+                                  <span className="font-medium">
+                                    {formatCurrency(invoice.subtotal)}
+                                  </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-gray-600">Tax:</span>
@@ -331,7 +357,7 @@ Thank you for your business!
                                     src={invoice.Proof}
                                     alt="Payment Proof"
                                     className="w-full h-auto rounded-lg border shadow-sm"
-                                    onError={(e) => {
+                                    onError={e => {
                                       const target = e.target as HTMLImageElement;
                                       target.style.display = 'none';
                                       target.nextElementSibling?.classList.remove('hidden');
@@ -384,7 +410,11 @@ Thank you for your business!
                       {invoice.Proof ? (
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                            >
                               <Eye className="h-4 w-4 mr-1" />
                               Proof
                             </Button>
@@ -401,7 +431,7 @@ Thank you for your business!
                                 src={invoice.Proof}
                                 alt="Invoice Proof"
                                 className="w-full h-auto rounded-lg border shadow-sm"
-                                onError={(e) => {
+                                onError={e => {
                                   const target = e.target as HTMLImageElement;
                                   target.style.display = 'none';
                                   target.nextElementSibling?.classList.remove('hidden');
@@ -428,7 +458,12 @@ Thank you for your business!
                           </DialogContent>
                         </Dialog>
                       ) : (
-                        <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" disabled>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                          disabled
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           No Proof
                         </Button>
@@ -452,4 +487,4 @@ Thank you for your business!
   );
 };
 
-export default InvoicesTab; 
+export default InvoicesTab;

@@ -8,9 +8,9 @@ let NProgress: any = null;
 
 if (typeof window !== 'undefined') {
   NProgress = require('nprogress');
-  
+
   // Configure NProgress
-  NProgress.configure({ 
+  NProgress.configure({
     showSpinner: true,
     minimum: 0.1,
     easing: 'ease',
@@ -52,4 +52,4 @@ export const usePageLoading = () => {
   }, [pathname, searchParams]);
 
   return { isLoading };
-}; 
+};

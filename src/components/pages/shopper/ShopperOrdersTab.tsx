@@ -18,7 +18,11 @@ interface ShopperOrdersTabProps {
   totalOrders: number;
   setOrdersPage: (page: number) => void;
   formatCurrency: (amount: string) => string;
-  renderPagination: (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => React.ReactNode;
+  renderPagination: (
+    currentPage: number,
+    totalItems: number,
+    onPageChange: (page: number) => void
+  ) => React.ReactNode;
 }
 
 const ShopperOrdersTab: React.FC<ShopperOrdersTabProps> = ({
@@ -47,9 +51,7 @@ const ShopperOrdersTab: React.FC<ShopperOrdersTabProps> = ({
           {paginatedOrders.map(order => (
             <TableRow key={order.id}>
               <TableCell className="font-medium">#{order.OrderID}</TableCell>
-              <TableCell>
-                {format(new Date(order.created_at), 'MMM d, yyyy HH:mm')}
-              </TableCell>
+              <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy HH:mm')}</TableCell>
               <TableCell>{order.User?.name}</TableCell>
               <TableCell>
                 <Badge
@@ -80,4 +82,4 @@ const ShopperOrdersTab: React.FC<ShopperOrdersTabProps> = ({
   );
 };
 
-export default ShopperOrdersTab; 
+export default ShopperOrdersTab;

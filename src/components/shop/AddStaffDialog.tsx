@@ -162,13 +162,15 @@ const PermissionDisplay = ({ permissions }: { permissions: string[] }) => {
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
-        {permissionGroups.map((group) => (
+        {permissionGroups.map(group => (
           <div key={group.title} className="space-y-2">
             <h4 className="font-medium text-sm">{group.title}</h4>
             <div className="grid grid-cols-2 gap-2">
-              {group.permissions.map((permission) => (
+              {group.permissions.map(permission => (
                 <div key={permission.key} className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${permissions.includes(permission.key) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <div
+                    className={`w-2 h-2 rounded-full ${permissions.includes(permission.key) ? 'bg-green-500' : 'bg-gray-300'}`}
+                  />
                   <span className="text-xs text-muted-foreground">{permission.label}</span>
                 </div>
               ))}
@@ -179,11 +181,15 @@ const PermissionDisplay = ({ permissions }: { permissions: string[] }) => {
           <h4 className="font-medium text-sm">System Permissions</h4>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${permissions.includes('systemAdmin') ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <div
+                className={`w-2 h-2 rounded-full ${permissions.includes('systemAdmin') ? 'bg-green-500' : 'bg-gray-300'}`}
+              />
               <span className="text-xs text-muted-foreground">System Admin</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${permissions.includes('globalAdmin') ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <div
+                className={`w-2 h-2 rounded-full ${permissions.includes('globalAdmin') ? 'bg-green-500' : 'bg-gray-300'}`}
+              />
               <span className="text-xs text-muted-foreground">Global Admin</span>
             </div>
           </div>
@@ -229,10 +235,10 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
 
   function handleSubmit(values: FormData) {
     const { position, ...employeeData } = values;
-    
+
     // Get permissions based on role type
     const permissions = getPermissionsForRole(roleType);
-    
+
     onSubmit({
       employee: {
         ...employeeData,
@@ -364,10 +370,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                           </FormDescription>
                         </div>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -532,7 +535,14 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                 <div className="space-y-4">
                   <Separator />
                   <div>
-                    <h4 className="font-medium mb-3">Permissions for {roleType === 'globalAdmin' ? 'Global Admin' : roleType === 'systemAdmin' ? 'System Admin' : 'Basic Admin'}</h4>
+                    <h4 className="font-medium mb-3">
+                      Permissions for{' '}
+                      {roleType === 'globalAdmin'
+                        ? 'Global Admin'
+                        : roleType === 'systemAdmin'
+                          ? 'System Admin'
+                          : 'Basic Admin'}
+                    </h4>
                     <PermissionDisplay permissions={getPermissionsForRole(roleType)} />
                   </div>
                 </div>
@@ -552,4 +562,4 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
   );
 };
 
-export default AddStaffDialog; 
+export default AddStaffDialog;

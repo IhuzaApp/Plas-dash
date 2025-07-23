@@ -18,7 +18,11 @@ interface RevenuesTabProps {
   totalRevenues: number;
   setRevenuesPage: (page: number) => void;
   formatCurrency: (amount: string) => string;
-  renderPagination: (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => React.ReactNode;
+  renderPagination: (
+    currentPage: number,
+    totalItems: number,
+    onPageChange: (page: number) => void
+  ) => React.ReactNode;
 }
 
 const RevenuesTab: React.FC<RevenuesTabProps> = ({
@@ -62,9 +66,7 @@ const RevenuesTab: React.FC<RevenuesTabProps> = ({
                   <TableCell className="font-medium">{formatCurrency(revenue.amount)}</TableCell>
                   <TableCell>{revenue.commission_percentage}%</TableCell>
                   <TableCell className="max-w-xs truncate">{revenue.products}</TableCell>
-                  <TableCell>
-                    {format(new Date(revenue.created_at), 'MMM d, yyyy')}
-                  </TableCell>
+                  <TableCell>{format(new Date(revenue.created_at), 'MMM d, yyyy')}</TableCell>
                 </TableRow>
               ))
             ) : (
@@ -82,4 +84,4 @@ const RevenuesTab: React.FC<RevenuesTabProps> = ({
   );
 };
 
-export default RevenuesTab; 
+export default RevenuesTab;

@@ -19,7 +19,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="rounded border bg-white p-3 shadow">
         <div className="font-semibold mb-1">{label}</div>
-        <div>Orders: <span className="font-bold">{payload[0].value}</span></div>
+        <div>
+          Orders: <span className="font-bold">{payload[0].value}</span>
+        </div>
         <div className="mt-1 text-xs text-muted-foreground">Shops:</div>
         <ul className="text-xs pl-3 list-disc">
           {payload[0].payload.shops.map((shop: string) => (
@@ -43,7 +45,10 @@ const RevenueChart = () => {
       const day = format(parseISO(order.created_at), 'yyyy-MM-dd');
       if (!grouped[day]) grouped[day] = { orders: 0, shops: new Set() };
       grouped[day].orders += 1;
-      const shopName = (order as any).Shop && typeof (order as any).Shop.name === 'string' ? (order as any).Shop.name : null;
+      const shopName =
+        (order as any).Shop && typeof (order as any).Shop.name === 'string'
+          ? (order as any).Shop.name
+          : null;
       if (shopName) {
         grouped[day].shops.add(shopName);
       }

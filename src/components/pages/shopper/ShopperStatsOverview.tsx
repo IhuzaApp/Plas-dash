@@ -72,4 +72,4 @@ const ShopperStatsOverview: React.FC<ShopperStatsOverviewProps> = ({
   );
 };
 
-export default ShopperStatsOverview; 
+export default ShopperStatsOverview;

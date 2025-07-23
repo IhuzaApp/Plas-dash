@@ -162,7 +162,11 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   // Calculate earnings and payouts
   const totalEarnings = orders
     .filter(order => order.status === 'delivered')
-    .reduce((sum, order) => sum + parseFloat(order.delivery_fee || '0') + parseFloat(order.service_fee || '0'), 0);
+    .reduce(
+      (sum, order) =>
+        sum + parseFloat(order.delivery_fee || '0') + parseFloat(order.service_fee || '0'),
+      0
+    );
 
   const pendingPayouts = parseFloat(wallet?.available_balance || '0');
 
@@ -182,18 +186,18 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const paginatedInvoices = paginateData(invoices, invoicesPage);
   const paginatedRevenues = paginateData(revenues, revenuesPage);
 
-
-
   // Calculate statistics
   const totalTickets = tickets.length;
   const openTickets = tickets.filter((t: any) => t.status !== 'closed')?.length || 0;
   const totalDeliveryIssues = deliveryIssues.length;
-  const resolvedDeliveryIssues = deliveryIssues.filter((i: any) => i.status === 'resolved')?.length || 0;
+  const resolvedDeliveryIssues =
+    deliveryIssues.filter((i: any) => i.status === 'resolved')?.length || 0;
   const totalInvoices = invoices.length;
-  
+
   // Calculate total revenue from both delivered orders and Revenues table
   const orderRevenue = totalEarnings;
-  const revenuesTableTotal = revenues.reduce((sum: number, r: any) => sum + parseFloat(r.amount || '0'), 0) || 0;
+  const revenuesTableTotal =
+    revenues.reduce((sum: number, r: any) => sum + parseFloat(r.amount || '0'), 0) || 0;
   const totalRevenue = orderRevenue + revenuesTableTotal;
 
   // Loading and error states
@@ -261,8 +265,6 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
           formatCurrency={formatCurrency}
           calculateAverageRating={calculateAverageRating}
         />
-
-
 
         {/* Main Content Tabs */}
         <ShopperTabs

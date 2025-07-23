@@ -1,6 +1,12 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 
 interface RevenueStatsProps {
   isLoadingRevenue: boolean;
@@ -28,7 +34,10 @@ const RevenueStats: React.FC<RevenueStatsProps> = ({
   <>
     <div className="mb-4 flex gap-4 items-center">
       <span className="font-medium">Filter Revenue By:</span>
-      <Select value={revenueFilter} onValueChange={v => setRevenueFilter(v as 'month' | 'week' | 'year')}>
+      <Select
+        value={revenueFilter}
+        onValueChange={v => setRevenueFilter(v as 'month' | 'week' | 'year')}
+      >
         <SelectTrigger className="w-[120px]">
           <SelectValue />
         </SelectTrigger>
@@ -67,7 +76,9 @@ const RevenueStats: React.FC<RevenueStatsProps> = ({
       {Object.keys(revenueByType).map(type => (
         <Card key={type}>
           <CardContent className="pt-6">
-            <div className="text-sm font-medium text-muted-foreground">{type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Revenue</div>
+            <div className="text-sm font-medium text-muted-foreground">
+              {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Revenue
+            </div>
             <div className="text-3xl font-bold">
               {isLoadingRevenue ? 'Loading...' : formatCurrency(revenueByType[type].toString())}
             </div>
@@ -78,4 +89,4 @@ const RevenueStats: React.FC<RevenueStatsProps> = ({
   </>
 );
 
-export default RevenueStats; 
+export default RevenueStats;

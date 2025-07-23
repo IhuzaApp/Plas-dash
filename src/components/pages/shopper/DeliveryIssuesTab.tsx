@@ -17,7 +17,11 @@ interface DeliveryIssuesTabProps {
   deliveryIssuesPage: number;
   totalDeliveryIssues: number;
   setDeliveryIssuesPage: (page: number) => void;
-  renderPagination: (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => React.ReactNode;
+  renderPagination: (
+    currentPage: number,
+    totalItems: number,
+    onPageChange: (page: number) => void
+  ) => React.ReactNode;
 }
 
 const DeliveryIssuesTab: React.FC<DeliveryIssuesTabProps> = ({
@@ -77,18 +81,16 @@ const DeliveryIssuesTab: React.FC<DeliveryIssuesTabProps> = ({
                       {issue.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    {format(new Date(issue.created_at), 'MMM d, yyyy')}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(issue.updated_at), 'MMM d, yyyy')}
-                  </TableCell>
+                  <TableCell>{format(new Date(issue.created_at), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>{format(new Date(issue.updated_at), 'MMM d, yyyy')}</TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  {totalDeliveryIssues === 0 ? 'No delivery issues found' : 'Loading delivery issues...'}
+                  {totalDeliveryIssues === 0
+                    ? 'No delivery issues found'
+                    : 'Loading delivery issues...'}
                 </TableCell>
               </TableRow>
             )}
@@ -100,4 +102,4 @@ const DeliveryIssuesTab: React.FC<DeliveryIssuesTabProps> = ({
   );
 };
 
-export default DeliveryIssuesTab; 
+export default DeliveryIssuesTab;

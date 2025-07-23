@@ -20,7 +20,6 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 🛍️ Order Management
 
 - **Order Tracking**
-
   - Real-time order status updates
   - Detailed order history
   - Automated notifications
@@ -35,7 +34,6 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 💰 Financial Management
 
 - **Wallet System**
-
   - Company and plasa wallet management
   - Real-time balance tracking
   - Transaction history
@@ -50,7 +48,6 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 🏪 Point of Sale (POS)
 
 - **Company Dashboard**
-
   - Multi-store performance tracking
   - Revenue vs target monitoring
   - Store-wise analytics
@@ -65,7 +62,6 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 🚚 Delivery Operations
 
 - **Plasa Management**
-
   - Performance tracking and ranking
   - Real-time availability status
   - Earnings management
@@ -90,14 +86,12 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 1. Delivery Configuration Forms
 
 - **General Settings**
-
   - Shopping time configuration
   - Currency settings
   - Rush hour management
   - Scheduled delivery options
 
 - **Fee Structure**
-
   - Base delivery fee
   - Service fee percentage
   - Distance-based surcharges
@@ -123,7 +117,6 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 3. Settings Forms
 
 - **Company Settings**
-
   - Business information
   - Contact details
   - Address management
@@ -141,7 +134,6 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 1. Main Analytics Dashboard
 
 - **Stat Cards**
-
   - Total Revenue
   - Order Count
   - Active Plasas
@@ -156,7 +148,6 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 2. Company Admin Dashboard
 
 - **Store Performance**
-
   - Revenue by location
   - Target vs actual analysis
   - Trend indicators
@@ -171,7 +162,6 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 3. Shop Dashboard
 
 - **Sales Metrics**
-
   - Daily/weekly/monthly sales
   - Category-wise breakdown
   - Staff performance
@@ -186,7 +176,6 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ### 4. TopPlasas Dashboard
 
 - **Performance Metrics**
-
   - On-time delivery percentage
   - Order volume tracking
   - Customer ratings
@@ -311,13 +300,11 @@ The TopPlasas component displays the best-performing delivery personnel based on
 ### Performance Calculation
 
 1. **On-Time Delivery Percentage**
-
    - Primary ranking metric
    - Calculated as: (Number of on-time deliveries / Total deliveries) × 100
    - On-time means delivered within 90 minutes
 
 2. **Order Volume**
-
    - Secondary ranking metric
    - Total number of completed deliveries
    - Used as a tiebreaker for same on-time percentage
@@ -375,7 +362,6 @@ Only active plasas with completed deliveries in the selected time period are inc
 ### Order Processing Logic
 
 1. **Order Creation Flow**
-
    - Customer order submission validation
    - Automatic plasa assignment based on:
      - Current location
@@ -426,7 +412,6 @@ Only active plasas with completed deliveries in the selected time period are inc
 ### Wallet System Logic
 
 1. **Balance Management**
-
    - Real-time balance updates
    - Hold amount system for pending transactions
    - Minimum balance requirements
@@ -475,7 +460,6 @@ Only active plasas with completed deliveries in the selected time period are inc
 ### Inventory Management
 
 1. **Stock Level Monitoring**
-
    - Real-time inventory tracking
    - Automatic reorder point calculation
    - Low stock alerts
@@ -490,7 +474,6 @@ Only active plasas with completed deliveries in the selected time period are inc
 ### Dynamic Pricing Rules
 
 1. **Price Adjustment Factors**
-
    - Time of day
    - Current demand
    - Weather conditions
@@ -508,7 +491,6 @@ Only active plasas with completed deliveries in the selected time period are inc
 ### Delivery Zone Management
 
 1. **Zone Assignment Logic**
-
    - Polygon-based zone definitions
    - Overlapping zone handling
    - Dynamic zone adjustments
