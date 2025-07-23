@@ -140,4 +140,4 @@ const TransactionDetailsDialog: React.FC<TransactionDetailsDialogProps> = ({
   );
 };
 
-export default TransactionDetailsDialog; 
+export default TransactionDetailsDialog;

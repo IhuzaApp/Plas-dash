@@ -43,9 +43,7 @@ const ShopperWalletTab: React.FC<ShopperWalletTabProps> = ({
           <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {formatCurrency(totalEarnings.toString())}
-          </div>
+          <div className="text-2xl font-bold">{formatCurrency(totalEarnings.toString())}</div>
         </CardContent>
       </Card>
 
@@ -54,13 +52,11 @@ const ShopperWalletTab: React.FC<ShopperWalletTabProps> = ({
           <CardTitle className="text-sm font-medium">Pending Payouts</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {formatCurrency(pendingPayouts.toString())}
-          </div>
+          <div className="text-2xl font-bold">{formatCurrency(pendingPayouts.toString())}</div>
         </CardContent>
       </Card>
     </div>
   );
 };
 
-export default ShopperWalletTab; 
+export default ShopperWalletTab;

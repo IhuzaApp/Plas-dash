@@ -20,7 +20,7 @@ query getShopperInformation {
 }
 
 query GetShoppersByUser_id($user_id: uuid = "") {
-  shoppers(where: {user_id: {_eq: $user_id}}) {
+  shoppers(where: { user_id: { _eq: $user_id } }) {
     Employment_id
     address
     background_check_completed
@@ -116,4 +116,3 @@ query GetShoppersByUser_id($user_id: uuid = "") {
     }
   }
 }
-

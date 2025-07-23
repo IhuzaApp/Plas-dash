@@ -526,8 +526,8 @@ export function useSystemConfig() {
 
 // Staff Management Types
 export interface OrgEmployee {
-  id: string;                    // Primary key (UUID, auto-generated)
-  employeeID: string;            // Business identifier (employee number)
+  id: string; // Primary key (UUID, auto-generated)
+  employeeID: string; // Business identifier (employee number)
   fullnames: string;
   email: string;
   phone: string;
@@ -560,39 +560,85 @@ export interface OrgEmployeeRole {
 // Default role templates as arrays
 export const DEFAULT_ROLES = {
   globalAdmin: [
-    'dashboard:view', 'dashboard:edit',
-    'pos:view', 'pos:create', 'pos:edit', 'pos:delete', 'pos:checkout', 'pos:refund',
-    'products:view', 'products:create', 'products:edit', 'products:delete',
-    'orders:view', 'orders:edit', 'orders:delete',
-    'customers:view', 'customers:create', 'customers:edit', 'customers:delete',
-    'inventory:view', 'inventory:edit', 'inventory:stock',
-    'reports:view', 'reports:export',
-    'settings:view', 'settings:edit',
-    'staff:view', 'staff:create', 'staff:edit', 'staff:delete',
-    'systemAdmin', 'globalAdmin'
+    'dashboard:view',
+    'dashboard:edit',
+    'pos:view',
+    'pos:create',
+    'pos:edit',
+    'pos:delete',
+    'pos:checkout',
+    'pos:refund',
+    'products:view',
+    'products:create',
+    'products:edit',
+    'products:delete',
+    'orders:view',
+    'orders:edit',
+    'orders:delete',
+    'customers:view',
+    'customers:create',
+    'customers:edit',
+    'customers:delete',
+    'inventory:view',
+    'inventory:edit',
+    'inventory:stock',
+    'reports:view',
+    'reports:export',
+    'settings:view',
+    'settings:edit',
+    'staff:view',
+    'staff:create',
+    'staff:edit',
+    'staff:delete',
+    'systemAdmin',
+    'globalAdmin',
   ],
   systemAdmin: [
-    'dashboard:view', 'dashboard:edit',
-    'pos:view', 'pos:create', 'pos:edit', 'pos:checkout', 'pos:refund',
-    'products:view', 'products:create', 'products:edit', 'products:delete',
-    'orders:view', 'orders:edit',
-    'customers:view', 'customers:create', 'customers:edit',
-    'inventory:view', 'inventory:edit', 'inventory:stock',
-    'reports:view', 'reports:export',
+    'dashboard:view',
+    'dashboard:edit',
+    'pos:view',
+    'pos:create',
+    'pos:edit',
+    'pos:checkout',
+    'pos:refund',
+    'products:view',
+    'products:create',
+    'products:edit',
+    'products:delete',
+    'orders:view',
+    'orders:edit',
+    'customers:view',
+    'customers:create',
+    'customers:edit',
+    'inventory:view',
+    'inventory:edit',
+    'inventory:stock',
+    'reports:view',
+    'reports:export',
     'settings:view',
-    'staff:view', 'staff:create', 'staff:edit',
-    'systemAdmin'
+    'staff:view',
+    'staff:create',
+    'staff:edit',
+    'systemAdmin',
   ],
   basicAdmin: [
     'dashboard:view',
-    'pos:view', 'pos:create', 'pos:checkout',
-    'products:view', 'products:create', 'products:edit',
-    'orders:view', 'orders:edit',
-    'customers:view', 'customers:create', 'customers:edit',
-    'inventory:view', 'inventory:stock',
+    'pos:view',
+    'pos:create',
+    'pos:checkout',
+    'products:view',
+    'products:create',
+    'products:edit',
+    'orders:view',
+    'orders:edit',
+    'customers:view',
+    'customers:create',
+    'customers:edit',
+    'inventory:view',
+    'inventory:stock',
     'reports:view',
     'settings:view',
-    'staff:view'
+    'staff:view',
   ],
 };
 
@@ -687,11 +733,7 @@ export function useUpdateEmployee() {
 
 // Type-safe hook for deleting employee
 export function useDeleteEmployee() {
-  return useMutation<
-    { delete_orgEmployees: { affected_rows: number } },
-    Error,
-    { id: string }
-  >({
+  return useMutation<{ delete_orgEmployees: { affected_rows: number } }, Error, { id: string }>({
     mutationFn: variables => hasuraRequest(DELETE_ORG_EMPLOYEE, variables),
   });
 }

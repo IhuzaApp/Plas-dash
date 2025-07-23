@@ -17,7 +17,11 @@ interface ShopperTicketsTabProps {
   ticketsPage: number;
   totalTickets: number;
   setTicketsPage: (page: number) => void;
-  renderPagination: (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => React.ReactNode;
+  renderPagination: (
+    currentPage: number,
+    totalItems: number,
+    onPageChange: (page: number) => void
+  ) => React.ReactNode;
 }
 
 const ShopperTicketsTab: React.FC<ShopperTicketsTabProps> = ({
@@ -76,12 +80,8 @@ const ShopperTicketsTab: React.FC<ShopperTicketsTabProps> = ({
                     {ticket.status}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {format(new Date(ticket.created_on), 'MMM d, yyyy')}
-                </TableCell>
-                <TableCell>
-                  {format(new Date(ticket.update_on), 'MMM d, yyyy')}
-                </TableCell>
+                <TableCell>{format(new Date(ticket.created_on), 'MMM d, yyyy')}</TableCell>
+                <TableCell>{format(new Date(ticket.update_on), 'MMM d, yyyy')}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -92,4 +92,4 @@ const ShopperTicketsTab: React.FC<ShopperTicketsTabProps> = ({
   );
 };
 
-export default ShopperTicketsTab; 
+export default ShopperTicketsTab;

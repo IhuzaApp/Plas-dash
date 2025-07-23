@@ -10,7 +10,11 @@ interface RatingsTabProps {
   setRatingsPage: (page: number) => void;
   calculateAverageRating: (ratings: any[]) => string;
   detailedShopper: any;
-  renderPagination: (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => React.ReactNode;
+  renderPagination: (
+    currentPage: number,
+    totalItems: number,
+    onPageChange: (page: number) => void
+  ) => React.ReactNode;
 }
 
 const RatingsTab: React.FC<RatingsTabProps> = ({
@@ -29,9 +33,7 @@ const RatingsTab: React.FC<RatingsTabProps> = ({
           <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
           <span>
             {calculateAverageRating(detailedShopper?.User?.Ratings || [])}
-            <span className="text-sm text-muted-foreground ml-2">
-              ({totalRatings} reviews)
-            </span>
+            <span className="text-sm text-muted-foreground ml-2">({totalRatings} reviews)</span>
           </span>
         </CardTitle>
       </CardHeader>
@@ -87,4 +89,4 @@ const RatingsTab: React.FC<RatingsTabProps> = ({
   );
 };
 
-export default RatingsTab; 
+export default RatingsTab;

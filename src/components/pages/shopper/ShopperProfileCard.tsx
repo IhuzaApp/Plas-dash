@@ -29,9 +29,7 @@ const ShopperProfileCard: React.FC<ShopperProfileCardProps> = ({ shopper, user }
         <div className="flex items-start gap-6">
           <Avatar className="h-20 w-20">
             <AvatarImage src={user.profile_picture || shopper.profile_photo || undefined} />
-            <AvatarFallback className="text-lg">
-              {getInitials(shopper.full_name)}
-            </AvatarFallback>
+            <AvatarFallback className="text-lg">{getInitials(shopper.full_name)}</AvatarFallback>
           </Avatar>
           <div className="space-y-1">
             <h2 className="text-2xl font-bold">{shopper.full_name}</h2>
@@ -67,4 +65,4 @@ const ShopperProfileCard: React.FC<ShopperProfileCardProps> = ({ shopper, user }
   );
 };
 
-export default ShopperProfileCard; 
+export default ShopperProfileCard;

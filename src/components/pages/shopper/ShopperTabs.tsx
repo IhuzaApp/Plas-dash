@@ -17,20 +17,20 @@ interface ShopperTabsProps {
   totalEarnings: number;
   pendingPayouts: number;
   formatCurrency: (amount: string) => string;
-  
+
   // Orders tab
   paginatedOrders: any[];
   ordersPage: number;
   totalOrders: number;
   setOrdersPage: (page: number) => void;
-  
+
   // Transactions tab
   paginatedTransactions: any[];
   transactionsPage: number;
   totalTransactions: number;
   setTransactionsPage: (page: number) => void;
   formatTransactionId: (id: string, type: string, created_at: string) => string;
-  
+
   // Ratings tab
   paginatedRatings: any[];
   ratingsPage: number;
@@ -38,33 +38,37 @@ interface ShopperTabsProps {
   setRatingsPage: (page: number) => void;
   calculateAverageRating: (ratings: any[]) => string;
   detailedShopper: any;
-  
+
   // Tickets tab
   paginatedTickets: any[];
   ticketsPage: number;
   totalTickets: number;
   setTicketsPage: (page: number) => void;
-  
+
   // Delivery issues tab
   paginatedDeliveryIssues: any[];
   deliveryIssuesPage: number;
   totalDeliveryIssues: number;
   setDeliveryIssuesPage: (page: number) => void;
-  
+
   // Invoices tab
   paginatedInvoices: any[];
   invoicesPage: number;
   totalInvoices: number;
   setInvoicesPage: (page: number) => void;
-  
+
   // Revenues tab
   paginatedRevenues: any[];
   revenuesPage: number;
   totalRevenues: number;
   setRevenuesPage: (page: number) => void;
-  
+
   // Pagination
-  renderPagination: (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => React.ReactNode;
+  renderPagination: (
+    currentPage: number,
+    totalItems: number,
+    onPageChange: (page: number) => void
+  ) => React.ReactNode;
 }
 
 const ShopperTabs: React.FC<ShopperTabsProps> = ({
@@ -215,4 +219,4 @@ const ShopperTabs: React.FC<ShopperTabsProps> = ({
   );
 };
 
-export default ShopperTabs; 
+export default ShopperTabs;

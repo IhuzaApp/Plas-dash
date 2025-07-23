@@ -5,13 +5,23 @@ import RecentOrders from '@/components/dashboard/RecentOrders';
 import TopShoppers from '@/components/dashboard/TopShoppers';
 import OrdersChart from '@/components/dashboard/OrdersChart';
 import OrdersOverdueCard from '@/components/dashboard/OrdersOverdueCard';
-import { ShoppingCart, User, DollarSign, Package, Store, MessageSquare, Package2, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ShoppingCart,
+  User,
+  DollarSign,
+  Package,
+  Store,
+  MessageSquare,
+  Package2,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [showAllStats, setShowAllStats] = useState(false);
-  
+
   const {
     totalShops,
     totalUsers,
@@ -24,7 +34,7 @@ const Index = () => {
     totalRevenue,
     monthlyRevenue,
     activeShoppers,
-    isLoading
+    isLoading,
   } = useDashboardData();
 
   const formatCurrency = (amount: number) => {
@@ -38,89 +48,89 @@ const Index = () => {
 
   const allStats = [
     {
-      title: "Total Revenue",
-      value: isLoading ? "Loading..." : formatCurrency(totalRevenue),
-      description: "Total revenue all time",
+      title: 'Total Revenue',
+      value: isLoading ? 'Loading...' : formatCurrency(totalRevenue),
+      description: 'Total revenue all time',
       icon: <DollarSign />,
-      trend: { value: 12, isPositive: true }
+      trend: { value: 12, isPositive: true },
     },
     {
-      title: "Monthly Revenue",
-      value: isLoading ? "Loading..." : formatCurrency(monthlyRevenue),
-      description: "Revenue this month",
+      title: 'Monthly Revenue',
+      value: isLoading ? 'Loading...' : formatCurrency(monthlyRevenue),
+      description: 'Revenue this month',
       icon: <DollarSign />,
-      trend: { value: 9, isPositive: true }
+      trend: { value: 9, isPositive: true },
     },
     {
-      title: "Total Orders",
-      value: isLoading ? "Loading..." : totalOrders.toLocaleString(),
-      description: "All time orders",
+      title: 'Total Orders',
+      value: isLoading ? 'Loading...' : totalOrders.toLocaleString(),
+      description: 'All time orders',
       icon: <ShoppingCart />,
-      trend: { value: 9, isPositive: true }
+      trend: { value: 9, isPositive: true },
     },
     {
-      title: "Monthly Orders",
-      value: isLoading ? "Loading..." : monthlyOrders.toLocaleString(),
-      description: "Orders this month",
+      title: 'Monthly Orders',
+      value: isLoading ? 'Loading...' : monthlyOrders.toLocaleString(),
+      description: 'Orders this month',
       icon: <ShoppingCart />,
-      trend: { value: 5, isPositive: true }
+      trend: { value: 5, isPositive: true },
     },
     {
-      title: "Supermarkets",
-      value: isLoading ? "Loading..." : totalShops.toLocaleString(),
-      description: "Total shops in system",
+      title: 'Supermarkets',
+      value: isLoading ? 'Loading...' : totalShops.toLocaleString(),
+      description: 'Total shops in system',
       icon: <Store />,
-      trend: { value: 2, isPositive: true }
+      trend: { value: 2, isPositive: true },
     },
     {
-      title: "Users",
-      value: isLoading ? "Loading..." : totalUsers.toLocaleString(),
-      description: "Total registered users",
+      title: 'Users',
+      value: isLoading ? 'Loading...' : totalUsers.toLocaleString(),
+      description: 'Total registered users',
       icon: <User />,
-      trend: { value: 8, isPositive: true }
+      trend: { value: 8, isPositive: true },
     },
     {
-      title: "Products",
-      value: isLoading ? "Loading..." : totalProducts.toLocaleString(),
-      description: "Total products in system",
+      title: 'Products',
+      value: isLoading ? 'Loading...' : totalProducts.toLocaleString(),
+      description: 'Total products in system',
       icon: <Package2 />,
-      trend: { value: 15, isPositive: true }
+      trend: { value: 15, isPositive: true },
     },
     {
-      title: "Active Shoppers",
-      value: isLoading ? "Loading..." : activeShoppers.toLocaleString(),
-      description: "Currently active",
+      title: 'Active Shoppers',
+      value: isLoading ? 'Loading...' : activeShoppers.toLocaleString(),
+      description: 'Currently active',
       icon: <User />,
-      trend: { value: 3, isPositive: true }
+      trend: { value: 3, isPositive: true },
     },
     {
-      title: "Pending Orders",
-      value: isLoading ? "Loading..." : pendingOrders.toLocaleString(),
-      description: "Not delivered orders",
+      title: 'Pending Orders',
+      value: isLoading ? 'Loading...' : pendingOrders.toLocaleString(),
+      description: 'Not delivered orders',
       icon: <Package />,
-      trend: { value: 2, isPositive: false }
+      trend: { value: 2, isPositive: false },
     },
     {
-      title: "Total Tickets",
-      value: isLoading ? "Loading..." : totalTickets.toLocaleString(),
-      description: "All support tickets",
+      title: 'Total Tickets',
+      value: isLoading ? 'Loading...' : totalTickets.toLocaleString(),
+      description: 'All support tickets',
       icon: <MessageSquare />,
-      trend: { value: 4, isPositive: false }
+      trend: { value: 4, isPositive: false },
     },
     {
-      title: "Open Tickets",
-      value: isLoading ? "Loading..." : openTickets.toLocaleString(),
-      description: "Tickets needing attention",
+      title: 'Open Tickets',
+      value: isLoading ? 'Loading...' : openTickets.toLocaleString(),
+      description: 'Tickets needing attention',
       icon: <MessageSquare />,
-      trend: { value: 1, isPositive: false }
+      trend: { value: 1, isPositive: false },
     },
     {
-      title: "System Health",
-      value: isLoading ? "Loading..." : "Good",
-      description: "Platform status",
+      title: 'System Health',
+      value: isLoading ? 'Loading...' : 'Good',
+      description: 'Platform status',
       icon: <Package />,
-      trend: { value: 0, isPositive: true }
-    }
+      trend: { value: 0, isPositive: true },
+    },
   ];
 
   const visibleStats = showAllStats ? allStats : allStats.slice(0, 4);
@@ -175,7 +185,6 @@ const Index = () => {
           <OrdersOverdueCard />
           <TopShoppers />
         </div>
-      
       </div>
     </AdminLayout>
   );

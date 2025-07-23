@@ -15,8 +15,35 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Filter, Loader2, Package, User, Calendar, DollarSign, MapPin, Plus, FileUp, Users, Edit, Trash2, UserX } from 'lucide-react';
-import { useShopById, useAddProduct, useUpdateProduct, useSystemConfig, useEmployeesByShop, useAddEmployee, useAddEmployeeRole, useUpdateEmployee, useUpdateEmployeeRole, useDeleteEmployee, OrgEmployee } from '@/hooks/useHasuraApi';
+import {
+  Search,
+  Filter,
+  Loader2,
+  Package,
+  User,
+  Calendar,
+  DollarSign,
+  MapPin,
+  Plus,
+  FileUp,
+  Users,
+  Edit,
+  Trash2,
+  UserX,
+} from 'lucide-react';
+import {
+  useShopById,
+  useAddProduct,
+  useUpdateProduct,
+  useSystemConfig,
+  useEmployeesByShop,
+  useAddEmployee,
+  useAddEmployeeRole,
+  useUpdateEmployee,
+  useUpdateEmployeeRole,
+  useDeleteEmployee,
+  OrgEmployee,
+} from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { z } from 'zod';
@@ -100,7 +127,7 @@ const ShopDetail = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
+
   // Staff management state
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
   const [isEditStaffOpen, setIsEditStaffOpen] = useState(false);
@@ -115,7 +142,7 @@ const ShopDetail = () => {
   const updateProduct = useUpdateProduct();
   const { data: configData } = useSystemConfig();
   const config = configData?.System_configuratioins[0];
-  
+
   // Staff management hooks
   const { data: employeesData, refetch: refetchEmployees } = useEmployeesByShop(id);
   const addEmployee = useAddEmployee();
@@ -170,10 +197,10 @@ const ShopDetail = () => {
         id: selectedProduct.id,
         ...formData,
       };
-      
+
       // Call the update mutation
       await updateProduct.mutateAsync(updateData);
-      
+
       toast.success('Product updated successfully!');
       setIsEditProductOpen(false);
       setSelectedProduct(null);
@@ -260,9 +287,13 @@ const ShopDetail = () => {
       // Only update employee if there are changes
       if (Object.keys(data.employee).length > 0) {
         // Create dynamic mutation that only sets provided fields
-        const setFields = Object.keys(data.employee).map(key => `${key}: $${key}`).join(', ');
-        const variables = Object.keys(data.employee).map(key => `$${key}: ${getGraphQLType(key)}`).join(', ');
-        
+        const setFields = Object.keys(data.employee)
+          .map(key => `${key}: $${key}`)
+          .join(', ');
+        const variables = Object.keys(data.employee)
+          .map(key => `$${key}: ${getGraphQLType(key)}`)
+          .join(', ');
+
         const dynamicMutation = `
           mutation UpdateOrgEmployee($id: uuid!, ${variables}) {
             update_orgEmployees(where: {id: {_eq: $id}}, _set: {${setFields}}) {
@@ -270,7 +301,7 @@ const ShopDetail = () => {
             }
           }
         `;
-        
+
         await hasuraRequest(dynamicMutation, { id: data.id, ...data.employee });
       }
 
@@ -291,7 +322,11 @@ const ShopDetail = () => {
   };
 
   const handleDeleteStaff = async (employeeId: string) => {
-    if (confirm('Are you sure you want to deactivate this staff member? They will no longer be able to access the system.')) {
+    if (
+      confirm(
+        'Are you sure you want to deactivate this staff member? They will no longer be able to access the system.'
+      )
+    ) {
       try {
         // Use soft delete by setting active to false
         const softDeleteMutation = `
@@ -301,9 +336,9 @@ const ShopDetail = () => {
             }
           }
         `;
-        
+
         await hasuraRequest(softDeleteMutation, { id: employeeId });
-        
+
         toast.success('Staff member deactivated successfully');
         refetchEmployees();
       } catch (error) {
@@ -314,13 +349,14 @@ const ShopDetail = () => {
   };
 
   // Filter staff based on search term
-  const filteredStaff = employeesData?.orgEmployees.filter(
-    employee =>
-      staffSearchTerm === '' ||
-      employee.fullnames.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
-      employee.email.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
-      employee.phone.includes(staffSearchTerm)
-  ) || [];
+  const filteredStaff =
+    employeesData?.orgEmployees.filter(
+      employee =>
+        staffSearchTerm === '' ||
+        employee.fullnames.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
+        employee.email.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
+        employee.phone.includes(staffSearchTerm)
+    ) || [];
 
   // Calculate staff pagination
   const totalStaffItems = filteredStaff.length;
@@ -525,8 +561,8 @@ const ShopDetail = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleEditProduct(product)}
                           >
@@ -557,10 +593,7 @@ const ShopDetail = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search orders..."
-                    className="pl-8"
-                  />
+                  <Input placeholder="Search orders..." className="pl-8" />
                 </div>
                 <Button variant="outline" className="flex items-center gap-2">
                   <Filter className="h-4 w-4" /> Filter
@@ -586,8 +619,7 @@ const ShopDetail = () => {
                         <TableRow key={order.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
-                              <Package className="h-4 w-4 text-muted-foreground" />
-                              #{order.OrderID}
+                              <Package className="h-4 w-4 text-muted-foreground" />#{order.OrderID}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -597,12 +629,15 @@ const ShopDetail = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge 
+                            <Badge
                               className={
-                                order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                'bg-blue-100 text-blue-800'
+                                order.status === 'delivered'
+                                  ? 'bg-green-100 text-green-800'
+                                  : order.status === 'pending'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : order.status === 'cancelled'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-blue-100 text-blue-800'
                               }
                             >
                               {order.status}
@@ -610,7 +645,9 @@ const ShopDetail = () => {
                           </TableCell>
                           <TableCell>{order.Order_Items?.length || 0} items</TableCell>
                           <TableCell>{formatCurrency(order.total, config)}</TableCell>
-                          <TableCell>{format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}</TableCell>
+                          <TableCell>
+                            {format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}
+                          </TableCell>
                           <TableCell className="text-right">
                             <Button variant="ghost" size="sm">
                               View Details
@@ -646,10 +683,7 @@ const ShopDetail = () => {
                     }}
                   />
                 </div>
-                <Button 
-                  onClick={() => setIsAddStaffOpen(true)} 
-                  className="flex items-center gap-2"
-                >
+                <Button onClick={() => setIsAddStaffOpen(true)} className="flex items-center gap-2">
                   <Plus className="h-4 w-4" /> Add Staff
                 </Button>
                 <Button variant="outline" className="flex items-center gap-2">
@@ -657,7 +691,7 @@ const ShopDetail = () => {
                 </Button>
               </div>
 
-            <Card>
+              <Card>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -682,8 +716,9 @@ const ShopDetail = () => {
                       currentStaff.map(employee => {
                         const permissions = employee.orgEmployeeRoles[0]?.privillages || [];
                         let roleBadge = employee.roleType || 'Custom';
-                        let roleVariant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
-                        
+                        let roleVariant: 'default' | 'secondary' | 'destructive' | 'outline' =
+                          'outline';
+
                         if (permissions.includes('globalAdmin')) {
                           roleBadge = 'Global Admin';
                           roleVariant = 'destructive';
@@ -711,30 +746,34 @@ const ShopDetail = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={roleVariant}>
-                                {roleBadge}
-                              </Badge>
+                              <Badge variant={roleVariant}>{roleBadge}</Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge 
+                              <Badge
                                 variant={employee.active ? 'default' : 'secondary'}
-                                className={employee.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                                className={
+                                  employee.active
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }
                               >
                                 {employee.active ? 'Active' : 'Inactive'}
                               </Badge>
                             </TableCell>
-                            <TableCell>{format(new Date(employee.created_on), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell>
+                              {format(new Date(employee.created_on), 'MMM dd, yyyy')}
+                            </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => handleEditStaff(employee)}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => handleDeleteStaff(employee.id)}
                                   className="text-orange-600 hover:text-orange-700"
@@ -761,7 +800,7 @@ const ShopDetail = () => {
                   }}
                   totalItems={totalStaffItems}
                 />
-            </Card>
+              </Card>
             </div>
           </TabsContent>
 

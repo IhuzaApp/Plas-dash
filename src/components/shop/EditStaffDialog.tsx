@@ -148,13 +148,15 @@ const PermissionDisplay = ({ permissions }: { permissions: string[] }) => {
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
-        {permissionGroups.map((group) => (
+        {permissionGroups.map(group => (
           <div key={group.title} className="space-y-2">
             <h4 className="font-medium text-sm">{group.title}</h4>
             <div className="grid grid-cols-2 gap-2">
-              {group.permissions.map((permission) => (
+              {group.permissions.map(permission => (
                 <div key={permission.key} className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${permissions.includes(permission.key) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <div
+                    className={`w-2 h-2 rounded-full ${permissions.includes(permission.key) ? 'bg-green-500' : 'bg-gray-300'}`}
+                  />
                   <span className="text-xs text-muted-foreground">{permission.label}</span>
                 </div>
               ))}
@@ -165,11 +167,15 @@ const PermissionDisplay = ({ permissions }: { permissions: string[] }) => {
           <h4 className="font-medium text-sm">System Permissions</h4>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${permissions.includes('systemAdmin') ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <div
+                className={`w-2 h-2 rounded-full ${permissions.includes('systemAdmin') ? 'bg-green-500' : 'bg-gray-300'}`}
+              />
               <span className="text-xs text-muted-foreground">System Admin</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${permissions.includes('globalAdmin') ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <div
+                className={`w-2 h-2 rounded-full ${permissions.includes('globalAdmin') ? 'bg-green-500' : 'bg-gray-300'}`}
+              />
               <span className="text-xs text-muted-foreground">Global Admin</span>
             </div>
           </div>
@@ -207,7 +213,9 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         Address: employee.Address || '',
         position: employee.Position || '',
         active: employee.active ?? true,
-        roleType: (employee.roleType as 'globalAdmin' | 'systemAdmin' | 'basicAdmin' | 'custom') || 'basicAdmin',
+        roleType:
+          (employee.roleType as 'globalAdmin' | 'systemAdmin' | 'basicAdmin' | 'custom') ||
+          'basicAdmin',
       };
 
       form.reset(formData);
@@ -220,12 +228,12 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
     if (!employee) {
       return;
     }
-    
+
     const { position, ...employeeData } = values;
-    
+
     // Smart update: Only include fields that have changed
     const changes: any = {};
-    
+
     // Check each field and only include if it changed
     if (values.fullnames !== employee.fullnames) changes.fullnames = values.fullnames;
     if (values.email !== employee.email) changes.email = values.email;
@@ -234,12 +242,12 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
     if (values.position !== employee.Position) changes.Position = values.position;
     if (values.active !== employee.active) changes.active = values.active;
     if (values.roleType !== employee.roleType) changes.roleType = values.roleType;
-    
+
     // Filter out null and undefined values
     const filteredChanges = Object.fromEntries(
       Object.entries(changes).filter(([_, value]) => value !== null && value !== undefined)
     );
-    
+
     // Also filter out empty strings to prevent null value errors
     const finalChanges = Object.fromEntries(
       Object.entries(filteredChanges).filter(([_, value]) => {
@@ -249,10 +257,10 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         return true;
       })
     );
-    
+
     // Get permissions based on role type
     const permissions = getPermissionsForRole(roleType);
-    
+
     onSubmit({
       id: employee.id,
       employee: finalChanges,
@@ -269,9 +277,7 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Staff Member</DialogTitle>
-          <DialogDescription>
-            Update staff member information and role.
-          </DialogDescription>
+          <DialogDescription>Update staff member information and role.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -358,15 +364,10 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
                           <FormLabel className="text-base">Active Status</FormLabel>
-                          <FormDescription>
-                            Enable or disable this staff member
-                          </FormDescription>
+                          <FormDescription>Enable or disable this staff member</FormDescription>
                         </div>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -440,7 +441,14 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                 <div className="space-y-4">
                   <Separator />
                   <div>
-                    <h4 className="font-medium mb-3">Permissions for {roleType === 'globalAdmin' ? 'Global Admin' : roleType === 'systemAdmin' ? 'System Admin' : 'Basic Admin'}</h4>
+                    <h4 className="font-medium mb-3">
+                      Permissions for{' '}
+                      {roleType === 'globalAdmin'
+                        ? 'Global Admin'
+                        : roleType === 'systemAdmin'
+                          ? 'System Admin'
+                          : 'Basic Admin'}
+                    </h4>
                     <PermissionDisplay permissions={getPermissionsForRole(roleType)} />
                   </div>
                 </div>
@@ -460,4 +468,4 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
   );
 };
 
-export default EditStaffDialog; 
+export default EditStaffDialog;

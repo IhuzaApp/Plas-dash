@@ -19,7 +19,11 @@ interface TransactionsTabProps {
   setTransactionsPage: (page: number) => void;
   formatTransactionId: (id: string, type: string, created_at: string) => string;
   formatCurrency: (amount: string) => string;
-  renderPagination: (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => React.ReactNode;
+  renderPagination: (
+    currentPage: number,
+    totalItems: number,
+    onPageChange: (page: number) => void
+  ) => React.ReactNode;
 }
 
 const TransactionsTab: React.FC<TransactionsTabProps> = ({
@@ -48,15 +52,9 @@ const TransactionsTab: React.FC<TransactionsTabProps> = ({
           {paginatedTransactions.map(transaction => (
             <TableRow key={transaction.id}>
               <TableCell className="font-medium">
-                {formatTransactionId(
-                  transaction.id,
-                  transaction.type,
-                  transaction.created_at
-                )}
+                {formatTransactionId(transaction.id, transaction.type, transaction.created_at)}
               </TableCell>
-              <TableCell>
-                {format(new Date(transaction.created_at), 'MMM d, yyyy HH:mm')}
-              </TableCell>
+              <TableCell>{format(new Date(transaction.created_at), 'MMM d, yyyy HH:mm')}</TableCell>
               <TableCell className="capitalize">{transaction.type}</TableCell>
               <TableCell>{formatCurrency(transaction.amount)}</TableCell>
               <TableCell>
@@ -90,4 +88,4 @@ const TransactionsTab: React.FC<TransactionsTabProps> = ({
   );
 };
 
-export default TransactionsTab; 
+export default TransactionsTab;

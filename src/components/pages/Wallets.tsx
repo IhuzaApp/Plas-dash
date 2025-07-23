@@ -204,15 +204,21 @@ const Wallets = () => {
   const allRevenue: any[] = revenueData?.Revenue || [];
   const totalRevenue = allRevenue.reduce((sum: number, r: any) => sum + parseFloat(r.amount), 0);
   const filteredRevenue = allRevenue.filter(filterRevenueByPeriod);
-  const filteredRevenueTotal = filteredRevenue.reduce((sum: number, r: any) => sum + parseFloat(r.amount), 0);
+  const filteredRevenueTotal = filteredRevenue.reduce(
+    (sum: number, r: any) => sum + parseFloat(r.amount),
+    0
+  );
 
   // Revenue by type breakdown
-  const revenueByType: Record<string, number> = filteredRevenue.reduce((acc: Record<string, number>, r: any) => {
-    const type = r.type || 'other';
-    const amount = parseFloat(r.amount);
-    acc[type] = (acc[type] || 0) + amount;
-    return acc;
-  }, {});
+  const revenueByType: Record<string, number> = filteredRevenue.reduce(
+    (acc: Record<string, number>, r: any) => {
+      const type = r.type || 'other';
+      const amount = parseFloat(r.amount);
+      acc[type] = (acc[type] || 0) + amount;
+      return acc;
+    },
+    {}
+  );
 
   // Pending payouts: sum of all refund amounts
   const allRefunds: any[] = refundsData?.Refunds || [];
@@ -302,18 +308,18 @@ const Wallets = () => {
               filteredTransactions={filteredTransactions}
               currentTransactions={currentTransactions}
               totalPages={totalPages}
-                      currentPage={currentPage}
+              currentPage={currentPage}
               setCurrentPage={setCurrentPage}
-                      totalItems={totalItems}
+              totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
               typeFilter={typeFilter}
               setTypeFilter={setTypeFilter}
-                    formatCurrency={formatCurrency}
+              formatCurrency={formatCurrency}
               selectedTransaction={selectedTransaction}
               setSelectedTransaction={setSelectedTransaction}
-                  />
+            />
           </div>
         </TabsContent>
 

@@ -1,5 +1,13 @@
 import React from 'react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { format, parseISO } from 'date-fns';
 
@@ -45,4 +53,4 @@ const RevenueOverview: React.FC<RevenueOverviewProps> = ({ filteredRevenue }) =>
   </Card>
 );
 
-export default RevenueOverview; 
+export default RevenueOverview;
