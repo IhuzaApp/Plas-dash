@@ -46,6 +46,7 @@ import { useState, useEffect } from 'react';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useAuth } from '@/components/layout/RootLayout';
 import { PrivilegeKey } from '@/types/privileges';
+import { menuPrivileges } from '@/lib/privileges';
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
@@ -149,31 +150,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     },
   ];
 
-  // Map menu items to required privileges using new fine-grained system
-  const menuPrivileges: Record<string, { module: PrivilegeKey; action?: string }> = {
-    Dashboard: { module: 'company_dashboard' },
-    Orders: { module: 'orders' },
-    Plasas: { module: 'shoppers' },
-    Customers: { module: 'users' },
-    Shops: { module: 'shops' },
-    Products: { module: 'products' },
-    'Company Dashboard': { module: 'company_dashboard' },
-    'Shop Dashboard': { module: 'shop_dashboard' },
-    Checkout: { module: 'checkout' },
-    Inventory: { module: 'inventory' },
-    Transactions: { module: 'transactions' },
-    Discounts: { module: 'discounts' },
-    'Financial Overview': { module: 'financial_overview' },
-    'Staff Management': { module: 'staff_management' },
-    'Company Wallet': { module: 'wallet' },
-    'Plasa Wallets': { module: 'wallet' },
-    'Refund Claims': { module: 'refunds' },
-    Tickets: { module: 'tickets' },
-    'Help Center': { module: 'help' },
-    'Delivery Settings': { module: 'delivery_settings' },
-    Promotions: { module: 'promotions' },
-    'System Settings': { module: 'settings' },
-  };
+  // Note: menuPrivileges is now imported from @/lib/privileges
 
   // Filter menu items by privileges using new system
   const filteredMenuItems = isSuperUser()
