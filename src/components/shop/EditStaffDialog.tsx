@@ -33,6 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { OrgEmployee, getPermissionsForRole } from '@/hooks/useHasuraApi';
+import { permissionGroups } from '@/lib/privileges';
 
 const formSchema = z.object({
   fullnames: z.string().min(1, 'Full name is required'),

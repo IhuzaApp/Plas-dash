@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ChevronRight, Shield, Lock, Unlock, Settings } from 'lucide-react';
 import { UserPrivileges, DEFAULT_PRIVILEGES, PrivilegeKey } from '@/types/privileges';
+import { MODULE_DESCRIPTIONS } from '@/lib/privileges';
 
 interface PrivilegeManagerProps {
   privileges: UserPrivileges;
