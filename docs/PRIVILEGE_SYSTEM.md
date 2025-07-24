@@ -19,36 +19,36 @@ interface UserPrivileges {
 }
 
 interface ModulePrivileges {
-  access: boolean;           // Can access the module/page
-  [key: string]: boolean;    // Specific actions within the module
+  access: boolean; // Can access the module/page
+  [key: string]: boolean; // Specific actions within the module
 }
 ```
 
 ### 2. Available Modules
 
-| Module | Description | Key Actions |
-|--------|-------------|-------------|
-| `checkout` | Point of sale operations | `access`, `delete_pending_orders`, `apply_discount` |
-| `staff_management` | Staff account management | `access`, `view_accounts`, `add_new_staff` |
-| `inventory` | Product inventory management | `access`, `add_products`, `edit_products`, `delete_products` |
-| `transactions` | Financial transaction management | `access`, `view`, `refund`, `export` |
-| `discounts` | Discount and promotion management | `access`, `create_discount`, `delete_discount` |
-| `company_dashboard` | Company-wide analytics | `access`, `view_reports`, `export_reports` |
-| `shop_dashboard` | Shop-specific analytics | `access`, `view_sales_data`, `manage_daily_targets` |
-| `financial_overview` | Financial reporting | `access`, `view_profits`, `export_financial_data` |
-| `pos_terminal` | POS terminal operations | `access`, `park_sale`, `hold_order`, `resume_order` |
-| `orders` | Order management | `access`, `view_orders`, `create_orders`, `edit_orders` |
-| `products` | Product catalog management | `access`, `add_products`, `edit_products`, `delete_products` |
-| `users` | Customer account management | `access`, `view_users`, `add_users`, `edit_users` |
-| `shops` | Shop location management | `access`, `view_shops`, `add_shops`, `edit_shops` |
-| `shoppers` | Shopper account management | `access`, `view_shoppers`, `add_shoppers`, `edit_shoppers` |
-| `settings` | System configuration | `access`, `view_settings`, `edit_settings` |
-| `refunds` | Refund processing | `access`, `view_refunds`, `process_refunds` |
-| `tickets` | Support ticket management | `access`, `view_tickets`, `create_tickets`, `edit_tickets` |
-| `help` | Help center access | `access`, `view_help`, `search_help` |
-| `wallet` | Wallet management | `access`, `view_wallets`, `process_payouts` |
-| `promotions` | Promotion management | `access`, `view_promotions`, `create_promotions` |
-| `delivery_settings` | Delivery configuration | `access`, `view_delivery_settings`, `edit_delivery_settings` |
+| Module               | Description                       | Key Actions                                                  |
+| -------------------- | --------------------------------- | ------------------------------------------------------------ |
+| `checkout`           | Point of sale operations          | `access`, `delete_pending_orders`, `apply_discount`          |
+| `staff_management`   | Staff account management          | `access`, `view_accounts`, `add_new_staff`                   |
+| `inventory`          | Product inventory management      | `access`, `add_products`, `edit_products`, `delete_products` |
+| `transactions`       | Financial transaction management  | `access`, `view`, `refund`, `export`                         |
+| `discounts`          | Discount and promotion management | `access`, `create_discount`, `delete_discount`               |
+| `company_dashboard`  | Company-wide analytics            | `access`, `view_reports`, `export_reports`                   |
+| `shop_dashboard`     | Shop-specific analytics           | `access`, `view_sales_data`, `manage_daily_targets`          |
+| `financial_overview` | Financial reporting               | `access`, `view_profits`, `export_financial_data`            |
+| `pos_terminal`       | POS terminal operations           | `access`, `park_sale`, `hold_order`, `resume_order`          |
+| `orders`             | Order management                  | `access`, `view_orders`, `create_orders`, `edit_orders`      |
+| `products`           | Product catalog management        | `access`, `add_products`, `edit_products`, `delete_products` |
+| `users`              | Customer account management       | `access`, `view_users`, `add_users`, `edit_users`            |
+| `shops`              | Shop location management          | `access`, `view_shops`, `add_shops`, `edit_shops`            |
+| `shoppers`           | Shopper account management        | `access`, `view_shoppers`, `add_shoppers`, `edit_shoppers`   |
+| `settings`           | System configuration              | `access`, `view_settings`, `edit_settings`                   |
+| `refunds`            | Refund processing                 | `access`, `view_refunds`, `process_refunds`                  |
+| `tickets`            | Support ticket management         | `access`, `view_tickets`, `create_tickets`, `edit_tickets`   |
+| `help`               | Help center access                | `access`, `view_help`, `search_help`                         |
+| `wallet`             | Wallet management                 | `access`, `view_wallets`, `process_payouts`                  |
+| `promotions`         | Promotion management              | `access`, `view_promotions`, `create_promotions`             |
+| `delivery_settings`  | Delivery configuration            | `access`, `view_delivery_settings`, `edit_delivery_settings` |
 
 ## Usage Guide
 
@@ -61,16 +61,16 @@ import { usePrivilege } from '@/hooks/usePrivilege';
 
 function MyComponent() {
   const { hasModuleAccess, hasAction, isSuperUser } = usePrivilege();
-  
+
   // Check module access
   const canAccessCheckout = hasModuleAccess('checkout');
-  
+
   // Check specific action
   const canDeleteOrders = hasAction('checkout', 'delete_pending_orders');
-  
+
   // Check if user is super user (has all major permissions)
   const isAdmin = isSuperUser();
-  
+
   return (
     <div>
       {canAccessCheckout && <CheckoutComponent />}
@@ -120,7 +120,7 @@ function InventoryComponent() {
       <ProtectedAction module="inventory" action="add_products">
         <Button>Add Product</Button>
       </ProtectedAction>
-      
+
       {/* Hide completely if no permission */}
       <ProtectedUI module="inventory" action="edit_products">
         <EditProductForm />
@@ -138,14 +138,14 @@ Control form fields based on permissions:
 function ProductForm() {
   const { hasAction } = usePrivilege();
   const canEditProducts = hasAction('inventory', 'edit_products');
-  
+
   return (
     <form>
-      <Input 
+      <Input
         placeholder="Product Name"
         disabled={!canEditProducts}
       />
-      <Input 
+      <Input
         placeholder="Price"
         disabled={!canEditProducts}
       />
@@ -164,10 +164,10 @@ Show different UI based on permissions:
 ```typescript
 function DashboardComponent() {
   const { hasModuleAccess, hasAction } = usePrivilege();
-  
+
   const canViewAnalytics = hasModuleAccess('company_dashboard');
   const canExportData = hasAction('company_dashboard', 'export_reports');
-  
+
   return (
     <div>
       {canViewAnalytics ? (
@@ -194,11 +194,11 @@ import { PrivilegeManager } from '@/components/privileges/PrivilegeManager';
 
 function AddStaffDialog() {
   const [privileges, setPrivileges] = useState(DEFAULT_PRIVILEGES);
-  
+
   return (
     <Dialog>
       <DialogContent>
-        <PrivilegeManager 
+        <PrivilegeManager
           privileges={privileges}
           onPrivilegesChange={setPrivileges}
         />
@@ -215,8 +215,8 @@ Use predefined privilege templates for common roles:
 ```typescript
 // Super Admin - Full access
 const SUPER_ADMIN_PRIVILEGES = {
-  checkout: { access: true, delete_pending_orders: true, apply_discount: true, /* ... */ },
-  staff_management: { access: true, view_accounts: true, add_new_staff: true, /* ... */ },
+  checkout: { access: true, delete_pending_orders: true, apply_discount: true /* ... */ },
+  staff_management: { access: true, view_accounts: true, add_new_staff: true /* ... */ },
   // ... all modules with all actions
 };
 
@@ -267,7 +267,7 @@ const CASHIER_PRIVILEGES = {
 function MyComponent() {
   const { hasAction } = usePrivilege();
   const canPerformAction = hasAction('module', 'action');
-  
+
   return (
     <div>
       {canPerformAction ? (
@@ -290,17 +290,17 @@ function MyComponent() {
 ```typescript
 function MyComponent() {
   const { hasModuleAccess, isSuperUser } = usePrivilege();
-  
+
   // Super users can bypass some checks
   if (isSuperUser()) {
     return <FullAccessComponent />;
   }
-  
+
   // Regular users need specific permissions
   if (!hasModuleAccess('checkout')) {
     return <AccessDeniedComponent />;
   }
-  
+
   return <CheckoutComponent />;
 }
 ```
@@ -312,7 +312,7 @@ function MyComponent() {
 ```typescript
 function DebugComponent() {
   const { getAllPrivileges, isSuperUser } = usePrivilege();
-  
+
   if (isSuperUser()) {
     return (
       <pre>
@@ -320,7 +320,7 @@ function DebugComponent() {
       </pre>
     );
   }
-  
+
   return null;
 }
 ```
@@ -353,12 +353,14 @@ console.log('Is super user:', isAdmin);
 The new system automatically converts old privilege format to the new fine-grained format during login. The conversion mapping is defined in `LoginModal.tsx`.
 
 ### Old Format
+
 ```typescript
 // Old privilege format
-['checkout:view', 'inventory:add_products', 'staff:view_accounts']
+['checkout:view', 'inventory:add_products', 'staff:view_accounts'];
 ```
 
 ### New Format
+
 ```typescript
 // New privilege format
 {
@@ -383,14 +385,14 @@ When making API calls, include privilege checks:
 ```typescript
 async function deleteProduct(productId: string) {
   const { hasAction } = usePrivilege();
-  
+
   if (!hasAction('inventory', 'delete_products')) {
     throw new Error('Insufficient permissions');
   }
-  
+
   // Proceed with API call
   await api.deleteProduct(productId);
 }
 ```
 
-This comprehensive privilege system provides fine-grained control over user access while maintaining security and usability throughout the Plas Dashboard application. 
+This comprehensive privilege system provides fine-grained control over user access while maintaining security and usability throughout the Plas Dashboard application.

@@ -249,7 +249,7 @@ export function hasPrivilege(
   }
 
   const modulePrivileges = userPrivileges[module] as ModulePrivileges;
-  
+
   // If no specific action requested, check module access
   if (!action) {
     return modulePrivileges.access || false;
@@ -268,4 +268,4 @@ export function getModulePrivileges(
     return null;
   }
   return userPrivileges[module] as ModulePrivileges;
-} 
+}

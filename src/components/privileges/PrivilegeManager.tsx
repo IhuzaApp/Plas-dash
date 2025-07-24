@@ -19,37 +19,84 @@ interface PrivilegeManagerProps {
 }
 
 // Module descriptions for better UX
-const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: string; actions: { key: string; label: string; description: string }[] }> = {
+const MODULE_DESCRIPTIONS: Record<
+  PrivilegeKey,
+  {
+    title: string;
+    description: string;
+    actions: { key: string; label: string; description: string }[];
+  }
+> = {
   checkout: {
     title: 'Checkout & POS',
     description: 'Manage point-of-sale operations and order processing',
     actions: [
       { key: 'access', label: 'Access Checkout', description: 'Can access the checkout page' },
-      { key: 'delete_pending_orders', label: 'Delete Pending Orders', description: 'Can delete orders that are pending' },
-      { key: 'apply_discount', label: 'Apply Discounts', description: 'Can apply discounts to orders' },
+      {
+        key: 'delete_pending_orders',
+        label: 'Delete Pending Orders',
+        description: 'Can delete orders that are pending',
+      },
+      {
+        key: 'apply_discount',
+        label: 'Apply Discounts',
+        description: 'Can apply discounts to orders',
+      },
       { key: 'view_orders', label: 'View Orders', description: 'Can view order details' },
       { key: 'create_orders', label: 'Create Orders', description: 'Can create new orders' },
       { key: 'edit_orders', label: 'Edit Orders', description: 'Can modify existing orders' },
       { key: 'cancel_orders', label: 'Cancel Orders', description: 'Can cancel orders' },
       { key: 'process_payment', label: 'Process Payment', description: 'Can process payments' },
-      { key: 'view_customer_info', label: 'View Customer Info', description: 'Can view customer information' },
-      { key: 'edit_customer_info', label: 'Edit Customer Info', description: 'Can edit customer information' },
-    ]
+      {
+        key: 'view_customer_info',
+        label: 'View Customer Info',
+        description: 'Can view customer information',
+      },
+      {
+        key: 'edit_customer_info',
+        label: 'Edit Customer Info',
+        description: 'Can edit customer information',
+      },
+    ],
   },
   staff_management: {
     title: 'Staff Management',
     description: 'Manage staff accounts and permissions',
     actions: [
-      { key: 'access', label: 'Access Staff Management', description: 'Can access staff management page' },
+      {
+        key: 'access',
+        label: 'Access Staff Management',
+        description: 'Can access staff management page',
+      },
       { key: 'view_accounts', label: 'View Accounts', description: 'Can view staff accounts' },
-      { key: 'edit_accounts', label: 'Edit Accounts', description: 'Can edit staff account details' },
-      { key: 'view_activity_logs', label: 'View Activity Logs', description: 'Can view staff activity logs' },
-      { key: 'add_new_staff', label: 'Add New Staff', description: 'Can create new staff accounts' },
+      {
+        key: 'edit_accounts',
+        label: 'Edit Accounts',
+        description: 'Can edit staff account details',
+      },
+      {
+        key: 'view_activity_logs',
+        label: 'View Activity Logs',
+        description: 'Can view staff activity logs',
+      },
+      {
+        key: 'add_new_staff',
+        label: 'Add New Staff',
+        description: 'Can create new staff accounts',
+      },
       { key: 'delete_staff', label: 'Delete Staff', description: 'Can delete staff accounts' },
       { key: 'assign_roles', label: 'Assign Roles', description: 'Can assign roles to staff' },
-      { key: 'view_permissions', label: 'View Permissions', description: 'Can view staff permissions' },
-      { key: 'edit_permissions', label: 'Edit Permissions', description: 'Can edit staff permissions' },
-    ]
+      {
+        key: 'view_permissions',
+        label: 'View Permissions',
+        description: 'Can view staff permissions',
+      },
+      {
+        key: 'edit_permissions',
+        label: 'Edit Permissions',
+        description: 'Can edit staff permissions',
+      },
+    ],
   },
   inventory: {
     title: 'Inventory Management',
@@ -60,12 +107,24 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'add_products', label: 'Add Products', description: 'Can add new products' },
       { key: 'edit_products', label: 'Edit Products', description: 'Can edit product details' },
       { key: 'delete_products', label: 'Delete Products', description: 'Can delete products' },
-      { key: 'import_products', label: 'Import Products', description: 'Can import products from files' },
+      {
+        key: 'import_products',
+        label: 'Import Products',
+        description: 'Can import products from files',
+      },
       { key: 'export_products', label: 'Export Products', description: 'Can export product data' },
-      { key: 'manage_categories', label: 'Manage Categories', description: 'Can manage product categories' },
-      { key: 'view_stock_levels', label: 'View Stock Levels', description: 'Can view current stock levels' },
+      {
+        key: 'manage_categories',
+        label: 'Manage Categories',
+        description: 'Can manage product categories',
+      },
+      {
+        key: 'view_stock_levels',
+        label: 'View Stock Levels',
+        description: 'Can view current stock levels',
+      },
       { key: 'update_stock', label: 'Update Stock', description: 'Can update stock quantities' },
-    ]
+    ],
   },
   transactions: {
     title: 'Transactions',
@@ -77,22 +136,46 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'export', label: 'Export Data', description: 'Can export transaction data' },
       { key: 'view_details', label: 'View Details', description: 'Can view transaction details' },
       { key: 'process_refund', label: 'Process Refund', description: 'Can process refunds' },
-      { key: 'view_receipts', label: 'View Receipts', description: 'Can view transaction receipts' },
-      { key: 'print_receipts', label: 'Print Receipts', description: 'Can print transaction receipts' },
-    ]
+      {
+        key: 'view_receipts',
+        label: 'View Receipts',
+        description: 'Can view transaction receipts',
+      },
+      {
+        key: 'print_receipts',
+        label: 'Print Receipts',
+        description: 'Can print transaction receipts',
+      },
+    ],
   },
   discounts: {
     title: 'Discounts & Promotions',
     description: 'Manage discount codes and promotional offers',
     actions: [
       { key: 'access', label: 'Access Discounts', description: 'Can access discounts page' },
-      { key: 'create_discount', label: 'Create Discount', description: 'Can create new discount codes' },
-      { key: 'delete_discount', label: 'Delete Discount', description: 'Can delete discount codes' },
+      {
+        key: 'create_discount',
+        label: 'Create Discount',
+        description: 'Can create new discount codes',
+      },
+      {
+        key: 'delete_discount',
+        label: 'Delete Discount',
+        description: 'Can delete discount codes',
+      },
       { key: 'edit_discount', label: 'Edit Discount', description: 'Can edit discount details' },
       { key: 'view_discounts', label: 'View Discounts', description: 'Can view discount listings' },
-      { key: 'apply_discount', label: 'Apply Discount', description: 'Can apply discounts to orders' },
-      { key: 'manage_discount_rules', label: 'Manage Rules', description: 'Can manage discount rules' },
-    ]
+      {
+        key: 'apply_discount',
+        label: 'Apply Discount',
+        description: 'Can apply discounts to orders',
+      },
+      {
+        key: 'manage_discount_rules',
+        label: 'Manage Rules',
+        description: 'Can manage discount rules',
+      },
+    ],
   },
   company_dashboard: {
     title: 'Company Dashboard',
@@ -102,33 +185,81 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'view_reports', label: 'View Reports', description: 'Can view company reports' },
       { key: 'export_reports', label: 'Export Reports', description: 'Can export report data' },
       { key: 'view_analytics', label: 'View Analytics', description: 'Can view analytics data' },
-      { key: 'view_revenue_data', label: 'View Revenue Data', description: 'Can view revenue information' },
-      { key: 'view_performance_metrics', label: 'View Performance', description: 'Can view performance metrics' },
-    ]
+      {
+        key: 'view_revenue_data',
+        label: 'View Revenue Data',
+        description: 'Can view revenue information',
+      },
+      {
+        key: 'view_performance_metrics',
+        label: 'View Performance',
+        description: 'Can view performance metrics',
+      },
+    ],
   },
   shop_dashboard: {
     title: 'Shop Dashboard',
     description: 'View shop-specific analytics and performance',
     actions: [
       { key: 'access', label: 'Access Shop Dashboard', description: 'Can access shop dashboard' },
-      { key: 'view_sales_data', label: 'View Sales Data', description: 'Can view sales information' },
-      { key: 'manage_daily_targets', label: 'Manage Targets', description: 'Can manage daily sales targets' },
-      { key: 'view_shop_performance', label: 'View Performance', description: 'Can view shop performance' },
-      { key: 'view_staff_performance', label: 'View Staff Performance', description: 'Can view staff performance' },
-      { key: 'view_customer_metrics', label: 'View Customer Metrics', description: 'Can view customer metrics' },
-    ]
+      {
+        key: 'view_sales_data',
+        label: 'View Sales Data',
+        description: 'Can view sales information',
+      },
+      {
+        key: 'manage_daily_targets',
+        label: 'Manage Targets',
+        description: 'Can manage daily sales targets',
+      },
+      {
+        key: 'view_shop_performance',
+        label: 'View Performance',
+        description: 'Can view shop performance',
+      },
+      {
+        key: 'view_staff_performance',
+        label: 'View Staff Performance',
+        description: 'Can view staff performance',
+      },
+      {
+        key: 'view_customer_metrics',
+        label: 'View Customer Metrics',
+        description: 'Can view customer metrics',
+      },
+    ],
   },
   financial_overview: {
     title: 'Financial Overview',
     description: 'View financial reports and profit analysis',
     actions: [
-      { key: 'access', label: 'Access Financial Overview', description: 'Can access financial overview' },
+      {
+        key: 'access',
+        label: 'Access Financial Overview',
+        description: 'Can access financial overview',
+      },
       { key: 'view_profits', label: 'View Profits', description: 'Can view profit information' },
-      { key: 'export_financial_data', label: 'Export Data', description: 'Can export financial data' },
-      { key: 'view_revenue_reports', label: 'View Revenue Reports', description: 'Can view revenue reports' },
-      { key: 'view_expense_reports', label: 'View Expense Reports', description: 'Can view expense reports' },
-      { key: 'view_profit_margins', label: 'View Profit Margins', description: 'Can view profit margin data' },
-    ]
+      {
+        key: 'export_financial_data',
+        label: 'Export Data',
+        description: 'Can export financial data',
+      },
+      {
+        key: 'view_revenue_reports',
+        label: 'View Revenue Reports',
+        description: 'Can view revenue reports',
+      },
+      {
+        key: 'view_expense_reports',
+        label: 'View Expense Reports',
+        description: 'Can view expense reports',
+      },
+      {
+        key: 'view_profit_margins',
+        label: 'View Profit Margins',
+        description: 'Can view profit margin data',
+      },
+    ],
   },
   pos_terminal: {
     title: 'POS Terminal',
@@ -141,8 +272,12 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'process_sale', label: 'Process Sale', description: 'Can process sales' },
       { key: 'view_cart', label: 'View Cart', description: 'Can view shopping cart' },
       { key: 'edit_cart', label: 'Edit Cart', description: 'Can edit shopping cart' },
-      { key: 'apply_promotions', label: 'Apply Promotions', description: 'Can apply promotions to sales' },
-    ]
+      {
+        key: 'apply_promotions',
+        label: 'Apply Promotions',
+        description: 'Can apply promotions to sales',
+      },
+    ],
   },
   orders: {
     title: 'Order Management',
@@ -154,10 +289,22 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'edit_orders', label: 'Edit Orders', description: 'Can edit order details' },
       { key: 'delete_orders', label: 'Delete Orders', description: 'Can delete orders' },
       { key: 'process_orders', label: 'Process Orders', description: 'Can process orders' },
-      { key: 'view_order_details', label: 'View Order Details', description: 'Can view detailed order information' },
-      { key: 'update_order_status', label: 'Update Status', description: 'Can update order status' },
-      { key: 'assign_delivery', label: 'Assign Delivery', description: 'Can assign delivery to orders' },
-    ]
+      {
+        key: 'view_order_details',
+        label: 'View Order Details',
+        description: 'Can view detailed order information',
+      },
+      {
+        key: 'update_order_status',
+        label: 'Update Status',
+        description: 'Can update order status',
+      },
+      {
+        key: 'assign_delivery',
+        label: 'Assign Delivery',
+        description: 'Can assign delivery to orders',
+      },
+    ],
   },
   products: {
     title: 'Product Management',
@@ -168,11 +315,19 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'add_products', label: 'Add Products', description: 'Can add new products' },
       { key: 'edit_products', label: 'Edit Products', description: 'Can edit product details' },
       { key: 'delete_products', label: 'Delete Products', description: 'Can delete products' },
-      { key: 'import_products', label: 'Import Products', description: 'Can import products from files' },
+      {
+        key: 'import_products',
+        label: 'Import Products',
+        description: 'Can import products from files',
+      },
       { key: 'export_products', label: 'Export Products', description: 'Can export product data' },
-      { key: 'manage_categories', label: 'Manage Categories', description: 'Can manage product categories' },
+      {
+        key: 'manage_categories',
+        label: 'Manage Categories',
+        description: 'Can manage product categories',
+      },
       { key: 'view_analytics', label: 'View Analytics', description: 'Can view product analytics' },
-    ]
+    ],
   },
   users: {
     title: 'User Management',
@@ -183,10 +338,22 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'add_users', label: 'Add Users', description: 'Can add new users' },
       { key: 'edit_users', label: 'Edit Users', description: 'Can edit user details' },
       { key: 'delete_users', label: 'Delete Users', description: 'Can delete users' },
-      { key: 'view_user_details', label: 'View User Details', description: 'Can view detailed user information' },
-      { key: 'manage_user_roles', label: 'Manage User Roles', description: 'Can manage user roles' },
-      { key: 'view_user_activity', label: 'View User Activity', description: 'Can view user activity logs' },
-    ]
+      {
+        key: 'view_user_details',
+        label: 'View User Details',
+        description: 'Can view detailed user information',
+      },
+      {
+        key: 'manage_user_roles',
+        label: 'Manage User Roles',
+        description: 'Can manage user roles',
+      },
+      {
+        key: 'view_user_activity',
+        label: 'View User Activity',
+        description: 'Can view user activity logs',
+      },
+    ],
   },
   shops: {
     title: 'Shop Management',
@@ -197,10 +364,22 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'add_shops', label: 'Add Shops', description: 'Can add new shops' },
       { key: 'edit_shops', label: 'Edit Shops', description: 'Can edit shop details' },
       { key: 'delete_shops', label: 'Delete Shops', description: 'Can delete shops' },
-      { key: 'view_shop_details', label: 'View Shop Details', description: 'Can view detailed shop information' },
-      { key: 'manage_shop_settings', label: 'Manage Shop Settings', description: 'Can manage shop settings' },
-      { key: 'view_shop_performance', label: 'View Shop Performance', description: 'Can view shop performance data' },
-    ]
+      {
+        key: 'view_shop_details',
+        label: 'View Shop Details',
+        description: 'Can view detailed shop information',
+      },
+      {
+        key: 'manage_shop_settings',
+        label: 'Manage Shop Settings',
+        description: 'Can manage shop settings',
+      },
+      {
+        key: 'view_shop_performance',
+        label: 'View Shop Performance',
+        description: 'Can view shop performance data',
+      },
+    ],
   },
   shoppers: {
     title: 'Shopper Management',
@@ -211,11 +390,27 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'add_shoppers', label: 'Add Shoppers', description: 'Can add new shoppers' },
       { key: 'edit_shoppers', label: 'Edit Shoppers', description: 'Can edit shopper details' },
       { key: 'delete_shoppers', label: 'Delete Shoppers', description: 'Can delete shoppers' },
-      { key: 'view_shopper_details', label: 'View Shopper Details', description: 'Can view detailed shopper information' },
-      { key: 'view_shopper_orders', label: 'View Shopper Orders', description: 'Can view shopper order history' },
-      { key: 'view_shopper_wallet', label: 'View Shopper Wallet', description: 'Can view shopper wallet information' },
-      { key: 'view_shopper_ratings', label: 'View Shopper Ratings', description: 'Can view shopper ratings' },
-    ]
+      {
+        key: 'view_shopper_details',
+        label: 'View Shopper Details',
+        description: 'Can view detailed shopper information',
+      },
+      {
+        key: 'view_shopper_orders',
+        label: 'View Shopper Orders',
+        description: 'Can view shopper order history',
+      },
+      {
+        key: 'view_shopper_wallet',
+        label: 'View Shopper Wallet',
+        description: 'Can view shopper wallet information',
+      },
+      {
+        key: 'view_shopper_ratings',
+        label: 'View Shopper Ratings',
+        description: 'Can view shopper ratings',
+      },
+    ],
   },
   settings: {
     title: 'System Settings',
@@ -224,10 +419,22 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'access', label: 'Access Settings', description: 'Can access settings page' },
       { key: 'view_settings', label: 'View Settings', description: 'Can view system settings' },
       { key: 'edit_settings', label: 'Edit Settings', description: 'Can edit system settings' },
-      { key: 'manage_system_config', label: 'Manage System Config', description: 'Can manage system configuration' },
-      { key: 'view_audit_logs', label: 'View Audit Logs', description: 'Can view system audit logs' },
-      { key: 'manage_notifications', label: 'Manage Notifications', description: 'Can manage notification settings' },
-    ]
+      {
+        key: 'manage_system_config',
+        label: 'Manage System Config',
+        description: 'Can manage system configuration',
+      },
+      {
+        key: 'view_audit_logs',
+        label: 'View Audit Logs',
+        description: 'Can view system audit logs',
+      },
+      {
+        key: 'manage_notifications',
+        label: 'Manage Notifications',
+        description: 'Can manage notification settings',
+      },
+    ],
   },
   refunds: {
     title: 'Refund Management',
@@ -235,12 +442,28 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
     actions: [
       { key: 'access', label: 'Access Refunds', description: 'Can access refunds page' },
       { key: 'view_refunds', label: 'View Refunds', description: 'Can view refund requests' },
-      { key: 'process_refunds', label: 'Process Refunds', description: 'Can process refund requests' },
-      { key: 'approve_refunds', label: 'Approve Refunds', description: 'Can approve refund requests' },
+      {
+        key: 'process_refunds',
+        label: 'Process Refunds',
+        description: 'Can process refund requests',
+      },
+      {
+        key: 'approve_refunds',
+        label: 'Approve Refunds',
+        description: 'Can approve refund requests',
+      },
       { key: 'reject_refunds', label: 'Reject Refunds', description: 'Can reject refund requests' },
-      { key: 'view_refund_details', label: 'View Refund Details', description: 'Can view detailed refund information' },
-      { key: 'export_refund_data', label: 'Export Refund Data', description: 'Can export refund data' },
-    ]
+      {
+        key: 'view_refund_details',
+        label: 'View Refund Details',
+        description: 'Can view detailed refund information',
+      },
+      {
+        key: 'export_refund_data',
+        label: 'Export Refund Data',
+        description: 'Can export refund data',
+      },
+    ],
   },
   tickets: {
     title: 'Support Tickets',
@@ -248,13 +471,29 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
     actions: [
       { key: 'access', label: 'Access Tickets', description: 'Can access tickets page' },
       { key: 'view_tickets', label: 'View Tickets', description: 'Can view support tickets' },
-      { key: 'create_tickets', label: 'Create Tickets', description: 'Can create new support tickets' },
+      {
+        key: 'create_tickets',
+        label: 'Create Tickets',
+        description: 'Can create new support tickets',
+      },
       { key: 'edit_tickets', label: 'Edit Tickets', description: 'Can edit ticket details' },
       { key: 'delete_tickets', label: 'Delete Tickets', description: 'Can delete tickets' },
-      { key: 'assign_tickets', label: 'Assign Tickets', description: 'Can assign tickets to staff' },
-      { key: 'resolve_tickets', label: 'Resolve Tickets', description: 'Can resolve support tickets' },
-      { key: 'view_ticket_details', label: 'View Ticket Details', description: 'Can view detailed ticket information' },
-    ]
+      {
+        key: 'assign_tickets',
+        label: 'Assign Tickets',
+        description: 'Can assign tickets to staff',
+      },
+      {
+        key: 'resolve_tickets',
+        label: 'Resolve Tickets',
+        description: 'Can resolve support tickets',
+      },
+      {
+        key: 'view_ticket_details',
+        label: 'View Ticket Details',
+        description: 'Can view detailed ticket information',
+      },
+    ],
   },
   help: {
     title: 'Help Center',
@@ -265,7 +504,7 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
       { key: 'search_help', label: 'Search Help', description: 'Can search help documentation' },
       { key: 'view_categories', label: 'View Categories', description: 'Can view help categories' },
       { key: 'view_articles', label: 'View Articles', description: 'Can view help articles' },
-    ]
+    ],
   },
   wallet: {
     title: 'Wallet Management',
@@ -273,42 +512,114 @@ const MODULE_DESCRIPTIONS: Record<PrivilegeKey, { title: string; description: st
     actions: [
       { key: 'access', label: 'Access Wallets', description: 'Can access wallet management' },
       { key: 'view_wallets', label: 'View Wallets', description: 'Can view wallet information' },
-      { key: 'process_payouts', label: 'Process Payouts', description: 'Can process wallet payouts' },
-      { key: 'view_transactions', label: 'View Transactions', description: 'Can view wallet transactions' },
-      { key: 'manage_wallet_settings', label: 'Manage Wallet Settings', description: 'Can manage wallet settings' },
+      {
+        key: 'process_payouts',
+        label: 'Process Payouts',
+        description: 'Can process wallet payouts',
+      },
+      {
+        key: 'view_transactions',
+        label: 'View Transactions',
+        description: 'Can view wallet transactions',
+      },
+      {
+        key: 'manage_wallet_settings',
+        label: 'Manage Wallet Settings',
+        description: 'Can manage wallet settings',
+      },
       { key: 'view_balance', label: 'View Balance', description: 'Can view wallet balances' },
-      { key: 'export_wallet_data', label: 'Export Wallet Data', description: 'Can export wallet data' },
-    ]
+      {
+        key: 'export_wallet_data',
+        label: 'Export Wallet Data',
+        description: 'Can export wallet data',
+      },
+    ],
   },
   promotions: {
     title: 'Promotion Management',
     description: 'Manage promotional campaigns and offers',
     actions: [
       { key: 'access', label: 'Access Promotions', description: 'Can access promotions page' },
-      { key: 'view_promotions', label: 'View Promotions', description: 'Can view promotion listings' },
-      { key: 'create_promotions', label: 'Create Promotions', description: 'Can create new promotions' },
-      { key: 'edit_promotions', label: 'Edit Promotions', description: 'Can edit promotion details' },
-      { key: 'delete_promotions', label: 'Delete Promotions', description: 'Can delete promotions' },
-      { key: 'activate_promotions', label: 'Activate Promotions', description: 'Can activate promotions' },
-      { key: 'deactivate_promotions', label: 'Deactivate Promotions', description: 'Can deactivate promotions' },
-      { key: 'view_promotion_analytics', label: 'View Analytics', description: 'Can view promotion analytics' },
-    ]
+      {
+        key: 'view_promotions',
+        label: 'View Promotions',
+        description: 'Can view promotion listings',
+      },
+      {
+        key: 'create_promotions',
+        label: 'Create Promotions',
+        description: 'Can create new promotions',
+      },
+      {
+        key: 'edit_promotions',
+        label: 'Edit Promotions',
+        description: 'Can edit promotion details',
+      },
+      {
+        key: 'delete_promotions',
+        label: 'Delete Promotions',
+        description: 'Can delete promotions',
+      },
+      {
+        key: 'activate_promotions',
+        label: 'Activate Promotions',
+        description: 'Can activate promotions',
+      },
+      {
+        key: 'deactivate_promotions',
+        label: 'Deactivate Promotions',
+        description: 'Can deactivate promotions',
+      },
+      {
+        key: 'view_promotion_analytics',
+        label: 'View Analytics',
+        description: 'Can view promotion analytics',
+      },
+    ],
   },
   delivery_settings: {
     title: 'Delivery Settings',
     description: 'Configure delivery zones and fees',
     actions: [
-      { key: 'access', label: 'Access Delivery Settings', description: 'Can access delivery settings' },
-      { key: 'view_delivery_settings', label: 'View Settings', description: 'Can view delivery settings' },
-      { key: 'edit_delivery_settings', label: 'Edit Settings', description: 'Can edit delivery settings' },
-      { key: 'manage_delivery_zones', label: 'Manage Zones', description: 'Can manage delivery zones' },
-      { key: 'set_delivery_fees', label: 'Set Delivery Fees', description: 'Can set delivery fees' },
-      { key: 'configure_delivery_times', label: 'Configure Times', description: 'Can configure delivery times' },
-    ]
+      {
+        key: 'access',
+        label: 'Access Delivery Settings',
+        description: 'Can access delivery settings',
+      },
+      {
+        key: 'view_delivery_settings',
+        label: 'View Settings',
+        description: 'Can view delivery settings',
+      },
+      {
+        key: 'edit_delivery_settings',
+        label: 'Edit Settings',
+        description: 'Can edit delivery settings',
+      },
+      {
+        key: 'manage_delivery_zones',
+        label: 'Manage Zones',
+        description: 'Can manage delivery zones',
+      },
+      {
+        key: 'set_delivery_fees',
+        label: 'Set Delivery Fees',
+        description: 'Can set delivery fees',
+      },
+      {
+        key: 'configure_delivery_times',
+        label: 'Configure Times',
+        description: 'Can configure delivery times',
+      },
+    ],
   },
 };
 
-export function PrivilegeManager({ privileges, onPrivilegesChange, readOnly = false }: PrivilegeManagerProps) {
+export function PrivilegeManager({
+  privileges,
+  onPrivilegesChange,
+  readOnly = false,
+}: PrivilegeManagerProps) {
   const [expandedModules, setExpandedModules] = useState<Set<PrivilegeKey>>(new Set());
 
   const toggleModule = (module: PrivilegeKey) => {
@@ -337,7 +648,7 @@ export function PrivilegeManager({ privileges, onPrivilegesChange, readOnly = fa
 
     const moduleInfo = MODULE_DESCRIPTIONS[module];
     const newPrivileges = { ...privileges };
-    
+
     if (!newPrivileges[module]) {
       newPrivileges[module] = { access: false };
     }
@@ -352,7 +663,7 @@ export function PrivilegeManager({ privileges, onPrivilegesChange, readOnly = fa
   const getModuleAccessCount = (module: PrivilegeKey) => {
     const modulePrivileges = privileges[module];
     if (!modulePrivileges) return 0;
-    
+
     const moduleInfo = MODULE_DESCRIPTIONS[module];
     return moduleInfo.actions.filter(action => modulePrivileges[action.key]).length;
   };
@@ -376,9 +687,7 @@ export function PrivilegeManager({ privileges, onPrivilegesChange, readOnly = fa
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">
-            {getTotalAccessCount()} permissions granted
-          </Badge>
+          <Badge variant="secondary">{getTotalAccessCount()} permissions granted</Badge>
           {readOnly && (
             <Badge variant="outline" className="text-muted-foreground">
               Read Only
@@ -420,7 +729,7 @@ export function PrivilegeManager({ privileges, onPrivilegesChange, readOnly = fa
                             <h4 className="font-medium">{moduleInfo.title}</h4>
                           </div>
                         </div>
-                        <Badge variant={hasAccess ? "default" : "secondary"}>
+                        <Badge variant={hasAccess ? 'default' : 'secondary'}>
                           {accessCount}/{totalActions}
                         </Badge>
                       </div>
@@ -429,7 +738,7 @@ export function PrivilegeManager({ privileges, onPrivilegesChange, readOnly = fa
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               toggleAllInModule(module, !hasAccess);
                             }}
@@ -447,11 +756,14 @@ export function PrivilegeManager({ privileges, onPrivilegesChange, readOnly = fa
 
                 <CollapsibleContent>
                   <div className="px-4 pb-4 space-y-3">
-                    {moduleInfo.actions.map((action) => {
+                    {moduleInfo.actions.map(action => {
                       const isEnabled = modulePrivileges[action.key] || false;
-                      
+
                       return (
-                        <div key={action.key} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                        <div
+                          key={action.key}
+                          className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
+                        >
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <Label htmlFor={`${module}-${action.key}`} className="font-medium">
@@ -470,7 +782,9 @@ export function PrivilegeManager({ privileges, onPrivilegesChange, readOnly = fa
                           <Switch
                             id={`${module}-${action.key}`}
                             checked={isEnabled}
-                            onCheckedChange={(checked) => updatePrivilege(module, action.key, checked)}
+                            onCheckedChange={checked =>
+                              updatePrivilege(module, action.key, checked)
+                            }
                             disabled={readOnly}
                           />
                         </div>
@@ -494,4 +808,4 @@ export function PrivilegeManager({ privileges, onPrivilegesChange, readOnly = fa
       )}
     </div>
   );
-} 
+}

@@ -188,13 +188,15 @@ query loginOrgEmployee($identifier: String!, $password: String!) {
   orgEmployees(
     where: {
       _and: [
-        { password: { _eq: $password } },
-        { _or: [
-          { email: { _eq: $identifier } },
-          { phone: { _eq: $identifier } },
-          { fullnames: { _eq: $identifier } },
-          { employeeID: { _eq: $identifier } }
-        ]}
+        { password: { _eq: $password } }
+        {
+          _or: [
+            { email: { _eq: $identifier } }
+            { phone: { _eq: $identifier } }
+            { fullnames: { _eq: $identifier } }
+            { employeeID: { _eq: $identifier } }
+          ]
+        }
       ]
     }
   ) {

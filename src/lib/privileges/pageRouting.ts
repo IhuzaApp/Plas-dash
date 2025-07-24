@@ -16,43 +16,121 @@ export interface PageRoute {
 export const PAGE_ROUTES: PageRoute[] = [
   // High Priority - Main dashboards
   { path: '/', module: 'company_dashboard', action: 'access', title: 'Dashboard', priority: 100 },
-  { path: '/pos/company-dashboard', module: 'company_dashboard', action: 'access', title: 'Company Dashboard', priority: 95 },
-  { path: '/pos/shop-dashboard', module: 'shop_dashboard', action: 'access', title: 'Shop Dashboard', priority: 90 },
-  
+  {
+    path: '/pos/company-dashboard',
+    module: 'company_dashboard',
+    action: 'access',
+    title: 'Company Dashboard',
+    priority: 95,
+  },
+  {
+    path: '/pos/shop-dashboard',
+    module: 'shop_dashboard',
+    action: 'access',
+    title: 'Shop Dashboard',
+    priority: 90,
+  },
+
   // POS Operations
   { path: '/pos/checkout', module: 'checkout', action: 'access', title: 'Checkout', priority: 85 },
-  { path: '/pos/inventory', module: 'inventory', action: 'access', title: 'Inventory', priority: 80 },
-  { path: '/pos/transactions', module: 'transactions', action: 'access', title: 'Transactions', priority: 75 },
-  { path: '/pos/discounts', module: 'discounts', action: 'access', title: 'Discounts', priority: 70 },
-  { path: '/pos/financial', module: 'financial_overview', action: 'access', title: 'Financial Overview', priority: 65 },
-  
+  {
+    path: '/pos/inventory',
+    module: 'inventory',
+    action: 'access',
+    title: 'Inventory',
+    priority: 80,
+  },
+  {
+    path: '/pos/transactions',
+    module: 'transactions',
+    action: 'access',
+    title: 'Transactions',
+    priority: 75,
+  },
+  {
+    path: '/pos/discounts',
+    module: 'discounts',
+    action: 'access',
+    title: 'Discounts',
+    priority: 70,
+  },
+  {
+    path: '/pos/financial',
+    module: 'financial_overview',
+    action: 'access',
+    title: 'Financial Overview',
+    priority: 65,
+  },
+
   // Management Pages
   { path: '/orders', module: 'orders', action: 'access', title: 'Orders', priority: 60 },
   { path: '/products', module: 'products', action: 'access', title: 'Products', priority: 55 },
   { path: '/users', module: 'users', action: 'access', title: 'Users', priority: 50 },
   { path: '/shops', module: 'shops', action: 'access', title: 'Shops', priority: 45 },
   { path: '/shoppers', module: 'shoppers', action: 'access', title: 'Shoppers', priority: 40 },
-  
+
   // Financial & Support
-  { path: '/company-wallet', module: 'wallet', action: 'access', title: 'Company Wallet', priority: 35 },
-  { path: '/shopper-wallets', module: 'wallet', action: 'access', title: 'Shopper Wallets', priority: 30 },
+  {
+    path: '/company-wallet',
+    module: 'wallet',
+    action: 'access',
+    title: 'Company Wallet',
+    priority: 35,
+  },
+  {
+    path: '/shopper-wallets',
+    module: 'wallet',
+    action: 'access',
+    title: 'Shopper Wallets',
+    priority: 30,
+  },
   { path: '/refunds', module: 'refunds', action: 'access', title: 'Refunds', priority: 25 },
   { path: '/tickets', module: 'tickets', action: 'access', title: 'Tickets', priority: 20 },
-  
+
   // Settings & Configuration
-  { path: '/promotions', module: 'promotions', action: 'access', title: 'Promotions', priority: 15 },
-  { path: '/delivery-settings', module: 'delivery_settings', action: 'access', title: 'Delivery Settings', priority: 10 },
+  {
+    path: '/promotions',
+    module: 'promotions',
+    action: 'access',
+    title: 'Promotions',
+    priority: 15,
+  },
+  {
+    path: '/delivery-settings',
+    module: 'delivery_settings',
+    action: 'access',
+    title: 'Delivery Settings',
+    priority: 10,
+  },
   { path: '/settings', module: 'settings', action: 'access', title: 'Settings', priority: 5 },
   { path: '/help', module: 'help', action: 'access', title: 'Help', priority: 1 },
-  
+
   // Additional pages that might exist
   { path: '/pos', module: 'company_dashboard', action: 'access', title: 'POS', priority: 88 },
-  { path: '/dashboard', module: 'company_dashboard', action: 'access', title: 'Dashboard', priority: 99 },
+  {
+    path: '/dashboard',
+    module: 'company_dashboard',
+    action: 'access',
+    title: 'Dashboard',
+    priority: 99,
+  },
   { path: '/admin', module: 'company_dashboard', action: 'access', title: 'Admin', priority: 98 },
   { path: '/staff', module: 'staff_management', action: 'access', title: 'Staff', priority: 42 },
   { path: '/customers', module: 'users', action: 'access', title: 'Customers', priority: 48 },
-  { path: '/analytics', module: 'company_dashboard', action: 'access', title: 'Analytics', priority: 67 },
-  { path: '/reports', module: 'company_dashboard', action: 'access', title: 'Reports', priority: 66 },
+  {
+    path: '/analytics',
+    module: 'company_dashboard',
+    action: 'access',
+    title: 'Analytics',
+    priority: 67,
+  },
+  {
+    path: '/reports',
+    module: 'company_dashboard',
+    action: 'access',
+    title: 'Reports',
+    priority: 66,
+  },
 ];
 
 /**
@@ -84,9 +162,7 @@ export const findFirstAccessiblePage = (privileges: UserPrivileges | null): Page
 export const getAccessiblePages = (privileges: UserPrivileges | null): PageRoute[] => {
   if (!privileges) return [];
 
-  return PAGE_ROUTES.filter(page => 
-    hasPrivilege(privileges, page.module, page.action)
-  );
+  return PAGE_ROUTES.filter(page => hasPrivilege(privileges, page.module, page.action));
 };
 
 /**
@@ -100,7 +176,7 @@ export const isPageAccessible = (privileges: UserPrivileges | null, path: string
 
   const page = PAGE_ROUTES.find(route => route.path === path);
   console.log('Checking page accessibility:', { path, pageFound: !!page, page });
-  
+
   if (!page) {
     console.log('Page not found in PAGE_ROUTES, allowing access by default');
     return true; // Allow access to pages not in our routing system
@@ -108,7 +184,7 @@ export const isPageAccessible = (privileges: UserPrivileges | null, path: string
 
   const hasAccess = hasPrivilege(privileges, page.module, page.action);
   console.log('Page access result:', { path, module: page.module, action: page.action, hasAccess });
-  
+
   return hasAccess;
 };
 
@@ -124,7 +200,7 @@ export const getRecommendedLandingPage = (privileges: UserPrivileges | null): Pa
   // Priority order for landing pages
   const landingPageModules: PrivilegeKey[] = [
     'company_dashboard',
-    'shop_dashboard', 
+    'shop_dashboard',
     'checkout',
     'inventory',
     'transactions',
@@ -139,7 +215,7 @@ export const getRecommendedLandingPage = (privileges: UserPrivileges | null): Pa
     'promotions',
     'delivery_settings',
     'settings',
-    'help'
+    'help',
   ];
 
   // Find the first accessible module in priority order
@@ -151,4 +227,4 @@ export const getRecommendedLandingPage = (privileges: UserPrivileges | null): Pa
   }
 
   return null;
-}; 
+};

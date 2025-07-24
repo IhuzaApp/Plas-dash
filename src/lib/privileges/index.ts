@@ -1,24 +1,24 @@
 // Export all privilege-related utilities
 export { getDefaultPrivilegesForRole } from './rolePrivileges';
 export { permissionGroups, type Permission, type PermissionGroup } from './permissionGroups';
-export { 
-  convertCustomPermissionsToPrivileges, 
+export {
+  convertCustomPermissionsToPrivileges,
   convertPrivilegesToOldFormat,
   mergePrivileges,
-  removePrivileges
+  removePrivileges,
 } from './privilegeConverters';
-export { 
-  menuPrivileges, 
-  getMenuPrivilege, 
+export {
+  menuPrivileges,
+  getMenuPrivilege,
   shouldShowMenuItem,
-  type MenuPrivilege 
+  type MenuPrivilege,
 } from './menuPrivileges';
-export { 
-  MODULE_DESCRIPTIONS, 
-  getModuleDescription, 
+export {
+  MODULE_DESCRIPTIONS,
+  getModuleDescription,
   getAllModules,
   type ModuleDescription,
-  type ModuleAction
+  type ModuleAction,
 } from './moduleDescriptions';
 export {
   PAGE_ROUTES,
@@ -26,8 +26,8 @@ export {
   getAccessiblePages,
   isPageAccessible,
   getRecommendedLandingPage,
-  type PageRoute
+  type PageRoute,
 } from './pageRouting';
 
 // Re-export types from the main types file
-export type { UserPrivileges, PrivilegeKey } from '@/types/privileges'; 
+export type { UserPrivileges, PrivilegeKey } from '@/types/privileges';

@@ -295,4 +295,4 @@ export const permissionGroups: PermissionGroup[] = [
       { key: 'view_delivery_reports', label: 'View Delivery Reports' },
     ],
   },
-]; 
+];

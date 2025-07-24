@@ -57,10 +57,10 @@ export const shouldShowMenuItem = (
 ): boolean => {
   const privilege = getMenuPrivilege(menuTitle);
   if (!privilege) return true; // If no privilege defined, allow access
-  
+
   if (privilege.action && hasAction) {
     return hasAction(privilege.module, privilege.action);
   }
-  
+
   return hasModuleAccess(privilege.module);
-}; 
+};

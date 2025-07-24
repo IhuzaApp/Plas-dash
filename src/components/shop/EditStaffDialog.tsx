@@ -33,12 +33,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { OrgEmployee, getPermissionsForRole } from '@/hooks/useHasuraApi';
-import { 
-  UserPrivileges, 
+import {
+  UserPrivileges,
   PrivilegeKey,
   getDefaultPrivilegesForRole,
   permissionGroups,
-  convertCustomPermissionsToPrivileges
+  convertCustomPermissionsToPrivileges,
 } from '@/lib/privileges';
 import { DEFAULT_PRIVILEGES } from '@/types/privileges';
 
@@ -50,23 +50,23 @@ const formSchema = z.object({
   position: z.string().min(1, 'Position is required'),
   active: z.boolean(),
   roleType: z.enum([
-    'globalAdmin', 
-    'systemAdmin', 
-    'storeManager', 
-    'assistantManager', 
-    'cashier', 
-    'salesAssociate', 
-    'inventorySpecialist', 
-    'financeManager', 
-    'accountant', 
-    'kitchenManager', 
-    'chef', 
-    'waiter', 
-    'bartender', 
-    'deliveryDriver', 
-    'securityGuard', 
-    'maintenanceStaff', 
-    'custom'
+    'globalAdmin',
+    'systemAdmin',
+    'storeManager',
+    'assistantManager',
+    'cashier',
+    'salesAssociate',
+    'inventorySpecialist',
+    'financeManager',
+    'accountant',
+    'kitchenManager',
+    'chef',
+    'waiter',
+    'bartender',
+    'deliveryDriver',
+    'securityGuard',
+    'maintenanceStaff',
+    'custom',
   ]),
 });
 
@@ -103,12 +103,12 @@ const PermissionDisplay = ({ privileges }: { privileges: UserPrivileges }) => {
               {group.permissions.map(permission => {
                 const hasAccess = privileges[group.module]?.[permission.key] || false;
                 return (
-                <div key={permission.key} className="flex items-center gap-2">
-                  <div
+                  <div key={permission.key} className="flex items-center gap-2">
+                    <div
                       className={`w-2 h-2 rounded-full ${hasAccess ? 'bg-green-500' : 'bg-gray-300'}`}
-                  />
-                  <span className="text-xs text-muted-foreground">{permission.label}</span>
-                </div>
+                    />
+                    <span className="text-xs text-muted-foreground">{permission.label}</span>
+                  </div>
                 );
               })}
             </div>
@@ -148,8 +148,24 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         position: employee.Position || '',
         active: employee.active ?? true,
         roleType:
-          (employee.roleType as 'globalAdmin' | 'systemAdmin' | 'storeManager' | 'assistantManager' | 'cashier' | 'salesAssociate' | 'inventorySpecialist' | 'financeManager' | 'accountant' | 'kitchenManager' | 'chef' | 'waiter' | 'bartender' | 'deliveryDriver' | 'securityGuard' | 'maintenanceStaff' | 'custom') ||
-          'cashier',
+          (employee.roleType as
+            | 'globalAdmin'
+            | 'systemAdmin'
+            | 'storeManager'
+            | 'assistantManager'
+            | 'cashier'
+            | 'salesAssociate'
+            | 'inventorySpecialist'
+            | 'financeManager'
+            | 'accountant'
+            | 'kitchenManager'
+            | 'chef'
+            | 'waiter'
+            | 'bartender'
+            | 'deliveryDriver'
+            | 'securityGuard'
+            | 'maintenanceStaff'
+            | 'custom') || 'cashier',
       };
 
       form.reset(formData);
