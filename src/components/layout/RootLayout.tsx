@@ -1,10 +1,11 @@
 import React, { createContext, useContext } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Head from 'next/head';
 import { Toaster } from '@/components/ui/toaster';
 import LoadingProvider from './LoadingProvider';
 import LoginModal from '../modals/LoginModal';
 import { UserPrivileges } from '@/types/privileges';
+import { getRecommendedLandingPage, isPageAccessible } from '@/lib/privileges';
 
 interface SessionData {
   id: string;
@@ -68,6 +69,7 @@ const getPageTitle = (pathname: string | null) => {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const pageTitle = getPageTitle(pathname);
   const [session, setSession] = React.useState<SessionData | null>(null);
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
@@ -100,6 +102,33 @@ export default function RootLayout({ children }: RootLayoutProps) {
     }
   }, []);
 
+  // Check if current page is accessible and redirect if not
+  React.useEffect(() => {
+    if (isAuthenticated && session && pathname) {
+      console.log('=== Page Accessibility Check ===');
+      console.log('Current pathname:', pathname);
+      console.log('User privileges:', session.privileges);
+      
+      const currentPageAccessible = isPageAccessible(session.privileges, pathname);
+      console.log('Is current page accessible:', currentPageAccessible);
+      
+      if (!currentPageAccessible) {
+        const recommendedPage = getRecommendedLandingPage(session.privileges);
+        console.log('Recommended page:', recommendedPage);
+        
+        if (recommendedPage && recommendedPage.path !== pathname) {
+          console.log(`🚨 Redirecting from inaccessible page ${pathname} to: ${recommendedPage.path}`);
+          router.push(recommendedPage.path);
+        } else {
+          console.log('✅ No redirect needed - already on recommended page or no recommendation');
+        }
+      } else {
+        console.log('✅ Current page is accessible, no redirect needed');
+      }
+      console.log('=== End Page Accessibility Check ===');
+    }
+  }, [isAuthenticated, session, pathname, router]);
+
   const handleLoginSuccess = (sessionData: SessionData) => {
     // Set session expiration to 8 hours from now
     const expiresAt = Date.now() + 8 * 60 * 60 * 1000;
@@ -107,6 +136,18 @@ export default function RootLayout({ children }: RootLayoutProps) {
     localStorage.setItem('orgEmployeeSession', JSON.stringify(sessionWithExpiry));
     setSession(sessionWithExpiry);
     setIsAuthenticated(true);
+
+    // Only auto-route if current page is not accessible
+    const currentPageAccessible = isPageAccessible(sessionData.privileges, pathname);
+    if (!currentPageAccessible) {
+      const recommendedPage = getRecommendedLandingPage(sessionData.privileges);
+      if (recommendedPage && recommendedPage.path !== pathname) {
+        console.log(`🔄 Login auto-routing to: ${recommendedPage.path} (${recommendedPage.title})`);
+        router.push(recommendedPage.path);
+      }
+    } else {
+      console.log('✅ Login successful - current page is accessible, staying put');
+    }
   };
 
   const handleLogout = () => {

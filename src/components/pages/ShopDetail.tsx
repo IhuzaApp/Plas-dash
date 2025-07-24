@@ -55,6 +55,7 @@ import EditStaffDialog from '@/components/shop/EditStaffDialog';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { hasuraRequest } from '@/lib/hasura';
+import { convertPrivilegesToOldFormat } from '@/lib/privileges';
 
 // Helper function to get GraphQL type for each field
 function getGraphQLType(fieldName: string): string {
@@ -239,7 +240,7 @@ const ShopDetail = () => {
       password: string;
       roleType: string;
     };
-    permissions: string[];
+    privileges: any; // Changed from permissions: string[] to privileges: UserPrivileges
   }) => {
     try {
       // Add employee
@@ -248,11 +249,14 @@ const ShopDetail = () => {
         shop_id: id,
       });
 
+      // Convert new privilege format to old string format for database
+      const oldFormatPermissions = convertPrivilegesToOldFormat(data.privileges);
+
       // Add employee role
       if (result.insert_orgEmployees.returning[0]) {
         await addEmployeeRole.mutateAsync({
           orgEmployeeID: result.insert_orgEmployees.returning[0].id,
-          privillages: data.permissions,
+          privillages: oldFormatPermissions,
         });
       }
 
@@ -281,7 +285,7 @@ const ShopDetail = () => {
       roleType: string;
       active: boolean;
     }>;
-    permissions: string[];
+    privileges: any; // Changed from permissions: string[] to privileges: UserPrivileges
   }) => {
     try {
       // Only update employee if there are changes
@@ -305,10 +309,13 @@ const ShopDetail = () => {
         await hasuraRequest(dynamicMutation, { id: data.id, ...data.employee });
       }
 
+      // Convert new privilege format to old string format for database
+      const oldFormatPermissions = convertPrivilegesToOldFormat(data.privileges);
+
       // Always update employee role (permissions might have changed)
       await updateEmployeeRole.mutateAsync({
         id: data.id,
-        privillages: data.permissions,
+        privillages: oldFormatPermissions,
       });
 
       toast.success('Staff member updated successfully');

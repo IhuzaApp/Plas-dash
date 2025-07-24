@@ -20,6 +20,14 @@ export {
   type ModuleDescription,
   type ModuleAction
 } from './moduleDescriptions';
+export {
+  PAGE_ROUTES,
+  findFirstAccessiblePage,
+  getAccessiblePages,
+  isPageAccessible,
+  getRecommendedLandingPage,
+  type PageRoute
+} from './pageRouting';
 
 // Re-export types from the main types file
 export type { UserPrivileges, PrivilegeKey } from '@/types/privileges'; 
