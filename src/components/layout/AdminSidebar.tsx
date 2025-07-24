@@ -47,6 +47,7 @@ import { usePrivilege } from '@/hooks/usePrivilege';
 import { useAuth } from '@/components/layout/RootLayout';
 import { PrivilegeKey } from '@/types/privileges';
 import { menuPrivileges } from '@/lib/privileges';
+import { usePageAccess } from '@/hooks/usePageAccess';
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
@@ -60,6 +61,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   
   const { hasModuleAccess, hasAnyPrivilege, isSuperUser } = usePrivilege();
   const { logout } = useAuth();
+  const { navigateToPage } = usePageAccess();
 
   // Handle navigation state
   useEffect(() => {
@@ -83,7 +85,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     if (path === pathname) return;
     setIsNavigating(true);
     setNavigatingTo(path);
-    router.push(path);
+    navigateToPage(path);
   };
 
   const handleLogout = () => {
