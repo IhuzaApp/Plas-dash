@@ -17,6 +17,7 @@ import { Search, Filter, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useShoppers } from '@/hooks/useHasuraApi';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Pagination from '@/components/ui/pagination';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 const Shoppers = () => {
   const { data, isLoading, isError, error } = useShoppers();
@@ -24,6 +25,7 @@ const Shoppers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const { hasAction } = usePrivilege();
 
   const getInitials = (name: string) => {
     return name
@@ -80,7 +82,11 @@ const Shoppers = () => {
       <PageHeader
         title="Plasas"
         description="Manage your delivery personnel and track their performance."
-        actions={<Button>Add New Plasa</Button>}
+        actions={
+          hasAction('shoppers', 'add_shoppers') && (
+            <Button>Add New Plasa</Button>
+          )
+        }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -198,11 +204,13 @@ const Shoppers = () => {
                       <span className="capitalize">{shopper.onboarding_step}</span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/shoppers/${shopper.user_id}`}>
-                        <Button variant="ghost" size="sm">
-                          View Profile
-                        </Button>
-                      </Link>
+                      {hasAction('shoppers', 'view_shopper_details') && (
+                        <Link href={`/shoppers/${shopper.user_id}`}>
+                          <Button variant="ghost" size="sm">
+                            View Profile
+                          </Button>
+                        </Link>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

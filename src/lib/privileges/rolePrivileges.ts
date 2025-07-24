@@ -554,5 +554,11 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       break;
   }
 
+  // Ensure all users have at least view access to help center
+  if (privileges.help) {
+    privileges.help.access = true;
+    privileges.help.view_help = true;
+  }
+
   return privileges;
 };
