@@ -33,7 +33,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { OrgEmployee, getPermissionsForRole } from '@/hooks/useHasuraApi';
-import { permissionGroups } from '@/lib/privileges';
+import { 
+  UserPrivileges, 
+  PrivilegeKey,
+  getDefaultPrivilegesForRole,
+  permissionGroups,
+  convertCustomPermissionsToPrivileges
+} from '@/lib/privileges';
+import { DEFAULT_PRIVILEGES } from '@/types/privileges';
 
 const formSchema = z.object({
   fullnames: z.string().min(1, 'Full name is required'),
@@ -42,7 +49,25 @@ const formSchema = z.object({
   Address: z.string().min(1, 'Address is required'),
   position: z.string().min(1, 'Position is required'),
   active: z.boolean(),
-  roleType: z.enum(['globalAdmin', 'systemAdmin', 'basicAdmin', 'custom']),
+  roleType: z.enum([
+    'globalAdmin', 
+    'systemAdmin', 
+    'storeManager', 
+    'assistantManager', 
+    'cashier', 
+    'salesAssociate', 
+    'inventorySpecialist', 
+    'financeManager', 
+    'accountant', 
+    'kitchenManager', 
+    'chef', 
+    'waiter', 
+    'bartender', 
+    'deliveryDriver', 
+    'securityGuard', 
+    'maintenanceStaff', 
+    'custom'
+  ]),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -61,86 +86,13 @@ interface EditStaffDialogProps {
       roleType: string;
       active: boolean;
     }>;
-    permissions: string[];
+    privileges: UserPrivileges;
   }) => void;
   employee: OrgEmployee | null;
 }
 
-// Permission display component
-const PermissionDisplay = ({ permissions }: { permissions: string[] }) => {
-  const permissionGroups = [
-    {
-      title: 'Point of Sale',
-      permissions: [
-        { key: 'dashboard:view', label: 'Company Dashboard' },
-        { key: 'shopDashboard:view', label: 'Shop Dashboard' },
-        { key: 'pos:checkout', label: 'Checkout' },
-        { key: 'inventory:view', label: 'Inventory' },
-        { key: 'transactions:view', label: 'Transactions' },
-        { key: 'discounts:view', label: 'Discounts' },
-        { key: 'financial:view', label: 'Financial Overview' },
-        { key: 'staff:view', label: 'Staff Management' },
-      ],
-    },
-    {
-      title: 'Product Management',
-      permissions: [
-        { key: 'products:view', label: 'View Products' },
-        { key: 'products:create', label: 'Create Products' },
-        { key: 'products:edit', label: 'Edit Products' },
-        { key: 'products:delete', label: 'Delete Products' },
-      ],
-    },
-    {
-      title: 'Order Management',
-      permissions: [
-        { key: 'orders:view', label: 'View Orders' },
-        { key: 'orders:edit', label: 'Edit Orders' },
-        { key: 'orders:delete', label: 'Delete Orders' },
-      ],
-    },
-    {
-      title: 'Customer Management',
-      permissions: [
-        { key: 'customers:view', label: 'View Customers' },
-        { key: 'customers:create', label: 'Create Customers' },
-        { key: 'customers:edit', label: 'Edit Customers' },
-        { key: 'customers:delete', label: 'Delete Customers' },
-      ],
-    },
-    {
-      title: 'Inventory Management',
-      permissions: [
-        { key: 'inventory:view', label: 'View Inventory' },
-        { key: 'inventory:edit', label: 'Edit Inventory' },
-        { key: 'inventory:stock', label: 'Manage Stock' },
-      ],
-    },
-    {
-      title: 'Reports',
-      permissions: [
-        { key: 'reports:view', label: 'View Reports' },
-        { key: 'reports:export', label: 'Export Reports' },
-      ],
-    },
-    {
-      title: 'Settings',
-      permissions: [
-        { key: 'settings:view', label: 'View Settings' },
-        { key: 'settings:edit', label: 'Edit Settings' },
-      ],
-    },
-    {
-      title: 'Staff Management',
-      permissions: [
-        { key: 'staff:view', label: 'View Staff' },
-        { key: 'staff:create', label: 'Create Staff' },
-        { key: 'staff:edit', label: 'Edit Staff' },
-        { key: 'staff:delete', label: 'Delete Staff' },
-      ],
-    },
-  ];
-
+// Permission display component for the new privilege system
+const PermissionDisplay = ({ privileges }: { privileges: UserPrivileges }) => {
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
@@ -148,34 +100,20 @@ const PermissionDisplay = ({ permissions }: { permissions: string[] }) => {
           <div key={group.title} className="space-y-2">
             <h4 className="font-medium text-sm">{group.title}</h4>
             <div className="grid grid-cols-2 gap-2">
-              {group.permissions.map(permission => (
+              {group.permissions.map(permission => {
+                const hasAccess = privileges[group.module]?.[permission.key] || false;
+                return (
                 <div key={permission.key} className="flex items-center gap-2">
                   <div
-                    className={`w-2 h-2 rounded-full ${permissions.includes(permission.key) ? 'bg-green-500' : 'bg-gray-300'}`}
+                      className={`w-2 h-2 rounded-full ${hasAccess ? 'bg-green-500' : 'bg-gray-300'}`}
                   />
                   <span className="text-xs text-muted-foreground">{permission.label}</span>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
-        <div className="space-y-2">
-          <h4 className="font-medium text-sm">System Permissions</h4>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${permissions.includes('systemAdmin') ? 'bg-green-500' : 'bg-gray-300'}`}
-              />
-              <span className="text-xs text-muted-foreground">System Admin</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${permissions.includes('globalAdmin') ? 'bg-green-500' : 'bg-gray-300'}`}
-              />
-              <span className="text-xs text-muted-foreground">Global Admin</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -196,7 +134,7 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
       Address: '',
       position: '',
       active: true,
-      roleType: 'basicAdmin',
+      roleType: 'cashier',
     },
   });
 
@@ -210,8 +148,8 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         position: employee.Position || '',
         active: employee.active ?? true,
         roleType:
-          (employee.roleType as 'globalAdmin' | 'systemAdmin' | 'basicAdmin' | 'custom') ||
-          'basicAdmin',
+          (employee.roleType as 'globalAdmin' | 'systemAdmin' | 'storeManager' | 'assistantManager' | 'cashier' | 'salesAssociate' | 'inventorySpecialist' | 'financeManager' | 'accountant' | 'kitchenManager' | 'chef' | 'waiter' | 'bartender' | 'deliveryDriver' | 'securityGuard' | 'maintenanceStaff' | 'custom') ||
+          'cashier',
       };
 
       form.reset(formData);
@@ -254,13 +192,13 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
       })
     );
 
-    // Get permissions based on role type
-    const permissions = getPermissionsForRole(roleType);
+    // Get privileges based on role type
+    const privileges = getDefaultPrivilegesForRole(roleType);
 
     onSubmit({
       id: employee.id,
       employee: finalChanges,
-      permissions,
+      privileges,
     });
   }
 
@@ -417,10 +355,88 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                               <span>Limited system access</span>
                             </div>
                           </SelectItem>
-                          <SelectItem value="basicAdmin">
+                          <SelectItem value="storeManager">
                             <div className="flex items-center gap-2">
-                              <Badge variant="secondary">Basic Admin</Badge>
-                              <span>Basic operations</span>
+                              <Badge variant="default">Store Manager</Badge>
+                              <span>Full store operations & staff management</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="assistantManager">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">Assistant Manager</Badge>
+                              <span>Store operations with limited staff access</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="cashier">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Cashier</Badge>
+                              <span>POS operations & customer service</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="salesAssociate">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Sales Associate</Badge>
+                              <span>Product sales & customer assistance</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="inventorySpecialist">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Inventory Specialist</Badge>
+                              <span>Stock management & product updates</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="financeManager">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">Finance Manager</Badge>
+                              <span>Financial oversight & accounting</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="accountant">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Accountant</Badge>
+                              <span>Financial records & reports</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="kitchenManager">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">Kitchen Manager</Badge>
+                              <span>Food preparation & kitchen operations</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="chef">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Chef</Badge>
+                              <span>Food preparation & order management</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="waiter">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Waiter</Badge>
+                              <span>Order taking & customer service</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="bartender">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Bartender</Badge>
+                              <span>Drink orders & inventory</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="deliveryDriver">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Delivery Driver</Badge>
+                              <span>Order delivery & basic viewing</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="securityGuard">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Security Guard</Badge>
+                              <span>Basic monitoring access</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="maintenanceStaff">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">Maintenance Staff</Badge>
+                              <span>System maintenance access</span>
                             </div>
                           </SelectItem>
                         </SelectContent>
@@ -443,9 +459,37 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                         ? 'Global Admin'
                         : roleType === 'systemAdmin'
                           ? 'System Admin'
-                          : 'Basic Admin'}
+                          : roleType === 'storeManager'
+                            ? 'Store Manager'
+                            : roleType === 'assistantManager'
+                              ? 'Assistant Manager'
+                              : roleType === 'cashier'
+                                ? 'Cashier'
+                                : roleType === 'salesAssociate'
+                                  ? 'Sales Associate'
+                                  : roleType === 'inventorySpecialist'
+                                    ? 'Inventory Specialist'
+                                    : roleType === 'financeManager'
+                                      ? 'Finance Manager'
+                                      : roleType === 'accountant'
+                                        ? 'Accountant'
+                                        : roleType === 'kitchenManager'
+                                          ? 'Kitchen Manager'
+                                          : roleType === 'chef'
+                                            ? 'Chef'
+                                            : roleType === 'waiter'
+                                              ? 'Waiter'
+                                              : roleType === 'bartender'
+                                                ? 'Bartender'
+                                                : roleType === 'deliveryDriver'
+                                                  ? 'Delivery Driver'
+                                                  : roleType === 'securityGuard'
+                                                    ? 'Security Guard'
+                                                    : roleType === 'maintenanceStaff'
+                                                      ? 'Maintenance Staff'
+                                                      : 'Custom Role'}
                     </h4>
-                    <PermissionDisplay permissions={getPermissionsForRole(roleType)} />
+                    <PermissionDisplay privileges={getDefaultPrivilegesForRole(roleType)} />
                   </div>
                 </div>
               </CardContent>
