@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 interface ShopperActionsProps {
   shopper: any;
@@ -40,6 +41,7 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
   handleReject,
   calculateAverageRating,
 }) => {
+  const { hasAction } = usePrivilege();
   return (
     <div className="flex gap-2">
       <Dialog>
@@ -188,7 +190,7 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
         </DialogContent>
       </Dialog>
 
-      {shopper?.status === 'pending' && (
+      {shopper?.status === 'pending' && hasAction('shoppers', 'edit_shoppers') && (
         <>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -235,7 +237,7 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
           </AlertDialog>
         </>
       )}
-      {shopper?.status === 'approved' && (
+      {shopper?.status === 'approved' && hasAction('shoppers', 'edit_shoppers') && (
         <Button
           variant="outline"
           className="bg-red-50 text-red-600 hover:bg-red-100"
@@ -244,7 +246,9 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
           Suspend Account
         </Button>
       )}
-      <Button>Send Message</Button>
+      {hasAction('shoppers', 'send_message') && (
+        <Button>Send Message</Button>
+      )}
     </div>
   );
 };

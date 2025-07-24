@@ -571,6 +571,240 @@ Only active plasas with completed deliveries in the selected time period are inc
    };
    ```
 
+## 🛡️ Privilege System (RBAC & Fine-Grained Access Control)
+
+### Overview
+
+The Plas Dashboard uses a **fine-grained, role-based access control (RBAC)** system. Each user is assigned a set of privileges that determine which modules, pages, and actions they can access or perform. Privileges are stored as a nested JSON object (`UserPrivileges`) and checked throughout the UI and backend.
+
+---
+
+### Privilege Structure
+
+#### 1. **Privilege Types**
+
+- **Module Privileges**: Each module (e.g., `products`, `orders`, `inventory`) has an `access` flag and a set of action-specific privileges.
+- **Action Privileges**: Each module defines actions (e.g., `view_products`, `add_products`, `edit_products`, `delete_products`).
+
+#### 2. **TypeScript Interfaces**
+
+```typescript
+// src/types/privileges.ts
+
+export interface ModulePrivileges {
+  access: boolean;
+  [key: string]: boolean; // Action-specific privileges
+}
+
+export interface UserPrivileges {
+  products?: ModulePrivileges;
+  orders?: ModulePrivileges;
+  inventory?: ModulePrivileges;
+  // ...all other modules
+}
+```
+
+#### 3. **Default Privileges**
+
+Each module has a default privilege template, e.g.:
+
+```typescript
+export const DEFAULT_PRIVILEGES: UserPrivileges = {
+  products: {
+    access: false,
+    view_products: false,
+    add_products: false,
+    edit_products: false,
+    delete_products: false,
+    import_products: false,
+    export_products: false,
+    manage_categories: false,
+    view_analytics: false,
+  },
+  // ...other modules
+};
+```
+
+---
+
+### Privilege Assignment
+
+#### 1. **Role-Based Privileges**
+
+Default privileges for each role are defined in `src/lib/privileges/rolePrivileges.ts`:
+
+```typescript
+import { UserPrivileges, DEFAULT_PRIVILEGES, PrivilegeKey } from '@/types/privileges';
+
+export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges => {
+  // Start with all privileges set to false
+  const privileges: UserPrivileges = {} as UserPrivileges;
+  Object.keys(DEFAULT_PRIVILEGES).forEach(module => {
+    privileges[module as PrivilegeKey] = { access: false, ...DEFAULT_PRIVILEGES[module as PrivilegeKey] };
+    Object.keys(privileges[module as PrivilegeKey]!).forEach(action => {
+      privileges[module as PrivilegeKey]![action] = false;
+    });
+  });
+
+  switch (roleType) {
+    case 'globalAdmin':
+      // Full access to everything
+      Object.keys(privileges).forEach(module => {
+        Object.keys(privileges[module as PrivilegeKey]!).forEach(action => {
+          privileges[module as PrivilegeKey]![action] = true;
+        });
+      });
+      break;
+    // ...other roles (systemAdmin, cashier, etc.)
+  }
+  return privileges;
+};
+```
+
+- **Custom roles** can be created by toggling privileges in the UI.
+
+#### 2. **Privilege Conversion**
+
+- **Old format (array of strings):** `["products:view_products", "orders:create_orders"]`
+- **New format (nested object):** See `UserPrivileges` above.
+
+Conversion utilities:
+```typescript
+// Convert old array to new object
+convertCustomPermissionsToPrivileges(customPermissions: string[]): UserPrivileges
+
+// Convert new object to old array
+convertPrivilegesToOldFormat(privileges: UserPrivileges): string[]
+```
+
+---
+
+### Privilege Storage & Session
+
+- Privileges are loaded on login and stored in the session (`localStorage` as `orgEmployeeSession`).
+- The session includes user info and their `UserPrivileges` object.
+- The session is provided to the app via `AuthContext` (`src/components/layout/RootLayout.tsx`).
+
+---
+
+### Privilege Checks in the UI
+
+#### 1. **usePrivilege Hook**
+
+Use the `usePrivilege` hook to check privileges in any component:
+
+```typescript
+import { usePrivilege } from '@/hooks/usePrivilege';
+
+const { hasModuleAccess, hasAction } = usePrivilege();
+
+if (hasModuleAccess('products')) {
+  // User can access the products module
+}
+
+if (hasAction('products', 'add_products')) {
+  // User can add products
+}
+```
+
+#### 2. **Common Usage Patterns**
+
+- **Show/hide buttons:**
+  ```tsx
+  {hasAction('products', 'add_products') && (
+    <Button>Add Product</Button>
+  )}
+  ```
+- **Protect routes/pages:**
+  ```tsx
+  if (!hasModuleAccess('orders')) {
+    return <Unauthorized />;
+  }
+  ```
+- **Conditional rendering in tables:**
+  ```tsx
+  {hasAction('orders', 'edit_orders') && (
+    <Button>Edit</Button>
+  )}
+  ```
+
+#### 3. **Convenience Functions**
+
+- `hasModuleAccess(module: PrivilegeKey): boolean`
+- `hasAction(module: PrivilegeKey, action: string): boolean`
+- `hasAnyPrivilege(module: PrivilegeKey): boolean`
+- `isSuperUser(): boolean`
+
+---
+
+### Privilege Management Utilities
+
+- **Merge privileges:**  
+  `mergePrivileges(base, additional): UserPrivileges`
+- **Remove privileges:**  
+  `removePrivileges(base, toRemove): UserPrivileges`
+
+---
+
+### Example: Adding a New Role
+
+1. Define the role in `getDefaultPrivilegesForRole`.
+2. Assign privileges for each module/action.
+3. Use the role in the staff creation/edit dialog.
+
+---
+
+### Example: Protecting a Button
+
+```tsx
+import { usePrivilege } from '@/hooks/usePrivilege';
+const { hasAction } = usePrivilege();
+
+{hasAction('discounts', 'create_discount') && (
+  <Button>New Discount</Button>
+)}
+```
+
+---
+
+### Example: Protecting a Page
+
+```tsx
+import { usePrivilege } from '@/hooks/usePrivilege';
+const { hasModuleAccess } = usePrivilege();
+
+if (!hasModuleAccess('orders')) {
+  return <Unauthorized />;
+}
+```
+
+---
+
+### How Privileges Work (End-to-End)
+
+1. **Role is selected** (or custom privileges are set) when creating/editing a staff member.
+2. **Privileges are generated** using `getDefaultPrivilegesForRole` or custom toggles.
+3. **Privileges are stored** in the database and session.
+4. **On login**, privileges are loaded and provided via `AuthContext`.
+5. **Throughout the app**, `usePrivilege` is used to check privileges and conditionally render UI/actions.
+6. **If a user tries to access a page or action they lack privileges for,** the UI hides the option or redirects them.
+
+---
+
+### Security Note
+
+- **All privileged actions must be checked both in the UI and the backend.**
+- The UI hides actions the user cannot perform, but backend APIs/mutations should also enforce privilege checks.
+
+---
+
+**For more details, see:**
+- `src/types/privileges.ts`
+- `src/lib/privileges/rolePrivileges.ts`
+- `src/hooks/usePrivilege.ts`
+- `src/components/layout/RootLayout.tsx`
+- `src/lib/privileges/privilegeConverters.ts`
+
 ## Contributing
 
 1. Fork the repository

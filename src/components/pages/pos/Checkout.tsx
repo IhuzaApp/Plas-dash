@@ -90,7 +90,7 @@ const Checkout = () => {
   ]);
 
   const [selectedPendingCheckout, setSelectedPendingCheckout] = useState<string | null>(null);
-  const canDeleteOrder = usePrivilege('orders:delete');
+  const { hasAction } = usePrivilege();
 
   const addItem = () => {
     if (barcode.trim()) {
@@ -433,7 +433,7 @@ const Checkout = () => {
                         >
                           <CheckCircle className="h-4 w-4 mr-1" /> Complete
                         </Button>
-                        {canDeleteOrder && (
+                        {hasAction('orders', 'delete_orders') && (
                           <Button
                             size="sm"
                             variant="outline"
