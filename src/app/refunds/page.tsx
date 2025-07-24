@@ -5,7 +5,7 @@ import Refunds from '@/components/pages/Refunds';
 
 export default function RefundsPage() {
   return (
-    <ProtectedRoute requiredPrivilege="refunds:view">
+    <ProtectedRoute requiredPrivilege="refunds" requiredAction="view_refunds">
       <Refunds />
     </ProtectedRoute>
   );

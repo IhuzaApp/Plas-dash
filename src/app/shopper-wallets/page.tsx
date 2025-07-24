@@ -5,7 +5,7 @@ import Wallets from '@/components/pages/Wallets';
 
 export default function ShopperWalletsPage() {
   return (
-    <ProtectedRoute requiredPrivilege="wallet:view">
+    <ProtectedRoute requiredPrivilege="wallet" requiredAction="view_wallets">
       <Wallets />
     </ProtectedRoute>
   );

@@ -5,7 +5,7 @@ import Promotions from '@/components/pages/Promotions';
 
 export default function PromotionsPage() {
   return (
-    <ProtectedRoute requiredPrivilege="promotions:view">
+    <ProtectedRoute requiredPrivilege="promotions" requiredAction="view_promotions">
       <Promotions />
     </ProtectedRoute>
   );
