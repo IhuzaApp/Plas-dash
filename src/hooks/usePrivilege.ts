@@ -1,15 +1,20 @@
 import { useContext } from 'react';
 import { AuthContext } from '@/components/layout/RootLayout';
-import { hasPrivilege, getModulePrivileges, PrivilegeKey, UserPrivileges } from '@/types/privileges';
+import {
+  hasPrivilege,
+  getModulePrivileges,
+  PrivilegeKey,
+  UserPrivileges,
+} from '@/types/privileges';
 
 export function usePrivilege() {
   const authContext = useContext(AuthContext);
   if (!authContext) {
     throw new Error('usePrivilege must be used within an AuthProvider');
   }
-  
+
   const { session } = authContext;
-  
+
   // Check if user has access to a specific module
   const hasModuleAccess = (module: PrivilegeKey): boolean => {
     if (!session?.privileges) return false;
@@ -33,7 +38,7 @@ export function usePrivilege() {
     if (!session?.privileges) return false;
     const modulePrivileges = getModulePrivileges(session.privileges, module);
     if (!modulePrivileges) return false;
-    
+
     // Check if any privilege in the module is true
     return Object.values(modulePrivileges).some(privilege => privilege === true);
   };
@@ -51,13 +56,20 @@ export function usePrivilege() {
   // Check if user has admin/super user privileges (all privileges)
   const isSuperUser = (): boolean => {
     if (!session?.privileges) return false;
-    
+
     // Check if user has access to all major modules
     const majorModules: PrivilegeKey[] = [
-      'checkout', 'staff_management', 'inventory', 'transactions',
-      'orders', 'products', 'users', 'shops', 'shoppers'
+      'checkout',
+      'staff_management',
+      'inventory',
+      'transactions',
+      'orders',
+      'products',
+      'users',
+      'shops',
+      'shoppers',
     ];
-    
+
     return majorModules.every(module => hasPrivilege(session.privileges, module));
   };
 
@@ -69,17 +81,17 @@ export function usePrivilege() {
     getAllPrivileges,
     isAuthenticated,
     isSuperUser,
-    session
+    session,
   };
 }
 
 // Convenience hook for checking specific privileges
 export function useSpecificPrivilege(module: PrivilegeKey, action?: string) {
   const { hasModuleAccess, hasAction } = usePrivilege();
-  
+
   if (action) {
     return hasAction(module, action);
   }
-  
+
   return hasModuleAccess(module);
-} 
+}

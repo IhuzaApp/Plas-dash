@@ -16,10 +16,27 @@ export function PrivilegeDebug() {
   const oldPrivileges = (session as any)?.orgEmployeeRoles?.privillages || [];
 
   const modules: PrivilegeKey[] = [
-    'checkout', 'staff_management', 'inventory', 'transactions', 'discounts',
-    'company_dashboard', 'shop_dashboard', 'financial_overview', 'pos_terminal',
-    'orders', 'products', 'users', 'shops', 'shoppers', 'settings',
-    'refunds', 'tickets', 'help', 'wallet', 'promotions', 'delivery_settings'
+    'checkout',
+    'staff_management',
+    'inventory',
+    'transactions',
+    'discounts',
+    'company_dashboard',
+    'shop_dashboard',
+    'financial_overview',
+    'pos_terminal',
+    'orders',
+    'products',
+    'users',
+    'shops',
+    'shoppers',
+    'settings',
+    'refunds',
+    'tickets',
+    'help',
+    'wallet',
+    'promotions',
+    'delivery_settings',
   ];
 
   const fixPrivileges = () => {
@@ -28,7 +45,7 @@ export function PrivilegeDebug() {
       if (sessionStr) {
         try {
           const sessionData = JSON.parse(sessionStr);
-          
+
           // Create a new privileges object with all access set to true
           const newPrivileges: any = {};
           modules.forEach(module => {
@@ -38,7 +55,7 @@ export function PrivilegeDebug() {
           // Update the session
           const updatedSession = {
             ...sessionData,
-            privileges: newPrivileges
+            privileges: newPrivileges,
           };
 
           localStorage.setItem('orgEmployeeSession', JSON.stringify(updatedSession));
@@ -55,20 +72,17 @@ export function PrivilegeDebug() {
       <Card>
         <CardHeader>
           <CardTitle>Privilege Debug Information</CardTitle>
-          <CardDescription>
-            Current privilege state and debugging information
-          </CardDescription>
+          <CardDescription>Current privilege state and debugging information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          
           {/* Module Access Status */}
           <div>
             <h3 className="font-semibold mb-2">Module Access Status:</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {modules.map(module => (
                 <div key={module} className="flex items-center gap-2 p-2 rounded border">
-                  <Badge variant={hasModuleAccess(module) ? "default" : "secondary"}>
-                    {hasModuleAccess(module) ? "✓" : "✗"}
+                  <Badge variant={hasModuleAccess(module) ? 'default' : 'secondary'}>
+                    {hasModuleAccess(module) ? '✓' : '✗'}
                   </Badge>
                   <span className="text-sm">{module}</span>
                 </div>
@@ -106,14 +120,22 @@ export function PrivilegeDebug() {
           <div>
             <h3 className="font-semibold mb-2">Session Information:</h3>
             <div className="bg-muted p-3 rounded text-sm">
-              <p><strong>User ID:</strong> {session?.id}</p>
-              <p><strong>Email:</strong> {session?.email}</p>
-              <p><strong>Is Super User:</strong> {isSuperUser() ? "Yes" : "No"}</p>
-              <p><strong>Old Privileges Count:</strong> {oldPrivileges.length}</p>
+              <p>
+                <strong>User ID:</strong> {session?.id}
+              </p>
+              <p>
+                <strong>Email:</strong> {session?.email}
+              </p>
+              <p>
+                <strong>Is Super User:</strong> {isSuperUser() ? 'Yes' : 'No'}
+              </p>
+              <p>
+                <strong>Old Privileges Count:</strong> {oldPrivileges.length}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
-} 
+}

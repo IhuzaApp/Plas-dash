@@ -9,27 +9,22 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { ProtectedAction, ProtectedUI } from '@/components/auth/ProtectedRoute';
-import { 
-  ShoppingCart, 
-  Users, 
-  Package, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye, 
+import {
+  ShoppingCart,
+  Users,
+  Package,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
   Lock,
   Unlock,
-  Shield
+  Shield,
 } from 'lucide-react';
 
 export function PrivilegeExample() {
-  const { 
-    hasModuleAccess, 
-    hasAction, 
-    getModulePrivileges, 
-    isSuperUser,
-    getAllPrivileges 
-  } = usePrivilege();
+  const { hasModuleAccess, hasAction, getModulePrivileges, isSuperUser, getAllPrivileges } =
+    usePrivilege();
 
   // Example: Check if user can access checkout module
   const canAccessCheckout = hasModuleAccess('checkout');
@@ -60,35 +55,34 @@ export function PrivilegeExample() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          
           {/* Module Access Status */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center gap-2 p-3 rounded-lg border">
               <ShoppingCart className="h-4 w-4" />
               <div>
                 <p className="font-medium">Checkout Access</p>
-                <Badge variant={canAccessCheckout ? "default" : "secondary"}>
-                  {canAccessCheckout ? "Granted" : "Denied"}
+                <Badge variant={canAccessCheckout ? 'default' : 'secondary'}>
+                  {canAccessCheckout ? 'Granted' : 'Denied'}
                 </Badge>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2 p-3 rounded-lg border">
               <Package className="h-4 w-4" />
               <div>
                 <p className="font-medium">Inventory Access</p>
-                <Badge variant={canAccessInventory ? "default" : "secondary"}>
-                  {canAccessInventory ? "Granted" : "Denied"}
+                <Badge variant={canAccessInventory ? 'default' : 'secondary'}>
+                  {canAccessInventory ? 'Granted' : 'Denied'}
                 </Badge>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2 p-3 rounded-lg border">
               <Users className="h-4 w-4" />
               <div>
                 <p className="font-medium">Staff Management</p>
-                <Badge variant={canAccessStaff ? "default" : "secondary"}>
-                  {canAccessStaff ? "Granted" : "Denied"}
+                <Badge variant={canAccessStaff ? 'default' : 'secondary'}>
+                  {canAccessStaff ? 'Granted' : 'Denied'}
                 </Badge>
               </div>
             </div>
@@ -154,18 +148,18 @@ export function PrivilegeExample() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="product-name">Product Name</Label>
-                  <Input 
-                    id="product-name" 
+                  <Input
+                    id="product-name"
                     placeholder="Enter product name"
                     disabled={!canEditProducts}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="product-price">Price</Label>
-                  <Input 
-                    id="product-price" 
-                    type="number" 
+                  <Input
+                    id="product-price"
+                    type="number"
                     placeholder="0.00"
                     disabled={!canEditProducts}
                   />
@@ -218,26 +212,20 @@ export function PrivilegeExample() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Staff Management</CardTitle>
-              <CardDescription>
-                Example of privilege-based form field control
-              </CardDescription>
+              <CardDescription>Example of privilege-based form field control</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="staff-name">Staff Name</Label>
-                  <Input 
-                    id="staff-name" 
-                    placeholder="Enter staff name"
-                    disabled={!canEditStaff}
-                  />
+                  <Input id="staff-name" placeholder="Enter staff name" disabled={!canEditStaff} />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="staff-email">Email</Label>
-                  <Input 
-                    id="staff-email" 
-                    type="email" 
+                  <Input
+                    id="staff-email"
+                    type="email"
                     placeholder="staff@example.com"
                     disabled={!canEditStaff}
                   />
@@ -267,9 +255,7 @@ export function PrivilegeExample() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Debug Information (Super User Only)</CardTitle>
-                <CardDescription>
-                  Current privilege state for debugging
-                </CardDescription>
+                <CardDescription>Current privilege state for debugging</CardDescription>
               </CardHeader>
               <CardContent>
                 <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto">
@@ -282,4 +268,4 @@ export function PrivilegeExample() {
       </Card>
     </div>
   );
-} 
+}

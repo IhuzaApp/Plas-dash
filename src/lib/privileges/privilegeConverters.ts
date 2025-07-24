@@ -5,9 +5,11 @@ import { UserPrivileges, PrivilegeKey } from '@/types/privileges';
  * @param customPermissions - Array of old permission strings
  * @returns UserPrivileges object with new format
  */
-export const convertCustomPermissionsToPrivileges = (customPermissions: string[]): UserPrivileges => {
+export const convertCustomPermissionsToPrivileges = (
+  customPermissions: string[]
+): UserPrivileges => {
   const privileges: UserPrivileges = {};
-  
+
   // Map old permission format to new privilege format
   const permissionMapping: { [key: string]: { module: PrivilegeKey; action: string } } = {
     'companyDashboard:view': { module: 'company_dashboard', action: 'access' },
@@ -39,7 +41,7 @@ export const convertCustomPermissionsToPrivileges = (customPermissions: string[]
     'staff:edit': { module: 'staff_management', action: 'edit_accounts' },
     'staff:delete': { module: 'staff_management', action: 'delete_staff' },
   };
-  
+
   customPermissions.forEach(permission => {
     const mapping = permissionMapping[permission];
     if (mapping) {
@@ -49,7 +51,7 @@ export const convertCustomPermissionsToPrivileges = (customPermissions: string[]
       privileges[mapping.module]![mapping.action] = true;
     }
   });
-  
+
   return privileges;
 };
 
@@ -60,7 +62,7 @@ export const convertCustomPermissionsToPrivileges = (customPermissions: string[]
  */
 export const convertPrivilegesToOldFormat = (privileges: UserPrivileges): string[] => {
   const oldPermissions: string[] = [];
-  
+
   // Reverse mapping from new format to old format
   const reverseMapping: { [key: string]: { module: string; action: string } } = {
     'company_dashboard.access': { module: 'companyDashboard', action: 'view' },
@@ -92,7 +94,7 @@ export const convertPrivilegesToOldFormat = (privileges: UserPrivileges): string
     'staff_management.edit_accounts': { module: 'staff', action: 'edit' },
     'staff_management.delete_staff': { module: 'staff', action: 'delete' },
   };
-  
+
   Object.keys(privileges).forEach(module => {
     const modulePrivileges = privileges[module as PrivilegeKey];
     if (modulePrivileges) {
@@ -107,7 +109,7 @@ export const convertPrivilegesToOldFormat = (privileges: UserPrivileges): string
       });
     }
   });
-  
+
   return oldPermissions;
 };
 
@@ -117,15 +119,18 @@ export const convertPrivilegesToOldFormat = (privileges: UserPrivileges): string
  * @param additionalPrivileges - Additional privileges to merge
  * @returns Merged privileges object
  */
-export const mergePrivileges = (basePrivileges: UserPrivileges, additionalPrivileges: UserPrivileges): UserPrivileges => {
+export const mergePrivileges = (
+  basePrivileges: UserPrivileges,
+  additionalPrivileges: UserPrivileges
+): UserPrivileges => {
   const merged = { ...basePrivileges };
-  
+
   Object.keys(additionalPrivileges).forEach(module => {
     const moduleKey = module as PrivilegeKey;
     if (!merged[moduleKey]) {
       merged[moduleKey] = {};
     }
-    
+
     const modulePrivileges = additionalPrivileges[moduleKey];
     if (modulePrivileges) {
       Object.keys(modulePrivileges).forEach(action => {
@@ -133,7 +138,7 @@ export const mergePrivileges = (basePrivileges: UserPrivileges, additionalPrivil
       });
     }
   });
-  
+
   return merged;
 };
 
@@ -143,9 +148,12 @@ export const mergePrivileges = (basePrivileges: UserPrivileges, additionalPrivil
  * @param privilegesToRemove - Privileges to remove
  * @returns Privileges object with specified privileges removed
  */
-export const removePrivileges = (privileges: UserPrivileges, privilegesToRemove: UserPrivileges): UserPrivileges => {
+export const removePrivileges = (
+  privileges: UserPrivileges,
+  privilegesToRemove: UserPrivileges
+): UserPrivileges => {
   const result = { ...privileges };
-  
+
   Object.keys(privilegesToRemove).forEach(module => {
     const moduleKey = module as PrivilegeKey;
     if (result[moduleKey]) {
@@ -159,6 +167,6 @@ export const removePrivileges = (privileges: UserPrivileges, privilegesToRemove:
       }
     }
   });
-  
+
   return result;
-}; 
+};

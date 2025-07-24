@@ -35,12 +35,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { RefreshCw, Eye, EyeOff } from 'lucide-react';
-import { 
-  UserPrivileges, 
+import {
+  UserPrivileges,
   PrivilegeKey,
   getDefaultPrivilegesForRole,
   permissionGroups,
-  convertCustomPermissionsToPrivileges
+  convertCustomPermissionsToPrivileges,
 } from '@/lib/privileges';
 import { DEFAULT_PRIVILEGES } from '@/types/privileges';
 
@@ -54,23 +54,23 @@ const formSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   generatePassword: z.boolean().default(false),
   roleType: z.enum([
-    'globalAdmin', 
-    'systemAdmin', 
-    'storeManager', 
-    'assistantManager', 
-    'cashier', 
-    'salesAssociate', 
-    'inventorySpecialist', 
-    'financeManager', 
-    'accountant', 
-    'kitchenManager', 
-    'chef', 
-    'waiter', 
-    'bartender', 
-    'deliveryDriver', 
-    'securityGuard', 
-    'maintenanceStaff', 
-    'custom'
+    'globalAdmin',
+    'systemAdmin',
+    'storeManager',
+    'assistantManager',
+    'cashier',
+    'salesAssociate',
+    'inventorySpecialist',
+    'financeManager',
+    'accountant',
+    'kitchenManager',
+    'chef',
+    'waiter',
+    'bartender',
+    'deliveryDriver',
+    'securityGuard',
+    'maintenanceStaff',
+    'custom',
   ]),
 });
 
@@ -124,12 +124,12 @@ const PermissionDisplay = ({ privileges }: { privileges: UserPrivileges }) => {
               {group.permissions.map(permission => {
                 const hasAccess = privileges[group.module]?.[permission.key] || false;
                 return (
-                <div key={permission.key} className="flex items-center gap-2">
-                  <div
+                  <div key={permission.key} className="flex items-center gap-2">
+                    <div
                       className={`w-2 h-2 rounded-full ${hasAccess ? 'bg-green-500' : 'bg-gray-300'}`}
-                  />
-                  <span className="text-xs text-muted-foreground">{permission.label}</span>
-                </div>
+                    />
+                    <span className="text-xs text-muted-foreground">{permission.label}</span>
+                  </div>
                 );
               })}
             </div>
@@ -147,7 +147,9 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
   shopId,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [customPrivileges, setCustomPrivileges] = useState<UserPrivileges>({ ...DEFAULT_PRIVILEGES });
+  const [customPrivileges, setCustomPrivileges] = useState<UserPrivileges>({
+    ...DEFAULT_PRIVILEGES,
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -188,15 +190,16 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
       ...prev,
       [module]: {
         ...prev[module],
-        [action]: !prev[module]?.[action]
-      }
+        [action]: !prev[module]?.[action],
+      },
     }));
   }
 
   function handleSubmit(values: FormData) {
     const { position, generatePassword, ...employeeData } = values;
     // Use custom privileges if custom role, otherwise use default
-    const privileges = roleType === 'custom' ? customPrivileges : getDefaultPrivilegesForRole(roleType);
+    const privileges =
+      roleType === 'custom' ? customPrivileges : getDefaultPrivilegesForRole(roleType);
     // Hash the password before submitting
     const hashedPassword = bcrypt.hashSync(employeeData.password, 10);
     onSubmit({
@@ -569,7 +572,8 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        Choose a predefined role with preset permissions or select custom to pick specific permissions
+                        Choose a predefined role with preset permissions or select custom to pick
+                        specific permissions
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -590,11 +594,20 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                               <h4 className="font-medium text-sm">{group.title}</h4>
                               <div className="grid grid-cols-1 gap-2">
                                 {group.permissions.map(permission => (
-                                  <div key={permission.key} className="flex items-center justify-between p-2 rounded-lg border">
-                                    <span className="text-sm text-muted-foreground">{permission.label}</span>
+                                  <div
+                                    key={permission.key}
+                                    className="flex items-center justify-between p-2 rounded-lg border"
+                                  >
+                                    <span className="text-sm text-muted-foreground">
+                                      {permission.label}
+                                    </span>
                                     <Switch
-                                      checked={customPrivileges[group.module]?.[permission.key] || false}
-                                      onCheckedChange={() => handlePrivilegeToggle(group.module, permission.key)}
+                                      checked={
+                                        customPrivileges[group.module]?.[permission.key] || false
+                                      }
+                                      onCheckedChange={() =>
+                                        handlePrivilegeToggle(group.module, permission.key)
+                                      }
                                     />
                                   </div>
                                 ))}

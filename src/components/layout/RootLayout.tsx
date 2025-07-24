@@ -108,16 +108,18 @@ export default function RootLayout({ children }: RootLayoutProps) {
       console.log('=== Page Accessibility Check ===');
       console.log('Current pathname:', pathname);
       console.log('User privileges:', session.privileges);
-      
+
       const currentPageAccessible = isPageAccessible(session.privileges, pathname);
       console.log('Is current page accessible:', currentPageAccessible);
-      
+
       if (!currentPageAccessible) {
         const recommendedPage = getRecommendedLandingPage(session.privileges);
         console.log('Recommended page:', recommendedPage);
-        
+
         if (recommendedPage && recommendedPage.path !== pathname) {
-          console.log(`🚨 Redirecting from inaccessible page ${pathname} to: ${recommendedPage.path}`);
+          console.log(
+            `🚨 Redirecting from inaccessible page ${pathname} to: ${recommendedPage.path}`
+          );
           router.push(recommendedPage.path);
         } else {
           console.log('✅ No redirect needed - already on recommended page or no recommendation');
@@ -177,9 +179,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           {!isAuthenticated && (
             <div className="fixed inset-0 z-40 bg-white/30 backdrop-blur-md pointer-events-none" />
           )}
-          {!isAuthenticated && (
-            <LoginModal onLoginSuccess={handleLoginSuccess} />
-          )}
+          {!isAuthenticated && <LoginModal onLoginSuccess={handleLoginSuccess} />}
           <Toaster />
         </div>
       </LoadingProvider>

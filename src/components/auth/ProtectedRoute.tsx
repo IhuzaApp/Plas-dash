@@ -19,22 +19,22 @@ export function ProtectedRoute({
   requiredPrivilege,
   requiredAction,
   fallback,
-  showAccessDenied = true
+  showAccessDenied = true,
 }: ProtectedRouteProps) {
   const { hasModuleAccess, hasAction, isAuthenticated } = usePrivilege();
 
   // If no privilege is required, just check authentication
   if (!requiredPrivilege) {
     if (!isAuthenticated()) {
-      return fallback || (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Alert className="max-w-md">
-            <Lock className="h-4 w-4" />
-            <AlertDescription>
-              Please log in to access this page.
-            </AlertDescription>
-          </Alert>
-        </div>
+      return (
+        fallback || (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Alert className="max-w-md">
+              <Lock className="h-4 w-4" />
+              <AlertDescription>Please log in to access this page.</AlertDescription>
+            </Alert>
+          </div>
+        )
       );
     }
     return <>{children}</>;
@@ -42,7 +42,7 @@ export function ProtectedRoute({
 
   // Check if user has the required privilege
   let hasAccess = false;
-  
+
   if (requiredAction) {
     // Check for specific action within the module
     hasAccess = hasAction(requiredPrivilege, requiredAction);
@@ -53,20 +53,22 @@ export function ProtectedRoute({
 
   if (!hasAccess) {
     if (showAccessDenied) {
-      return fallback || (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Alert className="max-w-md">
-            <Shield className="h-4 w-4" />
-            <AlertDescription>
-              You don't have permission to access this page.
-              {requiredAction && (
-                <span className="block mt-1 text-sm text-muted-foreground">
-                  Required: {requiredPrivilege}.{requiredAction}
-                </span>
-              )}
-            </AlertDescription>
-          </Alert>
-        </div>
+      return (
+        fallback || (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Alert className="max-w-md">
+              <Shield className="h-4 w-4" />
+              <AlertDescription>
+                You don't have permission to access this page.
+                {requiredAction && (
+                  <span className="block mt-1 text-sm text-muted-foreground">
+                    Required: {requiredPrivilege}.{requiredAction}
+                  </span>
+                )}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )
       );
     }
     return null;
@@ -81,7 +83,7 @@ export function ProtectedAction({
   module,
   action,
   fallback,
-  showAccessDenied = false
+  showAccessDenied = false,
 }: {
   children: React.ReactNode;
   module: PrivilegeKey;
@@ -106,7 +108,7 @@ export function ProtectedUI({
   children,
   module,
   action,
-  fallback = null
+  fallback = null,
 }: {
   children: React.ReactNode;
   module: PrivilegeKey;
@@ -123,4 +125,4 @@ export function ProtectedUI({
       {children}
     </ProtectedRoute>
   );
-} 
+}

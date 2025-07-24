@@ -1,10 +1,10 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/layout/RootLayout';
-import { 
-  isPageAccessible, 
-  getRecommendedLandingPage, 
+import {
+  isPageAccessible,
+  getRecommendedLandingPage,
   getAccessiblePages,
-  type PageRoute 
+  type PageRoute,
 } from '@/lib/privileges';
 
 /**
@@ -53,11 +53,11 @@ export const usePageAccess = (currentPath?: string) => {
     hasAnyPageAccess,
     recommendedPage,
     accessiblePages,
-    
+
     // Actions
     navigateToRecommended,
     navigateToPage,
-    
+
     // Utilities
     isPageAccessible: (path: string) => isPageAccessible(session?.privileges || null, path),
   };
@@ -80,4 +80,4 @@ export const useAccessiblePages = (): PageRoute[] => {
 export const usePageAccessibility = (path: string): boolean => {
   const { session } = useAuth();
   return isPageAccessible(session?.privileges || null, path);
-}; 
+};

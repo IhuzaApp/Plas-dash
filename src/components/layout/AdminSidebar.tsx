@@ -58,7 +58,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
-  
+
   const { hasModuleAccess, hasAnyPrivilege, isSuperUser } = usePrivilege();
   const { logout } = useAuth();
   const { navigateToPage } = usePageAccess();
@@ -163,7 +163,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
           items: section.items.filter(item => {
             const privilege = menuPrivileges[item.title];
             if (!privilege) return true; // If no privilege defined, allow access
-            
+
             // Check if user has access to the module
             return hasModuleAccess(privilege.module);
           }),
@@ -171,28 +171,29 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         .filter(section => section.items.length > 0);
 
   // Check if user has access to any module (for sidebar visibility)
-  const hasAnyModuleAccess = isSuperUser() || 
-                            hasModuleAccess('checkout') ||
-                            hasModuleAccess('orders') ||
-                            hasModuleAccess('products') ||
-                            hasModuleAccess('users') ||
-                            hasModuleAccess('shops') ||
-                            hasModuleAccess('shoppers') ||
-                            hasModuleAccess('company_dashboard') ||
-                            hasModuleAccess('shop_dashboard') ||
-                            hasModuleAccess('inventory') ||
-                            hasModuleAccess('transactions') ||
-                            hasModuleAccess('discounts') ||
-                            hasModuleAccess('financial_overview') ||
-                            hasModuleAccess('pos_terminal') ||
-                            hasModuleAccess('staff_management') ||
-                            hasModuleAccess('wallet') ||
-                            hasModuleAccess('refunds') ||
-                            hasModuleAccess('tickets') ||
-                            hasModuleAccess('help') ||
-                            hasModuleAccess('settings') ||
-                            hasModuleAccess('promotions') ||
-                            hasModuleAccess('delivery_settings');
+  const hasAnyModuleAccess =
+    isSuperUser() ||
+    hasModuleAccess('checkout') ||
+    hasModuleAccess('orders') ||
+    hasModuleAccess('products') ||
+    hasModuleAccess('users') ||
+    hasModuleAccess('shops') ||
+    hasModuleAccess('shoppers') ||
+    hasModuleAccess('company_dashboard') ||
+    hasModuleAccess('shop_dashboard') ||
+    hasModuleAccess('inventory') ||
+    hasModuleAccess('transactions') ||
+    hasModuleAccess('discounts') ||
+    hasModuleAccess('financial_overview') ||
+    hasModuleAccess('pos_terminal') ||
+    hasModuleAccess('staff_management') ||
+    hasModuleAccess('wallet') ||
+    hasModuleAccess('refunds') ||
+    hasModuleAccess('tickets') ||
+    hasModuleAccess('help') ||
+    hasModuleAccess('settings') ||
+    hasModuleAccess('promotions') ||
+    hasModuleAccess('delivery_settings');
 
   // If no module access, return empty sidebar
   if (!hasAnyModuleAccess) {
