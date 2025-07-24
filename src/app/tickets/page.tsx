@@ -5,7 +5,7 @@ import Tickets from '@/components/pages/Tickets';
 
 export default function TicketsPage() {
   return (
-    <ProtectedRoute requiredPrivilege="tickets:view">
+    <ProtectedRoute requiredPrivilege="tickets" requiredAction="view_tickets">
       <Tickets />
     </ProtectedRoute>
   );

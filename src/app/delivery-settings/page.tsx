@@ -5,7 +5,7 @@ import DeliverySettings from '@/components/pages/DeliverySettings';
 
 export default function DeliverySettingsPage() {
   return (
-    <ProtectedRoute requiredPrivilege="settings:view">
+    <ProtectedRoute requiredPrivilege="delivery_settings" requiredAction="view_delivery_settings">
       <DeliverySettings />
     </ProtectedRoute>
   );
