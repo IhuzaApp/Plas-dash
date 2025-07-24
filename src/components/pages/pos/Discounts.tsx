@@ -15,6 +15,7 @@ import { Tag, Plus, Edit, Trash, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 interface Discount {
   id: string;
@@ -28,6 +29,7 @@ interface Discount {
 }
 
 const Discounts = () => {
+  const { hasAction } = usePrivilege();
   const discounts: Discount[] = [
     {
       id: '1',
@@ -124,10 +126,12 @@ const Discounts = () => {
         description="Manage promotional discounts and offers"
         icon={<Tag className="h-6 w-6" />}
         actions={
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Discount
-          </Button>
+          hasAction('discounts', 'create_discount') && (
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Discount
+            </Button>
+          )
         }
       />
 
@@ -164,12 +168,16 @@ const Discounts = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive">
-                          <Trash className="h-4 w-4" />
-                        </Button>
+                        {hasAction('discounts', 'edit_discount') && (
+                          <Button variant="ghost" size="icon">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {hasAction('discounts', 'delete_discount') && (
+                          <Button variant="ghost" size="icon" className="text-destructive">
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

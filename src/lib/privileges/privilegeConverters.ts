@@ -60,58 +60,17 @@ export const convertCustomPermissionsToPrivileges = (
  * @param privileges - UserPrivileges object in new format
  * @returns Array of old permission strings
  */
-export const convertPrivilegesToOldFormat = (privileges: UserPrivileges): string[] => {
-  const oldPermissions: string[] = [];
-
-  // Reverse mapping from new format to old format
-  const reverseMapping: { [key: string]: { module: string; action: string } } = {
-    'company_dashboard.access': { module: 'companyDashboard', action: 'view' },
-    'shop_dashboard.access': { module: 'shopDashboard', action: 'view' },
-    'checkout.access': { module: 'checkout', action: 'view' },
-    'inventory.access': { module: 'inventory', action: 'view' },
-    'transactions.access': { module: 'transactions', action: 'view' },
-    'discounts.access': { module: 'discounts', action: 'view' },
-    'financial_overview.access': { module: 'financial', action: 'view' },
-    'staff_management.access': { module: 'staff', action: 'view' },
-    'products.access': { module: 'products', action: 'view' },
-    'products.add_products': { module: 'products', action: 'create' },
-    'products.edit_products': { module: 'products', action: 'edit' },
-    'products.delete_products': { module: 'products', action: 'delete' },
-    'orders.access': { module: 'orders', action: 'view' },
-    'orders.edit_orders': { module: 'orders', action: 'edit' },
-    'orders.delete_orders': { module: 'orders', action: 'delete' },
-    'users.access': { module: 'customers', action: 'view' },
-    'users.add_users': { module: 'customers', action: 'create' },
-    'users.edit_users': { module: 'customers', action: 'edit' },
-    'users.delete_users': { module: 'customers', action: 'delete' },
-    'inventory.edit_products': { module: 'inventory', action: 'edit' },
-    'inventory.update_stock': { module: 'inventory', action: 'stock' },
-    'company_dashboard.view_reports': { module: 'reports', action: 'view' },
-    'company_dashboard.export_reports': { module: 'reports', action: 'export' },
-    'settings.access': { module: 'settings', action: 'view' },
-    'settings.edit_settings': { module: 'settings', action: 'edit' },
-    'staff_management.add_new_staff': { module: 'staff', action: 'create' },
-    'staff_management.edit_accounts': { module: 'staff', action: 'edit' },
-    'staff_management.delete_staff': { module: 'staff', action: 'delete' },
-  };
-
-  Object.keys(privileges).forEach(module => {
-    const modulePrivileges = privileges[module as PrivilegeKey];
-    if (modulePrivileges) {
-      Object.keys(modulePrivileges).forEach(action => {
-        if (modulePrivileges[action]) {
-          const key = `${module}.${action}`;
-          const mapping = reverseMapping[key];
-          if (mapping) {
-            oldPermissions.push(`${mapping.module}:${mapping.action}`);
-          }
-        }
-      });
-    }
+export function convertPrivilegesToOldFormat(privileges: Record<string, any>): string[] {
+  const result: string[] = [];
+  Object.entries(privileges).forEach(([module, actions]) => {
+    Object.entries(actions || {}).forEach(([action, value]) => {
+      if (value === true) {
+        result.push(`${module}:${action}`);
+      }
+    });
   });
-
-  return oldPermissions;
-};
+  return result;
+}
 
 /**
  * Merge two privilege objects

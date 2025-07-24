@@ -56,6 +56,7 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { hasuraRequest } from '@/lib/hasura';
 import { convertPrivilegesToOldFormat } from '@/lib/privileges';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 // Helper function to get GraphQL type for each field
 function getGraphQLType(fieldName: string): string {
@@ -143,6 +144,7 @@ const ShopDetail = () => {
   const updateProduct = useUpdateProduct();
   const { data: configData } = useSystemConfig();
   const config = configData?.System_configuratioins[0];
+  const { hasAction } = usePrivilege();
 
   // Staff management hooks
   const { data: employeesData, refetch: refetchEmployees } = useEmployeesByShop(id);
@@ -410,16 +412,20 @@ const ShopDetail = () => {
         description={`View and manage details for ${shop.name}`}
         actions={
           <div className="flex gap-2">
-            <Button onClick={() => setIsAddProductOpen(true)} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" /> Add Product
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsImportOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <FileUp className="h-4 w-4" /> Import Products
-            </Button>
+            {hasAction('products', 'add_products') && (
+              <Button onClick={() => setIsAddProductOpen(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Add Product
+              </Button>
+            )}
+            {hasAction('products', 'import_products') && (
+              <Button
+                variant="outline"
+                onClick={() => setIsImportOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <FileUp className="h-4 w-4" /> Import Products
+              </Button>
+            )}
           </div>
         }
       />
@@ -568,13 +574,26 @@ const ShopDetail = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditProduct(product)}
-                          >
-                            Edit
-                          </Button>
+                          {hasAction('products', 'edit_products') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditProduct(product)}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                          {hasAction('products', 'delete_products') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteProduct(product)}
+                              className="text-orange-600 hover:text-orange-700"
+                              title="Deactivate product"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))
@@ -721,7 +740,9 @@ const ShopDetail = () => {
                       </TableRow>
                     ) : (
                       currentStaff.map(employee => {
-                        const permissions = employee.orgEmployeeRoles[0]?.privillages || [];
+                        const permissions = Array.isArray(employee.orgEmployeeRoles) && employee.orgEmployeeRoles[0]
+                          ? employee.orgEmployeeRoles[0].privillages || []
+                          : [];
                         let roleBadge = employee.roleType || 'Custom';
                         let roleVariant: 'default' | 'secondary' | 'destructive' | 'outline' =
                           'outline';

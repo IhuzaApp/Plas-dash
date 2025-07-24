@@ -56,6 +56,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 interface InventoryItem {
   id: string;
@@ -329,6 +330,8 @@ const Inventory = () => {
     }).format(amount);
   };
 
+  const { hasAction } = usePrivilege();
+
   return (
     <AdminLayout>
       <PageHeader
@@ -337,18 +340,24 @@ const Inventory = () => {
         icon={<ShoppingBag className="h-6 w-6" />}
         actions={
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-              <Import className="mr-2 h-4 w-4" />
-              Import Products
-            </Button>
-            <Button variant="outline" onClick={handleExportTemplate}>
-              <Download className="mr-2 h-4 w-4" />
-              Export Template
-            </Button>
-            <Button onClick={() => setIsAddProductOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
-            </Button>
+            {hasAction('inventory', 'import_products') && (
+              <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                <Import className="mr-2 h-4 w-4" />
+                Import Products
+              </Button>
+            )}
+            {hasAction('inventory', 'export_products') && (
+              <Button variant="outline" onClick={handleExportTemplate}>
+                <Download className="mr-2 h-4 w-4" />
+                Export Template
+              </Button>
+            )}
+            {hasAction('inventory', 'add_products') && (
+              <Button onClick={() => setIsAddProductOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Product
+              </Button>
+            )}
           </div>
         }
       />
@@ -439,17 +448,21 @@ const Inventory = () => {
                           >
                             <ScanQrCode className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(item)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive"
-                            onClick={() => openDeleteDialog(item.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {hasAction('inventory', 'edit_products') && (
+                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(item)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {hasAction('inventory', 'delete_products') && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive"
+                              onClick={() => openDeleteDialog(item.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

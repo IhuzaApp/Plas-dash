@@ -202,6 +202,15 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
       roleType === 'custom' ? customPrivileges : getDefaultPrivilegesForRole(roleType);
     // Hash the password before submitting
     const hashedPassword = bcrypt.hashSync(employeeData.password, 10);
+    // Debug: Log privileges and converted array
+    if (process.env.NODE_ENV !== 'production') {
+      // Only log in dev
+      const { convertPrivilegesToOldFormat } = require('@/lib/privileges');
+      // Print the privileges object
+      console.log('DEBUG: Privileges object for role', roleType, privileges);
+      // Print the converted array
+      console.log('DEBUG: Old format array for role', roleType, convertPrivilegesToOldFormat(privileges));
+    }
     onSubmit({
       employee: {
         ...employeeData,

@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import UserDetailsDrawer from '@/components/drawers/UserDetailsDrawer';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 // Add styles for the highlight effect
 const styles = `
@@ -35,6 +36,7 @@ const Users = () => {
   const [pageSize, setPageSize] = useState(10);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { hasAction } = usePrivilege();
 
   // Calculate user statistics
   const totalUsers = users.length;
@@ -110,8 +112,12 @@ const Users = () => {
         description="View and manage user accounts."
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">Export</Button>
-            <Button>Add User</Button>
+            {hasAction('users', 'export_users') && (
+              <Button variant="outline">Export</Button>
+            )}
+            {hasAction('users', 'add_users') && (
+              <Button>Add User</Button>
+            )}
           </div>
         }
       />
