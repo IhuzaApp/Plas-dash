@@ -5,7 +5,7 @@ import FinancialOverview from '@/components/pages/pos/FinancialOverview';
 
 export default function FinancialOverviewPage() {
   return (
-    <ProtectedRoute requiredPrivilege="financial:view">
+    <ProtectedRoute requiredPrivilege="financial_overview">
       <FinancialOverview />
     </ProtectedRoute>
   );

@@ -5,7 +5,7 @@ import Inventory from '@/components/pages/pos/Inventory';
 
 export default function InventoryPage() {
   return (
-    <ProtectedRoute requiredPrivilege="inventory:view">
+    <ProtectedRoute requiredPrivilege="inventory">
       <Inventory />
     </ProtectedRoute>
   );

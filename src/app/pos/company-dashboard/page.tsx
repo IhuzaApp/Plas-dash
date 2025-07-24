@@ -5,7 +5,7 @@ import CompanyDashboard from '@/components/pages/pos/CompanyDashboard';
 
 export default function CompanyDashboardPage() {
   return (
-    <ProtectedRoute requiredPrivilege="companyDashboard:view">
+    <ProtectedRoute requiredPrivilege="company_dashboard">
       <CompanyDashboard />
     </ProtectedRoute>
   );

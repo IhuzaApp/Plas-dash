@@ -5,7 +5,7 @@ import StaffLogin from '@/components/pages/pos/StaffLogin';
 
 export default function StaffPage() {
   return (
-    <ProtectedRoute requiredPrivilege="staff:view">
+    <ProtectedRoute requiredPrivilege="staff_management">
       <StaffLogin />
     </ProtectedRoute>
   );

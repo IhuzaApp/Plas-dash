@@ -5,7 +5,7 @@ import Checkout from '@/components/pages/pos/Checkout';
 
 export default function CheckoutPage() {
   return (
-    <ProtectedRoute requiredPrivilege="checkout:view">
+    <ProtectedRoute requiredPrivilege="checkout">
       <Checkout />
     </ProtectedRoute>
   );
