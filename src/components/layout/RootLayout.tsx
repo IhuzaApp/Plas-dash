@@ -1,9 +1,39 @@
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 import { usePathname } from 'next/navigation';
 import Head from 'next/head';
 import { Toaster } from '@/components/ui/toaster';
 import LoadingProvider from './LoadingProvider';
 import LoginModal from '../modals/LoginModal';
+import { UserPrivileges } from '@/types/privileges';
+
+interface SessionData {
+  id: string;
+  username: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  privileges: UserPrivileges;
+  expiresAt: number;
+}
+
+interface AuthContextType {
+  session: SessionData | null;
+  isAuthenticated: boolean;
+  login: (sessionData: SessionData) => void;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export { AuthContext };
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -39,6 +69,7 @@ const getPageTitle = (pathname: string | null) => {
 export default function RootLayout({ children }: RootLayoutProps) {
   const pathname = usePathname();
   const pageTitle = getPageTitle(pathname);
+  const [session, setSession] = React.useState<SessionData | null>(null);
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
 
   React.useEffect(() => {
@@ -47,33 +78,52 @@ export default function RootLayout({ children }: RootLayoutProps) {
     console.log('orgEmployeeSession:', sessionStr);
     if (sessionStr) {
       try {
-        const session = JSON.parse(sessionStr);
+        const sessionData = JSON.parse(sessionStr);
         const now = Date.now();
-        const expiresAt = session.expiresAt || 0;
+        const expiresAt = sessionData.expiresAt || 0;
         if (expiresAt && now < expiresAt) {
+          setSession(sessionData);
           setIsAuthenticated(true);
         } else {
           localStorage.removeItem('orgEmployeeSession');
+          setSession(null);
           setIsAuthenticated(false);
         }
       } catch {
         localStorage.removeItem('orgEmployeeSession');
+        setSession(null);
         setIsAuthenticated(false);
       }
     } else {
+      setSession(null);
       setIsAuthenticated(false);
     }
   }, []);
 
-  const handleLoginSuccess = (sessionData: any) => {
+  const handleLoginSuccess = (sessionData: SessionData) => {
     // Set session expiration to 8 hours from now
     const expiresAt = Date.now() + 8 * 60 * 60 * 1000;
-    localStorage.setItem('orgEmployeeSession', JSON.stringify({ ...sessionData, expiresAt }));
+    const sessionWithExpiry = { ...sessionData, expiresAt };
+    localStorage.setItem('orgEmployeeSession', JSON.stringify(sessionWithExpiry));
+    setSession(sessionWithExpiry);
     setIsAuthenticated(true);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('orgEmployeeSession');
+    setSession(null);
+    setIsAuthenticated(false);
+  };
+
+  const authValue: AuthContextType = {
+    session,
+    isAuthenticated,
+    login: handleLoginSuccess,
+    logout: handleLogout,
+  };
+
   return (
-    <>
+    <AuthContext.Provider value={authValue}>
       <Head>
         <title key="title">{pageTitle}</title>
         <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
@@ -92,6 +142,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <Toaster />
         </div>
       </LoadingProvider>
-    </>
+    </AuthContext.Provider>
   );
 }

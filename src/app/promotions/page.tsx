@@ -1,7 +1,12 @@
 'use client';
 
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import Promotions from '@/components/pages/Promotions';
 
 export default function PromotionsPage() {
-  return <Promotions />;
+  return (
+    <ProtectedRoute requiredPrivilege="promotions:view">
+      <Promotions />
+    </ProtectedRoute>
+  );
 }

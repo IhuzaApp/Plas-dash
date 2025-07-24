@@ -43,46 +43,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { usePrivilege } from '@/hooks/usePrivilege';
+import { useAuth } from '@/components/layout/RootLayout';
+import { PrivilegeKey } from '@/types/privileges';
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
 }
-
-const handleLogout = () => {
-  localStorage.removeItem('orgEmployeeSession');
-  window.location.reload();
-};
 
 const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
-
-  // Get orgEmployee session, roleType, and privillages
-  let roleType = undefined;
-  let privillages: string[] = [];
-  let session = undefined;
-  if (typeof window !== 'undefined') {
-    const sessionStr = localStorage.getItem('orgEmployeeSession');
-    if (sessionStr) {
-      try {
-        session = JSON.parse(sessionStr);
-        roleType = session.roleType;
-        // Support both array and object for orgEmployeeRoles
-        if (session.orgEmployeeRoles) {
-          if (Array.isArray(session.orgEmployeeRoles)) {
-            privillages = session.orgEmployeeRoles[0]?.privillages || [];
-          } else if (session.orgEmployeeRoles.privillages) {
-            privillages = session.orgEmployeeRoles.privillages;
-          }
-        }
-      } catch {}
-    }
-  }
-  console.log('Sidebar Debug - session:', session);
-  console.log('Sidebar Debug - roleType:', roleType);
-  console.log('Sidebar Debug - privillages:', privillages);
+  
+  const { hasModuleAccess, hasAnyPrivilege, isSuperUser } = usePrivilege();
+  const { logout } = useAuth();
 
   // Handle navigation state
   useEffect(() => {
@@ -107,6 +83,11 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     setIsNavigating(true);
     setNavigatingTo(path);
     router.push(path);
+  };
+
+  const handleLogout = () => {
+    logout();
+    window.location.reload();
   };
 
   const menuItems = [
@@ -168,55 +149,97 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     },
   ];
 
-  // Map menu items to required privileges
-  const menuPrivileges: Record<string, string> = {
-    Dashboard: 'dashboard:view',
-    Orders: 'orders:view',
-    Plasas: 'shoppers:view',
-    Customers: 'customers:view',
-    Shops: 'shops:view',
-    Products: 'products:view',
-    'Company Dashboard': 'companyDashboard:view',
-    'Shop Dashboard': 'shopDashboard:view',
-    Checkout: 'checkout:view',
-    Inventory: 'inventory:view',
-    Transactions: 'transactions:view',
-    Discounts: 'discounts:view',
-    'Financial Overview': 'financial:view',
-    'Staff Management': 'staff:view',
-    'Company Wallet': 'wallet:view',
-    'Plasa Wallets': 'wallet:view',
-    'Refund Claims': 'refunds:view',
-    Tickets: 'tickets:view',
-    'Help Center': 'help:view',
-    'Delivery Settings': 'settings:view',
-    Promotions: 'promotions:view',
-    'System Settings': 'settings:edit',
-    // Section-level privileges
-    'Support & Help': 'support:view',
-    Settings: 'settings:view',
-    Finance: 'finance:view',
-    Operations: 'operations:view',
-    Overview: 'dashboard:view',
-    // Add more as needed
+  // Map menu items to required privileges using new fine-grained system
+  const menuPrivileges: Record<string, { module: PrivilegeKey; action?: string }> = {
+    Dashboard: { module: 'company_dashboard' },
+    Orders: { module: 'orders' },
+    Plasas: { module: 'shoppers' },
+    Customers: { module: 'users' },
+    Shops: { module: 'shops' },
+    Products: { module: 'products' },
+    'Company Dashboard': { module: 'company_dashboard' },
+    'Shop Dashboard': { module: 'shop_dashboard' },
+    Checkout: { module: 'checkout' },
+    Inventory: { module: 'inventory' },
+    Transactions: { module: 'transactions' },
+    Discounts: { module: 'discounts' },
+    'Financial Overview': { module: 'financial_overview' },
+    'Staff Management': { module: 'staff_management' },
+    'Company Wallet': { module: 'wallet' },
+    'Plasa Wallets': { module: 'wallet' },
+    'Refund Claims': { module: 'refunds' },
+    Tickets: { module: 'tickets' },
+    'Help Center': { module: 'help' },
+    'Delivery Settings': { module: 'delivery_settings' },
+    Promotions: { module: 'promotions' },
+    'System Settings': { module: 'settings' },
   };
 
-  // Filter menu items by privillages, but allow globalAdmin to see everything
-  const filteredMenuItems =
-    roleType === 'globalAdmin'
-      ? menuItems
-      : privillages.includes('sidebar:view')
-        ? menuItems
-            .map(section => ({
-              ...section,
-              items: section.items.filter(item => {
-                const required = menuPrivileges[item.title] || menuPrivileges[section.section];
-                return !required || privillages.includes(required);
-              }),
-            }))
-            .filter(section => section.items.length > 0)
-        : [];
-  console.log('Sidebar Debug - filteredMenuItems:', filteredMenuItems);
+  // Filter menu items by privileges using new system
+  const filteredMenuItems = isSuperUser()
+    ? menuItems
+    : menuItems
+        .map(section => ({
+          ...section,
+          items: section.items.filter(item => {
+            const privilege = menuPrivileges[item.title];
+            if (!privilege) return true; // If no privilege defined, allow access
+            
+            // Check if user has access to the module
+            return hasModuleAccess(privilege.module);
+          }),
+        }))
+        .filter(section => section.items.length > 0);
+
+  // Check if user has access to any module (for sidebar visibility)
+  const hasAnyModuleAccess = isSuperUser() || 
+                            hasModuleAccess('checkout') ||
+                            hasModuleAccess('orders') ||
+                            hasModuleAccess('products') ||
+                            hasModuleAccess('users') ||
+                            hasModuleAccess('shops') ||
+                            hasModuleAccess('shoppers') ||
+                            hasModuleAccess('company_dashboard') ||
+                            hasModuleAccess('shop_dashboard') ||
+                            hasModuleAccess('inventory') ||
+                            hasModuleAccess('transactions') ||
+                            hasModuleAccess('discounts') ||
+                            hasModuleAccess('financial_overview') ||
+                            hasModuleAccess('pos_terminal') ||
+                            hasModuleAccess('staff_management') ||
+                            hasModuleAccess('wallet') ||
+                            hasModuleAccess('refunds') ||
+                            hasModuleAccess('tickets') ||
+                            hasModuleAccess('help') ||
+                            hasModuleAccess('settings') ||
+                            hasModuleAccess('promotions') ||
+                            hasModuleAccess('delivery_settings');
+
+  // If no module access, return empty sidebar
+  if (!hasAnyModuleAccess) {
+    return (
+      <Sidebar
+        className={cn(
+          'fixed left-0 top-0 bottom-0 z-40 transition-all duration-300',
+          isSidebarOpen ? 'w-64' : 'w-20',
+          'border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'
+        )}
+      >
+        <SidebarHeader className="h-14 flex items-center px-4 border-b">
+          <div className="flex items-center justify-center w-full">
+            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold">
+              P
+            </div>
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="px-2">
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            No access to any modules
+          </div>
+        </SidebarContent>
+      </Sidebar>
+    );
+  }
 
   const renderMenuItem = (item: any) => {
     const isActive = pathname === item.path;

@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 interface CartItem {
   id: string;
@@ -89,6 +90,7 @@ const Checkout = () => {
   ]);
 
   const [selectedPendingCheckout, setSelectedPendingCheckout] = useState<string | null>(null);
+  const canDeleteOrder = usePrivilege('orders:delete');
 
   const addItem = () => {
     if (barcode.trim()) {
@@ -431,6 +433,16 @@ const Checkout = () => {
                         >
                           <CheckCircle className="h-4 w-4 mr-1" /> Complete
                         </Button>
+                        {canDeleteOrder && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive"
+                            onClick={() => completePendingCheckout(checkout.id)}
+                          >
+                            <Trash className="h-4 w-4 mr-1" /> Delete
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
