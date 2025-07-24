@@ -18,12 +18,14 @@ import { useProducts, useAddProduct, useSystemConfig } from '@/hooks/useHasuraAp
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import AddProductDialog from '@/components/shop/AddProductDialog';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 const Products = () => {
   const { data, isLoading, isError, error, refetch } = useProducts();
   const { data: systemConfig } = useSystemConfig();
   const products = data?.Products || [];
   const addProduct = useAddProduct();
+  const { hasAction } = usePrivilege();
 
   const [isScanning, setIsScanning] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -120,9 +122,16 @@ const Products = () => {
         title="Products"
         description="Manage products across all shops."
         actions={
-          <Button onClick={() => setIsAddProductOpen(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" /> Add New Product
-          </Button>
+          <>
+            {hasAction('products', 'add_products') && (
+              <Button onClick={() => setIsAddProductOpen(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Add New Product
+              </Button>
+            )}
+            <Button variant="outline" className="flex items-center gap-2">
+              <Filter className="h-4 w-4" /> Filter
+            </Button>
+          </>
         }
       />
 
@@ -235,9 +244,12 @@ const Products = () => {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          Edit
-                        </Button>
+                        {hasAction('products', 'edit_products') && (
+                          <Button variant="ghost" size="sm">Edit</Button>
+                        )}
+                        {hasAction('products', 'delete_products') && (
+                          <Button variant="ghost" size="sm">Delete</Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

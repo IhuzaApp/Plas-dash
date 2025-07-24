@@ -28,6 +28,7 @@ import {
 import { useShops } from '@/hooks/useHasuraApi';
 import Pagination from '@/components/ui/pagination';
 import { format } from 'date-fns';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 interface Shop {
   id: string;
@@ -78,6 +79,7 @@ const Shops = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [expandedShops, setExpandedShops] = useState<Set<string>>(new Set());
+  const { hasAction } = usePrivilege();
 
   // Filter shops based on search term
   const filteredShops =
@@ -135,7 +137,13 @@ const Shops = () => {
       <PageHeader
         title="Shops"
         description="Manage partner shops and their products."
-        actions={<Button>Add New Shop</Button>}
+        actions={
+          <div className="flex gap-2">
+            {hasAction('shops', 'add_shops') && (
+              <Button>Add New Shop</Button>
+            )}
+          </div>
+        }
       />
 
       <div className="space-y-4">
@@ -233,6 +241,16 @@ const Shops = () => {
                             View Details
                           </Button>
                         </Link>
+                        {hasAction('shops', 'edit_shops') && (
+                          <Button variant="ghost" size="sm">
+                            Edit
+                          </Button>
+                        )}
+                        {hasAction('shops', 'delete_shops') && (
+                          <Button variant="ghost" size="sm">
+                            Delete
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
 

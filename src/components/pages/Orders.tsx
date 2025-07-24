@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { toast } from 'sonner';
 import OrderDetailsDrawer from '@/components/drawers/OrderDetailsDrawer';
 import { Order } from '@/types/order';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 // Function to generate a short ID from a UUID or longer ID
 const generateShortId = (id: string) => {
@@ -45,6 +46,7 @@ const Orders = () => {
   const [pageSize, setPageSize] = useState(10);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { hasAction } = usePrivilege();
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -223,8 +225,12 @@ const Orders = () => {
         description="View and manage customer orders."
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">Export</Button>
-            <Button>Create Order</Button>
+            {hasAction('orders', 'export_orders') && (
+              <Button variant="outline">Export</Button>
+            )}
+            {hasAction('orders', 'create_orders') && (
+              <Button>Create Order</Button>
+            )}
           </div>
         }
       />

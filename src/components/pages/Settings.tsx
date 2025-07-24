@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
 import { Settings as SettingsIcon, Store, Building2 } from 'lucide-react';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 const Settings = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -39,6 +40,8 @@ const Settings = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  const { hasAction } = usePrivilege();
 
   return (
     <AdminLayout>
@@ -453,14 +456,16 @@ Sunday: 9:00 AM - 8:00 PM"
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                toast.success('Branch added successfully');
-                setDialogOpen(false);
-              }}
-            >
-              Add Branch
-            </Button>
+            {hasAction('settings', 'edit_settings') && (
+              <Button
+                onClick={() => {
+                  toast.success('Branch added successfully');
+                  setDialogOpen(false);
+                }}
+              >
+                Add Branch
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

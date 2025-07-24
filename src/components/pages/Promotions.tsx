@@ -49,6 +49,7 @@ import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 interface Promotion {
   id: string;
@@ -127,6 +128,7 @@ const Promotions = () => {
   const [date, setDate] = useState<DateRange | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
+  const { hasAction } = usePrivilege();
 
   const { data, isLoading } = useQuery({
     queryKey: ['promotions'],
@@ -291,9 +293,13 @@ const Promotions = () => {
         title="Promotions"
         description="Manage discounts, offers and promotional campaigns."
         actions={
-          <Button className="gap-2" onClick={handleCreate}>
-            <Plus className="h-4 w-4" /> Create Promotion
-          </Button>
+          <div className="flex gap-2">
+            {hasAction('promotions', 'create_promotions') && (
+              <Button className="gap-2" onClick={handleCreate}>
+                <Plus className="h-4 w-4" /> Create Promotion
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -383,9 +389,16 @@ const Promotions = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(promotion)}>
-                        Edit
-                      </Button>
+                      {hasAction('promotions', 'edit_promotions') && (
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(promotion)}>
+                          Edit
+                        </Button>
+                      )}
+                      {hasAction('promotions', 'delete_promotions') && (
+                        <Button variant="ghost" size="sm">
+                          Delete
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

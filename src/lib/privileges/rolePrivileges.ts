@@ -6,11 +6,23 @@ import { UserPrivileges, DEFAULT_PRIVILEGES, PrivilegeKey } from '@/types/privil
  * @returns UserPrivileges object with appropriate permissions for the role
  */
 export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges => {
-  const privileges = { ...DEFAULT_PRIVILEGES };
+  // Start with all privileges set to false
+  const privileges: UserPrivileges = {} as UserPrivileges;
+  Object.keys(DEFAULT_PRIVILEGES).forEach(module => {
+    privileges[module as PrivilegeKey] = { access: false, ...DEFAULT_PRIVILEGES[module as PrivilegeKey] };
+    // Explicitly set all actions to false for all modules
+    Object.keys(privileges[module as PrivilegeKey]!).forEach(action => {
+      privileges[module as PrivilegeKey]![action] = false;
+    });
+    // Ensure 'access' is always present and set to false
+    if (!('access' in privileges[module as PrivilegeKey]!)) {
+      privileges[module as PrivilegeKey]!.access = false;
+    }
+  });
 
   switch (roleType) {
     case 'globalAdmin':
-      // Full access to everything - can manage everything including staff and system settings
+      // Full access to everything
       Object.keys(privileges).forEach(module => {
         const moduleKey = module as PrivilegeKey;
         if (privileges[moduleKey]) {
@@ -21,8 +33,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       });
       break;
 
-    case 'systemAdmin':
-      // System admin - can manage operations but not staff or sensitive system settings
+    case 'systemAdmin': {
       const systemAdminModules: PrivilegeKey[] = [
         'checkout',
         'inventory',
@@ -35,11 +46,9 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'products',
         'settings',
       ];
-
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable most actions except staff management and sensitive system operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -59,38 +68,30 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
             ) {
               privileges[module]![action] = true;
             }
-            // Exclude delete operations and system config management
             if (action.includes('delete') || action.includes('system_config')) {
               privileges[module]![action] = false;
             }
           });
         }
       });
-
-      // Special restrictions for System Admin
-      // Staff Management: Only specific actions allowed
       if (privileges.staff_management) {
-        // Reset all staff management privileges to false first
         Object.keys(privileges.staff_management).forEach(action => {
           privileges.staff_management![action] = false;
         });
-        // Then enable only the specific actions
         privileges.staff_management!.access = true;
         privileges.staff_management!.add_new_staff = true;
         privileges.staff_management!.assign_roles = true;
         privileges.staff_management!.view_permissions = true;
       }
-
-      // Settings: No edit capabilities
       if (privileges.settings) {
         privileges.settings.edit_settings = false;
         privileges.settings.manage_system_config = false;
         privileges.settings.manage_notifications = false;
       }
       break;
+    }
 
-    case 'storeManager':
-      // Store Manager - Full store operations, staff management, financial oversight
+    case 'storeManager': {
       const storeManagerModules: PrivilegeKey[] = [
         'checkout',
         'inventory',
@@ -110,11 +111,9 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'tickets',
         'settings',
       ];
-
       storeManagerModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable most actions except system-level operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -137,17 +136,15 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
           });
         }
       });
-
-      // Staff Management: Full access
       if (privileges.staff_management) {
         Object.keys(privileges.staff_management).forEach(action => {
           privileges.staff_management![action] = true;
         });
       }
       break;
+    }
 
-    case 'assistantManager':
-      // Assistant Manager - Similar to store manager but with some restrictions
+    case 'assistantManager': {
       const assistantManagerModules: PrivilegeKey[] = [
         'checkout',
         'inventory',
@@ -163,11 +160,9 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'refunds',
         'tickets',
       ];
-
       assistantManagerModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable most actions except sensitive operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -184,15 +179,12 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
             ) {
               privileges[module]![action] = true;
             }
-            // Exclude delete operations and system config
             if (action.includes('delete') || action.includes('system_config')) {
               privileges[module]![action] = false;
             }
           });
         }
       });
-
-      // Staff Management: Limited access
       if (privileges.staff_management) {
         privileges.staff_management!.access = true;
         privileges.staff_management!.add_new_staff = true;
@@ -205,9 +197,9 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         privileges.staff_management!.view_activity_logs = false;
       }
       break;
+    }
 
-    case 'cashier':
-      // Cashier - POS operations, basic transactions, customer service
+    case 'cashier': {
       const cashierModules: PrivilegeKey[] = [
         'checkout',
         'pos_terminal',
@@ -215,42 +207,40 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'discounts',
         'products',
       ];
-
       cashierModules.forEach(module => {
         if (privileges[module]) {
-          privileges[module]!.access = true;
-          // Enable basic operations
-          Object.keys(privileges[module]!).forEach(action => {
-            if (
-              action === 'access' ||
-              action.includes('view') ||
-              action.includes('create') ||
-              action.includes('process') ||
-              action.includes('apply') ||
-              action.includes('park') ||
-              action.includes('hold') ||
-              action.includes('resume')
-            ) {
-              privileges[module]![action] = true;
-            }
-            // Exclude management operations
-            if (
-              action.includes('edit') ||
-              action.includes('delete') ||
-              action.includes('export') ||
-              action.includes('import') ||
-              action.includes('manage') ||
-              action.includes('configure')
-            ) {
+          // Special handling for discounts: only allow view
+          if (module === 'discounts') {
+            Object.keys(privileges[module]!).forEach(action => {
               privileges[module]![action] = false;
-            }
-          });
+            });
+            privileges[module]!.access = true;
+            privileges[module]!.view_discounts = true;
+          } else {
+            privileges[module]!.access = true;
+            Object.keys(privileges[module]!).forEach(action => {
+              if (
+                action === 'access' ||
+                action.includes('view') ||
+                action.includes('create') ||
+                action.includes('process') ||
+                action.includes('apply') ||
+                action.includes('park') ||
+                action.includes('hold') ||
+                action.includes('resume')
+              ) {
+                privileges[module]![action] = true;
+              } else {
+                privileges[module]![action] = false;
+              }
+            });
+          }
         }
       });
       break;
+    }
 
-    case 'salesAssociate':
-      // Sales Associate - Product sales, customer assistance, basic inventory
+    case 'salesAssociate': {
       const salesAssociateModules: PrivilegeKey[] = [
         'checkout',
         'pos_terminal',
@@ -262,7 +252,6 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       salesAssociateModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable basic operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -275,25 +264,16 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('resume')
             ) {
               privileges[module]![action] = true;
-            }
-            // Exclude management operations
-            if (
-              action.includes('edit') ||
-              action.includes('delete') ||
-              action.includes('export') ||
-              action.includes('import') ||
-              action.includes('manage') ||
-              action.includes('configure')
-            ) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'inventorySpecialist':
-      // Inventory Specialist - Stock management, product updates, inventory reports
+    case 'inventorySpecialist': {
       const inventorySpecialistModules: PrivilegeKey[] = [
         'inventory',
         'products',
@@ -304,7 +284,6 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       inventorySpecialistModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable inventory-related operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -319,18 +298,16 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('manage')
             ) {
               privileges[module]![action] = true;
-            }
-            // Exclude delete operations
-            if (action.includes('delete')) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'financeManager':
-      // Finance Manager - Financial oversight, reports, transactions, accounting
+    case 'financeManager': {
       const financeManagerModules: PrivilegeKey[] = [
         'transactions',
         'financial_overview',
@@ -344,7 +321,6 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       financeManagerModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable financial operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -360,14 +336,16 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('configure')
             ) {
               privileges[module]![action] = true;
+            } else {
+              privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'accountant':
-      // Accountant - Financial records, reports, basic transactions
+    case 'accountant': {
       const accountantModules: PrivilegeKey[] = [
         'transactions',
         'financial_overview',
@@ -379,7 +357,6 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       accountantModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable view and basic operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -390,24 +367,16 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('apply')
             ) {
               privileges[module]![action] = true;
-            }
-            // Exclude management operations
-            if (
-              action.includes('edit') ||
-              action.includes('delete') ||
-              action.includes('import') ||
-              action.includes('manage') ||
-              action.includes('configure')
-            ) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'kitchenManager':
-      // Kitchen Manager - Food preparation, inventory, kitchen operations
+    case 'kitchenManager': {
       const kitchenManagerModules: PrivilegeKey[] = [
         'inventory',
         'products',
@@ -419,7 +388,6 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       kitchenManagerModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable kitchen operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -433,24 +401,21 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('manage')
             ) {
               privileges[module]![action] = true;
-            }
-            // Exclude delete operations
-            if (action.includes('delete')) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'chef':
-      // Chef - Food preparation, basic inventory, order management
+    case 'chef': {
       const chefModules: PrivilegeKey[] = ['inventory', 'products', 'orders', 'shop_dashboard'];
 
       chefModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable basic operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -461,31 +426,21 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('apply')
             ) {
               privileges[module]![action] = true;
-            }
-            // Exclude management operations
-            if (
-              action.includes('edit') ||
-              action.includes('delete') ||
-              action.includes('export') ||
-              action.includes('import') ||
-              action.includes('manage') ||
-              action.includes('configure')
-            ) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'waiter':
-      // Waiter - Order taking, customer service, basic POS
+    case 'waiter': {
       const waiterModules: PrivilegeKey[] = ['checkout', 'pos_terminal', 'orders', 'products'];
 
       waiterModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable basic operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -498,25 +453,16 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('resume')
             ) {
               privileges[module]![action] = true;
-            }
-            // Exclude management operations
-            if (
-              action.includes('edit') ||
-              action.includes('delete') ||
-              action.includes('export') ||
-              action.includes('import') ||
-              action.includes('manage') ||
-              action.includes('configure')
-            ) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'bartender':
-      // Bartender - Drink orders, inventory, basic POS
+    case 'bartender': {
       const bartenderModules: PrivilegeKey[] = [
         'checkout',
         'pos_terminal',
@@ -528,7 +474,6 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       bartenderModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable basic operations
           Object.keys(privileges[module]!).forEach(action => {
             if (
               action === 'access' ||
@@ -541,115 +486,71 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('resume')
             ) {
               privileges[module]![action] = true;
-            }
-            // Exclude management operations
-            if (
-              action.includes('edit') ||
-              action.includes('delete') ||
-              action.includes('export') ||
-              action.includes('import') ||
-              action.includes('manage') ||
-              action.includes('configure')
-            ) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'deliveryDriver':
-      // Delivery Driver - Order delivery, basic order viewing
+    case 'deliveryDriver': {
       const deliveryDriverModules: PrivilegeKey[] = ['orders', 'shop_dashboard'];
 
       deliveryDriverModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable view operations only
           Object.keys(privileges[module]!).forEach(action => {
             if (action === 'access' || action.includes('view') || action.includes('update')) {
               privileges[module]![action] = true;
-            }
-            // Exclude all other operations
-            if (
-              action.includes('create') ||
-              action.includes('edit') ||
-              action.includes('delete') ||
-              action.includes('export') ||
-              action.includes('import') ||
-              action.includes('manage') ||
-              action.includes('configure') ||
-              action.includes('process')
-            ) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'securityGuard':
-      // Security Guard - Basic monitoring, no operational access
+    case 'securityGuard': {
       const securityGuardModules: PrivilegeKey[] = ['shop_dashboard'];
 
       securityGuardModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable view operations only
           Object.keys(privileges[module]!).forEach(action => {
             if (action === 'access' || action.includes('view')) {
               privileges[module]![action] = true;
-            }
-            // Exclude all other operations
-            if (
-              action.includes('create') ||
-              action.includes('edit') ||
-              action.includes('delete') ||
-              action.includes('export') ||
-              action.includes('import') ||
-              action.includes('manage') ||
-              action.includes('configure') ||
-              action.includes('process')
-            ) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
-    case 'maintenanceStaff':
-      // Maintenance Staff - Basic system access for maintenance tasks
+    case 'maintenanceStaff': {
       const maintenanceStaffModules: PrivilegeKey[] = ['shop_dashboard', 'settings'];
 
       maintenanceStaffModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
-          // Enable view operations only
           Object.keys(privileges[module]!).forEach(action => {
             if (action === 'access' || action.includes('view')) {
               privileges[module]![action] = true;
-            }
-            // Exclude all other operations
-            if (
-              action.includes('create') ||
-              action.includes('edit') ||
-              action.includes('delete') ||
-              action.includes('export') ||
-              action.includes('import') ||
-              action.includes('manage') ||
-              action.includes('configure') ||
-              action.includes('process')
-            ) {
+            } else {
               privileges[module]![action] = false;
             }
           });
         }
       });
       break;
+    }
 
     default:
-      // Custom role - start with no privileges
+      // Custom role - start with all privileges false, user will toggle as needed
       break;
   }
 
