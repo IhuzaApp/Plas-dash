@@ -37,7 +37,7 @@ import { usePrivilege } from '@/hooks/usePrivilege';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useProductsByShop } from '@/hooks/useHasuraApi';
 import { Product } from '@/hooks/useGraphql';
-import { AddProductDialog } from '@/components/modals/AddProductDialog';
+import { AddProductDialog } from '@/components/pages/pos/checkout/AddProductCheckoutDialog';
 
 interface CartItem {
   id: string;
