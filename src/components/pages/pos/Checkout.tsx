@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useAuth } from '@/components/layout/RootLayout';
-import { useProductsByShop } from '@/hooks/useHasuraApi';
+import { useProductsByShop, useShopById } from '@/hooks/useHasuraApi';
 import { Product } from '@/hooks/useGraphql';
 import { AddProductDialog } from '@/components/pages/pos/checkout/AddProductCheckoutDialog';
 import { ProductSelectionCard } from './checkout/ProductSelectionCard';
@@ -47,11 +47,15 @@ const Checkout = () => {
   const { toast } = useToast();
   const { session } = useAuth();
   const { hasAction } = usePrivilege();
-
+  
   const { data: productsData, isLoading: productsLoading } = useProductsByShop(
     session?.shop_id || ''
   );
   const products = productsData?.Products || [];
+
+  // Fetch shop details for checkout
+  const { data: shopData } = useShopById(session?.shop_id || '');
+  const shop = shopData?.Shops_by_pk;
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activeTab, setActiveTab] = useState('current');
@@ -86,7 +90,7 @@ const Checkout = () => {
 
   const addProductToCart = (product: Product) => {
     const existingItem = cart.find(item => item.id === product.id);
-
+    
     if (existingItem) {
       setCart(
         cart.map(item =>
@@ -123,13 +127,8 @@ const Checkout = () => {
     setCart(cart.filter(item => item.id !== id));
   };
 
-  const processFinalCheckout = (paymentMethod: 'card' | 'cash') => {
-    if (needsTIN && !tinNumber.trim()) {
-      setIsTINDialogOpen(true);
-      return;
-    }
-
-    const tinInfo = needsTIN && tinNumber ? ` with TIN: ${tinNumber}` : '';
+  const processFinalCheckout = (paymentMethod: 'card' | 'cash' | 'momo', tinNumber?: string) => {
+    const tinInfo = tinNumber ? ` with TIN: ${tinNumber}` : '';
     toast({
       title: 'Payment processed',
       description: `Order completed with ${paymentMethod}${tinInfo}. Total: $${(
@@ -205,6 +204,19 @@ const Checkout = () => {
               onRemoveItem={removeItem}
               onCheckout={processFinalCheckout}
               onSaveToPending={saveToPending}
+              shopId={session?.shop_id}
+              currentUser={{
+                id: session?.id || '',
+                name: session?.fullName || '',
+                email: session?.email || '',
+                role: 'Cashier' // Default role for POS users
+              }}
+              shopDetails={{
+                name: shop?.name || 'Shop Name',
+                address: shop?.address || 'Shop Address',
+                phone: session?.phoneNumber || '',
+                email: session?.email || ''
+              }}
             />
           </div>
         </TabsContent>

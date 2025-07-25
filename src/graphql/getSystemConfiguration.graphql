@@ -9,5 +9,14 @@ query getSystemConfiguration {
     unitsSurcharge
     extraUnits
     cappedDistanceFee
+    allowScheduledDeliveries
+    deliveryCommissionPercentage
+    distanceSurcharge
+    enableRush
+    rushHourSurcharge
+    productCommissionPercentage
+    rushHours
+    suggestedMinimumTip
+    tax
   }
 }

@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ShoppingBag, Search, Plus } from 'lucide-react';
 import { Product } from '@/hooks/useGraphql';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
+import { formatCurrencyWithConfig } from '@/lib/utils';
 
 interface ProductSelectionCardProps {
   products: Product[];
@@ -20,12 +22,13 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
   onAddProductManually,
 }) => {
   const [productSearch, setProductSearch] = useState('');
+  const { data: systemConfig } = useSystemConfig();
 
   const filteredProducts = products.filter(
     product =>
       product.name?.toLowerCase().includes(productSearch.toLowerCase()) ||
       product.description?.toLowerCase().includes(productSearch.toLowerCase()) ||
-      product.category.name?.toLowerCase().includes(productSearch.toLowerCase())
+      (product.category as unknown as string)?.toLowerCase().includes(productSearch.toLowerCase())
   );
 
   return (
@@ -71,12 +74,15 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                     <div className="flex-1">
                       <p className="font-medium text-sm truncate">{product.name}</p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {product.category.name || 'No Category'} •{' '}
+                        {(product.category as unknown as string) || 'No Category'} •{' '}
                         {product.measurement_unit || 'unit'}
                       </p>
-                      <p className="text-sm font-semibold text-primary">
-                        ${parseFloat(product.final_price || product.price || '0').toFixed(2)}
-                      </p>
+                                              <p className="text-sm font-semibold text-primary">
+                          {formatCurrencyWithConfig(
+                            parseFloat(product.final_price || product.price || '0'),
+                            systemConfig
+                          )}
+                        </p>
                     </div>
                     <Button size="sm" className="w-full bg-black text-white hover:bg-gray-800">
                       <Plus className="h-4 w-4 mr-1" />

@@ -420,3 +420,12 @@ export const UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE = `
     }
   }
 `;
+
+// Checkout mutations
+export const ADD_CHECKOUT = `
+  mutation addcheckouts($Processed_By: uuid = "", $cartItems: jsonb = "", $payment_method: String = "", $shop_id: uuid = "", $subtotal: String = "", $tax: String = "", $tin: String = "", $total: String = "") {
+    insert_shopCheckouts(objects: {Processed_By: $Processed_By, cartItems: $cartItems, payment_method: $payment_method, shop_id: $shop_id, subtotal: $subtotal, tax: $tax, tin: $tin, total: $total}) {
+      affected_rows
+    }
+  }
+`;
