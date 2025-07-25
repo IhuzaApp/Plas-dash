@@ -17,6 +17,7 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  Search,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,6 +32,8 @@ import {
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import { useAuth } from '@/components/layout/RootLayout';
+import { useProductsByShop } from '@/hooks/useHasuraApi';
 
 interface CartItem {
   id: string;
@@ -38,6 +41,28 @@ interface CartItem {
   price: number;
   quantity: number;
   barcode?: string;
+  description?: string;
+  measurement_unit?: string;
+  image?: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  final_price: string;
+  quantity: number;
+  measurement_unit: string;
+  image: string;
+  category?: {
+    id: string;
+    name: string;
+    description: string;
+    image: string;
+    is_active: boolean;
+  };
+  is_active: boolean;
 }
 
 interface PendingCheckout {
@@ -51,17 +76,28 @@ interface PendingCheckout {
 
 const Checkout = () => {
   const { toast } = useToast();
-  const [cart, setCart] = useState<CartItem[]>([
-    { id: '1', name: 'Milk 1L', price: 2.99, quantity: 2 },
-    { id: '2', name: 'Bread', price: 1.5, quantity: 1 },
-    { id: '3', name: 'Eggs (12)', price: 3.49, quantity: 1 },
-  ]);
+  const { session } = useAuth();
+  const { hasAction } = usePrivilege();
+  
+  // Fetch products from the user's shop
+  const { data: productsData, isLoading: productsLoading } = useProductsByShop(session?.shop_id || '');
+  const products = productsData?.Products || [];
+
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [barcode, setBarcode] = useState('');
+  const [productSearch, setProductSearch] = useState('');
   const [activeTab, setActiveTab] = useState('current');
   const [needsTIN, setNeedsTIN] = useState(false);
   const [tinNumber, setTinNumber] = useState('');
   const [isTINDialogOpen, setIsTINDialogOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash' | null>(null);
+
+  // Filter products based on search
+  const filteredProducts = products.filter(product =>
+    (product.name?.toLowerCase() || '').includes(productSearch.toLowerCase()) ||
+    (product.description?.toLowerCase() || '').includes(productSearch.toLowerCase()) ||
+    (product.category?.name?.toLowerCase() || '').includes(productSearch.toLowerCase())
+  );
 
   // Mock pending checkouts for demonstration
   const [pendingCheckouts, setPendingCheckouts] = useState<PendingCheckout[]>([
@@ -90,25 +126,54 @@ const Checkout = () => {
   ]);
 
   const [selectedPendingCheckout, setSelectedPendingCheckout] = useState<string | null>(null);
-  const { hasAction } = usePrivilege();
 
   const addItem = () => {
     if (barcode.trim()) {
-      // In a real application, this would query a product database
-      const mockProduct = {
-        id: `temp-${Date.now()}`,
-        name: `Product (${barcode})`,
-        price: Math.round(Math.random() * 10 * 100) / 100,
-        quantity: 1,
-        barcode: barcode,
-      };
+      // Search for product by barcode (assuming barcode is stored in product id or name for demo)
+      const foundProduct = products.find(product => 
+        product.id === barcode || 
+        product.name.toLowerCase().includes(barcode.toLowerCase())
+      );
 
-      setCart([...cart, mockProduct]);
-      setBarcode('');
-      toast({
-        title: 'Product added',
-        description: `${mockProduct.name} has been added to the cart.`,
-      });
+      if (foundProduct) {
+        addProductToCart(foundProduct);
+        setBarcode('');
+        toast({
+          title: 'Product added',
+          description: `${foundProduct.name} has been added to the cart.`,
+        });
+      } else {
+        toast({
+          title: 'Product not found',
+          description: 'No product found with this barcode.',
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
+  const addProductToCart = (product: Product) => {
+    const existingItem = cart.find(item => item.id === product.id);
+    
+    if (existingItem) {
+      // Update quantity if product already in cart
+      setCart(cart.map(item => 
+        item.id === product.id 
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      ));
+    } else {
+      // Add new product to cart
+      const cartItem: CartItem = {
+        id: product.id,
+        name: product.name,
+        price: parseFloat(product.final_price || product.price),
+        quantity: 1,
+        description: product.description,
+        measurement_unit: product.measurement_unit,
+        image: product.image,
+      };
+      setCart([...cart, cartItem]);
     }
   };
 
@@ -244,7 +309,7 @@ const Checkout = () => {
                 <CardTitle>Scanner</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 mb-4">
                   <Input
                     placeholder="Scan barcode or enter product code"
                     value={barcode}
@@ -254,6 +319,66 @@ const Checkout = () => {
                   />
                   <Button onClick={addItem}>Add</Button>
                 </div>
+
+                {/* Product Search */}
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search products..."
+                      value={productSearch}
+                      onChange={e => setProductSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Product Selection */}
+                {productsLoading ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p>Loading products...</p>
+                  </div>
+                ) : filteredProducts.length > 0 ? (
+                  <ScrollArea className="h-[300px] mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {filteredProducts.map(product => (
+                        <div
+                          key={product.id}
+                          className="p-3 border rounded-lg hover:bg-accent/20 cursor-pointer transition-colors"
+                          onClick={() => addProductToCart(product)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            {product.image && (
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-12 h-12 object-cover rounded"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{product.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {product.category?.name || 'No Category'} • {product.measurement_unit || 'unit'}
+                              </p>
+                              <p className="text-sm font-semibold text-primary">
+                                ${parseFloat(product.final_price || product.price || '0').toFixed(2)}
+                              </p>
+                            </div>
+                            <Button size="sm" variant="outline">
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <ShoppingBag className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                    <p>No products found</p>
+                  </div>
+                )}
 
                 <ScrollArea className="h-[400px] mt-4">
                   <div className="space-y-2">

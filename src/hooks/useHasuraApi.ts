@@ -3,6 +3,7 @@ import { hasuraRequest } from '../lib/hasura';
 import {
   GET_USERS,
   GET_PRODUCTS,
+  GET_PRODUCTS_BY_SHOP,
   GET_SHOPS,
   GET_ORDERS,
   GET_CARTS,
@@ -260,6 +261,15 @@ export function useProducts() {
   return useQuery<{ Products: Product[] }, Error>({
     queryKey: ['products'],
     queryFn: () => hasuraRequest(GET_PRODUCTS, {}),
+  });
+}
+
+// Type-safe hook for Products by Shop (for POS checkout)
+export function useProductsByShop(shopId: string) {
+  return useQuery<{ Products: Product[] }, Error>({
+    queryKey: ['products', 'shop', shopId],
+    queryFn: () => hasuraRequest(GET_PRODUCTS_BY_SHOP, { shop_id: shopId }),
+    enabled: !!shopId,
   });
 }
 
