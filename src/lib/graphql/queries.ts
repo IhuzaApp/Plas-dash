@@ -121,6 +121,31 @@ export const GET_PRODUCTS = `
   }
 `;
 
+// Products by shop query for POS checkout
+export const GET_PRODUCTS_BY_SHOP = `
+  query GetProductsByShop($shop_id: uuid!) {
+    Products(where: { shop_id: { _eq: $shop_id }, is_active: { _eq: true } }) {
+      id
+      name
+      description
+      shop_id
+      price
+      final_price
+      quantity
+      measurement_unit
+      image
+      category
+      created_at
+      updated_at
+      is_active
+      Shop {
+        id
+        name
+      }
+    }
+  }
+`;
+
 // Categories queries
 export const GET_CATEGORIES = `
   query GetCategories {

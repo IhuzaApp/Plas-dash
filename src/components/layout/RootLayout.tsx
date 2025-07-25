@@ -13,6 +13,7 @@ interface SessionData {
   fullName: string;
   email: string;
   phoneNumber: string;
+  shop_id: string;
   privileges: UserPrivileges;
   expiresAt: number;
 }
@@ -140,15 +141,17 @@ export default function RootLayout({ children }: RootLayoutProps) {
     setIsAuthenticated(true);
 
     // Only auto-route if current page is not accessible
-    const currentPageAccessible = isPageAccessible(sessionData.privileges, pathname);
-    if (!currentPageAccessible) {
-      const recommendedPage = getRecommendedLandingPage(sessionData.privileges);
-      if (recommendedPage && recommendedPage.path !== pathname) {
-        console.log(`🔄 Login auto-routing to: ${recommendedPage.path} (${recommendedPage.title})`);
-        router.push(recommendedPage.path);
+    if (pathname) {
+      const currentPageAccessible = isPageAccessible(sessionData.privileges, pathname);
+      if (!currentPageAccessible) {
+        const recommendedPage = getRecommendedLandingPage(sessionData.privileges);
+        if (recommendedPage && recommendedPage.path !== pathname) {
+          console.log(`🔄 Login auto-routing to: ${recommendedPage.path} (${recommendedPage.title})`);
+          router.push(recommendedPage.path);
+        }
+      } else {
+        console.log('✅ Login successful - current page is accessible, staying put');
       }
-    } else {
-      console.log('✅ Login successful - current page is accessible, staying put');
     }
   };
 

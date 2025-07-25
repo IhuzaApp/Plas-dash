@@ -386,6 +386,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
         fullName: session.fullName,
         email: session.email,
         phoneNumber: session.phoneNumber,
+        shop_id: session.shop_id,
         privileges: privileges,
         // Keep old format for backward compatibility
         orgEmployeeRoles: session.orgEmployeeRoles,
