@@ -85,14 +85,10 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
               onChange={e => setCode(e.target.value)}
               className="text-center text-3xl h-20 rounded-lg shadow-inner"
             />
-            <DialPad
-              onInput={handleInput}
-              onClear={handleClear}
-              onConfirm={handleConfirm}
-            />
+            <DialPad onInput={handleInput} onClear={handleClear} onConfirm={handleConfirm} />
           </div>
         </DialogContent>
       </DialogPortal>
     </Dialog>
   );
-}; 
+};

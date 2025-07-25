@@ -112,12 +112,8 @@ const Users = () => {
         description="View and manage user accounts."
         actions={
           <div className="flex gap-2">
-            {hasAction('users', 'export_users') && (
-              <Button variant="outline">Export</Button>
-            )}
-            {hasAction('users', 'add_users') && (
-              <Button>Add User</Button>
-            )}
+            {hasAction('users', 'export_users') && <Button variant="outline">Export</Button>}
+            {hasAction('users', 'add_users') && <Button>Add User</Button>}
           </div>
         }
       />

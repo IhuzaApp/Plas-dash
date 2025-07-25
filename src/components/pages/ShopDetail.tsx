@@ -740,9 +740,10 @@ const ShopDetail = () => {
                       </TableRow>
                     ) : (
                       currentStaff.map(employee => {
-                        const permissions = Array.isArray(employee.orgEmployeeRoles) && employee.orgEmployeeRoles[0]
-                          ? employee.orgEmployeeRoles[0].privillages || []
-                          : [];
+                        const permissions =
+                          Array.isArray(employee.orgEmployeeRoles) && employee.orgEmployeeRoles[0]
+                            ? employee.orgEmployeeRoles[0].privillages || []
+                            : [];
                         let roleBadge = employee.roleType || 'Custom';
                         let roleVariant: 'default' | 'secondary' | 'destructive' | 'outline' =
                           'outline';

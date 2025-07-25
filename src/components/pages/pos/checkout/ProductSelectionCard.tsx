@@ -77,12 +77,12 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                         {(product.category as unknown as string) || 'No Category'} •{' '}
                         {product.measurement_unit || 'unit'}
                       </p>
-                                              <p className="text-sm font-semibold text-primary">
-                          {formatCurrencyWithConfig(
-                            parseFloat(product.final_price || product.price || '0'),
-                            systemConfig
-                          )}
-                        </p>
+                      <p className="text-sm font-semibold text-primary">
+                        {formatCurrencyWithConfig(
+                          parseFloat(product.final_price || product.price || '0'),
+                          systemConfig
+                        )}
+                      </p>
                     </div>
                     <Button size="sm" className="w-full bg-black text-white hover:bg-gray-800">
                       <Plus className="h-4 w-4 mr-1" />
@@ -102,4 +102,4 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

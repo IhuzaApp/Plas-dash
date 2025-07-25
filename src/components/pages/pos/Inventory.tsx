@@ -449,7 +449,11 @@ const Inventory = () => {
                             <ScanQrCode className="h-4 w-4" />
                           </Button>
                           {hasAction('inventory', 'edit_products') && (
-                            <Button variant="ghost" size="icon" onClick={() => openEditDialog(item)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(item)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                           )}
