@@ -640,7 +640,10 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
   // Start with all privileges set to false
   const privileges: UserPrivileges = {} as UserPrivileges;
   Object.keys(DEFAULT_PRIVILEGES).forEach(module => {
-    privileges[module as PrivilegeKey] = { access: false, ...DEFAULT_PRIVILEGES[module as PrivilegeKey] };
+    privileges[module as PrivilegeKey] = {
+      access: false,
+      ...DEFAULT_PRIVILEGES[module as PrivilegeKey],
+    };
     Object.keys(privileges[module as PrivilegeKey]!).forEach(action => {
       privileges[module as PrivilegeKey]![action] = false;
     });
@@ -669,6 +672,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
 - **New format (nested object):** See `UserPrivileges` above.
 
 Conversion utilities:
+
 ```typescript
 // Convert old array to new object
 convertCustomPermissionsToPrivileges(customPermissions: string[]): UserPrivileges
@@ -711,9 +715,9 @@ if (hasAction('products', 'add_products')) {
 
 - **Show/hide buttons:**
   ```tsx
-  {hasAction('products', 'add_products') && (
-    <Button>Add Product</Button>
-  )}
+  {
+    hasAction('products', 'add_products') && <Button>Add Product</Button>;
+  }
   ```
 - **Protect routes/pages:**
   ```tsx
@@ -723,9 +727,9 @@ if (hasAction('products', 'add_products')) {
   ```
 - **Conditional rendering in tables:**
   ```tsx
-  {hasAction('orders', 'edit_orders') && (
-    <Button>Edit</Button>
-  )}
+  {
+    hasAction('orders', 'edit_orders') && <Button>Edit</Button>;
+  }
   ```
 
 #### 3. **Convenience Functions**
@@ -760,9 +764,9 @@ if (hasAction('products', 'add_products')) {
 import { usePrivilege } from '@/hooks/usePrivilege';
 const { hasAction } = usePrivilege();
 
-{hasAction('discounts', 'create_discount') && (
-  <Button>New Discount</Button>
-)}
+{
+  hasAction('discounts', 'create_discount') && <Button>New Discount</Button>;
+}
 ```
 
 ---
@@ -799,6 +803,7 @@ if (!hasModuleAccess('orders')) {
 ---
 
 **For more details, see:**
+
 - `src/types/privileges.ts`
 - `src/lib/privileges/rolePrivileges.ts`
 - `src/hooks/usePrivilege.ts`

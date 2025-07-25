@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle, Trash } from 'lucide-react';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
+import { formatCurrencyWithConfig } from '@/lib/utils';
 
 interface CartItem {
   id: string;
@@ -54,6 +56,7 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
   onDeleteCheckout,
   hasDeleteAction,
 }) => {
+  const { data: systemConfig } = useSystemConfig();
   return (
     <Card>
       <CardHeader>
@@ -78,7 +81,9 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
                   </div>
                   <div className="flex items-center space-x-2">
                     {getStatusBadge(checkout.status)}
-                    <Badge className="bg-primary">${checkout.total.toFixed(2)}</Badge>
+                    <Badge className="bg-primary">
+                      {formatCurrencyWithConfig(checkout.total, systemConfig)}
+                    </Badge>
                   </div>
                 </div>
                 {checkout.customerName && (
@@ -113,4 +118,4 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

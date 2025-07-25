@@ -146,7 +146,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
       if (!currentPageAccessible) {
         const recommendedPage = getRecommendedLandingPage(sessionData.privileges);
         if (recommendedPage && recommendedPage.path !== pathname) {
-          console.log(`🔄 Login auto-routing to: ${recommendedPage.path} (${recommendedPage.title})`);
+          console.log(
+            `🔄 Login auto-routing to: ${recommendedPage.path} (${recommendedPage.title})`
+          );
           router.push(recommendedPage.path);
         }
       } else {

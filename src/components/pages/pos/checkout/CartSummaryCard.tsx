@@ -14,7 +14,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { ShoppingBag, Plus, Minus, Trash, CreditCard, Banknote, Clock, ChevronDown, ChevronUp, Printer, Smartphone, CheckCircle } from 'lucide-react';
+import {
+  ShoppingBag,
+  Plus,
+  Minus,
+  Trash,
+  CreditCard,
+  Banknote,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Printer,
+  Smartphone,
+  CheckCircle,
+} from 'lucide-react';
 import { useGraphqlMutation } from '@/hooks/useGraphql';
 import { ADD_CHECKOUT } from '@/lib/graphql/mutations';
 import { useToast } from '@/hooks/use-toast';
@@ -62,7 +75,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   const [isOrderSummaryCollapsed, setIsOrderSummaryCollapsed] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isPrintConfirmDialogOpen, setIsPrintConfirmDialogOpen] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'cash' | 'momo' | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    'card' | 'cash' | 'momo' | null
+  >(null);
   const [needsTIN, setNeedsTIN] = useState(false);
   const [tinNumber, setTinNumber] = useState('');
   const [lastPaymentDetails, setLastPaymentDetails] = useState<{
@@ -96,18 +111,18 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
     if (needsTIN && !tinNumber.trim()) {
       console.error('TIN Number is required but not provided');
       toast({
-        title: "Error",
-        description: "TIN Number is required when checkbox is checked.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'TIN Number is required when checkbox is checked.',
+        variant: 'destructive',
       });
       return;
     }
-    
+
     if (selectedPaymentMethod) {
       const subtotal = calculateTotal();
       const tax = subtotal * 0.08;
       const totalAmount = subtotal + tax;
-      
+
       // Save payment details for logging and print confirmation
       const paymentDetails = {
         paymentMethod: selectedPaymentMethod,
@@ -116,7 +131,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
         items: [...cart],
         shopDetails: shopDetails,
         processedBy: currentUser,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
       setLastPaymentDetails(paymentDetails);
 
@@ -130,18 +145,21 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
       console.log('Total Amount:', formatCurrencyWithConfig(totalAmount, systemConfig));
       console.log('TIN Number:', needsTIN ? tinNumber : 'Not included');
       console.log('Items Count:', cart.length);
-      console.log('Cart Items:', cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: formatCurrencyWithConfig(item.price, systemConfig),
-        quantity: item.quantity,
-        subtotal: formatCurrencyWithConfig(item.price * item.quantity, systemConfig)
-      })));
+      console.log(
+        'Cart Items:',
+        cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: formatCurrencyWithConfig(item.price, systemConfig),
+          quantity: item.quantity,
+          subtotal: formatCurrencyWithConfig(item.price * item.quantity, systemConfig),
+        }))
+      );
       console.log('Tax Amount:', formatCurrencyWithConfig(tax, systemConfig));
       console.log('Subtotal:', formatCurrencyWithConfig(subtotal, systemConfig));
       console.log('Payment Timestamp:', new Date().toISOString());
       console.log('=== PAYMENT SAVING TO DATABASE ===');
-      
+
       try {
         // Save checkout to database
         const checkoutData = {
@@ -152,39 +170,38 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           subtotal: subtotal.toFixed(2),
           tax: tax.toFixed(2),
           tin: needsTIN ? tinNumber : '',
-          total: totalAmount.toFixed(2)
+          total: totalAmount.toFixed(2),
         };
 
         console.log('Saving checkout data:', checkoutData);
-        
+
         const result = await checkoutMutation.mutateAsync(checkoutData);
         console.log('Checkout saved successfully:', result);
-        
+
         // Call the checkout function
         onCheckout(selectedPaymentMethod, needsTIN ? tinNumber : undefined);
-        
+
         // Close payment dialog and show print confirmation
         setIsPaymentDialogOpen(false);
         setIsPrintConfirmDialogOpen(true);
-        
+
         // Reset payment form
         setSelectedPaymentMethod(null);
         setNeedsTIN(false);
         setTinNumber('');
-        
+
         console.log('=== PAYMENT PROCESSING COMPLETED ===');
-        
+
         toast({
-          title: "Payment Successful",
-          description: "Payment has been processed and saved to database.",
+          title: 'Payment Successful',
+          description: 'Payment has been processed and saved to database.',
         });
-        
       } catch (error) {
         console.error('Error saving checkout:', error);
         toast({
-          title: "Payment Error",
-          description: "Failed to save payment to database. Please try again.",
-          variant: "destructive",
+          title: 'Payment Error',
+          description: 'Failed to save payment to database. Please try again.',
+          variant: 'destructive',
         });
       }
     }
@@ -199,14 +216,14 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
       method: lastPaymentDetails?.paymentMethod,
       amount: lastPaymentDetails?.amount,
       tinNumber: lastPaymentDetails?.tinNumber,
-      timestamp: lastPaymentDetails?.timestamp
+      timestamp: lastPaymentDetails?.timestamp,
     });
     console.log('Items to Print:', lastPaymentDetails?.items);
     console.log('Printing timestamp:', new Date().toISOString());
-    
+
     // Print invoice logic will be implemented later
     console.log('Printing invoice with company header and user details...');
-    
+
     // Close the print confirmation dialog
     setIsPrintConfirmDialogOpen(false);
     setLastPaymentDetails(null);
@@ -215,7 +232,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   const handleSkipPrint = () => {
     console.log('=== PRINT SKIPPED ===');
     console.log('User chose to skip printing invoice');
-    
+
     setIsPrintConfirmDialogOpen(false);
     setLastPaymentDetails(null);
   };
@@ -233,22 +250,38 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
               <ScrollArea className="h-[300px]">
                 <div className="space-y-2">
                   {cart.map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-2 bg-accent/20 rounded-lg">
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-2 bg-accent/20 rounded-lg"
+                    >
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{item.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          ${item.price.toFixed(2)} × {item.quantity}
+                          {formatCurrencyWithConfig(item.price, systemConfig)} × {item.quantity}
                         </p>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, -1)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onUpdateQuantity(item.id, -1)}
+                        >
                           <Minus className="h-3 w-3" />
                         </Button>
                         <span className="w-6 text-center text-sm">{item.quantity}</span>
-                        <Button variant="outline" size="sm" onClick={() => onUpdateQuantity(item.id, 1)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onUpdateQuantity(item.id, 1)}
+                        >
                           <Plus className="h-3 w-3" />
                         </Button>
-                        <Button variant="outline" size="sm" className="text-destructive" onClick={() => onRemoveItem(item.id)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={() => onRemoveItem(item.id)}
+                        >
                           <Trash className="h-3 w-3" />
                         </Button>
                       </div>
@@ -276,33 +309,40 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                   <ChevronUp className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOrderSummaryCollapsed ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'}`}>
+              <div
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${isOrderSummaryCollapsed ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'}`}
+              >
                 <div className="space-y-2 text-sm pt-2">
                   <div className="flex justify-between">
                     <span>Items ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
-                                         <span>{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
-                   </div>
-                   <div className="flex justify-between">
-                     <span>Tax</span>
-                     <span>{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
-                   </div>
-                   <Separator />
-                   <div className="flex justify-between font-bold text-base">
-                     <span>Total</span>
-                     <span>{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
+                    <span>{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tax</span>
+                    <span>{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold text-base">
+                    <span>Total</span>
+                    <span>{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
                   </div>
                 </div>
               </div>
             </div>
             <div className="space-y-2">
-              <Button 
-                className="w-full" 
-                onClick={() => setIsPaymentDialogOpen(true)} 
+              <Button
+                className="w-full"
+                onClick={() => setIsPaymentDialogOpen(true)}
                 disabled={cart.length === 0 || checkoutMutation.isPending}
               >
                 {checkoutMutation.isPending ? 'Processing...' : 'Confirm Payment'}
               </Button>
-              <Button variant="secondary" className="w-full" onClick={onSaveToPending} disabled={cart.length === 0}>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={onSaveToPending}
+                disabled={cart.length === 0}
+              >
                 <Clock className="mr-2 h-4 w-4" /> Save for Later
               </Button>
             </div>
@@ -319,7 +359,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
               Select your preferred payment method and complete the transaction.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {/* Payment Method Selection */}
             <div className="space-y-2">
@@ -327,16 +367,18 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
               <div className="grid grid-cols-3 gap-3">
                 <div
                   className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
-                    selectedPaymentMethod === 'cash' 
-                      ? 'border-primary bg-primary/5' 
+                    selectedPaymentMethod === 'cash'
+                      ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-primary/50'
                   }`}
                   onClick={() => setSelectedPaymentMethod('cash')}
                 >
                   <div className="flex flex-col items-center space-y-2">
-                    <div className={`p-3 rounded-full ${
-                      selectedPaymentMethod === 'cash' ? 'bg-primary/10' : 'bg-muted'
-                    }`}>
+                    <div
+                      className={`p-3 rounded-full ${
+                        selectedPaymentMethod === 'cash' ? 'bg-primary/10' : 'bg-muted'
+                      }`}
+                    >
                       <Banknote className="h-6 w-6 text-primary" />
                     </div>
                     <div className="text-center">
@@ -355,16 +397,18 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
 
                 <div
                   className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
-                    selectedPaymentMethod === 'card' 
-                      ? 'border-primary bg-primary/5' 
+                    selectedPaymentMethod === 'card'
+                      ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-primary/50'
                   }`}
                   onClick={() => setSelectedPaymentMethod('card')}
                 >
                   <div className="flex flex-col items-center space-y-2">
-                    <div className={`p-3 rounded-full ${
-                      selectedPaymentMethod === 'card' ? 'bg-primary/10' : 'bg-muted'
-                    }`}>
+                    <div
+                      className={`p-3 rounded-full ${
+                        selectedPaymentMethod === 'card' ? 'bg-primary/10' : 'bg-muted'
+                      }`}
+                    >
                       <CreditCard className="h-6 w-6 text-primary" />
                     </div>
                     <div className="text-center">
@@ -383,16 +427,18 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
 
                 <div
                   className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
-                    selectedPaymentMethod === 'momo' 
-                      ? 'border-primary bg-primary/5' 
+                    selectedPaymentMethod === 'momo'
+                      ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-primary/50'
                   }`}
                   onClick={() => setSelectedPaymentMethod('momo')}
                 >
                   <div className="flex flex-col items-center space-y-2">
-                    <div className={`p-3 rounded-full ${
-                      selectedPaymentMethod === 'momo' ? 'bg-primary/10' : 'bg-muted'
-                    }`}>
+                    <div
+                      className={`p-3 rounded-full ${
+                        selectedPaymentMethod === 'momo' ? 'bg-primary/10' : 'bg-muted'
+                      }`}
+                    >
                       <Smartphone className="h-6 w-6 text-primary" />
                     </div>
                     <div className="text-center">
@@ -419,7 +465,10 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                   checked={needsTIN}
                   onCheckedChange={checked => setNeedsTIN(checked === true)}
                 />
-                <label htmlFor="include-tin" className="text-sm font-medium leading-none cursor-pointer">
+                <label
+                  htmlFor="include-tin"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
                   Include TIN Number
                 </label>
               </div>
@@ -437,19 +486,19 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
             <div className="border rounded-lg p-3 bg-muted/20">
               <h4 className="font-medium mb-2">Order Summary</h4>
               <div className="space-y-1 text-sm">
-                                  <div className="flex justify-between">
-                    <span>Items ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
-                    <span>{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax (8%)</span>
-                    <span>{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between font-bold">
-                    <span>Total</span>
-                    <span>{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
-                  </div>
+                <div className="flex justify-between">
+                  <span>Items ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
+                  <span>{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tax (8%)</span>
+                  <span>{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-bold">
+                  <span>Total</span>
+                  <span>{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -460,9 +509,15 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
             </Button>
             <Button
               onClick={handleConfirmPayment}
-              disabled={!selectedPaymentMethod || (needsTIN && !tinNumber.trim()) || checkoutMutation.isPending}
+              disabled={
+                !selectedPaymentMethod ||
+                (needsTIN && !tinNumber.trim()) ||
+                checkoutMutation.isPending
+              }
             >
-              {checkoutMutation.isPending ? 'Processing...' : `Pay ${formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}`}
+              {checkoutMutation.isPending
+                ? 'Processing...'
+                : `Pay ${formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}`}
             </Button>
             <Button variant="secondary" onClick={handlePrintInvoice}>
               <Printer className="mr-2 h-4 w-4" />
@@ -484,17 +539,21 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
               Your payment has been processed successfully. Would you like to print the invoice?
             </DialogDescription>
           </DialogHeader>
-          
+
           {lastPaymentDetails && (
             <div className="border rounded-lg p-3 bg-green-50">
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Payment Method:</span>
-                  <span className="font-medium">{lastPaymentDetails.paymentMethod.toUpperCase()}</span>
+                  <span className="font-medium">
+                    {lastPaymentDetails.paymentMethod.toUpperCase()}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Amount Paid:</span>
-                  <span className="font-medium">{formatCurrencyWithConfig(lastPaymentDetails.amount, systemConfig)}</span>
+                  <span className="font-medium">
+                    {formatCurrencyWithConfig(lastPaymentDetails.amount, systemConfig)}
+                  </span>
                 </div>
                 {lastPaymentDetails.tinNumber && (
                   <div className="flex justify-between">
@@ -507,11 +566,11 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                   <span className="font-medium">{lastPaymentDetails.items.length}</span>
                 </div>
                 <Separator />
-                                <div className="flex justify-between">
+                <div className="flex justify-between">
                   <span>Company:</span>
                   <span className="font-medium">{lastPaymentDetails.shopDetails?.name}</span>
                 </div>
-    
+
                 <Separator />
                 <div className="flex justify-between">
                   <span>Processed By:</span>

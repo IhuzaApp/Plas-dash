@@ -139,9 +139,7 @@ const Shops = () => {
         description="Manage partner shops and their products."
         actions={
           <div className="flex gap-2">
-            {hasAction('shops', 'add_shops') && (
-              <Button>Add New Shop</Button>
-            )}
+            {hasAction('shops', 'add_shops') && <Button>Add New Shop</Button>}
           </div>
         }
       />

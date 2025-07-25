@@ -47,7 +47,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const { session } = useAuth();
   const { hasAction } = usePrivilege();
-  
+
   const { data: productsData, isLoading: productsLoading } = useProductsByShop(
     session?.shop_id || ''
   );
@@ -90,12 +90,10 @@ const Checkout = () => {
 
   const addProductToCart = (product: Product) => {
     const existingItem = cart.find(item => item.id === product.id);
-    
+
     if (existingItem) {
       setCart(
-        cart.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        )
+        cart.map(item => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
       );
     } else {
       const cartItem: CartItem = {
@@ -185,9 +183,7 @@ const Checkout = () => {
       <Tabs defaultValue="current" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="current">Current Checkout</TabsTrigger>
-          <TabsTrigger value="pending">
-            Pending Checkouts ({pendingCheckouts.length})
-          </TabsTrigger>
+          <TabsTrigger value="pending">Pending Checkouts ({pendingCheckouts.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="current" className="space-y-6">
@@ -209,13 +205,13 @@ const Checkout = () => {
                 id: session?.id || '',
                 name: session?.fullName || '',
                 email: session?.email || '',
-                role: 'Cashier' // Default role for POS users
+                role: 'Cashier', // Default role for POS users
               }}
               shopDetails={{
                 name: shop?.name || 'Shop Name',
                 address: shop?.address || 'Shop Address',
                 phone: session?.phoneNumber || '',
-                email: session?.email || ''
+                email: session?.email || '',
               }}
             />
           </div>

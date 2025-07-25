@@ -209,7 +209,11 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
       // Print the privileges object
       console.log('DEBUG: Privileges object for role', roleType, privileges);
       // Print the converted array
-      console.log('DEBUG: Old format array for role', roleType, convertPrivilegesToOldFormat(privileges));
+      console.log(
+        'DEBUG: Old format array for role',
+        roleType,
+        convertPrivilegesToOldFormat(privileges)
+      );
     }
     onSubmit({
       employee: {

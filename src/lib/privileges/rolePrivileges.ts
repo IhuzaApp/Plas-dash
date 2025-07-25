@@ -9,7 +9,10 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
   // Start with all privileges set to false
   const privileges: UserPrivileges = {} as UserPrivileges;
   Object.keys(DEFAULT_PRIVILEGES).forEach(module => {
-    privileges[module as PrivilegeKey] = { access: false, ...DEFAULT_PRIVILEGES[module as PrivilegeKey] };
+    privileges[module as PrivilegeKey] = {
+      access: false,
+      ...DEFAULT_PRIVILEGES[module as PrivilegeKey],
+    };
     // Explicitly set all actions to false for all modules
     Object.keys(privileges[module as PrivilegeKey]!).forEach(action => {
       privileges[module as PrivilegeKey]![action] = false;

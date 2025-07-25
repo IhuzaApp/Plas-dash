@@ -246,9 +246,7 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
           Suspend Account
         </Button>
       )}
-      {hasAction('shoppers', 'send_message') && (
-        <Button>Send Message</Button>
-      )}
+      {hasAction('shoppers', 'send_message') && <Button>Send Message</Button>}
     </div>
   );
 };

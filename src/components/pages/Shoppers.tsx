@@ -82,11 +82,7 @@ const Shoppers = () => {
       <PageHeader
         title="Plasas"
         description="Manage your delivery personnel and track their performance."
-        actions={
-          hasAction('shoppers', 'add_shoppers') && (
-            <Button>Add New Plasa</Button>
-          )
-        }
+        actions={hasAction('shoppers', 'add_shoppers') && <Button>Add New Plasa</Button>}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

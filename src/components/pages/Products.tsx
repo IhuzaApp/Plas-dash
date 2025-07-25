@@ -245,10 +245,14 @@ const Products = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         {hasAction('products', 'edit_products') && (
-                          <Button variant="ghost" size="sm">Edit</Button>
+                          <Button variant="ghost" size="sm">
+                            Edit
+                          </Button>
                         )}
                         {hasAction('products', 'delete_products') && (
-                          <Button variant="ghost" size="sm">Delete</Button>
+                          <Button variant="ghost" size="sm">
+                            Delete
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
