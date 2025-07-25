@@ -18,6 +18,8 @@ import {
   Clock,
   AlertCircle,
   Search,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,6 +36,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useProductsByShop } from '@/hooks/useHasuraApi';
+import { Product } from '@/hooks/useGraphql';
+import { AddProductDialog } from '@/components/modals/AddProductDialog';
 
 interface CartItem {
   id: string;
@@ -44,25 +48,6 @@ interface CartItem {
   description?: string;
   measurement_unit?: string;
   image?: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: string;
-  final_price: string;
-  quantity: number;
-  measurement_unit: string;
-  image: string;
-  category?: {
-    id: string;
-    name: string;
-    description: string;
-    image: string;
-    is_active: boolean;
-  };
-  is_active: boolean;
 }
 
 interface PendingCheckout {
@@ -84,60 +69,36 @@ const Checkout = () => {
   const products = productsData?.Products || [];
 
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [barcode, setBarcode] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [activeTab, setActiveTab] = useState('current');
   const [needsTIN, setNeedsTIN] = useState(false);
   const [tinNumber, setTinNumber] = useState('');
   const [isTINDialogOpen, setIsTINDialogOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash' | null>(null);
+  const [isOrderSummaryCollapsed, setIsOrderSummaryCollapsed] = useState(false);
+  const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false);
 
   // Filter products based on search
   const filteredProducts = products.filter(product =>
     (product.name?.toLowerCase() || '').includes(productSearch.toLowerCase()) ||
     (product.description?.toLowerCase() || '').includes(productSearch.toLowerCase()) ||
-    (product.category?.name?.toLowerCase() || '').includes(productSearch.toLowerCase())
+    (product.category.name?.toLowerCase() || '').includes(productSearch.toLowerCase())
   );
 
   // Mock pending checkouts for demonstration
-  const [pendingCheckouts, setPendingCheckouts] = useState<PendingCheckout[]>([
-    {
-      id: 'PND-001',
-      items: [
-        { id: '4', name: 'Coffee', price: 5.99, quantity: 1 },
-        { id: '5', name: 'Sugar', price: 2.49, quantity: 1 },
-      ],
-      timestamp: new Date(2025, 4, 22, 8, 15),
-      customerName: 'John Smith',
-      status: 'pending',
-      total: 8.48,
-    },
-    {
-      id: 'PND-002',
-      items: [
-        { id: '6', name: 'Bottled Water (6-pack)', price: 4.99, quantity: 2 },
-        { id: '7', name: 'Chips', price: 3.29, quantity: 3 },
-      ],
-      timestamp: new Date(2025, 4, 22, 10, 30),
-      customerName: 'Emma Johnson',
-      status: 'processing',
-      total: 19.85,
-    },
-  ]);
+  const [pendingCheckouts, setPendingCheckouts] = useState<PendingCheckout[]>([]);
 
   const [selectedPendingCheckout, setSelectedPendingCheckout] = useState<string | null>(null);
 
-  const addItem = () => {
-    if (barcode.trim()) {
-      // Search for product by barcode (assuming barcode is stored in product id or name for demo)
+  const addProductByCode = (code: string) => {
+    if (code.trim()) {
       const foundProduct = products.find(product => 
-        product.id === barcode || 
-        product.name.toLowerCase().includes(barcode.toLowerCase())
+        product.id === code || 
+        product.name.toLowerCase().includes(code.toLowerCase())
       );
 
       if (foundProduct) {
         addProductToCart(foundProduct);
-        setBarcode('');
         toast({
           title: 'Product added',
           description: `${foundProduct.name} has been added to the cart.`,
@@ -145,7 +106,7 @@ const Checkout = () => {
       } else {
         toast({
           title: 'Product not found',
-          description: 'No product found with this barcode.',
+          description: 'No product found with this code.',
           variant: 'destructive',
         });
       }
@@ -302,22 +263,17 @@ const Checkout = () => {
 
         {/* Current Checkout Tab */}
         <TabsContent value="current" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Product Scanning Section */}
-            <Card className="lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            {/* Product Selection Section */}
+            <Card className="lg:col-span-3">
               <CardHeader>
-                <CardTitle>Scanner</CardTitle>
+                <CardTitle>Products</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex space-x-2 mb-4">
-                  <Input
-                    placeholder="Scan barcode or enter product code"
-                    value={barcode}
-                    onChange={e => setBarcode(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && addItem()}
-                    className="flex-1"
-                  />
-                  <Button onClick={addItem}>Add</Button>
+                  <Button onClick={() => setIsAddProductDialogOpen(true)} className="w-full">
+                    Add Product Manually
+                  </Button>
                 </div>
 
                 {/* Product Search */}
@@ -340,33 +296,34 @@ const Checkout = () => {
                     <p>Loading products...</p>
                   </div>
                 ) : filteredProducts.length > 0 ? (
-                  <ScrollArea className="h-[300px] mb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <ScrollArea className="h-[600px]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {filteredProducts.map(product => (
                         <div
                           key={product.id}
                           className="p-3 border rounded-lg hover:bg-accent/20 cursor-pointer transition-colors"
                           onClick={() => addProductToCart(product)}
                         >
-                          <div className="flex items-center space-x-3">
+                          <div className="flex flex-col space-y-2">
                             {product.image && (
                               <img
                                 src={product.image}
                                 alt={product.name}
-                                className="w-12 h-12 object-cover rounded"
+                                className="w-full h-24 object-cover rounded"
                               />
                             )}
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1">
                               <p className="font-medium text-sm truncate">{product.name}</p>
                               <p className="text-xs text-muted-foreground truncate">
-                                {product.category?.name || 'No Category'} • {product.measurement_unit || 'unit'}
+                                {product.category.name || 'No Category'} • {product.measurement_unit || 'unit'}
                               </p>
                               <p className="text-sm font-semibold text-primary">
                                 ${parseFloat(product.final_price || product.price || '0').toFixed(2)}
                               </p>
                             </div>
-                            <Button size="sm" variant="outline">
-                              <Plus className="h-4 w-4" />
+                            <Button size="sm" className="w-full bg-black text-white hover:bg-gray-800">
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add
                             </Button>
                           </div>
                         </div>
@@ -379,136 +336,173 @@ const Checkout = () => {
                     <p>No products found</p>
                   </div>
                 )}
-
-                <ScrollArea className="h-[400px] mt-4">
-                  <div className="space-y-2">
-                    {cart.map(item => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between p-3 bg-accent/20 rounded-lg"
-                      >
-                        <div>
-                          <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            ${item.price.toFixed(2)} × {item.quantity} = $
-                            {(item.price * item.quantity).toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => updateQuantity(item.id, -1)}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="w-8 text-center">{item.quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => updateQuantity(item.id, 1)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="text-destructive"
-                            onClick={() => removeItem(item.id)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {cart.length === 0 && (
-                      <div className="p-8 text-center text-muted-foreground">
-                        <ShoppingBag className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                        <p>Cart is empty</p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
               </CardContent>
             </Card>
 
-            {/* Checkout Summary */}
-            <Card>
+            {/* Cart and Order Summary */}
+            <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle>Cart & Summary</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span>Items ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
-                    <span>${calculateTotal().toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax</span>
-                    <span>${(calculateTotal() * 0.08).toFixed(2)}</span>
+                  {/* Cart Items */}
+                  <div>
+                    <h3 className="font-medium mb-2">Cart Items</h3>
+                    <ScrollArea className="h-[300px]">
+                      <div className="space-y-2">
+                        {cart.map(item => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between p-2 bg-accent/20 rounded-lg"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{item.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                ${item.price.toFixed(2)} × {item.quantity}
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.id, -1)}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="w-6 text-center text-sm">{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.id, 1)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() => removeItem(item.id)}
+                              >
+                                <Trash className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        {cart.length === 0 && (
+                          <div className="p-4 text-center text-muted-foreground">
+                            <ShoppingBag className="mx-auto h-6 w-6 mb-1 opacity-50" />
+                            <p className="text-sm">Cart is empty</p>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
                   </div>
 
                   <Separator />
 
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>${(calculateTotal() * 1.08).toFixed(2)}</span>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="include-tin"
-                      checked={needsTIN}
-                      onCheckedChange={checked => setNeedsTIN(checked === true)}
-                    />
-                    <label
-                      htmlFor="include-tin"
-                      className="text-sm font-medium leading-none cursor-pointer"
+                  {/* Order Summary */}
+                  <div>
+                    <div 
+                      className="flex items-center justify-between cursor-pointer"
+                      onClick={() => setIsOrderSummaryCollapsed(!isOrderSummaryCollapsed)}
                     >
-                      Include TIN Number
-                    </label>
-                  </div>
-
-                  {needsTIN && (
-                    <div className="pt-2">
-                      <Input
-                        placeholder="Enter TIN Number"
-                        value={tinNumber}
-                        onChange={e => setTinNumber(e.target.value)}
-                      />
+                      <h3 className="font-medium">Order Summary</h3>
+                      {isOrderSummaryCollapsed ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      )}
                     </div>
-                  )}
+                    
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                      isOrderSummaryCollapsed ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'
+                    }`}>
+                      <div className="space-y-2 text-sm pt-2">
+                        <div className="flex justify-between">
+                          <span>Items ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
+                          <span>${calculateTotal().toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Tax</span>
+                          <span>${(calculateTotal() * 0.08).toFixed(2)}</span>
+                        </div>
 
-                  <div className="pt-4 space-y-2">
-                    <Button
-                      className="w-full"
-                      onClick={() => {
-                        setPaymentMethod('card');
-                        handleCheckout();
-                      }}
-                      disabled={cart.length === 0}
-                    >
-                      <CreditCard className="mr-2 h-4 w-4" /> Pay with Card
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        setPaymentMethod('cash');
-                        handleCheckout();
-                      }}
-                      disabled={cart.length === 0}
-                    >
-                      <Banknote className="mr-2 h-4 w-4" /> Pay with Cash
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      className="w-full"
-                      onClick={saveToPending}
-                      disabled={cart.length === 0}
-                    >
-                      <Clock className="mr-2 h-4 w-4" /> Save for Later
-                    </Button>
+                        <Separator />
+
+                        <div className="flex justify-between font-bold text-base">
+                          <span>Total</span>
+                          <span>${(calculateTotal() * 1.08).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* TIN Number */}
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    isOrderSummaryCollapsed ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'
+                  }`}>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="include-tin"
+                        checked={needsTIN}
+                        onCheckedChange={checked => setNeedsTIN(checked === true)}
+                      />
+                      <label
+                        htmlFor="include-tin"
+                        className="text-sm font-medium leading-none cursor-pointer"
+                      >
+                        Include TIN Number
+                      </label>
+                    </div>
+
+                    {needsTIN && (
+                      <div className="pt-2">
+                        <Input
+                          placeholder="Enter TIN Number"
+                          value={tinNumber}
+                          onChange={e => setTinNumber(e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Payment Buttons */}
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    isOrderSummaryCollapsed ? 'max-h-0 opacity-0' : 'max-h-48 opacity-100'
+                  }`}>
+                    <div className="space-y-2">
+                      <Button
+                        className="w-full"
+                        onClick={() => {
+                          setPaymentMethod('card');
+                          handleCheckout();
+                        }}
+                        disabled={cart.length === 0}
+                      >
+                        <CreditCard className="mr-2 h-4 w-4" /> Pay with Card
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setPaymentMethod('cash');
+                          handleCheckout();
+                        }}
+                        disabled={cart.length === 0}
+                      >
+                        <Banknote className="mr-2 h-4 w-4" /> Pay with Cash
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="w-full"
+                        onClick={saveToPending}
+                        disabled={cart.length === 0}
+                      >
+                        <Clock className="mr-2 h-4 w-4" /> Save for Later
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -609,6 +603,13 @@ const Checkout = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Product Dialog */}
+      <AddProductDialog
+        isOpen={isAddProductDialogOpen}
+        onClose={() => setIsAddProductDialogOpen(false)}
+        onAddProduct={addProductByCode}
+      />
 
       {/* Pending Checkout Details Dialog */}
       <Dialog
