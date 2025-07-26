@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
-import { ShoppingBag, CheckCircle } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -66,16 +66,28 @@ const Checkout = () => {
   const [pendingCheckouts, setPendingCheckouts] = useState<PendingCheckout[]>([]);
   const [selectedPendingCheckout, setSelectedPendingCheckout] = useState<string | null>(null);
 
+  // Save cart data to localStorage for customer display
+  React.useEffect(() => {
+    const cartData = JSON.stringify(cart);
+    const shopData = JSON.stringify({
+      name: shop?.name || 'Shop Name',
+      address: shop?.address || 'Shop Address',
+      phone: session?.phoneNumber || '',
+      email: session?.email || '',
+    });
+    
+    localStorage.setItem('customerDisplayCart', cartData);
+    localStorage.setItem('customerDisplayShop', shopData);
+  }, [cart, shop, session]);
+
   // Load pending checkouts from localStorage on component mount
   React.useEffect(() => {
     const loadPendingCheckouts = () => {
       try {
         const stored = localStorage.getItem('pendingCheckouts');
-        console.log('Loading from localStorage:', stored);
         
         if (stored) {
           const parsed = JSON.parse(stored);
-          console.log('Parsed checkouts:', parsed);
           const now = Date.now();
           
           // Filter out expired checkouts (older than 24 hours) and convert timestamps back to Date objects
@@ -83,20 +95,17 @@ const Checkout = () => {
             // Convert string timestamp back to Date object
             const checkoutTime = new Date(checkout.timestamp).getTime();
             const hoursDiff = (now - checkoutTime) / (1000 * 60 * 60);
-            console.log(`Checkout ${checkout.id}: ${hoursDiff.toFixed(2)} hours old`);
             return hoursDiff < 24; // Keep only checkouts less than 24 hours old
           }).map((checkout: any) => ({
             ...checkout,
             timestamp: new Date(checkout.timestamp) // Convert back to Date object
           }));
           
-          console.log('Valid checkouts loaded:', validCheckouts);
           setPendingCheckouts(validCheckouts);
           
           // Update localStorage with only valid checkouts
           if (validCheckouts.length !== parsed.length) {
             localStorage.setItem('pendingCheckouts', JSON.stringify(validCheckouts));
-            console.log('Updated localStorage with valid checkouts only');
           }
         }
       } catch (error) {
@@ -112,10 +121,8 @@ const Checkout = () => {
   // Save pending checkouts to localStorage whenever they change
   React.useEffect(() => {
     if (pendingCheckouts.length > 0) {
-      console.log('Saving to localStorage:', pendingCheckouts);
       localStorage.setItem('pendingCheckouts', JSON.stringify(pendingCheckouts));
     } else {
-      console.log('Clearing localStorage - no pending checkouts');
       localStorage.removeItem('pendingCheckouts');
     }
   }, [pendingCheckouts]);
@@ -131,7 +138,6 @@ const Checkout = () => {
       });
       
       if (validCheckouts.length !== pendingCheckouts.length) {
-        console.log(`Cleaning up ${pendingCheckouts.length - validCheckouts.length} expired checkouts`);
         setPendingCheckouts(validCheckouts);
       }
     };
@@ -145,7 +151,10 @@ const Checkout = () => {
   const addProductByCode = (code: string) => {
     if (code.trim()) {
       const foundProduct = products.find(
-        product => product.id === code || product.name.toLowerCase().includes(code.toLowerCase())
+        product => 
+          product.sku === code || 
+          product.barcode === code || 
+          product.name.toLowerCase().includes(code.toLowerCase())
       );
 
       if (foundProduct) {
@@ -157,7 +166,7 @@ const Checkout = () => {
       } else {
         toast({
           title: 'Product not found',
-          description: 'No product found with this code.',
+          description: 'No product found with this SKU or barcode.',
           variant: 'destructive',
         });
       }

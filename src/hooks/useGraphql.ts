@@ -174,6 +174,8 @@ export interface Product {
     image: string;
     is_active: boolean;
   };
+  barcode?: string;
+  sku?: string;
   created_at: string;
   updated_at: string;
   is_active: boolean;
