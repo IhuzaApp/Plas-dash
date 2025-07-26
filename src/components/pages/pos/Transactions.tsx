@@ -272,25 +272,25 @@ const Transactions = () => {
                       </TableRow>
                     )}
                     {filteredTransactions.map(transaction => (
-                    <TableRow key={transaction.id}>
-                      <TableCell className="font-medium">{transaction.transactionId}</TableCell>
-                      <TableCell>{format(transaction.datetime, 'MMM dd, yyyy HH:mm')}</TableCell>
+                  <TableRow key={transaction.id}>
+                    <TableCell className="font-medium">{transaction.transactionId}</TableCell>
+                    <TableCell>{format(transaction.datetime, 'MMM dd, yyyy HH:mm')}</TableCell>
                         <TableCell className="text-right">{formatCurrencyWithConfig(transaction.amount, systemConfig)}</TableCell>
-                      <TableCell className="text-right">{transaction.items}</TableCell>
-                      <TableCell>{getPaymentMethodBadge(transaction.paymentMethod)}</TableCell>
-                      <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                      <TableCell>{transaction.cashier}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewTransaction(transaction.id)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    ))}
+                    <TableCell className="text-right">{transaction.items}</TableCell>
+                    <TableCell>{getPaymentMethodBadge(transaction.paymentMethod)}</TableCell>
+                    <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                    <TableCell>{transaction.cashier}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleViewTransaction(transaction.id)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
                   </>
                 )}
               </TableBody>
