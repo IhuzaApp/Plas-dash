@@ -22,6 +22,8 @@ export interface Product {
   name: string;
   price: string;
   description?: string;
+  barcode?: string;
+  sku?: string;
 }
 
 export interface OrderItem {

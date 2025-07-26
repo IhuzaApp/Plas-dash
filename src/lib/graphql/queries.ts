@@ -135,6 +135,8 @@ export const GET_PRODUCTS_BY_SHOP = `
       measurement_unit
       image
       category
+      barcode
+      sku
       created_at
       updated_at
       is_active

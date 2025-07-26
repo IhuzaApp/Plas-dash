@@ -26,6 +26,7 @@ import {
   Printer,
   Smartphone,
   CheckCircle,
+  Monitor,
 } from 'lucide-react';
 import { useGraphqlMutation } from '@/hooks/useGraphql';
 import { ADD_CHECKOUT } from '@/lib/graphql/mutations';
@@ -89,6 +90,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   const [isOrderSummaryCollapsed, setIsOrderSummaryCollapsed] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isPrintConfirmDialogOpen, setIsPrintConfirmDialogOpen] = useState(false);
+
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     'card' | 'cash' | 'momo' | null
   >(null);
@@ -227,9 +229,24 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
         // Call the checkout function
         onCheckout(selectedPaymentMethod, needsTIN ? tinNumber : undefined);
 
-        // Close payment dialog and show print confirmation
+        // Close payment dialog
         setIsPaymentDialogOpen(false);
-        setIsPrintConfirmDialogOpen(true);
+        
+        // For MOMO payments, only update localStorage to trigger dialog in customer display
+        if (selectedPaymentMethod === 'momo') {
+          // Update localStorage to trigger MOMO dialog in customer display
+          const paymentInfo = {
+            paymentMethod: selectedPaymentMethod,
+            discount: 0
+          };
+          localStorage.setItem('customerDisplayPayment', JSON.stringify(paymentInfo));
+          
+          // Don't show MOMO dialog here - it will show on customer display
+          setIsPrintConfirmDialogOpen(true);
+        } else {
+          // Show print confirmation for other payment methods
+          setIsPrintConfirmDialogOpen(true);
+        }
 
         // Reset payment form
         setSelectedPaymentMethod(null);
@@ -388,6 +405,32 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
     setLastPaymentDetails(null);
   };
 
+
+
+  const openCustomerDisplay = () => {
+    // Save cart data to localStorage for the customer display page
+    localStorage.setItem('customerDisplayCart', JSON.stringify(cart));
+    localStorage.setItem('customerDisplayShop', JSON.stringify(shopDetails));
+    
+    // Save payment information
+    const paymentInfo = {
+      paymentMethod: selectedPaymentMethod || 'pending',
+      discount: 0 // Can be enhanced later with discount functionality
+    };
+    localStorage.setItem('customerDisplayPayment', JSON.stringify(paymentInfo));
+    
+    // Open customer display page in a new window
+    const customerDisplayWindow = window.open(
+      '/customer-display',
+      'customer-display',
+      'width=800,height=900,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no'
+    );
+    
+    if (customerDisplayWindow) {
+      customerDisplayWindow.focus();
+    }
+  };
+
   return (
     <>
       <Card className="lg:col-span-2">
@@ -446,6 +489,19 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                   )}
                 </div>
               </ScrollArea>
+            </div>
+            
+            {/* Customer Display Button */}
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                onClick={openCustomerDisplay}
+                className="w-full"
+                disabled={cart.length === 0}
+              >
+                <Monitor className="mr-2 h-4 w-4" />
+                Show Customer Display
+              </Button>
             </div>
             <Separator />
             <div>
@@ -750,6 +806,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+
+
     </>
   );
 };
