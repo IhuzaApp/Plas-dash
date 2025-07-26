@@ -40,6 +40,13 @@ export default function CustomerDisplayPage() {
   });
 
   const [isMomoPaymentDialogOpen, setIsMomoPaymentDialogOpen] = useState(false);
+  const [previousPaymentMethod, setPreviousPaymentMethod] = useState<string>('pending');
+
+  // Function to manually open MOMO dialog
+  const openMomoDialog = () => {
+    console.log('=== MANUALLY OPENING MOMO DIALOG ===');
+    setIsMomoPaymentDialogOpen(true);
+  };
 
   // Fetch real-time data from localStorage
   const fetchDisplayData = () => {
@@ -53,18 +60,33 @@ export default function CustomerDisplayPage() {
         const shopDetails = shopData ? JSON.parse(shopData) : displayData.shopDetails;
         const paymentInfo = paymentData ? JSON.parse(paymentData) : { paymentMethod: 'pending', discount: 0 };
         
+        const newPaymentMethod = paymentInfo.paymentMethod;
+        
         setDisplayData({
           cart,
           shopDetails,
           timestamp: new Date().toISOString(),
-          paymentMethod: paymentInfo.paymentMethod,
+          paymentMethod: newPaymentMethod,
           discount: paymentInfo.discount || 0
         });
 
-        // Check if MOMO payment was just selected and show dialog
-        if (paymentInfo.paymentMethod === 'momo' && !isMomoPaymentDialogOpen) {
+        // Check if payment method changed to MOMO and show dialog
+        if (newPaymentMethod === 'momo' && previousPaymentMethod !== 'momo') {
+          console.log('=== CUSTOMER DISPLAY: MOMO PAYMENT DETECTED ===');
+          console.log('Previous payment method:', previousPaymentMethod);
+          console.log('New payment method:', newPaymentMethod);
+          console.log('Opening MOMO payment dialog');
           setIsMomoPaymentDialogOpen(true);
         }
+        
+        // Debug logging
+        if (newPaymentMethod !== previousPaymentMethod) {
+          console.log('=== CUSTOMER DISPLAY: PAYMENT METHOD CHANGED ===');
+          console.log('From:', previousPaymentMethod, 'To:', newPaymentMethod);
+        }
+        
+        // Update previous payment method
+        setPreviousPaymentMethod(newPaymentMethod);
       }
     } catch (error) {
       console.error('Error fetching display data:', error);

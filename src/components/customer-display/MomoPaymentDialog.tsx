@@ -42,11 +42,9 @@ export default function MomoPaymentDialog({
   // Generate QR code when component mounts or USSD code changes
   useEffect(() => {
     if (isOpen && ussdCode) {
-      // Use a simple text format with clear instructions
-      // This ensures the QR code is recognized as text and customer can copy/dial manually
-      const qrText = `MOMO Payment Code:\n${ussdCode}\n\nDial this code to pay ${formatCurrencyWithConfig(total, systemConfig)}`;
-      
-      QRCode.toDataURL(qrText, {
+      // Use tel: protocol with URL encoding to ensure complete USSD code is dialed
+      const telUrl = `tel:${encodeURIComponent(ussdCode)}`;
+      QRCode.toDataURL(telUrl, {
         width: 200,
         margin: 2,
         color: {
@@ -62,7 +60,7 @@ export default function MomoPaymentDialog({
         console.error('Error generating QR code:', err);
       });
     }
-  }, [isOpen, ussdCode, total, systemConfig]);
+  }, [isOpen, ussdCode]);
 
   const copyToClipboard = async () => {
     try {
@@ -108,7 +106,7 @@ export default function MomoPaymentDialog({
                     className="mx-auto w-32 h-32"
                   />
                   <p className="text-sm text-gray-600">
-                    Scan QR code to copy the USSD code
+                    Scan QR code - phone will open dialer with complete USSD code
                   </p>
                 </div>
               ) : (
@@ -168,12 +166,12 @@ export default function MomoPaymentDialog({
           <div className="space-y-3">
             <h4 className="font-semibold text-gray-800">How to Pay:</h4>
             <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-                  1
-                </div>
-                <span>Scan the QR code to copy the USSD code, then dial it manually</span>
-              </div>
+                                   <div className="flex items-start gap-2">
+                       <div className="w-5 h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+                         1
+                       </div>
+                       <span>Scan the QR code - your phone will open the dialer with the complete USSD code</span>
+                     </div>
               <div className="flex items-start gap-2">
                 <div className="w-5 h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
                   2
