@@ -99,7 +99,7 @@ const Checkout = () => {
       const cartItem: CartItem = {
         id: product.id,
         name: product.name,
-        price: parseFloat(product.final_price || product.price),
+        price: parseFloat(product.price), // Use base price for POS
         quantity: 1,
         description: product.description,
         measurement_unit: product.measurement_unit,
