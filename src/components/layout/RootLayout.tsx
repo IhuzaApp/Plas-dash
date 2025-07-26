@@ -106,29 +106,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
   // Check if current page is accessible and redirect if not
   React.useEffect(() => {
     if (isAuthenticated && session && pathname) {
-      console.log('=== Page Accessibility Check ===');
-      console.log('Current pathname:', pathname);
-      console.log('User privileges:', session.privileges);
-
       const currentPageAccessible = isPageAccessible(session.privileges, pathname);
-      console.log('Is current page accessible:', currentPageAccessible);
 
       if (!currentPageAccessible) {
         const recommendedPage = getRecommendedLandingPage(session.privileges);
-        console.log('Recommended page:', recommendedPage);
 
         if (recommendedPage && recommendedPage.path !== pathname) {
-          console.log(
-            `🚨 Redirecting from inaccessible page ${pathname} to: ${recommendedPage.path}`
-          );
           router.push(recommendedPage.path);
-        } else {
-          console.log('✅ No redirect needed - already on recommended page or no recommendation');
         }
-      } else {
-        console.log('✅ Current page is accessible, no redirect needed');
       }
-      console.log('=== End Page Accessibility Check ===');
     }
   }, [isAuthenticated, session, pathname, router]);
 
@@ -146,13 +132,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
       if (!currentPageAccessible) {
         const recommendedPage = getRecommendedLandingPage(sessionData.privileges);
         if (recommendedPage && recommendedPage.path !== pathname) {
-          console.log(
-            `🔄 Login auto-routing to: ${recommendedPage.path} (${recommendedPage.title})`
-          );
           router.push(recommendedPage.path);
         }
-      } else {
-        console.log('✅ Login successful - current page is accessible, staying put');
       }
     }
   };

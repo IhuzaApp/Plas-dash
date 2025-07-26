@@ -19,6 +19,7 @@ export type OrderItem = {
   name: string;
   quantity: number;
   price: string;
+  total?: string;
 };
 
 export type OrderDetails = {
@@ -32,6 +33,9 @@ export type OrderDetails = {
   email: string;
   paymentMethod: string;
   items: OrderItem[];
+  subtotal?: string;
+  tax?: string;
+  deliveryFee?: string;
 };
 
 interface OrderDetailDialogProps {
@@ -59,14 +63,15 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
     }
   };
 
-  // Calculate subtotal, tax, and total
-  const subtotal = order.items.reduce((sum, item) => {
-    const price = parseFloat(item.price.replace('$', ''));
+  // Use provided values from order if available, otherwise calculate
+  const subtotal = order.subtotal || order.items.reduce((sum, item) => {
+    // Extract numeric value from formatted price string
+    const priceMatch = item.price.match(/[\d,]+/);
+    const price = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0;
     return sum + price * item.quantity;
   }, 0);
 
-  const tax = subtotal * 0.08; // Assuming 8% tax
-  const total = parseFloat(order.total.replace('$', ''));
+  const tax = order.tax || '0';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -167,8 +172,7 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
                     <div className="text-right">
                       <p>{item.price} each</p>
                       <p className="font-medium">
-                        ${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}{' '}
-                        total
+                        {item.total || `${item.price} × ${item.quantity}`}
                       </p>
                     </div>
                   </CardContent>
@@ -182,15 +186,11 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <p className="text-muted-foreground">Subtotal</p>
-              <p>${subtotal.toFixed(2)}</p>
+              <p>{subtotal}</p>
             </div>
             <div className="flex justify-between items-center">
               <p className="text-muted-foreground">Tax (8%)</p>
-              <p>${tax.toFixed(2)}</p>
-            </div>
-            <div className="flex justify-between items-center">
-              <p className="text-muted-foreground">Delivery Fee</p>
-              <p>${(total - subtotal - tax).toFixed(2)}</p>
+              <p>{tax}</p>
             </div>
             <Separator />
             <div className="flex justify-between items-center pt-2">

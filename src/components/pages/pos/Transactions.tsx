@@ -126,24 +126,38 @@ const Transactions = () => {
     if (!transaction.originalData) return null;
     
     const cartItems = JSON.parse(transaction.originalData.cartItems || '[]');
-    const items: OrderItem[] = cartItems.map((item: any, index: number) => ({
-      id: `item${index}`,
-      name: item.name,
-      quantity: item.quantity,
-      price: formatCurrencyWithConfig(item.price, systemConfig),
-    }));
+    const items: OrderItem[] = cartItems.map((item: any, index: number) => {
+      const price = Number(item.price) || 0;
+      const quantity = Number(item.quantity) || 0;
+      return {
+        id: `item${index}`,
+        name: item.name,
+        quantity,
+        price: formatCurrencyWithConfig(price, systemConfig),
+        total: formatCurrencyWithConfig(price * quantity, systemConfig),
+      };
+    });
+
+    // Calculate subtotal, tax, delivery fee, and total
+    const subtotal = cartItems.reduce((sum: number, item: any) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 0), 0);
+    const tax = subtotal * 0.08;
+    const deliveryFee = Number(transaction.originalData.delivery_fee || 0);
+    const total = subtotal + tax + deliveryFee;
 
     return {
       id: transaction.transactionId,
-      customer: 'Walk-in Customer',
+      customer: transaction.originalData.ProcessedBy?.fullnames || 'Walk-in Customer',
       date: format(transaction.datetime, 'MMM dd, yyyy HH:mm'),
-      total: formatCurrencyWithConfig(transaction.amount, systemConfig),
+      total: formatCurrencyWithConfig(total, systemConfig),
       status: 'Completed',
-      address: transaction.originalData.Shops?.address || 'In-store purchase',
+      address: transaction.originalData.Shops?.address || 'N/A',
       phone: transaction.originalData.ProcessedBy?.phone || 'N/A',
       email: transaction.originalData.ProcessedBy?.email || 'N/A',
       paymentMethod: `${transaction.paymentMethod.toUpperCase()} Payment`,
       items,
+      subtotal: formatCurrencyWithConfig(subtotal, systemConfig),
+      tax: formatCurrencyWithConfig(tax, systemConfig),
+      deliveryFee: formatCurrencyWithConfig(deliveryFee, systemConfig),
     };
   };
 
@@ -157,35 +171,6 @@ const Transactions = () => {
     const transaction = filteredTransactions.find(t => t.id === selectedTransaction);
     return transaction ? createTransactionDetails(transaction) : null;
   })();
-
-  // Debug information
-  console.log('=== POS Transactions Debug ===');
-  console.log('Session:', session);
-  console.log('Shop ID:', shopId);
-  console.log('Is Loading:', isLoading);
-  console.log('Has Error:', !!error);
-  console.log('Error Message:', error?.message);
-  console.log('Transactions Data:', transactionsData);
-  console.log('Raw shopCheckouts:', transactionsData?.shopCheckouts);
-  console.log('Transformed transactions:', transactions);
-  console.log('Transactions Count:', transactions?.length || 0);
-  console.log('Filtered Count:', filteredTransactions.length);
-  
-  // Debug first transaction if it exists
-  if (transactions.length > 0) {
-    console.log('First transaction:', transactions[0]);
-    console.log('First transaction ID type:', typeof transactions[0].transactionId);
-    console.log('First transaction ID value:', transactions[0].transactionId);
-    console.log('First transaction datetime:', transactions[0].datetime);
-    console.log('First transaction amount:', transactions[0].amount);
-  }
-  
-  // Debug filtered transactions
-  if (filteredTransactions.length > 0) {
-    console.log('First filtered transaction:', filteredTransactions[0]);
-  }
-  
-  console.log('=== End Debug ===');
 
   return (
     <AdminLayout>
