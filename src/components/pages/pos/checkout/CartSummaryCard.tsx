@@ -410,7 +410,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
     const customerDisplayWindow = window.open(
       '/customer-display',
       'customer-display',
-      'width=800,height=900,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no'
+      'width=1400,height=1000,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no'
     );
     
     if (customerDisplayWindow) {

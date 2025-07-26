@@ -59,6 +59,30 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Staff performance metrics
   - Category-wise sales analysis
 
+- **POS Checkout System**
+  - Real-time cart management
+  - Product search by SKU/barcode
+  - Manual product entry with dial pad
+  - Multiple payment methods (Cash, Card, MOMO)
+  - TIN number support for invoices
+  - Pending checkout management (24-hour storage)
+  - Real-time customer display screen
+
+- **Customer Display Screen**
+  - Second screen functionality for customer visibility
+  - Real-time order updates via localStorage synchronization
+  - Professional 2-column layout (Order Details + Transaction Details)
+  - Currency formatting based on system configuration
+  - Responsive design optimized for device displays
+  - MOMO payment integration with QR code scanning
+
+- **MOMO Payment Integration**
+  - USSD code generation for mobile money payments
+  - QR code generation with tel: protocol for direct dialing
+  - Customer display popup for payment instructions
+  - Real-time payment status updates
+  - Professional black and white design theme
+
 ### 🚚 Delivery Operations
 
 - **Plasa Management**
@@ -129,6 +153,26 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Registration controls
   - Maintenance mode
 
+### 4. POS Checkout Forms
+
+- **Product Selection**
+  - Manual product entry with dial pad interface
+  - SKU/barcode scanning support
+  - Real-time product search and filtering
+  - Category-based product organization
+
+- **Payment Processing**
+  - Multiple payment method selection (Cash, Card, MOMO)
+  - TIN number input for invoice generation
+  - Real-time total calculation with tax
+  - Print invoice functionality with company branding
+
+- **Customer Display Management**
+  - Second screen window management
+  - Real-time data synchronization
+  - Payment method display
+  - Order status updates
+
 ## Dashboard Components
 
 ### 1. Main Analytics Dashboard
@@ -186,6 +230,26 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Time-based filters
   - Status indicators
   - Trend analysis
+
+### 5. Customer Display Components
+
+- **Order Display**
+  - Real-time cart item updates
+  - Product details with pricing
+  - Category information display
+  - Quantity and total calculations
+
+- **Transaction Details**
+  - Payment method selection
+  - Tax breakdown and calculations
+  - Order summary with totals
+  - Transaction ID generation
+
+- **MOMO Payment Dialog**
+  - USSD code generation and display
+  - QR code scanning for direct dialing
+  - Payment amount and transaction details
+  - Professional review interface
 
 ## Tech Stack
 
@@ -254,10 +318,14 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 ```
 src/
 ├── app/                 # Next.js app router pages
+│   └── customer-display/ # Customer display page
 ├── components/
 │   ├── dashboard/      # Dashboard-specific components
 │   ├── layout/         # Layout components
 │   ├── pages/          # Page components
+│   │   └── pos/        # POS-specific components
+│   │       └── checkout/ # Checkout components
+│   ├── customer-display/ # Customer display components
 │   └── ui/             # Reusable UI components
 ├── hooks/              # Custom React hooks
 ├── lib/                # Utility functions and configurations
@@ -359,6 +427,29 @@ Only active plasas with completed deliveries in the selected time period are inc
 
 ## Business Logic and Core Functionalities
 
+### POS Checkout Logic
+
+1. **Product Management Flow**
+   - Product search by SKU/barcode with real-time validation
+   - Manual product entry using dial pad interface
+   - Cart management with quantity updates and item removal
+   - Real-time price calculations with tax and discounts
+   - Pending checkout storage with 24-hour expiration
+
+2. **Payment Processing Flow**
+   - Multiple payment method selection (Cash, Card, MOMO)
+   - TIN number integration for invoice generation
+   - Real-time total calculation including tax (8%)
+   - Print invoice functionality with company branding
+   - Transaction ID generation using database auto-increment
+
+3. **Customer Display Integration**
+   - Second screen window management using `window.open()`
+   - Real-time data synchronization via localStorage
+   - Professional 2-column layout for order and transaction details
+   - Currency formatting based on system configuration
+   - MOMO payment dialog integration for mobile money transactions
+
 ### Order Processing Logic
 
 1. **Order Creation Flow**
@@ -384,7 +475,22 @@ Only active plasas with completed deliveries in the selected time period are inc
 
 ### Financial Calculations
 
-1. **Delivery Fee Calculation**
+1. **POS Transaction Calculations**
+
+   ```typescript
+   subtotal = sum(item.price × item.quantity)
+   tax = (subtotal - discount) × 0.08
+   total = subtotal - discount + tax
+   ```
+
+2. **MOMO Payment Processing**
+
+   ```typescript
+   ussd_code = `*182*8*1*1426640*${Math.round(total)}#`
+   qr_content = `tel:${encodeURIComponent(ussd_code)}`
+   ```
+
+3. **Delivery Fee Calculation**
 
    ```typescript
    final_fee = base_fee +
@@ -394,7 +500,7 @@ Only active plasas with completed deliveries in the selected time period are inc
                service_fee
    ```
 
-2. **Plasa Earnings**
+4. **Plasa Earnings**
 
    ```typescript
    earnings = delivery_fee × commission_rate +
@@ -402,7 +508,7 @@ Only active plasas with completed deliveries in the selected time period are inc
              tips
    ```
 
-3. **Store Commission**
+5. **Store Commission**
    ```typescript
    store_commission = order_subtotal × store_commission_rate -
                      platform_fee -
@@ -506,7 +612,24 @@ Only active plasas with completed deliveries in the selected time period are inc
 
 ### Form Validation Logic
 
-1. **Order Form Validation**
+1. **POS Checkout Validation**
+
+   ```typescript
+   const checkoutSchema = z.object({
+     cart_items: z.array(z.object({
+       id: z.string(),
+       name: z.string(),
+       price: z.number().positive(),
+       quantity: z.number().positive(),
+     })).min(1),
+     payment_method: z.enum(['cash', 'card', 'momo']),
+     tin_number: z.string().optional(),
+     shop_id: z.string().uuid(),
+     processed_by: z.string().uuid(),
+   });
+   ```
+
+2. **Order Form Validation**
 
    ```typescript
    const orderSchema = z.object({
@@ -526,7 +649,7 @@ Only active plasas with completed deliveries in the selected time period are inc
    });
    ```
 
-2. **Payment Form Validation**
+3. **Payment Form Validation**
    ```typescript
    const paymentSchema = z.object({
      amount: z.number().positive(),
