@@ -232,21 +232,8 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
         // Close payment dialog
         setIsPaymentDialogOpen(false);
         
-        // For MOMO payments, only update localStorage to trigger dialog in customer display
-        if (selectedPaymentMethod === 'momo') {
-          // Update localStorage to trigger MOMO dialog in customer display
-          const paymentInfo = {
-            paymentMethod: selectedPaymentMethod,
-            discount: 0
-          };
-          localStorage.setItem('customerDisplayPayment', JSON.stringify(paymentInfo));
-          
-          // Don't show MOMO dialog here - it will show on customer display
-          setIsPrintConfirmDialogOpen(true);
-        } else {
-          // Show print confirmation for other payment methods
-          setIsPrintConfirmDialogOpen(true);
-        }
+        // Show print confirmation for all payment methods
+        setIsPrintConfirmDialogOpen(true);
 
         // Reset payment form
         setSelectedPaymentMethod(null);
@@ -663,6 +650,34 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* MOMO Payment Button */}
+            {selectedPaymentMethod === 'momo' && (
+              <div className="space-y-2">
+                <Button
+                  onClick={() => {
+                    // Update localStorage to trigger MOMO dialog in customer display
+                    const paymentInfo = {
+                      paymentMethod: selectedPaymentMethod,
+                      discount: 0
+                    };
+                    localStorage.setItem('customerDisplayPayment', JSON.stringify(paymentInfo));
+                    
+                    console.log('=== OPENING MOMO DIALOG ON CUSTOMER DISPLAY ===');
+                    console.log('Updated localStorage with:', paymentInfo);
+                    
+                    toast({
+                      title: 'MOMO Payment',
+                      description: 'MOMO payment dialog opened on customer display screen.',
+                    });
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Open MOMO Payment on Customer Display
+                </Button>
+              </div>
+            )}
 
             {/* TIN Number Section */}
             <div className="space-y-2">
