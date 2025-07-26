@@ -175,15 +175,12 @@ export const isPageAccessible = (privileges: UserPrivileges | null, path: string
   if (!privileges) return false;
 
   const page = PAGE_ROUTES.find(route => route.path === path);
-  console.log('Checking page accessibility:', { path, pageFound: !!page, page });
 
   if (!page) {
-    console.log('Page not found in PAGE_ROUTES, allowing access by default');
     return true; // Allow access to pages not in our routing system
   }
 
   const hasAccess = hasPrivilege(privileges, page.module, page.action);
-  console.log('Page access result:', { path, module: page.module, action: page.action, hasAccess });
 
   return hasAccess;
 };
