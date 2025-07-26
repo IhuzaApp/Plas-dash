@@ -79,7 +79,7 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                       </p>
                       <p className="text-sm font-semibold text-primary">
                         {formatCurrencyWithConfig(
-                          parseFloat(product.final_price || product.price || '0'),
+                          parseFloat(product.price || '0'),
                           systemConfig
                         )}
                       </p>
