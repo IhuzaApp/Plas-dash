@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle, Trash } from 'lucide-react';
+import { Clock, CheckCircle, Trash, RotateCcw } from 'lucide-react';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 
@@ -27,6 +27,7 @@ interface PendingCheckoutsTabProps {
   onViewDetails: (id: string) => void;
   onCompleteCheckout: (id: string) => void;
   onDeleteCheckout: (id: string) => void;
+  onLoadCheckout: (id: string) => void;
   hasDeleteAction: boolean;
 }
 
@@ -54,9 +55,25 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
   onViewDetails,
   onCompleteCheckout,
   onDeleteCheckout,
+  onLoadCheckout,
   hasDeleteAction,
 }) => {
   const { data: systemConfig } = useSystemConfig();
+
+  const getTimeRemaining = (timestamp: Date) => {
+    const now = new Date();
+    const checkoutTime = new Date(timestamp);
+    const hoursDiff = (now.getTime() - checkoutTime.getTime()) / (1000 * 60 * 60);
+    const hoursRemaining = Math.max(0, 24 - hoursDiff);
+    
+    if (hoursRemaining < 1) {
+      const minutesRemaining = Math.floor(hoursRemaining * 60);
+      return `${minutesRemaining}m remaining`;
+    } else {
+      return `${Math.floor(hoursRemaining)}h remaining`;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -77,6 +94,9 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
                     <h3 className="font-medium">Order #{checkout.id}</h3>
                     <p className="text-sm text-muted-foreground">
                       {checkout.timestamp.toLocaleString()} • {checkout.items.length} items
+                    </p>
+                    <p className="text-xs text-orange-600 font-medium">
+                      {getTimeRemaining(checkout.timestamp)}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -99,6 +119,13 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
                     onClick={() => onCompleteCheckout(checkout.id)}
                   >
                     <CheckCircle className="h-4 w-4 mr-1" /> Complete
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onLoadCheckout(checkout.id)}
+                  >
+                    <RotateCcw className="h-4 w-4 mr-1" /> Load
                   </Button>
                   {hasDeleteAction && (
                     <Button
