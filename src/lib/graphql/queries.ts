@@ -483,6 +483,59 @@ export const GET_USER_BY_ID = `
   }
 `;
 
+// POS Transactions query
+export const GET_POS_TRANSACTIONS = `
+  query getPOSTransactions($shop_id: uuid = "") {
+    shopCheckouts(where: {shop_id: {_eq: $shop_id}}) {
+      Processed_By
+      ProcessedBy {
+        Address
+        Position
+        active
+        created_on
+        dob
+        email
+        employeeID
+        fullnames
+        gender
+        generatePassword
+        id
+        last_login
+        multAuthEnabled
+        online
+        password
+        phone
+        restaurant_id
+        roleType
+        shop_id
+        updated_on
+      }
+      cartItems
+      created_on
+      id
+      number
+      payment_method
+      shop_id
+      subtotal
+      tax
+      tin
+      total
+      Shops {
+        address
+        category_id
+        description
+        id
+        image
+        logo
+        longitude
+        name
+        phone
+        operating_hours
+      }
+    }
+  }
+`;
+
 // Shop details query
 export const GET_SHOP_BY_ID = `
   query GetShopById($id: uuid!) {
