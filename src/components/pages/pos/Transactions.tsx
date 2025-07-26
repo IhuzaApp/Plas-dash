@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Receipt, Filter, Search, Eye } from 'lucide-react';
+import { Receipt, Filter, Search, Eye, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +23,10 @@ import {
 } from '@/components/ui/select';
 import { format } from 'date-fns';
 import OrderDetailDialog, { OrderDetails, OrderItem } from '@/components/order/OrderDetailDialog';
+import { usePOSTransactions } from '@/hooks/useHasuraApi';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
+import { formatCurrencyWithConfig } from '@/lib/utils';
+import { useAuth } from '@/components/layout/RootLayout';
 
 interface Transaction {
   id: string;
@@ -30,97 +34,66 @@ interface Transaction {
   datetime: Date;
   amount: number;
   items: number;
-  paymentMethod: 'cash' | 'card' | 'wallet';
+  paymentMethod: 'cash' | 'card' | 'momo';
   status: 'completed' | 'refunded' | 'pending';
   cashier: string;
+  originalData?: any; // Keep original checkout data for details
 }
 
 const Transactions = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
 
-  const transactions: Transaction[] = [
-    {
-      id: '1',
-      transactionId: 'TRX-20250522-001',
-      datetime: new Date(2025, 4, 22, 9, 30),
-      amount: 24.98,
-      items: 5,
-      paymentMethod: 'card',
-      status: 'completed',
-      cashier: 'John Smith',
-    },
-    {
-      id: '2',
-      transactionId: 'TRX-20250522-002',
-      datetime: new Date(2025, 4, 22, 10, 15),
-      amount: 12.75,
-      items: 2,
-      paymentMethod: 'cash',
-      status: 'completed',
-      cashier: 'John Smith',
-    },
-    {
-      id: '3',
-      transactionId: 'TRX-20250522-003',
-      datetime: new Date(2025, 4, 22, 11, 45),
-      amount: 47.32,
-      items: 8,
-      paymentMethod: 'card',
-      status: 'completed',
-      cashier: 'Emma Johnson',
-    },
-    {
-      id: '4',
-      transactionId: 'TRX-20250522-004',
-      datetime: new Date(2025, 4, 22, 13, 20),
-      amount: 34.5,
-      items: 3,
-      paymentMethod: 'cash',
-      status: 'completed',
-      cashier: 'Emma Johnson',
-    },
-    {
-      id: '5',
-      transactionId: 'TRX-20250522-005',
-      datetime: new Date(2025, 4, 22, 14, 5),
-      amount: 18.99,
-      items: 1,
-      paymentMethod: 'wallet',
-      status: 'completed',
-      cashier: 'David Wilson',
-    },
-    {
-      id: '6',
-      transactionId: 'TRX-20250522-006',
-      datetime: new Date(2025, 4, 22, 15, 30),
-      amount: 53.85,
-      items: 7,
-      paymentMethod: 'card',
-      status: 'refunded',
-      cashier: 'David Wilson',
-    },
-    {
-      id: '7',
-      transactionId: 'TRX-20250522-007',
-      datetime: new Date(2025, 4, 22, 16, 40),
-      amount: 29.99,
-      items: 4,
-      paymentMethod: 'cash',
-      status: 'completed',
-      cashier: 'John Smith',
-    },
-    {
-      id: '8',
-      transactionId: 'TRX-20250522-008',
-      datetime: new Date(2025, 4, 22, 17, 55),
-      amount: 42.15,
-      items: 6,
-      paymentMethod: 'card',
-      status: 'pending',
-      cashier: 'Emma Johnson',
-    },
-  ];
+  // Get session data for shop_id
+  const { session } = useAuth();
+  const shopId = session?.shop_id;
+
+  // Fetch transactions data
+  const { data: transactionsData, isLoading, error } = usePOSTransactions(shopId || '');
+  const { data: systemConfig } = useSystemConfig();
+
+  // Transform shopCheckouts data to match our interface
+  const transactions: Transaction[] = transactionsData?.shopCheckouts?.map((checkout, index) => {
+    const cartItems = JSON.parse(checkout.cartItems || '[]');
+    const totalItems = cartItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+    
+    // Generate transaction ID: 0 + YYMM + sequence (2 digits)
+    const createdDate = new Date(checkout.created_on || Date.now());
+    const year = createdDate.getFullYear().toString().slice(-2); // Last 2 digits of year
+    const month = (createdDate.getMonth() + 1).toString().padStart(2, '0'); // Month with leading zero
+    
+    // Use last 2 characters of checkout ID for unique sequence
+
+    const sequence = checkout.number// Ensure 2 digits
+    
+    const transactionId = `0${year}${month}${sequence}`;
+    
+    return {
+      id: checkout.id || 'unknown',
+      transactionId: `TRX-${transactionId}`, // Always use our generated format
+      datetime: createdDate,
+      amount: parseFloat(checkout.total || '0'),
+      items: totalItems,
+      paymentMethod: (checkout.payment_method as 'cash' | 'card' | 'momo') || 'cash',
+      status: 'completed' as const, // All saved checkouts are completed
+      cashier: checkout.ProcessedBy?.fullnames || 'Unknown',
+      originalData: checkout, // Keep original data for details
+    };
+  }) || [];
+
+  // Filter transactions based on search and filters
+  const filteredTransactions = transactions.filter(transaction => {
+    // Ensure transactionId is a string
+    const transactionIdStr = typeof transaction.transactionId === 'string' ? transaction.transactionId : String(transaction.transactionId || '');
+    const cashierStr = typeof transaction.cashier === 'string' ? transaction.cashier : String(transaction.cashier || '');
+    
+    const matchesSearch = transactionIdStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         cashierStr.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPaymentMethod = paymentMethodFilter === 'all' || transaction.paymentMethod === paymentMethodFilter;
+    return matchesSearch && matchesPaymentMethod;
+  });
 
   const getPaymentMethodBadge = (method: string) => {
     switch (method) {
@@ -128,8 +101,8 @@ const Transactions = () => {
         return <Badge className="bg-blue-500">Card</Badge>;
       case 'cash':
         return <Badge className="bg-green-500">Cash</Badge>;
-      case 'wallet':
-        return <Badge className="bg-purple-500">Wallet</Badge>;
+      case 'momo':
+        return <Badge className="bg-purple-500">MOMO</Badge>;
       default:
         return null;
     }
@@ -148,63 +121,30 @@ const Transactions = () => {
     }
   };
 
-  // Mock transaction details for the dialog
-  const transactionDetailsMap: Record<string, OrderDetails> = {
-    '1': {
-      id: 'TRX-20250522-001',
+  // Create transaction details from real data
+  const createTransactionDetails = (transaction: Transaction): OrderDetails | null => {
+    if (!transaction.originalData) return null;
+    
+    const cartItems = JSON.parse(transaction.originalData.cartItems || '[]');
+    const items: OrderItem[] = cartItems.map((item: any, index: number) => ({
+      id: `item${index}`,
+      name: item.name,
+      quantity: item.quantity,
+      price: formatCurrencyWithConfig(item.price, systemConfig),
+    }));
+
+    return {
+      id: transaction.transactionId,
       customer: 'Walk-in Customer',
-      date: format(new Date(2025, 4, 22, 9, 30), 'MMM dd, yyyy HH:mm'),
-      total: '$24.98',
+      date: format(transaction.datetime, 'MMM dd, yyyy HH:mm'),
+      total: formatCurrencyWithConfig(transaction.amount, systemConfig),
       status: 'Completed',
-      address: 'In-store purchase',
-      phone: 'N/A',
-      email: 'N/A',
-      paymentMethod: 'Credit Card (Visa ****4512)',
-      items: [
-        { id: 'item1', name: 'Whole Milk 1L', quantity: 2, price: '$2.99' },
-        { id: 'item2', name: 'White Bread', quantity: 1, price: '$3.50' },
-        { id: 'item3', name: 'Eggs (12)', quantity: 1, price: '$4.99' },
-        { id: 'item4', name: 'Bananas', quantity: 1, price: '$2.99' },
-      ],
-    },
-    '2': {
-      id: 'TRX-20250522-002',
-      customer: 'Walk-in Customer',
-      date: format(new Date(2025, 4, 22, 10, 15), 'MMM dd, yyyy HH:mm'),
-      total: '$12.75',
-      status: 'Completed',
-      address: 'In-store purchase',
-      phone: 'N/A',
-      email: 'N/A',
-      paymentMethod: 'Cash',
-      items: [
-        { id: 'item1', name: 'Potato Chips', quantity: 1, price: '$3.99' },
-        { id: 'item2', name: 'Soda (2L)', quantity: 1, price: '$2.49' },
-        { id: 'item3', name: 'Chocolate Bar', quantity: 3, price: '$2.09' },
-      ],
-    },
-    '3': {
-      id: 'TRX-20250522-003',
-      customer: 'James Brown',
-      date: format(new Date(2025, 4, 22, 11, 45), 'MMM dd, yyyy HH:mm'),
-      total: '$47.32',
-      status: 'Completed',
-      address: 'In-store purchase',
-      phone: '555-123-4567',
-      email: 'james@example.com',
-      paymentMethod: 'Credit Card (Mastercard ****8821)',
-      items: [
-        { id: 'item1', name: 'Ground Beef (1lb)', quantity: 2, price: '$8.99' },
-        { id: 'item2', name: 'Pasta Sauce', quantity: 1, price: '$3.49' },
-        { id: 'item3', name: 'Spaghetti', quantity: 1, price: '$1.99' },
-        { id: 'item4', name: 'Garlic Bread', quantity: 1, price: '$4.50' },
-        { id: 'item5', name: 'Parmesan Cheese', quantity: 1, price: '$5.99' },
-        { id: 'item6', name: 'Mixed Salad', quantity: 1, price: '$3.99' },
-        { id: 'item7', name: 'Salad Dressing', quantity: 1, price: '$2.89' },
-        { id: 'item8', name: 'Ice Cream', quantity: 1, price: '$6.49' },
-      ],
-    },
-    // Add more transaction details as needed for other transactions
+      address: transaction.originalData.Shops?.address || 'In-store purchase',
+      phone: transaction.originalData.ProcessedBy?.phone || 'N/A',
+      email: transaction.originalData.ProcessedBy?.email || 'N/A',
+      paymentMethod: `${transaction.paymentMethod.toUpperCase()} Payment`,
+      items,
+    };
   };
 
   const handleViewTransaction = (id: string) => {
@@ -212,9 +152,40 @@ const Transactions = () => {
     setIsDetailOpen(true);
   };
 
-  const selectedTransactionDetails = selectedTransaction
-    ? transactionDetailsMap[selectedTransaction] || null
-    : null;
+  const selectedTransactionDetails = (() => {
+    if (!selectedTransaction) return null;
+    const transaction = filteredTransactions.find(t => t.id === selectedTransaction);
+    return transaction ? createTransactionDetails(transaction) : null;
+  })();
+
+  // Debug information
+  console.log('=== POS Transactions Debug ===');
+  console.log('Session:', session);
+  console.log('Shop ID:', shopId);
+  console.log('Is Loading:', isLoading);
+  console.log('Has Error:', !!error);
+  console.log('Error Message:', error?.message);
+  console.log('Transactions Data:', transactionsData);
+  console.log('Raw shopCheckouts:', transactionsData?.shopCheckouts);
+  console.log('Transformed transactions:', transactions);
+  console.log('Transactions Count:', transactions?.length || 0);
+  console.log('Filtered Count:', filteredTransactions.length);
+  
+  // Debug first transaction if it exists
+  if (transactions.length > 0) {
+    console.log('First transaction:', transactions[0]);
+    console.log('First transaction ID type:', typeof transactions[0].transactionId);
+    console.log('First transaction ID value:', transactions[0].transactionId);
+    console.log('First transaction datetime:', transactions[0].datetime);
+    console.log('First transaction amount:', transactions[0].amount);
+  }
+  
+  // Debug filtered transactions
+  if (filteredTransactions.length > 0) {
+    console.log('First filtered transaction:', filteredTransactions[0]);
+  }
+  
+  console.log('=== End Debug ===');
 
   return (
     <AdminLayout>
@@ -232,11 +203,16 @@ const Transactions = () => {
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex items-center relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search transactions..." className="pl-10" />
+              <Input 
+                placeholder="Search transactions..." 
+                className="pl-10" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Select>
+              <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Payment Method" />
                 </SelectTrigger>
@@ -244,19 +220,7 @@ const Transactions = () => {
                   <SelectItem value="all">All Methods</SelectItem>
                   <SelectItem value="card">Card</SelectItem>
                   <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="wallet">Wallet</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="refunded">Refunded</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="momo">MOMO</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -277,26 +241,73 @@ const Transactions = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.map(transaction => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="font-medium">{transaction.transactionId}</TableCell>
-                    <TableCell>{format(transaction.datetime, 'MMM dd, yyyy HH:mm')}</TableCell>
-                    <TableCell className="text-right">${transaction.amount.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">{transaction.items}</TableCell>
-                    <TableCell>{getPaymentMethodBadge(transaction.paymentMethod)}</TableCell>
-                    <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                    <TableCell>{transaction.cashier}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleViewTransaction(transaction.id)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8">
+                      <div className="flex items-center justify-center space-x-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading transactions...</span>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-red-500">
+                      Error loading transactions: {error.message}
+                    </TableCell>
+                  </TableRow>
+                ) : filteredTransactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      No transactions found
+                      {transactions.length > 0 && (
+                        <div className="text-xs mt-2">
+                          (Raw transactions: {transactions.length}, Filtered: {filteredTransactions.length})
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  <>
+                    {/* Test row to verify table is working */}
+                    {transactions.length === 0 && (
+                      <TableRow>
+                        <TableCell className="font-medium">TEST-001</TableCell>
+                        <TableCell>Jan 01, 2025 12:00</TableCell>
+                        <TableCell className="text-right">RWF 1,000</TableCell>
+                        <TableCell className="text-right">1</TableCell>
+                        <TableCell><Badge className="bg-green-500">Cash</Badge></TableCell>
+                        <TableCell><Badge className="bg-green-500">Completed</Badge></TableCell>
+                        <TableCell>Test User</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {filteredTransactions.map(transaction => (
+                    <TableRow key={transaction.id}>
+                      <TableCell className="font-medium">{transaction.transactionId}</TableCell>
+                      <TableCell>{format(transaction.datetime, 'MMM dd, yyyy HH:mm')}</TableCell>
+                        <TableCell className="text-right">{formatCurrencyWithConfig(transaction.amount, systemConfig)}</TableCell>
+                      <TableCell className="text-right">{transaction.items}</TableCell>
+                      <TableCell>{getPaymentMethodBadge(transaction.paymentMethod)}</TableCell>
+                      <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                      <TableCell>{transaction.cashier}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleViewTransaction(transaction.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    ))}
+                  </>
+                )}
               </TableBody>
             </Table>
           </div>

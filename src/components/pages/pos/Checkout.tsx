@@ -47,7 +47,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const { session } = useAuth();
   const { hasAction } = usePrivilege();
-
+  
   const { data: productsData, isLoading: productsLoading } = useProductsByShop(
     session?.shop_id || ''
   );
@@ -90,7 +90,7 @@ const Checkout = () => {
 
   const addProductToCart = (product: Product) => {
     const existingItem = cart.find(item => item.id === product.id);
-
+    
     if (existingItem) {
       setCart(
         cart.map(item => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))

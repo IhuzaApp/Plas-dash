@@ -18,6 +18,7 @@ import {
   GET_SHOPPERS,
   GET_SYSTEM_CONFIG,
   GET_ORG_EMPLOYEES_BY_SHOP,
+  GET_POS_TRANSACTIONS,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -745,5 +746,14 @@ export function useUpdateEmployee() {
 export function useDeleteEmployee() {
   return useMutation<{ delete_orgEmployees: { affected_rows: number } }, Error, { id: string }>({
     mutationFn: variables => hasuraRequest(DELETE_ORG_EMPLOYEE, variables),
+  });
+}
+
+// Type-safe hook for POS Transactions
+export function usePOSTransactions(shopId: string) {
+  return useQuery<{ shopCheckouts: any[] }, Error>({
+    queryKey: ['pos-transactions', shopId],
+    queryFn: () => hasuraRequest(GET_POS_TRANSACTIONS, { shop_id: shopId }),
+    enabled: !!shopId,
   });
 }
