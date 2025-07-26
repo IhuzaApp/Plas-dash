@@ -26,6 +26,19 @@ const nextConfig = {
         aggregateTimeout: 300,
         poll: 1000,
       };
+      
+      // Improve HMR stability
+      config.devServer = {
+        ...config.devServer,
+        hot: true,
+        liveReload: false,
+        client: {
+          overlay: {
+            errors: true,
+            warnings: false,
+          },
+        },
+      };
     }
     return config;
   },
@@ -35,6 +48,11 @@ const nextConfig = {
     maxInactiveAge: 25 * 1000,
     // number of pages that should be kept simultaneously without being disposed
     pagesBufferLength: 2,
+  },
+  // Improve HMR performance
+  experimental: {
+    optimizeCss: false,
+    scrollRestoration: false,
   },
 };
 

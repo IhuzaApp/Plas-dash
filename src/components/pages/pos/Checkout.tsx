@@ -66,6 +66,82 @@ const Checkout = () => {
   const [pendingCheckouts, setPendingCheckouts] = useState<PendingCheckout[]>([]);
   const [selectedPendingCheckout, setSelectedPendingCheckout] = useState<string | null>(null);
 
+  // Load pending checkouts from localStorage on component mount
+  React.useEffect(() => {
+    const loadPendingCheckouts = () => {
+      try {
+        const stored = localStorage.getItem('pendingCheckouts');
+        console.log('Loading from localStorage:', stored);
+        
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          console.log('Parsed checkouts:', parsed);
+          const now = Date.now();
+          
+          // Filter out expired checkouts (older than 24 hours) and convert timestamps back to Date objects
+          const validCheckouts = parsed.filter((checkout: any) => {
+            // Convert string timestamp back to Date object
+            const checkoutTime = new Date(checkout.timestamp).getTime();
+            const hoursDiff = (now - checkoutTime) / (1000 * 60 * 60);
+            console.log(`Checkout ${checkout.id}: ${hoursDiff.toFixed(2)} hours old`);
+            return hoursDiff < 24; // Keep only checkouts less than 24 hours old
+          }).map((checkout: any) => ({
+            ...checkout,
+            timestamp: new Date(checkout.timestamp) // Convert back to Date object
+          }));
+          
+          console.log('Valid checkouts loaded:', validCheckouts);
+          setPendingCheckouts(validCheckouts);
+          
+          // Update localStorage with only valid checkouts
+          if (validCheckouts.length !== parsed.length) {
+            localStorage.setItem('pendingCheckouts', JSON.stringify(validCheckouts));
+            console.log('Updated localStorage with valid checkouts only');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading pending checkouts:', error);
+        // Clear corrupted data
+        localStorage.removeItem('pendingCheckouts');
+      }
+    };
+
+    loadPendingCheckouts();
+  }, []);
+
+  // Save pending checkouts to localStorage whenever they change
+  React.useEffect(() => {
+    if (pendingCheckouts.length > 0) {
+      console.log('Saving to localStorage:', pendingCheckouts);
+      localStorage.setItem('pendingCheckouts', JSON.stringify(pendingCheckouts));
+    } else {
+      console.log('Clearing localStorage - no pending checkouts');
+      localStorage.removeItem('pendingCheckouts');
+    }
+  }, [pendingCheckouts]);
+
+  // Cleanup expired checkouts every hour
+  React.useEffect(() => {
+    const cleanupExpiredCheckouts = () => {
+      const now = Date.now();
+      const validCheckouts = pendingCheckouts.filter(checkout => {
+        const checkoutTime = new Date(checkout.timestamp).getTime();
+        const hoursDiff = (now - checkoutTime) / (1000 * 60 * 60);
+        return hoursDiff < 24;
+      });
+      
+      if (validCheckouts.length !== pendingCheckouts.length) {
+        console.log(`Cleaning up ${pendingCheckouts.length - validCheckouts.length} expired checkouts`);
+        setPendingCheckouts(validCheckouts);
+      }
+    };
+
+    // Run cleanup every hour
+    const interval = setInterval(cleanupExpiredCheckouts, 60 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [pendingCheckouts]);
+
   const addProductByCode = (code: string) => {
     if (code.trim()) {
       const foundProduct = products.find(
@@ -143,17 +219,19 @@ const Checkout = () => {
     if (cart.length === 0) return;
 
     const newPendingCheckout: PendingCheckout = {
-      id: `PND-${Date.now().toString().slice(-3)}`,
+      id: `PND-${Date.now().toString().slice(-6)}`,
       items: [...cart],
       timestamp: new Date(),
       status: 'pending',
       total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      customerName: 'Walk-in Customer', // Can be enhanced later with customer input
     };
 
-    setPendingCheckouts([...pendingCheckouts, newPendingCheckout]);
+    setPendingCheckouts(prev => [...prev, newPendingCheckout]);
+
     toast({
-      title: 'Checkout saved',
-      description: `Checkout #${newPendingCheckout.id} saved to pending orders.`,
+      title: 'Checkout Saved',
+      description: `Checkout #${newPendingCheckout.id} saved to pending orders. It will expire in 24 hours.`,
     });
 
     setCart([]);
@@ -169,6 +247,25 @@ const Checkout = () => {
     toast({
       title: 'Pending checkout completed',
       description: `Checkout #${id} has been processed successfully.`,
+    });
+  };
+
+  const loadPendingCheckout = (id: string) => {
+    const checkout = pendingCheckouts.find(c => c.id === id);
+    if (!checkout) return;
+
+    // Load items back to cart
+    setCart(checkout.items);
+    
+    // Remove from pending checkouts
+    setPendingCheckouts(pendingCheckouts.filter(c => c.id !== id));
+    
+    // Switch to current checkout tab
+    setActiveTab('current');
+    
+    toast({
+      title: 'Checkout Loaded',
+      description: `Checkout #${id} has been loaded back to cart.`,
     });
   };
 
@@ -203,8 +300,8 @@ const Checkout = () => {
               shopId={session?.shop_id}
               currentUser={{
                 id: session?.id || '',
-                name: session?.fullName || '',
-                email: session?.email || '',
+                name: session?.fullName || 'Unknown User',
+                email: session?.email || 'N/A',
                 role: 'Cashier', // Default role for POS users
               }}
               shopDetails={{
@@ -223,6 +320,7 @@ const Checkout = () => {
             onViewDetails={setSelectedPendingCheckout}
             onCompleteCheckout={completePendingCheckout}
             onDeleteCheckout={completePendingCheckout} // Assuming delete is same as complete for now
+            onLoadCheckout={loadPendingCheckout}
             hasDeleteAction={hasAction('orders', 'delete_orders')}
           />
         </TabsContent>
