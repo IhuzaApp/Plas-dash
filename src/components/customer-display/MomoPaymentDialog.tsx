@@ -74,7 +74,7 @@ export default function MomoPaymentDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">
             Mobile Money Payment
@@ -83,10 +83,10 @@ export default function MomoPaymentDialog({
 
         <div className="space-y-6">
           {/* Payment Amount */}
-          <Card className="border-2 border-green-500">
+          <Card className="border-2 border-black">
             <CardContent className="p-6 text-center">
-              <div className="text-sm text-gray-600 mb-2">Amount to Pay</div>
-              <div className="text-3xl font-bold text-green-600">
+              <div className="text-base text-gray-600 mb-2">Amount to Pay</div>
+              <div className="text-3xl font-bold text-black">
                 {formatCurrencyWithConfig(total, systemConfig)}
               </div>
               <div className="text-sm text-gray-500 mt-1">
@@ -103,7 +103,7 @@ export default function MomoPaymentDialog({
                   <img 
                     src={qrCodeDataUrl} 
                     alt="MOMO Payment QR Code" 
-                    className="mx-auto w-32 h-32"
+                    className="mx-auto w-40 h-40"
                   />
                   <p className="text-sm text-gray-600">
                     Scan QR code - phone will open dialer with complete USSD code
@@ -111,7 +111,7 @@ export default function MomoPaymentDialog({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <QrCode className="h-32 w-32 mx-auto text-gray-400" />
+                  <QrCode className="h-40 w-40 mx-auto text-gray-400" />
                   <p className="text-sm text-gray-600">
                     Generating QR code...
                   </p>
@@ -121,98 +121,33 @@ export default function MomoPaymentDialog({
           </div>
 
           {/* USSD Code */}
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-gray-50 border-gray-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Phone className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">USSD Code:</span>
+                  <Phone className="h-5 w-5 text-black" />
+                  <span className="text-sm font-medium text-black">USSD Code:</span>
                 </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <Badge variant="secondary" className="bg-gray-100 text-black text-sm px-2 py-1">
                   MOMO
                 </Badge>
               </div>
               
-              <div className="mt-3 p-3 bg-white rounded border border-green-300">
-                <div className="font-mono text-lg text-center text-green-700 font-bold">
+              <div className="mt-3 p-3 bg-white rounded border border-gray-300">
+                <div className="font-mono text-lg text-center text-black font-bold">
                   {ussdCode}
                 </div>
               </div>
 
-              <Button
-                onClick={copyToClipboard}
-                variant="outline"
-                size="sm"
-                className="w-full mt-3 border-green-300 text-green-700 hover:bg-green-50"
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy USSD Code
-                  </>
-                )}
-              </Button>
+
             </CardContent>
           </Card>
 
           <Separator />
 
-          {/* Instructions */}
-          <div className="space-y-3">
-            <h4 className="font-semibold text-gray-800">How to Pay:</h4>
-            <div className="space-y-2 text-sm text-gray-600">
-                                   <div className="flex items-start gap-2">
-                       <div className="w-5 h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-                         1
-                       </div>
-                       <span>Scan the QR code - your phone will open the dialer with the complete USSD code</span>
-                     </div>
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-                  2
-                </div>
-                <span>Enter your MOMO PIN when prompted</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-                  3
-                </div>
-                <span>Confirm the payment amount</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-                  4
-                </div>
-                <span>Wait for payment confirmation SMS</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            <Button
-              onClick={copyToClipboard}
-              variant="outline"
-              className="w-full border-green-300 text-green-700 hover:bg-green-50"
-            >
-              {copied ? 'Copied!' : 'Copy Code'}
-            </Button>
-            <Button
-              onClick={onPaymentConfirmed}
-              className="w-full bg-green-600 hover:bg-green-700"
-            >
-              Payment Completed
-            </Button>
-          </div>
-
           {/* Footer Note */}
           <div className="text-center text-xs text-gray-500">
-            Complete the payment to proceed
+            Review payment details above
           </div>
         </div>
       </DialogContent>
