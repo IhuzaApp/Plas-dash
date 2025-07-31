@@ -433,3 +433,47 @@ export const ADD_CHECKOUT = `
     }
   }
 `;
+
+// Shop settings mutations
+export const UPDATE_SHOP_SETTINGS = `
+  mutation UpdateShopSettings(
+    $id: uuid!
+    $name: String
+    $description: String
+    $address: String
+    $phone: String
+    $operating_hours: String
+    $is_active: Boolean
+    $logo: String
+    $tin: String
+    $ssd: String
+  ) {
+    update_Shops_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        name: $name
+        description: $description
+        address: $address
+        phone: $phone
+        operating_hours: $operating_hours
+        is_active: $is_active
+        image: $logo
+        tin: $tin
+        ssd: $ssd
+        updated_at: "now()"
+      }
+    ) {
+      id
+      name
+      description
+      address
+      phone
+      operating_hours
+      is_active
+      image
+      tin
+      ssd
+      updated_at
+    }
+  }
+`;
