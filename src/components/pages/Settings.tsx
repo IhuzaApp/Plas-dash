@@ -19,6 +19,7 @@ import {
 import { toast } from '@/components/ui/sonner';
 import { Settings as SettingsIcon, Store, Building2 } from 'lucide-react';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import SupermarketSettings from './SupermarketSettings';
 
 const Settings = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -55,7 +56,9 @@ const Settings = () => {
       <Tabs defaultValue="general">
         <TabsList className="mb-4">
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="supermarket">Supermarket</TabsTrigger>
+          {hasAction('settings', 'view_settings') && (
+            <TabsTrigger value="supermarket">Supermarket</TabsTrigger>
+          )}
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
@@ -138,113 +141,11 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="supermarket" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Supermarket Information</CardTitle>
-              <CardDescription>Configure your supermarket details and branding.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <Label>Supermarket Logo</Label>
-                <div className="flex items-center gap-4">
-                  <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
-                    {logoPreview ? (
-                      <img
-                        src={logoPreview}
-                        alt="Logo preview"
-                        className="h-full w-full object-contain"
-                      />
-                    ) : (
-                      <Store className="h-10 w-10 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Input id="logo" type="file" accept="image/*" onChange={handleLogoChange} />
-                    <p className="text-xs text-muted-foreground">
-                      Recommended size: 512x512px. Max file size: 2MB.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="market-name">Supermarket Name</Label>
-                  <Input id="market-name" defaultValue="SuperMart" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="market-slogan">Slogan/Tagline</Label>
-                  <Input id="market-slogan" defaultValue="Fresh Food, Great Prices" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="market-tin">Tax Identification Number (TIN)</Label>
-                  <Input id="market-tin" defaultValue="123-45-6789" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="market-reg">Business Registration Number</Label>
-                  <Input id="market-reg" defaultValue="REG12345678" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="store-hours">Store Hours</Label>
-                <Textarea
-                  id="store-hours"
-                  defaultValue="Monday-Friday: 8:00 AM - 9:00 PM
-Saturday: 8:00 AM - 10:00 PM
-Sunday: 9:00 AM - 8:00 PM"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Store Type</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input type="radio" id="type-grocery" name="store-type" defaultChecked />
-                    <Label htmlFor="type-grocery">Grocery</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="radio" id="type-convenience" name="store-type" />
-                    <Label htmlFor="type-convenience">Convenience</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="radio" id="type-hypermarket" name="store-type" />
-                    <Label htmlFor="type-hypermarket">Hypermarket</Label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium">Enable Membership System</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Allow customers to register for memberships and earn rewards
-                  </p>
-                </div>
-                <Switch id="membership-system" defaultChecked />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium">Enable Digital Receipts</h3>
-                  <p className="text-sm text-muted-foreground">Send receipts via email or SMS</p>
-                </div>
-                <Switch id="digital-receipts" defaultChecked />
-              </div>
-
-              <div className="pt-2">
-                <Button onClick={() => setDialogOpen(true)} variant="outline">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Configure Store Branches
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {hasAction('settings', 'view_settings') && (
+          <TabsContent value="supermarket" className="space-y-6">
+            <SupermarketSettings />
+          </TabsContent>
+        )}
 
         <TabsContent value="appearance" className="space-y-6">
           <Card>

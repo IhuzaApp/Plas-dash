@@ -226,6 +226,29 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           setLastPaymentDetails(paymentDetails);
         }
 
+        // Close MOMO dialog on customer display if payment is confirmed
+        if (selectedPaymentMethod === 'momo') {
+          console.log('=== CART SUMMARY: CLOSING MOMO DIALOG ON CUSTOMER DISPLAY ===');
+          localStorage.setItem('momoDialogState', JSON.stringify({
+            shouldClose: true,
+            timestamp: Date.now()
+          }));
+          
+          // Dispatch custom event for immediate communication
+          window.dispatchEvent(new CustomEvent('momoDialogClose'));
+          
+          // Try direct communication with customer display window
+          try {
+            const customerDisplayWindow = window.open('', 'customer-display');
+            if (customerDisplayWindow && (customerDisplayWindow as any).closeMomoDialog) {
+              console.log('=== CART SUMMARY: DIRECT MOMO DIALOG CLOSE ===');
+              (customerDisplayWindow as any).closeMomoDialog();
+            }
+          } catch (error) {
+            console.log('Direct communication failed, using localStorage fallback');
+          }
+        }
+
         // Call the checkout function
         onCheckout(selectedPaymentMethod, needsTIN ? tinNumber : undefined);
 
@@ -545,7 +568,17 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
       </Card>
 
       {/* Payment Dialog */}
-      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+      <Dialog open={isPaymentDialogOpen} onOpenChange={(open) => {
+        setIsPaymentDialogOpen(open);
+        // Close MOMO dialog on customer display when payment dialog is closed
+        if (!open && selectedPaymentMethod === 'momo') {
+          console.log('=== CART SUMMARY: PAYMENT DIALOG CLOSED, CLOSING MOMO DIALOG ===');
+          localStorage.setItem('momoDialogState', JSON.stringify({
+            shouldClose: true,
+            timestamp: Date.now()
+          }));
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Payment Method</DialogTitle>

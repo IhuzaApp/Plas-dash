@@ -1281,3 +1281,30 @@ export const GET_ORG_EMPLOYEE_BY_IDENTITY = `
     }
   }
 `;
+
+// Get shop by ID for settings
+export const GET_SHOP_BY_ID_FOR_SETTINGS = `
+  query GetShopsWhereID($shop_id: uuid = "") {
+    Shops(where: {id: {_eq: $shop_id}}) {
+      id
+      name
+      description
+      category_id
+      image
+      address
+      latitude
+      longitude
+      operating_hours
+      created_at
+      updated_at
+      is_active
+      phone
+      tin
+      ssd
+      Category {
+        id
+        name
+      }
+    }
+  }
+`;
