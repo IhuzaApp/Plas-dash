@@ -26,6 +26,44 @@ import { useCategories } from '@/hooks/useHasuraApi';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Store, Upload, X } from 'lucide-react';
 
+// Utility function to get default image based on category name
+const getDefaultImageForCategory = (categoryName: string): string => {
+  const categoryNameLower = categoryName.toLowerCase();
+  
+  // Map category names to default images
+  const categoryImageMap: { [key: string]: string } = {
+    'supermarket': '/Assets/images/superMarkets.jpg',
+    'grocery': '/Assets/images/superMarkets.jpg',
+    'market': '/Assets/images/publicMarket.jpg',
+    'public market': '/Assets/images/publicMarket.jpg',
+    'organic': '/Assets/images/OrganicShop.jpg',
+    'organic shop': '/Assets/images/OrganicShop.jpg',
+    'health food': '/Assets/images/OrganicShop.jpg',
+    'delicatessen': '/Assets/images/delicatessen.jpeg',
+    'deli': '/Assets/images/delicatessen.jpeg',
+    'butcher': '/Assets/images/Butcher.webp',
+    'meat shop': '/Assets/images/Butcher.webp',
+    'bakery': '/Assets/images/Bakery.webp',
+    'bread shop': '/Assets/images/Bakery.webp',
+    'pastry': '/Assets/images/Bakery.webp',
+  };
+
+  // Try exact match first
+  if (categoryImageMap[categoryNameLower]) {
+    return categoryImageMap[categoryNameLower];
+  }
+
+  // Try partial matches
+  for (const [key, image] of Object.entries(categoryImageMap)) {
+    if (categoryNameLower.includes(key) || key.includes(categoryNameLower)) {
+      return image;
+    }
+  }
+
+  // Default fallback
+  return '/Assets/images/superMarkets.jpg';
+};
+
 interface AddShopDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -47,6 +85,7 @@ interface CreateShopFormData {
   latitude: number | null;
   longitude: number | null;
   logo: string | null;
+  image: string | null;
   tin: string;
   ssd: string;
   is_active: boolean;
@@ -62,6 +101,7 @@ interface CreateShopMutationData {
   latitude?: string;
   longitude?: string;
   logo?: string;
+  image?: string;
   tin?: string;
   ssd?: string;
   is_active: boolean;
@@ -91,6 +131,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
     latitude: null,
     longitude: null,
     logo: null,
+    image: null,
     tin: '',
     ssd: '',
     is_active: true,
@@ -167,6 +208,23 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       ...prev,
       [field]: value,
     }));
+
+    // Automatically set default image when category is selected
+    if (field === 'category_id' && value) {
+      const selectedCategory = categoriesData?.Categories?.find(cat => cat.id === value);
+      if (selectedCategory) {
+        const defaultImage = getDefaultImageForCategory(selectedCategory.name);
+        setFormData(prev => ({
+          ...prev,
+          [field]: value,
+          image: defaultImage,
+        }));
+        
+        console.log('=== ADD SHOP DIALOG: AUTO-ASSIGNED IMAGE ===');
+        console.log('Category:', selectedCategory.name);
+        console.log('Default image:', defaultImage);
+      }
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -278,6 +336,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       latitude: submitData.latitude?.toString() || undefined,
       longitude: submitData.longitude?.toString() || undefined,
       logo: submitData.logo || undefined,
+      image: submitData.image || undefined,
       tin: submitData.tin?.trim() || undefined,
       ssd: submitData.ssd?.trim() || undefined,
       is_active: submitData.is_active,
@@ -308,6 +367,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       latitude: null,
       longitude: null,
       logo: null,
+      image: null,
       tin: '',
       ssd: '',
       is_active: true,
@@ -425,6 +485,12 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
                   ))}
                 </SelectContent>
               </Select>
+              {formData.image && (
+                <div className="text-xs text-muted-foreground flex items-center gap-2">
+                  <span>✓ Default image assigned:</span>
+                  <span className="font-medium">{formData.image.split('/').pop()}</span>
+                </div>
+              )}
             </div>
           </div>
 

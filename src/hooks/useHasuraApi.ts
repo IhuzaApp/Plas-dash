@@ -124,6 +124,7 @@ interface ShopDetails extends Shop {
   latitude: number;
   longitude: number;
   image: string;
+  logo: string | null;
   created_at: string;
   updated_at: string;
   Products: ShopProduct[];
@@ -500,7 +501,7 @@ export function useAddProduct() {
       has_commission?: boolean;
       commission_percentage?: number;
       final_price: string;
-      total: string;
+      image?: string;
     }
   >({
     mutationFn: variables => hasuraRequest(ADD_PRODUCT, variables),

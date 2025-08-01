@@ -167,6 +167,7 @@ export const GET_SHOPS = `
       name
       category_id
       logo
+      image
       category: Category {
         id
         name
@@ -551,6 +552,7 @@ export const GET_SHOP_BY_ID = `
       latitude
       longitude
       image
+      logo
       is_active
       created_at
       updated_at
