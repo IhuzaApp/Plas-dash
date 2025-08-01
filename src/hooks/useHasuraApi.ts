@@ -521,6 +521,11 @@ export function useUpdateProduct() {
       quantity?: number;
       measurement_unit?: string;
       final_price?: string;
+      barcode?: string;
+      sku?: string;
+      supplier?: string;
+      reorder_point?: number;
+      image?: string;
     }
   >({
     mutationFn: variables => hasuraRequest(UPDATE_PRODUCT, variables),
