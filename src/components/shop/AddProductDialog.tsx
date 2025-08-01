@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ScanBarcode, ScanQrCode } from 'lucide-react';
+import { ScanBarcode, ScanQrCode, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useShops, useSystemConfig } from '@/hooks/useHasuraApi';
 import { Switch } from '@/components/ui/switch';
@@ -48,6 +48,7 @@ const formSchema = z.object({
   supplier: z.string().optional(),
   reorder_point: z.number().int().min(0).optional(),
   shop_id: z.string().optional(),
+  image: z.string().optional(),
   // UI-only fields (not sent to database)
   has_commission: z.boolean().default(true),
   commission_percentage: z.number().min(0).max(100).optional(),
@@ -74,6 +75,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 }) => {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanType, setScanType] = useState<'barcode' | 'qrcode' | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { data: shopsData } = useShops();
   const { data: systemConfig } = useSystemConfig();
   const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
@@ -95,6 +98,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       supplier: undefined,
       reorder_point: undefined,
       shop_id: shopId,
+      image: '',
       has_commission: true,
       commission_percentage: Number(defaultCommission) || 0,
       final_price: '',
@@ -144,6 +148,20 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     }
   }, [hasCommission, defaultCommission, form, price]);
 
+  // Reset image state when dialog opens/closes
+  useEffect(() => {
+    if (!open) {
+      setImageFile(null);
+      setImagePreview(null);
+      form.setValue('image', '');
+      // Clear the file input
+      const fileInput = document.getElementById('product-image') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    }
+  }, [open, form]);
+
   function handleSubmit(values: FormData) {
     // Destructure to remove has_commission and commission_percentage
     const { has_commission, commission_percentage, ...productData } = values;
@@ -177,6 +195,44 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     }, 1500);
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file.');
+        return;
+      }
+
+      // Validate file size (2MB limit)
+      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size > maxSize) {
+        toast.error('Image file size must be less than 2MB.');
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImagePreview(result);
+        form.setValue('image', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    form.setValue('image', '');
+    // Clear the file input
+    const fileInput = document.getElementById('product-image') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -188,6 +244,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            
             {!shopId && (
               <FormField
                 control={form.control}
@@ -214,6 +271,73 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 )}
               />
             )}
+            {/* Product Image */}
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product Image</FormLabel>
+                    <div className="flex items-start gap-4">
+                      <div className="relative">
+                        <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
+                          {imagePreview ? (
+                            <img src={imagePreview} alt="Product preview" className="h-full w-full object-contain" />
+                          ) : (
+                            <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                          )}
+                        </div>
+                        {imagePreview && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={handleRemoveImage}
+                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                            title="Remove image"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            id="product-image" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleImageChange}
+                            className="flex-1"
+                          />
+                          {imagePreview && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleRemoveImage}
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p>• Recommended size: 512x512px</p>
+                          <p>• Supported formats: JPG, PNG, GIF, WebP</p>
+                          <p>• Maximum file size: 2MB</p>
+                          {imageFile && (
+                            <p className="text-green-600 font-medium">
+                              ✓ {imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)}MB)
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
@@ -411,6 +535,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 />
               )}
             </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField

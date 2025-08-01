@@ -30,6 +30,7 @@ import {
   Edit,
   Trash2,
   UserX,
+  Store,
 } from 'lucide-react';
 import {
   useShopById,
@@ -53,7 +54,7 @@ import EditProductDialog from '@/components/shop/EditProductDialog';
 import AddStaffDialog from '@/components/shop/AddStaffDialog';
 import EditStaffDialog from '@/components/shop/EditStaffDialog';
 import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatCurrencyWithConfig } from '@/lib/utils';
 import { hasuraRequest } from '@/lib/hasura';
 import { convertPrivilegesToOldFormat } from '@/lib/privileges';
 import { usePrivilege } from '@/hooks/usePrivilege';
@@ -99,6 +100,8 @@ const productFormSchema = z.object({
   sku: z.string().optional(),
   supplier: z.string().optional(),
   reorder_point: z.number().int().min(0).optional(),
+  image: z.string().optional(),
+  final_price: z.string().min(1, 'Final price is required'),
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
@@ -169,8 +172,8 @@ const ShopDetail = () => {
         reorder_point: formData.reorder_point,
         supplier: formData.supplier,
         is_active: formData.is_active,
-        final_price: formData.price,
-        total: formData.price,
+        final_price: formData.final_price,
+        image: formData.image,
       });
 
       toast.success('Product added successfully');
@@ -211,6 +214,33 @@ const ShopDetail = () => {
     } catch (error) {
       toast.error('Failed to update product');
       console.error('Error updating product:', error);
+    }
+  };
+
+  const handleDeleteProduct = async (product: any) => {
+    if (confirm('Are you sure you want to deactivate this product?')) {
+      try {
+        // Use soft delete by setting is_active to false
+        const softDeleteMutation = `
+          mutation SoftDeleteProduct($id: uuid!) {
+            update_Products_by_pk(
+              pk_columns: { id: $id }
+              _set: { is_active: false, updated_at: "now()" }
+            ) {
+              id
+              is_active
+            }
+          }
+        `;
+
+        await hasuraRequest(softDeleteMutation, { id: product.id });
+
+        toast.success('Product deactivated successfully');
+        refetch(); // Refresh the shop data
+      } catch (error) {
+        console.error('Error deactivating product:', error);
+        toast.error('Failed to deactivate product. Please try again.');
+      }
     }
   };
 
@@ -409,7 +439,16 @@ const ShopDetail = () => {
     <AdminLayout>
       <PageHeader
         title={shop.name}
-        description={`View and manage details for ${shop.name}`}
+        description={`${shop.category?.name || 'Uncategorized'} • ${shop.is_active ? 'Active' : 'Inactive'}`}
+        icon={
+          <div className="h-12 w-12 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
+            {shop.logo ? (
+              <img src={shop.logo} alt={`${shop.name} logo`} className="h-full w-full object-contain" />
+            ) : (
+              <Store className="h-6 w-6 text-muted-foreground" />
+            )}
+          </div>
+        }
         actions={
           <div className="flex gap-2">
             {hasAction('products', 'add_products') && (
@@ -558,8 +597,8 @@ const ShopDetail = () => {
                     currentProducts.map(product => (
                       <TableRow key={product.id}>
                         <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{formatCurrency(product.price, config)}</TableCell>
-                        <TableCell>{formatCurrency(product.final_price, config)}</TableCell>
+                        <TableCell>{formatCurrencyWithConfig(product.price, config)}</TableCell>
+                        <TableCell>{formatCurrencyWithConfig(product.final_price, config)}</TableCell>
                         <TableCell>{product.quantity}</TableCell>
                         <TableCell>{product.measurement_unit}</TableCell>
                         <TableCell>
@@ -670,7 +709,7 @@ const ShopDetail = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>{order.Order_Items?.length || 0} items</TableCell>
-                          <TableCell>{formatCurrency(order.total, config)}</TableCell>
+                          <TableCell>{formatCurrencyWithConfig(order.total, config)}</TableCell>
                           <TableCell>
                             {format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}
                           </TableCell>

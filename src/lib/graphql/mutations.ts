@@ -237,6 +237,7 @@ export const ADD_PRODUCT = `
     $supplier: String
     $is_active: Boolean = true
     $final_price: String!
+    $image: String
   ) {
     insert_Products_one(
       object: {
@@ -253,6 +254,7 @@ export const ADD_PRODUCT = `
         supplier: $supplier
         is_active: $is_active
         final_price: $final_price
+        image: $image
       }
     ) {
       id
@@ -269,6 +271,7 @@ export const ADD_PRODUCT = `
       supplier
       is_active
       final_price
+      image
       created_at
       updated_at
     }
@@ -490,6 +493,7 @@ export const CREATE_SHOP = `
     $latitude: String
     $longitude: String
     $logo: String
+    $image: String
     $tin: String
     $ssd: String
     $is_active: Boolean = true
@@ -505,6 +509,7 @@ export const CREATE_SHOP = `
         latitude: $latitude
         longitude: $longitude
         logo: $logo
+        image: $image
         tin: $tin
         ssd: $ssd
         is_active: $is_active
@@ -520,6 +525,7 @@ export const CREATE_SHOP = `
       latitude
       longitude
       logo
+      image
       tin
       ssd
       is_active
