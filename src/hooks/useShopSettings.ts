@@ -9,7 +9,7 @@ interface ShopSettings {
   name: string;
   description: string;
   category_id: string;
-  image: string | null;
+  logo: string | null;
   address: string;
   latitude: number;
   longitude: number;

@@ -1,9 +1,7 @@
 'use client';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import dynamic from 'next/dynamic';
-
-const Shops = dynamic(() => import('@/components/pages/Shops'), { ssr: false });
+import Shops from '@/components/pages/Shops';
 
 export default function ShopsPage() {
   return (

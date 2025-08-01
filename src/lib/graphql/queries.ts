@@ -166,6 +166,7 @@ export const GET_SHOPS = `
       id
       name
       category_id
+      logo
       category: Category {
         id
         name
@@ -1290,7 +1291,7 @@ export const GET_SHOP_BY_ID_FOR_SETTINGS = `
       name
       description
       category_id
-      image
+      logo
       address
       latitude
       longitude
