@@ -287,6 +287,11 @@ export const UPDATE_PRODUCT = `
     $quantity: Int
     $measurement_unit: String
     $final_price: String
+    $barcode: String
+    $sku: String
+    $supplier: String
+    $reorder_point: Int
+    $image: String
   ) {
     update_Products_by_pk(
       pk_columns: { id: $id }
@@ -297,6 +302,11 @@ export const UPDATE_PRODUCT = `
         quantity: $quantity
         measurement_unit: $measurement_unit
         final_price: $final_price
+        barcode: $barcode
+        sku: $sku
+        supplier: $supplier
+        reorder_point: $reorder_point
+        image: $image
         updated_at: "now()"
       }
     ) {
@@ -314,6 +324,7 @@ export const UPDATE_PRODUCT = `
       supplier
       is_active
       final_price
+      image
       created_at
       updated_at
     }

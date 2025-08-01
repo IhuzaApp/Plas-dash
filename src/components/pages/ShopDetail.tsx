@@ -31,6 +31,7 @@ import {
   Trash2,
   UserX,
   Store,
+  Image as ImageIcon,
 } from 'lucide-react';
 import {
   useShopById,
@@ -201,7 +202,17 @@ const ShopDetail = () => {
       // Add the product ID to the form data
       const updateData = {
         id: selectedProduct.id,
-        ...formData,
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        quantity: formData.quantity,
+        measurement_unit: formData.measurement_unit,
+        final_price: formData.final_price,
+        barcode: formData.barcode,
+        sku: formData.sku,
+        supplier: formData.supplier,
+        reorder_point: formData.reorder_point,
+        image: formData.image,
       };
 
       // Call the update mutation
@@ -577,6 +588,7 @@ const ShopDetail = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Image</TableHead>
                     <TableHead>Product Name</TableHead>
                     <TableHead>Base Price</TableHead>
                     <TableHead>Final Price</TableHead>
@@ -589,13 +601,27 @@ const ShopDetail = () => {
                 <TableBody>
                   {currentProducts.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                         No products found.
                       </TableCell>
                     </TableRow>
                   ) : (
                     currentProducts.map(product => (
                       <TableRow key={product.id}>
+                        <TableCell>
+                          <div className="h-10 w-10 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
+                            {product.image ? (
+                              <img 
+                                src={product.image} 
+                                alt={`${product.name} image`} 
+                                className="h-full w-full object-contain"
+                                title={product.name}
+                              />
+                            ) : (
+                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell>{formatCurrencyWithConfig(product.price, config)}</TableCell>
                         <TableCell>{formatCurrencyWithConfig(product.final_price, config)}</TableCell>
@@ -887,6 +913,7 @@ const ShopDetail = () => {
         onOpenChange={setIsAddProductOpen}
         onSubmit={handleAddProduct}
         shopId={id}
+        isLoading={addProduct.isPending}
       />
 
       <ImportProductsDialog
@@ -900,6 +927,7 @@ const ShopDetail = () => {
         onOpenChange={setIsEditProductOpen}
         onSubmit={handleUpdateProduct}
         product={selectedProduct}
+        isLoading={updateProduct.isPending}
       />
 
       <AddStaffDialog

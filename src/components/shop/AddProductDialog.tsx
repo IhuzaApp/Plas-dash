@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ScanBarcode, ScanQrCode, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { ScanBarcode, ScanQrCode, Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useShops, useSystemConfig } from '@/hooks/useHasuraApi';
 import { Switch } from '@/components/ui/switch';
@@ -65,6 +65,7 @@ interface AddProductDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: ProductSubmitData) => void;
   shopId?: string;
+  isLoading?: boolean;
 }
 
 const AddProductDialog: React.FC<AddProductDialogProps> = ({
@@ -72,6 +73,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   onOpenChange,
   onSubmit,
   shopId,
+  isLoading = false,
 }) => {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanType, setScanType] = useState<'barcode' | 'qrcode' | null>(null);
@@ -151,16 +153,37 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   // Reset image state when dialog opens/closes
   useEffect(() => {
     if (!open) {
-      setImageFile(null);
-      setImagePreview(null);
-      form.setValue('image', '');
-      // Clear the file input
-      const fileInput = document.getElementById('product-image') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = '';
-      }
+      resetForm();
     }
-  }, [open, form]);
+  }, [open]);
+
+  const resetForm = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    form.reset({
+      name: '',
+      description: '',
+      price: '',
+      quantity: 0,
+      measurement_unit: 'item',
+      category: '',
+      is_active: true,
+      barcode: undefined,
+      sku: undefined,
+      supplier: undefined,
+      reorder_point: undefined,
+      shop_id: shopId,
+      image: '',
+      has_commission: true,
+      commission_percentage: Number(defaultCommission) || 0,
+      final_price: '',
+    });
+    // Clear the file input
+    const fileInput = document.getElementById('product-image') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
 
   function handleSubmit(values: FormData) {
     // Destructure to remove has_commission and commission_percentage
@@ -654,10 +677,19 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button type="submit">Save Product</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Product'
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
