@@ -133,9 +133,9 @@ export default function SupermarketSettings() {
         tin: shop.tin || '',
         ssd: shop.ssd || '',
       });
-      // Set logo preview if shop has an image
-      if (shop.image) {
-        setLogoPreview(shop.image);
+      // Set logo preview if shop has a logo
+      if (shop.logo) {
+        setLogoPreview(shop.logo);
       }
     }
   }, [shop]);
@@ -175,7 +175,7 @@ export default function SupermarketSettings() {
       }
 
       // Handle logo upload - convert to base64 if there's a new file
-      let logoData = shop.image || null; // Keep existing logo if no new file
+      let logoData = shop.logo || null; // Keep existing logo if no new file
       if (logoFile && logoPreview) {
         logoData = logoPreview; // Use the base64 preview data
       }
@@ -224,7 +224,7 @@ export default function SupermarketSettings() {
         ssd: shop.ssd || '',
       });
       // Reset logo preview
-      setLogoPreview(shop.image || null);
+      setLogoPreview(shop.logo || null);
       setLogoFile(null);
     }
     setIsEditing(false);

@@ -1,0 +1,575 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { hasuraRequest } from '@/lib/hasura';
+import { CREATE_SHOP } from '@/lib/graphql/mutations';
+import { useCategories } from '@/hooks/useHasuraApi';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Store, Upload, X } from 'lucide-react';
+
+interface AddShopDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
+
+interface CreateShopFormData {
+  name: string;
+  description: string;
+  category_id: string;
+  address: string;
+  phone: string;
+  operating_hours: string;
+  latitude: number | null;
+  longitude: number | null;
+  logo: string | null;
+  tin: string;
+  ssd: string;
+  is_active: boolean;
+}
+
+interface CreateShopMutationData {
+  name: string;
+  description?: string;
+  category_id: string;
+  address?: string;
+  phone?: string;
+  operating_hours: any; // JSON object
+  latitude?: string;
+  longitude?: string;
+  logo?: string;
+  tin?: string;
+  ssd?: string;
+  is_active: boolean;
+}
+
+const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState<CreateShopFormData>({
+    name: '',
+    description: '',
+    category_id: '',
+    address: '',
+    phone: '',
+    operating_hours: JSON.stringify({
+      "monday": "9am - 5pm",
+      "tuesday": "9am - 5pm", 
+      "wednesday": "9am - 5pm",
+      "thursday": "9am - 5pm",
+      "friday": "9am - 5pm",
+      "saturday": "9am - 2pm",
+      "sunday": "Closed"
+    }, null, 2),
+    latitude: null,
+    longitude: null,
+    logo: null,
+    tin: '',
+    ssd: '',
+    is_active: true,
+  });
+
+  // Fetch categories
+  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useCategories();
+  
+  console.log('=== ADD SHOP DIALOG: CATEGORIES DEBUG ===');
+  console.log('Categories loading:', categoriesLoading);
+  console.log('Categories error:', categoriesError);
+  console.log('Categories data:', categoriesData);
+
+  // Create shop mutation
+  const createShopMutation = useMutation({
+    mutationFn: async (data: CreateShopMutationData) => {
+      console.log('=== ADD SHOP DIALOG: MUTATION FUNCTION CALLED ===');
+      console.log('Mutation data:', data);
+      console.log('CREATE_SHOP mutation:', CREATE_SHOP);
+      
+      try {
+        const result = await hasuraRequest(CREATE_SHOP, data);
+        console.log('=== ADD SHOP DIALOG: MUTATION SUCCESS ===');
+        console.log('Mutation result:', result);
+        return result;
+      } catch (error: any) {
+        console.error('=== ADD SHOP DIALOG: MUTATION ERROR ===');
+        console.error('Mutation error:', error);
+        console.error('Error details:', {
+          message: error?.message,
+          response: error?.response,
+          status: error?.response?.status,
+          data: error?.response?.data
+        });
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      console.log('=== ADD SHOP DIALOG: ON SUCCESS CALLED ===');
+      console.log('Success data:', data);
+      toast({
+        title: 'Success',
+        description: 'Shop created successfully!',
+      });
+      queryClient.invalidateQueries({ queryKey: ['shops'] });
+      handleClose();
+    },
+    onError: (error: any) => {
+      console.error('=== ADD SHOP DIALOG: ON ERROR CALLED ===');
+      console.error('Error in onError:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error response:', error?.response);
+      
+      let errorMessage = 'Failed to create shop. Please try again.';
+      
+      if (error?.response?.data?.errors) {
+        const graphqlErrors = error.response.data.errors;
+        console.error('GraphQL errors:', graphqlErrors);
+        errorMessage = graphqlErrors.map((err: any) => err.message).join(', ');
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleInputChange = (field: keyof CreateShopFormData, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'Please select a valid image file.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Validate file size (2MB limit)
+      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size > maxSize) {
+        toast({
+          title: 'Error',
+          description: 'Image file size must be less than 2MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    // Clear the file input
+    const fileInput = document.getElementById('logo') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('=== ADD SHOP DIALOG: SUBMIT STARTED ===');
+    console.log('Form data:', formData);
+    console.log('Image preview exists:', !!imagePreview);
+    
+    if (!formData.name.trim()) {
+      console.log('=== ADD SHOP DIALOG: VALIDATION ERROR - NAME REQUIRED ===');
+      toast({
+        title: 'Error',
+        description: 'Shop name is required.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.category_id) {
+      console.log('=== ADD SHOP DIALOG: VALIDATION ERROR - CATEGORY REQUIRED ===');
+      toast({
+        title: 'Error',
+        description: 'Please select a category.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const submitData = {
+      ...formData,
+      logo: imagePreview,
+    };
+
+    console.log('=== ADD SHOP DIALOG: SUBMITTING DATA ===');
+    console.log('Submit data:', submitData);
+    console.log('Operating hours type:', typeof submitData.operating_hours);
+    console.log('Operating hours value:', submitData.operating_hours);
+
+    try {
+      // Try to parse operating hours to ensure it's valid JSON
+      if (typeof submitData.operating_hours === 'string') {
+        const parsedHours = JSON.parse(submitData.operating_hours);
+        console.log('=== ADD SHOP DIALOG: OPERATING HOURS PARSED SUCCESSFULLY ===');
+        console.log('Parsed operating hours:', parsedHours);
+      }
+    } catch (error) {
+      console.error('=== ADD SHOP DIALOG: OPERATING HOURS PARSE ERROR ===');
+      console.error('Error parsing operating hours:', error);
+      toast({
+        title: 'Error',
+        description: 'Invalid operating hours format. Please check the JSON format.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Clean the data to avoid null values for String fields
+    const cleanedData = {
+      name: submitData.name,
+      description: submitData.description?.trim() || undefined,
+      category_id: submitData.category_id,
+      address: submitData.address?.trim() || undefined,
+      phone: submitData.phone?.trim() || undefined,
+      operating_hours: JSON.parse(submitData.operating_hours),
+      latitude: submitData.latitude?.toString() || undefined,
+      longitude: submitData.longitude?.toString() || undefined,
+      logo: submitData.logo || undefined,
+      tin: submitData.tin?.trim() || undefined,
+      ssd: submitData.ssd?.trim() || undefined,
+      is_active: submitData.is_active,
+    };
+
+    console.log('=== ADD SHOP DIALOG: CLEANED DATA ===');
+    console.log('Cleaned data:', cleanedData);
+
+    createShopMutation.mutate(cleanedData as CreateShopMutationData);
+  };
+
+  const handleClose = () => {
+    setFormData({
+      name: '',
+      description: '',
+      category_id: '',
+      address: '',
+      phone: '',
+      operating_hours: JSON.stringify({
+        "monday": "9am - 5pm",
+        "tuesday": "9am - 5pm", 
+        "wednesday": "9am - 5pm",
+        "thursday": "9am - 5pm",
+        "friday": "9am - 5pm",
+        "saturday": "9am - 2pm",
+        "sunday": "Closed"
+      }, null, 2),
+      latitude: null,
+      longitude: null,
+      logo: null,
+      tin: '',
+      ssd: '',
+      is_active: true,
+    });
+    setImageFile(null);
+    setImagePreview(null);
+    // Clear the file input
+    const fileInput = document.getElementById('logo') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Store className="h-5 w-5" />
+            Add New Shop
+          </DialogTitle>
+          <DialogDescription>
+            Create a new shop with all the necessary details.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Shop Logo */}
+          <div className="space-y-4">
+            <Label>Shop Logo</Label>
+            <div className="flex items-start gap-4">
+              <div className="relative">
+                <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="Logo preview" className="h-full w-full object-contain" />
+                  ) : (
+                    <Store className="h-10 w-10 text-muted-foreground" />
+                  )}
+                </div>
+                {imagePreview && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleRemoveLogo}
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                    title="Remove logo"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <Input 
+                    id="logo" 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageChange}
+                    className="flex-1"
+                  />
+                  {imagePreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemoveLogo}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>• Recommended size: 512x512px</p>
+                  <p>• Supported formats: JPG, PNG, GIF, WebP</p>
+                  <p>• Maximum file size: 2MB</p>
+                  {imageFile && (
+                    <p className="text-green-600 font-medium">
+                      ✓ {imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)}MB)
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Basic Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="name">Shop Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Enter shop name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category *</Label>
+              <Select
+                value={formData.category_id}
+                onValueChange={(value) => handleInputChange('category_id', value)}
+                disabled={categoriesLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select a category"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoriesData?.Categories?.filter(category => category.is_active).map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Enter shop description"
+              rows={3}
+            />
+          </div>
+
+          {/* Contact Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="Enter phone number"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                placeholder="Enter shop address"
+              />
+            </div>
+          </div>
+
+          {/* Tax Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="tin">Tax Identification Number (TIN)</Label>
+              <Input
+                id="tin"
+                value={formData.tin}
+                onChange={(e) => handleInputChange('tin', e.target.value)}
+                placeholder="Enter TIN number"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ssd">Social Security Number (SSD)</Label>
+              <Input
+                id="ssd"
+                value={formData.ssd}
+                onChange={(e) => handleInputChange('ssd', e.target.value)}
+                placeholder="Enter SSD number"
+              />
+            </div>
+          </div>
+
+          {/* Location Coordinates */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="latitude">Latitude</Label>
+              <Input
+                id="latitude"
+                type="number"
+                step="any"
+                value={formData.latitude || ''}
+                onChange={(e) => handleInputChange('latitude', e.target.value ? parseFloat(e.target.value) : null)}
+                placeholder="Enter latitude"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="longitude">Longitude</Label>
+              <Input
+                id="longitude"
+                type="number"
+                step="any"
+                value={formData.longitude || ''}
+                onChange={(e) => handleInputChange('longitude', e.target.value ? parseFloat(e.target.value) : null)}
+                placeholder="Enter longitude"
+              />
+            </div>
+          </div>
+
+          {/* Operating Hours */}
+          <div className="space-y-2">
+            <Label htmlFor="operating_hours">Operating Hours</Label>
+            <Textarea
+              id="operating_hours"
+              value={formData.operating_hours}
+              onChange={(e) => handleInputChange('operating_hours', e.target.value)}
+              placeholder="Enter operating hours (e.g., Monday-Friday: 8AM-6PM, Saturday: 9AM-5PM)"
+              rows={6}
+            />
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p className="font-medium">Current format (JSON):</p>
+              <div className="bg-muted p-2 rounded text-xs font-mono">
+                {`{
+  "monday": "9am - 5pm",
+  "tuesday": "9am - 5pm",
+  "wednesday": "9am - 5pm", 
+  "thursday": "9am - 5pm",
+  "friday": "9am - 5pm",
+  "saturday": "9am - 2pm",
+  "sunday": "Closed"
+}`}
+              </div>
+              <p className="text-xs">You can edit the times or use "Closed" for days when the shop is not open.</p>
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium">Shop Status</h3>
+              <p className="text-sm text-muted-foreground">Enable or disable the shop</p>
+            </div>
+            <Switch
+              checked={formData.is_active}
+              onCheckedChange={(checked) => handleInputChange('is_active', checked)}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={createShopMutation.isPending || categoriesLoading}
+            >
+              {createShopMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Shop'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default AddShopDialog; 

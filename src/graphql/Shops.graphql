@@ -5,6 +5,7 @@ query GetShops {
     description
     category_id
     image
+    logo
     address
     latitude
     longitude

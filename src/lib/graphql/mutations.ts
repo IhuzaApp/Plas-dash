@@ -457,7 +457,7 @@ export const UPDATE_SHOP_SETTINGS = `
         phone: $phone
         operating_hours: $operating_hours
         is_active: $is_active
-        image: $logo
+        logo: $logo
         tin: $tin
         ssd: $ssd
         updated_at: "now()"
@@ -470,10 +470,65 @@ export const UPDATE_SHOP_SETTINGS = `
       phone
       operating_hours
       is_active
-      image
+      logo
       tin
       ssd
       updated_at
+    }
+  }
+`;
+
+// Create shop mutation
+export const CREATE_SHOP = `
+  mutation CreateShop(
+    $name: String!
+    $description: String
+    $category_id: uuid
+    $address: String
+    $phone: String
+    $operating_hours: json
+    $latitude: String
+    $longitude: String
+    $logo: String
+    $tin: String
+    $ssd: String
+    $is_active: Boolean = true
+  ) {
+    insert_Shops_one(
+      object: {
+        name: $name
+        description: $description
+        category_id: $category_id
+        address: $address
+        phone: $phone
+        operating_hours: $operating_hours
+        latitude: $latitude
+        longitude: $longitude
+        logo: $logo
+        tin: $tin
+        ssd: $ssd
+        is_active: $is_active
+      }
+    ) {
+      id
+      name
+      description
+      category_id
+      address
+      phone
+      operating_hours
+      latitude
+      longitude
+      logo
+      tin
+      ssd
+      is_active
+      created_at
+      updated_at
+      Category {
+        id
+        name
+      }
     }
   }
 `;

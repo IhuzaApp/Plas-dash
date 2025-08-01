@@ -24,16 +24,27 @@ import {
   User,
   Calendar,
   DollarSign,
+  Plus,
+  PowerOff,
+  Eye,
+  Edit,
+  Store,
 } from 'lucide-react';
 import { useShops } from '@/hooks/useHasuraApi';
 import Pagination from '@/components/ui/pagination';
 import { format } from 'date-fns';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import AddShopDialog from '../shop/AddShopDialog';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { hasuraRequest } from '@/lib/hasura';
+import { UPDATE_SHOP_SETTINGS } from '@/lib/graphql/mutations';
+import { useToast } from '@/hooks/use-toast';
 
 interface Shop {
   id: string;
   name: string;
   category_id: string;
+  logo: string | null;
   category: {
     id: string;
     name: string;
@@ -79,7 +90,44 @@ const Shops = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [expandedShops, setExpandedShops] = useState<Set<string>>(new Set());
+  const [isAddShopDialogOpen, setIsAddShopDialogOpen] = useState(false);
   const { hasAction } = usePrivilege();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Disable shop mutation
+  const disableShopMutation = useMutation({
+    mutationFn: async ({ shopId, isActive }: { shopId: string; isActive: boolean }) => {
+      return hasuraRequest(UPDATE_SHOP_SETTINGS, {
+        id: shopId,
+        is_active: isActive,
+      });
+    },
+    onSuccess: (data, variables) => {
+      const action = variables.isActive ? 'enabled' : 'disabled';
+      toast({
+        title: 'Success',
+        description: `Shop ${action} successfully!`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['shops'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to update shop status. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleDisableShop = (shopId: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus;
+    const action = newStatus ? 'enable' : 'disable';
+    
+    if (confirm(`Are you sure you want to ${action} this shop?`)) {
+      disableShopMutation.mutate({ shopId, isActive: newStatus });
+    }
+  };
 
   // Filter shops based on search term
   const filteredShops =
@@ -139,7 +187,11 @@ const Shops = () => {
         description="Manage partner shops and their products."
         actions={
           <div className="flex gap-2">
-            {hasAction('shops', 'add_shops') && <Button>Add New Shop</Button>}
+            {hasAction('shops', 'add_shops') && (
+              <Button onClick={() => setIsAddShopDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Add New Shop
+              </Button>
+            )}
           </div>
         }
       />
@@ -168,6 +220,7 @@ const Shops = () => {
             <TableHeader>
               <TableRow>
                 <TableHead></TableHead>
+                <TableHead>Logo</TableHead>
                 <TableHead>Shop Name</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Products</TableHead>
@@ -179,13 +232,13 @@ const Shops = () => {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     <div className="text-red-500">
                       Error loading shops. Please try again.
                       {error && <div className="text-sm mt-2">Error details: {error.message}</div>}
@@ -194,7 +247,7 @@ const Shops = () => {
                 </TableRow>
               ) : currentShops.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                     No shops found.
                   </TableCell>
                 </TableRow>
@@ -218,6 +271,15 @@ const Shops = () => {
                           </Button>
                         )}
                       </TableCell>
+                      <TableCell>
+                        <div className="h-10 w-10 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted" title={shop.name}>
+                          {shop.logo ? (
+                            <img src={shop.logo} alt={`${shop.name} logo`} className="h-full w-full object-contain" />
+                          ) : (
+                            <Store className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">{shop.name}</TableCell>
                       <TableCell>{shop.category?.name || 'Uncategorized'}</TableCell>
                       <TableCell>{shop.Products_aggregate.aggregate.count}</TableCell>
@@ -234,28 +296,43 @@ const Shops = () => {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Link href={`/shops/${shop.id}`}>
-                          <Button variant="ghost" size="sm">
-                            View Details
-                          </Button>
-                        </Link>
-                        {hasAction('shops', 'edit_shops') && (
-                          <Button variant="ghost" size="sm">
-                            Edit
-                          </Button>
-                        )}
-                        {hasAction('shops', 'delete_shops') && (
-                          <Button variant="ghost" size="sm">
-                            Delete
-                          </Button>
-                        )}
+                        <div className="flex items-center justify-end gap-1">
+                          <Link href={`/shops/${shop.id}`}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          {hasAction('shops', 'edit_shops') && (
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {hasAction('shops', 'delete_shops') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDisableShop(shop.id, shop.is_active)}
+                              disabled={disableShopMutation.isPending}
+                              className="h-8 w-8 p-0"
+                              title={shop.is_active ? 'Disable Shop' : 'Enable Shop'}
+                            >
+                              {disableShopMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : shop.is_active ? (
+                                <PowerOff className="h-4 w-4" />
+                              ) : (
+                                <PowerOff className="h-4 w-4 text-green-600" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
 
                     {/* Expanded Orders Section */}
                     {expandedShops.has(shop.id) && shop.Orders.length > 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="p-0">
+                        <TableCell colSpan={8} className="p-0">
                           <div className="bg-muted/30 p-4">
                             <h4 className="font-semibold mb-3 text-sm text-muted-foreground">
                               Recent Orders ({shop.Orders.length})
@@ -346,6 +423,11 @@ const Shops = () => {
           )}
         </Card>
       </div>
+
+      <AddShopDialog
+        isOpen={isAddShopDialogOpen}
+        onClose={() => setIsAddShopDialogOpen(false)}
+      />
     </AdminLayout>
   );
 };
