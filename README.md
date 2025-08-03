@@ -943,319 +943,177 @@ The Plas Dashboard implements a **separate privilege system for Project Users** 
 
 ---
 
-### Project Users vs Store Staff
+## 📋 Recent Updates & Changes (Latest Implementation)
 
-#### **🔧 Project Users (ProjectPrivileges)**
-- **Purpose**: System-level management (developers, support, project managers, global admins)
-- **Access**: Project management, system configuration, user management, analytics, etc.
-- **Restriction**: **NO access to point-of-sale operations**
-- **Database**: Uses `ProjectUsers` table
-- **Privilege System**: Separate `ProjectPrivileges` system
+### **🆕 New Components & Files Created**
 
-#### **🏪 Store Staff (Current Privileges)**
-- **Purpose**: Store-level operations (cashiers, managers, inventory, etc.)
-- **Access**: Point-of-sale, inventory, transactions, etc.
-- **Restriction**: Limited to store operations
-- **Database**: Uses regular staff tables
-- **Privilege System**: Current `UserPrivileges` system
+#### **1. Project Privilege System**
+- **`src/types/projectPrivileges.ts`** - Project privilege interfaces and types
+- **`src/lib/privileges/projectRolePrivileges.ts`** - Project role definitions and privilege assignments
+- **`src/hooks/useProjectPrivilege.ts`** - Hook for project user privilege checking
+- **`src/components/auth/ProtectedProjectRoute.tsx`** - Route protection for project users
 
----
+#### **2. Project Users Management**
+- **`src/components/pages/ProjectUsers.tsx`** - Project users management interface
+- **`src/app/project-users/page.tsx`** - Project users route with protection
+- **`src/graphql/ProjectUsers.graphql`** - GraphQL queries for project users
 
-### Project User Roles & Access Levels
+#### **3. Enhanced Protection System**
+- **Updated `src/components/auth/ProtectedRoute.tsx`** - Now handles both regular and project users
+- **Updated `src/components/layout/AdminSidebar.tsx`** - Added Project Users menu item
+- **Updated `src/lib/privileges/menuPrivileges.ts`** - Added project users menu mapping
 
-#### **1. Customer Support**
-**Access to:**
-- ✅ Orders
-- ✅ Plasas (Shoppers)
-- ✅ Customers (Users)
-- ✅ Shops
-- ✅ Products
-- ✅ Plasa Wallets
-- ✅ Refund Claims
-- ✅ Tickets
-- ✅ Help Center
+### **🔧 Privilege System Integration**
 
-**Restrictions:**
-- ❌ No delete operations
-- ❌ No system configuration
-- ❌ No security settings
-- ❌ No promotions management
-
-#### **2. System Admin**
-**Access to:**
-- ✅ Orders
-- ✅ Plasas (Shoppers)
-- ✅ Customers (Users)
-- ✅ Shops
-- ✅ Products
-- ✅ Plasa Wallets
-- ✅ Refund Claims
-- ✅ Tickets
-- ✅ Help Center
-- ✅ Dashboard
-- ✅ Delivery Settings
-- ✅ Promotions
-- ✅ System Settings
-
-**Restrictions:**
-- ❌ No delete operations
-- ❌ No debug/maintenance operations
-
-#### **3. Manager**
-**Access to:**
-- ✅ Orders
-- ✅ Plasas (Shoppers)
-- ✅ Customers (Users)
-- ✅ Shops
-- ✅ Products
-- ✅ Plasa Wallets
-- ✅ Refund Claims
-- ✅ Tickets
-- ✅ Help Center
-- ✅ Dashboard
-- ✅ Promotions
-
-**Restrictions:**
-- ❌ No delete operations
-- ❌ No system configuration
-- ❌ No delivery settings
-
-#### **4. Project Admin (Global System Admin)**
-**Access to:**
-- ✅ **ALL Store Operations** (Orders, Plasas, Customers, Shops, Products, Wallets, Refunds, Tickets, Help)
-- ✅ **ALL POS Operations** (Checkout, Staff Management, Inventory, Transactions, Discounts, Company Dashboard, Shop Dashboard, Financial Overview, POS Terminal)
-- ✅ **ALL System Management** (System Management, User Management, Project Users, Analytics, Reporting, Support Management, Help Management, System Configuration, Global Settings, Security Management, Access Control, System Monitoring, Audit Logs, Development Tools, Maintenance)
-- ✅ **ALL Additional Modules** (Dashboard, Delivery Settings, Promotions, Settings)
-
-**Restrictions:**
-- ❌ **NONE** - Complete system access
-
-**Note:** This role has access to **everything** in the system, including both store staff operations (POS) and project management operations. They are the ultimate administrators.
-
----
-
-### Project Privilege Structure
-
-#### **TypeScript Interfaces**
+#### **1. Dual Authentication Support**
+The system now supports **two types of users**:
 
 ```typescript
-// src/types/projectPrivileges.ts
-
-export interface ProjectModulePrivileges {
-  access: boolean;
-  [key: string]: boolean; // Action-specific privileges
+// Regular Store Staff
+interface OrgEmployeeSession {
+  id: string;
+  username: string;
+  privileges: UserPrivileges; // Store staff privileges
+  orgEmployeeRoles: any;
 }
 
-export interface ProjectUserPrivileges {
-  // Store Operations (No POS access)
-  orders?: ProjectModulePrivileges;
-  shoppers?: ProjectModulePrivileges;
-  users?: ProjectModulePrivileges;
-  shops?: ProjectModulePrivileges;
-  products?: ProjectModulePrivileges;
-  wallet?: ProjectModulePrivileges;
-  refunds?: ProjectModulePrivileges;
-  tickets?: ProjectModulePrivileges;
-  help?: ProjectModulePrivileges;
-  
-  // Additional Store Modules
-  dashboard?: ProjectModulePrivileges;
-  delivery_settings?: ProjectModulePrivileges;
-  promotions?: ProjectModulePrivileges;
-  settings?: ProjectModulePrivileges;
-  
-  // System Management
-  system_management?: ProjectModulePrivileges;
-  user_management?: ProjectModulePrivileges;
-  project_users?: ProjectModulePrivileges;
-  analytics?: ProjectModulePrivileges;
-  reporting?: ProjectModulePrivileges;
-  support_management?: ProjectModulePrivileges;
-  help_management?: ProjectModulePrivileges;
-  system_configuration?: ProjectModulePrivileges;
-  global_settings?: ProjectModulePrivileges;
-  security_management?: ProjectModulePrivileges;
-  access_control?: ProjectModulePrivileges;
-  system_monitoring?: ProjectModulePrivileges;
-  audit_logs?: ProjectModulePrivileges;
-  development_tools?: ProjectModulePrivileges;
-  maintenance?: ProjectModulePrivileges;
-}
-```
-
-#### **Default Project Privileges**
-
-```typescript
-export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
-  orders: {
-    access: false,
-    view_orders: false,
-    create_orders: false,
-    edit_orders: false,
-    delete_orders: false,
-    process_orders: false,
-    view_order_details: false,
-    update_order_status: false,
-    assign_delivery: false,
-  },
-  // ... other modules with their respective actions
-};
-```
-
----
-
-### Project Role Assignment
-
-#### **Role Definition**
-
-```typescript
-// src/lib/privileges/projectRolePrivileges.ts
-
-export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): ProjectUserPrivileges => {
-  const privileges: ProjectUserPrivileges = {} as ProjectUserPrivileges;
-  
-  // Initialize all privileges to false
-  Object.keys(DEFAULT_PROJECT_PRIVILEGES).forEach(module => {
-    privileges[module as ProjectPrivilegeKey] = {
-      access: false,
-      ...DEFAULT_PROJECT_PRIVILEGES[module as ProjectPrivilegeKey],
-    };
-  });
-
-  switch (projectRoleType) {
-    case 'customerSupport':
-      const customerSupportModules: ProjectPrivilegeKey[] = [
-        'orders', 'shoppers', 'users', 'shops', 'products',
-        'wallet', 'refunds', 'tickets', 'help'
-      ];
-      // Grant appropriate privileges...
-      break;
-      
-    case 'systemAdmin':
-      const systemAdminModules: ProjectPrivilegeKey[] = [
-        'orders', 'shoppers', 'users', 'shops', 'products',
-        'wallet', 'refunds', 'tickets', 'help', 'dashboard',
-        'delivery_settings', 'promotions', 'settings'
-      ];
-      // Grant appropriate privileges...
-      break;
-      
-    case 'projectManager':
-      const projectManagerModules: ProjectPrivilegeKey[] = [
-        'orders', 'shoppers', 'users', 'shops', 'products',
-        'wallet', 'refunds', 'tickets', 'help', 'dashboard',
-        'promotions'
-      ];
-      // Grant appropriate privileges...
-      break;
-      
-    case 'projectAdmin':
-      // Full access to everything
-      break;
-  }
-  
-  return privileges;
-};
-```
-
-#### **Available Project Roles**
-
-```typescript
-export const PROJECT_ROLE_TYPES = [
-  'projectAdmin',
-  'systemAdmin', 
-  'projectManager',
-  'customerSupport',
-] as const;
-
-export type ProjectRoleType = typeof PROJECT_ROLE_TYPES[number];
-```
-
----
-
-### Project User Authentication & Session
-
-#### **Session Structure**
-
-Project users have a separate session structure:
-
-```typescript
+// Project Users
 interface ProjectUserSession {
   id: string;
   username: string;
-  email: string;
-  role: ProjectRoleType;
-  privileges: ProjectUserPrivileges;
+  privileges: ProjectUserPrivileges; // Project user privileges
   isProjectUser: true;
-  // ... other session data
 }
 ```
 
-#### **Authentication Flow**
-
-1. **Project User Login**: Uses `ProjectUsers` table
-2. **Privilege Loading**: Loads `ProjectUserPrivileges` based on role
-3. **Session Creation**: Creates project user session
-4. **Access Control**: Enforces project-specific privileges
-
----
-
-### Project User Menu System
-
-#### **Menu Privilege Mapping**
+#### **2. Privilege Conversion System**
+**Updated `src/components/modals/LoginModal.tsx`** to handle privilege conversion:
 
 ```typescript
-// src/lib/privileges/menuPrivileges.ts
+// Added to privilegeMapping object:
+'project_users:access': { module: 'project_users', action: 'access' },
+'project_users:view_project_users': { module: 'project_users', action: 'view_project_users' },
+'project_users:add_project_users': { module: 'project_users', action: 'add_project_users' },
+'project_users:edit_project_users': { module: 'project_users', action: 'edit_project_users' },
+'project_users:delete_project_users': { module: 'project_users', action: 'delete_project_users' },
+'project_users:view_project_user_details': { module: 'project_users', action: 'view_project_user_details' },
+'project_users:manage_project_user_roles': { module: 'project_users', action: 'manage_project_user_roles' },
+'project_users:view_project_user_activity': { module: 'project_users', action: 'view_project_user_activity' },
 
-export const menuPrivileges: Record<string, MenuPrivilege> = {
-  // ... store staff menu items
+// Page Access Privileges
+'pages:access': { module: 'pages', action: 'access' },
+'pages:access_project_users': { module: 'pages', action: 'access_project_users' },
+'pages:access_orders': { module: 'pages', action: 'access_orders' },
+// ... and 24 more page access privileges
+```
+
+#### **3. Enhanced Protection Components**
+
+```typescript
+// src/components/auth/ProtectedRoute.tsx - Updated to handle both user types
+export function ProtectedRoute({
+  children,
+  requiredPrivilege,
+  requiredAction,
+  fallback,
+  showAccessDenied = true,
+}: ProtectedRouteProps) {
+  const { hasModuleAccess, hasAction, isAuthenticated } = usePrivilege();
+  const { hasProjectModuleAccess, hasProjectAction, isProjectUser } = useProjectPrivilege();
+
+  // Check both privilege systems
+  const isUserAuthenticated = isAuthenticated() || isProjectUser();
   
+  // ... privilege checking logic for both systems
+}
+```
+
+### **📊 Database Integration**
+
+#### **1. Regular User Privileges (Array Format)**
+```json
+["sidebar:view","checkout:access","project_users:access","pages:access_project_users",...]
+```
+
+#### **2. Project User Privileges (Object Format)**
+```json
+{
+  "project_users": {
+    "access": true,
+    "view_project_users": true,
+    "add_project_users": true,
+    "edit_project_users": true,
+    "delete_project_users": true
+  },
+  "pages": {
+    "access": true,
+    "access_project_users": true,
+    "access_orders": true
+  }
+}
+```
+
+#### **3. Privilege Conversion Process**
+1. **Login**: User logs in with array-based privileges
+2. **Conversion**: `convertPrivilegesToNewFormat()` converts array to object
+3. **Storage**: Privileges stored in `localStorage` as `orgEmployeeSession`
+4. **Access**: `ProtectedRoute` checks converted privileges
+
+### **🎯 Page Protection System**
+
+#### **1. Route Protection**
+```typescript
+// src/app/project-users/page.tsx
+export default function ProjectUsersPage() {
+  return (
+    <ProtectedRoute requiredPrivilege="project_users">
+      <ProjectUsers />
+    </ProtectedRoute>
+  );
+}
+```
+
+#### **2. Menu Protection**
+```typescript
+// src/lib/privileges/menuPrivileges.ts
+export const menuPrivileges: Record<string, MenuPrivilege> = {
   'Project Users': { 
     module: 'project_users', 
     isProjectUser: true 
   },
-  
   // ... other menu items
 };
 ```
 
-#### **Menu Filtering**
-
-The sidebar filters menu items based on user type:
-
+#### **3. Component Protection**
 ```typescript
-const filteredMenuItems = isProjectUser()
-  ? projectMenuItems.filter(item => hasProjectModuleAccess(item.module))
-  : storeMenuItems.filter(item => hasModuleAccess(item.module));
+// Conditional rendering based on privileges
+const { hasAction } = usePrivilege();
+
+{hasAction('project_users', 'add_project_users') && (
+  <Button>Add Project User</Button>
+)}
 ```
 
----
+### **🔐 Security Features**
 
-### Security Benefits
+#### **1. Complete Separation**
+- **Project Users**: Cannot access POS operations (except Global System Admin)
+- **Store Staff**: Cannot access project management features
+- **Different Privilege Systems**: No cross-contamination
 
-#### **Complete Separation**
-- **Project users** cannot access any POS operations (except Global System Admin)
-- **Store staff** cannot access project management features
-- **Different privilege systems** prevent cross-contamination
+#### **2. Role-Based Access Control**
+- **Customer Support**: Limited store operations access
+- **System Admin**: Store operations + system settings
+- **Manager**: Store operations + dashboard + promotions
+- **Global System Admin**: Complete access to everything
 
-#### **Role-Based Access**
-- Each project role has specific, limited access
-- No unnecessary permissions granted
-- Clear separation of concerns
+#### **3. Page-Level Security**
+- **26 Page Access Privileges**: Granular control over route access
+- **Module-Level Protection**: Each module has its own access controls
+- **Action-Level Protection**: Specific actions within modules
 
-#### **System Integrity**
-- Project users focus on system management
-- Store staff focus on business operations
-- No interference between the two systems
-
-#### **Global System Admin Exception**
-- **Global System Admin** has access to **everything** including POS operations
-- This is the only role that bridges both systems
-- Ultimate administrative control
-
----
-
-### Implementation Files
+### **📝 Implementation Files**
 
 #### **Core Files**
 - `src/types/projectPrivileges.ts` - Project privilege types and interfaces
@@ -1264,21 +1122,19 @@ const filteredMenuItems = isProjectUser()
 - `src/components/pages/ProjectUsers.tsx` - Project users management page
 - `src/app/project-users/page.tsx` - Project users route
 
+#### **Authentication & Protection**
+- `src/hooks/useProjectPrivilege.ts` - Project user privilege checking
+- `src/components/auth/ProtectedProjectRoute.tsx` - Project user route protection
+- `src/components/auth/ProtectedRoute.tsx` - Enhanced dual-system protection
+- `src/components/modals/LoginModal.tsx` - Updated privilege conversion
+
 #### **Database Integration**
 - `src/graphql/ProjectUsers.graphql` - Project users GraphQL queries
 - `src/hooks/useHasuraApi.ts` - Project users data fetching hooks
 
-#### **Authentication**
-- Project user authentication system
-- Session management for project users
-- Privilege checking for project users
+### **🚀 Usage Examples**
 
----
-
-### Usage Examples
-
-#### **Checking Project User Privileges**
-
+#### **1. Checking Project User Privileges**
 ```typescript
 import { useProjectPrivilege } from '@/hooks/useProjectPrivilege';
 
@@ -1293,8 +1149,7 @@ if (hasProjectAction('orders', 'view_orders')) {
 }
 ```
 
-#### **Protecting Project User Components**
-
+#### **2. Protecting Project User Components**
 ```tsx
 import { ProtectedProjectRoute } from '@/components/auth/ProtectedProjectRoute';
 
@@ -1307,8 +1162,7 @@ export default function ProjectUsersPage() {
 }
 ```
 
-#### **Conditional Rendering for Project Users**
-
+#### **3. Conditional Rendering for Project Users**
 ```tsx
 import { useProjectPrivilege } from '@/hooks/useProjectPrivilege';
 
@@ -1355,4 +1209,215 @@ const { hasProjectAction } = useProjectPrivilege();
 - `src/app/project-users/page.tsx`
 - `src/graphql/ProjectUsers.graphql`
 
+---
+
+## 📊 Complete Privilege & Role System Summary
+
+### **🎯 System Overview**
+
+The Plas Dashboard implements a **dual privilege system** with complete separation between **Store Staff** and **Project Users**:
+
+#### **🏪 Store Staff (Regular Users)**
+- **Purpose**: Store-level operations (POS, inventory, transactions)
+- **Database**: `orgEmployees` table
+- **Privilege System**: `UserPrivileges` (array format in DB, object format in session)
+- **Access**: Point-of-sale, store operations, customer management
+
+#### **🔧 Project Users (System Staff)**
+- **Purpose**: System-level management (developers, support, admins)
+- **Database**: `ProjectUsers` table
+- **Privilege System**: `ProjectUserPrivileges` (object format)
+- **Access**: Project management, system configuration, analytics
+
+---
+
+### **📋 Complete Privilege Matrix**
+
+#### **🏪 Store Staff Privileges (UserPrivileges)**
+
+| Module | Access | Actions |
+|--------|--------|---------|
+| **checkout** | ✅ | access, delete_pending_orders, apply_discount, view_orders, create_orders, edit_orders, cancel_orders, process_payment, view_customer_info, edit_customer_info |
+| **staff_management** | ✅ | access, view_accounts, edit_accounts, view_activity_logs, add_new_staff, delete_staff, assign_roles, view_permissions, edit_permissions |
+| **inventory** | ✅ | access, view_products, add_products, edit_products, delete_products, import_products, export_products, manage_categories, view_stock_levels, update_stock |
+| **transactions** | ✅ | access, view, refund, export, view_details, process_refund, view_receipts, print_receipts |
+| **discounts** | ✅ | access, create_discount, delete_discount, edit_discount, view_discounts, apply_discount, manage_discount_rules |
+| **company_dashboard** | ✅ | access, view_reports, export_reports, view_analytics, view_revenue_data, view_performance_metrics |
+| **shop_dashboard** | ✅ | access, view_sales_data, manage_daily_targets, view_shop_performance, view_staff_performance, view_customer_metrics |
+| **financial_overview** | ✅ | access, view_profits, export_financial_data, view_revenue_reports, view_expense_reports, view_profit_margins |
+| **pos_terminal** | ✅ | access, park_sale, hold_order, resume_order, process_sale, view_cart, edit_cart, apply_promotions |
+| **orders** | ✅ | access, view_orders, create_orders, edit_orders, delete_orders, process_orders, view_order_details, update_order_status, assign_delivery |
+| **products** | ✅ | access, view_products, add_products, edit_products, delete_products, import_products, export_products, manage_categories, view_analytics |
+| **users** | ✅ | access, view_users, add_users, edit_users, delete_users, view_user_details, manage_user_roles, view_user_activity |
+| **project_users** | ✅ | access, view_project_users, add_project_users, edit_project_users, delete_project_users, view_project_user_details, manage_project_user_roles, view_project_user_activity |
+| **shops** | ✅ | access, view_shops, add_shops, edit_shops, delete_shops, view_shop_details, manage_shop_settings, view_shop_performance |
+| **shoppers** | ✅ | access, view_shoppers, add_shoppers, edit_shoppers, delete_shoppers, view_shopper_details, view_shopper_orders, view_shopper_wallet, view_shopper_ratings |
+| **settings** | ✅ | access, view_settings, edit_settings, manage_system_config, view_audit_logs, manage_notifications |
+| **refunds** | ✅ | access, view_refunds, process_refunds, approve_refunds, reject_refunds, view_refund_details, export_refund_data |
+| **tickets** | ✅ | access, view_tickets, create_tickets, edit_tickets, delete_tickets, assign_tickets, resolve_tickets, view_ticket_details |
+| **help** | ✅ | access, view_help, search_help, view_categories, view_articles |
+| **wallet** | ✅ | access, view_wallets, process_payouts, view_transactions, manage_wallet_settings, view_balance, export_wallet_data |
+| **promotions** | ✅ | access, view_promotions, create_promotions, edit_promotions, delete_promotions, activate_promotions, deactivate_promotions, view_promotion_analytics |
+| **delivery_settings** | ✅ | access, view_delivery_settings, edit_delivery_settings, manage_delivery_zones, set_delivery_fees, configure_delivery_times |
+| **pages** | ✅ | access, view_pages, access_project_users, access_orders, access_shops, access_products, access_users, access_shoppers, access_settings, access_refunds, access_tickets, access_help, access_wallet, access_promotions, access_delivery_settings, access_dashboard, access_pos, access_checkout, access_staff_management, access_inventory, access_transactions, access_discounts, access_company_dashboard, access_shop_dashboard, access_financial_overview, access_pos_terminal |
+
+#### **🔧 Project User Privileges (ProjectUserPrivileges)**
+
+| Module | Access | Actions |
+|--------|--------|---------|
+| **orders** | ✅ | access, view_orders, create_orders, edit_orders, delete_orders, process_orders, view_order_details, update_order_status, assign_delivery |
+| **shoppers** | ✅ | access, view_shoppers, add_shoppers, edit_shoppers, delete_shoppers, view_shopper_details, view_shopper_orders, view_shopper_wallet, view_shopper_ratings |
+| **users** | ✅ | access, view_users, add_users, edit_users, delete_users, view_user_details, manage_user_roles, view_user_activity |
+| **shops** | ✅ | access, view_shops, add_shops, edit_shops, delete_shops, view_shop_details, manage_shop_settings, view_shop_performance |
+| **products** | ✅ | access, view_products, add_products, edit_products, delete_products, import_products, export_products, manage_categories, view_analytics |
+| **wallet** | ✅ | access, view_wallets, process_payouts, view_transactions, manage_wallet_settings, view_balance, export_wallet_data |
+| **refunds** | ✅ | access, view_refunds, process_refunds, approve_refunds, reject_refunds, view_refund_details, export_refund_data |
+| **tickets** | ✅ | access, view_tickets, create_tickets, edit_tickets, delete_tickets, assign_tickets, resolve_tickets, view_ticket_details |
+| **help** | ✅ | access, view_help, search_help, view_categories, view_articles |
+| **dashboard** | ✅ | access, view_dashboard, view_analytics, view_reports, export_data |
+| **delivery_settings** | ✅ | access, view_delivery_settings, edit_delivery_settings, manage_delivery_zones, set_delivery_fees, configure_delivery_times |
+| **promotions** | ✅ | access, view_promotions, create_promotions, edit_promotions, delete_promotions, activate_promotions, deactivate_promotions, view_promotion_analytics |
+| **settings** | ✅ | access, view_settings, edit_settings, manage_system_config, view_audit_logs, manage_notifications |
+| **system_management** | ✅ | access, view_system, manage_system, configure_system, monitor_system |
+| **user_management** | ✅ | access, view_users, add_users, edit_users, delete_users, manage_roles |
+| **project_users** | ✅ | access, view_project_users, add_project_users, edit_project_users, delete_project_users, manage_project_roles |
+| **analytics** | ✅ | access, view_analytics, export_analytics, create_reports, view_insights |
+| **reporting** | ✅ | access, view_reports, create_reports, export_reports, schedule_reports |
+| **support_management** | ✅ | access, view_support, manage_support, assign_tickets, resolve_issues |
+| **help_management** | ✅ | access, view_help, manage_help, create_articles, edit_articles |
+| **system_configuration** | ✅ | access, view_config, edit_config, manage_config, backup_config |
+| **global_settings** | ✅ | access, view_settings, edit_settings, manage_settings, apply_settings |
+| **security_management** | ✅ | access, view_security, manage_security, configure_security, monitor_security |
+| **access_control** | ✅ | access, view_access, manage_access, configure_access, audit_access |
+| **system_monitoring** | ✅ | access, view_monitoring, manage_monitoring, configure_monitoring, alert_monitoring |
+| **audit_logs** | ✅ | access, view_logs, export_logs, search_logs, analyze_logs |
+| **development_tools** | ✅ | access, view_tools, use_tools, configure_tools, debug_tools |
+| **maintenance** | ✅ | access, view_maintenance, perform_maintenance, schedule_maintenance, monitor_maintenance |
+| **pages** | ✅ | access, view_pages, access_project_users, access_orders, access_shops, access_products, access_users, access_shoppers, access_settings, access_refunds, access_tickets, access_help, access_wallet, access_promotions, access_delivery_settings, access_dashboard, access_pos, access_checkout, access_staff_management, access_inventory, access_transactions, access_discounts, access_company_dashboard, access_shop_dashboard, access_financial_overview, access_pos_terminal |
+
+---
+
+### **👥 Role Hierarchy & Access Levels**
+
+#### **🏪 Store Staff Roles**
+
+| Role | Store Operations | POS Operations | System Management | Access Level |
+|------|------------------|----------------|-------------------|--------------|
+| **Cashier** | ✅ Basic | ✅ Full | ❌ None | Limited |
+| **Store Manager** | ✅ Full | ✅ Full | ❌ None | Store Operations |
+| **Inventory Manager** | ✅ Inventory | ✅ Limited | ❌ None | Inventory Focus |
+| **System Admin** | ✅ Full | ✅ Full | ✅ System Settings | System Management |
+
+#### **🔧 Project User Roles**
+
+| Role | Store Operations | POS Operations | System Management | Access Level |
+|------|------------------|----------------|-------------------|--------------|
+| **Customer Support** | ✅ Basic | ❌ None | ❌ None | Limited |
+| **Manager** | ✅ Full | ❌ None | ❌ None | Business Operations |
+| **System Admin** | ✅ Full | ❌ None | ✅ System Settings | System Management |
+| **Global System Admin** | ✅ Full | ✅ Full | ✅ Full | **Complete Access** |
+
+---
+
+### **🔐 Security Architecture**
+
+#### **Complete Separation (with Exception)**
+- **Regular Project Users**: No POS access (Customer Support, Manager, System Admin)
+- **Store Staff**: No project management access
+- **Global System Admin**: **Complete access to everything** (the exception)
+
+#### **Privilege Enforcement**
+- **Module-Level**: Each module has its own access controls
+- **Action-Level**: Specific actions within modules
+- **Page-Level**: Route-specific permissions (26 page access privileges)
+- **Component-Level**: UI element protection
+
+#### **Authentication Flow**
+1. **Login**: User authenticates with credentials
+2. **Role Detection**: System determines user type (store staff vs project user)
+3. **Privilege Loading**: Loads appropriate privilege system
+4. **Session Creation**: Creates user session with privileges
+5. **Access Control**: Enforces privileges throughout the application
+
+---
+
+### **📊 Database Schema**
+
+#### **Store Staff Tables**
+```sql
+-- Regular staff users
+orgEmployees (id, username, email, password_hash, shop_id, ...)
+orgEmployeeRoles (id, privillages: string[], ...)
+```
+
+#### **Project User Tables**
+```sql
+-- Project users
+ProjectUsers (id, username, email, password_hash, role, is_active, ...)
+ProjectUserPrivileges (id, project_user_id, privileges: jsonb, ...)
+```
+
+#### **Privilege Storage**
+- **Store Staff**: Array format in database, converted to object in session
+- **Project Users**: Object format in database and session
+
+---
+
+### **🔄 Migration & Integration**
+
+#### **Privilege Conversion**
+- **Old Format**: `["checkout:access", "orders:view"]`
+- **New Format**: `{ checkout: { access: true }, orders: { view_orders: true } }`
+- **Conversion**: `convertPrivilegesToNewFormat()` in LoginModal
+
+#### **Session Management**
+- **Store Staff**: `orgEmployeeSession` in localStorage
+- **Project Users**: `projectUserSession` in localStorage
+- **Dual Support**: `ProtectedRoute` checks both systems
+
+#### **Menu System**
+- **Dynamic Filtering**: Based on user type and privileges
+- **Project Users**: Only see project-relevant menu items
+- **Store Staff**: Only see store-relevant menu items
+
+---
+
+### **📝 Implementation Summary**
+
+#### **Files Created/Modified**
+- ✅ **New Files**: 8 files for project user system
+- ✅ **Updated Files**: 6 files for integration
+- ✅ **Total Changes**: 14 files modified
+
+#### **Features Implemented**
+- ✅ **Dual Authentication**: Both user types supported
+- ✅ **Privilege Conversion**: Array to object conversion
+- ✅ **Page Protection**: Route-level security
+- ✅ **Menu Protection**: Dynamic menu filtering
+- ✅ **Component Protection**: UI element security
+- ✅ **Database Integration**: Both privilege systems
+
+#### **Security Achieved**
+- ✅ **Complete Separation**: No cross-contamination
+- ✅ **Role-Based Access**: Granular permissions
+- ✅ **Page-Level Security**: Route protection
+- ✅ **Component Security**: UI protection
+- ✅ **Session Security**: Proper authentication
+
+---
+
 ## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is proprietary software. All rights reserved.
+
+## Support
+
+For support, please contact our team at support@example.com or open an issue in the repository.

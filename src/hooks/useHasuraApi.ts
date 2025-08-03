@@ -578,6 +578,24 @@ export interface OrgEmployeeRole {
   update_on: string;
 }
 
+export interface ProjectUser {
+  id: string;
+  MembershipId: string;
+  username: string;
+  email: string;
+  password: string;
+  role: string;
+  is_active: boolean;
+  TwoAuth_enabled: boolean;
+  last_Login: string | null;
+  created_at: string;
+  updated_at: string;
+  gender: string | null;
+  device_details: string | null;
+  profile: string | null;
+  privileges: any; // JSON object for project user privileges
+}
+
 // Default role templates as arrays
 export const DEFAULT_ROLES = {
   globalAdmin: [
@@ -769,7 +787,7 @@ export function usePOSTransactions(shopId: string) {
 }
 
 export function useProjectUsers() {
-  return useQuery({
+  return useQuery<{ ProjectUsers: ProjectUser[] }, Error>({
     queryKey: ['projectUsers'],
     queryFn: async () => {
       const query = `
@@ -789,10 +807,64 @@ export function useProjectUsers() {
             profile
             role
             username
+            updated_at
           }
         }
       `;
       return hasuraRequest(query);
+    },
+  });
+}
+
+// Type-safe hook for adding project user
+export function useAddProjectUser() {
+  return useMutation<
+    { insert_ProjectUsers: { affected_rows: number } },
+    Error,
+    {
+      username: string;
+      email: string;
+      password: string;
+      role: string;
+      is_active: boolean;
+      TwoAuth_enabled: boolean;
+      gender?: string;
+      device_details?: string;
+      profile?: string;
+      privileges?: any;
+    }
+  >({
+    mutationFn: variables => {
+      const mutation = `
+        mutation AddProjectUsers(
+          $username: String!,
+          $email: String!,
+          $password: String!,
+          $role: String!,
+          $is_active: Boolean!,
+          $TwoAuth_enabled: Boolean!,
+          $gender: String,
+          $device_details: String,
+          $profile: String,
+          $privileges: jsonb
+        ) {
+          insert_ProjectUsers(objects: {
+            username: $username,
+            email: $email,
+            password: $password,
+            role: $role,
+            is_active: $is_active,
+            TwoAuth_enabled: $TwoAuth_enabled,
+            gender: $gender,
+            device_details: $device_details,
+            profile: $profile,
+            privileges: $privileges
+          }) {
+            affected_rows
+          }
+        }
+      `;
+      return hasuraRequest(mutation, variables);
     },
   });
 }

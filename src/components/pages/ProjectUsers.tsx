@@ -14,15 +14,22 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { usePrivilege } from '@/hooks/usePrivilege';
-import { useProjectUsers } from '@/hooks/useHasuraApi';
+import { useProjectUsers, ProjectUser } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
 import { Search, Plus, Edit, Trash2, User, Mail, Shield } from 'lucide-react';
 import { usePageAccess } from '@/hooks/usePageAccess';
+import AddProjectUserDialog from '@/components/shop/AddProjectUserDialog';
+import EditProjectUserDialog from '@/components/shop/EditProjectUserDialog';
+import DeleteProjectUserDialog from '@/components/shop/DeleteProjectUserDialog';
 
 const ProjectUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<ProjectUser | null>(null);
   const { hasAction } = usePrivilege();
   const { navigateToPage } = usePageAccess();
 
@@ -31,7 +38,7 @@ const ProjectUsers = () => {
 
   // Filter users based on search term
   const filteredUsers = data?.ProjectUsers?.filter(
-    user =>
+    (user: ProjectUser) =>
       searchTerm === '' ||
       user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,31 +54,43 @@ const ProjectUsers = () => {
 
   const handleAddUser = () => {
     if (hasAction('project_users', 'add_project_users')) {
-      // TODO: Implement add user functionality
-      toast.info('Add user functionality coming soon');
+      setIsAddDialogOpen(true);
     } else {
       toast.error('You do not have permission to add project users');
     }
   };
 
-  const handleEditUser = (user: any) => {
+  const handleEditUser = (user: ProjectUser) => {
     if (hasAction('project_users', 'edit_project_users')) {
-      // TODO: Implement edit user functionality
-      toast.info('Edit user functionality coming soon');
+      setSelectedUser(user);
+      setIsEditDialogOpen(true);
     } else {
       toast.error('You do not have permission to edit project users');
     }
   };
 
-  const handleDeleteUser = (user: any) => {
+  const handleDeleteUser = (user: ProjectUser) => {
     if (hasAction('project_users', 'delete_project_users')) {
-      if (confirm(`Are you sure you want to delete user "${user.username}"?`)) {
-        // TODO: Implement delete user functionality
-        toast.info('Delete user functionality coming soon');
-      }
+      setSelectedUser(user);
+      setIsDeleteDialogOpen(true);
     } else {
       toast.error('You do not have permission to delete project users');
     }
+  };
+
+  const handleAddSuccess = () => {
+    refetch();
+    toast.success('Project user added successfully');
+  };
+
+  const handleEditSuccess = () => {
+    refetch();
+    toast.success('Project user updated successfully');
+  };
+
+  const handleDeleteSuccess = () => {
+    refetch();
+    toast.success('Project user deleted successfully');
   };
 
   if (isLoading) {
@@ -279,6 +298,23 @@ const ProjectUsers = () => {
           </CardContent>
         </Card>
       </div>
+      <AddProjectUserDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={handleAddSuccess}
+      />
+      <EditProjectUserDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        user={selectedUser}
+        onSuccess={handleEditSuccess}
+      />
+      <DeleteProjectUserDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        user={selectedUser}
+        onSuccess={handleDeleteSuccess}
+      />
     </AdminLayout>
   );
 };
