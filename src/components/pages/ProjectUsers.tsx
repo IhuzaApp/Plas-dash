@@ -21,6 +21,7 @@ import { usePageAccess } from '@/hooks/usePageAccess';
 import AddProjectUserDialog from '@/components/shop/AddProjectUserDialog';
 import EditProjectUserDialog from '@/components/shop/EditProjectUserDialog';
 import DeleteProjectUserDialog from '@/components/shop/DeleteProjectUserDialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const ProjectUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +31,11 @@ const ProjectUsers = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ProjectUser | null>(null);
+  const [profileImageModal, setProfileImageModal] = useState<{ isOpen: boolean; image: string; username: string }>({
+    isOpen: false,
+    image: '',
+    username: '',
+  });
   const { hasAction } = usePrivilege();
   const { navigateToPage } = usePageAccess();
 
@@ -92,6 +98,14 @@ const ProjectUsers = () => {
   const handleDeleteSuccess = () => {
     refetch();
     toast.success('Project user deleted successfully');
+  };
+
+  const handleProfileImageClick = (image: string, username: string) => {
+    setProfileImageModal({
+      isOpen: true,
+      image,
+      username,
+    });
   };
 
   if (isLoading) {
@@ -157,6 +171,7 @@ const ProjectUsers = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Profile</TableHead>
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
@@ -170,7 +185,7 @@ const ProjectUsers = () => {
               <TableBody>
                 {currentUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
+                    <TableCell colSpan={9} className="text-center py-8">
                       <div className="flex flex-col items-center space-y-2">
                         <User className="h-8 w-8 text-muted-foreground" />
                         <p className="text-muted-foreground">No project users found</p>
@@ -186,14 +201,38 @@ const ProjectUsers = () => {
                   currentUsers.map(user => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="h-4 w-4 text-primary" />
+                        {user.profile ? (
+                          <div className="relative group">
+                            <img
+                              src={user.profile.startsWith('data:') ? user.profile : `data:image/jpeg;base64,${user.profile}`}
+                              alt={`${user.username}'s profile`}
+                              className="h-10 w-10 rounded-full object-cover border border-gray-200 cursor-pointer transition-transform hover:scale-105"
+                              onClick={() => user.profile && handleProfileImageClick(user.profile, user.username)}
+                            />
+                            {/* Profile image indicator */}
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                            {/* Hover Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                              <div className="bg-black text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                                {user.username}
+                              </div>
+                              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black mx-auto"></div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">{user.username}</p>
-                            <p className="text-sm text-muted-foreground">ID: {user.MembershipId}</p>
+                        ) : (
+                          <div className="relative">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <User className="h-5 w-5 text-primary" />
+                            </div>
+                            {/* No profile image indicator */}
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-gray-400 rounded-full border-2 border-white"></div>
                           </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{user.username}</p>
+                          <p className="text-sm text-muted-foreground">ID: {user.MembershipId}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -297,6 +336,30 @@ const ProjectUsers = () => {
         user={selectedUser}
         onSuccess={handleDeleteSuccess}
       />
+
+      {/* Profile Image Modal */}
+      <Dialog open={profileImageModal.isOpen} onOpenChange={(open) => setProfileImageModal(prev => ({ ...prev, isOpen: open }))}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              {profileImageModal.username}'s Profile
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <img
+              src={profileImageModal.image.startsWith('data:') ? profileImageModal.image : `data:image/jpeg;base64,${profileImageModal.image}`}
+              alt={`${profileImageModal.username}'s profile`}
+              className="h-64 w-64 rounded-lg object-cover border border-gray-200"
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setProfileImageModal(prev => ({ ...prev, isOpen: false }))}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

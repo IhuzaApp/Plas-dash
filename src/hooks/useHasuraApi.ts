@@ -868,3 +868,58 @@ export function useAddProjectUser() {
     },
   });
 }
+
+// Type-safe hook for updating project user
+export function useUpdateProjectUser() {
+  return useMutation<
+    { update_ProjectUsers: { affected_rows: number } },
+    Error,
+    {
+      id: string;
+      username?: string;
+      email?: string;
+      password?: string;
+      role?: string;
+      is_active?: boolean;
+      TwoAuth_enabled?: boolean;
+      gender?: string;
+      device_details?: string;
+      profile?: string;
+      privileges?: any;
+    }
+  >({
+    mutationFn: variables => {
+      const { id, ...updateData } = variables;
+      
+      // Build the _set object dynamically to avoid null values
+      const setObject: any = {
+        updated_at: "now()"
+      };
+      
+      // Only include fields that are actually provided
+      if (updateData.username !== undefined) setObject.username = updateData.username;
+      if (updateData.email !== undefined) setObject.email = updateData.email;
+      if (updateData.password !== undefined) setObject.password = updateData.password;
+      if (updateData.role !== undefined) setObject.role = updateData.role;
+      if (updateData.is_active !== undefined) setObject.is_active = updateData.is_active;
+      if (updateData.TwoAuth_enabled !== undefined) setObject.TwoAuth_enabled = updateData.TwoAuth_enabled;
+      if (updateData.gender !== undefined) setObject.gender = updateData.gender;
+      if (updateData.device_details !== undefined) setObject.device_details = updateData.device_details;
+      if (updateData.profile !== undefined) setObject.profile = updateData.profile;
+      if (updateData.privileges !== undefined) setObject.privileges = updateData.privileges;
+      
+      const mutation = `
+        mutation UpdateProjectUser($id: uuid!, $set: ProjectUsers_set_input!) {
+          update_ProjectUsers(
+            where: { id: { _eq: $id } },
+            _set: $set
+          ) {
+            affected_rows
+          }
+        }
+      `;
+      
+      return hasuraRequest(mutation, { id, set: setObject });
+    },
+  });
+}

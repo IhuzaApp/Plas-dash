@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, User, Mail, Shield, Lock, Copy, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Loader2, User, Mail, Shield, Lock, Copy, RefreshCw, Eye, EyeOff, Upload, X } from 'lucide-react';
 import { PROJECT_ROLE_TYPES } from '@/lib/privileges/projectRolePrivileges';
 import { useAddProjectUser } from '@/hooks/useHasuraApi';
 import { getDefaultProjectPrivilegesForRole } from '@/lib/privileges/projectRolePrivileges';
@@ -38,10 +38,10 @@ const hashPassword = async (password: string): Promise<string> => {
   const saltHex = Array.from(salt)
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
-
+  
   // Combine password with salt
   const passwordWithSalt = password + saltHex;
-
+  
   // Hash with multiple iterations (10,000 iterations for security)
   // This simulates bcrypt-like behavior to slow down brute force attacks
   let hash = passwordWithSalt;
@@ -52,7 +52,7 @@ const hashPassword = async (password: string): Promise<string> => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
-
+  
   // Return salt:hash format (salt is needed for password verification)
   return saltHex + ':' + hash;
 };
@@ -68,10 +68,10 @@ export const verifyPassword = async (
     if (!saltHex || !storedHash) {
       return false;
     }
-
+    
     // Combine password with salt
     const passwordWithSalt = password + saltHex;
-
+    
     // Hash with same iterations
     let hash = passwordWithSalt;
     for (let i = 0; i < 10000; i++) {
@@ -81,13 +81,29 @@ export const verifyPassword = async (
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
-
+    
     // Compare hashes
     return hash === storedHash;
   } catch (error) {
     console.error('Password verification error:', error);
     return false;
   }
+};
+
+// Image upload and conversion to base64
+const convertImageToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to convert image to base64'));
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
 };
 
 // Form validation schema
@@ -160,6 +176,9 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
     email: string;
     password: string;
   } | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const addProjectUserMutation = useAddProjectUser();
 
   const form = useForm<FormData>({
@@ -267,7 +286,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
         TwoAuth_enabled: data.TwoAuth_enabled,
         gender: data.gender || '', // Use empty string for optional field
         device_details: '', // Use empty string for optional field
-        profile: '', // Use empty string for optional field
+        profile: profileImage || '', // Include profile image
         privileges: privileges,
       };
 
@@ -299,6 +318,8 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
     setGeneratedPassword('');
     setShowPassword(false);
     setShowConfirmPassword(false);
+    setProfileImage(null);
+    setImageFile(null);
     form.clearErrors();
     onOpenChange(false);
   };
@@ -311,6 +332,8 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
       setGeneratedPassword('');
       setShowPassword(false);
       setShowConfirmPassword(false);
+      setProfileImage(null);
+      setImageFile(null);
       form.clearErrors();
     }
   }, [open, form]);
@@ -329,7 +352,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
 
   const handleCopyLoginInfoFromSuccess = async () => {
     if (!createdUser) return;
-
+    
     const loginInfo = `Username: ${createdUser.username}\nEmail: ${createdUser.email}\nPassword: ${createdUser.password}\n\nLogin URL: ${window.location.origin}/login`;
     try {
       await navigator.clipboard.writeText(loginInfo);
@@ -344,6 +367,46 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
       document.body.removeChild(textArea);
       toast.success('Login information copied to clipboard');
     }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    try {
+      const base64 = await convertImageToBase64(file);
+      setProfileImage(base64);
+      setImageFile(file);
+      toast.success('Profile image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setProfileImage(null);
+    setImageFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    toast.success('Profile image removed');
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -393,6 +456,63 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
           }}
           className="space-y-4"
         >
+          {/* Profile Image Upload */}
+          <div className="space-y-4">
+            <Label>Profile Image (Optional)</Label>
+            <div className="flex items-center space-x-4">
+              {/* Current Profile Image */}
+              <div className="relative">
+                {profileImage ? (
+                  <div className="relative">
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="h-20 w-20 rounded-full object-cover border-2 border-gray-200"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleRemoveImage}
+                      className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="h-20 w-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                    <User className="h-8 w-8 text-gray-400" />
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Button */}
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleImageClick}
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  {profileImage ? 'Change Image' : 'Upload Image'}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  JPG, PNG, GIF up to 5MB
+                </p>
+              </div>
+
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="username">Username *</Label>
