@@ -1289,6 +1289,61 @@ export const GET_ORG_EMPLOYEE_BY_IDENTITY = `
   }
 `;
 
+// ProjectUser queries for authentication
+export const GET_PROJECT_USER_BY_IDENTITY = `
+  query GetProjectUserByIdentity($identity: String!) {
+    ProjectUsers(
+      where: {
+        _or: [
+          { username: { _eq: $identity } },
+          { email: { _eq: $identity } }
+        ]
+      }
+    ) {
+      id
+      MembershipId
+      username
+      email
+      password
+      role
+      is_active
+      TwoAuth_enabled
+      last_Login
+      created_at
+      updated_at
+      gender
+      device_details
+      profile
+      privileges
+    }
+  }
+`;
+
+// Separate query for MembershipId (which is an integer)
+export const GET_PROJECT_USER_BY_MEMBERSHIP_ID = `
+  query GetProjectUserByMembershipId($membershipId: Int!) {
+    ProjectUsers(
+      where: { MembershipId: { _eq: $membershipId } }
+    ) {
+      id
+      MembershipId
+      username
+      email
+      password
+      role
+      is_active
+      TwoAuth_enabled
+      last_Login
+      created_at
+      updated_at
+      gender
+      device_details
+      profile
+      privileges
+    }
+  }
+`;
+
 // Get shop by ID for settings
 export const GET_SHOP_BY_ID_FOR_SETTINGS = `
   query GetShopsWhereID($shop_id: uuid = "") {
