@@ -843,10 +843,10 @@ export function useAddProjectUser() {
           $role: String!,
           $is_active: Boolean!,
           $TwoAuth_enabled: Boolean!,
-          $gender: String,
-          $device_details: String,
-          $profile: String,
-          $privileges: jsonb
+          $gender: String = "",
+          $device_details: String = "",
+          $profile: String = "",
+          $privileges: jsonb = null
         ) {
           insert_ProjectUsers(objects: {
             username: $username,
