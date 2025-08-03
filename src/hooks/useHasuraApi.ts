@@ -767,3 +767,32 @@ export function usePOSTransactions(shopId: string) {
     enabled: !!shopId,
   });
 }
+
+export function useProjectUsers() {
+  return useQuery({
+    queryKey: ['projectUsers'],
+    queryFn: async () => {
+      const query = `
+        query getProjectAllUsers {
+          ProjectUsers {
+            MembershipId
+            TwoAuth_enabled
+            created_at
+            device_details
+            email
+            gender
+            id
+            is_active
+            last_Login
+            password
+            privileges
+            profile
+            role
+            username
+          }
+        }
+      `;
+      return hasuraRequest(query);
+    },
+  });
+}

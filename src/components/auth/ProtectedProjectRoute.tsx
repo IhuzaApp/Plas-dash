@@ -1,69 +1,56 @@
 'use client';
 
 import React from 'react';
-import { usePrivilege } from '@/hooks/usePrivilege';
 import { useProjectPrivilege } from '@/hooks/useProjectPrivilege';
-import { PrivilegeKey } from '@/types/privileges';
 import { ProjectPrivilegeKey } from '@/types/projectPrivileges';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Lock } from 'lucide-react';
 
-interface ProtectedRouteProps {
+interface ProtectedProjectRouteProps {
   children: React.ReactNode;
-  requiredPrivilege?: PrivilegeKey | ProjectPrivilegeKey;
+  requiredPrivilege?: ProjectPrivilegeKey;
   requiredAction?: string;
   fallback?: React.ReactNode;
   showAccessDenied?: boolean;
 }
 
-export function ProtectedRoute({
+export function ProtectedProjectRoute({
   children,
   requiredPrivilege,
   requiredAction,
   fallback,
   showAccessDenied = true,
-}: ProtectedRouteProps) {
-  const { hasModuleAccess, hasAction, isAuthenticated } = usePrivilege();
+}: ProtectedProjectRouteProps) {
   const { hasProjectModuleAccess, hasProjectAction, isProjectUser } = useProjectPrivilege();
 
-  // Check if user is authenticated (either regular user or project user)
-  const isUserAuthenticated = isAuthenticated() || isProjectUser();
+  // Check if user is a project user
+  if (!isProjectUser()) {
+    return (
+      fallback || (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Alert className="max-w-md">
+            <Lock className="h-4 w-4" />
+            <AlertDescription>This page is only accessible to project users.</AlertDescription>
+          </Alert>
+        </div>
+      )
+    );
+  }
 
-  // If no privilege is required, just check authentication
+  // If no privilege is required, just check if user is project user
   if (!requiredPrivilege) {
-    if (!isUserAuthenticated) {
-      return (
-        fallback || (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <Alert className="max-w-md">
-              <Lock className="h-4 w-4" />
-              <AlertDescription>Please log in to access this page.</AlertDescription>
-            </Alert>
-          </div>
-        )
-      );
-    }
     return <>{children}</>;
   }
 
   // Check if user has the required privilege
   let hasAccess = false;
 
-  // Check both privilege systems
-  if (isProjectUser()) {
-    // Check project user privileges
-    if (requiredAction) {
-      hasAccess = hasProjectAction(requiredPrivilege as ProjectPrivilegeKey, requiredAction as any);
-    } else {
-      hasAccess = hasProjectModuleAccess(requiredPrivilege as ProjectPrivilegeKey);
-    }
-  } else if (isAuthenticated()) {
-    // Check regular user privileges
-    if (requiredAction) {
-      hasAccess = hasAction(requiredPrivilege as PrivilegeKey, requiredAction);
-    } else {
-      hasAccess = hasModuleAccess(requiredPrivilege as PrivilegeKey);
-    }
+  if (requiredAction) {
+    // Check for specific action within the module
+    hasAccess = hasProjectAction(requiredPrivilege, requiredAction as any);
+  } else {
+    // Check for module access
+    hasAccess = hasProjectModuleAccess(requiredPrivilege);
   }
 
   if (!hasAccess) {
@@ -92,8 +79,8 @@ export function ProtectedRoute({
   return <>{children}</>;
 }
 
-// Convenience component for protecting specific actions
-export function ProtectedAction({
+// Convenience component for protecting specific project actions
+export function ProtectedProjectAction({
   children,
   module,
   action,
@@ -101,43 +88,43 @@ export function ProtectedAction({
   showAccessDenied = false,
 }: {
   children: React.ReactNode;
-  module: PrivilegeKey;
+  module: ProjectPrivilegeKey;
   action: string;
   fallback?: React.ReactNode;
   showAccessDenied?: boolean;
 }) {
   return (
-    <ProtectedRoute
+    <ProtectedProjectRoute
       requiredPrivilege={module}
       requiredAction={action}
       fallback={fallback}
       showAccessDenied={showAccessDenied}
     >
       {children}
-    </ProtectedRoute>
+    </ProtectedProjectRoute>
   );
 }
 
 // Convenience component for protecting UI elements that should be hidden when no access
-export function ProtectedUI({
+export function ProtectedProjectUI({
   children,
   module,
   action,
   fallback = null,
 }: {
   children: React.ReactNode;
-  module: PrivilegeKey;
+  module: ProjectPrivilegeKey;
   action?: string;
   fallback?: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute
+    <ProtectedProjectRoute
       requiredPrivilege={module}
       requiredAction={action}
       fallback={fallback}
       showAccessDenied={false}
     >
       {children}
-    </ProtectedRoute>
+    </ProtectedProjectRoute>
   );
-}
+} 
