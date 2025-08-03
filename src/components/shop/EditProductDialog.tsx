@@ -116,6 +116,8 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
   // Update form when product changes
   useEffect(() => {
     if (product) {
+      console.log('EditProductDialog - Product data received:', product);
+      
       const basePrice = parseFloat(product.price);
       const finalPrice = parseFloat(product.final_price);
       const hasCommission = basePrice !== finalPrice;
@@ -123,7 +125,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
         ? ((finalPrice - basePrice) / basePrice) * 100
         : Number(defaultCommission) || 0;
 
-      form.reset({
+      const formData = {
         name: product.name,
         description: product.description || '',
         price: product.price,
@@ -137,7 +139,16 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
         has_commission: hasCommission,
         commission_percentage: commissionPercentage,
         final_price: product.final_price,
-      });
+      };
+
+      console.log('EditProductDialog - Form data to be set:', formData);
+      
+      form.reset(formData);
+
+      // Debug: Check form values after reset
+      setTimeout(() => {
+        console.log('EditProductDialog - Form values after reset:', form.getValues());
+      }, 100);
 
       // Set image preview if product has an image
       if (product.image) {
@@ -148,6 +159,16 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
       setImageFile(null);
     }
   }, [product, form, defaultCommission]);
+
+  // Debug: Monitor form values changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name && ['sku', 'supplier', 'barcode', 'reorder_point'].includes(name)) {
+        console.log(`EditProductDialog - Field ${name} changed to:`, value[name as keyof typeof value]);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const price = form.watch('price');
   const hasCommission = form.watch('has_commission');

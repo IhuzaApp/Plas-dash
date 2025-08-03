@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
@@ -144,6 +144,7 @@ const ShopDetail = () => {
 
   const { data, isLoading, isError, error, refetch } = useShopById(id);
   const shop = data?.Shops_by_pk;
+  
   const addProduct = useAddProduct();
   const updateProduct = useUpdateProduct();
   const { data: configData } = useSystemConfig();

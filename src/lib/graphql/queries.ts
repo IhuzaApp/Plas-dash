@@ -570,6 +570,10 @@ export const GET_SHOP_BY_ID = `
         quantity
         measurement_unit
         image
+        barcode
+        sku
+        supplier
+        reorder_point
         is_active
         created_at
         updated_at
