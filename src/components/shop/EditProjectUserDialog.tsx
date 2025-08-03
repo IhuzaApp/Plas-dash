@@ -22,35 +22,21 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Loader2, User, Mail, Shield, Lock, Upload, X } from 'lucide-react';
 import { PROJECT_ROLE_TYPES } from '@/lib/privileges/projectRolePrivileges';
 import { ProjectUser, useUpdateProjectUser } from '@/hooks/useHasuraApi';
 
-// Form validation schema
-const formSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().optional(),
-  confirmPassword: z.string().optional(),
-  role: z.enum(PROJECT_ROLE_TYPES),
-  is_active: z.boolean().default(true),
-  TwoAuth_enabled: z.boolean().default(false),
-  gender: z.string().optional(),
-  profile: z.string().optional(),
-}).refine((data) => {
-  // Only validate password matching if password is provided
-  if (data.password && data.password.trim()) {
-    return data.password === data.confirmPassword;
-  }
-  return true;
-}, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type FormData = z.infer<typeof formSchema>;
+type FormData = {
+  username: string;
+  email: string;
+  password?: string;
+  confirmPassword?: string;
+  role: string;
+  is_active: boolean;
+  TwoAuth_enabled: boolean;
+  gender?: string;
+  profile?: string;
+};
 
 interface EditProjectUserDialogProps {
   open: boolean;
@@ -89,7 +75,6 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
   const updateProjectUserMutation = useUpdateProjectUser();
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
     defaultValues: {
       username: '',
       email: '',
@@ -213,8 +198,6 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
         updateData.privileges = user.privileges;
       }
 
-      console.log('Updating project user with data:', updateData);
-      
       // Call the mutation
       await updateProjectUserMutation.mutateAsync(updateData);
       
@@ -255,7 +238,36 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
           <DialogDescription>Update project user information and permissions.</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = form.getValues();
+            
+            // Manual validation
+            if (!formData.username || formData.username.length < 3) {
+              toast.error('Username must be at least 3 characters');
+              return;
+            }
+            
+            if (!formData.email || !formData.email.includes('@')) {
+              toast.error('Please enter a valid email address');
+              return;
+            }
+            
+            if (formData.password && formData.password.length < 8) {
+              toast.error('Password must be at least 8 characters');
+              return;
+            }
+            
+            if (formData.password && formData.password !== formData.confirmPassword) {
+              toast.error('Passwords do not match');
+              return;
+            }
+            
+            onSubmit(formData);
+          }} 
+          className="space-y-4"
+        >
           {/* Profile Image Upload */}
           <div className="space-y-4">
             <Label>Profile Image</Label>
@@ -320,11 +332,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                 id="username"
                 placeholder="Enter username"
                 {...form.register('username')}
-                className={form.formState.errors.username ? 'border-red-500' : ''}
               />
-              {form.formState.errors.username && (
-                <p className="text-sm text-red-500">{form.formState.errors.username.message}</p>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -334,11 +342,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                 type="email"
                 placeholder="Enter email"
                 {...form.register('email')}
-                className={form.formState.errors.email ? 'border-red-500' : ''}
               />
-              {form.formState.errors.email && (
-                <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
-              )}
             </div>
           </div>
 
@@ -350,14 +354,10 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                 type="password"
                 placeholder="Enter new password"
                 {...form.register('password')}
-                className={form.formState.errors.password ? 'border-red-500' : ''}
               />
               <p className="text-xs text-muted-foreground">
                 Leave empty to keep current password. For security, current password is not displayed.
               </p>
-              {form.formState.errors.password && (
-                <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -367,13 +367,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                 type="password"
                 placeholder="Confirm new password"
                 {...form.register('confirmPassword')}
-                className={form.formState.errors.confirmPassword ? 'border-red-500' : ''}
               />
-              {form.formState.errors.confirmPassword && (
-                <p className="text-sm text-red-500">
-                  {form.formState.errors.confirmPassword.message}
-                </p>
-              )}
             </div>
           </div>
 
@@ -414,9 +408,6 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                   </SelectItem>
                 </SelectContent>
               </Select>
-              {form.formState.errors.role && (
-                <p className="text-sm text-red-500">{form.formState.errors.role.message}</p>
-              )}
             </div>
 
             <div className="space-y-2">
