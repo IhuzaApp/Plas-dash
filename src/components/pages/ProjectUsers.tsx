@@ -21,7 +21,13 @@ import { usePageAccess } from '@/hooks/usePageAccess';
 import AddProjectUserDialog from '@/components/shop/AddProjectUserDialog';
 import EditProjectUserDialog from '@/components/shop/EditProjectUserDialog';
 import DeleteProjectUserDialog from '@/components/shop/DeleteProjectUserDialog';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const ProjectUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,7 +37,11 @@ const ProjectUsers = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ProjectUser | null>(null);
-  const [profileImageModal, setProfileImageModal] = useState<{ isOpen: boolean; image: string; username: string }>({
+  const [profileImageModal, setProfileImageModal] = useState<{
+    isOpen: boolean;
+    image: string;
+    username: string;
+  }>({
     isOpen: false,
     image: '',
     username: '',
@@ -204,10 +214,16 @@ const ProjectUsers = () => {
                         {user.profile ? (
                           <div className="relative group">
                             <img
-                              src={user.profile.startsWith('data:') ? user.profile : `data:image/jpeg;base64,${user.profile}`}
+                              src={
+                                user.profile.startsWith('data:')
+                                  ? user.profile
+                                  : `data:image/jpeg;base64,${user.profile}`
+                              }
                               alt={`${user.username}'s profile`}
                               className="h-10 w-10 rounded-full object-cover border border-gray-200 cursor-pointer transition-transform hover:scale-105"
-                              onClick={() => user.profile && handleProfileImageClick(user.profile, user.username)}
+                              onClick={() =>
+                                user.profile && handleProfileImageClick(user.profile, user.username)
+                              }
                             />
                             {/* Profile image indicator */}
                             <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -338,7 +354,10 @@ const ProjectUsers = () => {
       />
 
       {/* Profile Image Modal */}
-      <Dialog open={profileImageModal.isOpen} onOpenChange={(open) => setProfileImageModal(prev => ({ ...prev, isOpen: open }))}>
+      <Dialog
+        open={profileImageModal.isOpen}
+        onOpenChange={open => setProfileImageModal(prev => ({ ...prev, isOpen: open }))}
+      >
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -348,7 +367,11 @@ const ProjectUsers = () => {
           </DialogHeader>
           <div className="flex justify-center">
             <img
-              src={profileImageModal.image.startsWith('data:') ? profileImageModal.image : `data:image/jpeg;base64,${profileImageModal.image}`}
+              src={
+                profileImageModal.image.startsWith('data:')
+                  ? profileImageModal.image
+                  : `data:image/jpeg;base64,${profileImageModal.image}`
+              }
               alt={`${profileImageModal.username}'s profile`}
               className="h-64 w-64 rounded-lg object-cover border border-gray-200"
             />

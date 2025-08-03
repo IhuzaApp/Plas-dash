@@ -24,7 +24,19 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, User, Mail, Shield, Lock, Copy, RefreshCw, Eye, EyeOff, Upload, X } from 'lucide-react';
+import {
+  Loader2,
+  User,
+  Mail,
+  Shield,
+  Lock,
+  Copy,
+  RefreshCw,
+  Eye,
+  EyeOff,
+  Upload,
+  X,
+} from 'lucide-react';
 import { PROJECT_ROLE_TYPES } from '@/lib/privileges/projectRolePrivileges';
 import { useAddProjectUser } from '@/hooks/useHasuraApi';
 import { getDefaultProjectPrivilegesForRole } from '@/lib/privileges/projectRolePrivileges';
@@ -38,10 +50,10 @@ const hashPassword = async (password: string): Promise<string> => {
   const saltHex = Array.from(salt)
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
-  
+
   // Combine password with salt
   const passwordWithSalt = password + saltHex;
-  
+
   // Hash with multiple iterations (10,000 iterations for security)
   // This simulates bcrypt-like behavior to slow down brute force attacks
   let hash = passwordWithSalt;
@@ -52,7 +64,7 @@ const hashPassword = async (password: string): Promise<string> => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
-  
+
   // Return salt:hash format (salt is needed for password verification)
   return saltHex + ':' + hash;
 };
@@ -68,10 +80,10 @@ export const verifyPassword = async (
     if (!saltHex || !storedHash) {
       return false;
     }
-    
+
     // Combine password with salt
     const passwordWithSalt = password + saltHex;
-    
+
     // Hash with same iterations
     let hash = passwordWithSalt;
     for (let i = 0; i < 10000; i++) {
@@ -81,7 +93,7 @@ export const verifyPassword = async (
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
-    
+
     // Compare hashes
     return hash === storedHash;
   } catch (error) {
@@ -352,7 +364,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
 
   const handleCopyLoginInfoFromSuccess = async () => {
     if (!createdUser) return;
-    
+
     const loginInfo = `Username: ${createdUser.username}\nEmail: ${createdUser.email}\nPassword: ${createdUser.password}\n\nLogin URL: ${window.location.origin}/login`;
     try {
       await navigator.clipboard.writeText(loginInfo);
@@ -497,9 +509,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                   <Upload className="h-4 w-4" />
                   {profileImage ? 'Change Image' : 'Upload Image'}
                 </Button>
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG, GIF up to 5MB
-                </p>
+                <p className="text-xs text-muted-foreground">JPG, PNG, GIF up to 5MB</p>
               </div>
 
               {/* Hidden File Input */}

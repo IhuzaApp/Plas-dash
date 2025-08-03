@@ -7,8 +7,15 @@ import { useForm } from 'react-hook-form';
 import { hasuraRequest } from '@/lib/hasura';
 import bcrypt from 'bcryptjs';
 import { Lock, User } from 'lucide-react';
-import { GET_ORG_EMPLOYEE_BY_IDENTITY, GET_PROJECT_USER_BY_IDENTITY, GET_PROJECT_USER_BY_MEMBERSHIP_ID } from '@/lib/graphql/queries';
-import { UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE, UPDATE_PROJECT_USER_LAST_LOGIN } from '@/lib/graphql/mutations';
+import {
+  GET_ORG_EMPLOYEE_BY_IDENTITY,
+  GET_PROJECT_USER_BY_IDENTITY,
+  GET_PROJECT_USER_BY_MEMBERSHIP_ID,
+} from '@/lib/graphql/queries';
+import {
+  UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE,
+  UPDATE_PROJECT_USER_LAST_LOGIN,
+} from '@/lib/graphql/mutations';
 import { UserPrivileges, DEFAULT_PRIVILEGES } from '@/types/privileges';
 
 interface LoginModalProps {
@@ -34,8 +41,6 @@ const convertPrivilegesToNewFormat = (orgEmployeeRoles: any): UserPrivileges => 
   } else if (orgEmployeeRoles.privillages) {
     oldPrivileges = orgEmployeeRoles.privillages;
   }
-
-
 
   // Map old privilege keys to new module-based structure
   const privilegeMapping: { [key: string]: { module: keyof UserPrivileges; action: string } } = {
@@ -411,7 +416,7 @@ const loginOrgEmployee = async (identity: string, password: string) => {
 // ProjectUser authentication function
 const loginProjectUser = async (identity: string, password: string) => {
   let projectUsers: any[] = [];
-  
+
   // First, try to find user by username or email
   try {
     const data = (await hasuraRequest(GET_PROJECT_USER_BY_IDENTITY, { identity })) as {
@@ -421,7 +426,7 @@ const loginProjectUser = async (identity: string, password: string) => {
   } catch (error) {
     // String-based query failed, continue to integer-based query
   }
-  
+
   // If no users found, try to find by MembershipId (if identity is a number)
   if (projectUsers.length === 0) {
     const membershipId = parseInt(identity);
@@ -436,25 +441,25 @@ const loginProjectUser = async (identity: string, password: string) => {
       }
     }
   }
-  
+
   if (projectUsers && projectUsers.length > 0) {
     for (const user of projectUsers) {
       // Check if user is active
       if (!user.is_active) {
         throw new Error('Account is deactivated');
       }
-      
+
       // Verify password using the proper hashing method
       if (user.password) {
         const isValidPassword = await verifyProjectUserPassword(password, user.password);
-        
+
         if (isValidPassword) {
           return user;
         }
       }
     }
   }
-  
+
   throw new Error('Invalid credentials');
 };
 
@@ -474,18 +479,21 @@ const updateProjectUserLastLogin = async (id: string) => {
 };
 
 // Verify ProjectUser password (handles both bcrypt and custom SHA-256 formats)
-const verifyProjectUserPassword = async (inputPassword: string, hashedPassword: string): Promise<boolean> => {
+const verifyProjectUserPassword = async (
+  inputPassword: string,
+  hashedPassword: string
+): Promise<boolean> => {
   try {
     // Check if it's a bcrypt hash (starts with $2b$)
     if (hashedPassword.startsWith('$2b$')) {
       return bcrypt.compareSync(inputPassword, hashedPassword);
     }
-    
+
     // Check if it's our custom SHA-256 format (contains ':')
     if (hashedPassword.includes(':')) {
       // Parse the hashed password format: salt:hash
       const [saltHex, hash] = hashedPassword.split(':');
-      
+
       if (!saltHex || !hash) {
         return false;
       }
@@ -493,7 +501,7 @@ const verifyProjectUserPassword = async (inputPassword: string, hashedPassword: 
       // Recreate the hashing process
       const passwordWithSalt = inputPassword + saltHex;
       let computedHash = passwordWithSalt;
-      
+
       // Apply the same hashing iterations (10,000)
       for (let i = 0; i < 10000; i++) {
         const encoder = new TextEncoder();
@@ -505,10 +513,9 @@ const verifyProjectUserPassword = async (inputPassword: string, hashedPassword: 
 
       return computedHash === hash;
     }
-    
+
     // If it's neither format, try direct comparison (for legacy passwords)
     return inputPassword === hashedPassword;
-    
   } catch (error) {
     return false;
   }
@@ -544,7 +551,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
       // Update last login based on user type
       if (isProjectUser) {
         await updateProjectUserLastLogin(session.id);
-        
+
         // Create session data for ProjectUser
         const sessionData = {
           id: session.id,
