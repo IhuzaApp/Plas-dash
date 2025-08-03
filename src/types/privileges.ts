@@ -17,6 +17,7 @@ export interface UserPrivileges {
   orders?: ModulePrivileges;
   products?: ModulePrivileges;
   users?: ModulePrivileges;
+  project_users?: ModulePrivileges;
   shops?: ModulePrivileges;
   shoppers?: ModulePrivileges;
   settings?: ModulePrivileges;
@@ -26,6 +27,7 @@ export interface UserPrivileges {
   wallet?: ModulePrivileges;
   promotions?: ModulePrivileges;
   delivery_settings?: ModulePrivileges;
+  pages?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -150,6 +152,16 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     manage_user_roles: false,
     view_user_activity: false,
   },
+  project_users: {
+    access: false,
+    view_project_users: false,
+    add_project_users: false,
+    edit_project_users: false,
+    delete_project_users: false,
+    view_project_user_details: false,
+    manage_project_user_roles: false,
+    view_project_user_activity: false,
+  },
   shops: {
     access: false,
     view_shops: false,
@@ -231,6 +243,34 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     manage_delivery_zones: false,
     set_delivery_fees: false,
     configure_delivery_times: false,
+  },
+  pages: {
+    access: false,
+    view_pages: false,
+    access_project_users: false,
+    access_orders: false,
+    access_shops: false,
+    access_products: false,
+    access_users: false,
+    access_shoppers: false,
+    access_settings: false,
+    access_refunds: false,
+    access_tickets: false,
+    access_help: false,
+    access_wallet: false,
+    access_promotions: false,
+    access_delivery_settings: false,
+    access_dashboard: false,
+    access_pos: false,
+    access_checkout: false,
+    access_staff_management: false,
+    access_inventory: false,
+    access_transactions: false,
+    access_discounts: false,
+    access_company_dashboard: false,
+    access_shop_dashboard: false,
+    access_financial_overview: false,
+    access_pos_terminal: false,
   },
 };
 

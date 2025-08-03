@@ -3,6 +3,7 @@ import { PrivilegeKey } from '@/types/privileges';
 export interface MenuPrivilege {
   module: PrivilegeKey;
   action?: string;
+  isProjectUser?: boolean;
 }
 
 /**
@@ -14,6 +15,7 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   Orders: { module: 'orders' },
   Plasas: { module: 'shoppers' },
   Customers: { module: 'users' },
+  'Project Users': { module: 'project_users', isProjectUser: true },
   Shops: { module: 'shops' },
   Products: { module: 'products' },
   'Company Dashboard': { module: 'company_dashboard' },

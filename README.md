@@ -933,18 +933,426 @@ if (!hasModuleAccess('orders')) {
 - `src/components/layout/RootLayout.tsx`
 - `src/lib/privileges/privilegeConverters.ts`
 
+---
+
+## 🔧 Project Users Privilege System
+
+### Overview
+
+The Plas Dashboard implements a **separate privilege system for Project Users** - system-level staff (developers, customer support, managers, and global admins) who manage the entire project/system rather than individual store operations. This system is completely separate from the store staff privilege system and ensures **no access to point-of-sale operations**.
+
+---
+
+### Project Users vs Store Staff
+
+#### **🔧 Project Users (ProjectPrivileges)**
+- **Purpose**: System-level management (developers, support, project managers, global admins)
+- **Access**: Project management, system configuration, user management, analytics, etc.
+- **Restriction**: **NO access to point-of-sale operations**
+- **Database**: Uses `ProjectUsers` table
+- **Privilege System**: Separate `ProjectPrivileges` system
+
+#### **🏪 Store Staff (Current Privileges)**
+- **Purpose**: Store-level operations (cashiers, managers, inventory, etc.)
+- **Access**: Point-of-sale, inventory, transactions, etc.
+- **Restriction**: Limited to store operations
+- **Database**: Uses regular staff tables
+- **Privilege System**: Current `UserPrivileges` system
+
+---
+
+### Project User Roles & Access Levels
+
+#### **1. Customer Support**
+**Access to:**
+- ✅ Orders
+- ✅ Plasas (Shoppers)
+- ✅ Customers (Users)
+- ✅ Shops
+- ✅ Products
+- ✅ Plasa Wallets
+- ✅ Refund Claims
+- ✅ Tickets
+- ✅ Help Center
+
+**Restrictions:**
+- ❌ No delete operations
+- ❌ No system configuration
+- ❌ No security settings
+- ❌ No promotions management
+
+#### **2. System Admin**
+**Access to:**
+- ✅ Orders
+- ✅ Plasas (Shoppers)
+- ✅ Customers (Users)
+- ✅ Shops
+- ✅ Products
+- ✅ Plasa Wallets
+- ✅ Refund Claims
+- ✅ Tickets
+- ✅ Help Center
+- ✅ Dashboard
+- ✅ Delivery Settings
+- ✅ Promotions
+- ✅ System Settings
+
+**Restrictions:**
+- ❌ No delete operations
+- ❌ No debug/maintenance operations
+
+#### **3. Manager**
+**Access to:**
+- ✅ Orders
+- ✅ Plasas (Shoppers)
+- ✅ Customers (Users)
+- ✅ Shops
+- ✅ Products
+- ✅ Plasa Wallets
+- ✅ Refund Claims
+- ✅ Tickets
+- ✅ Help Center
+- ✅ Dashboard
+- ✅ Promotions
+
+**Restrictions:**
+- ❌ No delete operations
+- ❌ No system configuration
+- ❌ No delivery settings
+
+#### **4. Project Admin (Global System Admin)**
+**Access to:**
+- ✅ **ALL Store Operations** (Orders, Plasas, Customers, Shops, Products, Wallets, Refunds, Tickets, Help)
+- ✅ **ALL POS Operations** (Checkout, Staff Management, Inventory, Transactions, Discounts, Company Dashboard, Shop Dashboard, Financial Overview, POS Terminal)
+- ✅ **ALL System Management** (System Management, User Management, Project Users, Analytics, Reporting, Support Management, Help Management, System Configuration, Global Settings, Security Management, Access Control, System Monitoring, Audit Logs, Development Tools, Maintenance)
+- ✅ **ALL Additional Modules** (Dashboard, Delivery Settings, Promotions, Settings)
+
+**Restrictions:**
+- ❌ **NONE** - Complete system access
+
+**Note:** This role has access to **everything** in the system, including both store staff operations (POS) and project management operations. They are the ultimate administrators.
+
+---
+
+### Project Privilege Structure
+
+#### **TypeScript Interfaces**
+
+```typescript
+// src/types/projectPrivileges.ts
+
+export interface ProjectModulePrivileges {
+  access: boolean;
+  [key: string]: boolean; // Action-specific privileges
+}
+
+export interface ProjectUserPrivileges {
+  // Store Operations (No POS access)
+  orders?: ProjectModulePrivileges;
+  shoppers?: ProjectModulePrivileges;
+  users?: ProjectModulePrivileges;
+  shops?: ProjectModulePrivileges;
+  products?: ProjectModulePrivileges;
+  wallet?: ProjectModulePrivileges;
+  refunds?: ProjectModulePrivileges;
+  tickets?: ProjectModulePrivileges;
+  help?: ProjectModulePrivileges;
+  
+  // Additional Store Modules
+  dashboard?: ProjectModulePrivileges;
+  delivery_settings?: ProjectModulePrivileges;
+  promotions?: ProjectModulePrivileges;
+  settings?: ProjectModulePrivileges;
+  
+  // System Management
+  system_management?: ProjectModulePrivileges;
+  user_management?: ProjectModulePrivileges;
+  project_users?: ProjectModulePrivileges;
+  analytics?: ProjectModulePrivileges;
+  reporting?: ProjectModulePrivileges;
+  support_management?: ProjectModulePrivileges;
+  help_management?: ProjectModulePrivileges;
+  system_configuration?: ProjectModulePrivileges;
+  global_settings?: ProjectModulePrivileges;
+  security_management?: ProjectModulePrivileges;
+  access_control?: ProjectModulePrivileges;
+  system_monitoring?: ProjectModulePrivileges;
+  audit_logs?: ProjectModulePrivileges;
+  development_tools?: ProjectModulePrivileges;
+  maintenance?: ProjectModulePrivileges;
+}
+```
+
+#### **Default Project Privileges**
+
+```typescript
+export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
+  orders: {
+    access: false,
+    view_orders: false,
+    create_orders: false,
+    edit_orders: false,
+    delete_orders: false,
+    process_orders: false,
+    view_order_details: false,
+    update_order_status: false,
+    assign_delivery: false,
+  },
+  // ... other modules with their respective actions
+};
+```
+
+---
+
+### Project Role Assignment
+
+#### **Role Definition**
+
+```typescript
+// src/lib/privileges/projectRolePrivileges.ts
+
+export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): ProjectUserPrivileges => {
+  const privileges: ProjectUserPrivileges = {} as ProjectUserPrivileges;
+  
+  // Initialize all privileges to false
+  Object.keys(DEFAULT_PROJECT_PRIVILEGES).forEach(module => {
+    privileges[module as ProjectPrivilegeKey] = {
+      access: false,
+      ...DEFAULT_PROJECT_PRIVILEGES[module as ProjectPrivilegeKey],
+    };
+  });
+
+  switch (projectRoleType) {
+    case 'customerSupport':
+      const customerSupportModules: ProjectPrivilegeKey[] = [
+        'orders', 'shoppers', 'users', 'shops', 'products',
+        'wallet', 'refunds', 'tickets', 'help'
+      ];
+      // Grant appropriate privileges...
+      break;
+      
+    case 'systemAdmin':
+      const systemAdminModules: ProjectPrivilegeKey[] = [
+        'orders', 'shoppers', 'users', 'shops', 'products',
+        'wallet', 'refunds', 'tickets', 'help', 'dashboard',
+        'delivery_settings', 'promotions', 'settings'
+      ];
+      // Grant appropriate privileges...
+      break;
+      
+    case 'projectManager':
+      const projectManagerModules: ProjectPrivilegeKey[] = [
+        'orders', 'shoppers', 'users', 'shops', 'products',
+        'wallet', 'refunds', 'tickets', 'help', 'dashboard',
+        'promotions'
+      ];
+      // Grant appropriate privileges...
+      break;
+      
+    case 'projectAdmin':
+      // Full access to everything
+      break;
+  }
+  
+  return privileges;
+};
+```
+
+#### **Available Project Roles**
+
+```typescript
+export const PROJECT_ROLE_TYPES = [
+  'projectAdmin',
+  'systemAdmin', 
+  'projectManager',
+  'customerSupport',
+] as const;
+
+export type ProjectRoleType = typeof PROJECT_ROLE_TYPES[number];
+```
+
+---
+
+### Project User Authentication & Session
+
+#### **Session Structure**
+
+Project users have a separate session structure:
+
+```typescript
+interface ProjectUserSession {
+  id: string;
+  username: string;
+  email: string;
+  role: ProjectRoleType;
+  privileges: ProjectUserPrivileges;
+  isProjectUser: true;
+  // ... other session data
+}
+```
+
+#### **Authentication Flow**
+
+1. **Project User Login**: Uses `ProjectUsers` table
+2. **Privilege Loading**: Loads `ProjectUserPrivileges` based on role
+3. **Session Creation**: Creates project user session
+4. **Access Control**: Enforces project-specific privileges
+
+---
+
+### Project User Menu System
+
+#### **Menu Privilege Mapping**
+
+```typescript
+// src/lib/privileges/menuPrivileges.ts
+
+export const menuPrivileges: Record<string, MenuPrivilege> = {
+  // ... store staff menu items
+  
+  'Project Users': { 
+    module: 'project_users', 
+    isProjectUser: true 
+  },
+  
+  // ... other menu items
+};
+```
+
+#### **Menu Filtering**
+
+The sidebar filters menu items based on user type:
+
+```typescript
+const filteredMenuItems = isProjectUser()
+  ? projectMenuItems.filter(item => hasProjectModuleAccess(item.module))
+  : storeMenuItems.filter(item => hasModuleAccess(item.module));
+```
+
+---
+
+### Security Benefits
+
+#### **Complete Separation**
+- **Project users** cannot access any POS operations (except Global System Admin)
+- **Store staff** cannot access project management features
+- **Different privilege systems** prevent cross-contamination
+
+#### **Role-Based Access**
+- Each project role has specific, limited access
+- No unnecessary permissions granted
+- Clear separation of concerns
+
+#### **System Integrity**
+- Project users focus on system management
+- Store staff focus on business operations
+- No interference between the two systems
+
+#### **Global System Admin Exception**
+- **Global System Admin** has access to **everything** including POS operations
+- This is the only role that bridges both systems
+- Ultimate administrative control
+
+---
+
+### Implementation Files
+
+#### **Core Files**
+- `src/types/projectPrivileges.ts` - Project privilege types and interfaces
+- `src/lib/privileges/projectRolePrivileges.ts` - Project role definitions
+- `src/lib/privileges/menuPrivileges.ts` - Menu privilege mapping
+- `src/components/pages/ProjectUsers.tsx` - Project users management page
+- `src/app/project-users/page.tsx` - Project users route
+
+#### **Database Integration**
+- `src/graphql/ProjectUsers.graphql` - Project users GraphQL queries
+- `src/hooks/useHasuraApi.ts` - Project users data fetching hooks
+
+#### **Authentication**
+- Project user authentication system
+- Session management for project users
+- Privilege checking for project users
+
+---
+
+### Usage Examples
+
+#### **Checking Project User Privileges**
+
+```typescript
+import { useProjectPrivilege } from '@/hooks/useProjectPrivilege';
+
+const { hasProjectModuleAccess, hasProjectAction } = useProjectPrivilege();
+
+if (hasProjectModuleAccess('orders')) {
+  // Project user can access orders module
+}
+
+if (hasProjectAction('orders', 'view_orders')) {
+  // Project user can view orders
+}
+```
+
+#### **Protecting Project User Components**
+
+```tsx
+import { ProtectedProjectRoute } from '@/components/auth/ProtectedProjectRoute';
+
+export default function ProjectUsersPage() {
+  return (
+    <ProtectedProjectRoute requiredPrivilege="project_users">
+      <ProjectUsers />
+    </ProtectedProjectRoute>
+  );
+}
+```
+
+#### **Conditional Rendering for Project Users**
+
+```tsx
+import { useProjectPrivilege } from '@/hooks/useProjectPrivilege';
+
+const { hasProjectAction } = useProjectPrivilege();
+
+{
+  hasProjectAction('project_users', 'add_project_users') && (
+    <Button>Add Project User</Button>
+  );
+}
+```
+
+---
+
+### Migration & Setup
+
+#### **Database Setup**
+
+1. Ensure `ProjectUsers` table exists with required fields
+2. Create project user accounts with appropriate roles
+3. Set up project user authentication system
+
+#### **Code Integration**
+
+1. Import project privilege types and utilities
+2. Update authentication system to handle project users
+3. Implement project user session management
+4. Add project user menu items and routing
+
+#### **Testing**
+
+1. Test project user authentication
+2. Verify privilege enforcement
+3. Test menu filtering and access control
+4. Validate separation from store staff privileges
+
+---
+
+**For more details, see:**
+
+- `src/types/projectPrivileges.ts`
+- `src/lib/privileges/projectRolePrivileges.ts`
+- `src/components/pages/ProjectUsers.tsx`
+- `src/app/project-users/page.tsx`
+- `src/graphql/ProjectUsers.graphql`
+
 ## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is proprietary software. All rights reserved.
-
-## Support
-
-For support, please contact our team at support@example.com or open an issue in the repository.
