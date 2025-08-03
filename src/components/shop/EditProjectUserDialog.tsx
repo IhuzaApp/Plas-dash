@@ -162,7 +162,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
 
   const onSubmit = async (data: FormData) => {
     if (!user) return;
-    
+
     try {
       // Prepare the update data - only include fields that are actually being updated
       const updateData: any = {
@@ -200,7 +200,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
 
       // Call the mutation
       await updateProjectUserMutation.mutateAsync(updateData);
-      
+
       toast.success('Project user updated successfully');
       form.reset();
       setProfileImage(null);
@@ -238,34 +238,34 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
           <DialogDescription>Update project user information and permissions.</DialogDescription>
         </DialogHeader>
 
-        <form 
-          onSubmit={(e) => {
+        <form
+          onSubmit={e => {
             e.preventDefault();
             const formData = form.getValues();
-            
+
             // Manual validation
             if (!formData.username || formData.username.length < 3) {
               toast.error('Username must be at least 3 characters');
               return;
             }
-            
+
             if (!formData.email || !formData.email.includes('@')) {
               toast.error('Please enter a valid email address');
               return;
             }
-            
+
             if (formData.password && formData.password.length < 8) {
               toast.error('Password must be at least 8 characters');
               return;
             }
-            
+
             if (formData.password && formData.password !== formData.confirmPassword) {
               toast.error('Passwords do not match');
               return;
             }
-            
+
             onSubmit(formData);
-          }} 
+          }}
           className="space-y-4"
         >
           {/* Profile Image Upload */}
@@ -309,9 +309,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                   <Upload className="h-4 w-4" />
                   {profileImage ? 'Change Image' : 'Upload Image'}
                 </Button>
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG, GIF up to 5MB
-                </p>
+                <p className="text-xs text-muted-foreground">JPG, PNG, GIF up to 5MB</p>
               </div>
 
               {/* Hidden File Input */}
@@ -328,11 +326,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="username">Username *</Label>
-              <Input
-                id="username"
-                placeholder="Enter username"
-                {...form.register('username')}
-              />
+              <Input id="username" placeholder="Enter username" {...form.register('username')} />
             </div>
 
             <div className="space-y-2">
@@ -356,7 +350,8 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                 {...form.register('password')}
               />
               <p className="text-xs text-muted-foreground">
-                Leave empty to keep current password. For security, current password is not displayed.
+                Leave empty to keep current password. For security, current password is not
+                displayed.
               </p>
             </div>
 
@@ -455,7 +450,12 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleCancel} disabled={updateProjectUserMutation.isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              disabled={updateProjectUserMutation.isPending}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={updateProjectUserMutation.isPending}>

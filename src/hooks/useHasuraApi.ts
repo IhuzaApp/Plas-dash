@@ -890,24 +890,26 @@ export function useUpdateProjectUser() {
   >({
     mutationFn: variables => {
       const { id, ...updateData } = variables;
-      
+
       // Build the _set object dynamically to avoid null values
       const setObject: any = {
-        updated_at: "now()"
+        updated_at: 'now()',
       };
-      
+
       // Only include fields that are actually provided
       if (updateData.username !== undefined) setObject.username = updateData.username;
       if (updateData.email !== undefined) setObject.email = updateData.email;
       if (updateData.password !== undefined) setObject.password = updateData.password;
       if (updateData.role !== undefined) setObject.role = updateData.role;
       if (updateData.is_active !== undefined) setObject.is_active = updateData.is_active;
-      if (updateData.TwoAuth_enabled !== undefined) setObject.TwoAuth_enabled = updateData.TwoAuth_enabled;
+      if (updateData.TwoAuth_enabled !== undefined)
+        setObject.TwoAuth_enabled = updateData.TwoAuth_enabled;
       if (updateData.gender !== undefined) setObject.gender = updateData.gender;
-      if (updateData.device_details !== undefined) setObject.device_details = updateData.device_details;
+      if (updateData.device_details !== undefined)
+        setObject.device_details = updateData.device_details;
       if (updateData.profile !== undefined) setObject.profile = updateData.profile;
       if (updateData.privileges !== undefined) setObject.privileges = updateData.privileges;
-      
+
       const mutation = `
         mutation UpdateProjectUser($id: uuid!, $set: ProjectUsers_set_input!) {
           update_ProjectUsers(
@@ -918,7 +920,7 @@ export function useUpdateProjectUser() {
           }
         }
       `;
-      
+
       return hasuraRequest(mutation, { id, set: setObject });
     },
   });
