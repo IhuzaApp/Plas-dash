@@ -7,76 +7,9 @@ import { useForm } from 'react-hook-form';
 import { hasuraRequest } from '@/lib/hasura';
 import bcrypt from 'bcryptjs';
 import { Lock, User } from 'lucide-react';
-import { GET_ORG_EMPLOYEE_BY_IDENTITY } from '@/lib/graphql/queries';
-import { UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE } from '@/lib/graphql/mutations';
+import { GET_ORG_EMPLOYEE_BY_IDENTITY, GET_PROJECT_USER_BY_IDENTITY, GET_PROJECT_USER_BY_MEMBERSHIP_ID } from '@/lib/graphql/queries';
+import { UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE, UPDATE_PROJECT_USER_LAST_LOGIN } from '@/lib/graphql/mutations';
 import { UserPrivileges, DEFAULT_PRIVILEGES } from '@/types/privileges';
-
-// GraphQL query for ProjectUsers
-const GET_PROJECT_USER_BY_IDENTITY = `
-  query GetProjectUserByIdentity($identity: String!) {
-    ProjectUsers(
-      where: {
-        _or: [
-          { username: { _eq: $identity } },
-          { email: { _eq: $identity } }
-        ]
-      }
-    ) {
-      id
-      MembershipId
-      username
-      email
-      password
-      role
-      is_active
-      TwoAuth_enabled
-      last_Login
-      created_at
-      updated_at
-      gender
-      device_details
-      profile
-      privileges
-    }
-  }
-`;
-
-// Separate query for MembershipId (which is an integer)
-const GET_PROJECT_USER_BY_MEMBERSHIP_ID = `
-  query GetProjectUserByMembershipId($membershipId: Int!) {
-    ProjectUsers(
-      where: { MembershipId: { _eq: $membershipId } }
-    ) {
-      id
-      MembershipId
-      username
-      email
-      password
-      role
-      is_active
-      TwoAuth_enabled
-      last_Login
-      created_at
-      updated_at
-      gender
-      device_details
-      profile
-      privileges
-    }
-  }
-`;
-
-// Update ProjectUser last login
-const UPDATE_PROJECT_USER_LAST_LOGIN = `
-  mutation UpdateProjectUserLastLogin($id: uuid!, $lastLogin: timestamptz!) {
-    update_ProjectUsers(
-      where: { id: { _eq: $id } },
-      _set: { last_Login: $lastLogin }
-    ) {
-      affected_rows
-    }
-  }
-`;
 
 interface LoginModalProps {
   onLoginSuccess: (sessionData: any) => void;

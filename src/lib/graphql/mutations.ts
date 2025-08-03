@@ -435,6 +435,18 @@ export const UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE = `
   }
 `;
 
+// Update ProjectUser last login
+export const UPDATE_PROJECT_USER_LAST_LOGIN = `
+  mutation UpdateProjectUserLastLogin($id: uuid!, $lastLogin: timestamptz!) {
+    update_ProjectUsers(
+      where: { id: { _eq: $id } },
+      _set: { last_Login: $lastLogin }
+    ) {
+      affected_rows
+    }
+  }
+`;
+
 // Checkout mutations
 export const ADD_CHECKOUT = `
   mutation addcheckouts($Processed_By: uuid = "", $cartItems: jsonb = "", $payment_method: String = "", $shop_id: uuid = "", $subtotal: String = "", $tax: String = "", $tin: String = "", $total: String = "") {
