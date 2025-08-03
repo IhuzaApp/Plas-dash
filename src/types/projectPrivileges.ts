@@ -17,13 +17,13 @@ export interface ProjectUserPrivileges {
   refunds?: ProjectModulePrivileges;
   tickets?: ProjectModulePrivileges;
   help?: ProjectModulePrivileges;
-  
+
   // Additional Store Modules
   dashboard?: ProjectModulePrivileges;
   delivery_settings?: ProjectModulePrivileges;
   promotions?: ProjectModulePrivileges;
   settings?: ProjectModulePrivileges;
-  
+
   // POS Operations (Only for Global System Admin)
   checkout?: ProjectModulePrivileges;
   staff_management?: ProjectModulePrivileges;
@@ -34,7 +34,7 @@ export interface ProjectUserPrivileges {
   shop_dashboard?: ProjectModulePrivileges;
   financial_overview?: ProjectModulePrivileges;
   pos_terminal?: ProjectModulePrivileges;
-  
+
   // System Management
   system_management?: ProjectModulePrivileges;
   user_management?: ProjectModulePrivileges;
@@ -51,7 +51,7 @@ export interface ProjectUserPrivileges {
   audit_logs?: ProjectModulePrivileges;
   development_tools?: ProjectModulePrivileges;
   maintenance?: ProjectModulePrivileges;
-  
+
   // Page Access
   pages?: ProjectModulePrivileges;
 }
@@ -412,7 +412,9 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
 
 // Project privilege check helper types
 export type ProjectPrivilegeKey = keyof ProjectUserPrivileges;
-export type ProjectActionKey<T extends ProjectPrivilegeKey> = keyof NonNullable<ProjectUserPrivileges[T]>;
+export type ProjectActionKey<T extends ProjectPrivilegeKey> = keyof NonNullable<
+  ProjectUserPrivileges[T]
+>;
 
 // Helper function to check if project user has a specific privilege
 export function hasProjectPrivilege(
@@ -444,4 +446,4 @@ export function getProjectModulePrivileges(
     return null;
   }
   return projectPrivileges[module] as ProjectModulePrivileges;
-} 
+}

@@ -29,23 +29,23 @@ import { Loader2, Store, Upload, X } from 'lucide-react';
 // Utility function to get default image based on category name
 const getDefaultImageForCategory = (categoryName: string): string => {
   const categoryNameLower = categoryName.toLowerCase();
-  
+
   // Map category names to default images
   const categoryImageMap: { [key: string]: string } = {
-    'supermarket': '/Assets/images/superMarkets.jpg',
-    'grocery': '/Assets/images/superMarkets.jpg',
-    'market': '/Assets/images/publicMarket.jpg',
+    supermarket: '/Assets/images/superMarkets.jpg',
+    grocery: '/Assets/images/superMarkets.jpg',
+    market: '/Assets/images/publicMarket.jpg',
     'public market': '/Assets/images/publicMarket.jpg',
-    'organic': '/Assets/images/OrganicShop.jpg',
+    organic: '/Assets/images/OrganicShop.jpg',
     'organic shop': '/Assets/images/OrganicShop.jpg',
     'health food': '/Assets/images/OrganicShop.jpg',
-    'delicatessen': '/Assets/images/delicatessen.jpeg',
-    'deli': '/Assets/images/delicatessen.jpeg',
-    'butcher': '/Assets/images/Butcher.webp',
+    delicatessen: '/Assets/images/delicatessen.jpeg',
+    deli: '/Assets/images/delicatessen.jpeg',
+    butcher: '/Assets/images/Butcher.webp',
     'meat shop': '/Assets/images/Butcher.webp',
-    'bakery': '/Assets/images/Bakery.webp',
+    bakery: '/Assets/images/Bakery.webp',
     'bread shop': '/Assets/images/Bakery.webp',
-    'pastry': '/Assets/images/Bakery.webp',
+    pastry: '/Assets/images/Bakery.webp',
   };
 
   // Try exact match first
@@ -112,22 +112,26 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
   const queryClient = useQueryClient();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<CreateShopFormData>({
     name: '',
     description: '',
     category_id: '',
     address: '',
     phone: '',
-    operating_hours: JSON.stringify({
-      "monday": "9am - 5pm",
-      "tuesday": "9am - 5pm", 
-      "wednesday": "9am - 5pm",
-      "thursday": "9am - 5pm",
-      "friday": "9am - 5pm",
-      "saturday": "9am - 2pm",
-      "sunday": "Closed"
-    }, null, 2),
+    operating_hours: JSON.stringify(
+      {
+        monday: '9am - 5pm',
+        tuesday: '9am - 5pm',
+        wednesday: '9am - 5pm',
+        thursday: '9am - 5pm',
+        friday: '9am - 5pm',
+        saturday: '9am - 2pm',
+        sunday: 'Closed',
+      },
+      null,
+      2
+    ),
     latitude: null,
     longitude: null,
     logo: null,
@@ -138,8 +142,12 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
   });
 
   // Fetch categories
-  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useCategories();
-  
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useCategories();
+
   console.log('=== ADD SHOP DIALOG: CATEGORIES DEBUG ===');
   console.log('Categories loading:', categoriesLoading);
   console.log('Categories error:', categoriesError);
@@ -151,7 +159,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       console.log('=== ADD SHOP DIALOG: MUTATION FUNCTION CALLED ===');
       console.log('Mutation data:', data);
       console.log('CREATE_SHOP mutation:', CREATE_SHOP);
-      
+
       try {
         const result = await hasuraRequest(CREATE_SHOP, data);
         console.log('=== ADD SHOP DIALOG: MUTATION SUCCESS ===');
@@ -164,12 +172,12 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
           message: error?.message,
           response: error?.response,
           status: error?.response?.status,
-          data: error?.response?.data
+          data: error?.response?.data,
         });
         throw error;
       }
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       console.log('=== ADD SHOP DIALOG: ON SUCCESS CALLED ===');
       console.log('Success data:', data);
       toast({
@@ -184,9 +192,9 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       console.error('Error in onError:', error);
       console.error('Error message:', error?.message);
       console.error('Error response:', error?.response);
-      
+
       let errorMessage = 'Failed to create shop. Please try again.';
-      
+
       if (error?.response?.data?.errors) {
         const graphqlErrors = error.response.data.errors;
         console.error('GraphQL errors:', graphqlErrors);
@@ -194,7 +202,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       } else if (error?.message) {
         errorMessage = error.message;
       }
-      
+
       toast({
         title: 'Error',
         description: errorMessage,
@@ -219,7 +227,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
           [field]: value,
           image: defaultImage,
         }));
-        
+
         console.log('=== ADD SHOP DIALOG: AUTO-ASSIGNED IMAGE ===');
         console.log('Category:', selectedCategory.name);
         console.log('Default image:', defaultImage);
@@ -272,11 +280,11 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     console.log('=== ADD SHOP DIALOG: SUBMIT STARTED ===');
     console.log('Form data:', formData);
     console.log('Image preview exists:', !!imagePreview);
-    
+
     if (!formData.name.trim()) {
       console.log('=== ADD SHOP DIALOG: VALIDATION ERROR - NAME REQUIRED ===');
       toast({
@@ -355,15 +363,19 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       category_id: '',
       address: '',
       phone: '',
-      operating_hours: JSON.stringify({
-        "monday": "9am - 5pm",
-        "tuesday": "9am - 5pm", 
-        "wednesday": "9am - 5pm",
-        "thursday": "9am - 5pm",
-        "friday": "9am - 5pm",
-        "saturday": "9am - 2pm",
-        "sunday": "Closed"
-      }, null, 2),
+      operating_hours: JSON.stringify(
+        {
+          monday: '9am - 5pm',
+          tuesday: '9am - 5pm',
+          wednesday: '9am - 5pm',
+          thursday: '9am - 5pm',
+          friday: '9am - 5pm',
+          saturday: '9am - 2pm',
+          sunday: 'Closed',
+        },
+        null,
+        2
+      ),
       latitude: null,
       longitude: null,
       logo: null,
@@ -390,9 +402,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
             <Store className="h-5 w-5" />
             Add New Shop
           </DialogTitle>
-          <DialogDescription>
-            Create a new shop with all the necessary details.
-          </DialogDescription>
+          <DialogDescription>Create a new shop with all the necessary details.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -403,7 +413,11 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               <div className="relative">
                 <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
                   {imagePreview ? (
-                    <img src={imagePreview} alt="Logo preview" className="h-full w-full object-contain" />
+                    <img
+                      src={imagePreview}
+                      alt="Logo preview"
+                      className="h-full w-full object-contain"
+                    />
                   ) : (
                     <Store className="h-10 w-10 text-muted-foreground" />
                   )}
@@ -423,20 +437,15 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               </div>
               <div className="space-y-2 flex-1">
                 <div className="flex items-center gap-2">
-                  <Input 
-                    id="logo" 
-                    type="file" 
-                    accept="image/*" 
+                  <Input
+                    id="logo"
+                    type="file"
+                    accept="image/*"
                     onChange={handleImageChange}
                     className="flex-1"
                   />
                   {imagePreview && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRemoveLogo}
-                    >
+                    <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo}>
                       Remove
                     </Button>
                   )}
@@ -462,7 +471,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={e => handleInputChange('name', e.target.value)}
                 placeholder="Enter shop name"
                 required
               />
@@ -471,18 +480,22 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               <Label htmlFor="category">Category *</Label>
               <Select
                 value={formData.category_id}
-                onValueChange={(value) => handleInputChange('category_id', value)}
+                onValueChange={value => handleInputChange('category_id', value)}
                 disabled={categoriesLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select a category"} />
+                  <SelectValue
+                    placeholder={categoriesLoading ? 'Loading categories...' : 'Select a category'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoriesData?.Categories?.filter(category => category.is_active).map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
+                  {categoriesData?.Categories?.filter(category => category.is_active).map(
+                    category => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
               {formData.image && (
@@ -499,7 +512,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={e => handleInputChange('description', e.target.value)}
               placeholder="Enter shop description"
               rows={3}
             />
@@ -512,7 +525,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
+                onChange={e => handleInputChange('phone', e.target.value)}
                 placeholder="Enter phone number"
               />
             </div>
@@ -521,7 +534,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               <Input
                 id="address"
                 value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
+                onChange={e => handleInputChange('address', e.target.value)}
                 placeholder="Enter shop address"
               />
             </div>
@@ -534,7 +547,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               <Input
                 id="tin"
                 value={formData.tin}
-                onChange={(e) => handleInputChange('tin', e.target.value)}
+                onChange={e => handleInputChange('tin', e.target.value)}
                 placeholder="Enter TIN number"
               />
             </div>
@@ -543,7 +556,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               <Input
                 id="ssd"
                 value={formData.ssd}
-                onChange={(e) => handleInputChange('ssd', e.target.value)}
+                onChange={e => handleInputChange('ssd', e.target.value)}
                 placeholder="Enter SSD number"
               />
             </div>
@@ -558,7 +571,9 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
                 type="number"
                 step="any"
                 value={formData.latitude || ''}
-                onChange={(e) => handleInputChange('latitude', e.target.value ? parseFloat(e.target.value) : null)}
+                onChange={e =>
+                  handleInputChange('latitude', e.target.value ? parseFloat(e.target.value) : null)
+                }
                 placeholder="Enter latitude"
               />
             </div>
@@ -569,7 +584,9 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
                 type="number"
                 step="any"
                 value={formData.longitude || ''}
-                onChange={(e) => handleInputChange('longitude', e.target.value ? parseFloat(e.target.value) : null)}
+                onChange={e =>
+                  handleInputChange('longitude', e.target.value ? parseFloat(e.target.value) : null)
+                }
                 placeholder="Enter longitude"
               />
             </div>
@@ -581,7 +598,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
             <Textarea
               id="operating_hours"
               value={formData.operating_hours}
-              onChange={(e) => handleInputChange('operating_hours', e.target.value)}
+              onChange={e => handleInputChange('operating_hours', e.target.value)}
               placeholder="Enter operating hours (e.g., Monday-Friday: 8AM-6PM, Saturday: 9AM-5PM)"
               rows={6}
             />
@@ -598,7 +615,9 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
   "sunday": "Closed"
 }`}
               </div>
-              <p className="text-xs">You can edit the times or use "Closed" for days when the shop is not open.</p>
+              <p className="text-xs">
+                You can edit the times or use "Closed" for days when the shop is not open.
+              </p>
             </div>
           </div>
 
@@ -610,7 +629,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
             </div>
             <Switch
               checked={formData.is_active}
-              onCheckedChange={(checked) => handleInputChange('is_active', checked)}
+              onCheckedChange={checked => handleInputChange('is_active', checked)}
             />
           </div>
 
@@ -618,10 +637,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={createShopMutation.isPending || categoriesLoading}
-            >
+            <Button type="submit" disabled={createShopMutation.isPending || categoriesLoading}>
               {createShopMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -638,4 +654,4 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
   );
 };
 
-export default AddShopDialog; 
+export default AddShopDialog;

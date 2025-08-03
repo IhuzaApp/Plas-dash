@@ -31,15 +31,15 @@ const DeleteProjectUserDialog: React.FC<DeleteProjectUserDialogProps> = ({
 
   const handleDelete = async () => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
       // TODO: Implement the actual API call to delete project user
       console.log('Deleting project user:', user.id);
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       toast.success('Project user deleted successfully');
       onOpenChange(false);
       onSuccess?.();
@@ -99,20 +99,10 @@ const DeleteProjectUserDialog: React.FC<DeleteProjectUserDialogProps> = ({
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isLoading}
-          >
+          <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
             Cancel
           </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isLoading}
-          >
+          <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -131,4 +121,4 @@ const DeleteProjectUserDialog: React.FC<DeleteProjectUserDialogProps> = ({
   );
 };
 
-export default DeleteProjectUserDialog; 
+export default DeleteProjectUserDialog;

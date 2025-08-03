@@ -9,4 +9,4 @@ export default function ProjectUsersPage() {
       <ProjectUsers />
     </ProtectedRoute>
   );
-} 
+}

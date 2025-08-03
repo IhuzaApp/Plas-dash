@@ -15,25 +15,25 @@ import { useShopSettings } from '@/hooks/useShopSettings';
 import { useMutation } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { UPDATE_SHOP_SETTINGS } from '@/lib/graphql/mutations';
-import { 
-  Store, 
-  MapPin, 
-  Phone, 
-  Clock, 
-  Edit, 
-  Save, 
-  X, 
+import {
+  Store,
+  MapPin,
+  Phone,
+  Clock,
+  Edit,
+  Save,
+  X,
   Image as ImageIcon,
   Globe,
   Building,
-  Building2
+  Building2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 // Helper function to format operating hours JSON to readable string
 const formatOperatingHours = (operatingHours: any): string => {
   if (!operatingHours) return 'No operating hours set';
-  
+
   if (typeof operatingHours === 'string') {
     try {
       const parsed = JSON.parse(operatingHours);
@@ -42,26 +42,28 @@ const formatOperatingHours = (operatingHours: any): string => {
       return operatingHours;
     }
   }
-  
+
   if (typeof operatingHours === 'object') {
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    const formattedDays = days.map(day => {
-      const dayData = operatingHours[day];
-      if (!dayData) return null;
-      
-      const dayName = day.charAt(0).toUpperCase() + day.slice(1);
-      if (dayData.closed) {
-        return `${dayName}: Closed`;
-      }
-      
-      const openTime = dayData.open || '';
-      const closeTime = dayData.close || '';
-      return `${dayName}: ${openTime}-${closeTime}`;
-    }).filter(Boolean);
-    
+    const formattedDays = days
+      .map(day => {
+        const dayData = operatingHours[day];
+        if (!dayData) return null;
+
+        const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+        if (dayData.closed) {
+          return `${dayName}: Closed`;
+        }
+
+        const openTime = dayData.open || '';
+        const closeTime = dayData.close || '';
+        return `${dayName}: ${openTime}-${closeTime}`;
+      })
+      .filter(Boolean);
+
     return formattedDays.join(', ');
   }
-  
+
   return 'Invalid operating hours format';
 };
 
@@ -70,7 +72,7 @@ const parseOperatingHours = (operatingHoursString: string): any => {
   if (!operatingHoursString || operatingHoursString === 'No operating hours set') {
     return null;
   }
-  
+
   // Try to parse as JSON first
   try {
     return JSON.parse(operatingHoursString);
@@ -84,7 +86,7 @@ export default function SupermarketSettings() {
   const { toast } = useToast();
   const { hasAction } = usePrivilege();
   const { data, isLoading, error, refetch } = useShopSettings();
-  
+
   const updateShopMutation = useMutation({
     mutationFn: async (variables: {
       id: string;
@@ -126,9 +128,10 @@ export default function SupermarketSettings() {
         description: shop.description || '',
         address: shop.address || '',
         phone: shop.phone || '',
-        operating_hours: typeof shop.operating_hours === 'object' 
-          ? JSON.stringify(shop.operating_hours, null, 2)
-          : shop.operating_hours || '',
+        operating_hours:
+          typeof shop.operating_hours === 'object'
+            ? JSON.stringify(shop.operating_hours, null, 2)
+            : shop.operating_hours || '',
         is_active: shop.is_active ?? true,
         tin: shop.tin || '',
         ssd: shop.ssd || '',
@@ -143,7 +146,7 @@ export default function SupermarketSettings() {
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -216,9 +219,10 @@ export default function SupermarketSettings() {
         description: shop.description || '',
         address: shop.address || '',
         phone: shop.phone || '',
-        operating_hours: typeof shop.operating_hours === 'object' 
-          ? JSON.stringify(shop.operating_hours, null, 2)
-          : shop.operating_hours || '',
+        operating_hours:
+          typeof shop.operating_hours === 'object'
+            ? JSON.stringify(shop.operating_hours, null, 2)
+            : shop.operating_hours || '',
         is_active: shop.is_active ?? true,
         tin: shop.tin || '',
         ssd: shop.ssd || '',
@@ -251,7 +255,9 @@ export default function SupermarketSettings() {
           <div className="text-center py-8">
             <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Settings</h3>
-            <p className="text-gray-600 mb-4">Failed to load supermarket settings. Please try again.</p>
+            <p className="text-gray-600 mb-4">
+              Failed to load supermarket settings. Please try again.
+            </p>
             <Button onClick={() => refetch()}>Retry</Button>
           </div>
         </CardContent>
@@ -285,17 +291,13 @@ export default function SupermarketSettings() {
             <div className="flex gap-2">
               {isEditing ? (
                 <>
-                  <Button 
-                    onClick={handleSave} 
-                    size="sm"
-                    disabled={updateShopMutation.isPending}
-                  >
+                  <Button onClick={handleSave} size="sm" disabled={updateShopMutation.isPending}>
                     <Save className="h-4 w-4 mr-2" />
                     {updateShopMutation.isPending ? 'Saving...' : 'Save Changes'}
                   </Button>
-                  <Button 
-                    onClick={handleCancel} 
-                    variant="outline" 
+                  <Button
+                    onClick={handleCancel}
+                    variant="outline"
                     size="sm"
                     disabled={updateShopMutation.isPending}
                   >
@@ -320,16 +322,20 @@ export default function SupermarketSettings() {
           <div className="flex items-center gap-4">
             <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
               {logoPreview ? (
-                <img src={logoPreview} alt="Logo preview" className="h-full w-full object-contain" />
+                <img
+                  src={logoPreview}
+                  alt="Logo preview"
+                  className="h-full w-full object-contain"
+                />
               ) : (
                 <Store className="h-10 w-10 text-muted-foreground" />
               )}
             </div>
             <div className="space-y-2">
-              <Input 
-                id="logo" 
-                type="file" 
-                accept="image/*" 
+              <Input
+                id="logo"
+                type="file"
+                accept="image/*"
                 onChange={handleLogoChange}
                 disabled={!isEditing}
               />
@@ -348,7 +354,7 @@ export default function SupermarketSettings() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={e => handleInputChange('name', e.target.value)}
                 placeholder="Enter supermarket name"
               />
             ) : (
@@ -363,7 +369,7 @@ export default function SupermarketSettings() {
               <Input
                 id="description"
                 value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
+                onChange={e => handleInputChange('description', e.target.value)}
                 placeholder="Enter description or slogan"
               />
             ) : (
@@ -382,7 +388,7 @@ export default function SupermarketSettings() {
               <Input
                 id="tin"
                 value={formData.tin}
-                onChange={(e) => handleInputChange('tin', e.target.value)}
+                onChange={e => handleInputChange('tin', e.target.value)}
                 placeholder="Enter TIN number"
               />
             ) : (
@@ -397,7 +403,7 @@ export default function SupermarketSettings() {
               <Input
                 id="ssd"
                 value={formData.ssd}
-                onChange={(e) => handleInputChange('ssd', e.target.value)}
+                onChange={e => handleInputChange('ssd', e.target.value)}
                 placeholder="Enter SSD number"
               />
             ) : (
@@ -412,9 +418,7 @@ export default function SupermarketSettings() {
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
           <div className="p-3 bg-gray-50 rounded-md border">
-            <Badge variant="secondary">
-              {shop.Category?.name || 'Uncategorized'}
-            </Badge>
+            <Badge variant="secondary">{shop.Category?.name || 'Uncategorized'}</Badge>
           </div>
         </div>
 
@@ -426,7 +430,7 @@ export default function SupermarketSettings() {
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
+                onChange={e => handleInputChange('phone', e.target.value)}
                 placeholder="Enter phone number"
               />
             ) : (
@@ -445,7 +449,7 @@ export default function SupermarketSettings() {
             <Textarea
               id="address"
               value={formData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
+              onChange={e => handleInputChange('address', e.target.value)}
               placeholder="Enter supermarket address"
               rows={3}
             />
@@ -464,7 +468,7 @@ export default function SupermarketSettings() {
             <Textarea
               id="operating_hours"
               value={formData.operating_hours}
-              onChange={(e) => handleInputChange('operating_hours', e.target.value)}
+              onChange={e => handleInputChange('operating_hours', e.target.value)}
               placeholder="Enter JSON format or simple text"
               rows={6}
             />
@@ -485,7 +489,7 @@ export default function SupermarketSettings() {
           {isEditing ? (
             <Switch
               checked={formData.is_active}
-              onCheckedChange={(checked) => handleInputChange('is_active', checked)}
+              onCheckedChange={checked => handleInputChange('is_active', checked)}
             />
           ) : (
             <Badge variant={shop.is_active ? 'default' : 'secondary'}>
@@ -508,17 +512,13 @@ export default function SupermarketSettings() {
             <div className="space-y-2">
               <Label>Created</Label>
               <div className="p-3 bg-gray-50 rounded-md border">
-                <span className="text-sm">
-                  {format(new Date(shop.created_at), 'MMM dd, yyyy')}
-                </span>
+                <span className="text-sm">{format(new Date(shop.created_at), 'MMM dd, yyyy')}</span>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Last Updated</Label>
               <div className="p-3 bg-gray-50 rounded-md border">
-                <span className="text-sm">
-                  {format(new Date(shop.updated_at), 'MMM dd, yyyy')}
-                </span>
+                <span className="text-sm">{format(new Date(shop.updated_at), 'MMM dd, yyyy')}</span>
               </div>
             </div>
           </div>
@@ -544,4 +544,4 @@ export default function SupermarketSettings() {
       </CardContent>
     </Card>
   );
-} 
+}

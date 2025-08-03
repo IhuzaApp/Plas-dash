@@ -117,7 +117,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
   useEffect(() => {
     if (product) {
       console.log('EditProductDialog - Product data received:', product);
-      
+
       const basePrice = parseFloat(product.price);
       const finalPrice = parseFloat(product.final_price);
       const hasCommission = basePrice !== finalPrice;
@@ -142,7 +142,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
       };
 
       console.log('EditProductDialog - Form data to be set:', formData);
-      
+
       form.reset(formData);
 
       // Debug: Check form values after reset
@@ -164,7 +164,10 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name && ['sku', 'supplier', 'barcode', 'reorder_point'].includes(name)) {
-        console.log(`EditProductDialog - Field ${name} changed to:`, value[name as keyof typeof value]);
+        console.log(
+          `EditProductDialog - Field ${name} changed to:`,
+          value[name as keyof typeof value]
+        );
       }
     });
     return () => subscription.unsubscribe();
@@ -284,7 +287,8 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
         barcode: productData.barcode?.trim() || undefined,
         sku: productData.sku?.trim() || undefined,
         supplier: productData.supplier?.trim() || undefined,
-        reorder_point: typeof productData.reorder_point === 'number' ? productData.reorder_point : undefined,
+        reorder_point:
+          typeof productData.reorder_point === 'number' ? productData.reorder_point : undefined,
         image: productData.image?.trim() || undefined,
       };
 
@@ -312,11 +316,11 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form 
-            onSubmit={form.handleSubmit(handleSubmit, (errors) => {
+          <form
+            onSubmit={form.handleSubmit(handleSubmit, errors => {
               console.error('Form validation errors:', errors);
               toast.error('Please fix the form errors before submitting.');
-            })} 
+            })}
             className="space-y-4"
           >
             <FormField
@@ -364,7 +368,11 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
                       <div className="relative">
                         <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
                           {imagePreview ? (
-                            <img src={imagePreview} alt="Product preview" className="h-full w-full object-contain" />
+                            <img
+                              src={imagePreview}
+                              alt="Product preview"
+                              className="h-full w-full object-contain"
+                            />
                           ) : (
                             <ImageIcon className="h-10 w-10 text-muted-foreground" />
                           )}
@@ -384,10 +392,10 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
                       </div>
                       <div className="space-y-2 flex-1">
                         <div className="flex items-center gap-2">
-                          <Input 
-                            id="edit-product-image" 
-                            type="file" 
-                            accept="image/*" 
+                          <Input
+                            id="edit-product-image"
+                            type="file"
+                            accept="image/*"
                             onChange={handleImageChange}
                             className="flex-1"
                           />
@@ -461,11 +469,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
                     <div className="flex gap-2">
                       <FormControl>
                         <div className="relative flex-1">
-                          <Input 
-                            placeholder="Enter barcode" 
-                            {...field} 
-                            value={field.value || ''} 
-                          />
+                          <Input placeholder="Enter barcode" {...field} value={field.value || ''} />
                         </div>
                       </FormControl>
                       <Button
@@ -504,11 +508,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>SKU</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Enter SKU" 
-                        {...field} 
-                        value={field.value || ''} 
-                      />
+                      <Input placeholder="Enter SKU" {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -575,10 +575,10 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Enter supplier name" 
-                        {...field} 
-                        value={field.value || ''} 
+                      <Input
+                        placeholder="Enter supplier name"
+                        {...field}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -656,7 +656,12 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>

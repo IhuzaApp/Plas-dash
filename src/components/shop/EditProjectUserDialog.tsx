@@ -12,7 +12,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
@@ -23,24 +29,29 @@ import { PROJECT_ROLE_TYPES } from '@/lib/privileges/projectRolePrivileges';
 import { ProjectUser } from '@/hooks/useHasuraApi';
 
 // Form validation schema
-const formSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().optional(),
-  confirmPassword: z.string().optional(),
-  role: z.enum(PROJECT_ROLE_TYPES),
-  is_active: z.boolean().default(true),
-  TwoAuth_enabled: z.boolean().default(false),
-  gender: z.string().optional(),
-}).refine((data) => {
-  if (data.password && data.confirmPassword) {
-    return data.password === data.confirmPassword;
-  }
-  return true;
-}, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const formSchema = z
+  .object({
+    username: z.string().min(3, 'Username must be at least 3 characters'),
+    email: z.string().email('Invalid email address'),
+    password: z.string().optional(),
+    confirmPassword: z.string().optional(),
+    role: z.enum(PROJECT_ROLE_TYPES),
+    is_active: z.boolean().default(true),
+    TwoAuth_enabled: z.boolean().default(false),
+    gender: z.string().optional(),
+  })
+  .refine(
+    data => {
+      if (data.password && data.confirmPassword) {
+        return data.password === data.confirmPassword;
+      }
+      return true;
+    },
+    {
+      message: "Passwords don't match",
+      path: ['confirmPassword'],
+    }
+  );
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -94,10 +105,10 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
     try {
       // TODO: Implement the actual API call to update project user
       console.log('Updating project user:', data);
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       toast.success('Project user updated successfully');
       form.reset();
       onOpenChange(false);
@@ -127,9 +138,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
             <User className="h-5 w-5" />
             Edit Project User
           </DialogTitle>
-          <DialogDescription>
-            Update project user information and permissions.
-          </DialogDescription>
+          <DialogDescription>Update project user information and permissions.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -187,7 +196,9 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                 className={form.formState.errors.confirmPassword ? 'border-red-500' : ''}
               />
               {form.formState.errors.confirmPassword && (
-                <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.confirmPassword.message}
+                </p>
               )}
             </div>
           </div>
@@ -197,7 +208,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
               <Label htmlFor="role">Role *</Label>
               <Select
                 value={form.watch('role')}
-                onValueChange={(value) => form.setValue('role', value as any)}
+                onValueChange={value => form.setValue('role', value as any)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
@@ -238,7 +249,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
               <Label htmlFor="gender">Gender</Label>
               <Select
                 value={form.watch('gender')}
-                onValueChange={(value) => form.setValue('gender', value)}
+                onValueChange={value => form.setValue('gender', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select gender" />
@@ -256,39 +267,30 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="is_active">Active Status</Label>
-                <p className="text-sm text-muted-foreground">
-                  Enable or disable the user account
-                </p>
+                <p className="text-sm text-muted-foreground">Enable or disable the user account</p>
               </div>
               <Switch
                 id="is_active"
                 checked={form.watch('is_active')}
-                onCheckedChange={(checked) => form.setValue('is_active', checked)}
+                onCheckedChange={checked => form.setValue('is_active', checked)}
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="TwoAuth_enabled">Two-Factor Authentication</Label>
-                <p className="text-sm text-muted-foreground">
-                  Enable 2FA for enhanced security
-                </p>
+                <p className="text-sm text-muted-foreground">Enable 2FA for enhanced security</p>
               </div>
               <Switch
                 id="TwoAuth_enabled"
                 checked={form.watch('TwoAuth_enabled')}
-                onCheckedChange={(checked) => form.setValue('TwoAuth_enabled', checked)}
+                onCheckedChange={checked => form.setValue('TwoAuth_enabled', checked)}
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isLoading}
-            >
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
@@ -311,4 +313,4 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
   );
 };
 
-export default EditProjectUserDialog; 
+export default EditProjectUserDialog;

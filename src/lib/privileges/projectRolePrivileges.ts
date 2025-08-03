@@ -1,11 +1,17 @@
-import { ProjectUserPrivileges, DEFAULT_PROJECT_PRIVILEGES, ProjectPrivilegeKey } from '@/types/projectPrivileges';
+import {
+  ProjectUserPrivileges,
+  DEFAULT_PROJECT_PRIVILEGES,
+  ProjectPrivilegeKey,
+} from '@/types/projectPrivileges';
 
 /**
  * Get default project privileges for a specific project role type
  * @param projectRoleType - The project role type to get privileges for
  * @returns ProjectUserPrivileges object with appropriate permissions for the project role
  */
-export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): ProjectUserPrivileges => {
+export const getDefaultProjectPrivilegesForRole = (
+  projectRoleType: string
+): ProjectUserPrivileges => {
   // Start with all privileges set to false
   const privileges: ProjectUserPrivileges = {} as ProjectUserPrivileges;
   Object.keys(DEFAULT_PROJECT_PRIVILEGES).forEach(module => {
@@ -30,7 +36,7 @@ export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): Pro
       const globalAdminModules: ProjectPrivilegeKey[] = [
         // Store Operations (including POS)
         'orders',
-        'shoppers', 
+        'shoppers',
         'users',
         'shops',
         'products',
@@ -42,7 +48,7 @@ export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): Pro
         'delivery_settings',
         'promotions',
         'settings',
-        
+
         // POS Operations (exclusive to Global Admin)
         'checkout',
         'staff_management',
@@ -53,7 +59,7 @@ export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): Pro
         'shop_dashboard',
         'financial_overview',
         'pos_terminal',
-        
+
         // Project Management
         'system_management',
         'user_management',
@@ -70,11 +76,11 @@ export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): Pro
         'audit_logs',
         'development_tools',
         'maintenance',
-        
+
         // Page Access
         'pages',
       ];
-      
+
       globalAdminModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
@@ -128,7 +134,11 @@ export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): Pro
               privileges[module]![action] = true;
             }
             // Restrict sensitive operations
-            if (action.includes('delete') || action.includes('debug') || action.includes('maintenance')) {
+            if (
+              action.includes('delete') ||
+              action.includes('debug') ||
+              action.includes('maintenance')
+            ) {
               privileges[module]![action] = false;
             }
           });
@@ -175,7 +185,13 @@ export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): Pro
               privileges[module]![action] = true;
             }
             // Restrict sensitive operations
-            if (action.includes('delete') || action.includes('debug') || action.includes('maintenance') || action.includes('configure') || action.includes('set')) {
+            if (
+              action.includes('delete') ||
+              action.includes('debug') ||
+              action.includes('maintenance') ||
+              action.includes('configure') ||
+              action.includes('set')
+            ) {
               privileges[module]![action] = false;
             }
           });
@@ -216,7 +232,15 @@ export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): Pro
               privileges[module]![action] = true;
             }
             // Restrict sensitive operations
-            if (action.includes('delete') || action.includes('system') || action.includes('security') || action.includes('configure') || action.includes('set') || action.includes('activate') || action.includes('deactivate')) {
+            if (
+              action.includes('delete') ||
+              action.includes('system') ||
+              action.includes('security') ||
+              action.includes('configure') ||
+              action.includes('set') ||
+              action.includes('activate') ||
+              action.includes('deactivate')
+            ) {
               privileges[module]![action] = false;
             }
           });
@@ -236,9 +260,9 @@ export const getDefaultProjectPrivilegesForRole = (projectRoleType: string): Pro
 // Project role types
 export const PROJECT_ROLE_TYPES = [
   'projectAdmin',
-  'systemAdmin', 
+  'systemAdmin',
   'projectManager',
   'customerSupport',
 ] as const;
 
-export type ProjectRoleType = typeof PROJECT_ROLE_TYPES[number]; 
+export type ProjectRoleType = (typeof PROJECT_ROLE_TYPES)[number];

@@ -47,7 +47,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const { session } = useAuth();
   const { hasAction } = usePrivilege();
-  
+
   const { data: productsData, isLoading: productsLoading } = useProductsByShop(
     session?.shop_id || ''
   );
@@ -75,7 +75,7 @@ const Checkout = () => {
       phone: session?.phoneNumber || '',
       email: session?.email || '',
     });
-    
+
     localStorage.setItem('customerDisplayCart', cartData);
     localStorage.setItem('customerDisplayShop', shopData);
   }, [cart, shop, session]);
@@ -85,24 +85,26 @@ const Checkout = () => {
     const loadPendingCheckouts = () => {
       try {
         const stored = localStorage.getItem('pendingCheckouts');
-        
+
         if (stored) {
           const parsed = JSON.parse(stored);
           const now = Date.now();
-          
+
           // Filter out expired checkouts (older than 24 hours) and convert timestamps back to Date objects
-          const validCheckouts = parsed.filter((checkout: any) => {
-            // Convert string timestamp back to Date object
-            const checkoutTime = new Date(checkout.timestamp).getTime();
-            const hoursDiff = (now - checkoutTime) / (1000 * 60 * 60);
-            return hoursDiff < 24; // Keep only checkouts less than 24 hours old
-          }).map((checkout: any) => ({
-            ...checkout,
-            timestamp: new Date(checkout.timestamp) // Convert back to Date object
-          }));
-          
+          const validCheckouts = parsed
+            .filter((checkout: any) => {
+              // Convert string timestamp back to Date object
+              const checkoutTime = new Date(checkout.timestamp).getTime();
+              const hoursDiff = (now - checkoutTime) / (1000 * 60 * 60);
+              return hoursDiff < 24; // Keep only checkouts less than 24 hours old
+            })
+            .map((checkout: any) => ({
+              ...checkout,
+              timestamp: new Date(checkout.timestamp), // Convert back to Date object
+            }));
+
           setPendingCheckouts(validCheckouts);
-          
+
           // Update localStorage with only valid checkouts
           if (validCheckouts.length !== parsed.length) {
             localStorage.setItem('pendingCheckouts', JSON.stringify(validCheckouts));
@@ -136,7 +138,7 @@ const Checkout = () => {
         const hoursDiff = (now - checkoutTime) / (1000 * 60 * 60);
         return hoursDiff < 24;
       });
-      
+
       if (validCheckouts.length !== pendingCheckouts.length) {
         setPendingCheckouts(validCheckouts);
       }
@@ -144,16 +146,16 @@ const Checkout = () => {
 
     // Run cleanup every hour
     const interval = setInterval(cleanupExpiredCheckouts, 60 * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, [pendingCheckouts]);
 
   const addProductByCode = (code: string) => {
     if (code.trim()) {
       const foundProduct = products.find(
-        product => 
-          product.sku === code || 
-          product.barcode === code || 
+        product =>
+          product.sku === code ||
+          product.barcode === code ||
           product.name.toLowerCase().includes(code.toLowerCase())
       );
 
@@ -175,7 +177,7 @@ const Checkout = () => {
 
   const addProductToCart = (product: Product) => {
     const existingItem = cart.find(item => item.id === product.id);
-    
+
     if (existingItem) {
       setCart(
         cart.map(item => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
@@ -265,13 +267,13 @@ const Checkout = () => {
 
     // Load items back to cart
     setCart(checkout.items);
-    
+
     // Remove from pending checkouts
     setPendingCheckouts(pendingCheckouts.filter(c => c.id !== id));
-    
+
     // Switch to current checkout tab
     setActiveTab('current');
-    
+
     toast({
       title: 'Checkout Loaded',
       description: `Checkout #${id} has been loaded back to cart.`,

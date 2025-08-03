@@ -215,10 +215,22 @@ const convertPrivilegesToNewFormat = (orgEmployeeRoles: any): UserPrivileges => 
     'project_users:view_project_users': { module: 'project_users', action: 'view_project_users' },
     'project_users:add_project_users': { module: 'project_users', action: 'add_project_users' },
     'project_users:edit_project_users': { module: 'project_users', action: 'edit_project_users' },
-    'project_users:delete_project_users': { module: 'project_users', action: 'delete_project_users' },
-    'project_users:view_project_user_details': { module: 'project_users', action: 'view_project_user_details' },
-    'project_users:manage_project_user_roles': { module: 'project_users', action: 'manage_project_user_roles' },
-    'project_users:view_project_user_activity': { module: 'project_users', action: 'view_project_user_activity' },
+    'project_users:delete_project_users': {
+      module: 'project_users',
+      action: 'delete_project_users',
+    },
+    'project_users:view_project_user_details': {
+      module: 'project_users',
+      action: 'view_project_user_details',
+    },
+    'project_users:manage_project_user_roles': {
+      module: 'project_users',
+      action: 'manage_project_user_roles',
+    },
+    'project_users:view_project_user_activity': {
+      module: 'project_users',
+      action: 'view_project_user_activity',
+    },
 
     // Shops Module
     'shops:access': { module: 'shops', action: 'access' },

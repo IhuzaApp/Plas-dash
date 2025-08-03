@@ -1,5 +1,5 @@
 query getPOSTransactions($shop_id: uuid = "") {
-  shopCheckouts(where: {shop_id: {_eq: $shop_id}}) {
+  shopCheckouts(where: { shop_id: { _eq: $shop_id } }) {
     Processed_By
     ProcessedBy {
       Address

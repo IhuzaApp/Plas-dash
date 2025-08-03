@@ -64,12 +64,14 @@ const OrderDetailDialog = ({ open, onOpenChange, order }: OrderDetailDialogProps
   };
 
   // Use provided values from order if available, otherwise calculate
-  const subtotal = order.subtotal || order.items.reduce((sum, item) => {
-    // Extract numeric value from formatted price string
-    const priceMatch = item.price.match(/[\d,]+/);
-    const price = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0;
-    return sum + price * item.quantity;
-  }, 0);
+  const subtotal =
+    order.subtotal ||
+    order.items.reduce((sum, item) => {
+      // Extract numeric value from formatted price string
+      const priceMatch = item.price.match(/[\d,]+/);
+      const price = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : 0;
+      return sum + price * item.quantity;
+    }, 0);
 
   const tax = order.tax || '0';
 

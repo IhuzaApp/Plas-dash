@@ -124,7 +124,7 @@ const Shops = () => {
   const handleDisableShop = (shopId: string, currentStatus: boolean) => {
     const newStatus = !currentStatus;
     const action = newStatus ? 'enable' : 'disable';
-    
+
     if (confirm(`Are you sure you want to ${action} this shop?`)) {
       disableShopMutation.mutate({ shopId, isActive: newStatus });
     }
@@ -273,9 +273,16 @@ const Shops = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="h-10 w-10 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted" title={shop.name}>
+                        <div
+                          className="h-10 w-10 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted"
+                          title={shop.name}
+                        >
                           {shop.logo ? (
-                            <img src={shop.logo} alt={`${shop.name} logo`} className="h-full w-full object-contain" />
+                            <img
+                              src={shop.logo}
+                              alt={`${shop.name} logo`}
+                              className="h-full w-full object-contain"
+                            />
                           ) : (
                             <Store className="h-5 w-5 text-muted-foreground" />
                           )}
@@ -425,10 +432,7 @@ const Shops = () => {
         </Card>
       </div>
 
-      <AddShopDialog
-        isOpen={isAddShopDialogOpen}
-        onClose={() => setIsAddShopDialogOpen(false)}
-      />
+      <AddShopDialog isOpen={isAddShopDialogOpen} onClose={() => setIsAddShopDialogOpen(false)} />
     </AdminLayout>
   );
 };
