@@ -209,6 +209,17 @@ const convertPrivilegesToNewFormat = (orgEmployeeRoles: any): UserPrivileges => 
     'users:manage_user_roles': { module: 'users', action: 'manage_user_roles' },
     'users:view_user_activity': { module: 'users', action: 'view_user_activity' },
 
+    // Project Users Module
+    'project_users:access': { module: 'project_users', action: 'access' },
+    'project_users:view': { module: 'project_users', action: 'access' },
+    'project_users:view_project_users': { module: 'project_users', action: 'view_project_users' },
+    'project_users:add_project_users': { module: 'project_users', action: 'add_project_users' },
+    'project_users:edit_project_users': { module: 'project_users', action: 'edit_project_users' },
+    'project_users:delete_project_users': { module: 'project_users', action: 'delete_project_users' },
+    'project_users:view_project_user_details': { module: 'project_users', action: 'view_project_user_details' },
+    'project_users:manage_project_user_roles': { module: 'project_users', action: 'manage_project_user_roles' },
+    'project_users:view_project_user_activity': { module: 'project_users', action: 'view_project_user_activity' },
+
     // Shops Module
     'shops:access': { module: 'shops', action: 'access' },
     'shops:view': { module: 'shops', action: 'access' },
@@ -317,6 +328,34 @@ const convertPrivilegesToNewFormat = (orgEmployeeRoles: any): UserPrivileges => 
       module: 'delivery_settings',
       action: 'configure_delivery_times',
     },
+
+    // Pages Module
+    'pages:access': { module: 'pages', action: 'access' },
+    'pages:view_pages': { module: 'pages', action: 'view_pages' },
+    'pages:access_project_users': { module: 'pages', action: 'access_project_users' },
+    'pages:access_orders': { module: 'pages', action: 'access_orders' },
+    'pages:access_shops': { module: 'pages', action: 'access_shops' },
+    'pages:access_products': { module: 'pages', action: 'access_products' },
+    'pages:access_users': { module: 'pages', action: 'access_users' },
+    'pages:access_shoppers': { module: 'pages', action: 'access_shoppers' },
+    'pages:access_settings': { module: 'pages', action: 'access_settings' },
+    'pages:access_refunds': { module: 'pages', action: 'access_refunds' },
+    'pages:access_tickets': { module: 'pages', action: 'access_tickets' },
+    'pages:access_help': { module: 'pages', action: 'access_help' },
+    'pages:access_wallet': { module: 'pages', action: 'access_wallet' },
+    'pages:access_promotions': { module: 'pages', action: 'access_promotions' },
+    'pages:access_delivery_settings': { module: 'pages', action: 'access_delivery_settings' },
+    'pages:access_dashboard': { module: 'pages', action: 'access_dashboard' },
+    'pages:access_pos': { module: 'pages', action: 'access_pos' },
+    'pages:access_checkout': { module: 'pages', action: 'access_checkout' },
+    'pages:access_staff_management': { module: 'pages', action: 'access_staff_management' },
+    'pages:access_inventory': { module: 'pages', action: 'access_inventory' },
+    'pages:access_transactions': { module: 'pages', action: 'access_transactions' },
+    'pages:access_discounts': { module: 'pages', action: 'access_discounts' },
+    'pages:access_company_dashboard': { module: 'pages', action: 'access_company_dashboard' },
+    'pages:access_shop_dashboard': { module: 'pages', action: 'access_shop_dashboard' },
+    'pages:access_financial_overview': { module: 'pages', action: 'access_financial_overview' },
+    'pages:access_pos_terminal': { module: 'pages', action: 'access_pos_terminal' },
 
     // Legacy mappings for backward compatibility
     'customers:create': { module: 'users', action: 'add_users' },

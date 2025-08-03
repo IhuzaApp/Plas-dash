@@ -1,12 +1,12 @@
 'use client';
 
-import { ProtectedProjectRoute } from '@/components/auth/ProtectedProjectRoute';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import ProjectUsers from '@/components/pages/ProjectUsers';
 
 export default function ProjectUsersPage() {
   return (
-    <ProtectedProjectRoute requiredPrivilege="project_users">
+    <ProtectedRoute requiredPrivilege="project_users">
       <ProjectUsers />
-    </ProtectedProjectRoute>
+    </ProtectedRoute>
   );
 } 
