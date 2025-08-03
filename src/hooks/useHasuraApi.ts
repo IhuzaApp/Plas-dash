@@ -108,6 +108,10 @@ interface ShopProduct {
   quantity: number;
   measurement_unit: string;
   image: string;
+  barcode?: string;
+  sku?: string;
+  supplier?: string;
+  reorder_point?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
