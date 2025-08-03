@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Phone, QrCode, Copy, Check } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Phone, QrCode, Copy, Check } from 'lucide-react';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import QRCode from 'qrcode';
@@ -49,16 +49,16 @@ export default function MomoPaymentDialog({
         margin: 2,
         color: {
           dark: '#000000',
-          light: '#FFFFFF'
+          light: '#FFFFFF',
         },
-        errorCorrectionLevel: 'M'
+        errorCorrectionLevel: 'M',
       })
-      .then(url => {
-        setQrCodeDataUrl(url);
-      })
-      .catch(err => {
-        console.error('Error generating QR code:', err);
-      });
+        .then(url => {
+          setQrCodeDataUrl(url);
+        })
+        .catch(err => {
+          console.error('Error generating QR code:', err);
+        });
     }
   }, [isOpen, ussdCode]);
 
@@ -76,9 +76,7 @@ export default function MomoPaymentDialog({
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold">
-            Mobile Money Payment
-          </DialogTitle>
+          <DialogTitle className="text-center text-2xl font-bold">Mobile Money Payment</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -89,9 +87,7 @@ export default function MomoPaymentDialog({
               <div className="text-3xl font-bold text-black">
                 {formatCurrencyWithConfig(total, systemConfig)}
               </div>
-              <div className="text-sm text-gray-500 mt-1">
-                Transaction ID: {transactionId}
-              </div>
+              <div className="text-sm text-gray-500 mt-1">Transaction ID: {transactionId}</div>
             </CardContent>
           </Card>
 
@@ -100,9 +96,9 @@ export default function MomoPaymentDialog({
             <div className="bg-gray-100 p-6 rounded-lg border-2 border-dashed border-gray-300">
               {qrCodeDataUrl ? (
                 <div className="space-y-4">
-                  <img 
-                    src={qrCodeDataUrl} 
-                    alt="MOMO Payment QR Code" 
+                  <img
+                    src={qrCodeDataUrl}
+                    alt="MOMO Payment QR Code"
                     className="mx-auto w-40 h-40"
                   />
                   <p className="text-sm text-gray-600">
@@ -112,9 +108,7 @@ export default function MomoPaymentDialog({
               ) : (
                 <div className="space-y-4">
                   <QrCode className="h-40 w-40 mx-auto text-gray-400" />
-                  <p className="text-sm text-gray-600">
-                    Generating QR code...
-                  </p>
+                  <p className="text-sm text-gray-600">Generating QR code...</p>
                 </div>
               )}
             </div>
@@ -132,25 +126,19 @@ export default function MomoPaymentDialog({
                   MOMO
                 </Badge>
               </div>
-              
+
               <div className="mt-3 p-3 bg-white rounded border border-gray-300">
-                <div className="font-mono text-lg text-center text-black font-bold">
-                  {ussdCode}
-                </div>
+                <div className="font-mono text-lg text-center text-black font-bold">{ussdCode}</div>
               </div>
-
-
             </CardContent>
           </Card>
 
           <Separator />
 
           {/* Footer Note */}
-          <div className="text-center text-xs text-gray-500">
-            Review payment details above
-          </div>
+          <div className="text-center text-xs text-gray-500">Review payment details above</div>
         </div>
       </DialogContent>
     </Dialog>
   );
-} 
+}

@@ -37,13 +37,14 @@ const ProjectUsers = () => {
   const { data, isLoading, isError, error, refetch } = useProjectUsers();
 
   // Filter users based on search term
-  const filteredUsers = data?.ProjectUsers?.filter(
-    (user: ProjectUser) =>
-      searchTerm === '' ||
-      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredUsers =
+    data?.ProjectUsers?.filter(
+      (user: ProjectUser) =>
+        searchTerm === '' ||
+        user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   // Calculate pagination
   const totalItems = filteredUsers.length;
@@ -125,9 +126,7 @@ const ProjectUsers = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Project Users</h1>
-            <p className="text-muted-foreground">
-              Manage project users and their permissions
-            </p>
+            <p className="text-muted-foreground">Manage project users and their permissions</p>
           </div>
           {hasAction('project_users', 'add_project_users') && (
             <Button onClick={handleAddUser}>
@@ -147,7 +146,7 @@ const ProjectUsers = () => {
                   <Input
                     placeholder="Search users..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                     className="pl-8 w-64"
                   />
                 </div>
@@ -176,11 +175,7 @@ const ProjectUsers = () => {
                         <User className="h-8 w-8 text-muted-foreground" />
                         <p className="text-muted-foreground">No project users found</p>
                         {searchTerm && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSearchTerm('')}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => setSearchTerm('')}>
                             Clear search
                           </Button>
                         )}
@@ -188,7 +183,7 @@ const ProjectUsers = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  currentUsers.map((user) => (
+                  currentUsers.map(user => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
@@ -197,9 +192,7 @@ const ProjectUsers = () => {
                           </div>
                           <div>
                             <p className="font-medium">{user.username}</p>
-                            <p className="text-sm text-muted-foreground">
-                              ID: {user.MembershipId}
-                            </p>
+                            <p className="text-sm text-muted-foreground">ID: {user.MembershipId}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -213,16 +206,12 @@ const ProjectUsers = () => {
                         <Badge variant="outline">{user.role || 'No Role'}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={user.is_active ? 'default' : 'secondary'}
-                        >
+                        <Badge variant={user.is_active ? 'default' : 'secondary'}>
                           {user.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={user.TwoAuth_enabled ? 'default' : 'outline'}
-                        >
+                        <Badge variant={user.TwoAuth_enabled ? 'default' : 'outline'}>
                           {user.TwoAuth_enabled ? 'Enabled' : 'Disabled'}
                         </Badge>
                       </TableCell>
@@ -233,17 +222,11 @@ const ProjectUsers = () => {
                           <span className="text-muted-foreground">Never</span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        {format(new Date(user.created_at), 'MMM dd, yyyy')}
-                      </TableCell>
+                      <TableCell>{format(new Date(user.created_at), 'MMM dd, yyyy')}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
                           {hasAction('project_users', 'edit_project_users') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditUser(user)}
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
                               <Edit className="h-4 w-4" />
                             </Button>
                           )}
@@ -269,8 +252,7 @@ const ProjectUsers = () => {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4">
                 <div className="text-sm text-muted-foreground">
-                  Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of{' '}
-                  {totalItems} users
+                  Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} users
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -319,4 +301,4 @@ const ProjectUsers = () => {
   );
 };
 
-export default ProjectUsers; 
+export default ProjectUsers;

@@ -78,10 +78,7 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                         {product.measurement_unit || 'unit'}
                       </p>
                       <p className="text-sm font-semibold text-primary">
-                        {formatCurrencyWithConfig(
-                          parseFloat(product.price || '0'),
-                          systemConfig
-                        )}
+                        {formatCurrencyWithConfig(parseFloat(product.price || '0'), systemConfig)}
                       </p>
                     </div>
                     <Button size="sm" className="w-full bg-black text-white hover:bg-gray-800">

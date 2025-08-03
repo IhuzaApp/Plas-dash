@@ -267,7 +267,6 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            
             {!shopId && (
               <FormField
                 control={form.control}
@@ -306,7 +305,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                       <div className="relative">
                         <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
                           {imagePreview ? (
-                            <img src={imagePreview} alt="Product preview" className="h-full w-full object-contain" />
+                            <img
+                              src={imagePreview}
+                              alt="Product preview"
+                              className="h-full w-full object-contain"
+                            />
                           ) : (
                             <ImageIcon className="h-10 w-10 text-muted-foreground" />
                           )}
@@ -326,10 +329,10 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                       </div>
                       <div className="space-y-2 flex-1">
                         <div className="flex items-center gap-2">
-                          <Input 
-                            id="product-image" 
-                            type="file" 
-                            accept="image/*" 
+                          <Input
+                            id="product-image"
+                            type="file"
+                            accept="image/*"
                             onChange={handleImageChange}
                             className="flex-1"
                           />
@@ -559,7 +562,6 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
               )}
             </div>
 
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
@@ -677,7 +679,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>

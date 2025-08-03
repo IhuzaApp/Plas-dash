@@ -40,11 +40,11 @@ export const useShopSettings = () => {
       if (!session?.shop_id) {
         throw new Error('No shop ID available');
       }
-      
+
       return hasuraRequest(GET_SHOP_BY_ID_FOR_SETTINGS, { shop_id: session.shop_id });
     },
     enabled: !!session?.shop_id && hasModuleAccess('settings'),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
-}; 
+};

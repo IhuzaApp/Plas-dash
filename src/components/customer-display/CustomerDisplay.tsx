@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Store } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ShoppingCart, Store } from 'lucide-react';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 
@@ -70,7 +70,9 @@ export default function CustomerDisplay({
                   <div className="text-center py-20">
                     <ShoppingCart className="h-32 w-32 text-gray-300 mx-auto mb-8" />
                     <p className="text-3xl text-gray-500">Your cart is empty</p>
-                    <p className="text-xl text-gray-400 mt-3">Items will appear here as they are scanned</p>
+                    <p className="text-xl text-gray-400 mt-3">
+                      Items will appear here as they are scanned
+                    </p>
                   </div>
                 ) : (
                   <>
@@ -84,7 +86,10 @@ export default function CustomerDisplay({
                           <div className="flex-1">
                             <h3 className="text-2xl font-semibold text-black mb-2">{item.name}</h3>
                             <div className="flex items-center gap-4">
-                              <Badge variant="outline" className="text-base border-black text-black px-3 py-1">
+                              <Badge
+                                variant="outline"
+                                className="text-base border-black text-black px-3 py-1"
+                              >
                                 {item.category || 'General'}
                               </Badge>
                               <span className="text-xl text-gray-700">
@@ -108,26 +113,34 @@ export default function CustomerDisplay({
                     <div className="space-y-6">
                       <div className="flex justify-between items-center text-2xl">
                         <span className="text-gray-700">Subtotal:</span>
-                        <span className="font-semibold">{formatCurrencyWithConfig(subtotal, systemConfig)}</span>
+                        <span className="font-semibold">
+                          {formatCurrencyWithConfig(subtotal, systemConfig)}
+                        </span>
                       </div>
 
                       {discount > 0 && (
                         <div className="flex justify-between items-center text-2xl text-green-600">
                           <span>Discount ({discount}%):</span>
-                          <span className="font-semibold">-{formatCurrencyWithConfig(discountAmount, systemConfig)}</span>
+                          <span className="font-semibold">
+                            -{formatCurrencyWithConfig(discountAmount, systemConfig)}
+                          </span>
                         </div>
                       )}
 
                       <div className="flex justify-between items-center text-2xl">
                         <span className="text-gray-700">Tax:</span>
-                        <span className="font-semibold">{formatCurrencyWithConfig(tax, systemConfig)}</span>
+                        <span className="font-semibold">
+                          {formatCurrencyWithConfig(tax, systemConfig)}
+                        </span>
                       </div>
 
                       <Separator />
 
                       <div className="flex justify-between items-center text-4xl font-bold bg-gray-100 p-6 rounded-xl border-2 border-black">
                         <span className="text-black">Total:</span>
-                        <span className="text-black">{formatCurrencyWithConfig(total, systemConfig)}</span>
+                        <span className="text-black">
+                          {formatCurrencyWithConfig(total, systemConfig)}
+                        </span>
                       </div>
                     </div>
                   </>
@@ -154,19 +167,21 @@ export default function CustomerDisplay({
                         <span className="text-gray-700 text-lg">Payment Method:</span>
                         <span className="font-medium text-black text-lg">
                           {paymentMethod
-                            ? paymentMethod === "cash"
-                              ? "Cash"
-                              : paymentMethod === "card"
-                                ? "Credit/Debit Card"
-                                : paymentMethod === "momo"
-                                  ? "Mobile Money"
-                                  : "Not Selected"
-                            : "Pending Selection"}
+                            ? paymentMethod === 'cash'
+                              ? 'Cash'
+                              : paymentMethod === 'card'
+                                ? 'Credit/Debit Card'
+                                : paymentMethod === 'momo'
+                                  ? 'Mobile Money'
+                                  : 'Not Selected'
+                            : 'Pending Selection'}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-700 text-lg">Transaction ID:</span>
-                        <span className="font-mono text-black text-lg">#TXN-{Date.now().toString().slice(-6)}</span>
+                        <span className="font-mono text-black text-lg">
+                          #TXN-{Date.now().toString().slice(-6)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-700 text-lg">Date & Time:</span>
@@ -177,7 +192,9 @@ export default function CustomerDisplay({
 
                   {/* Tax Breakdown */}
                   <div className="space-y-4">
-                    <h3 className="text-xl font-semibold text-black border-b border-gray-300 pb-3">Tax Breakdown</h3>
+                    <h3 className="text-xl font-semibold text-black border-b border-gray-300 pb-3">
+                      Tax Breakdown
+                    </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-700 text-lg">Tax Rate:</span>
@@ -185,11 +202,15 @@ export default function CustomerDisplay({
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-700 text-lg">Taxable Amount:</span>
-                        <span className="text-black text-lg">{formatCurrencyWithConfig(subtotal - discountAmount, systemConfig)}</span>
+                        <span className="text-black text-lg">
+                          {formatCurrencyWithConfig(subtotal - discountAmount, systemConfig)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-700 text-lg">Tax Amount:</span>
-                        <span className="text-black text-lg">{formatCurrencyWithConfig(tax, systemConfig)}</span>
+                        <span className="text-black text-lg">
+                          {formatCurrencyWithConfig(tax, systemConfig)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -205,22 +226,30 @@ export default function CustomerDisplay({
                           <span className="text-gray-700">
                             Items ({cart.reduce((sum, item) => sum + item.quantity, 0)}):
                           </span>
-                          <span className="text-black">{formatCurrencyWithConfig(subtotal, systemConfig)}</span>
+                          <span className="text-black">
+                            {formatCurrencyWithConfig(subtotal, systemConfig)}
+                          </span>
                         </div>
                         {discount > 0 && (
                           <div className="flex justify-between text-xl">
                             <span className="text-gray-700">Discount ({discount}%):</span>
-                            <span className="text-black">-{formatCurrencyWithConfig(discountAmount, systemConfig)}</span>
+                            <span className="text-black">
+                              -{formatCurrencyWithConfig(discountAmount, systemConfig)}
+                            </span>
                           </div>
                         )}
                         <div className="flex justify-between text-xl">
                           <span className="text-gray-700">Tax (8%):</span>
-                          <span className="text-black">{formatCurrencyWithConfig(tax, systemConfig)}</span>
+                          <span className="text-black">
+                            {formatCurrencyWithConfig(tax, systemConfig)}
+                          </span>
                         </div>
                         <div className="border-t border-gray-400 pt-3 mt-3">
                           <div className="flex justify-between text-3xl font-bold">
                             <span className="text-black">Amount Due:</span>
-                            <span className="text-black">{formatCurrencyWithConfig(total, systemConfig)}</span>
+                            <span className="text-black">
+                              {formatCurrencyWithConfig(total, systemConfig)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -240,4 +269,4 @@ export default function CustomerDisplay({
       </div>
     </div>
   );
-} 
+}

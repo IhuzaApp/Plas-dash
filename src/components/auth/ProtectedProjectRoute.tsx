@@ -127,4 +127,4 @@ export function ProtectedProjectUI({
       {children}
     </ProtectedProjectRoute>
   );
-} 
+}

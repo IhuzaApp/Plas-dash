@@ -65,7 +65,7 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
     const checkoutTime = new Date(timestamp);
     const hoursDiff = (now.getTime() - checkoutTime.getTime()) / (1000 * 60 * 60);
     const hoursRemaining = Math.max(0, 24 - hoursDiff);
-    
+
     if (hoursRemaining < 1) {
       const minutesRemaining = Math.floor(hoursRemaining * 60);
       return `${minutesRemaining}m remaining`;
@@ -120,11 +120,7 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
                   >
                     <CheckCircle className="h-4 w-4 mr-1" /> Complete
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onLoadCheckout(checkout.id)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => onLoadCheckout(checkout.id)}>
                     <RotateCcw className="h-4 w-4 mr-1" /> Load
                   </Button>
                   {hasDeleteAction && (

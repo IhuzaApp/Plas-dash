@@ -32,11 +32,11 @@ export default function CustomerDisplayPage() {
       name: 'Shop Name',
       address: 'Shop Address',
       phone: 'Phone',
-      email: 'Email'
+      email: 'Email',
     },
     timestamp: new Date().toISOString(),
     paymentMethod: 'pending',
-    discount: 0
+    discount: 0,
   });
 
   const [isMomoPaymentDialogOpen, setIsMomoPaymentDialogOpen] = useState(false);
@@ -67,27 +67,29 @@ export default function CustomerDisplayPage() {
       const shopData = localStorage.getItem('customerDisplayShop');
       const paymentData = localStorage.getItem('customerDisplayPayment');
       const momoDialogState = localStorage.getItem('momoDialogState');
-      
+
       if (cartData) {
         const cart = JSON.parse(cartData);
         const shopDetails = shopData ? JSON.parse(shopData) : displayData.shopDetails;
-        const paymentInfo = paymentData ? JSON.parse(paymentData) : { paymentMethod: 'pending', discount: 0 };
-        
+        const paymentInfo = paymentData
+          ? JSON.parse(paymentData)
+          : { paymentMethod: 'pending', discount: 0 };
+
         const newPaymentMethod = paymentInfo.paymentMethod;
-        
+
         setDisplayData({
           cart,
           shopDetails,
           timestamp: new Date().toISOString(),
           paymentMethod: newPaymentMethod,
-          discount: paymentInfo.discount || 0
+          discount: paymentInfo.discount || 0,
         });
 
         // Check if payment method changed to MOMO and show dialog
         if (newPaymentMethod === 'momo' && previousPaymentMethod !== 'momo') {
           setIsMomoPaymentDialogOpen(true);
         }
-        
+
         // Update previous payment method
         setPreviousPaymentMethod(newPaymentMethod);
       }
@@ -113,7 +115,7 @@ export default function CustomerDisplayPage() {
   useEffect(() => {
     fetchDisplayData();
     const interval = setInterval(fetchDisplayData, 1000);
-    
+
     // Add event listener for direct communication
     const handleMomoDialogClose = (event: StorageEvent) => {
       if (event.key === 'momoDialogState' && event.newValue) {
@@ -136,7 +138,7 @@ export default function CustomerDisplayPage() {
 
     window.addEventListener('storage', handleMomoDialogClose);
     window.addEventListener('momoDialogClose', handleCustomMomoClose);
-    
+
     return () => {
       clearInterval(interval);
       window.removeEventListener('storage', handleMomoDialogClose);
@@ -221,4 +223,4 @@ export default function CustomerDisplayPage() {
       />
     </>
   );
-} 
+}

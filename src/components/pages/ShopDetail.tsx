@@ -144,7 +144,7 @@ const ShopDetail = () => {
 
   const { data, isLoading, isError, error, refetch } = useShopById(id);
   const shop = data?.Shops_by_pk;
-  
+
   const addProduct = useAddProduct();
   const updateProduct = useUpdateProduct();
   const { data: configData } = useSystemConfig();
@@ -455,7 +455,11 @@ const ShopDetail = () => {
         icon={
           <div className="h-12 w-12 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
             {shop.logo ? (
-              <img src={shop.logo} alt={`${shop.name} logo`} className="h-full w-full object-contain" />
+              <img
+                src={shop.logo}
+                alt={`${shop.name} logo`}
+                className="h-full w-full object-contain"
+              />
             ) : (
               <Store className="h-6 w-6 text-muted-foreground" />
             )}
@@ -612,9 +616,9 @@ const ShopDetail = () => {
                         <TableCell>
                           <div className="h-10 w-10 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
                             {product.image ? (
-                              <img 
-                                src={product.image} 
-                                alt={`${product.name} image`} 
+                              <img
+                                src={product.image}
+                                alt={`${product.name} image`}
                                 className="h-full w-full object-contain"
                                 title={product.name}
                               />
@@ -625,7 +629,9 @@ const ShopDetail = () => {
                         </TableCell>
                         <TableCell className="font-medium">{product.name}</TableCell>
                         <TableCell>{formatCurrencyWithConfig(product.price, config)}</TableCell>
-                        <TableCell>{formatCurrencyWithConfig(product.final_price, config)}</TableCell>
+                        <TableCell>
+                          {formatCurrencyWithConfig(product.final_price, config)}
+                        </TableCell>
                         <TableCell>{product.quantity}</TableCell>
                         <TableCell>{product.measurement_unit}</TableCell>
                         <TableCell>

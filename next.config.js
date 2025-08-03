@@ -26,7 +26,7 @@ const nextConfig = {
         aggregateTimeout: 300,
         poll: 1000,
       };
-      
+
       // Improve HMR stability
       config.devServer = {
         ...config.devServer,
