@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,6 +10,8 @@ import {
   ShoppingBag,
   Users,
   Clock,
+  MapPin,
+  Phone,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +24,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useBranchShops } from '@/hooks/useBranchShops';
+import { useShopSession } from '@/hooks/useShopSession';
+import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
+import { usePrivilege } from '@/hooks/usePrivilege';
+import AddBranchShopDialog from '@/components/shop/AddBranchShopDialog';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 interface StorePerformance {
   id: string;
@@ -31,67 +40,125 @@ interface StorePerformance {
   target: number;
   performance: number;
   trend: 'up' | 'down' | 'neutral';
+  address: string;
+  phone: string;
+  totalOrders: number;
+  averageRating: number;
 }
 
-const storePerformance: StorePerformance[] = [
-  {
-    id: '1',
-    name: 'Central Store',
-    location: 'Downtown',
-    revenue: 54280,
-    target: 50000,
-    performance: 108.6,
-    trend: 'up',
-  },
-  {
-    id: '2',
-    name: 'Westside Market',
-    location: 'West Hills',
-    revenue: 42150,
-    target: 45000,
-    performance: 93.7,
-    trend: 'down',
-  },
-  {
-    id: '3',
-    name: 'Northgate Shop',
-    location: 'North End',
-    revenue: 48900,
-    target: 47000,
-    performance: 104,
-    trend: 'up',
-  },
-  {
-    id: '4',
-    name: 'Eastside Express',
-    location: 'East Valley',
-    revenue: 37820,
-    target: 40000,
-    performance: 94.6,
-    trend: 'down',
-  },
-  {
-    id: '5',
-    name: 'South Point',
-    location: 'South District',
-    revenue: 41260,
-    target: 38000,
-    performance: 108.6,
-    trend: 'up',
-  },
-];
-
 const CompanyDashboard = () => {
-  const totalRevenue = storePerformance.reduce((sum, store) => sum + store.revenue, 0);
+  const { shopSession } = useShopSession();
+  const { orgEmployee } = useCurrentOrgEmployee();
+  const { hasAction } = usePrivilege();
+  const { 
+    branchShops, 
+    isLoading, 
+    error, 
+    totalRevenue, 
+    totalOrders, 
+    averagePerformance 
+  } = useBranchShops();
+
+  // State for Add Branch Dialog
+  const [isAddBranchDialogOpen, setIsAddBranchDialogOpen] = useState(false);
+
+  // Transform branch shops to store performance format
+  const storePerformance: StorePerformance[] = branchShops.map(shop => ({
+    id: shop.id,
+    name: shop.name,
+    location: shop.address,
+    revenue: shop.totalRevenue,
+    target: 50000, // Mock target for now
+    performance: shop.performance,
+    trend: shop.trend,
+    address: shop.address,
+    phone: shop.phone,
+    totalOrders: shop.totalOrders,
+    averageRating: shop.averageRating,
+  }));
+
   const totalTarget = storePerformance.reduce((sum, store) => sum + store.target, 0);
-  const overallPerformance = (totalRevenue / totalTarget) * 100;
+  const overallPerformance = totalTarget > 0 ? (totalRevenue / totalTarget) * 100 : 0;
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <PageHeader
+          title="Company Admin Dashboard"
+          description="Overview of all stores and company-wide metrics"
+          icon={<LayoutDashboard className="h-6 w-6" />}
+        />
+        <div className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-24 bg-muted rounded"></div>
+              ))}
+            </div>
+            <div className="h-64 bg-muted rounded"></div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <AdminLayout>
+        <PageHeader
+          title="Company Admin Dashboard"
+          description="Overview of all stores and company-wide metrics"
+          icon={<LayoutDashboard className="h-6 w-6" />}
+        />
+        <div className="p-6">
+          <div className="text-center">
+            <Store className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">Error Loading Dashboard</h3>
+            <p className="text-muted-foreground">{error}</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // Show message if no shop session
+  if (!shopSession) {
+    return (
+      <AdminLayout>
+        <PageHeader
+          title="Company Admin Dashboard"
+          description="Overview of all stores and company-wide metrics"
+          icon={<LayoutDashboard className="h-6 w-6" />}
+        />
+        <div className="p-6">
+          <div className="text-center">
+            <Store className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">No Shop Session</h3>
+            <p className="text-muted-foreground">
+              Please log into a shop to view the company dashboard.
+            </p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Company Admin Dashboard"
-        description="Overview of all stores and company-wide metrics"
+        title={`Company Admin Dashboard - ${shopSession.shopName}`}
+        description="Overview of branch stores and company-wide metrics"
         icon={<LayoutDashboard className="h-6 w-6" />}
+        actions={
+          hasAction('shops', 'add_shops') && (
+            <Button onClick={() => setIsAddBranchDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Branch Store
+            </Button>
+          )
+        }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -122,41 +189,45 @@ const CompanyDashboard = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Stores
+              Branch Stores
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground mt-1">All stores operational</p>
+            <div className="text-2xl font-bold">{branchShops.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {branchShops.length === 1 ? 'Branch store' : 'Branch stores'} active
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Staff</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">42</div>
-            <p className="text-xs text-muted-foreground mt-1">28 active today</p>
+            <div className="text-2xl font-bold">{totalOrders}</div>
+            <p className="text-xs text-muted-foreground mt-1">Across all branches</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Inventory Value
+              Average Performance
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$287,590</div>
-            <p className="text-xs text-muted-foreground mt-1">+$12,450 from last month</p>
+            <div className="text-2xl font-bold">{averagePerformance.toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {averagePerformance > 100 ? 'Above target' : 'Below target'}
+            </p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="stores">
         <TabsList className="mb-4">
-          <TabsTrigger value="stores">Store Performance</TabsTrigger>
+          <TabsTrigger value="stores">Branch Store Performance</TabsTrigger>
           <TabsTrigger value="inventory">Inventory Overview</TabsTrigger>
           <TabsTrigger value="staff">Staff Management</TabsTrigger>
         </TabsList>
@@ -164,51 +235,91 @@ const CompanyDashboard = () => {
         <TabsContent value="stores">
           <Card>
             <CardHeader>
-              <CardTitle>Store Performance</CardTitle>
-              <CardDescription>Monthly revenue vs targets for all locations</CardDescription>
+              <CardTitle>Branch Store Performance</CardTitle>
+              <CardDescription>Performance metrics for all branch stores under {shopSession.shopName}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Store</TableHead>
+                      <TableHead>Branch Store</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead className="text-right">Revenue</TableHead>
-                      <TableHead className="text-right">Target</TableHead>
+                      <TableHead className="text-right">Orders</TableHead>
+                      <TableHead className="text-right">Rating</TableHead>
                       <TableHead className="text-right">Performance</TableHead>
-                      <TableHead>Trend</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {storePerformance.map(store => (
-                      <TableRow key={store.id}>
-                        <TableCell className="font-medium">{store.name}</TableCell>
-                        <TableCell>{store.location}</TableCell>
-                        <TableCell className="text-right">
-                          ${store.revenue.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          ${store.target.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {store.performance.toFixed(1)}%
-                        </TableCell>
-                        <TableCell>
-                          {store.trend === 'up' ? (
-                            <div className="flex items-center text-green-500">
-                              <TrendingUp className="mr-1 h-4 w-4" /> Up
+                    {storePerformance.length > 0 ? (
+                      storePerformance.map(store => (
+                        <TableRow key={store.id}>
+                          <TableCell>
+                            <div className="font-medium">{store.name}</div>
+                            <div className="text-sm text-muted-foreground flex items-center">
+                              <Phone className="h-3 w-3 mr-1" />
+                              {store.phone}
                             </div>
-                          ) : store.trend === 'down' ? (
-                            <div className="flex items-center text-red-500">
-                              <TrendingDown className="mr-1 h-4 w-4" /> Down
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
+                              {store.location}
                             </div>
-                          ) : (
-                            <div className="flex items-center text-gray-500">— Stable</div>
-                          )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            ${store.revenue.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {store.totalOrders}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {store.averageRating > 0 ? (
+                              <div className="flex items-center justify-end">
+                                <span className="text-sm font-medium">
+                                  {store.averageRating.toFixed(1)}
+                                </span>
+                                <span className="text-xs text-muted-foreground ml-1">/5</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">No ratings</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {store.performance.toFixed(1)}%
+                          </TableCell>
+                          <TableCell>
+                            {store.trend === 'up' ? (
+                              <div className="flex items-center text-green-500">
+                                <TrendingUp className="mr-1 h-4 w-4" /> Up
+                              </div>
+                            ) : store.trend === 'down' ? (
+                              <div className="flex items-center text-red-500">
+                                <TrendingDown className="mr-1 h-4 w-4" /> Down
+                              </div>
+                            ) : (
+                              <div className="flex items-center text-gray-500">
+                                <Clock className="mr-1 h-4 w-4" /> Stable
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center">
+                          <div className="flex flex-col items-center">
+                            <Store className="h-8 w-8 text-muted-foreground mb-2" />
+                            <p className="text-muted-foreground">No branch stores found</p>
+                            <p className="text-sm text-muted-foreground">
+                              Branch stores will appear here when they are added to your company.
+                            </p>
+                          </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -432,6 +543,13 @@ const CompanyDashboard = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Add Branch Store Dialog */}
+              <AddBranchShopDialog
+          isOpen={isAddBranchDialogOpen}
+          onClose={() => setIsAddBranchDialogOpen(false)}
+          parentShopName={shopSession?.shopName || ''}
+        />
     </AdminLayout>
   );
 };
