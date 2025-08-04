@@ -53,9 +53,21 @@ const getDefaultImageForCategory = (categoryName: string): string => {
     return categoryImageMap[categoryNameLower];
   }
 
-  // Try partial matches
-  for (const [key, image] of Object.entries(categoryImageMap)) {
-    if (categoryNameLower.includes(key) || key.includes(categoryNameLower)) {
+  // Try partial matches with priority order
+  const partialMatches = [
+    { key: 'supermarket', image: '/Assets/images/superMarkets.jpg' },
+    { key: 'grocery', image: '/Assets/images/superMarkets.jpg' },
+    { key: 'organic', image: '/Assets/images/OrganicShop.jpg' },
+    { key: 'delicatessen', image: '/Assets/images/delicatessen.jpeg' },
+    { key: 'deli', image: '/Assets/images/delicatessen.jpeg' },
+    { key: 'butcher', image: '/Assets/images/Butcher.webp' },
+    { key: 'bakery', image: '/Assets/images/Bakery.webp' },
+    { key: 'pastry', image: '/Assets/images/Bakery.webp' },
+    { key: 'market', image: '/Assets/images/publicMarket.jpg' },
+  ];
+
+  for (const { key, image } of partialMatches) {
+    if (categoryNameLower.includes(key)) {
       return image;
     }
   }
