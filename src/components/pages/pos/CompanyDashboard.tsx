@@ -532,7 +532,7 @@ const CompanyDashboard = () => {
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium">Recent Staff Activity (Last 24 Hours)</h3>
+                      <h3 className="text-lg font-medium">Recent Staff Logins (Last 24 Hours)</h3>
                       <div className="text-sm text-muted-foreground">
                         {totalStaff} total staff • {activeStaff} active
                       </div>
@@ -553,13 +553,13 @@ const CompanyDashboard = () => {
                           </div>
                         ))
                       ) : (
-                        <div className="text-center py-8">
-                          <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                          <p className="text-muted-foreground">No recent activity</p>
-                          <p className="text-sm text-muted-foreground">
-                            Staff activity from the last 24 hours will appear here.
-                          </p>
-                        </div>
+                                                  <div className="text-center py-8">
+                            <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-muted-foreground">No recent logins</p>
+                            <p className="text-sm text-muted-foreground">
+                              Staff login activity from the last 24 hours will appear here.
+                            </p>
+                          </div>
                       )}
                     </div>
                   </div>
