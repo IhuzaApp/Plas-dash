@@ -520,6 +520,7 @@ export const CREATE_SHOP = `
     $tin: String
     $ssd: String
     $is_active: Boolean = true
+    $relatedTo: String
   ) {
     insert_Shops_one(
       object: {
@@ -536,6 +537,7 @@ export const CREATE_SHOP = `
         tin: $tin
         ssd: $ssd
         is_active: $is_active
+        relatedTo: $relatedTo
       }
     ) {
       id
@@ -552,6 +554,7 @@ export const CREATE_SHOP = `
       tin
       ssd
       is_active
+      relatedTo
       created_at
       updated_at
       Category {

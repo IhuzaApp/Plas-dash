@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
+import { BrowserMultiFormatReader, Result } from '@zxing/library';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -146,6 +147,14 @@ const Inventory = () => {
   const [scanType, setScanType] = useState<'barcode' | 'qrcode' | null>(null);
   const [selectedItemForScan, setSelectedItemForScan] = useState<string | null>(null);
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scannedCode, setScannedCode] = useState<string | null>(null);
+  const [manualInputMode, setManualInputMode] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  
+  // Refs for video element and code reader
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
 
   const filteredItems = items.filter(item => {
     return (
@@ -215,40 +224,124 @@ const Inventory = () => {
     toast.success('Template downloaded successfully');
   };
 
-  const startScanning = (itemId: string, type: 'barcode' | 'qrcode') => {
+  const startScanning = async (itemId: string, type: 'barcode' | 'qrcode') => {
     setSelectedItemForScan(itemId);
     setScanType(type);
     setIsScanning(true);
+    setScanError(null);
+    setScannedCode(null);
+    setManualInputMode(false);
+    setManualCode('');
     setIsScanDialogOpen(true);
 
-    // In a real application, this would activate the device camera
-    // For this demo, we'll simulate a scan after a short delay
-    setTimeout(() => {
-      const mockData =
-        type === 'barcode'
-          ? '5901234' + Math.floor(1000000 + Math.random() * 9000000).toString() // Mock barcode
-          : 'https://product-info.example.com/' +
-            Math.floor(10000 + Math.random() * 90000).toString(); // Mock QR code data
+    try {
+      // Initialize the code reader
+      codeReaderRef.current = new BrowserMultiFormatReader();
+      
+      // Get available video devices
+      const videoInputDevices = await codeReaderRef.current.listVideoInputDevices();
+      
+      if (videoInputDevices.length === 0) {
+        throw new Error('No camera devices found');
+      }
 
-      const updatedItems = items.map(item => {
-        if (item.id === itemId) {
-          return { ...item, barcode: type === 'barcode' ? mockData : mockData };
+      // Use the first available camera (usually the back camera on mobile)
+      const selectedDeviceId = videoInputDevices[0].deviceId;
+      
+      // Start scanning
+      await codeReaderRef.current.decodeFromVideoDevice(
+        selectedDeviceId,
+        videoRef.current!,
+        (result: Result | null, error: any) => {
+          if (result) {
+            // Successfully scanned a code
+            const scannedText = result.getText();
+            setScannedCode(scannedText);
+            
+            // Update the product with the scanned code
+            const updatedItems = items.map(item => {
+              if (item.id === itemId) {
+                return { ...item, barcode: scannedText };
+              }
+              return item;
+            });
+
+            setItems(updatedItems);
+            setIsScanning(false);
+            
+            // Stop the scanner
+            if (codeReaderRef.current) {
+              codeReaderRef.current.reset();
+            }
+
+            // Show success message and close dialog
+            setTimeout(() => {
+              setIsScanDialogOpen(false);
+              setSelectedItemForScan(null);
+              setScannedCode(null);
+              toast.success(
+                `${type === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
+              );
+            }, 1000);
+          }
+          
+          if (error && error.name !== 'NotFoundException') {
+            console.error('Scanning error:', error);
+            setScanError('Failed to scan. Please try again.');
+          }
         }
-        return item;
-      });
-
-      setItems(updatedItems);
+      );
+    } catch (error) {
+      console.error('Failed to start scanning:', error);
+      setScanError('Failed to access camera. You can manually enter the code below.');
       setIsScanning(false);
-
-      setTimeout(() => {
-        setIsScanDialogOpen(false);
-        setSelectedItemForScan(null);
-        toast.success(
-          `${type === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
-        );
-      }, 500);
-    }, 1500);
+      setManualInputMode(true);
+    }
   };
+
+  // Handle manual code input
+  const handleManualCodeSubmit = () => {
+    if (!manualCode.trim() || !selectedItemForScan) return;
+
+    const updatedItems = items.map(item => {
+      if (item.id === selectedItemForScan) {
+        return { ...item, barcode: manualCode.trim() };
+      }
+      return item;
+    });
+
+    setItems(updatedItems);
+    setScannedCode(manualCode.trim());
+    setManualInputMode(false);
+    setManualCode('');
+    
+    toast.success(
+      `${scanType === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
+    );
+  };
+
+  // Cleanup function to stop scanning when dialog closes
+  const stopScanning = () => {
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+      codeReaderRef.current = null;
+    }
+    setIsScanning(false);
+    setScanError(null);
+    setScannedCode(null);
+    setManualInputMode(false);
+    setManualCode('');
+    setSelectedItemForScan(null);
+  };
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (codeReaderRef.current) {
+        codeReaderRef.current.reset();
+      }
+    };
+  }, []);
 
   // New functions for edit dialog
   const openEditDialog = (item: InventoryItem) => {
@@ -646,8 +739,16 @@ const Inventory = () => {
       </AlertDialog>
 
       {/* Scanning Dialog */}
-      <Dialog open={isScanDialogOpen} onOpenChange={setIsScanDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      <Dialog 
+        open={isScanDialogOpen} 
+        onOpenChange={(open) => {
+          if (!open) {
+            stopScanning();
+          }
+          setIsScanDialogOpen(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Scanning {scanType === 'barcode' ? 'Barcode' : 'QR Code'}</DialogTitle>
             <DialogDescription>
@@ -659,24 +760,82 @@ const Inventory = () => {
           <div className="py-6">
             {isScanning ? (
               <div className="flex flex-col items-center justify-center gap-4">
-                <div className="w-full h-[200px] bg-muted flex items-center justify-center rounded-md border-2 border-dashed">
-                  <div className="animate-pulse flex flex-col items-center gap-2">
-                    {scanType === 'barcode' ? (
-                      <ScanBarcode className="h-12 w-12 text-muted-foreground" />
-                    ) : (
-                      <ScanQrCode className="h-12 w-12 text-muted-foreground" />
-                    )}
-                    <p className="text-sm text-muted-foreground">Scanning...</p>
+                <div className="relative w-full h-[300px] bg-black rounded-md overflow-hidden">
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    playsInline
+                    muted
+                  />
+                  {/* Scanning overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-48 h-48 border-2 border-white rounded-lg relative">
+                      <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-green-400"></div>
+                      <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-green-400"></div>
+                      <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-green-400"></div>
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-green-400"></div>
+                    </div>
                   </div>
                 </div>
-                <p className="text-sm text-center">
-                  Please hold steady while we scan the{' '}
-                  {scanType === 'barcode' ? 'barcode' : 'QR code'}
+                
+                {scanError && (
+                  <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md">
+                    {scanError}
+                  </div>
+                )}
+                
+                <p className="text-sm text-center text-muted-foreground">
+                  Position the {scanType === 'barcode' ? 'barcode' : 'QR code'} within the frame
+                </p>
+              </div>
+            ) : manualInputMode ? (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="w-full h-[200px] bg-blue-50 flex items-center justify-center rounded-md border-2 border-blue-200">
+                  <div className="flex flex-col items-center gap-2">
+                    <ScanBarcode className="h-12 w-12 text-blue-500" />
+                    <p className="text-sm text-blue-700 font-medium">Manual Input</p>
+                    <p className="text-xs text-blue-600 text-center">
+                      Enter the {scanType === 'barcode' ? 'barcode' : 'QR code'} manually
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="w-full space-y-2">
+                  <Input
+                    placeholder={`Enter ${scanType === 'barcode' ? 'barcode' : 'QR code'} number`}
+                    value={manualCode}
+                    onChange={(e) => setManualCode(e.target.value)}
+                    className="text-center font-mono"
+                  />
+                  <Button 
+                    onClick={handleManualCodeSubmit}
+                    disabled={!manualCode.trim()}
+                    className="w-full"
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Link Code to Product
+                  </Button>
+                </div>
+              </div>
+            ) : scannedCode ? (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="w-full h-[200px] bg-green-50 flex items-center justify-center rounded-md border-2 border-green-200">
+                  <div className="flex flex-col items-center gap-2">
+                    <Check className="h-12 w-12 text-green-500" />
+                    <p className="text-sm text-green-700 font-medium">Scan Successful!</p>
+                    <p className="text-xs text-green-600 font-mono bg-green-100 px-2 py-1 rounded">
+                      {scannedCode}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-center text-muted-foreground">
+                  Code has been linked to the product
                 </p>
               </div>
             ) : (
               <div className="flex items-center justify-center">
-                <p>Scan completed!</p>
+                <p>Initializing camera...</p>
               </div>
             )}
           </div>
@@ -684,11 +843,25 @@ const Inventory = () => {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsScanDialogOpen(false)}
+              onClick={() => {
+                stopScanning();
+                setIsScanDialogOpen(false);
+              }}
               disabled={isScanning}
             >
               Cancel
             </Button>
+            {scannedCode && (
+              <Button
+                onClick={() => {
+                  setIsScanDialogOpen(false);
+                  setScannedCode(null);
+                }}
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Done
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

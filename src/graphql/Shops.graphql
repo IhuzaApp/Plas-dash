@@ -12,6 +12,7 @@ query GetShops {
     operating_hours
     created_at
     updated_at
+    relatedTo
     is_active
     phone
     Orders {

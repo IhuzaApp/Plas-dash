@@ -64,9 +64,10 @@ const getDefaultImageForCategory = (categoryName: string): string => {
   return '/Assets/images/superMarkets.jpg';
 };
 
-interface AddShopDialogProps {
+interface AddBranchShopDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  parentShopName: string;
 }
 
 interface Category {
@@ -75,7 +76,7 @@ interface Category {
   is_active: boolean;
 }
 
-interface CreateShopFormData {
+interface CreateBranchShopFormData {
   name: string;
   description: string;
   category_id: string;
@@ -89,6 +90,7 @@ interface CreateShopFormData {
   tin: string;
   ssd: string;
   is_active: boolean;
+  relatedTo: string; // Required for branch shops
 }
 
 interface CreateShopMutationData {
@@ -105,19 +107,20 @@ interface CreateShopMutationData {
   tin?: string;
   ssd?: string;
   is_active: boolean;
-  relatedTo?: string;
+  relatedTo?: string; // Optional for branch shops
 }
 
-const AddShopDialog: React.FC<AddShopDialogProps> = ({ 
+const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({ 
   isOpen, 
-  onClose
+  onClose, 
+  parentShopName 
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<CreateShopFormData>({
+  const [formData, setFormData] = useState<CreateBranchShopFormData>({
     name: '',
     description: '',
     category_id: '',
@@ -143,6 +146,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
     tin: '',
     ssd: '',
     is_active: true,
+    relatedTo: parentShopName, // Always set to parent shop name for branch shops
   });
 
   // Fetch categories
@@ -152,22 +156,25 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
     error: categoriesError,
   } = useCategories();
 
-
+  console.log('=== ADD BRANCH SHOP DIALOG: CATEGORIES DEBUG ===');
+  console.log('Categories loading:', categoriesLoading);
+  console.log('Categories error:', categoriesError);
+  console.log('Categories data:', categoriesData);
 
   // Create shop mutation
   const createShopMutation = useMutation({
     mutationFn: async (data: CreateShopMutationData) => {
-      console.log('=== ADD SHOP DIALOG: MUTATION FUNCTION CALLED ===');
+      console.log('=== ADD BRANCH SHOP DIALOG: MUTATION FUNCTION CALLED ===');
       console.log('Mutation data:', data);
       console.log('CREATE_SHOP mutation:', CREATE_SHOP);
 
       try {
         const result = await hasuraRequest(CREATE_SHOP, data);
-        console.log('=== ADD SHOP DIALOG: MUTATION SUCCESS ===');
+        console.log('=== ADD BRANCH SHOP DIALOG: MUTATION SUCCESS ===');
         console.log('Mutation result:', result);
         return result;
       } catch (error: any) {
-        console.error('=== ADD SHOP DIALOG: MUTATION ERROR ===');
+        console.error('=== ADD BRANCH SHOP DIALOG: MUTATION ERROR ===');
         console.error('Mutation error:', error);
         console.error('Error details:', {
           message: error?.message,
@@ -179,23 +186,23 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
       }
     },
     onSuccess: data => {
-      console.log('=== ADD SHOP DIALOG: ON SUCCESS CALLED ===');
+      console.log('=== ADD BRANCH SHOP DIALOG: ON SUCCESS CALLED ===');
       console.log('Success data:', data);
       toast({
         title: 'Success',
-        description: 'Shop created successfully!',
+        description: 'Branch store created successfully!',
       });
       queryClient.invalidateQueries({ queryKey: ['shops'] });
       queryClient.invalidateQueries({ queryKey: ['branchShops'] });
       handleClose();
     },
     onError: (error: any) => {
-      console.error('=== ADD SHOP DIALOG: ON ERROR CALLED ===');
+      console.error('=== ADD BRANCH SHOP DIALOG: ON ERROR CALLED ===');
       console.error('Error in onError:', error);
       console.error('Error message:', error?.message);
       console.error('Error response:', error?.response);
 
-      let errorMessage = 'Failed to create shop. Please try again.';
+      let errorMessage = 'Failed to create branch store. Please try again.';
 
       if (error?.response?.data?.errors) {
         const graphqlErrors = error.response.data.errors;
@@ -213,7 +220,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
     },
   });
 
-  const handleInputChange = (field: keyof CreateShopFormData, value: any) => {
+  const handleInputChange = (field: keyof CreateBranchShopFormData, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -230,7 +237,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
           image: defaultImage,
         }));
 
-        console.log('=== ADD SHOP DIALOG: AUTO-ASSIGNED IMAGE ===');
+        console.log('=== ADD BRANCH SHOP DIALOG: AUTO-ASSIGNED IMAGE ===');
         console.log('Category:', selectedCategory.name);
         console.log('Default image:', defaultImage);
       }
@@ -283,22 +290,22 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('=== ADD SHOP DIALOG: SUBMIT STARTED ===');
+    console.log('=== ADD BRANCH SHOP DIALOG: SUBMIT STARTED ===');
     console.log('Form data:', formData);
     console.log('Image preview exists:', !!imagePreview);
 
     if (!formData.name.trim()) {
-      console.log('=== ADD SHOP DIALOG: VALIDATION ERROR - NAME REQUIRED ===');
+      console.log('=== ADD BRANCH SHOP DIALOG: VALIDATION ERROR - NAME REQUIRED ===');
       toast({
         title: 'Error',
-        description: 'Shop name is required.',
+        description: 'Branch store name is required.',
         variant: 'destructive',
       });
       return;
     }
 
     if (!formData.category_id) {
-      console.log('=== ADD SHOP DIALOG: VALIDATION ERROR - CATEGORY REQUIRED ===');
+      console.log('=== ADD BRANCH SHOP DIALOG: VALIDATION ERROR - CATEGORY REQUIRED ===');
       toast({
         title: 'Error',
         description: 'Please select a category.',
@@ -312,7 +319,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
       logo: imagePreview,
     };
 
-    console.log('=== ADD SHOP DIALOG: SUBMITTING DATA ===');
+    console.log('=== ADD BRANCH SHOP DIALOG: SUBMITTING DATA ===');
     console.log('Submit data:', submitData);
     console.log('Operating hours type:', typeof submitData.operating_hours);
     console.log('Operating hours value:', submitData.operating_hours);
@@ -321,11 +328,11 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
       // Try to parse operating hours to ensure it's valid JSON
       if (typeof submitData.operating_hours === 'string') {
         const parsedHours = JSON.parse(submitData.operating_hours);
-        console.log('=== ADD SHOP DIALOG: OPERATING HOURS PARSED SUCCESSFULLY ===');
+        console.log('=== ADD BRANCH SHOP DIALOG: OPERATING HOURS PARSED SUCCESSFULLY ===');
         console.log('Parsed operating hours:', parsedHours);
       }
     } catch (error) {
-      console.error('=== ADD SHOP DIALOG: OPERATING HOURS PARSE ERROR ===');
+      console.error('=== ADD BRANCH SHOP DIALOG: OPERATING HOURS PARSE ERROR ===');
       console.error('Error parsing operating hours:', error);
       toast({
         title: 'Error',
@@ -350,9 +357,10 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
       tin: submitData.tin?.trim() || undefined,
       ssd: submitData.ssd?.trim() || undefined,
       is_active: submitData.is_active,
+      relatedTo: submitData.relatedTo, // Always required for branch shops
     };
 
-    console.log('=== ADD SHOP DIALOG: CLEANED DATA ===');
+    console.log('=== ADD BRANCH SHOP DIALOG: CLEANED DATA ===');
     console.log('Cleaned data:', cleanedData);
 
     createShopMutation.mutate(cleanedData as CreateShopMutationData);
@@ -385,6 +393,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
       tin: '',
       ssd: '',
       is_active: true,
+      relatedTo: parentShopName,
     });
     setImageFile(null);
     setImagePreview(null);
@@ -402,17 +411,26 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store className="h-5 w-5" />
-            Add New Shop
+            Add New Branch Store
           </DialogTitle>
           <DialogDescription>
-            Create a new shop with all the necessary details.
+            Create a new branch store under {parentShopName}. This branch will be linked to the parent store.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Parent Shop Info */}
+          <div className="bg-muted p-4 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Store className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Parent Store</span>
+            </div>
+            <p className="text-sm text-muted-foreground">{parentShopName}</p>
+          </div>
+
           {/* Shop Logo */}
           <div className="space-y-4">
-            <Label>Shop Logo</Label>
+            <Label>Branch Store Logo</Label>
             <div className="flex items-start gap-4">
               <div className="relative">
                 <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
@@ -471,12 +489,12 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Shop Name *</Label>
+              <Label htmlFor="name">Branch Store Name *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={e => handleInputChange('name', e.target.value)}
-                placeholder="Enter shop name"
+                placeholder="Enter branch store name"
                 required
               />
             </div>
@@ -517,7 +535,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
               id="description"
               value={formData.description}
               onChange={e => handleInputChange('description', e.target.value)}
-              placeholder="Enter shop description"
+              placeholder="Enter branch store description"
               rows={3}
             />
           </div>
@@ -539,7 +557,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
                 id="address"
                 value={formData.address}
                 onChange={e => handleInputChange('address', e.target.value)}
-                placeholder="Enter shop address"
+                placeholder="Enter branch store address"
               />
             </div>
           </div>
@@ -620,7 +638,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
 }`}
               </div>
               <p className="text-xs">
-                You can edit the times or use "Closed" for days when the shop is not open.
+                You can edit the times or use "Closed" for days when the branch is not open.
               </p>
             </div>
           </div>
@@ -628,8 +646,8 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
           {/* Status */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium">Shop Status</h3>
-              <p className="text-sm text-muted-foreground">Enable or disable the shop</p>
+              <h3 className="text-sm font-medium">Branch Store Status</h3>
+              <p className="text-sm text-muted-foreground">Enable or disable the branch store</p>
             </div>
             <Switch
               checked={formData.is_active}
@@ -645,10 +663,10 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
               {createShopMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Creating Branch...
                 </>
               ) : (
-                'Create Shop'
+                'Create Branch Store'
               )}
             </Button>
           </DialogFooter>
@@ -658,4 +676,4 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
   );
 };
 
-export default AddShopDialog;
+export default AddBranchShopDialog; 
