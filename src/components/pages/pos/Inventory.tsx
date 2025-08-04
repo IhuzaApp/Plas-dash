@@ -55,77 +55,69 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useSystemConfig } from '@/hooks/useHasuraApi';
+import { useSystemConfig, useProductsByShop } from '@/hooks/useHasuraApi';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import { useShopSession } from '@/hooks/useShopSession';
 
 interface InventoryItem {
   id: string;
   name: string;
-  barcode: string;
-  category: string;
+  barcode?: string;
+  category?: string;
   price: number;
   stock: number;
   status: 'in-stock' | 'low-stock' | 'out-of-stock';
+  description?: string;
+  measurement_unit?: string;
+  sku?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 const Inventory = () => {
   const { data: systemConfig } = useSystemConfig();
-  const [items, setItems] = useState<InventoryItem[]>([
-    {
-      id: '1',
-      name: 'Milk 1L',
-      barcode: '5901234123457',
-      category: 'Dairy',
-      price: 2.99,
-      stock: 25,
-      status: 'in-stock',
-    },
-    {
-      id: '2',
-      name: 'Bread',
-      barcode: '4003994155486',
-      category: 'Bakery',
-      price: 1.5,
-      stock: 12,
-      status: 'in-stock',
-    },
-    {
-      id: '3',
-      name: 'Eggs (12)',
-      barcode: '0012000811331',
-      category: 'Dairy',
-      price: 3.49,
-      stock: 6,
-      status: 'low-stock',
-    },
-    {
-      id: '4',
-      name: 'Apples (1kg)',
-      barcode: '7622210101266',
-      category: 'Produce',
-      price: 4.99,
-      stock: 18,
-      status: 'in-stock',
-    },
-    {
-      id: '5',
-      name: 'Chicken Breast (500g)',
-      barcode: '5449000000996',
-      category: 'Meat',
-      price: 6.75,
-      stock: 0,
-      status: 'out-of-stock',
-    },
-    {
-      id: '6',
-      name: 'Rice (2kg)',
-      barcode: '7318690102205',
-      category: 'Grocery',
-      price: 5.25,
-      stock: 8,
-      status: 'low-stock',
-    },
-  ]);
+  const { shopSession } = useShopSession();
+  
+  // Fetch products for the current shop
+  const { data: productsData, isLoading: productsLoading } = useProductsByShop(
+    shopSession?.shopId || ''
+  );
+  
+  // Transform API data to match our interface
+  const transformProductsToInventoryItems = (products: any[]): InventoryItem[] => {
+    return products.map(product => ({
+      id: product.id,
+      name: product.name,
+      barcode: product.barcode || '',
+      category: product.category || 'Uncategorized',
+      price: parseFloat(product.price) || 0,
+      stock: parseInt(product.quantity) || 0,
+      status: getStockStatus(parseInt(product.quantity) || 0),
+      description: product.description || '',
+      measurement_unit: product.measurement_unit || 'unit',
+      sku: product.sku || '',
+      is_active: product.is_active || false,
+      created_at: product.created_at || new Date().toISOString(),
+      updated_at: product.updated_at || new Date().toISOString(),
+    }));
+  };
+
+  const getStockStatus = (quantity: number): 'in-stock' | 'low-stock' | 'out-of-stock' => {
+    if (quantity === 0) return 'out-of-stock';
+    if (quantity <= 5) return 'low-stock';
+    return 'in-stock';
+  };
+
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  
+  // Update items when products data changes
+  React.useEffect(() => {
+    if (productsData?.Products) {
+      const transformedItems = transformProductsToInventoryItems(productsData.Products);
+      setItems(transformedItems);
+    }
+  }, [productsData]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState<string | undefined>(undefined);
@@ -159,7 +151,7 @@ const Inventory = () => {
     return (
       (searchTerm === '' ||
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.barcode.includes(searchTerm)) &&
+        (item.barcode && item.barcode.includes(searchTerm))) &&
       (category === undefined || category === 'all' || item.category === category) &&
       (stockStatus === undefined || stockStatus === 'all' || item.status === stockStatus)
     );
@@ -178,7 +170,7 @@ const Inventory = () => {
     }
   };
 
-  const categories = Array.from(new Set(items.map(item => item.category)));
+  const categories = Array.from(new Set(items.map(item => item.category).filter(Boolean)));
 
   const handleAddProduct = (values: any) => {
     const newItem: InventoryItem = {
@@ -194,6 +186,12 @@ const Inventory = () => {
           : parseInt(values.stock) > 0
             ? 'low-stock'
             : 'out-of-stock',
+      description: values.description || '',
+      measurement_unit: values.measurement_unit || 'unit',
+      sku: values.sku || '',
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     setItems([...items, newItem]);
@@ -257,7 +255,7 @@ const Inventory = () => {
     setEditingItem(item);
     setEditFormData({
       name: item.name,
-      category: item.category,
+      category: item.category || '',
       price: item.price.toString(),
       stock: item.stock.toString(),
     });
@@ -332,10 +330,51 @@ const Inventory = () => {
 
   const { hasAction } = usePrivilege();
 
+  // Show loading state while fetching products
+  if (productsLoading) {
+    return (
+      <AdminLayout>
+        <PageHeader
+          title="POS Inventory"
+          description="Manage inventory levels and product information"
+          icon={<ShoppingBag className="h-6 w-6" />}
+        />
+        <div className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="h-64 bg-muted rounded"></div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // Show message if no shop session
+  if (!shopSession) {
+    return (
+      <AdminLayout>
+        <PageHeader
+          title="POS Inventory"
+          description="Manage inventory levels and product information"
+          icon={<ShoppingBag className="h-6 w-6" />}
+        />
+        <div className="p-6">
+          <div className="text-center">
+            <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">No Shop Session</h3>
+            <p className="text-muted-foreground">
+              Please log into a shop to view inventory.
+            </p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <PageHeader
-        title="POS Inventory"
+        title={`POS Inventory - ${shopSession.shopName}`}
         description="Manage inventory levels and product information"
         icon={<ShoppingBag className="h-6 w-6" />}
         actions={
@@ -425,8 +464,8 @@ const Inventory = () => {
                   filteredItems.map(item => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell className="font-mono text-sm">{item.barcode}</TableCell>
-                      <TableCell>{item.category}</TableCell>
+                      <TableCell className="font-mono text-sm">{item.barcode || '-'}</TableCell>
+                      <TableCell>{item.category || 'Uncategorized'}</TableCell>
                       <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
                       <TableCell className="text-right">{item.stock}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
