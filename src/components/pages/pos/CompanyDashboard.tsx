@@ -28,6 +28,7 @@ import { useBranchShops } from '@/hooks/useBranchShops';
 import { useShopSession } from '@/hooks/useShopSession';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import { useStaffManagement } from '@/hooks/useStaffManagement';
 import AddBranchShopDialog from '@/components/shop/AddBranchShopDialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -58,6 +59,15 @@ const CompanyDashboard = () => {
     totalOrders, 
     averagePerformance 
   } = useBranchShops();
+
+  const {
+    staffDistribution,
+    recentActivity,
+    totalStaff,
+    activeStaff,
+    isLoading: staffLoading,
+    error: staffError,
+  } = useStaffManagement();
 
   // State for Add Branch Dialog
   const [isAddBranchDialogOpen, setIsAddBranchDialogOpen] = useState(false);
@@ -161,7 +171,7 @@ const CompanyDashboard = () => {
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -207,6 +217,20 @@ const CompanyDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{totalOrders}</div>
             <p className="text-xs text-muted-foreground mt-1">Across all branches</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Staff
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalStaff}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {activeStaff} active • {totalStaff - activeStaff} inactive
+            </p>
           </CardContent>
         </Card>
 
@@ -448,97 +472,99 @@ const CompanyDashboard = () => {
               <CardDescription>Staff distribution by store and position</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border mb-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Store</TableHead>
-                      <TableHead className="text-right">Manager</TableHead>
-                      <TableHead className="text-right">Cashier</TableHead>
-                      <TableHead className="text-right">Stock Clerk</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">Central Store</TableCell>
-                      <TableCell className="text-right">1</TableCell>
-                      <TableCell className="text-right">4</TableCell>
-                      <TableCell className="text-right">3</TableCell>
-                      <TableCell className="text-right">8</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Westside Market</TableCell>
-                      <TableCell className="text-right">1</TableCell>
-                      <TableCell className="text-right">4</TableCell>
-                      <TableCell className="text-right">2</TableCell>
-                      <TableCell className="text-right">7</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Northgate Shop</TableCell>
-                      <TableCell className="text-right">1</TableCell>
-                      <TableCell className="text-right">5</TableCell>
-                      <TableCell className="text-right">3</TableCell>
-                      <TableCell className="text-right">9</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Eastside Express</TableCell>
-                      <TableCell className="text-right">1</TableCell>
-                      <TableCell className="text-right">3</TableCell>
-                      <TableCell className="text-right">3</TableCell>
-                      <TableCell className="text-right">7</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">South Point</TableCell>
-                      <TableCell className="text-right">1</TableCell>
-                      <TableCell className="text-right">4</TableCell>
-                      <TableCell className="text-right">2</TableCell>
-                      <TableCell className="text-right">7</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Recent Staff Activity</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <div>John Smith clocked in at Central Store</div>
-                        <div className="text-xs text-muted-foreground">Today, 8:03 AM</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <div>Emma Johnson clocked in at Central Store</div>
-                        <div className="text-xs text-muted-foreground">Today, 7:55 AM</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <div>David Wilson clocked in at Central Store</div>
-                        <div className="text-xs text-muted-foreground">Today, 8:10 AM</div>
-                      </div>
-                    </div>
+              {staffLoading ? (
+                <div className="animate-pulse space-y-4">
+                  <div className="h-64 bg-muted rounded"></div>
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-16 bg-muted rounded"></div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              ) : staffError ? (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-medium mb-2">Error Loading Staff Data</h3>
+                  <p className="text-muted-foreground">{staffError}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-md border mb-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Store</TableHead>
+                          <TableHead className="text-right">Manager</TableHead>
+                          <TableHead className="text-right">Cashier</TableHead>
+                          <TableHead className="text-right">Stock Clerk</TableHead>
+                          <TableHead className="text-right">Other</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {staffDistribution.length > 0 ? (
+                          staffDistribution.map(store => (
+                            <TableRow key={store.storeId}>
+                              <TableCell className="font-medium">{store.storeName}</TableCell>
+                              <TableCell className="text-right">{store.manager}</TableCell>
+                              <TableCell className="text-right">{store.cashier}</TableCell>
+                              <TableCell className="text-right">{store.stockClerk}</TableCell>
+                              <TableCell className="text-right">{store.other}</TableCell>
+                              <TableCell className="text-right font-medium">{store.total}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={6} className="h-24 text-center">
+                              <div className="flex flex-col items-center">
+                                <Users className="h-8 w-8 text-muted-foreground mb-2" />
+                                <p className="text-muted-foreground">No staff data found</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Staff data will appear here when employees are added to your stores.
+                                </p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-medium">Recent Staff Activity (Last 24 Hours)</h3>
+                      <div className="text-sm text-muted-foreground">
+                        {totalStaff} total staff • {activeStaff} active
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {recentActivity.length > 0 ? (
+                        recentActivity.map(activity => (
+                          <div key={activity.id} className="flex items-center justify-between p-2 border rounded-md">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                                <Clock className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <div>{activity.employeeName} {activity.action} at {activity.storeName}</div>
+                                <div className="text-xs text-muted-foreground">{activity.timeAgo}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-muted-foreground">No recent activity</p>
+                          <p className="text-sm text-muted-foreground">
+                            Staff activity from the last 24 hours will appear here.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
