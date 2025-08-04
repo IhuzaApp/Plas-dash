@@ -16,6 +16,7 @@ interface StaffMember {
   shop_id: string;
   created_on: string;
   updated_on: string;
+  last_login: string;
   Shops: {
     id: string;
     name: string;
@@ -77,6 +78,7 @@ const GET_ALL_STAFF = `
       shop_id
       created_on
       updated_on
+      last_login
       Shops {
         id
         name
@@ -161,18 +163,29 @@ export function useStaffManagement(): UseStaffManagementReturn {
 
       setStaffDistribution(Array.from(distributionMap.values()));
 
-      // Generate recent activity (last 24 hours)
+      // Generate recent activity (last 24 hours) based on last_login
       const now = new Date();
       const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       
-             const recentStaff = staff.filter((member: StaffMember) => {
-        const updatedOn = new Date(member.updated_on);
-        return updatedOn >= twentyFourHoursAgo;
+      const recentStaff = staff.filter((member: StaffMember) => {
+        if (!member.last_login) return false;
+        const lastLogin = new Date(member.last_login);
+        return lastLogin >= twentyFourHoursAgo;
       });
 
-             const activity: RecentActivity[] = recentStaff.map((member: StaffMember) => {
-        const updatedOn = new Date(member.updated_on);
-        const timeDiff = now.getTime() - updatedOn.getTime();
+      console.log('=== STAFF ACTIVITY DEBUG ===');
+      console.log('Total staff:', staff.length);
+      console.log('Staff with last_login:', staff.filter(m => m.last_login).length);
+      console.log('Recent staff (last 24h):', recentStaff.length);
+      console.log('Recent staff details:', recentStaff.map(s => ({
+        name: s.fullnames,
+        last_login: s.last_login,
+        store: s.Shops?.name
+      })));
+
+      const activity: RecentActivity[] = recentStaff.map((member: StaffMember) => {
+        const lastLogin = new Date(member.last_login);
+        const timeDiff = now.getTime() - lastLogin.getTime();
         const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60));
         const minutesAgo = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
 
@@ -187,8 +200,8 @@ export function useStaffManagement(): UseStaffManagementReturn {
           id: member.id,
           employeeName: member.fullnames,
           storeName: member.Shops?.name || 'Unknown Store',
-          action: 'Updated profile',
-          timestamp: member.updated_on,
+          action: 'Logged in',
+          timestamp: member.last_login,
           timeAgo,
         };
       });
