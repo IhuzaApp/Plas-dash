@@ -64,13 +64,17 @@ export function useCurrentOrgEmployee() {
     error,
   });
 
-  const orgEmployee = data && typeof data === 'object' && 'orgEmployees' in data && Array.isArray((data as any).orgEmployees) 
-    ? (data as any).orgEmployees[0] as OrgEmployee 
-    : undefined;
+  const orgEmployee =
+    data &&
+    typeof data === 'object' &&
+    'orgEmployees' in data &&
+    Array.isArray((data as any).orgEmployees)
+      ? ((data as any).orgEmployees[0] as OrgEmployee)
+      : undefined;
 
   return {
     orgEmployee,
     isLoading,
     error,
   };
-} 
+}

@@ -13,7 +13,13 @@ interface ShopSession {
 interface UseShopSessionReturn {
   shopSession: ShopSession | null;
   isLoggedIntoShop: boolean;
-  loginToShop: (shopId: string, shopName: string, employeeId: string, employeeName: string, position: string) => void;
+  loginToShop: (
+    shopId: string,
+    shopName: string,
+    employeeId: string,
+    employeeName: string,
+    position: string
+  ) => void;
   logoutFromShop: () => void;
   getShopSessionExpiry: () => number | null;
 }
@@ -32,7 +38,7 @@ export function useShopSession(): UseShopSessionReturn {
       try {
         const sessionData = JSON.parse(sessionStr);
         const now = Date.now();
-        
+
         // Check if session is still valid
         if (sessionData.expiresAt && now < sessionData.expiresAt) {
           setShopSession(sessionData);
@@ -57,26 +63,29 @@ export function useShopSession(): UseShopSessionReturn {
     }
   }, [session]);
 
-  const loginToShop = useCallback((
-    shopId: string, 
-    shopName: string, 
-    employeeId: string, 
-    employeeName: string, 
-    position: string
-  ) => {
-    const expiresAt = Date.now() + SHOP_SESSION_DURATION;
-    const newShopSession: ShopSession = {
-      shopId,
-      shopName,
-      employeeId,
-      employeeName,
-      position,
-      expiresAt,
-    };
+  const loginToShop = useCallback(
+    (
+      shopId: string,
+      shopName: string,
+      employeeId: string,
+      employeeName: string,
+      position: string
+    ) => {
+      const expiresAt = Date.now() + SHOP_SESSION_DURATION;
+      const newShopSession: ShopSession = {
+        shopId,
+        shopName,
+        employeeId,
+        employeeName,
+        position,
+        expiresAt,
+      };
 
-    localStorage.setItem(SHOP_SESSION_KEY, JSON.stringify(newShopSession));
-    setShopSession(newShopSession);
-  }, []);
+      localStorage.setItem(SHOP_SESSION_KEY, JSON.stringify(newShopSession));
+      setShopSession(newShopSession);
+    },
+    []
+  );
 
   const logoutFromShop = useCallback(() => {
     localStorage.removeItem(SHOP_SESSION_KEY);
@@ -94,4 +103,4 @@ export function useShopSession(): UseShopSessionReturn {
     logoutFromShop,
     getShopSessionExpiry,
   };
-} 
+}

@@ -79,12 +79,12 @@ interface InventoryItem {
 const Inventory = () => {
   const { data: systemConfig } = useSystemConfig();
   const { shopSession } = useShopSession();
-  
+
   // Fetch products for the current shop
   const { data: productsData, isLoading: productsLoading } = useProductsByShop(
     shopSession?.shopId || ''
   );
-  
+
   // Transform API data to match our interface
   const transformProductsToInventoryItems = (products: any[]): InventoryItem[] => {
     return products.map(product => ({
@@ -111,7 +111,7 @@ const Inventory = () => {
   };
 
   const [items, setItems] = useState<InventoryItem[]>([]);
-  
+
   // Update items when products data changes
   React.useEffect(() => {
     if (productsData?.Products) {
@@ -151,7 +151,7 @@ const Inventory = () => {
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [manualInputMode, setManualInputMode] = useState(false);
   const [manualCode, setManualCode] = useState('');
-  
+
   // Refs for video element and code reader
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
@@ -237,17 +237,17 @@ const Inventory = () => {
     try {
       // Initialize the code reader
       codeReaderRef.current = new BrowserMultiFormatReader();
-      
+
       // Get available video devices
       const videoInputDevices = await codeReaderRef.current.listVideoInputDevices();
-      
+
       if (videoInputDevices.length === 0) {
         throw new Error('No camera devices found');
       }
 
       // Use the first available camera (usually the back camera on mobile)
       const selectedDeviceId = videoInputDevices[0].deviceId;
-      
+
       // Start scanning
       await codeReaderRef.current.decodeFromVideoDevice(
         selectedDeviceId,
@@ -257,7 +257,7 @@ const Inventory = () => {
             // Successfully scanned a code
             const scannedText = result.getText();
             setScannedCode(scannedText);
-            
+
             // Update the product with the scanned code
             const updatedItems = items.map(item => {
               if (item.id === itemId) {
@@ -268,7 +268,7 @@ const Inventory = () => {
 
             setItems(updatedItems);
             setIsScanning(false);
-            
+
             // Stop the scanner
             if (codeReaderRef.current) {
               codeReaderRef.current.reset();
@@ -284,7 +284,7 @@ const Inventory = () => {
               );
             }, 1000);
           }
-          
+
           if (error && error.name !== 'NotFoundException') {
             console.error('Scanning error:', error);
             setScanError('Failed to scan. Please try again.');
@@ -314,7 +314,7 @@ const Inventory = () => {
     setScannedCode(manualCode.trim());
     setManualInputMode(false);
     setManualCode('');
-    
+
     toast.success(
       `${scanType === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
     );
@@ -455,9 +455,7 @@ const Inventory = () => {
           <div className="text-center">
             <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-medium mb-2">No Shop Session</h3>
-            <p className="text-muted-foreground">
-              Please log into a shop to view inventory.
-            </p>
+            <p className="text-muted-foreground">Please log into a shop to view inventory.</p>
           </div>
         </div>
       </AdminLayout>
@@ -739,9 +737,9 @@ const Inventory = () => {
       </AlertDialog>
 
       {/* Scanning Dialog */}
-      <Dialog 
-        open={isScanDialogOpen} 
-        onOpenChange={(open) => {
+      <Dialog
+        open={isScanDialogOpen}
+        onOpenChange={open => {
           if (!open) {
             stopScanning();
           }
@@ -778,13 +776,13 @@ const Inventory = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {scanError && (
                   <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md">
                     {scanError}
                   </div>
                 )}
-                
+
                 <p className="text-sm text-center text-muted-foreground">
                   Position the {scanType === 'barcode' ? 'barcode' : 'QR code'} within the frame
                 </p>
@@ -800,15 +798,15 @@ const Inventory = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="w-full space-y-2">
                   <Input
                     placeholder={`Enter ${scanType === 'barcode' ? 'barcode' : 'QR code'} number`}
                     value={manualCode}
-                    onChange={(e) => setManualCode(e.target.value)}
+                    onChange={e => setManualCode(e.target.value)}
                     className="text-center font-mono"
                   />
-                  <Button 
+                  <Button
                     onClick={handleManualCodeSubmit}
                     disabled={!manualCode.trim()}
                     className="w-full"

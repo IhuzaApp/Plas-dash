@@ -93,11 +93,11 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Store className="h-4 w-4" />
-            <h3 className={cn("font-medium", isSidebarOpen ? "text-sm" : "sr-only")}>
+            <h3 className={cn('font-medium', isSidebarOpen ? 'text-sm' : 'sr-only')}>
               Select Shop for POS
             </h3>
           </div>
-          
+
           <div className="space-y-2">
             <Card
               key={fallbackShopData.shop.id}
@@ -110,9 +110,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium truncate">
-                      {fallbackShopData.shop.name}
-                    </h4>
+                    <h4 className="text-sm font-medium truncate">{fallbackShopData.shop.name}</h4>
                     <p className="text-xs text-muted-foreground truncate">
                       {fallbackShopData.position}
                     </p>
@@ -153,7 +151,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
             <LogOut className="h-3 w-3" />
           </Button>
         </div>
-        
+
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
@@ -182,11 +180,11 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
     <div className="p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Store className="h-4 w-4" />
-        <h3 className={cn("font-medium", isSidebarOpen ? "text-sm" : "sr-only")}>
+        <h3 className={cn('font-medium', isSidebarOpen ? 'text-sm' : 'sr-only')}>
           Select Shop for POS
         </h3>
       </div>
-      
+
       <div className="space-y-2">
         <Card
           key={orgEmployee.Shops.id}
@@ -209,12 +207,8 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-medium truncate">
-                  {orgEmployee.Shops.name}
-                </h4>
-                <p className="text-xs text-muted-foreground truncate">
-                  {orgEmployee.Position}
-                </p>
+                <h4 className="text-sm font-medium truncate">{orgEmployee.Shops.name}</h4>
+                <p className="text-xs text-muted-foreground truncate">{orgEmployee.Position}</p>
               </div>
               <div className="flex items-center gap-1">
                 {orgEmployee.multAuthEnabled ? (
@@ -246,4 +240,4 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   );
 };
 
-export default ShopSelector; 
+export default ShopSelector;

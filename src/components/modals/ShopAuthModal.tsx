@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-  import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
@@ -56,7 +56,8 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
   const [secretKey, setSecretKey] = useState<string>('');
   const { loginToShop } = useShopSession();
   const updateMultAuthMutation = useUpdateMultAuth();
-  const { generateSecretKey, storeSecretKey, getSecretKey, verifyToken, generateQRCodeUrl } = useTwoFactorAuth();
+  const { generateSecretKey, storeSecretKey, getSecretKey, verifyToken, generateQRCodeUrl } =
+    useTwoFactorAuth();
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -105,7 +106,9 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
       if (setupStep === 'qr') {
         // Generate QR code and proceed to verification step
         setSetupStep('verify');
-        toast.success('2FA setup initiated. Please scan the QR code and enter the verification code.');
+        toast.success(
+          '2FA setup initiated. Please scan the QR code and enter the verification code.'
+        );
         return;
       } else if (setupStep === 'verify') {
         // Verify setup code
@@ -132,24 +135,24 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
           // Verify the TOTP code using the secret key
           const isValidCode = verifyToken(data.setupCode, secretKey);
           console.log('TOTP Verification Result:', isValidCode);
-          
+
           if (!isValidCode) {
             toast.error('Invalid verification code. Please try again.');
             setIsLoading(false);
             return;
           }
-          
+
           console.log('Storing secret key...');
           // Store the secret key for future authentication
           storeSecretKey(employeeId, shopId, secretKey);
-          
+
           console.log('Updating database...');
           // Update user's multAuthEnabled status
           await updateMultAuthMutation.mutateAsync({
             employeeId: userId, // Use the UUID instead of employeeId
             multAuthEnabled: true,
           });
-          
+
           console.log('2FA setup completed successfully');
           toast.success('2FA setup completed successfully!');
           setIsSetupMode(false);
@@ -181,7 +184,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
     try {
       // Get the stored secret key for this user and shop
       const storedSecretKey = getSecretKey(employeeId, shopId);
-      
+
       if (!storedSecretKey) {
         toast.error('2FA not properly configured. Please contact administrator.');
         return;
@@ -221,9 +224,9 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
           <div className="text-center space-y-4">
             {qrCodeDataUrl ? (
               <div className="mx-auto w-48 h-48 bg-white rounded-lg p-4 border">
-                <img 
-                  src={qrCodeDataUrl} 
-                  alt="2FA QR Code" 
+                <img
+                  src={qrCodeDataUrl}
+                  alt="2FA QR Code"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -232,7 +235,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             )}
-            
+
             {secretKey && (
               <div className="bg-muted/50 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground mb-1">Manual Entry Key:</p>
@@ -241,7 +244,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
                 </p>
               </div>
             )}
-            
+
             <div className="space-y-2">
               <p className="text-sm font-medium">Setup Instructions:</p>
               <ol className="text-sm text-muted-foreground space-y-1 text-left">
@@ -272,9 +275,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
             })}
           />
           {form.formState.errors.setupCode && (
-            <p className="text-sm text-destructive">
-              {form.formState.errors.setupCode.message}
-            </p>
+            <p className="text-sm text-destructive">{form.formState.errors.setupCode.message}</p>
           )}
         </div>
 
@@ -319,9 +320,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
           })}
         />
         {form.formState.errors.twoFactorCode && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.twoFactorCode.message}
-          </p>
+          <p className="text-sm text-destructive">{form.formState.errors.twoFactorCode.message}</p>
         )}
       </div>
 
@@ -332,7 +331,9 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Shield className="h-4 w-4" />
-          <span>{employeeName} - {position}</span>
+          <span>
+            {employeeName} - {position}
+          </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="h-4 w-4" />
@@ -351,10 +352,9 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
             {isSetupMode ? '2FA Setup Required' : 'Shop Authentication'}
           </DialogTitle>
           <DialogDescription>
-            {isSetupMode 
+            {isSetupMode
               ? 'You need to set up two-factor authentication before accessing shop features.'
-              : `Enter your 2FA code to access ${shopName}`
-            }
+              : `Enter your 2FA code to access ${shopName}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -371,12 +371,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
           )}
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isLoading}
-            >
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
@@ -388,10 +383,11 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
               ) : (
                 <>
                   <Shield className="mr-2 h-4 w-4" />
-                  {isSetupMode 
-                    ? (setupStep === 'qr' ? 'Continue Setup' : 'Complete Setup')
-                    : 'Verify & Login'
-                  }
+                  {isSetupMode
+                    ? setupStep === 'qr'
+                      ? 'Continue Setup'
+                      : 'Complete Setup'
+                    : 'Verify & Login'}
                 </>
               )}
             </Button>
@@ -402,4 +398,4 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
   );
 };
 
-export default ShopAuthModal; 
+export default ShopAuthModal;

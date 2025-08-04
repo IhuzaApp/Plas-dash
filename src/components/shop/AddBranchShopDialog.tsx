@@ -122,10 +122,10 @@ interface CreateShopMutationData {
   relatedTo?: string; // Optional for branch shops
 }
 
-const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({ 
-  isOpen, 
-  onClose, 
-  parentShopName 
+const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
+  isOpen,
+  onClose,
+  parentShopName,
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -426,7 +426,8 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
             Add New Branch Store
           </DialogTitle>
           <DialogDescription>
-            Create a new branch store under {parentShopName}. This branch will be linked to the parent store.
+            Create a new branch store under {parentShopName}. This branch will be linked to the
+            parent store.
           </DialogDescription>
         </DialogHeader>
 
@@ -688,4 +689,4 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
   );
 };
 
-export default AddBranchShopDialog; 
+export default AddBranchShopDialog;

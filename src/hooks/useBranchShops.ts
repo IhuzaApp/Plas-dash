@@ -67,7 +67,11 @@ export function useBranchShops(): UseBranchShopsReturn {
     }
   `;
 
-  const { data, isLoading: queryLoading, error: queryError } = useQuery({
+  const {
+    data,
+    isLoading: queryLoading,
+    error: queryError,
+  } = useQuery({
     queryKey: ['branchShops', currentShopName],
     queryFn: () => hasuraRequest(GET_BRANCH_SHOPS, { relatedTo: currentShopName }),
     enabled: !!currentShopName,
@@ -92,20 +96,25 @@ export function useBranchShops(): UseBranchShopsReturn {
         const totalRevenue = orders.reduce((sum: number, order: any) => {
           return sum + parseFloat(order.total || '0');
         }, 0);
-        
+
         const totalOrders = orders.length;
-        
+
         const ratings = orders.flatMap((order: any) => order.Ratings || []);
-        const averageRating = ratings.length > 0 
-          ? ratings.reduce((sum: number, rating: any) => sum + parseFloat(rating.rating || '0'), 0) / ratings.length
-          : 0;
+        const averageRating =
+          ratings.length > 0
+            ? ratings.reduce(
+                (sum: number, rating: any) => sum + parseFloat(rating.rating || '0'),
+                0
+              ) / ratings.length
+            : 0;
 
         // Calculate performance (mock target for now)
         const target = 50000; // Mock target
         const performance = target > 0 ? (totalRevenue / target) * 100 : 0;
-        
+
         // Determine trend (mock for now)
-        const trend: 'up' | 'down' | 'neutral' = performance > 100 ? 'up' : performance < 90 ? 'down' : 'neutral';
+        const trend: 'up' | 'down' | 'neutral' =
+          performance > 100 ? 'up' : performance < 90 ? 'down' : 'neutral';
 
         return {
           id: shop.id,
@@ -132,9 +141,10 @@ export function useBranchShops(): UseBranchShopsReturn {
   // Calculate totals
   const totalRevenue = branchShops.reduce((sum, shop) => sum + shop.totalRevenue, 0);
   const totalOrders = branchShops.reduce((sum, shop) => sum + shop.totalOrders, 0);
-  const averagePerformance = branchShops.length > 0 
-    ? branchShops.reduce((sum, shop) => sum + shop.performance, 0) / branchShops.length
-    : 0;
+  const averagePerformance =
+    branchShops.length > 0
+      ? branchShops.reduce((sum, shop) => sum + shop.performance, 0) / branchShops.length
+      : 0;
 
   return {
     branchShops,
@@ -144,4 +154,4 @@ export function useBranchShops(): UseBranchShopsReturn {
     totalOrders,
     averagePerformance,
   };
-} 
+}

@@ -120,10 +120,7 @@ interface CreateShopMutationData {
   relatedTo?: string;
 }
 
-const AddShopDialog: React.FC<AddShopDialogProps> = ({ 
-  isOpen, 
-  onClose
-}) => {
+const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -163,8 +160,6 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
     isLoading: categoriesLoading,
     error: categoriesError,
   } = useCategories();
-
-
 
   // Create shop mutation
   const createShopMutation = useMutation({
@@ -416,9 +411,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({
             <Store className="h-5 w-5" />
             Add New Shop
           </DialogTitle>
-          <DialogDescription>
-            Create a new shop with all the necessary details.
-          </DialogDescription>
+          <DialogDescription>Create a new shop with all the necessary details.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

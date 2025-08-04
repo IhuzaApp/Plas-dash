@@ -119,16 +119,18 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       icon: CreditCard,
       items: [
         { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
-        ...(isLoggedIntoShop ? [
-          // Shop-specific POS items when logged into a shop
-          { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
-          { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
-          { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
-          { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
-          { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
-          { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
-          { title: 'Staff Management', icon: Users, path: '/pos/staff' },
-        ] : []),
+        ...(isLoggedIntoShop
+          ? [
+              // Shop-specific POS items when logged into a shop
+              { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
+              { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
+              { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
+              { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
+              { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
+              { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
+              { title: 'Staff Management', icon: Users, path: '/pos/staff' },
+            ]
+          : []),
       ],
     },
     {
@@ -338,7 +340,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
             <ShopSelector isSidebarOpen={isSidebarOpen} />
           </SidebarGroup>
         )}
-        
+
         {filteredMenuItems.map(section => (
           <SidebarGroup key={section.section}>
             {isSidebarOpen && (

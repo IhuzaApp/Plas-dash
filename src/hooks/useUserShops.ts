@@ -47,7 +47,7 @@ export function useUserShops() {
         employeeName: session.fullName,
         userId: session.id, // Use the session ID as the UUID
       };
-      
+
       console.log('Shop from session:', shopFromSession);
       setUserShops([shopFromSession]);
       setIsLoading(false);
@@ -77,7 +77,11 @@ export function useUserShops() {
     }
   `;
 
-  const { data, isLoading: queryLoading, error: queryError } = useQuery({
+  const {
+    data,
+    isLoading: queryLoading,
+    error: queryError,
+  } = useQuery({
     queryKey: ['userShops', session?.id],
     queryFn: () => hasuraRequest(GET_USER_SHOPS, { userId: session?.id }),
     enabled: !!session?.id,
@@ -103,9 +107,14 @@ export function useUserShops() {
       setError(queryError.message);
     }
 
-    if (data && typeof data === 'object' && 'orgEmployees' in data && Array.isArray((data as any).orgEmployees)) {
+    if (
+      data &&
+      typeof data === 'object' &&
+      'orgEmployees' in data &&
+      Array.isArray((data as any).orgEmployees)
+    ) {
       console.log('Raw orgEmployees data:', (data as any).orgEmployees);
-      
+
       const shops = (data as any).orgEmployees
         .filter((employee: any) => employee.Shops && employee.Shops.is_active)
         .map((employee: any) => {
@@ -120,7 +129,7 @@ export function useUserShops() {
             userId: employee.id, // UUID from orgEmployees table
           };
         });
-      
+
       console.log('Processed shops:', shops);
       setUserShops(shops);
     }
@@ -131,4 +140,4 @@ export function useUserShops() {
     isLoading,
     error,
   };
-} 
+}

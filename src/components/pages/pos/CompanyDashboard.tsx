@@ -51,14 +51,8 @@ const CompanyDashboard = () => {
   const { shopSession } = useShopSession();
   const { orgEmployee } = useCurrentOrgEmployee();
   const { hasAction } = usePrivilege();
-  const { 
-    branchShops, 
-    isLoading, 
-    error, 
-    totalRevenue, 
-    totalOrders, 
-    averagePerformance 
-  } = useBranchShops();
+  const { branchShops, isLoading, error, totalRevenue, totalOrders, averagePerformance } =
+    useBranchShops();
 
   const {
     staffDistribution,
@@ -212,7 +206,9 @@ const CompanyDashboard = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Orders
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalOrders}</div>
@@ -222,9 +218,7 @@ const CompanyDashboard = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Staff
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Staff</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStaff}</div>
@@ -260,7 +254,9 @@ const CompanyDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Branch Store Performance</CardTitle>
-              <CardDescription>Performance metrics for all branch stores under {shopSession.shopName}</CardDescription>
+              <CardDescription>
+                Performance metrics for all branch stores under {shopSession.shopName}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -296,9 +292,7 @@ const CompanyDashboard = () => {
                           <TableCell className="text-right">
                             ${store.revenue.toLocaleString()}
                           </TableCell>
-                          <TableCell className="text-right">
-                            {store.totalOrders}
-                          </TableCell>
+                          <TableCell className="text-right">{store.totalOrders}</TableCell>
                           <TableCell className="text-right">
                             {store.averageRating > 0 ? (
                               <div className="flex items-center justify-end">
@@ -510,7 +504,9 @@ const CompanyDashboard = () => {
                               <TableCell className="text-right">{store.cashier}</TableCell>
                               <TableCell className="text-right">{store.stockClerk}</TableCell>
                               <TableCell className="text-right">{store.other}</TableCell>
-                              <TableCell className="text-right font-medium">{store.total}</TableCell>
+                              <TableCell className="text-right font-medium">
+                                {store.total}
+                              </TableCell>
                             </TableRow>
                           ))
                         ) : (
@@ -520,7 +516,8 @@ const CompanyDashboard = () => {
                                 <Users className="h-8 w-8 text-muted-foreground mb-2" />
                                 <p className="text-muted-foreground">No staff data found</p>
                                 <p className="text-sm text-muted-foreground">
-                                  Staff data will appear here when employees are added to your stores.
+                                  Staff data will appear here when employees are added to your
+                                  stores.
                                 </p>
                               </div>
                             </TableCell>
@@ -540,26 +537,33 @@ const CompanyDashboard = () => {
                     <div className="space-y-3">
                       {recentActivity.length > 0 ? (
                         recentActivity.map(activity => (
-                          <div key={activity.id} className="flex items-center justify-between p-2 border rounded-md">
+                          <div
+                            key={activity.id}
+                            className="flex items-center justify-between p-2 border rounded-md"
+                          >
                             <div className="flex items-center space-x-3">
                               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                                 <Clock className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <div>{activity.employeeName} {activity.action} at {activity.storeName}</div>
-                                <div className="text-xs text-muted-foreground">{activity.timeAgo}</div>
+                                <div>
+                                  {activity.employeeName} {activity.action} at {activity.storeName}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {activity.timeAgo}
+                                </div>
                               </div>
                             </div>
                           </div>
                         ))
                       ) : (
-                                                  <div className="text-center py-8">
-                            <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                            <p className="text-muted-foreground">No recent logins</p>
-                            <p className="text-sm text-muted-foreground">
-                              Staff login activity from the last 24 hours will appear here.
-                            </p>
-                          </div>
+                        <div className="text-center py-8">
+                          <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-muted-foreground">No recent logins</p>
+                          <p className="text-sm text-muted-foreground">
+                            Staff login activity from the last 24 hours will appear here.
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -571,11 +575,11 @@ const CompanyDashboard = () => {
       </Tabs>
 
       {/* Add Branch Store Dialog */}
-              <AddBranchShopDialog
-          isOpen={isAddBranchDialogOpen}
-          onClose={() => setIsAddBranchDialogOpen(false)}
-          parentShopName={shopSession?.shopName || ''}
-        />
+      <AddBranchShopDialog
+        isOpen={isAddBranchDialogOpen}
+        onClose={() => setIsAddBranchDialogOpen(false)}
+        parentShopName={shopSession?.shopName || ''}
+      />
     </AdminLayout>
   );
 };
