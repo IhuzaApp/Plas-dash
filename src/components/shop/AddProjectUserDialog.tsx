@@ -292,7 +292,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
       const mutationData = {
         username: data.username,
         email: data.email,
-        password: await hashPassword(data.password), 
+        password: await hashPassword(data.password),
         role: data.role,
         is_active: data.is_active,
         TwoAuth_enabled: data.TwoAuth_enabled,

@@ -13,10 +13,7 @@ interface ProtectedShopRouteProps {
   fallback?: React.ReactNode;
 }
 
-const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ 
-  children, 
-  fallback 
-}) => {
+const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallback }) => {
   const { isAuthenticated } = useAuth();
   const { isLoggedIntoShop, shopSession } = useShopSession();
   const router = useRouter();
@@ -54,10 +51,7 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({
               <AlertTriangle className="h-4 w-4" />
               <span>Session valid for 24 hours</span>
             </div>
-            <Button 
-              onClick={() => router.push('/pos/company-dashboard')}
-              className="w-full"
-            >
+            <Button onClick={() => router.push('/pos/company-dashboard')} className="w-full">
               Go to Company Dashboard
             </Button>
           </CardContent>
@@ -81,16 +75,14 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({
               </p>
             </div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            POS Session Active
-          </div>
+          <div className="text-xs text-muted-foreground">POS Session Active</div>
         </div>
       </div>
-      
+
       {/* Page Content */}
       {children}
     </div>
   );
 };
 
-export default ProtectedShopRoute; 
+export default ProtectedShopRoute;

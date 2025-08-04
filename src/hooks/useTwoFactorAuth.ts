@@ -40,7 +40,7 @@ export function useTwoFactorAuth() {
       shopId,
       secretKey: secretKey ? `${secretKey.substring(0, 8)}...` : 'missing',
     });
-    
+
     const key = `${employeeId}-${shopId}`;
     setSecrets(prev => ({
       ...prev,
@@ -50,7 +50,7 @@ export function useTwoFactorAuth() {
         shopId,
       },
     }));
-    
+
     console.log('Secret key stored successfully');
   };
 
@@ -65,7 +65,7 @@ export function useTwoFactorAuth() {
       secretKey: secretKey ? `${secretKey.substring(0, 8)}...` : 'missing',
       tokenLength: token.length,
     });
-    
+
     try {
       const result = authenticator.verify({
         token,
@@ -90,4 +90,4 @@ export function useTwoFactorAuth() {
     verifyToken,
     generateQRCodeUrl,
   };
-} 
+}

@@ -14,7 +14,7 @@ export function useUpdateMultAuth() {
   >({
     mutationFn: async ({ employeeId, multAuthEnabled }) => {
       console.log('UpdateMultAuth Debug:', { employeeId, multAuthEnabled });
-      
+
       const mutation = `
         mutation UpdateMultAuth($employeeId: uuid!, $multAuthEnabled: Boolean!) {
           update_orgEmployees(
@@ -36,4 +36,4 @@ export function useUpdateMultAuth() {
       }
     },
   });
-} 
+}

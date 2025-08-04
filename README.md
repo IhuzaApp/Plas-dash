@@ -128,10 +128,10 @@ When camera access fails, the system provides a manual input fallback:
 const startScanning = async (itemId: string, type: 'barcode' | 'qrcode') => {
   // Initialize code reader
   codeReaderRef.current = new BrowserMultiFormatReader();
-  
+
   // Get available video devices
   const videoInputDevices = await codeReaderRef.current.listVideoInputDevices();
-  
+
   // Start real-time scanning
   await codeReaderRef.current.decodeFromVideoDevice(
     selectedDeviceId,

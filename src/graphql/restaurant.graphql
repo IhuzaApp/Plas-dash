@@ -18,10 +18,35 @@ query getRestaurantsDetails {
   }
 }
 
-
-mutation addResturantDetails($email: String = "", $is_active: Boolean = false, $lat: String = "", $location: String = "", $long: String = "", $logo: String = "", $name: String = "", $phone: String = "", $profile: String = "", $tin: String = "", $ussd: String = "") {
-  insert_Restaurants(objects: {email: $email, is_active: $is_active, lat: $lat, location: $location, long: $long, logo: $logo, name: $name, phone: $phone, profile: $profile, tin: $tin, ussd: $ussd, verified: true}) {
+mutation addResturantDetails(
+  $email: String = ""
+  $is_active: Boolean = false
+  $lat: String = ""
+  $location: String = ""
+  $long: String = ""
+  $logo: String = ""
+  $name: String = ""
+  $phone: String = ""
+  $profile: String = ""
+  $tin: String = ""
+  $ussd: String = ""
+) {
+  insert_Restaurants(
+    objects: {
+      email: $email
+      is_active: $is_active
+      lat: $lat
+      location: $location
+      long: $long
+      logo: $logo
+      name: $name
+      phone: $phone
+      profile: $profile
+      tin: $tin
+      ussd: $ussd
+      verified: true
+    }
+  ) {
     affected_rows
   }
 }
-

@@ -98,7 +98,11 @@ export function useStaffManagement(): UseStaffManagementReturn {
   // Get the current shop name from shop session
   const currentShopName = shopSession?.shopName;
 
-  const { data, isLoading: queryLoading, error: queryError } = useQuery({
+  const {
+    data,
+    isLoading: queryLoading,
+    error: queryError,
+  } = useQuery({
     queryKey: ['allStaff', currentShopName],
     queryFn: () => hasuraRequest(GET_ALL_STAFF, { parentShopName: currentShopName }),
     enabled: !!currentShopName,
@@ -129,10 +133,10 @@ export function useStaffManagement(): UseStaffManagementReturn {
       // Calculate staff distribution by store and position
       const distributionMap = new Map<string, StaffDistribution>();
 
-             staff.forEach((member: StaffMember) => {
+      staff.forEach((member: StaffMember) => {
         const storeName = member.Shops?.name || 'Unknown Store';
         const storeId = member.Shops?.id || 'unknown';
-        
+
         if (!distributionMap.has(storeId)) {
           distributionMap.set(storeId, {
             storeName,
@@ -154,7 +158,11 @@ export function useStaffManagement(): UseStaffManagementReturn {
           store.manager++;
         } else if (position.includes('cashier') || position.includes('cash')) {
           store.cashier++;
-        } else if (position.includes('stock') || position.includes('inventory') || position.includes('clerk')) {
+        } else if (
+          position.includes('stock') ||
+          position.includes('inventory') ||
+          position.includes('clerk')
+        ) {
           store.stockClerk++;
         } else {
           store.other++;
@@ -166,7 +174,7 @@ export function useStaffManagement(): UseStaffManagementReturn {
       // Generate recent activity (last 24 hours) based on last_login
       const now = new Date();
       const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      
+
       const recentStaff = staff.filter((member: StaffMember) => {
         if (!member.last_login) return false;
         const lastLogin = new Date(member.last_login);
@@ -177,11 +185,14 @@ export function useStaffManagement(): UseStaffManagementReturn {
       console.log('Total staff:', staff.length);
       console.log('Staff with last_login:', staff.filter(m => m.last_login).length);
       console.log('Recent staff (last 24h):', recentStaff.length);
-      console.log('Recent staff details:', recentStaff.map(s => ({
-        name: s.fullnames,
-        last_login: s.last_login,
-        store: s.Shops?.name
-      })));
+      console.log(
+        'Recent staff details:',
+        recentStaff.map(s => ({
+          name: s.fullnames,
+          last_login: s.last_login,
+          store: s.Shops?.name,
+        }))
+      );
 
       const activity: RecentActivity[] = recentStaff.map((member: StaffMember) => {
         const lastLogin = new Date(member.last_login);
@@ -208,7 +219,7 @@ export function useStaffManagement(): UseStaffManagementReturn {
 
       // Sort by most recent first
       activity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      
+
       setRecentActivity(activity.slice(0, 10)); // Show only last 10 activities
       setIsLoading(false);
     }
@@ -226,4 +237,4 @@ export function useStaffManagement(): UseStaffManagementReturn {
     isLoading,
     error,
   };
-} 
+}
