@@ -26,6 +26,34 @@ import { Loader2, User, Mail, Shield, Lock, Upload, X } from 'lucide-react';
 import { PROJECT_ROLE_TYPES } from '@/lib/privileges/projectRolePrivileges';
 import { ProjectUser, useUpdateProjectUser } from '@/hooks/useHasuraApi';
 
+// Password hashing function with salt and multiple iterations
+// Note: In production, consider using a dedicated password hashing library like bcrypt
+// This implementation uses Web Crypto API with salt and iterations for security
+const hashPassword = async (password: string): Promise<string> => {
+  // Generate a random salt (16 bytes = 128 bits)
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const saltHex = Array.from(salt)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  // Combine password with salt
+  const passwordWithSalt = password + saltHex;
+
+  // Hash with multiple iterations (10,000 iterations for security)
+  // This simulates bcrypt-like behavior to slow down brute force attacks
+  let hash = passwordWithSalt;
+  for (let i = 0; i < 10000; i++) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(hash);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Return salt:hash format (salt is needed for password verification)
+  return saltHex + ':' + hash;
+};
+
 type FormData = {
   username: string;
   email: string;
@@ -183,9 +211,9 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
         updateData.device_details = user.device_details;
       }
 
-      // Only include password if it's provided (new password)
+      // Only include password if it's provided (new password) - hash it before storing
       if (data.password && data.password.trim()) {
-        updateData.password = data.password;
+        updateData.password = await hashPassword(data.password);
       }
 
       // Include profile image if available

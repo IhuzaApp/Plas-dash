@@ -48,6 +48,8 @@ import { useAuth } from '@/components/layout/RootLayout';
 import { PrivilegeKey } from '@/types/privileges';
 import { menuPrivileges } from '@/lib/privileges';
 import { usePageAccess } from '@/hooks/usePageAccess';
+import { useShopSession } from '@/hooks/useShopSession';
+import ShopSelector from './ShopSelector';
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
@@ -62,6 +64,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const { hasModuleAccess, hasAnyPrivilege, isSuperUser } = usePrivilege();
   const { logout } = useAuth();
   const { navigateToPage } = usePageAccess();
+  const { isLoggedIntoShop } = useShopSession();
 
   // Handle navigation state
   useEffect(() => {
@@ -116,13 +119,16 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       icon: CreditCard,
       items: [
         { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
-        { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
-        { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
-        { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
-        { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
-        { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
-        { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
-        { title: 'Staff Management', icon: Users, path: '/pos/staff' },
+        ...(isLoggedIntoShop ? [
+          // Shop-specific POS items when logged into a shop
+          { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
+          { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
+          { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
+          { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
+          { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
+          { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
+          { title: 'Staff Management', icon: Users, path: '/pos/staff' },
+        ] : []),
       ],
     },
     {
@@ -326,6 +332,13 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
+        {/* Shop Selector for POS users */}
+        {hasModuleAccess('pos_terminal') && (
+          <SidebarGroup>
+            <ShopSelector isSidebarOpen={isSidebarOpen} />
+          </SidebarGroup>
+        )}
+        
         {filteredMenuItems.map(section => (
           <SidebarGroup key={section.section}>
             {isSidebarOpen && (
