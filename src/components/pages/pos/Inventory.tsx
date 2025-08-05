@@ -56,7 +56,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useSystemConfig, useProductsByShop } from '@/hooks/useHasuraApi';
+import { useSystemConfig, useProductsByShop, useUpdateProduct } from '@/hooks/useHasuraApi';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useShopSession } from '@/hooks/useShopSession';
 
@@ -79,6 +79,7 @@ interface InventoryItem {
 const Inventory = () => {
   const { data: systemConfig } = useSystemConfig();
   const { shopSession } = useShopSession();
+  const updateProduct = useUpdateProduct();
 
   // Fetch products for the current shop
   const { data: productsData, isLoading: productsLoading } = useProductsByShop(
@@ -114,8 +115,12 @@ const Inventory = () => {
 
   // Update items when products data changes
   React.useEffect(() => {
+    console.log('=== PRODUCTS DATA CHANGED ===');
+    console.log('Products data:', productsData);
+    
     if (productsData?.Products) {
       const transformedItems = transformProductsToInventoryItems(productsData.Products);
+      console.log('Transformed items:', transformedItems);
       setItems(transformedItems);
     }
   }, [productsData]);
@@ -151,6 +156,10 @@ const Inventory = () => {
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [manualInputMode, setManualInputMode] = useState(false);
   const [manualCode, setManualCode] = useState('');
+  const [isSavingBarcode, setIsSavingBarcode] = useState(false);
+  const [availableCameras, setAvailableCameras] = useState<any[]>([]);
+  const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [scanTimeout, setScanTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Refs for video element and code reader
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -225,6 +234,10 @@ const Inventory = () => {
   };
 
   const startScanning = async (itemId: string, type: 'barcode' | 'qrcode') => {
+    console.log('=== STARTING BARCODE SCAN ===');
+    console.log('Item ID:', itemId);
+    console.log('Scan type:', type);
+    
     setSelectedItemForScan(itemId);
     setScanType(type);
     setIsScanning(true);
@@ -237,57 +250,117 @@ const Inventory = () => {
     try {
       // Initialize the code reader
       codeReaderRef.current = new BrowserMultiFormatReader();
+      console.log('Code reader initialized');
 
       // Get available video devices
       const videoInputDevices = await codeReaderRef.current.listVideoInputDevices();
+      console.log('Available video devices:', videoInputDevices);
+      setAvailableCameras(videoInputDevices);
 
       if (videoInputDevices.length === 0) {
         throw new Error('No camera devices found');
       }
 
-      // Use the first available camera (usually the back camera on mobile)
-      const selectedDeviceId = videoInputDevices[0].deviceId;
+      // Use selected camera or first available camera
+      const selectedDeviceId = selectedCamera || videoInputDevices[0].deviceId;
+      console.log('Selected device ID:', selectedDeviceId);
+      console.log('Selected device details:', videoInputDevices.find(d => d.deviceId === selectedDeviceId));
 
-      // Start scanning
+      // Configure video constraints for better scanning
+      const constraints = {
+        video: {
+          deviceId: selectedDeviceId,
+          width: { ideal: 1280, min: 640 },
+          height: { ideal: 720, min: 480 },
+          facingMode: 'environment', // Use back camera if available
+        }
+      };
+
+      console.log('Video constraints:', constraints);
+
+      // Set a timeout to stop scanning after 30 seconds
+      const timeout = setTimeout(() => {
+        console.log('Scan timeout reached - stopping scanner');
+        if (codeReaderRef.current) {
+          codeReaderRef.current.reset();
+        }
+        setIsScanning(false);
+        setScanError('Scan timeout. Please try again or use manual input.');
+      }, 30000); // 30 seconds
+      setScanTimeout(timeout);
+
+      // Start scanning with better configuration
       await codeReaderRef.current.decodeFromVideoDevice(
         selectedDeviceId,
         videoRef.current!,
-        (result: Result | null, error: any) => {
+        async (result: Result | null, error: any) => {
+          // Reduce console spam - only log occasionally
+          if (Math.random() < 0.01) { // Log only 1% of the time
+            console.log('=== SCAN CALLBACK TRIGGERED ===');
+            console.log('Result:', result);
+            console.log('Error:', error);
+          }
+          
           if (result) {
             // Successfully scanned a code
             const scannedText = result.getText();
+            console.log('🎉 SUCCESS! Scanned text:', scannedText);
             setScannedCode(scannedText);
 
-            // Update the product with the scanned code
-      const updatedItems = items.map(item => {
-        if (item.id === itemId) {
-                return { ...item, barcode: scannedText };
-        }
-        return item;
-      });
-
-      setItems(updatedItems);
-      setIsScanning(false);
-
-            // Stop the scanner
+            // Stop scanning immediately to prevent multiple scans
             if (codeReaderRef.current) {
               codeReaderRef.current.reset();
             }
+            if (scanTimeout) {
+              clearTimeout(scanTimeout);
+              setScanTimeout(null);
+            }
+            setIsScanning(false);
 
-            // Show success message and close dialog
-      setTimeout(() => {
-        setIsScanDialogOpen(false);
-        setSelectedItemForScan(null);
+            // Update the product in the database
+            try {
+              setIsSavingBarcode(true);
+              await updateProduct.mutateAsync({
+                id: itemId,
+                barcode: scannedText,
+              });
+
+              // Update local state
+              const updatedItems = items.map(item => {
+                if (item.id === itemId) {
+                  return { ...item, barcode: scannedText };
+                }
+                return item;
+              });
+
+              setItems(updatedItems);
+
+              // Immediately close dialog and show success message
+              setIsScanDialogOpen(false);
+              setSelectedItemForScan(null);
               setScannedCode(null);
-        toast.success(
-          `${type === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
-        );
-            }, 1000);
+              toast.success(
+                `${type === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
+              );
+            } catch (error) {
+              console.error('Failed to update product barcode:', error);
+              setScanError('Failed to save barcode to database. Please try again.');
+              setIsScanning(false);
+            } finally {
+              setIsSavingBarcode(false);
+            }
           }
 
-          if (error && error.name !== 'NotFoundException') {
-            console.error('Scanning error:', error);
-            setScanError('Failed to scan. Please try again.');
+          if (error) {
+            if (error.name === 'NotFoundException') {
+              // This is normal - no barcode detected yet, but don't log every time
+              if (Math.random() < 0.001) { // Log only 0.1% of the time
+                console.log('No barcode detected yet - this is normal');
+              }
+            } else {
+              console.error('Scanning error:', error);
+              setScanError('Failed to scan. Please try again.');
+            }
           }
         }
       );
@@ -300,24 +373,48 @@ const Inventory = () => {
   };
 
   // Handle manual code input
-  const handleManualCodeSubmit = () => {
+  const handleManualCodeSubmit = async () => {
+    console.log('=== MANUAL CODE SUBMIT ===');
+    console.log('Manual code:', manualCode);
+    console.log('Selected item:', selectedItemForScan);
+    
     if (!manualCode.trim() || !selectedItemForScan) return;
 
-    const updatedItems = items.map(item => {
-      if (item.id === selectedItemForScan) {
-        return { ...item, barcode: manualCode.trim() };
-      }
-      return item;
-    });
+    try {
+      setIsSavingBarcode(true);
+      // Update the product in the database
+      await updateProduct.mutateAsync({
+        id: selectedItemForScan,
+        barcode: manualCode.trim(),
+      });
 
-    setItems(updatedItems);
-    setScannedCode(manualCode.trim());
-    setManualInputMode(false);
-    setManualCode('');
+      // Update local state
+      const updatedItems = items.map(item => {
+        if (item.id === selectedItemForScan) {
+          return { ...item, barcode: manualCode.trim() };
+        }
+        return item;
+      });
 
-    toast.success(
-      `${scanType === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
-    );
+      setItems(updatedItems);
+      setScannedCode(manualCode.trim());
+      setManualInputMode(false);
+      setManualCode('');
+
+      // Immediately close dialog and show success message
+      setIsScanDialogOpen(false);
+      setSelectedItemForScan(null);
+      setScannedCode(null);
+
+      toast.success(
+        `${scanType === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
+      );
+    } catch (error) {
+      console.error('Failed to update product barcode:', error);
+      toast.error('Failed to save barcode to database. Please try again.');
+    } finally {
+      setIsSavingBarcode(false);
+    }
   };
 
   // Cleanup function to stop scanning when dialog closes
@@ -326,12 +423,17 @@ const Inventory = () => {
       codeReaderRef.current.reset();
       codeReaderRef.current = null;
     }
+    if (scanTimeout) {
+      clearTimeout(scanTimeout);
+      setScanTimeout(null);
+    }
     setIsScanning(false);
     setScanError(null);
     setScannedCode(null);
     setManualInputMode(false);
     setManualCode('');
     setSelectedItemForScan(null);
+    setIsSavingBarcode(false);
   };
 
   // Cleanup on component unmount
@@ -565,7 +667,11 @@ const Inventory = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => startScanning(item.id, 'barcode')}
+                            onClick={() => {
+                              console.log('=== SCAN BUTTON CLICKED ===');
+                              console.log('Item:', item);
+                              startScanning(item.id, 'barcode');
+                            }}
                             title="Scan Barcode"
                           >
                             <ScanBarcode className="h-4 w-4" />
@@ -755,6 +861,25 @@ const Inventory = () => {
             </DialogDescription>
           </DialogHeader>
 
+          {/* Camera Selection */}
+          {availableCameras.length > 1 && (
+            <div className="mb-4">
+              <label className="text-sm font-medium">Select Camera:</label>
+              <Select value={selectedCamera} onValueChange={setSelectedCamera}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choose camera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCameras.map((camera, index) => (
+                    <SelectItem key={camera.deviceId} value={camera.deviceId}>
+                      {camera.label || `Camera ${index + 1}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="py-6">
             {isScanning ? (
               <div className="flex flex-col items-center justify-center gap-4">
@@ -765,6 +890,13 @@ const Inventory = () => {
                     autoPlay
                     playsInline
                     muted
+                    onLoadedMetadata={() => {
+                      console.log('Video loaded metadata');
+                      console.log('Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+                    }}
+                    onCanPlay={() => {
+                      console.log('Video can play');
+                    }}
                   />
                   {/* Scanning overlay */}
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -775,17 +907,101 @@ const Inventory = () => {
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-green-400"></div>
                     </div>
                   </div>
+                  
+                  {/* Debug info */}
+                  <div className="absolute top-2 left-2 bg-black bg-opacity-75 text-white text-xs p-2 rounded">
+                    <div>Camera: {availableCameras.find(c => c.deviceId === selectedCamera)?.label || 'Unknown'}</div>
+                    <div>Status: Scanning...</div>
+                  </div>
                 </div>
 
                 {scanError && (
                   <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md">
                     {scanError}
+                    <div className="mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setManualInputMode(true)}
+                        className="text-xs"
+                      >
+                        📝 Enter Manually Instead
+                      </Button>
+                    </div>
                   </div>
                 )}
 
-                <p className="text-sm text-center text-muted-foreground">
-                  Position the {scanType === 'barcode' ? 'barcode' : 'QR code'} within the frame
-                </p>
+                <div className="text-sm text-center text-muted-foreground space-y-2">
+                  <p>Position the {scanType === 'barcode' ? 'barcode' : 'QR code'} within the frame</p>
+                  <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
+                    <p className="text-xs text-blue-700 font-medium mb-1">💡 Tips for better scanning:</p>
+                    <ul className="text-xs text-blue-600 space-y-1">
+                      <li>• Ensure good lighting</li>
+                      <li>• Hold the barcode steady</li>
+                      <li>• Keep it within the green frame</li>
+                      <li>• Try different angles if needed</li>
+                    </ul>
+                    <div className="mt-2 pt-2 border-t border-blue-200">
+                      <p className="text-xs text-blue-700 font-medium">🧪 Test Mode:</p>
+                      <p className="text-xs text-blue-600">Try scanning this test barcode: <code className="bg-blue-100 px-1 rounded">1234567890123</code></p>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs"
+                          onClick={() => {
+                            console.log('=== TEST SCAN TRIGGERED ===');
+                            const testBarcode = '1234567890123';
+                            setScannedCode(testBarcode);
+                            // Simulate the database update
+                            updateProduct.mutateAsync({
+                              id: selectedItemForScan!,
+                              barcode: testBarcode,
+                            }).then(() => {
+                              console.log('Test barcode saved successfully');
+                              // Immediately close dialog and show success message
+                              setIsScanDialogOpen(false);
+                              setSelectedItemForScan(null);
+                              setScannedCode(null);
+                              toast.success('Test barcode scanned successfully!');
+                            }).catch((error) => {
+                              console.error('Test barcode save failed:', error);
+                              toast.error('Test barcode save failed');
+                            });
+                          }}
+                        >
+                          🧪 Test Scan
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs"
+                          onClick={() => {
+                            console.log('=== TEST CAMERA ===');
+                            if (videoRef.current) {
+                              console.log('Video element:', videoRef.current);
+                              console.log('Video ready state:', videoRef.current.readyState);
+                              console.log('Video paused:', videoRef.current.paused);
+                              console.log('Video current time:', videoRef.current.currentTime);
+                              console.log('Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+                              toast.info('Camera test info logged to console');
+                            }
+                          }}
+                        >
+                          📷 Test Camera
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="text-xs bg-green-600 hover:bg-green-700"
+                          onClick={() => setManualInputMode(true)}
+                        >
+                          📝 Manual Input
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : manualInputMode ? (
               <div className="flex flex-col items-center justify-center gap-4">
@@ -808,11 +1024,20 @@ const Inventory = () => {
                   />
                   <Button
                     onClick={handleManualCodeSubmit}
-                    disabled={!manualCode.trim()}
+                    disabled={!manualCode.trim() || isSavingBarcode}
                     className="w-full"
                   >
-                    <Check className="mr-2 h-4 w-4" />
-                    Link Code to Product
+                    {isSavingBarcode ? (
+                      <>
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        Link Code to Product
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -820,15 +1045,24 @@ const Inventory = () => {
               <div className="flex flex-col items-center justify-center gap-4">
                 <div className="w-full h-[200px] bg-green-50 flex items-center justify-center rounded-md border-2 border-green-200">
                   <div className="flex flex-col items-center gap-2">
-                    <Check className="h-12 w-12 text-green-500" />
-                    <p className="text-sm text-green-700 font-medium">Scan Successful!</p>
+                    {isSavingBarcode ? (
+                      <>
+                        <div className="h-12 w-12 animate-spin rounded-full border-4 border-green-500 border-t-transparent" />
+                        <p className="text-sm text-green-700 font-medium">Saving to Database...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-12 w-12 text-green-500" />
+                        <p className="text-sm text-green-700 font-medium">Scan Successful!</p>
+                      </>
+                    )}
                     <p className="text-xs text-green-600 font-mono bg-green-100 px-2 py-1 rounded">
                       {scannedCode}
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-center text-muted-foreground">
-                  Code has been linked to the product
+                  {isSavingBarcode ? 'Saving barcode to database...' : 'Code has been linked to the product'}
                 </p>
               </div>
             ) : (
