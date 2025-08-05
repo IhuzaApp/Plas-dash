@@ -50,6 +50,7 @@ import { menuPrivileges } from '@/lib/privileges';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import { useShopSession } from '@/hooks/useShopSession';
 import ShopSelector from './ShopSelector';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
@@ -64,7 +65,8 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const { hasModuleAccess, hasAnyPrivilege, isSuperUser } = usePrivilege();
   const { logout } = useAuth();
   const { navigateToPage } = usePageAccess();
-  const { isLoggedIntoShop } = useShopSession();
+  const { isLoggedIntoShop, shopSession } = useShopSession();
+  const queryClient = useQueryClient();
 
   // Handle navigation state
   useEffect(() => {
@@ -84,6 +86,53 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     setNavigatingTo(null);
   }, [pathname]);
 
+  // Refetch data when shop session changes (login/logout)
+  useEffect(() => {
+    console.log('=== ADMIN SIDEBAR: SHOP SESSION CHANGED ===');
+    console.log('Shop session:', shopSession);
+    console.log('Is logged into shop:', isLoggedIntoShop);
+
+    // Refetch relevant queries when shop session changes
+    const queriesToRefetch = [
+      'branchShops',
+      'allStaff',
+      'productsByShop',
+      'shopTransactions',
+      'shopOrders',
+      'shopInventory',
+      'shopDashboard',
+      'shopFinancial',
+      'shopDiscounts',
+      'shopStaff',
+    ];
+
+    // Invalidate all queries that might be affected by shop session changes
+    queriesToRefetch.forEach(queryKey => {
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      console.log(`Invalidated query: ${queryKey}`);
+    });
+
+    // Also invalidate queries with shop-specific parameters
+    if (shopSession?.shopId) {
+      queryClient.invalidateQueries({ 
+        queryKey: ['branchShops', shopSession.shopName] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['allStaff', shopSession.shopName] 
+      });
+      console.log(`Invalidated shop-specific queries for: ${shopSession.shopName}`);
+    }
+
+    // If logged out of shop, also clear any shop-specific data
+    if (!isLoggedIntoShop) {
+      console.log('Shop logout detected - clearing shop-specific data');
+      // Clear any cached shop-specific data
+      queryClient.removeQueries({ queryKey: ['branchShops'] });
+      queryClient.removeQueries({ queryKey: ['allStaff'] });
+      queryClient.removeQueries({ queryKey: ['productsByShop'] });
+    }
+  }, [isLoggedIntoShop, shopSession?.shopId, queryClient]);
+
   const handleNavigation = (path: string) => {
     if (path === pathname) return;
     setIsNavigating(true);
@@ -94,6 +143,37 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const handleLogout = () => {
     logout();
     window.location.reload();
+  };
+
+  // Utility function to refetch shop-related data
+  const refetchShopData = () => {
+    console.log('=== REFETCHING SHOP DATA ===');
+    const queriesToRefetch = [
+      'branchShops',
+      'allStaff',
+      'productsByShop',
+      'shopTransactions',
+      'shopOrders',
+      'shopInventory',
+      'shopDashboard',
+      'shopFinancial',
+      'shopDiscounts',
+      'shopStaff',
+    ];
+
+    queriesToRefetch.forEach(queryKey => {
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+    });
+
+    // Also refetch shop-specific queries if we have a shop session
+    if (shopSession?.shopName) {
+      queryClient.invalidateQueries({ 
+        queryKey: ['branchShops', shopSession.shopName] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['allStaff', shopSession.shopName] 
+      });
+    }
   };
 
   const menuItems = [

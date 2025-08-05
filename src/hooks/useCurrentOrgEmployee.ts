@@ -14,6 +14,7 @@ interface OrgEmployee {
   active: boolean;
   shop_id: string;
   multAuthEnabled: boolean;
+  twoFactorSecrets?: string | null;
   Shops: {
     id: string;
     name: string;
@@ -40,6 +41,7 @@ export function useCurrentOrgEmployee() {
         active
         shop_id
         multAuthEnabled
+        twoFactorSecrets
         Shops {
           id
           name

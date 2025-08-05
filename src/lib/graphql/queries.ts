@@ -1238,6 +1238,7 @@ export const GET_ORG_EMPLOYEES_BY_SHOP = `
       updated_on
       Position
       roleType
+      twoFactorSecrets
       orgEmployeeRoles {
         created_on
         id
@@ -1281,6 +1282,7 @@ export const GET_ORG_EMPLOYEE_BY_IDENTITY = `
       shop_id
       updated_on
       online
+      twoFactorSecrets
       orgEmployeeRoles {
         id
         privillages
