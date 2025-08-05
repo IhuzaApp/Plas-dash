@@ -66,6 +66,12 @@ export function useCurrentOrgEmployee() {
     error,
   });
 
+  // Log the parsed orgEmployee data
+  if (data && typeof data === 'object' && 'orgEmployees' in data) {
+    console.log('Raw orgEmployees data:', (data as any).orgEmployees);
+    console.log('First orgEmployee:', (data as any).orgEmployees[0]);
+  }
+
   const orgEmployee =
     data &&
     typeof data === 'object' &&

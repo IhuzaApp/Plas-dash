@@ -6,6 +6,7 @@ import LoadingProvider from './LoadingProvider';
 import LoginModal from '../modals/LoginModal';
 import { UserPrivileges } from '@/types/privileges';
 import { getRecommendedLandingPage, isPageAccessible } from '@/lib/privileges';
+import { ShopSessionProvider } from '@/contexts/ShopSessionContext';
 
 interface SessionData {
   id: string;
@@ -153,22 +154,24 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
   return (
     <AuthContext.Provider value={authValue}>
-      <Head>
-        <title key="title">{pageTitle}</title>
-        <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
-        <meta key="description" name="description" content="Plas Admin Dashboard" />
-        <link key="favicon" rel="icon" href="/favicon.ico" />
-      </Head>
-      <LoadingProvider>
-        <div className="min-h-screen bg-background relative">
-          {children}
-          {!isAuthenticated && (
-            <div className="fixed inset-0 z-40 bg-white/30 backdrop-blur-md pointer-events-none" />
-          )}
-          {!isAuthenticated && <LoginModal onLoginSuccess={handleLoginSuccess} />}
-          <Toaster />
-        </div>
-      </LoadingProvider>
+      <ShopSessionProvider>
+        <Head>
+          <title key="title">{pageTitle}</title>
+          <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
+          <meta key="description" name="description" content="Plas Admin Dashboard" />
+          <link key="favicon" rel="icon" href="/favicon.ico" />
+        </Head>
+        <LoadingProvider>
+          <div className="min-h-screen bg-background relative">
+            {children}
+            {!isAuthenticated && (
+              <div className="fixed inset-0 z-40 bg-white/30 backdrop-blur-md pointer-events-none" />
+            )}
+            {!isAuthenticated && <LoginModal onLoginSuccess={handleLoginSuccess} />}
+            <Toaster />
+          </div>
+        </LoadingProvider>
+      </ShopSessionProvider>
     </AuthContext.Provider>
   );
 }

@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { Loader2, Store, Shield, Clock, AlertTriangle, Smartphone } from 'lucide-react';
-import { useShopSession } from '@/hooks/useShopSession';
+import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useUpdateMultAuth } from '@/hooks/useUpdateMultAuth';
 import { useDatabaseTwoFactorAuth } from '@/hooks/useDatabaseTwoFactorAuth';
 import { useQueryClient } from '@tanstack/react-query';
