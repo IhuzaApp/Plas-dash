@@ -57,8 +57,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSetupMode, setIsSetupMode] = useState(!multAuthEnabled);
   
-  console.log('=== SHOP AUTH MODAL: INITIAL STATE ===');
-  console.log('Initial setup mode:', { isSetupMode, multAuthEnabled });
+
   const [setupStep, setSetupStep] = useState<'qr' | 'verify'>('qr');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [secretKey, setSecretKey] = useState<string>('');
@@ -78,17 +77,12 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
 
   // Generate QR code when setup mode is activated
   React.useEffect(() => {
-    console.log('=== SHOP AUTH MODAL: SETUP MODE EFFECT ===');
-    console.log('Setup mode state:', { isSetupMode, setupStep, hasQrCode: !!qrCodeDataUrl });
-    
     if (isSetupMode && setupStep === 'qr' && !qrCodeDataUrl) {
-      console.log('Generating QR code...');
       generateQRCode();
     }
   }, [isSetupMode, setupStep, qrCodeDataUrl]);
 
   const triggerRealTimeUpdates = () => {
-    console.log('=== TRIGGERING REAL-TIME UPDATES ===');
     // Invalidate and refetch all relevant queries
     queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
     queryClient.invalidateQueries({ queryKey: ['userShops'] });
@@ -97,8 +91,6 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
     // Force refetch
     queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
     queryClient.refetchQueries({ queryKey: ['userShops'] });
-    
-    console.log('Real-time updates triggered');
   };
 
   const generateQRCode = async () => {
@@ -151,17 +143,8 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
 
         setIsLoading(true);
         try {
-          console.log('2FA Setup Debug:', {
-            setupCode: data.setupCode,
-            secretKey: secretKey ? '***' : 'missing',
-            employeeId,
-            userId,
-            shopId,
-          });
-
           // Verify the TOTP code using the secret key
           const isValidCode = verifyToken(data.setupCode, secretKey);
-          console.log('TOTP Verification Result:', isValidCode);
 
           if (!isValidCode) {
             toast.error('Invalid verification code. Please try again.');
@@ -169,18 +152,9 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
             return;
           }
 
-          console.log('Storing secret key...');
-          console.log('Setup parameters:', {
-            employeeId,
-            employeeIdType: typeof employeeId,
-            shopId,
-            secretKey: secretKey ? `${secretKey.substring(0, 8)}...` : 'missing'
-          });
-          
           // Check if employeeId is valid
           const employeeIdStr = String(employeeId);
           if (!employeeIdStr || employeeIdStr.trim() === '') {
-            console.error('Invalid employeeId during setup:', employeeId);
             toast.error('Invalid employee ID during setup. Please contact administrator.');
             return;
           }
@@ -188,17 +162,12 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
           // Store the secret key in database for future authentication
           await storeSecretKey(employeeIdStr, shopId, secretKey, storedTwoFactorSecrets || null, userId);
 
-          console.log('Updating database...');
           // Update user's multAuthEnabled status
           await updateMultAuthMutation.mutateAsync({
             employeeId: userId, // Use the UUID instead of employeeId
             multAuthEnabled: true,
           });
 
-          console.log('2FA setup completed successfully');
-          console.log('=== 2FA SETUP COMPLETED ===');
-          console.log('Setup completed for:', { employeeIdStr, shopId });
-          console.log('multAuthEnabled before update:', multAuthEnabled);
           toast.success('2FA setup completed successfully!');
           setIsSetupMode(false);
           setSetupStep('qr');
@@ -206,19 +175,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
           
           // Trigger real-time updates
           triggerRealTimeUpdates();
-          
-          // Force a re-render to update multAuthEnabled state
-          setTimeout(() => {
-            console.log('=== 2FA SETUP - STATE UPDATE CHECK ===');
-            console.log('multAuthEnabled after update:', multAuthEnabled);
-          }, 100);
         } catch (error: any) {
-          console.error('Error during 2FA setup:', error);
-          console.error('Error details:', {
-            message: error?.message || 'Unknown error',
-            stack: error?.stack,
-            name: error?.name,
-          });
           toast.error(`Failed to complete 2FA setup: ${error?.message || 'Unknown error'}`);
         } finally {
           setIsLoading(false);
@@ -236,24 +193,10 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
     setIsLoading(true);
 
     try {
-      console.log('=== SHOP AUTH MODAL: AUTHENTICATION ATTEMPT ===');
-      console.log('Authentication parameters:', {
-        employeeId,
-        employeeIdType: typeof employeeId,
-        shopId,
-        employeeName,
-        shopName,
-        multAuthEnabled,
-        userId
-      });
-      
-      // Debug authentication attempt
-      console.log('=== AUTHENTICATION DEBUG ===');
       
       // Check if employeeId is valid
       const employeeIdStr = String(employeeId);
       if (!employeeIdStr || employeeIdStr.trim() === '') {
-        console.error('Invalid employeeId:', employeeId);
         toast.error('Invalid employee ID. Please contact administrator.');
         return;
       }
@@ -262,7 +205,6 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
       const storedSecretKey = getSecretKey(employeeIdStr, shopId, storedTwoFactorSecrets || null, userId);
 
       if (!storedSecretKey) {
-        console.error('No stored secret key found for:', { employeeId, shopId });
         toast.error('2FA not properly configured. Please contact administrator.');
         return;
       }
@@ -272,13 +214,10 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
 
       if (isValidCode) {
         // Success - log into shop
-        console.log('=== SHOP AUTH MODAL: LOGIN SUCCESS ===');
-        console.log('Logging into shop:', { shopId, shopName, employeeId, employeeName, position });
         loginToShop(shopId, shopName, employeeId, employeeName, position);
         toast.success(`Successfully logged into ${shopName}`);
         onOpenChange(false);
         form.reset();
-        console.log('Shop login completed - modal closed');
         
         // Trigger real-time updates
         triggerRealTimeUpdates();

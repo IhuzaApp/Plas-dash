@@ -73,7 +73,6 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
       employeeName: string,
       position: string
     ) => {
-      console.log('=== SHOP SESSION CONTEXT: LOGIN ===');
       const expiresAt = Date.now() + SHOP_SESSION_DURATION;
       const newShopSession: ShopSession = {
         shopId,
@@ -86,16 +85,13 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
 
       localStorage.setItem(SHOP_SESSION_KEY, JSON.stringify(newShopSession));
       setShopSession(newShopSession);
-      console.log('Shop session set:', newShopSession);
     },
     []
   );
 
   const logoutFromShop = useCallback(() => {
-    console.log('=== SHOP SESSION CONTEXT: LOGOUT ===');
     localStorage.removeItem(SHOP_SESSION_KEY);
     setShopSession(null);
-    console.log('Shop session cleared');
   }, []);
 
   const getShopSessionExpiry = useCallback(() => {
@@ -103,10 +99,6 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
   }, [shopSession]);
 
   const isLoggedIntoShop = !!shopSession;
-
-  console.log('=== SHOP SESSION CONTEXT: STATE UPDATE ===');
-  console.log('shopSession:', shopSession);
-  console.log('isLoggedIntoShop:', isLoggedIntoShop);
 
   const value: ShopSessionContextType = {
     shopSession,
