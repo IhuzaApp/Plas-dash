@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Store, Clock, Shield, LogOut, CheckCircle, AlertCircle } from 'lucide-react';
+import { Store, Clock, Shield, LogOut, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
-import { useShopSession } from '@/hooks/useShopSession';
+import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useQueryClient } from '@tanstack/react-query';
 import ShopAuthModal from '@/components/modals/ShopAuthModal';
@@ -34,6 +34,45 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
       console.log('twoFactorSecrets:', orgEmployee.twoFactorSecrets ? 'exists' : 'null');
     }
   }, [orgEmployee]);
+
+  // Listen for shop session changes
+  useEffect(() => {
+    const handleShopSessionChange = (event: CustomEvent) => {
+      console.log('=== SHOP SELECTOR: SHOP SESSION EVENT RECEIVED ===');
+      console.log('Event type:', event.detail.type);
+      
+      // Trigger real-time updates when shop session changes
+      setTimeout(() => {
+        console.log('=== TRIGGERING REAL-TIME UPDATES AFTER SHOP SESSION CHANGE ===');
+        queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
+        queryClient.invalidateQueries({ queryKey: ['userShops'] });
+        queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
+        
+        // Force refetch
+        queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
+        queryClient.refetchQueries({ queryKey: ['userShops'] });
+        
+        // Force re-render
+        setForceUpdate(prev => prev + 1);
+      }, 100);
+    };
+
+    // Listen for orgEmployee data updates
+    const handleOrgEmployeeUpdate = () => {
+      console.log('=== SHOP SELECTOR: ORG EMPLOYEE DATA UPDATE EVENT ===');
+      setForceUpdate(prev => prev + 1);
+    };
+
+    // Add event listeners
+    window.addEventListener('shopSessionChanged', handleShopSessionChange as EventListener);
+    window.addEventListener('orgEmployeeDataUpdated', handleOrgEmployeeUpdate);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('shopSessionChanged', handleShopSessionChange as EventListener);
+      window.removeEventListener('orgEmployeeDataUpdated', handleOrgEmployeeUpdate);
+    };
+  }, [queryClient]);
   const [selectedShop, setSelectedShop] = useState<{
     shopId: string;
     shopName: string;
@@ -44,6 +83,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
     userId: string;
   } | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   const handleShopSelect = (shop: any) => {
     console.log('ShopSelector - Selected shop:', shop);
@@ -96,6 +136,13 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
       queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.refetchQueries({ queryKey: ['userShops'] });
     }, 100);
+  };
+
+  const handleManualRefresh = () => {
+    console.log('=== MANUAL REFRESH TRIGGERED ===');
+    queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
+    queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
+    setForceUpdate(prev => prev + 1);
   };
 
   if (isLoading) {
@@ -218,11 +265,21 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
 
   return (
     <div className="p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <Store className="h-4 w-4" />
-        <h3 className={cn('font-medium', isSidebarOpen ? 'text-sm' : 'sr-only')}>
-          Select Shop for POS
-        </h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Store className="h-4 w-4" />
+          <h3 className={cn('font-medium', isSidebarOpen ? 'text-sm' : 'sr-only')}>
+            Select Shop for POS
+          </h3>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleManualRefresh}
+          className="h-6 w-6 p-0"
+        >
+          <RefreshCw className="h-3 w-3" />
+        </Button>
       </div>
 
       <div className="space-y-2">

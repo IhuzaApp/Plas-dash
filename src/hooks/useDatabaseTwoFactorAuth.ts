@@ -29,7 +29,10 @@ export function useDatabaseTwoFactorAuth() {
         twoFactorSecrets,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('=== DATABASE UPDATE SUCCESS ===');
+      console.log('Update result:', data);
+      
       // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
       queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
@@ -38,6 +41,17 @@ export function useDatabaseTwoFactorAuth() {
       // Force refetch current user data
       queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.refetchQueries({ queryKey: ['userShops'] });
+      
+      // Also remove and refetch to ensure fresh data
+      queryClient.removeQueries({ queryKey: ['currentOrgEmployee'] });
+      queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
+      
+      console.log('Queries invalidated and refetched');
+      
+      // Dispatch custom event to force UI updates
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('orgEmployeeDataUpdated'));
+      }, 100);
     },
   });
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/layout/RootLayout';
 
 interface ShopSession {
@@ -10,7 +10,7 @@ interface ShopSession {
   expiresAt: number;
 }
 
-interface UseShopSessionReturn {
+interface ShopSessionContextType {
   shopSession: ShopSession | null;
   isLoggedIntoShop: boolean;
   loginToShop: (
@@ -24,10 +24,12 @@ interface UseShopSessionReturn {
   getShopSessionExpiry: () => number | null;
 }
 
+const ShopSessionContext = createContext<ShopSessionContextType | undefined>(undefined);
+
 const SHOP_SESSION_KEY = 'shopSession';
 const SHOP_SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
-export function useShopSession(): UseShopSessionReturn {
+export function ShopSessionProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const [shopSession, setShopSession] = useState<ShopSession | null>(null);
 
@@ -71,6 +73,7 @@ export function useShopSession(): UseShopSessionReturn {
       employeeName: string,
       position: string
     ) => {
+      console.log('=== SHOP SESSION CONTEXT: LOGIN ===');
       const expiresAt = Date.now() + SHOP_SESSION_DURATION;
       const newShopSession: ShopSession = {
         shopId,
@@ -83,26 +86,16 @@ export function useShopSession(): UseShopSessionReturn {
 
       localStorage.setItem(SHOP_SESSION_KEY, JSON.stringify(newShopSession));
       setShopSession(newShopSession);
-      
-      // Dispatch custom event to notify other components
-      window.dispatchEvent(new CustomEvent('shopSessionChanged', { 
-        detail: { type: 'login', session: newShopSession } 
-      }));
+      console.log('Shop session set:', newShopSession);
     },
     []
   );
 
   const logoutFromShop = useCallback(() => {
-    console.log('=== SHOP SESSION: LOGOUT TRIGGERED ===');
+    console.log('=== SHOP SESSION CONTEXT: LOGOUT ===');
     localStorage.removeItem(SHOP_SESSION_KEY);
     setShopSession(null);
-    
-    console.log('Shop session cleared, isLoggedIntoShop should be false');
-    
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new CustomEvent('shopSessionChanged', { 
-      detail: { type: 'logout' } 
-    }));
+    console.log('Shop session cleared');
   }, []);
 
   const getShopSessionExpiry = useCallback(() => {
@@ -110,16 +103,30 @@ export function useShopSession(): UseShopSessionReturn {
   }, [shopSession]);
 
   const isLoggedIntoShop = !!shopSession;
-  
-  console.log('=== SHOP SESSION: STATE UPDATE ===');
+
+  console.log('=== SHOP SESSION CONTEXT: STATE UPDATE ===');
   console.log('shopSession:', shopSession);
   console.log('isLoggedIntoShop:', isLoggedIntoShop);
-  
-  return {
+
+  const value: ShopSessionContextType = {
     shopSession,
     isLoggedIntoShop,
     loginToShop,
     logoutFromShop,
     getShopSessionExpiry,
   };
+
+  return (
+    <ShopSessionContext.Provider value={value}>
+      {children}
+    </ShopSessionContext.Provider>
+  );
 }
+
+export function useShopSession(): ShopSessionContextType {
+  const context = useContext(ShopSessionContext);
+  if (context === undefined) {
+    throw new Error('useShopSession must be used within a ShopSessionProvider');
+  }
+  return context;
+} 
