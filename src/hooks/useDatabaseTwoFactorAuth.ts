@@ -30,9 +30,6 @@ export function useDatabaseTwoFactorAuth() {
       });
     },
     onSuccess: (data) => {
-      console.log('=== DATABASE UPDATE SUCCESS ===');
-      console.log('Update result:', data);
-      
       // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
       queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
@@ -45,8 +42,6 @@ export function useDatabaseTwoFactorAuth() {
       // Also remove and refetch to ensure fresh data
       queryClient.removeQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
-      
-      console.log('Queries invalidated and refetched');
       
       // Dispatch custom event to force UI updates
       setTimeout(() => {
@@ -81,7 +76,6 @@ export function useDatabaseTwoFactorAuth() {
     if (existingSecrets) {
       try {
         secrets = JSON.parse(existingSecrets);
-        console.log('Existing secrets from database:', Object.keys(secrets));
       } catch (error) {
         console.error('Error parsing existing secrets:', error);
         secrets = {};
@@ -95,19 +89,14 @@ export function useDatabaseTwoFactorAuth() {
       shopId,
     };
 
-    console.log('Updated secrets object:', Object.keys(secrets));
-    console.log('Total secrets to store:', Object.keys(secrets).length);
-
     // Store in database
     const secretsJson = JSON.stringify(secrets);
-    console.log('Secrets JSON to store:', secretsJson);
 
     try {
       const result = await updateTwoFactorSecretsMutation.mutateAsync({
         employeeId: uuid, // Use UUID instead of employeeId
         twoFactorSecrets: secretsJson,
       });
-      console.log('Secret stored in database successfully:', result);
       return result;
     } catch (error) {
       console.error('Error storing secret in database:', error);
@@ -121,24 +110,17 @@ export function useDatabaseTwoFactorAuth() {
     storedSecrets: string | null,
     uuid?: string // Add optional UUID parameter for debugging
   ): string | null => {
-    console.log('=== GET SECRET KEY FROM DATABASE ===');
-    console.log('Looking for key:', `${employeeId}-${shopId}`);
-    console.log('UUID for debugging:', uuid);
-    console.log('Stored secrets from database:', storedSecrets);
 
     if (!storedSecrets) {
-      console.log('No stored secrets found in database');
       return null;
     }
 
     try {
       const secrets: TwoFactorSecrets = JSON.parse(storedSecrets);
-      console.log('Parsed secrets from database:', Object.keys(secrets));
       
       const key = `${employeeId}-${shopId}`;
       const secret = secrets[key];
       
-      console.log('Found secret:', secret ? '***' : 'null');
       return secret?.secretKey || null;
     } catch (error) {
       console.error('Error parsing secrets from database:', error);
@@ -147,18 +129,11 @@ export function useDatabaseTwoFactorAuth() {
   };
 
   const verifyToken = (token: string, secretKey: string): boolean => {
-    console.log('TOTP Verification Debug:', {
-      token,
-      secretKey: secretKey ? `${secretKey.substring(0, 8)}...` : 'missing',
-      tokenLength: token.length,
-    });
-
     try {
       const result = authenticator.verify({
         token,
         secret: secretKey,
       });
-      console.log('TOTP Verification Result:', result);
       return result;
     } catch (error) {
       console.error('TOTP Verification Error:', error);

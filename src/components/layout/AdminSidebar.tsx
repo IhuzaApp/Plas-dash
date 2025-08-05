@@ -94,11 +94,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   // Listen for shop session changes and refetch data
   useEffect(() => {
     const handleShopSessionChange = (event: CustomEvent) => {
-      console.log('=== ADMIN SIDEBAR: SHOP SESSION EVENT RECEIVED ===');
-      console.log('Event type:', event.detail.type);
-      console.log('Shop session:', shopSession);
-      console.log('Is logged into shop:', isLoggedIntoShop);
-
       // Refetch relevant queries when shop session changes
       const queriesToRefetch = [
         'branchShops',
@@ -116,7 +111,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       // Invalidate all queries that might be affected by shop session changes
       queriesToRefetch.forEach(queryKey => {
         queryClient.invalidateQueries({ queryKey: [queryKey] });
-        console.log(`Invalidated query: ${queryKey}`);
       });
 
       // Also invalidate queries with shop-specific parameters
@@ -127,12 +121,10 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         queryClient.invalidateQueries({ 
           queryKey: ['allStaff', shopSession.shopName] 
         });
-        console.log(`Invalidated shop-specific queries for: ${shopSession.shopName}`);
       }
 
       // If logged out of shop, also clear any shop-specific data
       if (!isLoggedIntoShop) {
-        console.log('Shop logout detected - clearing shop-specific data');
         // Clear any cached shop-specific data
         queryClient.removeQueries({ queryKey: ['branchShops'] });
         queryClient.removeQueries({ queryKey: ['allStaff'] });
@@ -141,9 +133,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
 
       // Force re-render
       setForceUpdate(prev => prev + 1);
-      
-      // Force re-render when shop session changes
-      console.log('Shop session event received:', event.detail.type);
     };
 
     // Add event listener
@@ -169,7 +158,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
 
   // Utility function to refetch shop-related data
   const refetchShopData = () => {
-    console.log('=== REFETCHING SHOP DATA ===');
     const queriesToRefetch = [
       'branchShops',
       'allStaff',

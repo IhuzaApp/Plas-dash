@@ -22,18 +22,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   const { shopSession, isLoggedIntoShop, logoutFromShop } = useShopSession();
   const queryClient = useQueryClient();
 
-  console.log('ShopSelector - Session data:', session);
-  console.log('ShopSelector - OrgEmployee data:', orgEmployee);
-  
-  // Trigger real-time updates when orgEmployee data changes
-  useEffect(() => {
-    if (orgEmployee) {
-      console.log('=== SHOP SELECTOR: ORG EMPLOYEE DATA UPDATED ===');
-      console.log('Updated orgEmployee:', orgEmployee);
-      console.log('multAuthEnabled:', orgEmployee.multAuthEnabled);
-      console.log('twoFactorSecrets:', orgEmployee.twoFactorSecrets ? 'exists' : 'null');
-    }
-  }, [orgEmployee]);
+
 
   // Listen for shop session changes
   useEffect(() => {
@@ -86,7 +75,6 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   const [forceUpdate, setForceUpdate] = useState(0);
 
   const handleShopSelect = (shop: any) => {
-    console.log('ShopSelector - Selected shop:', shop);
     const selectedShopData = {
       shopId: shop.shop.id,
       shopName: shop.shop.name,
@@ -96,20 +84,16 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
       multAuthEnabled: shop.multAuthEnabled || false,
       userId: shop.userId || '',
     };
-    console.log('ShopSelector - Processed shop data:', selectedShopData);
-    console.log('ShopSelector - employeeId being passed:', selectedShopData.employeeId);
     setSelectedShop(selectedShopData);
     setShowAuthModal(true);
   };
 
   const handleAuthSuccess = () => {
-    console.log('=== SHOP SELECTOR: AUTH SUCCESS CALLBACK ===');
     setShowAuthModal(false);
     setSelectedShop(null);
     
     // Trigger real-time updates after successful authentication
     setTimeout(() => {
-      console.log('=== TRIGGERING REAL-TIME UPDATES AFTER AUTH SUCCESS ===');
       queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.invalidateQueries({ queryKey: ['userShops'] });
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
@@ -121,13 +105,10 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   };
 
   const handleLogout = () => {
-    console.log('=== SHOP SELECTOR: LOGOUT TRIGGERED ===');
     logoutFromShop();
-    console.log('Shop logout completed');
     
     // Trigger real-time updates after logout
     setTimeout(() => {
-      console.log('=== TRIGGERING REAL-TIME UPDATES AFTER LOGOUT ===');
       queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.invalidateQueries({ queryKey: ['userShops'] });
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
@@ -139,7 +120,6 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   };
 
   const handleManualRefresh = () => {
-    console.log('=== MANUAL REFRESH TRIGGERED ===');
     queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
     queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
     setForceUpdate(prev => prev + 1);
@@ -159,7 +139,6 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   if (!orgEmployee || !orgEmployee.Shops) {
     // Fallback: use session data if available
     if (session && session.shop_id) {
-      console.log('Using fallback session data for shop');
       const fallbackShopData = {
         shop: {
           id: session.shop_id,
@@ -190,7 +169,6 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
               key={fallbackShopData.shop.id}
               className="cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
               onClick={() => {
-                console.log('ShopSelector - Using fallback shop data:', fallbackShopData);
                 handleShopSelect(fallbackShopData);
               }}
             >
@@ -286,22 +264,18 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
         <Card
           key={orgEmployee.Shops.id}
           className="cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
-          onClick={() => {
-            console.log('ShopSelector - orgEmployee data:', orgEmployee);
-            console.log('ShopSelector - orgEmployee.employeeID:', orgEmployee.employeeID);
-            const shopData = {
-              shop: orgEmployee.Shops,
-              position: orgEmployee.Position,
-              roleType: orgEmployee.roleType,
-              multAuthEnabled: orgEmployee.multAuthEnabled,
-              employeeId: orgEmployee.employeeID,
-              employeeName: orgEmployee.fullnames,
-              userId: orgEmployee.id,
-            };
-            console.log('ShopSelector - shopData being passed:', shopData);
-            console.log('ShopSelector - shopData.employeeId:', shopData.employeeId);
-            handleShopSelect(shopData);
-          }}
+                      onClick={() => {
+              const shopData = {
+                shop: orgEmployee.Shops,
+                position: orgEmployee.Position,
+                roleType: orgEmployee.roleType,
+                multAuthEnabled: orgEmployee.multAuthEnabled,
+                employeeId: orgEmployee.employeeID,
+                employeeName: orgEmployee.fullnames,
+                userId: orgEmployee.id,
+              };
+              handleShopSelect(shopData);
+            }}
         >
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
