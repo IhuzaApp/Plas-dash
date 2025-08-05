@@ -320,10 +320,30 @@ const Inventory = () => {
             // Update the product in the database
             try {
               setIsSavingBarcode(true);
-              await updateProduct.mutateAsync({
+              console.log('Updating product with barcode:', { itemId, scannedText });
+              
+              // Get current product data to ensure we have all required fields
+              const currentProduct = getCurrentProduct(itemId);
+              console.log('Current product data:', currentProduct);
+              
+              // Create update data with current product info to avoid null issues
+              const updateData = {
                 id: itemId,
-                barcode: scannedText,
-              });
+                barcode: scannedText || '', // Ensure it's not null
+                // Include other fields that might be required
+                name: currentProduct?.name || '',
+                price: currentProduct?.price?.toString() || '0',
+                quantity: currentProduct?.stock || 0,
+                measurement_unit: currentProduct?.measurement_unit || 'unit',
+                final_price: currentProduct?.price?.toString() || '0',
+              };
+              
+              console.log('Update data being sent:', updateData);
+              
+              // Only update the barcode field, don't pass other fields to avoid null issues
+              const updateResult = await updateProduct.mutateAsync(updateData);
+              
+              console.log('Database update successful:', updateResult);
 
               // Update local state
               const updatedItems = items.map(item => {
@@ -342,9 +362,17 @@ const Inventory = () => {
               toast.success(
                 `${type === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
               );
-            } catch (error) {
+            } catch (error: any) {
               console.error('Failed to update product barcode:', error);
-              setScanError('Failed to save barcode to database. Please try again.');
+              console.error('Error details:', {
+                itemId,
+                scannedText,
+                errorMessage: error.message,
+                errorStack: error.stack,
+                errorResponse: error.response,
+                errorData: error.data
+              });
+              setScanError(`Failed to save barcode to database: ${error.message}`);
               setIsScanning(false);
             } finally {
               setIsSavingBarcode(false);
@@ -382,11 +410,30 @@ const Inventory = () => {
 
     try {
       setIsSavingBarcode(true);
-      // Update the product in the database
-      await updateProduct.mutateAsync({
+      console.log('Updating product with manual barcode:', { selectedItemForScan, manualCode });
+      
+      // Get current product data to ensure we have all required fields
+      const currentProduct = getCurrentProduct(selectedItemForScan);
+      console.log('Current product data for manual input:', currentProduct);
+      
+      // Create update data with current product info to avoid null issues
+      const updateData = {
         id: selectedItemForScan,
-        barcode: manualCode.trim(),
-      });
+        barcode: manualCode.trim() || '', // Ensure it's not null
+        // Include other fields that might be required
+        name: currentProduct?.name || '',
+        price: currentProduct?.price?.toString() || '0',
+        quantity: currentProduct?.stock || 0,
+        measurement_unit: currentProduct?.measurement_unit || 'unit',
+        final_price: currentProduct?.price?.toString() || '0',
+      };
+      
+      console.log('Manual update data being sent:', updateData);
+      
+      // Update the product in the database
+      const updateResult = await updateProduct.mutateAsync(updateData);
+      
+      console.log('Manual barcode update successful:', updateResult);
 
       // Update local state
       const updatedItems = items.map(item => {
@@ -409,12 +456,23 @@ const Inventory = () => {
       toast.success(
         `${scanType === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update product barcode:', error);
-      toast.error('Failed to save barcode to database. Please try again.');
+      console.error('Manual input error details:', {
+        selectedItemForScan,
+        manualCode,
+        errorMessage: error.message,
+        errorStack: error.stack
+      });
+      toast.error(`Failed to save barcode to database: ${error.message}`);
     } finally {
       setIsSavingBarcode(false);
     }
+  };
+
+  // Function to get current product data
+  const getCurrentProduct = (productId: string) => {
+    return items.find(item => item.id === productId);
   };
 
   // Cleanup function to stop scanning when dialog closes
@@ -953,20 +1011,42 @@ const Inventory = () => {
                             console.log('=== TEST SCAN TRIGGERED ===');
                             const testBarcode = '1234567890123';
                             setScannedCode(testBarcode);
-                            // Simulate the database update
-                            updateProduct.mutateAsync({
+                            
+                            // Get current product data to ensure we have all required fields
+                            const currentProduct = getCurrentProduct(selectedItemForScan!);
+                            console.log('Current product data for test scan:', currentProduct);
+                            
+                            // Create update data with current product info to avoid null issues
+                            const updateData = {
                               id: selectedItemForScan!,
-                              barcode: testBarcode,
-                            }).then(() => {
-                              console.log('Test barcode saved successfully');
+                              barcode: testBarcode || '', // Ensure it's not null
+                              // Include other fields that might be required
+                              name: currentProduct?.name || '',
+                              price: currentProduct?.price?.toString() || '0',
+                              quantity: currentProduct?.stock || 0,
+                              measurement_unit: currentProduct?.measurement_unit || 'unit',
+                              final_price: currentProduct?.price?.toString() || '0',
+                            };
+                            
+                            console.log('Test update data being sent:', updateData);
+                            
+                            // Simulate the database update
+                            updateProduct.mutateAsync(updateData).then((result) => {
+                              console.log('Test barcode saved successfully:', result);
                               // Immediately close dialog and show success message
                               setIsScanDialogOpen(false);
                               setSelectedItemForScan(null);
                               setScannedCode(null);
                               toast.success('Test barcode scanned successfully!');
-                            }).catch((error) => {
+                            }).catch((error: any) => {
                               console.error('Test barcode save failed:', error);
-                              toast.error('Test barcode save failed');
+                              console.error('Test scan error details:', {
+                                selectedItemForScan,
+                                testBarcode,
+                                errorMessage: error.message,
+                                errorStack: error.stack
+                              });
+                              toast.error(`Test barcode save failed: ${error.message}`);
                             });
                           }}
                         >
