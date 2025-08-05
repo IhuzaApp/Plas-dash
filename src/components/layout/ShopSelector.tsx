@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { Store, Clock, Shield, LogOut, CheckCircle, AlertCircle } from 'lucide-r
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { useShopSession } from '@/hooks/useShopSession';
 import { useAuth } from '@/components/layout/RootLayout';
+import { useQueryClient } from '@tanstack/react-query';
 import ShopAuthModal from '@/components/modals/ShopAuthModal';
 import { cn } from '@/lib/utils';
 
@@ -19,9 +20,20 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   const { session } = useAuth();
   const { orgEmployee, isLoading } = useCurrentOrgEmployee();
   const { shopSession, isLoggedIntoShop, logoutFromShop } = useShopSession();
+  const queryClient = useQueryClient();
 
   console.log('ShopSelector - Session data:', session);
   console.log('ShopSelector - OrgEmployee data:', orgEmployee);
+  
+  // Trigger real-time updates when orgEmployee data changes
+  useEffect(() => {
+    if (orgEmployee) {
+      console.log('=== SHOP SELECTOR: ORG EMPLOYEE DATA UPDATED ===');
+      console.log('Updated orgEmployee:', orgEmployee);
+      console.log('multAuthEnabled:', orgEmployee.multAuthEnabled);
+      console.log('twoFactorSecrets:', orgEmployee.twoFactorSecrets ? 'exists' : 'null');
+    }
+  }, [orgEmployee]);
   const [selectedShop, setSelectedShop] = useState<{
     shopId: string;
     shopName: string;
@@ -45,17 +57,45 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
       userId: shop.userId || '',
     };
     console.log('ShopSelector - Processed shop data:', selectedShopData);
+    console.log('ShopSelector - employeeId being passed:', selectedShopData.employeeId);
     setSelectedShop(selectedShopData);
     setShowAuthModal(true);
   };
 
   const handleAuthSuccess = () => {
+    console.log('=== SHOP SELECTOR: AUTH SUCCESS CALLBACK ===');
     setShowAuthModal(false);
     setSelectedShop(null);
+    
+    // Trigger real-time updates after successful authentication
+    setTimeout(() => {
+      console.log('=== TRIGGERING REAL-TIME UPDATES AFTER AUTH SUCCESS ===');
+      queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
+      queryClient.invalidateQueries({ queryKey: ['userShops'] });
+      queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
+      
+      // Force refetch
+      queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
+      queryClient.refetchQueries({ queryKey: ['userShops'] });
+    }, 100);
   };
 
   const handleLogout = () => {
+    console.log('=== SHOP SELECTOR: LOGOUT TRIGGERED ===');
     logoutFromShop();
+    console.log('Shop logout completed');
+    
+    // Trigger real-time updates after logout
+    setTimeout(() => {
+      console.log('=== TRIGGERING REAL-TIME UPDATES AFTER LOGOUT ===');
+      queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
+      queryClient.invalidateQueries({ queryKey: ['userShops'] });
+      queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
+      
+      // Force refetch
+      queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
+      queryClient.refetchQueries({ queryKey: ['userShops'] });
+    }, 100);
   };
 
   if (isLoading) {
@@ -191,6 +231,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
           className="cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
           onClick={() => {
             console.log('ShopSelector - orgEmployee data:', orgEmployee);
+            console.log('ShopSelector - orgEmployee.employeeID:', orgEmployee.employeeID);
             const shopData = {
               shop: orgEmployee.Shops,
               position: orgEmployee.Position,
@@ -201,6 +242,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
               userId: orgEmployee.id,
             };
             console.log('ShopSelector - shopData being passed:', shopData);
+            console.log('ShopSelector - shopData.employeeId:', shopData.employeeId);
             handleShopSelect(shopData);
           }}
         >
@@ -234,6 +276,8 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
           position={selectedShop.position}
           multAuthEnabled={selectedShop.multAuthEnabled}
           userId={selectedShop.userId}
+          storedTwoFactorSecrets={orgEmployee?.twoFactorSecrets || null}
+          onAuthSuccess={handleAuthSuccess}
         />
       )}
     </div>

@@ -259,15 +259,15 @@ const Inventory = () => {
             setScannedCode(scannedText);
 
             // Update the product with the scanned code
-            const updatedItems = items.map(item => {
-              if (item.id === itemId) {
+      const updatedItems = items.map(item => {
+        if (item.id === itemId) {
                 return { ...item, barcode: scannedText };
-              }
-              return item;
-            });
+        }
+        return item;
+      });
 
-            setItems(updatedItems);
-            setIsScanning(false);
+      setItems(updatedItems);
+      setIsScanning(false);
 
             // Stop the scanner
             if (codeReaderRef.current) {
@@ -275,13 +275,13 @@ const Inventory = () => {
             }
 
             // Show success message and close dialog
-            setTimeout(() => {
-              setIsScanDialogOpen(false);
-              setSelectedItemForScan(null);
+      setTimeout(() => {
+        setIsScanDialogOpen(false);
+        setSelectedItemForScan(null);
               setScannedCode(null);
-              toast.success(
-                `${type === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
-              );
+        toast.success(
+          `${type === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
+        );
             }, 1000);
           }
 

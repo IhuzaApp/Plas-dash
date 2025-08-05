@@ -17,7 +17,8 @@ import { useForm } from 'react-hook-form';
 import { Loader2, Store, Shield, Clock, AlertTriangle, Smartphone } from 'lucide-react';
 import { useShopSession } from '@/hooks/useShopSession';
 import { useUpdateMultAuth } from '@/hooks/useUpdateMultAuth';
-import { useTwoFactorAuth } from '@/hooks/useTwoFactorAuth';
+import { useDatabaseTwoFactorAuth } from '@/hooks/useDatabaseTwoFactorAuth';
+import { useQueryClient } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 
 interface ShopAuthModalProps {
@@ -30,6 +31,8 @@ interface ShopAuthModalProps {
   position: string;
   multAuthEnabled: boolean;
   userId: string; // This should be the UUID from the orgEmployees table
+  storedTwoFactorSecrets?: string | null; // Stored secrets from database
+  onAuthSuccess?: () => void; // Callback for successful authentication
 }
 
 type FormData = {
@@ -48,16 +51,22 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
   position,
   multAuthEnabled,
   userId,
+  storedTwoFactorSecrets,
+  onAuthSuccess,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSetupMode, setIsSetupMode] = useState(!multAuthEnabled);
+  
+  console.log('=== SHOP AUTH MODAL: INITIAL STATE ===');
+  console.log('Initial setup mode:', { isSetupMode, multAuthEnabled });
   const [setupStep, setSetupStep] = useState<'qr' | 'verify'>('qr');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [secretKey, setSecretKey] = useState<string>('');
   const { loginToShop } = useShopSession();
   const updateMultAuthMutation = useUpdateMultAuth();
-  const { generateSecretKey, storeSecretKey, getSecretKey, verifyToken, generateQRCodeUrl } =
-    useTwoFactorAuth();
+  const queryClient = useQueryClient();
+  const { generateSecretKey, storeSecretKey, getSecretKey, verifyToken, generateQRCodeUrl, isLoading: twoFactorLoading, error: twoFactorError } =
+    useDatabaseTwoFactorAuth();
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -69,10 +78,28 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
 
   // Generate QR code when setup mode is activated
   React.useEffect(() => {
+    console.log('=== SHOP AUTH MODAL: SETUP MODE EFFECT ===');
+    console.log('Setup mode state:', { isSetupMode, setupStep, hasQrCode: !!qrCodeDataUrl });
+    
     if (isSetupMode && setupStep === 'qr' && !qrCodeDataUrl) {
+      console.log('Generating QR code...');
       generateQRCode();
     }
   }, [isSetupMode, setupStep, qrCodeDataUrl]);
+
+  const triggerRealTimeUpdates = () => {
+    console.log('=== TRIGGERING REAL-TIME UPDATES ===');
+    // Invalidate and refetch all relevant queries
+    queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
+    queryClient.invalidateQueries({ queryKey: ['userShops'] });
+    queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
+    
+    // Force refetch
+    queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
+    queryClient.refetchQueries({ queryKey: ['userShops'] });
+    
+    console.log('Real-time updates triggered');
+  };
 
   const generateQRCode = async () => {
     try {
@@ -143,8 +170,23 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
           }
 
           console.log('Storing secret key...');
-          // Store the secret key for future authentication
-          storeSecretKey(employeeId, shopId, secretKey);
+          console.log('Setup parameters:', {
+            employeeId,
+            employeeIdType: typeof employeeId,
+            shopId,
+            secretKey: secretKey ? `${secretKey.substring(0, 8)}...` : 'missing'
+          });
+          
+          // Check if employeeId is valid
+          const employeeIdStr = String(employeeId);
+          if (!employeeIdStr || employeeIdStr.trim() === '') {
+            console.error('Invalid employeeId during setup:', employeeId);
+            toast.error('Invalid employee ID during setup. Please contact administrator.');
+            return;
+          }
+          
+          // Store the secret key in database for future authentication
+          await storeSecretKey(employeeIdStr, shopId, secretKey, storedTwoFactorSecrets || null, userId);
 
           console.log('Updating database...');
           // Update user's multAuthEnabled status
@@ -154,10 +196,22 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
           });
 
           console.log('2FA setup completed successfully');
+          console.log('=== 2FA SETUP COMPLETED ===');
+          console.log('Setup completed for:', { employeeIdStr, shopId });
+          console.log('multAuthEnabled before update:', multAuthEnabled);
           toast.success('2FA setup completed successfully!');
           setIsSetupMode(false);
           setSetupStep('qr');
           form.reset();
+          
+          // Trigger real-time updates
+          triggerRealTimeUpdates();
+          
+          // Force a re-render to update multAuthEnabled state
+          setTimeout(() => {
+            console.log('=== 2FA SETUP - STATE UPDATE CHECK ===');
+            console.log('multAuthEnabled after update:', multAuthEnabled);
+          }, 100);
         } catch (error: any) {
           console.error('Error during 2FA setup:', error);
           console.error('Error details:', {
@@ -182,10 +236,33 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
     setIsLoading(true);
 
     try {
-      // Get the stored secret key for this user and shop
-      const storedSecretKey = getSecretKey(employeeId, shopId);
+      console.log('=== SHOP AUTH MODAL: AUTHENTICATION ATTEMPT ===');
+      console.log('Authentication parameters:', {
+        employeeId,
+        employeeIdType: typeof employeeId,
+        shopId,
+        employeeName,
+        shopName,
+        multAuthEnabled,
+        userId
+      });
+      
+      // Debug authentication attempt
+      console.log('=== AUTHENTICATION DEBUG ===');
+      
+      // Check if employeeId is valid
+      const employeeIdStr = String(employeeId);
+      if (!employeeIdStr || employeeIdStr.trim() === '') {
+        console.error('Invalid employeeId:', employeeId);
+        toast.error('Invalid employee ID. Please contact administrator.');
+        return;
+      }
+      
+      // Get the stored secret key for this user and shop from database
+      const storedSecretKey = getSecretKey(employeeIdStr, shopId, storedTwoFactorSecrets || null, userId);
 
       if (!storedSecretKey) {
+        console.error('No stored secret key found for:', { employeeId, shopId });
         toast.error('2FA not properly configured. Please contact administrator.');
         return;
       }
@@ -195,10 +272,21 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
 
       if (isValidCode) {
         // Success - log into shop
+        console.log('=== SHOP AUTH MODAL: LOGIN SUCCESS ===');
+        console.log('Logging into shop:', { shopId, shopName, employeeId, employeeName, position });
         loginToShop(shopId, shopName, employeeId, employeeName, position);
         toast.success(`Successfully logged into ${shopName}`);
         onOpenChange(false);
         form.reset();
+        console.log('Shop login completed - modal closed');
+        
+        // Trigger real-time updates
+        triggerRealTimeUpdates();
+        
+        // Call success callback if provided
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
       } else {
         toast.error('Invalid 2FA code. Please try again.');
       }

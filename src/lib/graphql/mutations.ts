@@ -435,6 +435,16 @@ export const UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE = `
   }
 `;
 
+// Update orgEmployee twoFactorSecrets
+export const UPDATE_ORG_EMPLOYEE_TWO_FACTOR_SECRETS = `
+  mutation updateOrgEmployeeTwoFactorSecrets($id: uuid!, $twoFactorSecrets: String!) {
+    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { twoFactorSecrets: $twoFactorSecrets }) {
+      id
+      twoFactorSecrets
+    }
+  }
+`;
+
 // Update ProjectUser last login
 export const UPDATE_PROJECT_USER_LAST_LOGIN = `
   mutation UpdateProjectUserLastLogin($id: uuid!, $lastLogin: timestamptz!) {
