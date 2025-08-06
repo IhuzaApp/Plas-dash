@@ -287,7 +287,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   };
 
   const handleBarcodeScanResult = (barcode: string) => {
-    // Auto-fill barcode field and search for existing products
+    // Auto-fill barcode field
     form.setValue('barcode', barcode);
     setSearchTerm(barcode);
     setSearchMode('barcode');
@@ -295,15 +295,39 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     // Search for existing products with this barcode
     getProductByBarcode.mutateAsync({ barcode }).then((data) => {
       if (data?.productNames && data.productNames.length > 0) {
-        setSearchResults(data.productNames);
-        setShowSearchResults(true);
+        // Found existing product with this barcode
+        const foundProduct = data.productNames[0]; // Take the first match
+        
+        // Auto-fill the product name and other fields
+        form.setValue('name', foundProduct.name);
+        form.setValue('productName_id', foundProduct.id);
+        form.setValue('description', foundProduct.description || '');
+        form.setValue('sku', foundProduct.sku || '');
+        
+        if (foundProduct.image) {
+          setImagePreview(foundProduct.image);
+          form.setValue('image', foundProduct.image);
+        }
+        
+        // Clear search results since we auto-filled
+        setSearchResults([]);
+        setShowSearchResults(false);
+        
+        toast.success(`Found existing product: ${foundProduct.name}`);
       } else {
+        // No product found with this barcode
         setSearchResults([]);
         setShowSearchResults(true);
+        
+        toast.info(`No product found with barcode: ${barcode}. You can add it as a new product.`);
       }
     }).catch((error) => {
       console.error('Error searching for barcode:', error);
       toast.error('Failed to search for barcode');
+      
+      // Show "add as new" option even on error
+      setSearchResults([]);
+      setShowSearchResults(true);
     });
   };
 
@@ -424,7 +448,10 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 ) : (
                   <div className="text-center py-4">
                     <div className="text-muted-foreground mb-2">
-                      No products found with "{searchTerm}"
+                      {searchMode === 'barcode' 
+                        ? `No products found with barcode "${searchTerm}"`
+                        : `No products found with "${searchTerm}"`
+                      }
                     </div>
                     <Button
                       size="sm"
@@ -572,7 +599,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Base Price*</FormLabel>
-                    <FormControl>
+                      <FormControl>
                       <Input
                         type="number"
                         step="0.01"
@@ -584,7 +611,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                           field.onChange(value);
                         }}
                       />
-                    </FormControl>
+                      </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
