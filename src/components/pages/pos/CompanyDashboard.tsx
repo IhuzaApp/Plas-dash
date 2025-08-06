@@ -25,9 +25,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useBranchShops } from '@/hooks/useBranchShops';
-import { useShopSession } from '@/contexts/ShopSessionContext';
+
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import { useAuth } from '@/components/layout/RootLayout';
 import { useStaffManagement } from '@/hooks/useStaffManagement';
 import AddBranchShopDialog from '@/components/shop/AddBranchShopDialog';
 import { Button } from '@/components/ui/button';
@@ -48,9 +49,10 @@ interface StorePerformance {
 }
 
 const CompanyDashboard = () => {
-  const { shopSession } = useShopSession();
+
   const { orgEmployee } = useCurrentOrgEmployee();
   const { hasAction } = usePrivilege();
+  const { session } = useAuth();
   const { branchShops, isLoading, error, totalRevenue, totalOrders, averagePerformance } =
     useBranchShops();
 
@@ -67,19 +69,19 @@ const CompanyDashboard = () => {
   const [isAddBranchDialogOpen, setIsAddBranchDialogOpen] = useState(false);
 
   // Transform branch shops to store performance format
-  const storePerformance: StorePerformance[] = branchShops.map(shop => ({
+  const storePerformance: StorePerformance[] = branchShops?.map(shop => ({
     id: shop.id,
     name: shop.name,
     location: shop.address,
-    revenue: shop.totalRevenue,
+    revenue: shop.totalRevenue || 0,
     target: 50000, // Mock target for now
-    performance: shop.performance,
-    trend: shop.trend,
+    performance: shop.performance || 0,
+    trend: shop.trend || 'neutral',
     address: shop.address,
     phone: shop.phone,
-    totalOrders: shop.totalOrders,
-    averageRating: shop.averageRating,
-  }));
+    totalOrders: shop.totalOrders || 0,
+    averageRating: shop.averageRating || 0,
+  })) || [];
 
   const totalTarget = storePerformance.reduce((sum, store) => sum + store.target, 0);
   const overallPerformance = totalTarget > 0 ? (totalRevenue / totalTarget) * 100 : 0;
@@ -127,33 +129,13 @@ const CompanyDashboard = () => {
     );
   }
 
-  // Show message if no shop session
-  if (!shopSession) {
-  return (
-    <AdminLayout>
-      <PageHeader
-        title="Company Admin Dashboard"
-        description="Overview of all stores and company-wide metrics"
-        icon={<LayoutDashboard className="h-6 w-6" />}
-        />
-        <div className="p-6">
-          <div className="text-center">
-            <Store className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">No Shop Session</h3>
-            <p className="text-muted-foreground">
-              Please log into a shop to view the company dashboard.
-            </p>
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
+
 
   return (
     <AdminLayout>
       <PageHeader
-        title={`Company Admin Dashboard - ${shopSession.shopName}`}
-        description="Overview of branch stores and company-wide metrics"
+        title={`${session?.shop_id ? 'Branch Stores Dashboard' : 'Company Admin Dashboard'}`}
+        description={session?.shop_id ? "Overview of your branch stores and performance metrics" : "Overview of all stores and company-wide metrics"}
         icon={<LayoutDashboard className="h-6 w-6" />}
         actions={
           hasAction('shops', 'add_shops') && (
@@ -221,9 +203,9 @@ const CompanyDashboard = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Staff</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStaff}</div>
+            <div className="text-2xl font-bold">{totalStaff || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              {activeStaff} active • {totalStaff - activeStaff} inactive
+              {activeStaff || 0} active • {(totalStaff || 0) - (activeStaff || 0)} inactive
             </p>
           </CardContent>
         </Card>
@@ -255,7 +237,7 @@ const CompanyDashboard = () => {
             <CardHeader>
               <CardTitle>Branch Store Performance</CardTitle>
               <CardDescription>
-                Performance metrics for all branch stores under {shopSession.shopName}
+                Performance metrics for your branch stores
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -578,7 +560,7 @@ const CompanyDashboard = () => {
       <AddBranchShopDialog
         isOpen={isAddBranchDialogOpen}
         onClose={() => setIsAddBranchDialogOpen(false)}
-        parentShopName={shopSession?.shopName || ''}
+        parentShopName=""
       />
     </AdminLayout>
   );

@@ -391,7 +391,7 @@ const Shops = () => {
                                             className="flex justify-between text-xs"
                                           >
                                             <span>
-                                              {item.Product.name} x{item.quantity}
+                                              {item.Product.ProductName?.name || 'Unknown Product'} x{item.quantity}
                                             </span>
                                             <span>{formatCurrency(item.price)}</span>
                                           </div>

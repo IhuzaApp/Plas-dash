@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
-import { useShopSession } from '@/contexts/ShopSessionContext';
+import { useAuth } from '@/components/layout/RootLayout';
 
 interface StaffMember {
   id: string;
@@ -54,16 +54,11 @@ interface UseStaffManagementReturn {
 
 // GraphQL query to get all staff members
 const GET_ALL_STAFF = `
-  query GetAllStaff($parentShopName: String!) {
+  query GetAllStaff($shopId: uuid!) {
     orgEmployees(
       where: { 
         active: { _eq: true }
-        Shops: { 
-          _or: [
-            { name: { _eq: $parentShopName } }
-            { relatedTo: { _eq: $parentShopName } }
-          ]
-        }
+        shop_id: { _eq: $shopId }
       }
     ) {
       id
@@ -88,31 +83,27 @@ const GET_ALL_STAFF = `
 `;
 
 export function useStaffManagement(): UseStaffManagementReturn {
-  const { shopSession } = useShopSession();
+  const { session } = useAuth();
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [staffDistribution, setStaffDistribution] = useState<StaffDistribution[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get the current shop name from shop session
-  const currentShopName = shopSession?.shopName;
+  // Get the current shop ID from main session
+  const currentShopId = session?.shop_id;
 
   const {
     data,
     isLoading: queryLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ['allStaff', currentShopName],
-    queryFn: () => hasuraRequest(GET_ALL_STAFF, { parentShopName: currentShopName }),
-    enabled: !!currentShopName,
+    queryKey: ['allStaff', currentShopId],
+    queryFn: () => hasuraRequest(GET_ALL_STAFF, { shopId: currentShopId }),
+    enabled: !!currentShopId,
   }) as { data: { orgEmployees: StaffMember[] } | undefined; isLoading: boolean; error: any };
 
-  console.log('=== STAFF MANAGEMENT HOOK DEBUG ===');
-  console.log('Current shop name:', currentShopName);
-  console.log('Query loading:', queryLoading);
-  console.log('Query error:', queryError);
-  console.log('Query data:', data);
+
 
   useEffect(() => {
     if (queryLoading) {
@@ -180,19 +171,6 @@ export function useStaffManagement(): UseStaffManagementReturn {
         const lastLogin = new Date(member.last_login);
         return lastLogin >= twentyFourHoursAgo;
       });
-
-      console.log('=== STAFF ACTIVITY DEBUG ===');
-      console.log('Total staff:', staff.length);
-      console.log('Staff with last_login:', staff.filter(m => m.last_login).length);
-      console.log('Recent staff (last 24h):', recentStaff.length);
-      console.log(
-        'Recent staff details:',
-        recentStaff.map(s => ({
-          name: s.fullnames,
-          last_login: s.last_login,
-          store: s.Shops?.name,
-        }))
-      );
 
       const activity: RecentActivity[] = recentStaff.map((member: StaffMember) => {
         const lastLogin = new Date(member.last_login);

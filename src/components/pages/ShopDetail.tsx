@@ -36,6 +36,7 @@ import {
 import {
   useShopById,
   useAddProduct,
+  useAddProductName,
   useUpdateProduct,
   useSystemConfig,
   useEmployeesByShop,
@@ -90,19 +91,24 @@ interface OperatingHours {
 }
 
 const productFormSchema = z.object({
-  name: z.string().min(1, 'Product name is required'),
-  description: z.string().optional(),
+  productName_id: z.string().optional(),
+  productNameData: z.object({
+    name: z.string().min(1, 'Product name is required'),
+    description: z.string().optional(),
+    barcode: z.string().optional(),
+    sku: z.string().optional(),
+    image: z.string().optional(),
+  }).optional(),
   price: z.string().min(1, 'Price is required'),
   quantity: z.number().int().min(0, 'Quantity must be a positive number'),
   measurement_unit: z.string().min(1, 'Measurement unit is required'),
   category: z.string().min(1, 'Category is required'),
   is_active: z.boolean().default(true),
-  barcode: z.string().optional(),
   sku: z.string().optional(),
   supplier: z.string().optional(),
   reorder_point: z.number().int().min(0).optional(),
   image: z.string().optional(),
-  final_price: z.string().min(1, 'Final price is required'),
+  final_price: z.string().optional(),
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
@@ -146,6 +152,7 @@ const ShopDetail = () => {
   const shop = data?.Shops_by_pk;
 
   const addProduct = useAddProduct();
+  const addProductName = useAddProductName();
   const updateProduct = useUpdateProduct();
   const { data: configData } = useSystemConfig();
   const config = configData?.System_configuratioins[0];
@@ -161,22 +168,35 @@ const ShopDetail = () => {
 
   const handleAddProduct = async (formData: ProductFormData) => {
     try {
-      await addProduct.mutateAsync({
-        name: formData.name,
-        description: formData.description,
+      // First, create or find the ProductName
+      let productNameId = formData.productName_id;
+
+      // If we don't have a productName_id but have productNameData, create the product name first
+      if (!productNameId && formData.productNameData) {
+        const productNameResult = await addProductName.mutateAsync(formData.productNameData);
+        productNameId = productNameResult.insert_productNames_one.id;
+      }
+
+      // Ensure we have a valid productNameId
+      if (!productNameId) {
+        throw new Error('Product name is required');
+      }
+
+      // Then create the Product with the productName_id
+      const productData = {
+        productName_id: productNameId,
         price: formData.price,
         quantity: formData.quantity,
         measurement_unit: formData.measurement_unit,
         shop_id: id,
         category: formData.category,
-        barcode: formData.barcode,
-        sku: formData.sku,
         reorder_point: formData.reorder_point,
         supplier: formData.supplier,
         is_active: formData.is_active,
-        final_price: formData.final_price,
-        image: formData.image,
-      });
+        final_price: formData.final_price || formData.price, // Use price as fallback
+      };
+
+      await addProduct.mutateAsync(productData);
 
       toast.success('Product added successfully');
       setIsAddProductOpen(false);
@@ -200,20 +220,15 @@ const ShopDetail = () => {
 
   const handleUpdateProduct = async (formData: any) => {
     try {
-      // Add the product ID to the form data
+      // Only update Product fields, not ProductName fields
       const updateData = {
         id: selectedProduct.id,
-        name: formData.name,
-        description: formData.description,
         price: formData.price,
         quantity: formData.quantity,
         measurement_unit: formData.measurement_unit,
-        final_price: formData.final_price,
-        barcode: formData.barcode,
-        sku: formData.sku,
+        final_price: formData.final_price || formData.price,
         supplier: formData.supplier,
         reorder_point: formData.reorder_point,
-        image: formData.image,
       };
 
       // Call the update mutation
@@ -261,7 +276,7 @@ const ShopDetail = () => {
     shop?.Products.filter(
       product =>
         searchTerm === '' ||
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.ProductName?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.measurement_unit?.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
@@ -615,19 +630,19 @@ const ShopDetail = () => {
                       <TableRow key={product.id}>
                         <TableCell>
                           <div className="h-10 w-10 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
-                            {product.image ? (
+                            {product.ProductName?.image ? (
                               <img
-                                src={product.image}
-                                alt={`${product.name} image`}
+                                src={product.ProductName.image}
+                                alt={`${product.ProductName?.name || 'Product'} image`}
                                 className="h-full w-full object-contain"
-                                title={product.name}
+                                title={product.ProductName?.name || 'Product'}
                               />
                             ) : (
                               <ImageIcon className="h-5 w-5 text-muted-foreground" />
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell className="font-medium">{product.ProductName?.name || 'Unknown Product'}</TableCell>
                         <TableCell>{formatCurrencyWithConfig(product.price, config)}</TableCell>
                         <TableCell>
                           {formatCurrencyWithConfig(product.final_price, config)}

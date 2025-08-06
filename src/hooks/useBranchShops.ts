@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { useAuth } from '@/components/layout/RootLayout';
-import { useShopSession } from '@/contexts/ShopSessionContext';
+
 
 interface BranchShop {
   id: string;
@@ -33,18 +33,64 @@ interface UseBranchShopsReturn {
 
 export function useBranchShops(): UseBranchShopsReturn {
   const { session } = useAuth();
-  const { shopSession } = useShopSession();
   const [branchShops, setBranchShops] = useState<BranchShop[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get the current shop name from shop session
-  const currentShopName = shopSession?.shopName;
+  // Get the current shop ID from the main session
+  const currentShopId = session?.shop_id;
+  
 
-  // GraphQL query to get branch shops
+
+  // First, get the main shop to get its name
+  const GET_MAIN_SHOP = `
+    query GetMainShop($shopId: uuid!) {
+      Shops(where: { id: { _eq: $shopId } }) {
+        id
+        name
+        description
+        address
+        phone
+        is_active
+        created_at
+        updated_at
+        relatedTo
+        Orders {
+          id
+          total
+          status
+          created_at
+          Ratings {
+            rating
+          }
+        }
+      }
+    }
+  `;
+
+  // Query to get the main shop
+  const {
+    data: mainShopData,
+    isLoading: mainShopLoading,
+    error: mainShopError,
+  } = useQuery({
+    queryKey: ['mainShop', currentShopId],
+    queryFn: () => hasuraRequest(GET_MAIN_SHOP, { shopId: currentShopId }),
+    enabled: !!currentShopId,
+  });
+
+  // Get the main shop name
+  const mainShop = mainShopData && typeof mainShopData === 'object' && 'Shops' in mainShopData && Array.isArray((mainShopData as any).Shops) ? (mainShopData as any).Shops[0] : null;
+  const mainShopName = mainShop?.name;
+  
+
+  
+
+
+  // GraphQL query to get branch shops by relatedTo (shop name)
   const GET_BRANCH_SHOPS = `
-    query GetBranchShops($relatedTo: String!) {
-      Shops(where: { relatedTo: { _eq: $relatedTo }, is_active: { _eq: true } }) {
+    query getBranchwhereName($shopName: String = "") {
+      Shops(where: { relatedTo: { _eq: $shopName } }) {
         id
         name
         description
@@ -72,25 +118,43 @@ export function useBranchShops(): UseBranchShopsReturn {
     isLoading: queryLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ['branchShops', currentShopName],
-    queryFn: () => hasuraRequest(GET_BRANCH_SHOPS, { relatedTo: currentShopName }),
-    enabled: !!currentShopName,
+    queryKey: ['branchShops', mainShopName],
+    queryFn: () => hasuraRequest(GET_BRANCH_SHOPS, { shopName: mainShopName }),
+    enabled: !!mainShopName,
   });
 
   useEffect(() => {
-    if (queryLoading) {
+    if (mainShopLoading || queryLoading) {
       setIsLoading(true);
       setError(null);
     } else {
       setIsLoading(false);
     }
 
-    if (queryError) {
+    if (mainShopError) {
+      setError(mainShopError.message);
+    } else if (queryError) {
       setError(queryError.message);
     }
 
+    // Combine main shop and branch shops
+    const allShops = [];
+    
+    // Add main shop if it exists
+    if (mainShop) {
+      allShops.push(mainShop);
+    }
+    
+    // Add branch shops if they exist
     if (data && typeof data === 'object' && 'Shops' in data && Array.isArray((data as any).Shops)) {
-      const shops = (data as any).Shops.map((shop: any) => {
+
+      allShops.push(...(data as any).Shops);
+    }
+    
+
+    
+    if (allShops.length > 0) {
+      const shops = allShops.map((shop: any) => {
         // Calculate performance metrics
         const orders = shop.Orders || [];
         const totalRevenue = orders.reduce((sum: number, order: any) => {
@@ -136,7 +200,7 @@ export function useBranchShops(): UseBranchShopsReturn {
 
       setBranchShops(shops);
     }
-  }, [data, queryLoading, queryError]);
+  }, [data, queryLoading, queryError, mainShopData, mainShopLoading, mainShopError, mainShop]);
 
   // Calculate totals
   const totalRevenue = branchShops.reduce((sum, shop) => sum + shop.totalRevenue, 0);

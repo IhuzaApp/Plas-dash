@@ -55,20 +55,23 @@ const SEARCH_QUERY = `
     Products(
       where: {
         _or: [
-          { name: { _ilike: $searchTerm } },
-          { description: { _ilike: $searchTerm } }
+          { ProductName: { name: { _ilike: $searchTerm } } },
+          { ProductName: { description: { _ilike: $searchTerm } } }
         ]
       },
       limit: 5,
-      order_by: { name: asc }
+      order_by: { ProductName: { name: asc } }
     ) {
       id
-      name
-      description
       price
       quantity
       measurement_unit
-      image
+      ProductName {
+        id
+        name
+        description
+        image
+      }
       Shop {
         id
         name
@@ -118,12 +121,15 @@ interface SearchResult {
   }>;
   Products: Array<{
     id: string;
-    name: string;
-    description: string;
     price: string;
     quantity: number;
     measurement_unit: string;
-    image?: string;
+    ProductName: {
+      id: string;
+      name: string;
+      description: string;
+      image?: string;
+    };
     Shop: {
       id: string;
       name: string;
@@ -368,12 +374,12 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
             {data.Products.map(product => (
               <CommandItem
                 key={product.id}
-                value={product.name}
+                value={product.ProductName.name}
                 onSelect={() => handleSelect(`/products/${product.id}`)}
               >
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 <div className="flex flex-col">
-                  <span>{product.name}</span>
+                  <span>{product.ProductName.name}</span>
                   <span className="text-xs text-muted-foreground">
                     {product.Shop.name} • {product.measurement_unit}: {product.quantity} • $
                     {product.price}
