@@ -50,6 +50,23 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   // Refs for video element and code reader
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio element
+  useEffect(() => {
+    audioRef.current = new Audio('/Assets/sound/storescannerbeep.mp3');
+    audioRef.current.volume = 0.5; // Set volume to 50%
+  }, []);
+
+  // Function to play scan sound
+  const playScanSound = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0; // Reset to beginning
+      audioRef.current.play().catch(error => {
+        console.log('Audio play failed:', error);
+      });
+    }
+  };
 
   // Start scanning when dialog opens
   useEffect(() => {
@@ -106,8 +123,19 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 codeReaderRef.current.reset();
               }
               
+              // Play scan sound
+              playScanSound();
+              
               toast.success(`Scanned ${scanType}: ${result.getText()}`);
               setHasScanned(true);
+              
+              // Automatically close dialog and return the scanned code
+              setTimeout(() => {
+                onScanSuccess(result.getText());
+                onOpenChange(false);
+                setScannedCode(null);
+                setHasScanned(false);
+              }, 1000); // Small delay to show success message
             }
             if (error && error.name !== 'NotFoundException') {
               setScanError(error.message);
@@ -138,7 +166,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     setScannedCode(manualCode);
     setManualInputMode(false);
     
+    // Play scan sound
+    playScanSound();
+    
     toast.success(`Manual ${scanType}: ${manualCode}`);
+    
+    // Automatically close dialog and return the manual code
+    setTimeout(() => {
+      onScanSuccess(manualCode);
+      onOpenChange(false);
+      setScannedCode(null);
+      setHasScanned(false);
+    }, 1000); // Small delay to show success message
   };
 
   const stopScanning = () => {
@@ -300,12 +339,6 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           >
             Cancel
           </Button>
-          {scannedCode && (
-            <Button onClick={handleDone}>
-              <Check className="mr-2 h-4 w-4" />
-              Done
-            </Button>
-          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
