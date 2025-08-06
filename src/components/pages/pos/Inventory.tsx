@@ -522,6 +522,7 @@ const Inventory = () => {
         onOpenChange={setIsAddProductOpen}
         onSubmit={handleAddProduct}
         shopId={shopSession?.shopId}
+        hideCommission={true}
       />
 
       {/* Import Products Dialog */}

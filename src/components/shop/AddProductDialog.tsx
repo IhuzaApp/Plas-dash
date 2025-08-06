@@ -34,63 +34,13 @@ import { useShops, useSystemConfig, useGetProductNameByBarcode, useGetProductNam
 import { Switch } from '@/components/ui/switch';
 import BarcodeScanner from './BarcodeScanner';
 
-// Match the API types exactly
-const formSchema = z.object({
-  name: z.string().optional(), // Make name optional since we might use productName_id
-  description: z.string().optional(),
-  price: z.string().min(1, 'Price is required'),
-  quantity: z.number().int().min(0, 'Quantity must be a positive number'),
-  measurement_unit: z.string().min(1, 'Measurement unit is required'),
-  category: z.string().min(1, 'Category is required'),
-  is_active: z.boolean().default(true),
-  barcode: z.string().optional(),
-  sku: z.string().optional(),
-  supplier: z.string().optional(),
-  reorder_point: z.number().int().min(0).optional(),
-  shop_id: z.string().optional(),
-  image: z.string().optional(),
-  // UI-only fields (not sent to database)
-  has_commission: z.boolean().default(true),
-  commission_percentage: z.number().min(0).max(100).optional(),
-  final_price: z.string().optional(), // Make final_price optional since it's calculated
-  productName_id: z.string().optional(), // Add this for tracking selected product name ID
-}).refine((data) => {
-  // Ensure either name or productName_id is provided
-  return (data.name && data.name.trim() !== '') || data.productName_id;
-}, {
-  message: "Either product name or existing product must be selected",
-  path: ["name"]
-});
-
-type FormData = z.infer<typeof formSchema>;
-
-// Define the type for the data that will be sent to the API
-type ProductSubmitData = {
-  price: string;
-  quantity: number;
-  measurement_unit: string;
-  shop_id: string | undefined;
-  category: string;
-  reorder_point: number | undefined;
-  supplier: string | undefined;
-  is_active: boolean;
-  final_price: string | undefined;
-  productName_id: string | undefined;
-  productNameData?: {
-    name: string;
-    description?: string;
-    barcode?: string;
-    sku?: string;
-    image?: string;
-  };
-};
-
 interface AddProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: ProductSubmitData) => void;
   shopId?: string;
   isLoading?: boolean;
+  hideCommission?: boolean; // New prop to hide commission fields
 }
 
 const AddProductDialog: React.FC<AddProductDialogProps> = ({
@@ -99,6 +49,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   onSubmit,
   shopId,
   isLoading = false,
+  hideCommission = false,
 }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -120,6 +71,59 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const getProductBySku = useGetProductNameBySku();
   const { data: searchProductNamesData, isLoading: isSearchingNames } = useSearchProductNames(searchTerm);
 
+  // Dynamic form schema based on hideCommission prop
+  const formSchema = z.object({
+    name: z.string().optional(), // Make name optional since we might use productName_id
+    description: z.string().optional(),
+    price: z.string().min(1, 'Price is required'),
+    quantity: z.number().int().min(0, 'Quantity must be a positive number'),
+    measurement_unit: z.string().min(1, 'Measurement unit is required'),
+    category: z.string().min(1, 'Category is required'),
+    is_active: z.boolean().default(true),
+    barcode: z.string().optional(),
+    sku: z.string().optional(),
+    supplier: z.string().optional(),
+    reorder_point: z.number().int().min(0).optional(),
+    shop_id: z.string().optional(),
+    image: z.string().optional(),
+    // UI-only fields (not sent to database) - only include if not hiding commission
+    ...(hideCommission ? {} : {
+      has_commission: z.boolean().default(true),
+      commission_percentage: z.number().min(0).max(100).optional(),
+    }),
+    final_price: z.string().optional(), // Make final_price optional since it's calculated
+    productName_id: z.string().optional(), // Add this for tracking selected product name ID
+  }).refine((data) => {
+    // Ensure either name or productName_id is provided
+    return (data.name && data.name.trim() !== '') || data.productName_id;
+  }, {
+    message: "Either product name or existing product must be selected",
+    path: ["name"]
+  });
+
+  type FormData = z.infer<typeof formSchema>;
+
+  // Define the type for the data that will be sent to the API
+  type ProductSubmitData = {
+    price: string;
+    quantity: number;
+    measurement_unit: string;
+    shop_id: string | undefined;
+    category: string;
+    reorder_point: number | undefined;
+    supplier: string | undefined;
+    is_active: boolean;
+    final_price: string | undefined;
+    productName_id: string | undefined;
+    productNameData?: {
+      name: string;
+      description?: string;
+      barcode?: string;
+      sku?: string;
+      image?: string;
+    };
+  };
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -136,16 +140,18 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       reorder_point: undefined,
       shop_id: shopId,
       image: '',
-      has_commission: true,
-      commission_percentage: Number(defaultCommission) || 0,
+      ...(hideCommission ? {} : {
+        has_commission: true,
+        commission_percentage: Number(defaultCommission) || 0,
+      }),
       final_price: '',
     },
   });
 
   // Watch price and commission-related fields to calculate final price
   const price = form.watch('price');
-  const hasCommission = form.watch('has_commission');
-  const commissionPercentage = Number(defaultCommission) || 0; // Convert to number
+  const hasCommission = hideCommission ? false : form.watch('has_commission');
+  const commissionPercentage = hideCommission ? 0 : Number(defaultCommission) || 0; // Convert to number
 
   // Calculate final price whenever price or commission changes
   useEffect(() => {
@@ -154,12 +160,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         const basePrice = parseFloat(price);
         if (!isNaN(basePrice)) {
           let finalPrice;
-          if (hasCommission) {
+          if (hideCommission || !hasCommission) {
+            // When commission is hidden or disabled, final price equals base price
+            finalPrice = basePrice;
+          } else {
             // When commission is enabled, calculate with default commission rate
             finalPrice = basePrice * (1 + commissionPercentage / 100);
-          } else {
-            // When commission is disabled, final price is exactly the same as base price
-            finalPrice = basePrice;
           }
           form.setValue('final_price', finalPrice.toFixed(2));
         }
@@ -170,16 +176,18 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     };
 
     calculateFinalPrice();
-  }, [price, hasCommission, commissionPercentage, form]);
+  }, [price, hasCommission, commissionPercentage, form, hideCommission]);
 
   // Update commission percentage when has_commission changes
   useEffect(() => {
-    if (hasCommission) {
-      form.setValue('commission_percentage', Number(defaultCommission) || 0);
-    } else {
-      form.setValue('commission_percentage', 0);
+    if (!hideCommission) {
+      if (hasCommission) {
+        form.setValue('commission_percentage', Number(defaultCommission) || 0);
+      } else {
+        form.setValue('commission_percentage', 0);
+      }
     }
-  }, [hasCommission, defaultCommission, form]);
+  }, [hasCommission, defaultCommission, form, hideCommission]);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -598,7 +606,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Base Price*</FormLabel>
+                    <FormLabel>{hideCommission ? 'Price*' : 'Base Price*'}</FormLabel>
                       <FormControl>
                       <Input
                         type="number"
@@ -617,27 +625,29 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="final_price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Final Price (with commission)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        {...field}
-                        disabled
-                        className="bg-muted"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!hideCommission && (
+                <FormField
+                  control={form.control}
+                  name="final_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Final Price (with commission)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                          disabled
+                          className="bg-muted"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

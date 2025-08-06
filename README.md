@@ -220,6 +220,581 @@ const startScanning = async (itemId: string, type: 'barcode' | 'qrcode') => {
 - **Advanced Analytics**: Scanning performance metrics
 - **Custom Formats**: Support for custom barcode formats
 
+---
+
+## 📱 **Advanced Barcode & QR Code Scanning System**
+
+### **🎯 Overview**
+
+The Plas Dashboard implements a **comprehensive barcode and QR code scanning system** that integrates seamlessly with the product management workflow. This system provides real-time camera-based scanning, manual input fallbacks, and automatic product linking.
+
+### **🏗️ Architecture & Components**
+
+#### **1. Core Components**
+
+- **`BarcodeScanner.tsx`**: Dedicated scanning component with camera integration
+- **`AddProductDialog.tsx`**: Product form with integrated scanning functionality
+- **`useHasuraApi.ts`**: GraphQL hooks for product search and management
+
+#### **2. Scanning Flow**
+
+```typescript
+// Scanning workflow
+User clicks scan → Camera activates → Code detected → Product search → Auto-fill form
+```
+
+### **🔧 Technical Implementation**
+
+#### **1. Camera Integration**
+
+```typescript
+// BarcodeScanner.tsx - Core scanning logic
+import { BrowserMultiFormatReader, Result } from '@zxing/library';
+
+const startScanning = async () => {
+  codeReaderRef.current = new BrowserMultiFormatReader();
+  
+  // Get available cameras
+  const videoInputDevices = await codeReaderRef.current.listVideoInputDevices();
+  
+  // Start real-time scanning
+  await codeReaderRef.current.decodeFromVideoDevice(
+    selectedDeviceId,
+    videoRef.current!,
+    (result: Result | null, error: any) => {
+      if (result && !hasScanned) {
+        setHasScanned(true);
+        playScanSound();
+        onScanSuccess(result.getText());
+      }
+    }
+  );
+};
+```
+
+#### **2. Product Search Integration**
+
+```typescript
+// AddProductDialog.tsx - Product search by barcode
+const handleBarcodeScanResult = async (barcode: string) => {
+  setBarcode(barcode);
+  setSearchTerm(barcode);
+  
+  // Search for existing product
+  const product = await getProductByBarcode.mutateAsync({ barcode });
+  
+  if (product?.productNames?.[0]) {
+    // Auto-fill form with existing product data
+    const existingProduct = product.productNames[0];
+    form.setValue('productName_id', existingProduct.id);
+    form.setValue('name', existingProduct.name);
+    form.setValue('description', existingProduct.description || '');
+    form.setValue('sku', existingProduct.sku || '');
+    form.setValue('image', existingProduct.image || '');
+    setSearchResults([]);
+  } else {
+    // Show "Add as New Product" option
+    setSearchResults([]);
+    setShowSearchResults(true);
+  }
+};
+```
+
+#### **3. Audio Feedback System**
+
+```typescript
+// BarcodeScanner.tsx - Sound integration
+const audioRef = useRef<HTMLAudioElement | null>(null);
+
+useEffect(() => {
+  audioRef.current = new Audio('/Assets/sound/storescannerbeep.mp3');
+  audioRef.current.volume = 0.5;
+}, []);
+
+const playScanSound = () => {
+  if (audioRef.current) {
+    audioRef.current.currentTime = 0;
+    audioRef.current.play();
+  }
+};
+```
+
+### **🎨 User Interface Components**
+
+#### **1. Scanning Dialog**
+
+```tsx
+// BarcodeScanner.tsx - Main scanning interface
+<Dialog open={open} onOpenChange={onOpenChange}>
+  <DialogContent className="sm:max-w-[500px]">
+    <DialogHeader>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogDescription>{description}</DialogDescription>
+    </DialogHeader>
+    
+    {/* Camera video feed */}
+    <div className="relative">
+      <video ref={videoRef} className="w-full h-64 object-cover rounded-lg" />
+      <div className="absolute inset-0 border-2 border-dashed border-blue-500 rounded-lg pointer-events-none">
+        <div className="absolute top-2 left-2 w-8 h-8 border-l-2 border-t-2 border-blue-500"></div>
+        <div className="absolute top-2 right-2 w-8 h-8 border-r-2 border-t-2 border-blue-500"></div>
+        <div className="absolute bottom-2 left-2 w-8 h-8 border-l-2 border-b-2 border-blue-500"></div>
+        <div className="absolute bottom-2 right-2 w-8 h-8 border-r-2 border-b-2 border-blue-500"></div>
+      </div>
+    </div>
+    
+    {/* Manual input fallback */}
+    {manualInputMode && (
+      <div className="space-y-2">
+        <Input
+          placeholder="Enter barcode manually"
+          value={manualCode}
+          onChange={(e) => setManualCode(e.target.value)}
+        />
+        <Button onClick={handleManualCodeSubmit}>Submit</Button>
+      </div>
+    )}
+  </DialogContent>
+</Dialog>
+```
+
+#### **2. Product Form Integration**
+
+```tsx
+// AddProductDialog.tsx - Scanning buttons
+<div className="flex gap-2">
+  <div className="flex-1">
+    <FormField
+      control={form.control}
+      name="name"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Product Name*</FormLabel>
+          <FormControl>
+            <Input placeholder="Enter product name" {...field} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  </div>
+  
+  {/* Barcode scanning button */}
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() => setIsBarcodeScannerOpen(true)}
+    className="mt-8"
+  >
+    <ScanBarcode className="h-4 w-4" />
+  </Button>
+  
+  {/* SKU search button */}
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() => setSearchMode('sku')}
+    className="mt-8"
+  >
+    SKU
+  </Button>
+</div>
+```
+
+### **🔍 Search Functionality**
+
+#### **1. Multi-Mode Search**
+
+```typescript
+// AddProductDialog.tsx - Search modes
+type SearchMode = 'name' | 'barcode' | 'sku';
+
+const [searchMode, setSearchMode] = useState<SearchMode>('name');
+const [searchTerm, setSearchTerm] = useState<string>('');
+const [searchResults, setSearchResults] = useState<any[]>([]);
+
+// Real-time search with debouncing
+useEffect(() => {
+  if (searchMode === 'name' && searchTerm.trim()) {
+    const timeoutId = setTimeout(() => {
+      if (searchProductNamesData?.productNames) {
+        setSearchResults(searchProductNamesData.productNames);
+        setShowSearchResults(true);
+      }
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }
+}, [searchTerm, searchMode, searchProductNamesData]);
+```
+
+#### **2. Product Name Autocomplete**
+
+```tsx
+// ProductNameAutocomplete.tsx - Autocomplete component
+{showSearchResults && searchResults.length > 0 && (
+  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+    {searchResults.map((product) => (
+      <div
+        key={product.id}
+        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+        onClick={() => handleProductSelect(product)}
+      >
+        <div className="font-medium">{product.name}</div>
+        {product.description && (
+          <div className="text-sm text-gray-600">{product.description}</div>
+        )}
+      </div>
+    ))}
+  </div>
+)}
+```
+
+### **🎯 Supported Code Formats**
+
+#### **1. Barcode Formats**
+
+- **EAN-13**: European Article Number (13 digits)
+- **EAN-8**: European Article Number (8 digits)
+- **UPC-A**: Universal Product Code (12 digits)
+- **UPC-E**: Universal Product Code (8 digits)
+- **Code 128**: High-density linear barcode
+- **Code 39**: Alpha-numeric barcode
+- **ITF**: Interleaved 2 of 5
+
+#### **2. QR Code Formats**
+
+- **Standard QR**: All standard QR code formats
+- **Data Matrix**: 2D matrix codes
+- **PDF417**: 2D stacked barcodes
+- **Aztec**: 2D matrix codes
+
+### **🔄 Error Handling & Fallbacks**
+
+#### **1. Camera Access Issues**
+
+```typescript
+// BarcodeScanner.tsx - Error handling
+const startScanning = async () => {
+  try {
+    // Attempt camera access
+    await codeReaderRef.current.decodeFromVideoDevice(/* ... */);
+  } catch (error) {
+    console.error('Camera access failed:', error);
+    setScanError('Camera access denied. Please use manual input.');
+    setManualInputMode(true);
+  }
+};
+```
+
+#### **2. Manual Input Fallback**
+
+```typescript
+// BarcodeScanner.tsx - Manual input
+const handleManualCodeSubmit = () => {
+  if (manualCode.trim()) {
+    playScanSound();
+    onScanSuccess(manualCode.trim());
+    setManualCode('');
+  }
+};
+```
+
+#### **3. Network Error Handling**
+
+```typescript
+// AddProductDialog.tsx - Search error handling
+const handleBarcodeScanResult = async (barcode: string) => {
+  try {
+    const product = await getProductByBarcode.mutateAsync({ barcode });
+    // Process result...
+  } catch (error) {
+    console.error('Error searching for barcode:', error);
+    toast.error('Failed to search for barcode');
+    setSearchResults([]);
+    setShowSearchResults(true);
+  }
+};
+```
+
+### **⚡ Performance Optimizations**
+
+#### **1. Debounced Search**
+
+```typescript
+// AddProductDialog.tsx - Debounced search
+useEffect(() => {
+  const timeoutId = setTimeout(() => {
+    // Perform search after 300ms delay
+  }, 300);
+  
+  return () => clearTimeout(timeoutId);
+}, [searchTerm]);
+```
+
+#### **2. Camera Resource Management**
+
+```typescript
+// BarcodeScanner.tsx - Resource cleanup
+useEffect(() => {
+  return () => {
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+    }
+  };
+}, []);
+```
+
+#### **3. Memory Management**
+
+```typescript
+// BarcodeScanner.tsx - State cleanup
+const stopScanning = () => {
+  if (codeReaderRef.current) {
+    codeReaderRef.current.reset();
+  }
+  setHasScanned(false);
+  setScannedCode(null);
+};
+```
+
+### **🎵 Audio Feedback System**
+
+#### **1. Sound Configuration**
+
+```typescript
+// BarcodeScanner.tsx - Audio setup
+const audioRef = useRef<HTMLAudioElement | null>(null);
+
+useEffect(() => {
+  audioRef.current = new Audio('/Assets/sound/storescannerbeep.mp3');
+  audioRef.current.volume = 0.5; // 50% volume
+}, []);
+```
+
+#### **2. Sound Triggers**
+
+- **Successful scan**: Plays beep sound
+- **Manual input**: Plays beep sound
+- **Error**: No sound (user-friendly)
+
+### **🔧 Configuration Options**
+
+#### **1. Scanner Settings**
+
+```typescript
+// BarcodeScanner.tsx - Configuration
+interface BarcodeScannerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onScanSuccess: (code: string) => void;
+  scanType?: 'barcode' | 'qrcode' | 'both';
+  title?: string;
+  description?: string;
+}
+```
+
+#### **2. Search Settings**
+
+```typescript
+// AddProductDialog.tsx - Search configuration
+const searchConfig = {
+  debounceDelay: 300, // ms
+  maxResults: 10,
+  minSearchLength: 2,
+};
+```
+
+### **📱 Mobile Optimization**
+
+#### **1. Responsive Design**
+
+```css
+/* Mobile-first design */
+.scanner-video {
+  width: 100%;
+  height: 64vh; /* 64% of viewport height */
+  object-fit: cover;
+}
+
+@media (min-width: 768px) {
+  .scanner-video {
+    height: 256px; /* Fixed height on desktop */
+  }
+}
+```
+
+#### **2. Touch Interface**
+
+- **Large touch targets**: Buttons sized for mobile
+- **Swipe gestures**: Intuitive navigation
+- **Haptic feedback**: Vibration on successful scan (if supported)
+
+### **🔐 Security Considerations**
+
+#### **1. Camera Permissions**
+
+- **Explicit permission requests**: Clear permission dialogs
+- **Graceful degradation**: Fallback to manual input
+- **Permission status tracking**: Monitor camera access
+
+#### **2. Data Validation**
+
+```typescript
+// Input validation
+const validateBarcode = (code: string): boolean => {
+  return /^[0-9A-Za-z\-_]+$/.test(code) && code.length >= 3;
+};
+```
+
+### **📊 Analytics & Monitoring**
+
+#### **1. Scan Metrics**
+
+- **Scan success rate**: Track successful vs failed scans
+- **Scan duration**: Average time to successful scan
+- **Error types**: Categorize common errors
+- **Device compatibility**: Track device-specific issues
+
+#### **2. Performance Monitoring**
+
+```typescript
+// Performance tracking
+const trackScanPerformance = (startTime: number, success: boolean) => {
+  const duration = Date.now() - startTime;
+  // Send to analytics service
+  analytics.track('barcode_scan', {
+    duration,
+    success,
+    device: navigator.userAgent,
+  });
+};
+```
+
+### **🔄 Integration Points**
+
+#### **1. Product Management**
+
+- **AddProductDialog**: Primary integration point
+- **Inventory management**: Stock level updates
+- **Product search**: Real-time product lookup
+
+#### **2. POS System**
+
+- **Checkout process**: Quick product addition
+- **Cart management**: Instant product lookup
+- **Transaction processing**: Barcode-based transactions
+
+#### **3. Database Integration**
+
+```typescript
+// GraphQL queries for product search
+const SEARCH_PRODUCT_NAMES = `
+  query SearchProductNames($searchTerm: String!) {
+    productNames(
+      where: {
+        _or: [
+          { name: { _ilike: $searchTerm } },
+          { barcode: { _ilike: $searchTerm } },
+          { sku: { _ilike: $searchTerm } }
+        ]
+      }
+      limit: 10
+    ) {
+      id
+      name
+      barcode
+      sku
+      description
+      image
+    }
+  }
+`;
+```
+
+### **🚀 Future Enhancements**
+
+#### **1. Advanced Features**
+
+- **Batch scanning**: Multiple products in sequence
+- **Offline mode**: Local storage for offline processing
+- **Advanced analytics**: Detailed scanning metrics
+- **Custom formats**: Support for proprietary barcodes
+
+#### **2. Performance Improvements**
+
+- **WebAssembly**: Faster code processing
+- **GPU acceleration**: Hardware-accelerated scanning
+- **Parallel processing**: Multiple camera support
+
+#### **3. User Experience**
+
+- **Voice feedback**: Audio confirmation of scans
+- **Haptic feedback**: Vibration on successful scans
+- **AR overlay**: Augmented reality scanning guide
+
+### **📋 Troubleshooting Guide**
+
+#### **1. Common Issues**
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Camera not working | Permission denied | Check browser permissions |
+| Slow scanning | Poor lighting | Improve lighting conditions |
+| No sound | Audio file missing | Verify sound file path |
+| Search not working | Network issues | Check internet connection |
+
+#### **2. Debug Mode**
+
+```typescript
+// Enable debug logging
+const DEBUG_SCANNING = process.env.NODE_ENV === 'development';
+
+if (DEBUG_SCANNING) {
+  console.log('Scanning started:', { deviceId, scanType });
+}
+```
+
+### **📚 API Reference**
+
+#### **1. BarcodeScanner Component**
+
+```typescript
+interface BarcodeScannerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onScanSuccess: (code: string) => void;
+  scanType?: 'barcode' | 'qrcode' | 'both';
+  title?: string;
+  description?: string;
+}
+```
+
+#### **2. AddProductDialog Integration**
+
+```typescript
+interface AddProductDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: ProductFormData) => void;
+  shopId?: string;
+  hideCommission?: boolean;
+}
+```
+
+#### **3. GraphQL Hooks**
+
+```typescript
+// Product search hooks
+const useSearchProductNames = (searchTerm: string) => { /* ... */ };
+const useGetProductNameByBarcode = () => { /* ... */ };
+const useGetProductNameBySku = () => { /* ... */ };
+```
+
+---
+
+## 🛡️ Privilege System (RBAC & Fine-Grained Access Control)
+
 ### 🚚 Delivery Operations
 
 - **Plasa Management**
