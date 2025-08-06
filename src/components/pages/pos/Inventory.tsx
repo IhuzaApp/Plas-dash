@@ -56,12 +56,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useSystemConfig, useProductsByShop, useUpdateProduct } from '@/hooks/useHasuraApi';
+import { useSystemConfig, useProductsByShop, useUpdateProduct, useUpdateProductName } from '@/hooks/useHasuraApi';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useShopSession } from '@/hooks/useShopSession';
 
 interface InventoryItem {
   id: string;
+  productName_id?: string;
   name: string;
   barcode?: string;
   category?: string;
@@ -80,6 +81,7 @@ const Inventory = () => {
   const { data: systemConfig } = useSystemConfig();
   const { shopSession } = useShopSession();
   const updateProduct = useUpdateProduct();
+  const updateProductName = useUpdateProductName();
 
   // Fetch products for the current shop
   const { data: productsData, isLoading: productsLoading } = useProductsByShop(
@@ -90,15 +92,16 @@ const Inventory = () => {
   const transformProductsToInventoryItems = (products: any[]): InventoryItem[] => {
     return products.map(product => ({
       id: product.id,
-      name: product.name,
-      barcode: product.barcode || '',
+      productName_id: product.productName_id,
+      name: product.ProductName?.name || 'Unknown Product',
+      barcode: product.ProductName?.barcode || '',
       category: product.category || 'Uncategorized',
       price: parseFloat(product.price) || 0,
       stock: parseInt(product.quantity) || 0,
       status: getStockStatus(parseInt(product.quantity) || 0),
-      description: product.description || '',
+      description: product.ProductName?.description || '',
       measurement_unit: product.measurement_unit || 'unit',
-      sku: product.sku || '',
+      sku: product.ProductName?.sku || '',
       is_active: product.is_active || false,
       created_at: product.created_at || new Date().toISOString(),
       updated_at: product.updated_at || new Date().toISOString(),
@@ -326,24 +329,23 @@ const Inventory = () => {
               const currentProduct = getCurrentProduct(itemId);
               console.log('Current product data:', currentProduct);
               
-              // Create update data with current product info to avoid null issues
-              const updateData = {
-                id: itemId,
+              // Since barcode is now in ProductName table, we need to update the ProductName
+              // First, we need to get the productName_id from the current product
+              const productNameId = currentProduct?.productName_id;
+              
+              if (!productNameId) {
+                throw new Error('Product name ID not found');
+              }
+              
+              console.log('Updating ProductName with barcode:', { productNameId, scannedText });
+              
+              // Update the ProductName with the new barcode
+              const updateProductNameResult = await updateProductName.mutateAsync({
+                id: productNameId,
                 barcode: scannedText || '', // Ensure it's not null
-                // Include other fields that might be required
-                name: currentProduct?.name || '',
-                price: currentProduct?.price?.toString() || '0',
-                quantity: currentProduct?.stock || 0,
-                measurement_unit: currentProduct?.measurement_unit || 'unit',
-                final_price: currentProduct?.price?.toString() || '0',
-              };
+              });
               
-              console.log('Update data being sent:', updateData);
-              
-              // Only update the barcode field, don't pass other fields to avoid null issues
-              const updateResult = await updateProduct.mutateAsync(updateData);
-              
-              console.log('Database update successful:', updateResult);
+              console.log('ProductName update successful:', updateProductNameResult);
 
               // Update local state
               const updatedItems = items.map(item => {
@@ -386,8 +388,8 @@ const Inventory = () => {
                 console.log('No barcode detected yet - this is normal');
               }
             } else {
-              console.error('Scanning error:', error);
-              setScanError('Failed to scan. Please try again.');
+            console.error('Scanning error:', error);
+            setScanError('Failed to scan. Please try again.');
             }
           }
         }
@@ -436,26 +438,26 @@ const Inventory = () => {
       console.log('Manual barcode update successful:', updateResult);
 
       // Update local state
-      const updatedItems = items.map(item => {
-        if (item.id === selectedItemForScan) {
-          return { ...item, barcode: manualCode.trim() };
-        }
-        return item;
-      });
+    const updatedItems = items.map(item => {
+      if (item.id === selectedItemForScan) {
+        return { ...item, barcode: manualCode.trim() };
+      }
+      return item;
+    });
 
-      setItems(updatedItems);
-      setScannedCode(manualCode.trim());
-      setManualInputMode(false);
-      setManualCode('');
+    setItems(updatedItems);
+    setScannedCode(manualCode.trim());
+    setManualInputMode(false);
+    setManualCode('');
 
       // Immediately close dialog and show success message
       setIsScanDialogOpen(false);
       setSelectedItemForScan(null);
       setScannedCode(null);
 
-      toast.success(
-        `${scanType === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
-      );
+    toast.success(
+      `${scanType === 'barcode' ? 'Barcode' : 'QR code'} successfully linked to product!`
+    );
     } catch (error: any) {
       console.error('Failed to update product barcode:', error);
       console.error('Manual input error details:', {
@@ -1114,8 +1116,8 @@ const Inventory = () => {
                       </>
                     ) : (
                       <>
-                        <Check className="mr-2 h-4 w-4" />
-                        Link Code to Product
+                    <Check className="mr-2 h-4 w-4" />
+                    Link Code to Product
                       </>
                     )}
                   </Button>
@@ -1132,8 +1134,8 @@ const Inventory = () => {
                       </>
                     ) : (
                       <>
-                        <Check className="h-12 w-12 text-green-500" />
-                        <p className="text-sm text-green-700 font-medium">Scan Successful!</p>
+                    <Check className="h-12 w-12 text-green-500" />
+                    <p className="text-sm text-green-700 font-medium">Scan Successful!</p>
                       </>
                     )}
                     <p className="text-xs text-green-600 font-mono bg-green-100 px-2 py-1 rounded">

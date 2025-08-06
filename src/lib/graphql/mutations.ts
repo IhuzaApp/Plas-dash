@@ -222,58 +222,111 @@ export const UPDATE_SHOPPER_STATUS = `
 `;
 
 // Product mutations
-export const ADD_PRODUCT = `
-  mutation AddProduct(
+export const ADD_PRODUCT_NAME = `
+  mutation AddProductName(
     $name: String!
     $description: String
-    $price: String!
-    $quantity: Int!
-    $measurement_unit: String!
-    $shop_id: uuid!
-    $category: String!
     $barcode: String
     $sku: String
-    $reorder_point: Int
-    $supplier: String
-    $is_active: Boolean = true
-    $final_price: String!
     $image: String
   ) {
-    insert_Products_one(
+    insert_productNames_one(
       object: {
         name: $name
         description: $description
-        price: $price
-        quantity: $quantity
-        measurement_unit: $measurement_unit
-        shop_id: $shop_id
-        category: $category
         barcode: $barcode
         sku: $sku
-        reorder_point: $reorder_point
-        supplier: $supplier
-        is_active: $is_active
-        final_price: $final_price
         image: $image
       }
     ) {
       id
       name
       description
+      barcode
+      sku
+      image
+      create_at
+    }
+  }
+`;
+
+export const GET_PRODUCT_NAME_BY_BARCODE = `
+  query GetProductNameByBarcode($barcode: String!) {
+    productNames(where: {barcode: {_eq: $barcode}}) {
+      id
+      name
+      description
+      barcode
+      sku
+      image
+      create_at
+    }
+  }
+`;
+
+export const GET_PRODUCT_NAME_BY_SKU = `
+  query GetProductNameBySku($sku: String!) {
+    productNames(where: {sku: {_eq: $sku}}) {
+      id
+      name
+      description
+      barcode
+      sku
+      image
+      create_at
+    }
+  }
+`;
+
+export const ADD_PRODUCT = `
+  mutation AddProduct(
+    $productName_id: uuid!
+    $price: String!
+    $quantity: Int!
+    $measurement_unit: String!
+    $shop_id: uuid!
+    $category: String!
+    $reorder_point: Int
+    $supplier: String
+    $is_active: Boolean = true
+    $final_price: String!
+  ) {
+    insert_Products_one(
+      object: {
+        productName_id: $productName_id
+        price: $price
+        quantity: $quantity
+        measurement_unit: $measurement_unit
+        shop_id: $shop_id
+        category: $category
+        reorder_point: $reorder_point
+        supplier: $supplier
+        is_active: $is_active
+        final_price: $final_price
+      }
+    ) {
+      id
+      productName_id
       price
       quantity
       measurement_unit
       shop_id
       category
-      barcode
-      sku
       reorder_point
       supplier
       is_active
       final_price
-      image
       created_at
       updated_at
+      ProductName {
+        id
+        name
+        description
+        barcode
+        sku
+        image
+        create_at
+      }
     }
   }
 `;
@@ -281,52 +334,47 @@ export const ADD_PRODUCT = `
 export const UPDATE_PRODUCT = `
   mutation UpdateProduct(
     $id: uuid!
-    $name: String
-    $description: String
     $price: String
     $quantity: Int
     $measurement_unit: String
     $final_price: String
-    $barcode: String
-    $sku: String
     $supplier: String
     $reorder_point: Int
-    $image: String
   ) {
     update_Products_by_pk(
       pk_columns: { id: $id }
       _set: {
-        name: $name
-        description: $description
         price: $price
         quantity: $quantity
         measurement_unit: $measurement_unit
         final_price: $final_price
-        barcode: $barcode
-        sku: $sku
         supplier: $supplier
         reorder_point: $reorder_point
-        image: $image
         updated_at: "now()"
       }
     ) {
       id
-      name
-      description
+      productName_id
       price
       quantity
       measurement_unit
       shop_id
       category
-      barcode
-      sku
       reorder_point
       supplier
       is_active
       final_price
-      image
       created_at
       updated_at
+      ProductName {
+        id
+        name
+        description
+        barcode
+        sku
+        image
+        create_at
+      }
     }
   }
 `;
@@ -571,6 +619,36 @@ export const CREATE_SHOP = `
         id
         name
       }
+    }
+  }
+`;
+
+export const UPDATE_PRODUCT_NAME = `
+  mutation UpdateProductName(
+    $id: uuid!
+    $name: String
+    $description: String
+    $barcode: String
+    $sku: String
+    $image: String
+  ) {
+    update_productNames_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        name: $name
+        description: $description
+        barcode: $barcode
+        sku: $sku
+        image: $image
+      }
+    ) {
+      id
+      name
+      description
+      barcode
+      sku
+      image
+      create_at
     }
   }
 `;

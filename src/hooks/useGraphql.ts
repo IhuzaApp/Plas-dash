@@ -159,26 +159,25 @@ export interface User {
 
 export interface Product {
   id: string;
-  name: string;
-  description: string;
+  productName_id: string;
   shop_id: string;
   price: string;
   final_price: string;
   quantity: number;
   measurement_unit: string;
-  image: string;
-  category: {
-    id: string;
-    name: string;
-    description: string;
-    image: string;
-    is_active: boolean;
-  };
-  barcode?: string;
-  sku?: string;
+  category: string;
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  ProductName: {
+    id: string;
+    name: string;
+    description: string;
+    barcode?: string;
+    sku?: string;
+    image: string;
+    create_at: string;
+  };
   Shop?: Shop;
   Order_Items?: OrderItem[];
   Cart_Items?: CartItem[];
