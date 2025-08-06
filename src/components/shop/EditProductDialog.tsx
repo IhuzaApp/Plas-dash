@@ -36,7 +36,8 @@ import { ScanBarcode, ScanQrCode, Upload, X, Image as ImageIcon, Loader2 } from 
 
 // Form schema with commission fields
 const formSchema = z.object({
-  name: z.string().min(1, 'Product name is required'),
+  productName_id: z.string().optional(),
+  name: z.string().optional(), // For display/editing purposes
   description: z.string().optional().or(z.literal('')),
   price: z.string().min(1, 'Price is required'),
   quantity: z.number().int().min(0, 'Quantity must be a positive number'),
@@ -63,17 +64,21 @@ interface EditProductDialogProps {
   onSubmit: (data: ProductSubmitData) => void;
   product: {
     id: string;
-    name: string;
-    description?: string;
+    productName_id: string;
+    ProductName?: {
+      id: string;
+      name: string;
+      description?: string;
+      barcode?: string;
+      sku?: string;
+      image?: string;
+    };
     price: string;
     quantity: number;
     measurement_unit: string;
     final_price: string;
-    barcode?: string;
-    sku?: string;
     supplier?: string;
     reorder_point?: number;
-    image?: string;
   } | null;
   isLoading?: boolean;
 }
@@ -126,16 +131,17 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
         : Number(defaultCommission) || 0;
 
       const formData = {
-        name: product.name,
-        description: product.description || '',
+        productName_id: product.productName_id,
+        name: product.ProductName?.name || '',
+        description: product.ProductName?.description || '',
         price: product.price,
         quantity: product.quantity,
         measurement_unit: product.measurement_unit,
-        barcode: product.barcode || '',
-        sku: product.sku || '',
+        barcode: product.ProductName?.barcode || '',
+        sku: product.ProductName?.sku || '',
         supplier: product.supplier || '',
         reorder_point: product.reorder_point || undefined,
-        image: product.image || '',
+        image: product.ProductName?.image || '',
         has_commission: hasCommission,
         commission_percentage: commissionPercentage,
         final_price: product.final_price,
@@ -151,8 +157,8 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
       }, 100);
 
       // Set image preview if product has an image
-      if (product.image) {
-        setImagePreview(product.image);
+      if (product.ProductName?.image) {
+        setImagePreview(product.ProductName.image);
       } else {
         setImagePreview(null);
       }

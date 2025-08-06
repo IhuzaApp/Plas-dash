@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -18,7 +18,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,11 +28,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ScanBarcode, ScanQrCode, Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ScanBarcode, Upload, X, Image as ImageIcon, Loader2, Search, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { useShops, useSystemConfig } from '@/hooks/useHasuraApi';
+import { useShops, useSystemConfig, useGetProductNameByBarcode, useGetProductNameBySku, useSearchProductNames } from '@/hooks/useHasuraApi';
 import { Switch } from '@/components/ui/switch';
-import ProductNameAutocomplete from './ProductNameAutocomplete';
+import { BrowserMultiFormatReader } from '@zxing/library';
 
 // Match the API types exactly
 const formSchema = z.object({
@@ -106,11 +105,37 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedProductName, setSelectedProductName] = useState<any>(null);
+  const [searchMode, setSearchMode] = useState<'name' | 'barcode' | 'sku'>('name');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  
+  // Barcode scanning states
+  const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scannedCode, setScannedCode] = useState<string | null>(null);
+  const [manualInputMode, setManualInputMode] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  const [availableCameras, setAvailableCameras] = useState<any[]>([]);
+  const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [scanTimeout, setScanTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [hasScanned, setHasScanned] = useState(false);
+  
+  // Refs for video element and code reader
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  
   const { data: shopsData } = useShops();
   const { data: systemConfig } = useSystemConfig();
   const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
   const defaultCommission =
     systemConfig?.System_configuratioins[0]?.productCommissionPercentage || 0;
+    
+  // Hooks for searching by barcode and SKU
+  const getProductByBarcode = useGetProductNameByBarcode();
+  const getProductBySku = useGetProductNameBySku();
+  const { data: searchProductNamesData, isLoading: isSearchingNames } = useSearchProductNames(searchTerm);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -170,120 +195,90 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       form.setValue('commission_percentage', Number(defaultCommission) || 0);
     } else {
       form.setValue('commission_percentage', 0);
-      // When turning off commission, set final price to match base price exactly
-      if (price) {
-        form.setValue('final_price', price);
-      }
     }
-  }, [hasCommission, defaultCommission, form, price]);
+  }, [hasCommission, defaultCommission, form]);
 
-  // Reset image state when dialog opens/closes
+  // Reset form when dialog opens/closes
   useEffect(() => {
     if (!open) {
       resetForm();
     }
   }, [open]);
 
+  // Auto-search as user types
+  useEffect(() => {
+    if (searchTerm.trim() && searchMode === 'name') {
+      // The useSearchProductNames hook will automatically handle the search
+      setSearchResults(searchProductNamesData?.productNames || []);
+      setShowSearchResults(true);
+    } else if (!searchTerm.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
+  }, [searchTerm, searchMode, searchProductNamesData]);
+
   const resetForm = () => {
+    form.reset();
     setImageFile(null);
     setImagePreview(null);
     setSelectedProductName(null);
-    form.reset({
-      name: '',
-      description: '',
-      price: '',
-      quantity: 0,
-      measurement_unit: 'item',
-      category: '',
-      is_active: true,
-      barcode: undefined,
-      sku: undefined,
-      supplier: undefined,
-      reorder_point: undefined,
-      shop_id: shopId,
-      image: '',
-      has_commission: true,
-      commission_percentage: Number(defaultCommission) || 0,
-      final_price: '',
-      productName_id: undefined,
-    });
-    // Clear the file input
-    const fileInput = document.getElementById('product-image') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
+    setSearchTerm('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+    setScannedCode(null);
+    setScanError(null);
+    setManualInputMode(false);
+    setManualCode('');
+    setIsScanning(false);
+    setIsScanDialogOpen(false);
+    setHasScanned(false); // Reset scanning flag
   };
 
   function handleSubmit(values: FormData) {
-    // Destructure to remove has_commission and commission_percentage
-    const { has_commission, commission_percentage, productName_id, name, description, barcode, sku, image, ...productData } = values;
-
-    const formattedValues = {
-      // Only include fields that the ADD_PRODUCT mutation accepts
-      price: productData.price,
-      quantity: Math.max(0, Number(values.quantity) || 0),
-      measurement_unit: productData.measurement_unit,
-      shop_id: shopId || values.shop_id,
-      category: productData.category,
-      reorder_point: typeof values.reorder_point === 'number' ? values.reorder_point : undefined,
-      supplier: productData.supplier,
-      is_active: productData.is_active,
-      final_price: productData.final_price,
-      // Product name related fields (will be handled by the parent component)
-      productName_id: productName_id || undefined,
-      productNameData: productName_id ? undefined : {
-        name: name || '',
-        description: description,
-        barcode: barcode,
-        sku: sku,
-        image: image,
-      },
+    const submitData: ProductSubmitData = {
+      price: values.price,
+      quantity: values.quantity,
+      measurement_unit: values.measurement_unit,
+      shop_id: values.shop_id || shopId,
+      category: values.category,
+      reorder_point: values.reorder_point,
+      supplier: values.supplier,
+      is_active: values.is_active,
+      final_price: values.final_price,
+      productName_id: values.productName_id,
+      productNameData: values.name && !values.productName_id ? {
+        name: values.name,
+        description: values.description,
+        barcode: values.barcode,
+        sku: values.sku,
+        image: values.image,
+      } : undefined,
     };
-    onSubmit(formattedValues);
+
+    onSubmit(submitData);
   }
-
-  const startScanning = (type: 'barcode' | 'qrcode') => {
-    setScanType(type);
-    setIsScanning(true);
-
-    setTimeout(() => {
-      const mockData =
-        type === 'barcode' ? '5901234123457' : 'https://product-info.example.com/12345';
-
-      if (type === 'barcode') {
-        form.setValue('barcode', mockData);
-        toast.success('Barcode scanned successfully!');
-      } else {
-        form.setValue('barcode', mockData);
-        toast.success('QR code scanned successfully!');
-      }
-
-      setIsScanning(false);
-    }, 1500);
-  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select a valid image file.');
+      // Validate file size (2MB limit)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Image file size must be less than 2MB');
         return;
       }
 
-      // Validate file size (2MB limit)
-      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
-      if (file.size > maxSize) {
-        toast.error('Image file size must be less than 2MB.');
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Please select a valid image file (JPG, PNG, GIF, WebP)');
         return;
       }
 
       setImageFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-        form.setValue('image', result);
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+        form.setValue('image', e.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -293,31 +288,135 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     setImageFile(null);
     setImagePreview(null);
     form.setValue('image', '');
-    // Clear the file input
-    const fileInput = document.getElementById('product-image') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
   };
 
   const handleProductNameSelect = (product: any) => {
     setSelectedProductName(product);
-    
-    // Auto-fill form fields with selected product details
-    if (product) {
-      form.setValue('name', product.name);
-      form.setValue('description', product.description || '');
-      form.setValue('barcode', product.barcode || '');
-      form.setValue('sku', product.sku || '');
-      form.setValue('image', product.image || '');
-      form.setValue('productName_id', product.id);
+    form.setValue('productName_id', product.id);
+    form.setValue('name', product.name);
+    form.setValue('description', product.description || '');
+    form.setValue('barcode', product.barcode || '');
+    form.setValue('sku', product.sku || '');
+    if (product.image) {
+      setImagePreview(product.image);
+      form.setValue('image', product.image);
+    }
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
+
+  const handleSearchResultSelect = (product: any) => {
+    handleProductNameSelect(product);
+  };
+
+  const startScanning = async (type: 'barcode' | 'qrcode') => {
+    setScanType(type);
+    setScanError(null);
+    setScannedCode(null);
+    setManualInputMode(false);
+    setManualCode('');
+    setHasScanned(false); // Reset scanning flag
+    setIsScanning(true);
+    setIsScanDialogOpen(true);
+
+    try {
+      // Get available cameras
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      setAvailableCameras(videoDevices);
       
-      // Set image preview if product has an image
-      if (product.image) {
-        setImagePreview(product.image);
+      if (videoDevices.length > 0) {
+        setSelectedCamera(videoDevices[0].deviceId);
       }
+
+      // Initialize code reader
+      if (!codeReaderRef.current) {
+        codeReaderRef.current = new BrowserMultiFormatReader();
+      }
+
+      // Start scanning
+      const videoElement = videoRef.current;
+      if (videoElement) {
+        const result = await codeReaderRef.current.decodeFromVideoDevice(
+          selectedCamera || undefined,
+          videoElement,
+          (result, error) => {
+            if (result && !hasScanned) {
+              setScannedCode(result.getText());
+              setIsScanning(false);
+              
+              // Stop the code reader to prevent multiple scans
+              if (codeReaderRef.current) {
+                codeReaderRef.current.reset();
+              }
+              
+              // Auto-fill barcode field only
+              form.setValue('barcode', result.getText());
+              setSearchTerm(result.getText() ?? '');
+              setSearchMode('barcode');
+              
+              // Don't automatically search - let user decide
+              toast.success(`Scanned ${type}: ${result.getText()}`);
+              setHasScanned(true); // Set flag to true after successful scan
+            }
+            if (error && error.name !== 'NotFoundException') {
+              setScanError(error.message);
+            }
+          }
+        );
+
+        // Set timeout for scanning
+        const timeout = setTimeout(() => {
+          if (isScanning) {
+            setScanError('Scanning timeout. Please try again or enter manually.');
+            setIsScanning(false);
+          }
+        }, 30000); // 30 seconds timeout
+
+        setScanTimeout(timeout);
+      }
+    } catch (error) {
+      console.error('Scanning error:', error);
+      setScanError('Failed to start camera. Please check camera permissions.');
+      setIsScanning(false);
     }
   };
+
+  const handleManualCodeSubmit = async () => {
+    if (!manualCode.trim()) return;
+
+    setScannedCode(manualCode);
+    setManualInputMode(false);
+    
+    // Auto-fill barcode field only
+    form.setValue('barcode', manualCode);
+    setSearchTerm(manualCode);
+    setSearchMode('barcode');
+    
+    // Don't automatically search - let user decide
+    toast.success(`Manual ${scanType}: ${manualCode}`);
+  };
+
+  const stopScanning = () => {
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+    }
+    if (scanTimeout) {
+      clearTimeout(scanTimeout);
+      setScanTimeout(null);
+    }
+    setIsScanning(false);
+    setScanError(null);
+  };
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (codeReaderRef.current) {
+        codeReaderRef.current.reset();
+      }
+    };
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -356,6 +455,108 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 )}
               />
             )}
+            
+            {/* Product Name Input with Search Buttons */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Product Name*</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Input
+                        placeholder="Type to search existing products or add new..."
+                        {...field}
+                        value={field.value || ''}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setSearchTerm(e.target.value || '');
+                          setSearchMode('name');
+                        }}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSearchMode('barcode');
+                        startScanning('barcode');
+                      }}
+                      title="Scan Barcode"
+                    >
+                      <ScanBarcode className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSearchMode('sku');
+                        setShowSearchResults(false);
+                      }}
+                      title="Search by SKU"
+                    >
+                      SKU
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Search Results */}
+            {showSearchResults && (
+              <div className="border rounded-md p-2 max-h-40 overflow-y-auto">
+                {isSearchingNames ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span className="text-sm text-muted-foreground">Searching products...</span>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="space-y-2">
+                    {searchResults.map((product) => (
+                      <div
+                        key={product.id}
+                        className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
+                        onClick={() => handleSearchResultSelect(product)}
+                      >
+                        <div>
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {product.barcode && `Barcode: ${product.barcode}`}
+                            {product.sku && `SKU: ${product.sku}`}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline">
+                          Select
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="text-muted-foreground mb-2">
+                      No products found with "{searchTerm}"
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        // Auto-fill the name field with the search term
+                        form.setValue('name', searchTerm);
+                        setShowSearchResults(false);
+                        toast.info('You can now add this as a new product');
+                      }}
+                    >
+                      Add as New Product
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            
             {/* Product Image */}
             <div className="space-y-4">
               <FormField
@@ -431,17 +632,15 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product Name*</FormLabel>
+                    <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <ProductNameAutocomplete
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        onProductSelect={handleProductNameSelect}
-                        placeholder="Search or add product name..."
-                        disabled={isLoading}
+                      <Textarea
+                        placeholder="Enter product description..."
+                        className="resize-none"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -462,76 +661,18 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="dairy">Dairy</SelectItem>
-                        <SelectItem value="produce">Produce</SelectItem>
-                        <SelectItem value="bakery">Bakery</SelectItem>
-                        <SelectItem value="meat">Meat</SelectItem>
-                        <SelectItem value="grocery">Grocery</SelectItem>
-                        <SelectItem value="frozen">Frozen</SelectItem>
-                        <SelectItem value="beverages">Beverages</SelectItem>
-                        <SelectItem value="snacks">Snacks</SelectItem>
-                        <SelectItem value="household">Household</SelectItem>
+                        <SelectItem value="groceries">Groceries</SelectItem>
+                        <SelectItem value="electronics">Electronics</SelectItem>
+                        <SelectItem value="clothing">Clothing</SelectItem>
+                        <SelectItem value="home">Home & Garden</SelectItem>
                         <SelectItem value="health">Health & Beauty</SelectItem>
+                        <SelectItem value="sports">Sports & Outdoors</SelectItem>
+                        <SelectItem value="books">Books & Media</SelectItem>
+                        <SelectItem value="automotive">Automotive</SelectItem>
+                        <SelectItem value="toys">Toys & Games</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="barcode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Barcode</FormLabel>
-                    <div className="flex gap-2">
-                      <FormControl>
-                        <div className="relative flex-1">
-                          <Input placeholder="Enter barcode" {...field} value={field.value || ''} />
-                        </div>
-                      </FormControl>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="outline"
-                        onClick={() => startScanning('barcode')}
-                        disabled={isScanning}
-                      >
-                        <ScanBarcode className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="outline"
-                        onClick={() => startScanning('qrcode')}
-                        disabled={isScanning}
-                      >
-                        <ScanQrCode className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {isScanning && (
-                      <div className="mt-2 text-sm text-muted-foreground">
-                        Scanning {scanType === 'barcode' ? 'barcode' : 'QR code'}...
-                      </div>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="sku"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SKU</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter SKU" {...field} value={field.value || ''} />
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -546,112 +687,60 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Base Price*</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5">{currency}</span>
-                        <Input placeholder="0" className="pl-12" {...field} />
-                      </div>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {hasCommission && (
-                <FormField
-                  control={form.control}
-                  name="final_price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Final Price</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-3 top-2.5">{currency}</span>
-                          <Input placeholder="0" className="pl-12" {...field} disabled />
-                        </div>
-                      </FormControl>
-                      <FormDescription>Final price after applying commission</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-
-            <div className="space-y-4">
               <FormField
                 control={form.control}
-                name="has_commission"
+                name="final_price"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Apply Commission</FormLabel>
-                      <FormDescription>
-                        Enable to apply commission percentage to this product
-                      </FormDescription>
-                    </div>
+                  <FormItem>
+                    <FormLabel>Final Price (with commission)</FormLabel>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={checked => {
-                          field.onChange(checked);
-                          // Reset final price to base price when commission is turned off
-                          if (!checked) {
-                            form.setValue('final_price', form.getValues('price'));
-                            form.setValue('commission_percentage', Number(defaultCommission) || 0);
-                          }
-                        }}
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        {...field}
+                        disabled
+                        className="bg-muted"
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {hasCommission && (
-                <FormField
-                  control={form.control}
-                  name="commission_percentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Commission Percentage</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          disabled
-                          className="bg-muted"
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                          value={Number(field.value) || 0}
-                        />
-                      </FormControl>
-                      <FormDescription>Default system commission rate</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="quantity"
-                render={({ field: { onChange, value, ...field } }) => (
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quantity*</FormLabel>
+                    <FormLabel>Initial Stock Quantity*</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         min="0"
                         placeholder="0"
                         {...field}
-                        value={value}
-                        onChange={e => {
-                          const val =
-                            e.target.value === ''
-                              ? 0
-                              : Math.max(0, parseInt(e.target.value, 10) || 0);
-                          onChange(val);
-                        }}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -677,11 +766,71 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         <SelectItem value="g">Gram (g)</SelectItem>
                         <SelectItem value="l">Liter (L)</SelectItem>
                         <SelectItem value="ml">Milliliter (mL)</SelectItem>
-                        <SelectItem value="lb">Pound (lb)</SelectItem>
-                        <SelectItem value="oz">Ounce (oz)</SelectItem>
+                        <SelectItem value="piece">Piece</SelectItem>
                         <SelectItem value="pack">Pack</SelectItem>
+                        <SelectItem value="box">Box</SelectItem>
+                        <SelectItem value="bottle">Bottle</SelectItem>
+                        <SelectItem value="can">Can</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="barcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Barcode</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter barcode..."
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="sku"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SKU</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter SKU..."
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="supplier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Supplier</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter supplier name..."
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -690,7 +839,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
               <FormField
                 control={form.control}
                 name="reorder_point"
-                render={({ field: { onChange, value, ...field } }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Reorder Point</FormLabel>
                     <FormControl>
@@ -699,14 +848,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         min="0"
                         placeholder="0"
                         {...field}
-                        value={value ?? ''}
-                        onChange={e => {
-                          const val =
-                            e.target.value === ''
-                              ? undefined
-                              : Math.max(0, parseInt(e.target.value, 10));
-                          onChange(val);
-                        }}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -717,32 +860,21 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
             <FormField
               control={form.control}
-              name="supplier"
+              name="is_active"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Supplier</FormLabel>
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Active Status</FormLabel>
+                    <div className="text-sm text-muted-foreground">
+                      Enable this product for sale
+                    </div>
+                  </div>
                   <FormControl>
-                    <Input placeholder="Enter supplier name" {...field} value={field.value || ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter product description"
-                      className="resize-none"
-                      {...field}
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -770,6 +902,162 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
           </form>
         </Form>
       </DialogContent>
+      
+      {/* Scanning Dialog */}
+      <Dialog
+        open={isScanDialogOpen}
+        onOpenChange={open => {
+          if (!open) {
+            stopScanning();
+          }
+          setIsScanDialogOpen(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Scanning {scanType === 'barcode' ? 'Barcode' : 'QR Code'}</DialogTitle>
+            <DialogDescription>
+              Point your camera at the {scanType === 'barcode' ? 'barcode' : 'QR code'} to scan it.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Camera Selection */}
+          {availableCameras.length > 1 && (
+            <div className="mb-4">
+              <label className="text-sm font-medium">Select Camera:</label>
+              <Select value={selectedCamera} onValueChange={setSelectedCamera}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choose camera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCameras.map((camera, index) => (
+                    <SelectItem key={camera.deviceId} value={camera.deviceId}>
+                      {camera.label || `Camera ${index + 1}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="py-6">
+            {isScanning ? (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="relative w-full h-[300px] bg-black rounded-md overflow-hidden">
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    playsInline
+                    muted
+                  />
+                  {/* Scanning overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-48 h-48 border-2 border-white rounded-lg relative">
+                      <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-green-400"></div>
+                      <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-green-400"></div>
+                      <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-green-400"></div>
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-green-400"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {scanError && (
+                  <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md">
+                    {scanError}
+                    <div className="mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setManualInputMode(true)}
+                        className="text-xs"
+                      >
+                        📝 Enter Manually Instead
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-sm text-center text-muted-foreground">
+                  <p>Position the {scanType === 'barcode' ? 'barcode' : 'QR code'} within the frame</p>
+                </div>
+              </div>
+            ) : manualInputMode ? (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="w-full h-[200px] bg-blue-50 flex items-center justify-center rounded-md border-2 border-blue-200">
+                  <div className="flex flex-col items-center gap-2">
+                    <ScanBarcode className="h-12 w-12 text-blue-500" />
+                    <p className="text-sm text-blue-700 font-medium">Manual Input</p>
+                    <p className="text-xs text-blue-600 text-center">
+                      Enter the {scanType === 'barcode' ? 'barcode' : 'QR code'} manually
+                    </p>
+                  </div>
+                </div>
+
+                <div className="w-full space-y-2">
+                  <Input
+                    placeholder={`Enter ${scanType === 'barcode' ? 'barcode' : 'QR code'} number`}
+                    value={manualCode}
+                    onChange={e => setManualCode(e.target.value)}
+                    className="text-center font-mono"
+                  />
+                  <Button
+                    onClick={handleManualCodeSubmit}
+                    disabled={!manualCode.trim()}
+                    className="w-full"
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Link Code to Product
+                  </Button>
+                </div>
+              </div>
+            ) : scannedCode ? (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="w-full h-[200px] bg-green-50 flex items-center justify-center rounded-md border-2 border-green-200">
+                  <div className="flex flex-col items-center gap-2">
+                    <Check className="h-12 w-12 text-green-500" />
+                    <p className="text-sm text-green-700 font-medium">Scan Successful!</p>
+                    <p className="text-xs text-green-600 font-mono bg-green-100 px-2 py-1 rounded">
+                      {scannedCode}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-center text-muted-foreground">
+                  Code has been linked to the product
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <p>Initializing camera...</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                stopScanning();
+                setIsScanDialogOpen(false);
+              }}
+              disabled={isScanning}
+            >
+              Cancel
+            </Button>
+            {scannedCode && (
+              <Button
+                onClick={() => {
+                  setIsScanDialogOpen(false);
+                  setScannedCode(null);
+                }}
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Done
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };

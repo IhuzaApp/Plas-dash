@@ -154,16 +154,16 @@ const Checkout = () => {
     if (code.trim()) {
       const foundProduct = products.find(
         product =>
-          product.sku === code ||
-          product.barcode === code ||
-          product.name.toLowerCase().includes(code.toLowerCase())
+          product.ProductName?.sku === code ||
+          product.ProductName?.barcode === code ||
+          product.ProductName?.name.toLowerCase().includes(code.toLowerCase())
       );
 
       if (foundProduct) {
         addProductToCart(foundProduct);
         toast({
           title: 'Product added',
-          description: `${foundProduct.name} has been added to the cart.`,
+          description: `${foundProduct.ProductName?.name} has been added to the cart.`,
         });
       } else {
         toast({
@@ -185,12 +185,12 @@ const Checkout = () => {
     } else {
       const cartItem: CartItem = {
         id: product.id,
-        name: product.name,
+        name: product.ProductName?.name || 'Unknown Product',
         price: parseFloat(product.price), // Use base price for POS
         quantity: 1,
-        description: product.description,
+        description: product.ProductName?.description || '',
         measurement_unit: product.measurement_unit,
-        image: product.image,
+        image: product.ProductName?.image || '',
       };
       setCart([...cart, cartItem]);
     }

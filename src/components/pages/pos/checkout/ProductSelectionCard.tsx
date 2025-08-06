@@ -26,9 +26,9 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
 
   const filteredProducts = products.filter(
     product =>
-      product.name?.toLowerCase().includes(productSearch.toLowerCase()) ||
-      product.description?.toLowerCase().includes(productSearch.toLowerCase()) ||
-      (product.category as unknown as string)?.toLowerCase().includes(productSearch.toLowerCase())
+      product.ProductName?.name?.toLowerCase().includes(productSearch.toLowerCase()) ||
+      product.ProductName?.description?.toLowerCase().includes(productSearch.toLowerCase()) ||
+      product.category?.toLowerCase().includes(productSearch.toLowerCase())
   );
 
   return (
@@ -64,17 +64,17 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                   onClick={() => onAddProductToCart(product)}
                 >
                   <div className="flex flex-col space-y-2">
-                    {product.image && (
+                    {product.ProductName?.image && (
                       <img
-                        src={product.image}
-                        alt={product.name}
+                        src={product.ProductName.image}
+                        alt={product.ProductName.name}
                         className="w-full h-24 object-cover rounded"
                       />
                     )}
                     <div className="flex-1">
-                      <p className="font-medium text-sm truncate">{product.name}</p>
+                      <p className="font-medium text-sm truncate">{product.ProductName?.name || 'Unknown Product'}</p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {(product.category as unknown as string) || 'No Category'} •{' '}
+                        {product.category || 'No Category'} •{' '}
                         {product.measurement_unit || 'unit'}
                       </p>
                       <p className="text-sm font-semibold text-primary">
