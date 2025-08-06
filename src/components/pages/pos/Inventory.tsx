@@ -118,20 +118,10 @@ const Inventory = () => {
 
   const [items, setItems] = useState<InventoryItem[]>([]);
 
-  // Ensure shop session is properly loaded on mount
-  React.useEffect(() => {
-    console.log('=== INVENTORY: CHECKING SHOP SESSION ===');
-    console.log('Initial shop session:', shopSession);
-  }, [shopSession]);
-
   // Update items when products data changes
   React.useEffect(() => {
-    console.log('=== PRODUCTS DATA CHANGED ===');
-    console.log('Products data:', productsData);
-    
     if (productsData?.Products) {
       const transformedItems = transformProductsToInventoryItems(productsData.Products);
-      console.log('Transformed items:', transformedItems);
       setItems(transformedItems);
     }
   }, [productsData]);
@@ -209,19 +199,16 @@ const Inventory = () => {
         return;
       }
 
-      console.log('Adding product with shop session:', {
-        shopId: shopSession.shopId,
-        shopName: shopSession.shopName
-      });
+
 
       let productNameId = formData.productName_id;
 
       // If we don't have a productName_id but have productNameData, create the product name first
       if (!productNameId && formData.productNameData) {
-        console.log('Creating new product name:', formData.productNameData);
+  
         const productNameResult = await addProductName.mutateAsync(formData.productNameData);
         productNameId = productNameResult.insert_productNames_one.id;
-        console.log('Product name created with ID:', productNameId);
+        
       }
 
       // Now create the product with the productName_id
@@ -238,9 +225,9 @@ const Inventory = () => {
         final_price: formData.final_price || formData.price, // Use price as fallback if final_price is not set
       };
 
-      console.log('Creating product with data:', productData);
+
       await addProduct.mutateAsync(productData);
-      console.log('Product created successfully');
+      
       
       // Verify shop session is still valid after mutation
       if (!shopSession?.shopId) {
@@ -253,9 +240,9 @@ const Inventory = () => {
       setIsAddProductOpen(false);
       
       // Refresh the products data without losing shop session
-      console.log('Refreshing products data...');
+      
       await refetchProducts();
-      console.log('Products data refreshed successfully');
+      
     } catch (error) {
       console.error('Error adding product:', error);
       console.error('Error details:', {
@@ -269,7 +256,7 @@ const Inventory = () => {
 
   const handleImportFile = (file: File) => {
     // In a real application, this would process the Excel/CSV file
-    console.log('Importing file:', file.name);
+
 
     // Simulate processing delay
     setTimeout(() => {
@@ -700,65 +687,7 @@ const Inventory = () => {
             {/* Debug button for testing session persistence */}
             {process.env.NODE_ENV === 'development' && (
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    console.log('=== DEBUG: SESSION STATUS ===');
-                    console.log('Current shop session:', shopSession);
-                    console.log('localStorage shop session:', localStorage.getItem('shopSession'));
-                    console.log('localStorage orgEmployeeSession:', localStorage.getItem('orgEmployeeSession'));
-                    
-                    // Use the debug function from context
-                    debugSession();
-                    
-                    toast.info('Session debug info logged to console');
-                  }}
-                >
-                  🔧 Debug Session
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    console.log('=== CREATING TEST SESSION ===');
-                    const testSession = {
-                      shopId: 'test-shop-id',
-                      shopName: 'Test Shop',
-                      employeeId: 'test-employee-id',
-                      employeeName: 'Test Employee',
-                      position: 'Test Position',
-                      expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
-                    };
-                    localStorage.setItem('shopSession', JSON.stringify(testSession));
-                    console.log('Test session saved:', testSession);
-                    toast.success('Test session created');
-                  }}
-                >
-                  🧪 Test Session
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    console.log('=== TESTING SESSION PERSISTENCE ===');
-                    const testSession = {
-                      shopId: 'persistence-test',
-                      shopName: 'Persistence Test Shop',
-                      employeeId: 'test-employee',
-                      employeeName: 'Test Employee',
-                      position: 'Test Position',
-                      expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
-                    };
-                    localStorage.setItem('shopSession', JSON.stringify(testSession));
-                    console.log('Persistence test session saved:', testSession);
-                    
-                    // Immediately check if it was saved
-                    const savedSession = localStorage.getItem('shopSession');
-                    console.log('Immediately after save, localStorage contains:', savedSession);
-                    
-                    toast.success('Persistence test session created. Now refresh the page to test.');
-                  }}
-                >
-                  🔄 Test Persistence
-                </Button>
+
               </div>
             )}
           </div>
