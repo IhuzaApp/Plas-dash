@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { useAuth } from '@/components/layout/RootLayout';
-import { useShopSession } from '@/hooks/useShopSession';
+import { useShopSession } from '@/contexts/ShopSessionContext';
 
 interface BranchShop {
   id: string;
