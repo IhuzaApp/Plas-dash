@@ -68,8 +68,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const { navigateToPage } = usePageAccess();
   const { isLoggedIntoShop, shopSession } = useShopSession();
   const queryClient = useQueryClient();
-  
-
 
   // Handle navigation state
   useEffect(() => {
@@ -88,8 +86,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     setIsNavigating(false);
     setNavigatingTo(null);
   }, [pathname]);
-
-
 
   // Listen for shop session changes and refetch data
   useEffect(() => {
@@ -115,11 +111,11 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
 
       // Also invalidate queries with shop-specific parameters
       if (shopSession?.shopId) {
-        queryClient.invalidateQueries({ 
-          queryKey: ['branchShops', shopSession.shopName] 
+        queryClient.invalidateQueries({
+          queryKey: ['branchShops', shopSession.shopName],
         });
-        queryClient.invalidateQueries({ 
-          queryKey: ['allStaff', shopSession.shopName] 
+        queryClient.invalidateQueries({
+          queryKey: ['allStaff', shopSession.shopName],
         });
       }
 
@@ -177,11 +173,11 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
 
     // Also refetch shop-specific queries if we have a shop session
     if (shopSession?.shopName) {
-      queryClient.invalidateQueries({ 
-        queryKey: ['branchShops', shopSession.shopName] 
+      queryClient.invalidateQueries({
+        queryKey: ['branchShops', shopSession.shopName],
       });
-      queryClient.invalidateQueries({ 
-        queryKey: ['allStaff', shopSession.shopName] 
+      queryClient.invalidateQueries({
+        queryKey: ['allStaff', shopSession.shopName],
       });
     }
   };

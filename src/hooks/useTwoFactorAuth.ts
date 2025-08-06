@@ -18,7 +18,7 @@ export function useTwoFactorAuth() {
     console.log('=== LOADING 2FA SECRETS FROM LOCALSTORAGE ===');
     const storedSecrets = localStorage.getItem(TWO_FACTOR_SECRETS_KEY);
     console.log('Raw stored secrets:', storedSecrets);
-    
+
     if (storedSecrets) {
       try {
         const parsedSecrets = JSON.parse(storedSecrets);
@@ -55,7 +55,7 @@ export function useTwoFactorAuth() {
 
     const key = `${employeeId}-${shopId}`;
     console.log('Storage key:', key);
-    
+
     // Update state
     setSecrets(prev => {
       const newSecrets = {
@@ -67,7 +67,7 @@ export function useTwoFactorAuth() {
         },
       };
       console.log('Updated secrets object:', Object.keys(newSecrets));
-      
+
       // Immediately save to localStorage
       try {
         localStorage.setItem(TWO_FACTOR_SECRETS_KEY, JSON.stringify(newSecrets));
@@ -75,12 +75,12 @@ export function useTwoFactorAuth() {
       } catch (error) {
         console.error('Error saving to localStorage:', error);
       }
-      
+
       return newSecrets;
     });
 
     console.log('Secret key stored successfully');
-    
+
     // Verify storage was successful
     setTimeout(() => {
       const stored = localStorage.getItem(TWO_FACTOR_SECRETS_KEY);
@@ -105,7 +105,7 @@ export function useTwoFactorAuth() {
     console.log('Available secrets:', Object.keys(secrets));
     console.log('Found secret:', secrets[key]);
     console.log('Returning secret key:', secrets[key]?.secretKey ? '***' : 'null');
-    
+
     // Check localStorage directly as fallback
     const storedSecrets = localStorage.getItem(TWO_FACTOR_SECRETS_KEY);
     console.log('Direct localStorage check:', storedSecrets);
@@ -123,7 +123,7 @@ export function useTwoFactorAuth() {
         console.error('Error parsing localStorage secrets:', error);
       }
     }
-    
+
     return secrets[key]?.secretKey || null;
   };
 

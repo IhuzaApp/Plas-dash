@@ -46,7 +46,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   const [selectedCamera, setSelectedCamera] = useState<string>('');
   const [scanTimeout, setScanTimeout] = useState<NodeJS.Timeout | null>(null);
   const [hasScanned, setHasScanned] = useState(false);
-  
+
   // Refs for video element and code reader
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
@@ -97,7 +97,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
       setAvailableCameras(videoDevices);
-      
+
       if (videoDevices.length > 0) {
         setSelectedCamera(videoDevices[0].deviceId);
       }
@@ -117,18 +117,18 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             if (result && !hasScanned) {
               setScannedCode(result.getText());
               setIsScanning(false);
-              
+
               // Stop the code reader to prevent multiple scans
               if (codeReaderRef.current) {
                 codeReaderRef.current.reset();
               }
-              
+
               // Play scan sound
               playScanSound();
-              
+
               toast.success(`Scanned ${scanType}: ${result.getText()}`);
               setHasScanned(true);
-              
+
               // Automatically close dialog and return the scanned code
               setTimeout(() => {
                 onScanSuccess(result.getText());
@@ -165,12 +165,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
     setScannedCode(manualCode);
     setManualInputMode(false);
-    
+
     // Play scan sound
     playScanSound();
-    
+
     toast.success(`Manual ${scanType}: ${manualCode}`);
-    
+
     // Automatically close dialog and return the manual code
     setTimeout(() => {
       onScanSuccess(manualCode);
@@ -212,9 +212,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{title || `Scanning ${scanType === 'barcode' ? 'Barcode' : 'QR Code'}`}</DialogTitle>
+          <DialogTitle>
+            {title || `Scanning ${scanType === 'barcode' ? 'Barcode' : 'QR Code'}`}
+          </DialogTitle>
           <DialogDescription>
-            {description || `Point your camera at the ${scanType === 'barcode' ? 'barcode' : 'QR code'} to scan it.`}
+            {description ||
+              `Point your camera at the ${scanType === 'barcode' ? 'barcode' : 'QR code'} to scan it.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -276,7 +279,9 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
               )}
 
               <div className="text-sm text-center text-muted-foreground">
-                <p>Position the {scanType === 'barcode' ? 'barcode' : 'QR code'} within the frame</p>
+                <p>
+                  Position the {scanType === 'barcode' ? 'barcode' : 'QR code'} within the frame
+                </p>
               </div>
             </div>
           ) : manualInputMode ? (
@@ -332,11 +337,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isScanning}
-          >
+          <Button variant="outline" onClick={handleClose} disabled={isScanning}>
             Cancel
           </Button>
         </DialogFooter>
@@ -345,4 +346,4 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   );
 };
 
-export default BarcodeScanner; 
+export default BarcodeScanner;

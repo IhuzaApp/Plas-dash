@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { useAuth } from '@/components/layout/RootLayout';
 
-
 interface BranchShop {
   id: string;
   name: string;
@@ -39,8 +38,6 @@ export function useBranchShops(): UseBranchShopsReturn {
 
   // Get the current shop ID from the main session
   const currentShopId = session?.shop_id;
-  
-
 
   // First, get the main shop to get its name
   const GET_MAIN_SHOP = `
@@ -80,12 +77,14 @@ export function useBranchShops(): UseBranchShopsReturn {
   });
 
   // Get the main shop name
-  const mainShop = mainShopData && typeof mainShopData === 'object' && 'Shops' in mainShopData && Array.isArray((mainShopData as any).Shops) ? (mainShopData as any).Shops[0] : null;
+  const mainShop =
+    mainShopData &&
+    typeof mainShopData === 'object' &&
+    'Shops' in mainShopData &&
+    Array.isArray((mainShopData as any).Shops)
+      ? (mainShopData as any).Shops[0]
+      : null;
   const mainShopName = mainShop?.name;
-  
-
-  
-
 
   // GraphQL query to get branch shops by relatedTo (shop name)
   const GET_BRANCH_SHOPS = `
@@ -139,20 +138,17 @@ export function useBranchShops(): UseBranchShopsReturn {
 
     // Combine main shop and branch shops
     const allShops = [];
-    
+
     // Add main shop if it exists
     if (mainShop) {
       allShops.push(mainShop);
     }
-    
+
     // Add branch shops if they exist
     if (data && typeof data === 'object' && 'Shops' in data && Array.isArray((data as any).Shops)) {
-
       allShops.push(...(data as any).Shops);
     }
-    
 
-    
     if (allShops.length > 0) {
       const shops = allShops.map((shop: any) => {
         // Calculate performance metrics

@@ -56,7 +56,6 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSetupMode, setIsSetupMode] = useState(!multAuthEnabled);
-  
 
   const [setupStep, setSetupStep] = useState<'qr' | 'verify'>('qr');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -64,8 +63,15 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
   const { loginToShop } = useShopSession();
   const updateMultAuthMutation = useUpdateMultAuth();
   const queryClient = useQueryClient();
-  const { generateSecretKey, storeSecretKey, getSecretKey, verifyToken, generateQRCodeUrl, isLoading: twoFactorLoading, error: twoFactorError } =
-    useDatabaseTwoFactorAuth();
+  const {
+    generateSecretKey,
+    storeSecretKey,
+    getSecretKey,
+    verifyToken,
+    generateQRCodeUrl,
+    isLoading: twoFactorLoading,
+    error: twoFactorError,
+  } = useDatabaseTwoFactorAuth();
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -87,7 +93,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
     queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
     queryClient.invalidateQueries({ queryKey: ['userShops'] });
     queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
-    
+
     // Force refetch
     queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
     queryClient.refetchQueries({ queryKey: ['userShops'] });
@@ -158,9 +164,15 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
             toast.error('Invalid employee ID during setup. Please contact administrator.');
             return;
           }
-          
+
           // Store the secret key in database for future authentication
-          await storeSecretKey(employeeIdStr, shopId, secretKey, storedTwoFactorSecrets || null, userId);
+          await storeSecretKey(
+            employeeIdStr,
+            shopId,
+            secretKey,
+            storedTwoFactorSecrets || null,
+            userId
+          );
 
           // Update user's multAuthEnabled status
           await updateMultAuthMutation.mutateAsync({
@@ -172,7 +184,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
           setIsSetupMode(false);
           setSetupStep('qr');
           form.reset();
-          
+
           // Trigger real-time updates
           triggerRealTimeUpdates();
         } catch (error: any) {
@@ -193,16 +205,20 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
     setIsLoading(true);
 
     try {
-      
       // Check if employeeId is valid
       const employeeIdStr = String(employeeId);
       if (!employeeIdStr || employeeIdStr.trim() === '') {
         toast.error('Invalid employee ID. Please contact administrator.');
         return;
       }
-      
+
       // Get the stored secret key for this user and shop from database
-      const storedSecretKey = getSecretKey(employeeIdStr, shopId, storedTwoFactorSecrets || null, userId);
+      const storedSecretKey = getSecretKey(
+        employeeIdStr,
+        shopId,
+        storedTwoFactorSecrets || null,
+        userId
+      );
 
       if (!storedSecretKey) {
         toast.error('2FA not properly configured. Please contact administrator.');
@@ -218,10 +234,10 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
         toast.success(`Successfully logged into ${shopName}`);
         onOpenChange(false);
         form.reset();
-        
+
         // Trigger real-time updates
         triggerRealTimeUpdates();
-        
+
         // Call success callback if provided
         if (onAuthSuccess) {
           onAuthSuccess();

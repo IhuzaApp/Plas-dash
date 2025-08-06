@@ -253,10 +253,10 @@ import { BrowserMultiFormatReader, Result } from '@zxing/library';
 
 const startScanning = async () => {
   codeReaderRef.current = new BrowserMultiFormatReader();
-  
+
   // Get available cameras
   const videoInputDevices = await codeReaderRef.current.listVideoInputDevices();
-  
+
   // Start real-time scanning
   await codeReaderRef.current.decodeFromVideoDevice(
     selectedDeviceId,
@@ -279,10 +279,10 @@ const startScanning = async () => {
 const handleBarcodeScanResult = async (barcode: string) => {
   setBarcode(barcode);
   setSearchTerm(barcode);
-  
+
   // Search for existing product
   const product = await getProductByBarcode.mutateAsync({ barcode });
-  
+
   if (product?.productNames?.[0]) {
     // Auto-fill form with existing product data
     const existingProduct = product.productNames[0];
@@ -331,7 +331,7 @@ const playScanSound = () => {
       <DialogTitle>{title}</DialogTitle>
       <DialogDescription>{description}</DialogDescription>
     </DialogHeader>
-    
+
     {/* Camera video feed */}
     <div className="relative">
       <video ref={videoRef} className="w-full h-64 object-cover rounded-lg" />
@@ -342,14 +342,14 @@ const playScanSound = () => {
         <div className="absolute bottom-2 right-2 w-8 h-8 border-r-2 border-b-2 border-blue-500"></div>
       </div>
     </div>
-    
+
     {/* Manual input fallback */}
     {manualInputMode && (
       <div className="space-y-2">
         <Input
           placeholder="Enter barcode manually"
           value={manualCode}
-          onChange={(e) => setManualCode(e.target.value)}
+          onChange={e => setManualCode(e.target.value)}
         />
         <Button onClick={handleManualCodeSubmit}>Submit</Button>
       </div>
@@ -378,7 +378,7 @@ const playScanSound = () => {
       )}
     />
   </div>
-  
+
   {/* Barcode scanning button */}
   <Button
     type="button"
@@ -388,14 +388,9 @@ const playScanSound = () => {
   >
     <ScanBarcode className="h-4 w-4" />
   </Button>
-  
+
   {/* SKU search button */}
-  <Button
-    type="button"
-    variant="outline"
-    onClick={() => setSearchMode('sku')}
-    className="mt-8"
-  >
+  <Button type="button" variant="outline" onClick={() => setSearchMode('sku')} className="mt-8">
     SKU
   </Button>
 </div>
@@ -422,7 +417,7 @@ useEffect(() => {
         setShowSearchResults(true);
       }
     }, 300);
-    
+
     return () => clearTimeout(timeoutId);
   }
 }, [searchTerm, searchMode, searchProductNamesData]);
@@ -432,22 +427,24 @@ useEffect(() => {
 
 ```tsx
 // ProductNameAutocomplete.tsx - Autocomplete component
-{showSearchResults && searchResults.length > 0 && (
-  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-    {searchResults.map((product) => (
-      <div
-        key={product.id}
-        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-        onClick={() => handleProductSelect(product)}
-      >
-        <div className="font-medium">{product.name}</div>
-        {product.description && (
-          <div className="text-sm text-gray-600">{product.description}</div>
-        )}
-      </div>
-    ))}
-  </div>
-)}
+{
+  showSearchResults && searchResults.length > 0 && (
+    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+      {searchResults.map(product => (
+        <div
+          key={product.id}
+          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+          onClick={() => handleProductSelect(product)}
+        >
+          <div className="font-medium">{product.name}</div>
+          {product.description && (
+            <div className="text-sm text-gray-600">{product.description}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 ```
 
 ### **🎯 Supported Code Formats**
@@ -527,7 +524,7 @@ useEffect(() => {
   const timeoutId = setTimeout(() => {
     // Perform search after 300ms delay
   }, 300);
-  
+
   return () => clearTimeout(timeoutId);
 }, [searchTerm]);
 ```
@@ -737,12 +734,12 @@ const SEARCH_PRODUCT_NAMES = `
 
 #### **1. Common Issues**
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| Camera not working | Permission denied | Check browser permissions |
-| Slow scanning | Poor lighting | Improve lighting conditions |
-| No sound | Audio file missing | Verify sound file path |
-| Search not working | Network issues | Check internet connection |
+| Issue              | Cause              | Solution                    |
+| ------------------ | ------------------ | --------------------------- |
+| Camera not working | Permission denied  | Check browser permissions   |
+| Slow scanning      | Poor lighting      | Improve lighting conditions |
+| No sound           | Audio file missing | Verify sound file path      |
+| Search not working | Network issues     | Check internet connection   |
 
 #### **2. Debug Mode**
 
@@ -786,9 +783,15 @@ interface AddProductDialogProps {
 
 ```typescript
 // Product search hooks
-const useSearchProductNames = (searchTerm: string) => { /* ... */ };
-const useGetProductNameByBarcode = () => { /* ... */ };
-const useGetProductNameBySku = () => { /* ... */ };
+const useSearchProductNames = (searchTerm: string) => {
+  /* ... */
+};
+const useGetProductNameByBarcode = () => {
+  /* ... */
+};
+const useGetProductNameBySku = () => {
+  /* ... */
+};
 ```
 
 ---

@@ -103,8 +103,6 @@ export function useStaffManagement(): UseStaffManagementReturn {
     enabled: !!currentShopId,
   }) as { data: { orgEmployees: StaffMember[] } | undefined; isLoading: boolean; error: any };
 
-
-
   useEffect(() => {
     if (queryLoading) {
       setIsLoading(true);

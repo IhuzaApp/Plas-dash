@@ -22,25 +22,23 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   const { shopSession, isLoggedIntoShop, logoutFromShop } = useShopSession();
   const queryClient = useQueryClient();
 
-
-
   // Listen for shop session changes
   useEffect(() => {
     const handleShopSessionChange = (event: CustomEvent) => {
       console.log('=== SHOP SELECTOR: SHOP SESSION EVENT RECEIVED ===');
       console.log('Event type:', event.detail.type);
-      
+
       // Trigger real-time updates when shop session changes
       setTimeout(() => {
         console.log('=== TRIGGERING REAL-TIME UPDATES AFTER SHOP SESSION CHANGE ===');
         queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
         queryClient.invalidateQueries({ queryKey: ['userShops'] });
         queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
-        
+
         // Force refetch
         queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
         queryClient.refetchQueries({ queryKey: ['userShops'] });
-        
+
         // Force re-render
         setForceUpdate(prev => prev + 1);
       }, 100);
@@ -91,13 +89,13 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     setSelectedShop(null);
-    
+
     // Trigger real-time updates after successful authentication
     setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.invalidateQueries({ queryKey: ['userShops'] });
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
-      
+
       // Force refetch
       queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.refetchQueries({ queryKey: ['userShops'] });
@@ -106,13 +104,13 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
 
   const handleLogout = () => {
     logoutFromShop();
-    
+
     // Trigger real-time updates after logout
     setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.invalidateQueries({ queryKey: ['userShops'] });
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
-      
+
       // Force refetch
       queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.refetchQueries({ queryKey: ['userShops'] });
@@ -250,12 +248,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
             Select Shop for POS
           </h3>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleManualRefresh}
-          className="h-6 w-6 p-0"
-        >
+        <Button variant="ghost" size="sm" onClick={handleManualRefresh} className="h-6 w-6 p-0">
           <RefreshCw className="h-3 w-3" />
         </Button>
       </div>
@@ -264,18 +257,18 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
         <Card
           key={orgEmployee.Shops.id}
           className="cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
-                      onClick={() => {
-              const shopData = {
-                shop: orgEmployee.Shops,
-                position: orgEmployee.Position,
-                roleType: orgEmployee.roleType,
-                multAuthEnabled: orgEmployee.multAuthEnabled,
-                employeeId: orgEmployee.employeeID,
-                employeeName: orgEmployee.fullnames,
-                userId: orgEmployee.id,
-              };
-              handleShopSelect(shopData);
-            }}
+          onClick={() => {
+            const shopData = {
+              shop: orgEmployee.Shops,
+              position: orgEmployee.Position,
+              roleType: orgEmployee.roleType,
+              multAuthEnabled: orgEmployee.multAuthEnabled,
+              employeeId: orgEmployee.employeeID,
+              employeeName: orgEmployee.fullnames,
+              userId: orgEmployee.id,
+            };
+            handleShopSelect(shopData);
+          }}
         >
           <CardContent className="p-3">
             <div className="flex items-center justify-between">

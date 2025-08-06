@@ -539,22 +539,14 @@ export function useUpdateProductName() {
 
 // Type-safe hook for getting product name by barcode
 export function useGetProductNameByBarcode() {
-  return useMutation<
-    { productNames: any[] },
-    Error,
-    { barcode: string }
-  >({
+  return useMutation<{ productNames: any[] }, Error, { barcode: string }>({
     mutationFn: variables => hasuraRequest(GET_PRODUCT_NAME_BY_BARCODE, variables),
   });
 }
 
 // Type-safe hook for getting product name by SKU
 export function useGetProductNameBySku() {
-  return useMutation<
-    { productNames: any[] },
-    Error,
-    { sku: string }
-  >({
+  return useMutation<{ productNames: any[] }, Error, { sku: string }>({
     mutationFn: variables => hasuraRequest(GET_PRODUCT_NAME_BY_SKU, variables),
   });
 }

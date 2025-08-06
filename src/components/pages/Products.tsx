@@ -14,7 +14,12 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Filter, ScanBarcode, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { useProducts, useAddProduct, useAddProductName, useSystemConfig } from '@/hooks/useHasuraApi';
+import {
+  useProducts,
+  useAddProduct,
+  useAddProductName,
+  useSystemConfig,
+} from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import AddProductDialog from '@/components/shop/AddProductDialog';
@@ -247,7 +252,9 @@ const Products = () => {
                   const stockStatus = getStockStatus(product.quantity);
                   return (
                     <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.ProductName?.name || 'N/A'}</TableCell>
+                      <TableCell className="font-medium">
+                        {product.ProductName?.name || 'N/A'}
+                      </TableCell>
                       <TableCell>{product.Shop?.name || 'N/A'}</TableCell>
                       <TableCell>
                         {typeof product.category === 'string'

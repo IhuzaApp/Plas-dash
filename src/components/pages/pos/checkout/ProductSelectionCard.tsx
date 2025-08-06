@@ -72,10 +72,11 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                       />
                     )}
                     <div className="flex-1">
-                      <p className="font-medium text-sm truncate">{product.ProductName?.name || 'Unknown Product'}</p>
+                      <p className="font-medium text-sm truncate">
+                        {product.ProductName?.name || 'Unknown Product'}
+                      </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {product.category || 'No Category'} •{' '}
-                        {product.measurement_unit || 'unit'}
+                        {product.category || 'No Category'} • {product.measurement_unit || 'unit'}
                       </p>
                       <p className="text-sm font-semibold text-primary">
                         {formatCurrencyWithConfig(parseFloat(product.price || '0'), systemConfig)}

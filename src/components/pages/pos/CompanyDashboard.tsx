@@ -49,7 +49,6 @@ interface StorePerformance {
 }
 
 const CompanyDashboard = () => {
-
   const { orgEmployee } = useCurrentOrgEmployee();
   const { hasAction } = usePrivilege();
   const { session } = useAuth();
@@ -69,19 +68,20 @@ const CompanyDashboard = () => {
   const [isAddBranchDialogOpen, setIsAddBranchDialogOpen] = useState(false);
 
   // Transform branch shops to store performance format
-  const storePerformance: StorePerformance[] = branchShops?.map(shop => ({
-    id: shop.id,
-    name: shop.name,
-    location: shop.address,
-    revenue: shop.totalRevenue || 0,
-    target: 50000, // Mock target for now
-    performance: shop.performance || 0,
-    trend: shop.trend || 'neutral',
-    address: shop.address,
-    phone: shop.phone,
-    totalOrders: shop.totalOrders || 0,
-    averageRating: shop.averageRating || 0,
-  })) || [];
+  const storePerformance: StorePerformance[] =
+    branchShops?.map(shop => ({
+      id: shop.id,
+      name: shop.name,
+      location: shop.address,
+      revenue: shop.totalRevenue || 0,
+      target: 50000, // Mock target for now
+      performance: shop.performance || 0,
+      trend: shop.trend || 'neutral',
+      address: shop.address,
+      phone: shop.phone,
+      totalOrders: shop.totalOrders || 0,
+      averageRating: shop.averageRating || 0,
+    })) || [];
 
   const totalTarget = storePerformance.reduce((sum, store) => sum + store.target, 0);
   const overallPerformance = totalTarget > 0 ? (totalRevenue / totalTarget) * 100 : 0;
@@ -129,13 +129,15 @@ const CompanyDashboard = () => {
     );
   }
 
-
-
   return (
     <AdminLayout>
       <PageHeader
         title={`${session?.shop_id ? 'Branch Stores Dashboard' : 'Company Admin Dashboard'}`}
-        description={session?.shop_id ? "Overview of your branch stores and performance metrics" : "Overview of all stores and company-wide metrics"}
+        description={
+          session?.shop_id
+            ? 'Overview of your branch stores and performance metrics'
+            : 'Overview of all stores and company-wide metrics'
+        }
         icon={<LayoutDashboard className="h-6 w-6" />}
         actions={
           hasAction('shops', 'add_shops') && (
@@ -236,9 +238,7 @@ const CompanyDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Branch Store Performance</CardTitle>
-              <CardDescription>
-                Performance metrics for your branch stores
-              </CardDescription>
+              <CardDescription>Performance metrics for your branch stores</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -257,7 +257,7 @@ const CompanyDashboard = () => {
                   <TableBody>
                     {storePerformance.length > 0 ? (
                       storePerformance.map(store => (
-                      <TableRow key={store.id}>
+                        <TableRow key={store.id}>
                           <TableCell>
                             <div className="font-medium">{store.name}</div>
                             <div className="text-sm text-muted-foreground flex items-center">
@@ -271,11 +271,11 @@ const CompanyDashboard = () => {
                               {store.location}
                             </div>
                           </TableCell>
-                        <TableCell className="text-right">
-                          ${store.revenue.toLocaleString()}
-                        </TableCell>
+                          <TableCell className="text-right">
+                            ${store.revenue.toLocaleString()}
+                          </TableCell>
                           <TableCell className="text-right">{store.totalOrders}</TableCell>
-                        <TableCell className="text-right">
+                          <TableCell className="text-right">
                             {store.averageRating > 0 ? (
                               <div className="flex items-center justify-end">
                                 <span className="text-sm font-medium">
@@ -286,20 +286,20 @@ const CompanyDashboard = () => {
                             ) : (
                               <span className="text-sm text-muted-foreground">No ratings</span>
                             )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {store.performance.toFixed(1)}%
-                        </TableCell>
-                        <TableCell>
-                          {store.trend === 'up' ? (
-                            <div className="flex items-center text-green-500">
-                              <TrendingUp className="mr-1 h-4 w-4" /> Up
-                            </div>
-                          ) : store.trend === 'down' ? (
-                            <div className="flex items-center text-red-500">
-                              <TrendingDown className="mr-1 h-4 w-4" /> Down
-                            </div>
-                          ) : (
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {store.performance.toFixed(1)}%
+                          </TableCell>
+                          <TableCell>
+                            {store.trend === 'up' ? (
+                              <div className="flex items-center text-green-500">
+                                <TrendingUp className="mr-1 h-4 w-4" /> Up
+                              </div>
+                            ) : store.trend === 'down' ? (
+                              <div className="flex items-center text-red-500">
+                                <TrendingDown className="mr-1 h-4 w-4" /> Down
+                              </div>
+                            ) : (
                               <div className="flex items-center text-gray-500">
                                 <Clock className="mr-1 h-4 w-4" /> Stable
                               </div>
@@ -465,19 +465,19 @@ const CompanyDashboard = () => {
                 </div>
               ) : (
                 <>
-              <div className="rounded-md border mb-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Store</TableHead>
-                      <TableHead className="text-right">Manager</TableHead>
-                      <TableHead className="text-right">Cashier</TableHead>
-                      <TableHead className="text-right">Stock Clerk</TableHead>
+                  <div className="rounded-md border mb-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Store</TableHead>
+                          <TableHead className="text-right">Manager</TableHead>
+                          <TableHead className="text-right">Cashier</TableHead>
+                          <TableHead className="text-right">Stock Clerk</TableHead>
                           <TableHead className="text-right">Other</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                          <TableHead className="text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {staffDistribution.length > 0 ? (
                           staffDistribution.map(store => (
                             <TableRow key={store.storeId}>
@@ -489,10 +489,10 @@ const CompanyDashboard = () => {
                               <TableCell className="text-right font-medium">
                                 {store.total}
                               </TableCell>
-                    </TableRow>
+                            </TableRow>
                           ))
                         ) : (
-                    <TableRow>
+                          <TableRow>
                             <TableCell colSpan={6} className="h-24 text-center">
                               <div className="flex flex-col items-center">
                                 <Users className="h-8 w-8 text-muted-foreground mb-2" />
@@ -503,13 +503,13 @@ const CompanyDashboard = () => {
                                 </p>
                               </div>
                             </TableCell>
-                    </TableRow>
+                          </TableRow>
                         )}
-                  </TableBody>
-                </Table>
-              </div>
+                      </TableBody>
+                    </Table>
+                  </div>
 
-              <div className="space-y-4">
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-medium">Recent Staff Logins (Last 24 Hours)</h3>
                       <div className="text-sm text-muted-foreground">
@@ -523,20 +523,20 @@ const CompanyDashboard = () => {
                             key={activity.id}
                             className="flex items-center justify-between p-2 border rounded-md"
                           >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                                <Clock className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
                                 <div>
                                   {activity.employeeName} {activity.action} at {activity.storeName}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                   {activity.timeAgo}
-                      </div>
-                    </div>
-                  </div>
-                      </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         ))
                       ) : (
                         <div className="text-center py-8">
@@ -545,7 +545,7 @@ const CompanyDashboard = () => {
                           <p className="text-sm text-muted-foreground">
                             Staff login activity from the last 24 hours will appear here.
                           </p>
-                      </div>
+                        </div>
                       )}
                     </div>
                   </div>

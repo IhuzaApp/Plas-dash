@@ -3,11 +3,7 @@ import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useSearchProductNames, useAddProductName } from '@/hooks/useHasuraApi';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -34,7 +30,7 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
   value,
   onValueChange,
   onProductSelect,
-  placeholder = "Search or add product name...",
+  placeholder = 'Search or add product name...',
   disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
@@ -58,7 +54,7 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
     const selectedProduct = searchResults?.productNames.find(
       product => product.id === selectedValue
     );
-    
+
     if (selectedProduct) {
       onValueChange(selectedProduct.name);
       onProductSelect?.(selectedProduct);
@@ -90,7 +86,7 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
         setOpen(false);
         setSearchTerm(newProduct.name);
         toast.success('Product name added successfully!');
-        
+
         // Reset form
         setNewProductName('');
         setNewProductDescription('');
@@ -106,7 +102,7 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
   const handleInputChange = (inputValue: string) => {
     setSearchTerm(inputValue);
     onValueChange(inputValue);
-    
+
     // If input is empty, close the popover
     if (!inputValue.trim()) {
       setOpen(false);
@@ -118,12 +114,14 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
   // Filter products based on search term
   const filteredProducts = React.useMemo(() => {
     if (!searchResults?.productNames) return [];
-    
-    return searchResults.productNames.filter(product => 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product.barcode && product.barcode.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+
+    return searchResults.productNames.filter(
+      product =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.description &&
+          product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.barcode && product.barcode.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [searchResults?.productNames, searchTerm]);
 
@@ -147,7 +145,7 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
             ref={inputRef}
             placeholder={placeholder}
             value={searchTerm}
-            onChange={(e) => handleInputChange(e.target.value)}
+            onChange={e => handleInputChange(e.target.value)}
             className="h-9"
           />
         </div>
@@ -160,17 +158,15 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
           )}
           {!isSearching && filteredProducts.length === 0 && searchTerm.length > 0 && (
             <div className="p-4">
-              <p className="text-sm text-muted-foreground mb-2">
-                No product found. Add a new one:
-              </p>
+              <p className="text-sm text-muted-foreground mb-2">No product found. Add a new one:</p>
               <div className="space-y-2">
                 <input
                   type="text"
                   placeholder="Product name"
                   value={newProductName}
-                  onChange={(e) => setNewProductName(e.target.value)}
+                  onChange={e => setNewProductName(e.target.value)}
                   className="w-full px-3 py-2 border border-input rounded-md text-sm"
-                  onKeyDown={(e) => {
+                  onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       handleAddNewProduct();
@@ -180,7 +176,7 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
                 <textarea
                   placeholder="Description (optional)"
                   value={newProductDescription}
-                  onChange={(e) => setNewProductDescription(e.target.value)}
+                  onChange={e => setNewProductDescription(e.target.value)}
                   className="w-full px-3 py-2 border border-input rounded-md text-sm resize-none"
                   rows={2}
                 />
@@ -207,7 +203,7 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
           )}
           {!isSearching && filteredProducts.length > 0 && (
             <div className="py-1">
-              {filteredProducts.map((product) => (
+              {filteredProducts.map(product => (
                 <div
                   key={product.id}
                   onClick={() => handleSelect(product.id)}
@@ -215,16 +211,14 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      value === product.name ? "opacity-100" : "opacity-0"
+                      'mr-2 h-4 w-4',
+                      value === product.name ? 'opacity-100' : 'opacity-0'
                     )}
                   />
                   <div className="flex flex-col">
                     <span className="font-medium">{product.name}</span>
                     {product.description && (
-                      <span className="text-xs text-muted-foreground">
-                        {product.description}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{product.description}</span>
                     )}
                   </div>
                 </div>
@@ -237,4 +231,4 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
   );
 };
 
-export default ProductNameAutocomplete; 
+export default ProductNameAutocomplete;
