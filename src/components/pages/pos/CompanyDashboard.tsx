@@ -25,7 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useBranchShops } from '@/hooks/useBranchShops';
-import { useShopSession } from '@/hooks/useShopSession';
+import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useStaffManagement } from '@/hooks/useStaffManagement';
