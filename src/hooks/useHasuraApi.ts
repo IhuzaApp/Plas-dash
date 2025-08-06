@@ -19,6 +19,8 @@ import {
   GET_SYSTEM_CONFIG,
   GET_ORG_EMPLOYEES_BY_SHOP,
   GET_POS_TRANSACTIONS,
+  GET_PRODUCT_NAMES,
+  SEARCH_PRODUCT_NAMES,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -31,6 +33,10 @@ import {
   REGISTER_SHOPPER,
   ADD_PRODUCT,
   UPDATE_PRODUCT,
+  ADD_PRODUCT_NAME,
+  UPDATE_PRODUCT_NAME,
+  GET_PRODUCT_NAME_BY_BARCODE,
+  GET_PRODUCT_NAME_BY_SKU,
   ADD_ORG_EMPLOYEE,
   ADD_ORG_EMPLOYEE_ROLES,
   UPDATE_ORG_EMPLOYEE_ROLE,
@@ -55,6 +61,16 @@ interface Category {
   id: string;
   name: string;
   is_active: boolean;
+}
+
+interface ProductName {
+  id: string;
+  name: string;
+  description: string;
+  barcode?: string;
+  sku?: string;
+  image: string;
+  create_at: string;
 }
 
 interface Shop {
@@ -102,23 +118,25 @@ interface Shop {
 
 interface ShopProduct {
   id: string;
-  name: string;
-  description: string;
+  productName_id: string;
   price: string;
   quantity: number;
   measurement_unit: string;
-  image: string;
-  barcode?: string;
-  sku?: string;
   supplier?: string;
   reorder_point?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  has_commission: boolean;
-  commission_percentage: number | null;
   final_price: string;
-  total: string;
+  ProductName: {
+    id: string;
+    name: string;
+    description: string;
+    barcode?: string;
+    sku?: string;
+    image: string;
+    create_at: string;
+  };
 }
 
 interface ShopDetails extends Shop {
@@ -484,28 +502,78 @@ export function useShoppers() {
   });
 }
 
-// Type-safe hook for adding a product
+// Type-safe hook for adding a product name
+export function useAddProductName() {
+  return useMutation<
+    { insert_productNames_one: any },
+    Error,
+    {
+      name: string;
+      description?: string;
+      barcode?: string;
+      sku?: string;
+      image?: string;
+    }
+  >({
+    mutationFn: variables => hasuraRequest(ADD_PRODUCT_NAME, variables),
+  });
+}
+
+// Type-safe hook for updating a product name
+export function useUpdateProductName() {
+  return useMutation<
+    { update_productNames_by_pk: any },
+    Error,
+    {
+      id: string;
+      name?: string;
+      description?: string;
+      barcode?: string;
+      sku?: string;
+      image?: string;
+    }
+  >({
+    mutationFn: variables => hasuraRequest(UPDATE_PRODUCT_NAME, variables),
+  });
+}
+
+// Type-safe hook for getting product name by barcode
+export function useGetProductNameByBarcode() {
+  return useMutation<
+    { productNames: any[] },
+    Error,
+    { barcode: string }
+  >({
+    mutationFn: variables => hasuraRequest(GET_PRODUCT_NAME_BY_BARCODE, variables),
+  });
+}
+
+// Type-safe hook for getting product name by SKU
+export function useGetProductNameBySku() {
+  return useMutation<
+    { productNames: any[] },
+    Error,
+    { sku: string }
+  >({
+    mutationFn: variables => hasuraRequest(GET_PRODUCT_NAME_BY_SKU, variables),
+  });
+}
+
 export function useAddProduct() {
   return useMutation<
     { insert_Products_one: ShopProduct },
     Error,
     {
-      name: string;
-      description?: string;
+      productName_id: string;
       price: string;
       quantity: number;
       measurement_unit: string;
       shop_id: string;
       category: string;
-      barcode?: string;
-      sku?: string;
       reorder_point?: number;
       supplier?: string;
       is_active?: boolean;
-      has_commission?: boolean;
-      commission_percentage?: number;
       final_price: string;
-      image?: string;
     }
   >({
     mutationFn: variables => hasuraRequest(ADD_PRODUCT, variables),
@@ -519,17 +587,12 @@ export function useUpdateProduct() {
     Error,
     {
       id: string;
-      name?: string;
-      description?: string;
       price?: string;
       quantity?: number;
       measurement_unit?: string;
       final_price?: string;
-      barcode?: string;
-      sku?: string;
       supplier?: string;
       reorder_point?: number;
-      image?: string;
     }
   >({
     mutationFn: variables => hasuraRequest(UPDATE_PRODUCT, variables),
@@ -542,6 +605,23 @@ export function useSystemConfig() {
     queryKey: ['system-config'],
     queryFn: () => hasuraRequest(GET_SYSTEM_CONFIG, {}),
     staleTime: Infinity, // Configuration rarely changes, so we can cache it indefinitely
+  });
+}
+
+// Type-safe hook for Product Names
+export function useProductNames() {
+  return useQuery<{ productNames: ProductName[] }, Error>({
+    queryKey: ['product-names'],
+    queryFn: () => hasuraRequest(GET_PRODUCT_NAMES, {}),
+  });
+}
+
+// Type-safe hook for searching Product Names
+export function useSearchProductNames(searchTerm: string) {
+  return useQuery<{ productNames: ProductName[] }, Error>({
+    queryKey: ['product-names', 'search', searchTerm],
+    queryFn: () => hasuraRequest(SEARCH_PRODUCT_NAMES, { searchTerm: `%${searchTerm}%` }),
+    enabled: searchTerm.length > 0,
   });
 }
 

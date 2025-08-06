@@ -74,18 +74,25 @@ export const GET_PRODUCTS = `
   query GetProducts {
     Products {
       id
-      name
-      description
+      productName_id
       shop_id
       price
       final_price
       quantity
       measurement_unit
-      image
       category
       created_at
       updated_at
       is_active
+      ProductName {
+        id
+        name
+        description
+        barcode
+        sku
+        image
+        create_at
+      }
       Shop {
         address
         category_id
@@ -126,20 +133,25 @@ export const GET_PRODUCTS_BY_SHOP = `
   query GetProductsByShop($shop_id: uuid!) {
     Products(where: { shop_id: { _eq: $shop_id }, is_active: { _eq: true } }) {
       id
-      name
-      description
+      productName_id
       shop_id
       price
       final_price
       quantity
       measurement_unit
-      image
       category
-      barcode
-      sku
       created_at
       updated_at
       is_active
+      ProductName {
+        id
+        name
+        description
+        barcode
+        sku
+        image
+        create_at
+      }
       Shop {
         id
         name
@@ -201,7 +213,9 @@ export const GET_SHOPS = `
           quantity
           price
           Product {
-            name
+            ProductName {
+              name
+            }
           }
         }
       }
@@ -563,20 +577,25 @@ export const GET_SHOP_BY_ID = `
       }
       Products {
         id
-        name
-        description
+        productName_id
         price
         final_price
         quantity
         measurement_unit
-        image
-        barcode
-        sku
         supplier
         reorder_point
         is_active
         created_at
         updated_at
+        ProductName {
+          id
+          name
+          description
+          barcode
+          sku
+          image
+          create_at
+        }
       }
       Products_aggregate {
         aggregate {
@@ -608,8 +627,10 @@ export const GET_SHOP_BY_ID = `
           quantity
           price
           Product {
-            name
-            image
+            ProductName {
+              name
+              image
+            }
           }
         }
         Address {
@@ -1369,6 +1390,47 @@ export const GET_SHOP_BY_ID_FOR_SETTINGS = `
         id
         name
       }
+    }
+  }
+`;
+
+// Product Names queries
+export const GET_PRODUCT_NAMES = `
+  query GetProductNames {
+    productNames {
+      id
+      name
+      description
+      barcode
+      sku
+      image
+      create_at
+    }
+  }
+`;
+
+// Search Product Names query
+export const SEARCH_PRODUCT_NAMES = `
+  query SearchProductNames($searchTerm: String!) {
+    productNames(
+      where: {
+        _or: [
+          { name: { _ilike: $searchTerm } },
+          { description: { _ilike: $searchTerm } },
+          { barcode: { _ilike: $searchTerm } },
+          { sku: { _ilike: $searchTerm } }
+        ]
+      },
+      limit: 10,
+      order_by: { name: asc }
+    ) {
+      id
+      name
+      description
+      barcode
+      sku
+      image
+      create_at
     }
   }
 `;

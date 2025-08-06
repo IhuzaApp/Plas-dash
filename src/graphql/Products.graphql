@@ -1,20 +1,27 @@
 query GetProducts {
   Products {
-    barcode
     category
     created_at
     id
     image
     is_active
     measurement_unit
-    name
+    productName_id
     price
     quantity
     reorder_point
     shop_id
-    sku
     supplier
     updated_at
+    ProductName {
+      id
+      name
+      barcode
+      sku
+      description
+      image
+      create_at
+    }
     Shop {
       address
       category_id

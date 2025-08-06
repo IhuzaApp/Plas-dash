@@ -14,7 +14,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Filter, ScanBarcode, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { useProducts, useAddProduct, useSystemConfig } from '@/hooks/useHasuraApi';
+import { useProducts, useAddProduct, useAddProductName, useSystemConfig } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import AddProductDialog from '@/components/shop/AddProductDialog';
@@ -25,6 +25,7 @@ const Products = () => {
   const { data: systemConfig } = useSystemConfig();
   const products = data?.Products || [];
   const addProduct = useAddProduct();
+  const addProductName = useAddProductName();
   const { hasAction } = usePrivilege();
 
   const [isScanning, setIsScanning] = useState(false);
@@ -65,7 +66,29 @@ const Products = () => {
 
   const handleAddProduct = async (formData: any) => {
     try {
-      await addProduct.mutateAsync(formData);
+      let productNameId = formData.productName_id;
+
+      // If we don't have a productName_id but have productNameData, create the product name first
+      if (!productNameId && formData.productNameData) {
+        const productNameResult = await addProductName.mutateAsync(formData.productNameData);
+        productNameId = productNameResult.insert_productNames_one.id;
+      }
+
+      // Now create the product with the productName_id
+      const productData = {
+        productName_id: productNameId,
+        price: formData.price,
+        quantity: formData.quantity,
+        measurement_unit: formData.measurement_unit,
+        shop_id: formData.shop_id,
+        category: formData.category,
+        reorder_point: formData.reorder_point,
+        supplier: formData.supplier,
+        is_active: formData.is_active,
+        final_price: formData.final_price || formData.price, // Use price as fallback if final_price is not set
+      };
+
+      await addProduct.mutateAsync(productData);
       toast.success('Product added successfully');
       setIsAddProductOpen(false);
       refetch(); // Refresh the products list
@@ -104,7 +127,7 @@ const Products = () => {
   const filteredProducts = products.filter(
     product =>
       searchTerm === '' ||
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.ProductName?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.Shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.category.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -224,12 +247,12 @@ const Products = () => {
                   const stockStatus = getStockStatus(product.quantity);
                   return (
                     <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell className="font-medium">{product.ProductName?.name || 'N/A'}</TableCell>
                       <TableCell>{product.Shop?.name || 'N/A'}</TableCell>
                       <TableCell>
                         {typeof product.category === 'string'
                           ? product.category
-                          : product.category.name}
+                          : (product.category as any)?.name || 'N/A'}
                       </TableCell>
                       <TableCell>{formatCurrency(product.price)}</TableCell>
                       <TableCell>{formatCurrency(product.final_price)}</TableCell>

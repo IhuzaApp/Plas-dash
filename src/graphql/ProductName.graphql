@@ -1,0 +1,29 @@
+query getProductsNames {
+  productName {
+    barcode
+    create_at
+    description
+    id
+    image
+    name
+    sku
+  }
+}
+
+query getProductsNames {
+  productName {
+    barcode
+    create_at
+    description
+    id
+    image
+    name
+    sku
+  }
+}
+
+mutation addProductName($barcode: String = "", $description: String = "", $image: String = "", $name: String = "", $sku: String = "") {
+  insert_productName(objects: {barcode: $barcode, description: $description, image: $image, name: $name, sku: $sku}) {
+    affected_rows
+  }
+}

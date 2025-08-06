@@ -33,10 +33,11 @@ import { ScanBarcode, ScanQrCode, Upload, X, Image as ImageIcon, Loader2 } from 
 import { toast } from 'sonner';
 import { useShops, useSystemConfig } from '@/hooks/useHasuraApi';
 import { Switch } from '@/components/ui/switch';
+import ProductNameAutocomplete from './ProductNameAutocomplete';
 
 // Match the API types exactly
 const formSchema = z.object({
-  name: z.string().min(1, 'Product name is required'),
+  name: z.string().optional(), // Make name optional since we might use productName_id
   description: z.string().optional(),
   price: z.string().min(1, 'Price is required'),
   quantity: z.number().int().min(0, 'Quantity must be a positive number'),
@@ -52,13 +53,38 @@ const formSchema = z.object({
   // UI-only fields (not sent to database)
   has_commission: z.boolean().default(true),
   commission_percentage: z.number().min(0).max(100).optional(),
-  final_price: z.string().min(1, 'Final price is required'),
+  final_price: z.string().optional(), // Make final_price optional since it's calculated
+  productName_id: z.string().optional(), // Add this for tracking selected product name ID
+}).refine((data) => {
+  // Ensure either name or productName_id is provided
+  return (data.name && data.name.trim() !== '') || data.productName_id;
+}, {
+  message: "Either product name or existing product must be selected",
+  path: ["name"]
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 // Define the type for the data that will be sent to the API
-type ProductSubmitData = Omit<FormData, 'has_commission' | 'commission_percentage'>;
+type ProductSubmitData = {
+  price: string;
+  quantity: number;
+  measurement_unit: string;
+  shop_id: string | undefined;
+  category: string;
+  reorder_point: number | undefined;
+  supplier: string | undefined;
+  is_active: boolean;
+  final_price: string | undefined;
+  productName_id: string | undefined;
+  productNameData?: {
+    name: string;
+    description?: string;
+    barcode?: string;
+    sku?: string;
+    image?: string;
+  };
+};
 
 interface AddProductDialogProps {
   open: boolean;
@@ -79,6 +105,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const [scanType, setScanType] = useState<'barcode' | 'qrcode' | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedProductName, setSelectedProductName] = useState<any>(null);
   const { data: shopsData } = useShops();
   const { data: systemConfig } = useSystemConfig();
   const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
@@ -160,6 +187,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const resetForm = () => {
     setImageFile(null);
     setImagePreview(null);
+    setSelectedProductName(null);
     form.reset({
       name: '',
       description: '',
@@ -177,6 +205,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       has_commission: true,
       commission_percentage: Number(defaultCommission) || 0,
       final_price: '',
+      productName_id: undefined,
     });
     // Clear the file input
     const fileInput = document.getElementById('product-image') as HTMLInputElement;
@@ -187,13 +216,28 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   function handleSubmit(values: FormData) {
     // Destructure to remove has_commission and commission_percentage
-    const { has_commission, commission_percentage, ...productData } = values;
+    const { has_commission, commission_percentage, productName_id, name, description, barcode, sku, image, ...productData } = values;
 
     const formattedValues = {
-      ...productData,
+      // Only include fields that the ADD_PRODUCT mutation accepts
+      price: productData.price,
       quantity: Math.max(0, Number(values.quantity) || 0),
-      reorder_point: typeof values.reorder_point === 'number' ? values.reorder_point : undefined,
+      measurement_unit: productData.measurement_unit,
       shop_id: shopId || values.shop_id,
+      category: productData.category,
+      reorder_point: typeof values.reorder_point === 'number' ? values.reorder_point : undefined,
+      supplier: productData.supplier,
+      is_active: productData.is_active,
+      final_price: productData.final_price,
+      // Product name related fields (will be handled by the parent component)
+      productName_id: productName_id || undefined,
+      productNameData: productName_id ? undefined : {
+        name: name || '',
+        description: description,
+        barcode: barcode,
+        sku: sku,
+        image: image,
+      },
     };
     onSubmit(formattedValues);
   }
@@ -253,6 +297,25 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     const fileInput = document.getElementById('product-image') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
+    }
+  };
+
+  const handleProductNameSelect = (product: any) => {
+    setSelectedProductName(product);
+    
+    // Auto-fill form fields with selected product details
+    if (product) {
+      form.setValue('name', product.name);
+      form.setValue('description', product.description || '');
+      form.setValue('barcode', product.barcode || '');
+      form.setValue('sku', product.sku || '');
+      form.setValue('image', product.image || '');
+      form.setValue('productName_id', product.id);
+      
+      // Set image preview if product has an image
+      if (product.image) {
+        setImagePreview(product.image);
+      }
     }
   };
 
@@ -373,7 +436,13 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Product Name*</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter product name" {...field} />
+                      <ProductNameAutocomplete
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onProductSelect={handleProductNameSelect}
+                        placeholder="Search or add product name..."
+                        disabled={isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
