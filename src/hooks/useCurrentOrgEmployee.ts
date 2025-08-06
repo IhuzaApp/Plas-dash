@@ -59,8 +59,6 @@ export function useCurrentOrgEmployee() {
     enabled: !!session?.email,
   });
 
-
-
   const orgEmployee =
     data &&
     typeof data === 'object' &&

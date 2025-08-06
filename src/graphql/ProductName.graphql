@@ -10,8 +10,16 @@ query getProductsNames {
   }
 }
 
-mutation addProductName($barcode: String = "", $description: String = "", $image: String = "", $name: String = "", $sku: String = "") {
-  insert_productNames(objects: {barcode: $barcode, description: $description, image: $image, name: $name, sku: $sku}) {
+mutation addProductName(
+  $barcode: String = ""
+  $description: String = ""
+  $image: String = ""
+  $name: String = ""
+  $sku: String = ""
+) {
+  insert_productNames(
+    objects: { barcode: $barcode, description: $description, image: $image, name: $name, sku: $sku }
+  ) {
     affected_rows
   }
 }

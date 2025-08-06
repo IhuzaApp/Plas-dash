@@ -53,7 +53,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useSystemConfig, useProductsByShop, useUpdateProduct, useUpdateProductName, useAddProduct, useAddProductName } from '@/hooks/useHasuraApi';
+import {
+  useSystemConfig,
+  useProductsByShop,
+  useUpdateProduct,
+  useUpdateProductName,
+  useAddProduct,
+  useAddProductName,
+} from '@/hooks/useHasuraApi';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useShopSession } from '@/contexts/ShopSessionContext';
 
@@ -83,9 +90,11 @@ const Inventory = () => {
   const addProductName = useAddProductName();
 
   // Fetch products for the current shop
-  const { data: productsData, isLoading: productsLoading, refetch: refetchProducts } = useProductsByShop(
-    shopSession?.shopId || ''
-  );
+  const {
+    data: productsData,
+    isLoading: productsLoading,
+    refetch: refetchProducts,
+  } = useProductsByShop(shopSession?.shopId || '');
 
   // Transform API data to match our interface
   const transformProductsToInventoryItems = (products: any[]): InventoryItem[] => {
@@ -145,8 +154,6 @@ const Inventory = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-
-
   const filteredItems = items.filter(item => {
     return (
       (searchTerm === '' ||
@@ -170,7 +177,9 @@ const Inventory = () => {
     }
   };
 
-  const categories = Array.from(new Set(items.map(item => item.category).filter(Boolean))) as string[];
+  const categories = Array.from(
+    new Set(items.map(item => item.category).filter(Boolean))
+  ) as string[];
 
   const handleAddProduct = async (formData: any) => {
     try {
@@ -180,16 +189,12 @@ const Inventory = () => {
         return;
       }
 
-
-
       let productNameId = formData.productName_id;
 
       // If we don't have a productName_id but have productNameData, create the product name first
       if (!productNameId && formData.productNameData) {
-  
         const productNameResult = await addProductName.mutateAsync(formData.productNameData);
         productNameId = productNameResult.insert_productNames_one.id;
-        
       }
 
       // Now create the product with the productName_id
@@ -206,30 +211,29 @@ const Inventory = () => {
         final_price: formData.final_price || formData.price, // Use price as fallback if final_price is not set
       };
 
-
       await addProduct.mutateAsync(productData);
-      
-      
+
       // Verify shop session is still valid after mutation
       if (!shopSession?.shopId) {
         console.error('Shop session lost after product creation!');
         toast.error('Shop session was lost. Please log in again.');
         return;
       }
-      
+
       toast.success('Product added successfully');
       setIsAddProductOpen(false);
-      
+
       // Refresh the products data without losing shop session
-      
+
       await refetchProducts();
-      
     } catch (error) {
       console.error('Error adding product:', error);
-              console.error('Error details:', {
+      console.error('Error details:', {
         error,
-        shopSession: shopSession ? { shopId: shopSession.shopId, shopName: shopSession.shopName } : null,
-        formData
+        shopSession: shopSession
+          ? { shopId: shopSession.shopId, shopName: shopSession.shopName }
+          : null,
+        formData,
       });
       toast.error('Failed to add product. Please try again.');
     }
@@ -237,7 +241,6 @@ const Inventory = () => {
 
   const handleImportFile = (file: File) => {
     // In a real application, this would process the Excel/CSV file
-
 
     // Simulate processing delay
     setTimeout(() => {
@@ -250,10 +253,6 @@ const Inventory = () => {
     // In a real application, this would generate and download an Excel template
     toast.success('Template downloaded successfully');
   };
-
-
-
-
 
   // New functions for edit dialog
   const openEditDialog = (item: InventoryItem) => {
@@ -401,11 +400,7 @@ const Inventory = () => {
               </Button>
             )}
             {/* Debug button for testing session persistence */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="flex gap-2">
-
-              </div>
-            )}
+            {process.env.NODE_ENV === 'development' && <div className="flex gap-2"></div>}
           </div>
         }
       />
@@ -639,8 +634,6 @@ const Inventory = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-
     </AdminLayout>
   );
 };

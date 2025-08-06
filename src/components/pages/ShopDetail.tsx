@@ -92,13 +92,15 @@ interface OperatingHours {
 
 const productFormSchema = z.object({
   productName_id: z.string().optional(),
-  productNameData: z.object({
-    name: z.string().min(1, 'Product name is required'),
-    description: z.string().optional(),
-    barcode: z.string().optional(),
-    sku: z.string().optional(),
-    image: z.string().optional(),
-  }).optional(),
+  productNameData: z
+    .object({
+      name: z.string().min(1, 'Product name is required'),
+      description: z.string().optional(),
+      barcode: z.string().optional(),
+      sku: z.string().optional(),
+      image: z.string().optional(),
+    })
+    .optional(),
   price: z.string().min(1, 'Price is required'),
   quantity: z.number().int().min(0, 'Quantity must be a positive number'),
   measurement_unit: z.string().min(1, 'Measurement unit is required'),
@@ -642,7 +644,9 @@ const ShopDetail = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">{product.ProductName?.name || 'Unknown Product'}</TableCell>
+                        <TableCell className="font-medium">
+                          {product.ProductName?.name || 'Unknown Product'}
+                        </TableCell>
                         <TableCell>{formatCurrencyWithConfig(product.price, config)}</TableCell>
                         <TableCell>
                           {formatCurrencyWithConfig(product.final_price, config)}

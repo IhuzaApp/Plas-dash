@@ -17,32 +17,32 @@ export function useDatabaseTwoFactorAuth() {
   const queryClient = useQueryClient();
 
   const updateTwoFactorSecretsMutation = useMutation({
-    mutationFn: async ({ 
-      employeeId, 
-      twoFactorSecrets 
-    }: { 
-      employeeId: string; 
-      twoFactorSecrets: string; 
+    mutationFn: async ({
+      employeeId,
+      twoFactorSecrets,
+    }: {
+      employeeId: string;
+      twoFactorSecrets: string;
     }) => {
       return hasuraRequest(UPDATE_ORG_EMPLOYEE_TWO_FACTOR_SECRETS, {
         id: employeeId,
         twoFactorSecrets,
       });
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['orgEmployees'] });
       queryClient.invalidateQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.invalidateQueries({ queryKey: ['userShops'] });
-      
+
       // Force refetch current user data
       queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.refetchQueries({ queryKey: ['userShops'] });
-      
+
       // Also remove and refetch to ensure fresh data
       queryClient.removeQueries({ queryKey: ['currentOrgEmployee'] });
       queryClient.refetchQueries({ queryKey: ['currentOrgEmployee'] });
-      
+
       // Dispatch custom event to force UI updates
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('orgEmployeeDataUpdated'));
@@ -55,8 +55,8 @@ export function useDatabaseTwoFactorAuth() {
   };
 
   const storeSecretKey = async (
-    employeeId: string, 
-    shopId: string, 
+    employeeId: string,
+    shopId: string,
     secretKey: string,
     existingSecrets: string | null = null,
     uuid: string // Add UUID parameter
@@ -105,22 +105,21 @@ export function useDatabaseTwoFactorAuth() {
   };
 
   const getSecretKey = (
-    employeeId: string, 
-    shopId: string, 
+    employeeId: string,
+    shopId: string,
     storedSecrets: string | null,
     uuid?: string // Add optional UUID parameter for debugging
   ): string | null => {
-
     if (!storedSecrets) {
       return null;
     }
 
     try {
       const secrets: TwoFactorSecrets = JSON.parse(storedSecrets);
-      
+
       const key = `${employeeId}-${shopId}`;
       const secret = secrets[key];
-      
+
       return secret?.secretKey || null;
     } catch (error) {
       console.error('Error parsing secrets from database:', error);
@@ -154,4 +153,4 @@ export function useDatabaseTwoFactorAuth() {
     isLoading: updateTwoFactorSecretsMutation.isPending,
     error: updateTwoFactorSecretsMutation.error,
   };
-} 
+}

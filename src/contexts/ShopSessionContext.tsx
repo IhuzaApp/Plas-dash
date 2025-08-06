@@ -37,7 +37,7 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
   // Load shop session from localStorage on mount (same approach as main session)
   useEffect(() => {
     const sessionStr = localStorage.getItem(SHOP_SESSION_KEY);
-    
+
     if (sessionStr) {
       try {
         const sessionData = JSON.parse(sessionStr);
@@ -66,7 +66,7 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
     // Check if main session exists in localStorage (to detect if it's just loading)
     const mainSessionStr = localStorage.getItem('orgEmployeeSession');
     const hasMainSessionInStorage = !!mainSessionStr;
-    
+
     // Only clear shop session if main session is null AND there's no main session in localStorage
     // This prevents clearing during the initial load when main session is temporarily null
     if (!session && !hasMainSessionInStorage && shopSession) {
@@ -129,11 +129,7 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
     debugSession,
   };
 
-  return (
-    <ShopSessionContext.Provider value={value}>
-      {children}
-    </ShopSessionContext.Provider>
-  );
+  return <ShopSessionContext.Provider value={value}>{children}</ShopSessionContext.Provider>;
 }
 
 export function useShopSession(): ShopSessionContextType {
@@ -142,4 +138,4 @@ export function useShopSession(): ShopSessionContextType {
     throw new Error('useShopSession must be used within a ShopSessionProvider');
   }
   return context;
-} 
+}

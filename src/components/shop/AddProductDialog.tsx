@@ -30,7 +30,13 @@ import {
 } from '@/components/ui/select';
 import { Upload, X, Image as ImageIcon, Loader2, ScanBarcode } from 'lucide-react';
 import { toast } from 'sonner';
-import { useShops, useSystemConfig, useGetProductNameByBarcode, useGetProductNameBySku, useSearchProductNames } from '@/hooks/useHasuraApi';
+import {
+  useShops,
+  useSystemConfig,
+  useGetProductNameByBarcode,
+  useGetProductNameBySku,
+  useSearchProductNames,
+} from '@/hooks/useHasuraApi';
 import { Switch } from '@/components/ui/switch';
 import BarcodeScanner from './BarcodeScanner';
 
@@ -59,47 +65,55 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
-  
+
   const { data: shopsData } = useShops();
   const { data: systemConfig } = useSystemConfig();
   const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
   const defaultCommission =
     systemConfig?.System_configuratioins[0]?.productCommissionPercentage || 0;
-    
+
   // Hooks for searching by barcode and SKU
   const getProductByBarcode = useGetProductNameByBarcode();
   const getProductBySku = useGetProductNameBySku();
-  const { data: searchProductNamesData, isLoading: isSearchingNames } = useSearchProductNames(searchTerm);
+  const { data: searchProductNamesData, isLoading: isSearchingNames } =
+    useSearchProductNames(searchTerm);
 
   // Dynamic form schema based on hideCommission prop
-  const formSchema = z.object({
-    name: z.string().optional(), // Make name optional since we might use productName_id
-    description: z.string().optional(),
-    price: z.string().min(1, 'Price is required'),
-    quantity: z.number().int().min(0, 'Quantity must be a positive number'),
-    measurement_unit: z.string().min(1, 'Measurement unit is required'),
-    category: z.string().min(1, 'Category is required'),
-    is_active: z.boolean().default(true),
-    barcode: z.string().optional(),
-    sku: z.string().optional(),
-    supplier: z.string().optional(),
-    reorder_point: z.number().int().min(0).optional(),
-    shop_id: z.string().optional(),
-    image: z.string().optional(),
-    // UI-only fields (not sent to database) - only include if not hiding commission
-    ...(hideCommission ? {} : {
-      has_commission: z.boolean().default(true),
-      commission_percentage: z.number().min(0).max(100).optional(),
-    }),
-    final_price: z.string().optional(), // Make final_price optional since it's calculated
-    productName_id: z.string().optional(), // Add this for tracking selected product name ID
-  }).refine((data) => {
-    // Ensure either name or productName_id is provided
-    return (data.name && data.name.trim() !== '') || data.productName_id;
-  }, {
-    message: "Either product name or existing product must be selected",
-    path: ["name"]
-  });
+  const formSchema = z
+    .object({
+      name: z.string().optional(), // Make name optional since we might use productName_id
+      description: z.string().optional(),
+      price: z.string().min(1, 'Price is required'),
+      quantity: z.number().int().min(0, 'Quantity must be a positive number'),
+      measurement_unit: z.string().min(1, 'Measurement unit is required'),
+      category: z.string().min(1, 'Category is required'),
+      is_active: z.boolean().default(true),
+      barcode: z.string().optional(),
+      sku: z.string().optional(),
+      supplier: z.string().optional(),
+      reorder_point: z.number().int().min(0).optional(),
+      shop_id: z.string().optional(),
+      image: z.string().optional(),
+      // UI-only fields (not sent to database) - only include if not hiding commission
+      ...(hideCommission
+        ? {}
+        : {
+            has_commission: z.boolean().default(true),
+            commission_percentage: z.number().min(0).max(100).optional(),
+          }),
+      final_price: z.string().optional(), // Make final_price optional since it's calculated
+      productName_id: z.string().optional(), // Add this for tracking selected product name ID
+    })
+    .refine(
+      data => {
+        // Ensure either name or productName_id is provided
+        return (data.name && data.name.trim() !== '') || data.productName_id;
+      },
+      {
+        message: 'Either product name or existing product must be selected',
+        path: ['name'],
+      }
+    );
 
   type FormData = z.infer<typeof formSchema>;
 
@@ -140,10 +154,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       reorder_point: undefined,
       shop_id: shopId,
       image: '',
-      ...(hideCommission ? {} : {
-        has_commission: true,
-        commission_percentage: Number(defaultCommission) || 0,
-      }),
+      ...(hideCommission
+        ? {}
+        : {
+            has_commission: true,
+            commission_percentage: Number(defaultCommission) || 0,
+          }),
       final_price: '',
     },
   });
@@ -231,13 +247,16 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       is_active: values.is_active,
       final_price: values.final_price,
       productName_id: values.productName_id,
-      productNameData: values.name && !values.productName_id ? {
-        name: values.name,
-        description: values.description,
-        barcode: values.barcode,
-        sku: values.sku,
-        image: values.image,
-      } : undefined,
+      productNameData:
+        values.name && !values.productName_id
+          ? {
+              name: values.name,
+              description: values.description,
+              barcode: values.barcode,
+              sku: values.sku,
+              image: values.image,
+            }
+          : undefined,
     };
 
     onSubmit(submitData);
@@ -261,7 +280,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
       setImageFile(file);
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         setImagePreview(e.target?.result as string);
         form.setValue('image', e.target?.result as string);
       };
@@ -299,44 +318,47 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     form.setValue('barcode', barcode);
     setSearchTerm(barcode);
     setSearchMode('barcode');
-    
+
     // Search for existing products with this barcode
-    getProductByBarcode.mutateAsync({ barcode }).then((data) => {
-      if (data?.productNames && data.productNames.length > 0) {
-        // Found existing product with this barcode
-        const foundProduct = data.productNames[0]; // Take the first match
-        
-        // Auto-fill the product name and other fields
-        form.setValue('name', foundProduct.name);
-        form.setValue('productName_id', foundProduct.id);
-        form.setValue('description', foundProduct.description || '');
-        form.setValue('sku', foundProduct.sku || '');
-        
-        if (foundProduct.image) {
-          setImagePreview(foundProduct.image);
-          form.setValue('image', foundProduct.image);
+    getProductByBarcode
+      .mutateAsync({ barcode })
+      .then(data => {
+        if (data?.productNames && data.productNames.length > 0) {
+          // Found existing product with this barcode
+          const foundProduct = data.productNames[0]; // Take the first match
+
+          // Auto-fill the product name and other fields
+          form.setValue('name', foundProduct.name);
+          form.setValue('productName_id', foundProduct.id);
+          form.setValue('description', foundProduct.description || '');
+          form.setValue('sku', foundProduct.sku || '');
+
+          if (foundProduct.image) {
+            setImagePreview(foundProduct.image);
+            form.setValue('image', foundProduct.image);
+          }
+
+          // Clear search results since we auto-filled
+          setSearchResults([]);
+          setShowSearchResults(false);
+
+          toast.success(`Found existing product: ${foundProduct.name}`);
+        } else {
+          // No product found with this barcode
+          setSearchResults([]);
+          setShowSearchResults(true);
+
+          toast.info(`No product found with barcode: ${barcode}. You can add it as a new product.`);
         }
-        
-        // Clear search results since we auto-filled
-        setSearchResults([]);
-        setShowSearchResults(false);
-        
-        toast.success(`Found existing product: ${foundProduct.name}`);
-      } else {
-        // No product found with this barcode
+      })
+      .catch(error => {
+        console.error('Error searching for barcode:', error);
+        toast.error('Failed to search for barcode');
+
+        // Show "add as new" option even on error
         setSearchResults([]);
         setShowSearchResults(true);
-        
-        toast.info(`No product found with barcode: ${barcode}. You can add it as a new product.`);
-      }
-    }).catch((error) => {
-      console.error('Error searching for barcode:', error);
-      toast.error('Failed to search for barcode');
-      
-      // Show "add as new" option even on error
-      setSearchResults([]);
-      setShowSearchResults(true);
-    });
+      });
   };
 
   return (
@@ -376,7 +398,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 )}
               />
             )}
-            
+
             {/* Product Name Input with Search Buttons */}
             <FormField
               control={form.control}
@@ -390,7 +412,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         placeholder="Type to search existing products or add new..."
                         {...field}
                         value={field.value || ''}
-                        onChange={(e) => {
+                        onChange={e => {
                           field.onChange(e);
                           setSearchTerm(e.target.value || '');
                           setSearchMode('name');
@@ -423,7 +445,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 </FormItem>
               )}
             />
-            
+
             {/* Search Results */}
             {showSearchResults && (
               <div className="border rounded-md p-2 max-h-40 overflow-y-auto">
@@ -434,7 +456,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   </div>
                 ) : searchResults.length > 0 ? (
                   <div className="space-y-2">
-                    {searchResults.map((product) => (
+                    {searchResults.map(product => (
                       <div
                         key={product.id}
                         className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
@@ -456,10 +478,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 ) : (
                   <div className="text-center py-4">
                     <div className="text-muted-foreground mb-2">
-                      {searchMode === 'barcode' 
+                      {searchMode === 'barcode'
                         ? `No products found with barcode "${searchTerm}"`
-                        : `No products found with "${searchTerm}"`
-                      }
+                        : `No products found with "${searchTerm}"`}
                     </div>
                     <Button
                       size="sm"
@@ -477,7 +498,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 )}
               </div>
             )}
-            
+
             {/* Product Image */}
             <div className="space-y-4">
               <FormField
@@ -607,19 +628,19 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{hideCommission ? 'Price*' : 'Base Price*'}</FormLabel>
-                      <FormControl>
+                    <FormControl>
                       <Input
                         type="number"
                         step="0.01"
                         min="0"
                         placeholder="0.00"
                         {...field}
-                        onChange={(e) => {
+                        onChange={e => {
                           const value = e.target.value;
                           field.onChange(value);
                         }}
                       />
-                      </FormControl>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -663,7 +684,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         min="0"
                         placeholder="0"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        onChange={e => field.onChange(parseInt(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -710,11 +731,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Barcode</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter barcode..."
-                        {...field}
-                        value={field.value || ''}
-                      />
+                      <Input placeholder="Enter barcode..." {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -728,11 +745,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>SKU</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter SKU..."
-                        {...field}
-                        value={field.value || ''}
-                      />
+                      <Input placeholder="Enter SKU..." {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -771,7 +784,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         min="0"
                         placeholder="0"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                        onChange={e => field.onChange(parseInt(e.target.value) || undefined)}
                         value={field.value || ''}
                       />
                     </FormControl>
@@ -793,10 +806,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                     </div>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -825,7 +835,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
           </form>
         </Form>
       </DialogContent>
-      
+
       {/* Barcode Scanner */}
       <BarcodeScanner
         open={isBarcodeScannerOpen}
