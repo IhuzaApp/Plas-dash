@@ -19,6 +19,7 @@ import { useAuth } from '@/components/layout/RootLayout';
 import { useProductsByShop, useShopById } from '@/hooks/useHasuraApi';
 import { Product } from '@/hooks/useGraphql';
 import { AddProductDialog } from '@/components/pages/pos/checkout/AddProductCheckoutDialog';
+import CheckoutBarcodeScanner from '@/components/pages/pos/checkout/CheckoutBarcodeScanner';
 import { ProductSelectionCard } from './checkout/ProductSelectionCard';
 import { CartSummaryCard } from './checkout/CartSummaryCard';
 import { PendingCheckoutsTab } from './checkout/PendingCheckoutsTab';
@@ -63,6 +64,7 @@ const Checkout = () => {
   const [tinNumber, setTinNumber] = useState('');
   const [isTINDialogOpen, setIsTINDialogOpen] = useState(false);
   const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
   const [pendingCheckouts, setPendingCheckouts] = useState<PendingCheckout[]>([]);
   const [selectedPendingCheckout, setSelectedPendingCheckout] = useState<string | null>(null);
 
@@ -280,6 +282,10 @@ const Checkout = () => {
     });
   };
 
+  const handleProductFoundByScan = (product: Product) => {
+    addProductToCart(product);
+  };
+
   return (
     <AdminLayout>
       <PageHeader
@@ -301,6 +307,7 @@ const Checkout = () => {
               isLoading={productsLoading}
               onAddProductToCart={addProductToCart}
               onAddProductManually={() => setIsAddProductDialogOpen(true)}
+              onScanProduct={() => setIsBarcodeScannerOpen(true)}
             />
             <CartSummaryCard
               cart={cart}
@@ -372,6 +379,14 @@ const Checkout = () => {
         isOpen={isAddProductDialogOpen}
         onClose={() => setIsAddProductDialogOpen(false)}
         onAddProduct={addProductByCode}
+      />
+
+      <CheckoutBarcodeScanner
+        open={isBarcodeScannerOpen}
+        onOpenChange={setIsBarcodeScannerOpen}
+        onProductFound={handleProductFoundByScan}
+        products={products}
+        isLoading={productsLoading}
       />
     </AdminLayout>
   );
