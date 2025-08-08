@@ -48,6 +48,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import AddReelModal from '@/components/Reels/AddReelModal';
+import EditReelModal from '@/components/Reels/EditReelModal';
 
 type PostType = "restaurant" | "supermarket" | "chef";
 
@@ -216,6 +217,12 @@ const Reels = () => {
               open={isAddDrawerOpen}
               onOpenChange={setIsAddDrawerOpen}
               onSuccess={refetch}
+            />
+            <EditReelModal 
+              open={isEditDialogOpen}
+              onOpenChange={setIsEditDialogOpen}
+              onSuccess={refetch}
+              reel={selectedReel}
             />
           </div>
         }

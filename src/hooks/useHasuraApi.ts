@@ -47,6 +47,7 @@ import {
   DELETE_ORG_EMPLOYEE,
   ADD_RESTAURANT,
   ADD_REEL,
+  UPDATE_REEL,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -824,6 +825,38 @@ export function useAddReel() {
     }
   >({
     mutationFn: variables => hasuraRequest(ADD_REEL, variables),
+  });
+}
+
+// Type-safe hook for updating a reel
+export function useUpdateReel() {
+  return useMutation<
+    { update_Reels_by_pk: {
+      id: string;
+      title: string;
+      description: string;
+      video_url: string;
+      category: string;
+      type: string;
+      Price: string;
+      delivery_time: string;
+      is_active: boolean;
+    } },
+    Error,
+    {
+      id: string;
+      title: string;
+      description: string;
+      video_url: string;
+      category: string;
+      type: string;
+      Price: string;
+      Product?: any;
+      delivery_time: string;
+      is_active: boolean;
+    }
+  >({
+    mutationFn: variables => hasuraRequest(UPDATE_REEL, variables),
   });
 }
 
