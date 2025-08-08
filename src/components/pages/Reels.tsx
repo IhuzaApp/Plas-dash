@@ -47,7 +47,7 @@ import Pagination from '@/components/ui/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import AddReelModal from '@/components/modals/AddReelModal';
+import AddReelModal from '@/components/Reels/AddReelModal';
 
 type PostType = "restaurant" | "supermarket" | "chef";
 
