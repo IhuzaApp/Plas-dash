@@ -13,6 +13,7 @@ interface OrgEmployee {
   roleType: string;
   active: boolean;
   shop_id: string;
+  restaurant_id: string | null;
   multAuthEnabled: boolean;
   twoFactorSecrets?: string | null;
   Shops: {
@@ -40,6 +41,7 @@ export function useCurrentOrgEmployee() {
         roleType
         active
         shop_id
+        restaurant_id
         multAuthEnabled
         twoFactorSecrets
         Shops {

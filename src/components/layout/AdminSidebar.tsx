@@ -37,6 +37,7 @@ import {
   HelpCircle,
   LogOut,
   Loader2,
+  Video,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -198,6 +199,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         { title: 'Project Users', icon: Users, path: '/project-users' },
         { title: 'Shops', icon: Store, path: '/shops' },
         { title: 'Restaurants', icon: Store, path: '/restaurants' },
+        { title: 'Reels', icon: Video, path: '/reels' },
         { title: 'Products', icon: ShoppingCart, path: '/products' },
       ],
     },

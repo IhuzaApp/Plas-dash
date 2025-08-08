@@ -1526,3 +1526,124 @@ export const GET_RESTAURANTS = `
     }
   }
 `;
+
+// Reels query
+export const GET_REELS = `
+  query getAllReels {
+    Reels {
+      Reels_comments {
+        created_on
+        id
+        isLiked
+        likes
+        reel_id
+        text
+        user_id
+      }
+      Product
+      Price
+      Restaurant {
+        created_at
+        email
+        id
+        is_active
+        lat
+        location
+        logo
+        long
+        name
+        phone
+        profile
+        relatedTo
+        tin
+        ussd
+        verified
+      }
+      category
+      created_on
+      delivery_time
+      description
+      id
+      isLiked
+      likes
+      restaurant_id
+      shop_id
+      title
+      type
+      user_id
+      video_url
+      reel_likes {
+        created_at
+        id
+        reel_id
+        user_id
+      }
+      reel_orders {
+        OrderID
+        combined_order_id
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_note
+        delivery_photo_url
+        delivery_time
+        discount
+        found
+        id
+        quantity
+        reel_id
+        service_fee
+        shopper_id
+        status
+        total
+        updated_at
+        user_id
+        voucher_code
+        Address {
+          city
+          created_at
+          id
+          is_default
+          latitude
+          longitude
+          postal_code
+          street
+          updated_at
+          user_id
+        }
+      }
+      Shops {
+        address
+        category_id
+        created_at
+        description
+        id
+        image
+        is_active
+        latitude
+        logo
+        longitude
+        name
+        phone
+        operating_hours
+        relatedTo
+        ssd
+        tin
+        updated_at
+      }
+      User {
+        created_at
+        email
+        gender
+        id
+        is_active
+        name
+        password_hash
+        phone
+        profile_picture
+        role
+        updated_at
+      }
+    }
+  }
+`;
