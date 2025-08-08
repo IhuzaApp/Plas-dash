@@ -728,3 +728,43 @@ export const ADD_REEL = `
     }
   }
 `;
+
+export const UPDATE_REEL = `
+  mutation updateReel(
+    $id: uuid!
+    $Price: String = ""
+    $Product: jsonb = ""
+    $category: String = ""
+    $delivery_time: String = ""
+    $description: String = ""
+    $title: String = ""
+    $type: String = ""
+    $video_url: String = ""
+    $is_active: Boolean = true
+  ) {
+    update_Reels_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        Price: $Price
+        Product: $Product
+        category: $category
+        delivery_time: $delivery_time
+        description: $description
+        title: $title
+        type: $type
+        video_url: $video_url
+        is_active: $is_active
+      }
+    ) {
+      id
+      title
+      description
+      video_url
+      category
+      type
+      Price
+      delivery_time
+      is_active
+    }
+  }
+`;
