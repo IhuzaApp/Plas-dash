@@ -19,6 +19,7 @@ export interface UserPrivileges {
   users?: ModulePrivileges;
   project_users?: ModulePrivileges;
   shops?: ModulePrivileges;
+  restaurants?: ModulePrivileges;
   shoppers?: ModulePrivileges;
   settings?: ModulePrivileges;
   refunds?: ModulePrivileges;
@@ -171,6 +172,16 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     view_shop_details: false,
     manage_shop_settings: false,
     view_shop_performance: false,
+  },
+  restaurants: {
+    access: false,
+    view_restaurants: false,
+    add_restaurants: false,
+    edit_restaurants: false,
+    delete_restaurants: false,
+    view_restaurant_details: false,
+    manage_restaurant_settings: false,
+    view_restaurant_performance: false,
   },
   shoppers: {
     access: false,

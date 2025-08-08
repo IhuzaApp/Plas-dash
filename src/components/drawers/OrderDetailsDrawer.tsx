@@ -14,12 +14,72 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Order } from '@/types/order';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { useOrderPayments } from '@/hooks/useShoppers';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Video } from 'lucide-react';
 import type { WalletTransaction, Refund } from '@/hooks/useShoppers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+// Unified order interface for both regular and reel orders
+interface UnifiedOrder {
+  id: string;
+  OrderID: string;
+  type: 'regular' | 'reel';
+  status: string;
+  total: string;
+  created_at: string;
+  updated_at: string;
+  delivery_fee: string;
+  service_fee: string;
+  discount: string;
+  voucher_code: string | null;
+  shopper_id: string | null;
+  user_id: string;
+  delivery_address_id: string;
+  delivery_photo_url: string;
+  delivery_time: string | null;
+  combined_order_id: string | null;
+  shop_id: string;
+  // Regular order specific fields
+  delivery_notes?: string;
+  Order_Items?: any[];
+  User?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  Address?: {
+    street: string;
+    city: string;
+    postal_code: string;
+  };
+  shopper?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  // Reel order specific fields
+  quantity?: number;
+  reel_id?: string;
+  delivery_note?: string;
+  found?: boolean;
+  Reel?: {
+    Price: string;
+    Product: string;
+    category: string;
+    title: string;
+    description: string;
+    video_url: string;
+  };
+  Shoppers?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
+}
+
 interface OrderDetailsDrawerProps {
-  order: Order | null;
+  order: UnifiedOrder | null;
   open: boolean;
   onClose: () => void;
 }
@@ -101,16 +161,24 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
       <SheetContent className="sm:max-w-[600px] overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center justify-between">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger className="text-primary hover:underline">
-                  Order #{generateShortId(order.OrderID?.toString() || order.id)}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Full ID: {order.OrderID || order.id}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="text-primary hover:underline">
+                    Order #{generateShortId(order.OrderID?.toString() || order.id)}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Full ID: {order.OrderID || order.id}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {order.type === 'reel' && (
+                <Badge variant="outline">
+                  <Video className="h-3 w-3 mr-1" />
+                  Reel Order
+                </Badge>
+              )}
+            </div>
             <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
           </SheetTitle>
           <SheetDescription>Created on {formatDateTime(order.created_at)}</SheetDescription>
@@ -119,20 +187,31 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
         <div className="space-y-6">
           {/* Customer Information */}
           <div>
-            <h3 className="text-lg font-semibold mb-3">Customer Details</h3>
+            <h3 className="text-lg font-semibold mb-3">
+              {order.type === 'regular' ? 'Customer Details' : 'Reel Details'}
+            </h3>
             <Card className="p-4">
               <div className="flex items-center space-x-4">
                 <Avatar>
                   <AvatarFallback>
-                    {order.User?.name
-                      ?.split(' ')
-                      .map(n => n[0])
-                      .join('')}
+                    {order.type === 'regular' 
+                      ? order.User?.name?.split(' ').map(n => n[0]).join('')
+                      : order.Reel?.title?.split(' ').map(n => n[0]).join('')
+                    }
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{order.User?.name}</p>
-                  <p className="text-sm text-muted-foreground">{order.User?.email}</p>
+                  <p className="font-medium">
+                    {order.type === 'regular' ? order.User?.name : order.Reel?.title}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {order.type === 'regular' ? order.User?.email : order.Reel?.description}
+                  </p>
+                  {order.type === 'reel' && (
+                    <p className="text-sm text-muted-foreground">
+                      Category: {order.Reel?.category} | Price: {formatCurrency(order.Reel?.Price || '0')}
+                    </p>
+                  )}
                 </div>
               </div>
             </Card>
@@ -140,32 +219,45 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
 
           {/* Order Items */}
           <div>
-            <h3 className="text-lg font-semibold mb-3">Order Items</h3>
+            <h3 className="text-lg font-semibold mb-3">
+              {order.type === 'regular' ? 'Order Items' : 'Reel Item'}
+            </h3>
             <Card className="p-4">
               <div className="space-y-4">
-                {order.Order_Items?.map((item, index) => (
-                  <div key={item.id}>
-                    {index > 0 && <Separator className="my-4" />}
-                    <div className="flex justify-between">
-                      <div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger className="text-primary hover:underline">
-                              <p className="font-medium">
-                                Product #{generateShortId(item.product_id)}
-                              </p>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Full Product ID: {item.product_id}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                {order.type === 'regular' ? (
+                  order.Order_Items?.map((item, index) => (
+                    <div key={item.id}>
+                      {index > 0 && <Separator className="my-4" />}
+                      <div className="flex justify-between">
+                        <div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="text-primary hover:underline">
+                                <p className="font-medium">
+                                  Product #{generateShortId(item.product_id)}
+                                </p>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Full Product ID: {item.product_id}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                        </div>
+                        <p className="font-medium">{formatCurrency(item.price)}</p>
                       </div>
-                      <p className="font-medium">{formatCurrency(item.price)}</p>
                     </div>
+                  ))
+                ) : (
+                  <div className="flex justify-between">
+                    <div>
+                      <p className="font-medium">{order.Reel?.title}</p>
+                      <p className="text-sm text-muted-foreground">Quantity: {order.quantity || 1}</p>
+                      <p className="text-sm text-muted-foreground">Product: {order.Reel?.Product}</p>
+                    </div>
+                    <p className="font-medium">{formatCurrency(order.Reel?.Price || '0')}</p>
                   </div>
-                ))}
+                )}
               </div>
             </Card>
           </div>
@@ -282,11 +374,11 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
               <div className="space-y-2">
                 <p className="text-sm">
                   <span className="font-medium">Address: </span>
-                  {order.Address.street}, {order.Address.city} {order.Address.postal_code}
+                  {order.Address ? `${order.Address.street}, ${order.Address.city} ${order.Address.postal_code}` : 'Address not available'}
                 </p>
                 <p className="text-sm">
                   <span className="font-medium">Delivery Notes: </span>
-                  {order.delivery_notes || 'No special instructions'}
+                  {order.delivery_notes || order.delivery_note || 'No special instructions'}
                 </p>
                 {order.delivery_time && (
                   <p className="text-sm">

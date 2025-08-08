@@ -6,6 +6,8 @@ import {
   GET_PRODUCTS_BY_SHOP,
   GET_SHOPS,
   GET_ORDERS,
+  GET_REEL_ORDERS,
+  GET_RESTAURANTS,
   GET_CARTS,
   GET_ADDRESSES,
   GET_INVOICE_DETAILS,
@@ -42,6 +44,7 @@ import {
   UPDATE_ORG_EMPLOYEE_ROLE,
   UPDATE_ORG_EMPLOYEE,
   DELETE_ORG_EMPLOYEE,
+  ADD_RESTAURANT,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -241,6 +244,88 @@ interface OrderType {
     city: string;
     postal_code: string;
   };
+}
+
+interface ReelOrder {
+  id: string;
+  OrderID: string;
+  combined_order_id: string | null;
+  created_at: string;
+  delivery_address_id: string;
+  delivery_fee: string;
+  delivery_note: string;
+  delivery_photo_url: string;
+  delivery_time: string | null;
+  discount: string;
+  found: boolean;
+  quantity: number;
+  reel_id: string;
+  service_fee: string;
+  shopper_id: string | null;
+  status: string;
+  total: string;
+  updated_at: string;
+  user_id: string;
+  voucher_code: string | null;
+  Reel: {
+    Price: string;
+    Product: string;
+    category: string;
+    created_on: string;
+    delivery_time: string;
+    description: string;
+    id: string;
+    isLiked: boolean;
+    likes: number;
+    restaurant_id: string;
+    shop_id: string;
+    title: string;
+    type: string;
+    user_id: string;
+    video_url: string;
+  };
+  Shoppers: {
+    created_at: string;
+    email: string;
+    gender: string;
+    id: string;
+    is_active: boolean;
+    name: string;
+    phone: string;
+    profile_picture: string;
+    role: string;
+    updated_at: string;
+  } | null;
+  Address: {
+    city: string;
+    created_at: string;
+    id: string;
+    is_default: boolean;
+    latitude: number;
+    longitude: number;
+    postal_code: string;
+    street: string;
+    updated_at: string;
+    user_id: string;
+  };
+}
+
+interface Restaurant {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  location: string;
+  lat: string;
+  long: string;
+  profile: string;
+  logo: string;
+  verified: boolean;
+  is_active: boolean;
+  relatedTo: string;
+  tin: string;
+  ussd: string;
+  created_at: string;
 }
 
 export interface SystemConfig {
@@ -614,6 +699,44 @@ export function useSearchProductNames(searchTerm: string) {
     queryKey: ['product-names', 'search', searchTerm],
     queryFn: () => hasuraRequest(SEARCH_PRODUCT_NAMES, { searchTerm: `%${searchTerm}%` }),
     enabled: searchTerm.length > 0,
+  });
+}
+
+// Type-safe hook for Reel Orders
+export function useReelOrders() {
+  return useQuery<{ reel_orders: ReelOrder[] }, Error>({
+    queryKey: ['reel-orders'],
+    queryFn: () => hasuraRequest(GET_REEL_ORDERS, {}),
+  });
+}
+
+// Type-safe hook for Restaurants
+export function useRestaurants() {
+  return useQuery<{ Restaurants: Restaurant[] }, Error>({
+    queryKey: ['restaurants'],
+    queryFn: () => hasuraRequest(GET_RESTAURANTS, {}),
+  });
+}
+
+// Type-safe hook for adding a restaurant
+export function useAddRestaurant() {
+  return useMutation<
+    { insert_Restaurants_one: any },
+    Error,
+    {
+      name: string;
+      address: string;
+      phone_number: string;
+      email: string;
+      operating_hours: string;
+      latitude: number;
+      longitude: number;
+      image: string;
+      logo: string | null;
+      is_active: boolean;
+    }
+  >({
+    mutationFn: variables => hasuraRequest(ADD_RESTAURANT, variables),
   });
 }
 

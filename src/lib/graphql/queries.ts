@@ -1434,3 +1434,95 @@ export const SEARCH_PRODUCT_NAMES = `
     }
   }
 `;
+
+// Reel Orders query
+export const GET_REEL_ORDERS = `
+  query getReelOrders {
+    reel_orders {
+      OrderID
+      combined_order_id
+      created_at
+      delivery_address_id
+      delivery_fee
+      delivery_note
+      delivery_photo_url
+      delivery_time
+      discount
+      found
+      id
+      quantity
+      reel_id
+      service_fee
+      shopper_id
+      status
+      total
+      updated_at
+      user_id
+      voucher_code
+      Reel {
+        Price
+        Product
+        category
+        created_on
+        delivery_time
+        description
+        id
+        isLiked
+        likes
+        restaurant_id
+        shop_id
+        title
+        type
+        user_id
+        video_url
+      }
+      Shoppers {
+        created_at
+        email
+        gender
+        id
+        is_active
+        name
+        phone
+        profile_picture
+        role
+        updated_at
+      }
+      Address {
+        city
+        created_at
+        id
+        is_default
+        latitude
+        longitude
+        postal_code
+        street
+        updated_at
+        user_id
+      }
+    }
+  }
+`;
+
+// Restaurants query
+export const GET_RESTAURANTS = `
+  query getRestaurantsDetails {
+    Restaurants {
+      created_at
+      email
+      id
+      lat
+      location
+      long
+      name
+      phone
+      profile
+      verified
+      logo
+      is_active
+      relatedTo
+      tin
+      ussd
+    }
+  }
+`;

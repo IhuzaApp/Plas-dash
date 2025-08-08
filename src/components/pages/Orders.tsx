@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, Loader2, Phone, AlertCircle } from 'lucide-react';
-import { useOrders, useSystemConfig } from '@/hooks/useHasuraApi';
+import { Search, Filter, Loader2, Phone, AlertCircle, Video } from 'lucide-react';
+import { useOrders, useReelOrders, useSystemConfig } from '@/hooks/useHasuraApi';
 import { format, differenceInMinutes } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import OrderDetailsDrawer from '@/components/drawers/OrderDetailsDrawer';
 import { Order } from '@/types/order';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import { Badge } from '@/components/ui/badge';
 
 // Function to generate a short ID from a UUID or longer ID
 const generateShortId = (id: string) => {
@@ -37,16 +38,120 @@ const generateShortId = (id: string) => {
   return id.slice(0, 8);
 };
 
+// Unified order interface for both regular and reel orders
+interface UnifiedOrder {
+  id: string;
+  OrderID: string;
+  type: 'regular' | 'reel';
+  status: string;
+  total: string;
+  created_at: string;
+  updated_at: string;
+  delivery_fee: string;
+  service_fee: string;
+  discount: string;
+  voucher_code: string | null;
+  shopper_id: string | null;
+  user_id: string;
+  delivery_address_id: string;
+  delivery_photo_url: string;
+  delivery_time: string | null;
+  combined_order_id: string | null;
+  shop_id: string;
+  // Regular order specific fields
+  delivery_notes?: string;
+  Order_Items?: any[];
+  User?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  Address?: {
+    street: string;
+    city: string;
+    postal_code: string;
+  };
+  shopper?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  // Reel order specific fields
+  quantity?: number;
+  reel_id?: string;
+  delivery_note?: string;
+  found?: boolean;
+  Reel?: {
+    Price: string;
+    Product: string;
+    category: string;
+    title: string;
+    description: string;
+    video_url: string;
+  };
+  Shoppers?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
+}
+
 const Orders = () => {
   const { data, isLoading, isError, error } = useOrders();
+  const { data: reelOrders } = useReelOrders();
   const { data: systemConfig } = useSystemConfig();
   const orders: Order[] = data?.Orders || [];
+  const reelOrderItems: any[] = reelOrders?.reel_orders || [];
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<UnifiedOrder | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { hasAction } = usePrivilege();
+
+  // Combine regular orders and reel orders into a unified array
+  const allOrders: UnifiedOrder[] = useMemo(() => {
+    const regularOrders: UnifiedOrder[] = orders.map(order => ({
+      ...order,
+      type: 'regular' as const,
+      OrderID: order.OrderID || order.id,
+    }));
+
+    const reelOrders: UnifiedOrder[] = reelOrderItems.map(reelOrder => ({
+      id: reelOrder.id,
+      OrderID: reelOrder.OrderID,
+      type: 'reel' as const,
+      status: reelOrder.status,
+      total: reelOrder.total,
+      created_at: reelOrder.created_at,
+      updated_at: reelOrder.updated_at,
+      delivery_fee: reelOrder.delivery_fee,
+      service_fee: reelOrder.service_fee,
+      discount: reelOrder.discount,
+      voucher_code: reelOrder.voucher_code,
+      shopper_id: reelOrder.shopper_id,
+      user_id: reelOrder.user_id,
+      delivery_address_id: reelOrder.delivery_address_id,
+      delivery_photo_url: reelOrder.delivery_photo_url,
+      delivery_time: reelOrder.delivery_time,
+      combined_order_id: reelOrder.combined_order_id,
+      shop_id: reelOrder.Reel?.shop_id || '',
+      quantity: reelOrder.quantity,
+      reel_id: reelOrder.reel_id,
+      delivery_note: reelOrder.delivery_note,
+      found: reelOrder.found,
+      Reel: reelOrder.Reel,
+      Shoppers: reelOrder.Shoppers,
+      Address: reelOrder.Address,
+    }));
+
+    // Combine and sort by creation date (newest first)
+    return [...regularOrders, ...reelOrders].sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [orders, reelOrderItems]);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -65,7 +170,7 @@ const Orders = () => {
     toast.info(`Calling shopper at ${phone}...`);
   };
 
-  const getOrderWarnings = (order: any) => {
+  const getOrderWarnings = (order: UnifiedOrder) => {
     const warnings = [];
     const timeSinceUpdate = differenceInMinutes(new Date(), new Date(order.updated_at));
     const statusLower = order.status.toLowerCase();
@@ -100,7 +205,7 @@ const Orders = () => {
     return warnings;
   };
 
-  const getStatusColor = (order: any) => {
+  const getStatusColor = (order: UnifiedOrder) => {
     const statusLower = order.status.toLowerCase();
     const warnings = getOrderWarnings(order);
 
@@ -137,19 +242,17 @@ const Orders = () => {
     return format(new Date(dateString), 'MMM d, yyyy HH:mm');
   };
 
-  const pendingOrders = orders.filter(order => order.status === 'PENDING');
-
-  const deliveredOrders = orders.filter(order => order.status.toLowerCase() === 'delivered');
-
-  const inProgressOrders = orders.filter(order => {
+  const pendingOrders = allOrders.filter(order => order.status === 'PENDING');
+  const deliveredOrders = allOrders.filter(order => order.status.toLowerCase() === 'delivered');
+  const inProgressOrders = allOrders.filter(order => {
     const statusLower = order.status.toLowerCase();
     return order.status !== 'PENDING' && statusLower !== 'delivered';
   });
 
-  const totalRevenue = orders.reduce((acc, order) => acc + parseFloat(order.total), 0);
+  const totalRevenue = allOrders.reduce((acc, order) => acc + parseFloat(order.total), 0);
 
   // Filter orders based on search term
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = allOrders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
 
     // Direct ID match (case-insensitive)
@@ -172,12 +275,24 @@ const Orders = () => {
       return true;
     }
 
-    // Other fields match
-    return (
-      order.User?.name?.toLowerCase().includes(searchLower) ||
-      order.User?.email?.toLowerCase().includes(searchLower) ||
-      order.status.toLowerCase().includes(searchLower)
-    );
+    // Customer name/email match (for regular orders)
+    if (order.User?.name?.toLowerCase().includes(searchLower) ||
+        order.User?.email?.toLowerCase().includes(searchLower)) {
+      return true;
+    }
+
+    // Reel title/description match (for reel orders)
+    if (order.Reel?.title?.toLowerCase().includes(searchLower) ||
+        order.Reel?.description?.toLowerCase().includes(searchLower)) {
+      return true;
+    }
+
+    // Status match
+    if (order.status.toLowerCase().includes(searchLower)) {
+      return true;
+    }
+
+    return false;
   });
 
   // Calculate pagination
@@ -187,7 +302,7 @@ const Orders = () => {
   const endIndex = startIndex + pageSize;
   const currentOrders = filteredOrders.slice(startIndex, endIndex);
 
-  const handleViewDetails = (order: Order) => {
+  const handleViewDetails = (order: UnifiedOrder) => {
     setSelectedOrder(order);
     setIsDrawerOpen(true);
   };
@@ -234,7 +349,7 @@ const Orders = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{orders.length}</div>
+            <div className="text-2xl font-bold">{orders.length + reelOrderItems.length}</div>
             <p className="text-muted-foreground">Total Orders</p>
           </CardContent>
         </Card>
@@ -334,10 +449,18 @@ const Orders = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{order.User?.name || 'N/A'}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {order.User?.email || 'N/A'}
+                        <div className="font-medium">
+                          {order.type === 'regular' ? order.User?.name : order.Reel?.title || 'N/A'}
                         </div>
+                        <div className="text-sm text-muted-foreground">
+                          {order.type === 'regular' ? order.User?.email : order.Reel?.description || 'N/A'}
+                        </div>
+                        {order.type === 'reel' && (
+                          <Badge variant="outline" className="mt-1">
+                            <Video className="h-3 w-3 mr-1" />
+                            Reel Order
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         <span
@@ -346,7 +469,12 @@ const Orders = () => {
                           {order.status}
                         </span>
                       </TableCell>
-                      <TableCell>{order.Order_Items?.length || 0} items</TableCell>
+                      <TableCell>
+                        {order.type === 'regular' 
+                          ? `${order.Order_Items?.length || 0} items`
+                          : `${order.quantity || 1} item`
+                        }
+                      </TableCell>
                       <TableCell>{formatCurrency(order.total)}</TableCell>
                       <TableCell>{formatDateTime(order.created_at)}</TableCell>
                       <TableCell>{formatDateTime(order.updated_at)}</TableCell>
@@ -356,7 +484,11 @@ const Orders = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleCallShopper(order.shopper?.phone)}
+                              onClick={() => handleCallShopper(
+                                order.type === 'regular' 
+                                  ? order.shopper?.phone 
+                                  : order.Shoppers?.phone
+                              )}
                               className="text-yellow-600 hover:text-yellow-700"
                             >
                               <Phone className="h-4 w-4 mr-1" />
