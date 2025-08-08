@@ -1,4 +1,4 @@
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/components/layout/RootLayout';
 import {
   isPageAccessible,
@@ -14,11 +14,12 @@ import {
  */
 export const usePageAccess = (currentPath?: string) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { session, isAuthenticated } = useAuth();
-  const pathname = currentPath || window.location.pathname;
+  const currentPathname = currentPath || pathname || '/';
 
   // Check if current page is accessible
-  const isCurrentPageAccessible = isPageAccessible(session?.privileges || null, pathname);
+  const isCurrentPageAccessible = isPageAccessible(session?.privileges || null, currentPathname);
 
   // Get recommended landing page
   const recommendedPage = getRecommendedLandingPage(session?.privileges || null);
@@ -28,7 +29,7 @@ export const usePageAccess = (currentPath?: string) => {
 
   // Navigate to recommended page
   const navigateToRecommended = () => {
-    if (recommendedPage && recommendedPage.path !== pathname) {
+    if (recommendedPage && recommendedPage.path !== currentPathname) {
       router.push(recommendedPage.path);
     }
   };

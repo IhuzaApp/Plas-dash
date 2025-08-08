@@ -197,6 +197,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         { title: 'Customers', icon: Users, path: '/users' },
         { title: 'Project Users', icon: Users, path: '/project-users' },
         { title: 'Shops', icon: Store, path: '/shops' },
+        { title: 'Restaurants', icon: Store, path: '/restaurants' },
         { title: 'Products', icon: ShoppingCart, path: '/products' },
       ],
     },
@@ -274,6 +275,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     hasModuleAccess('users') ||
     hasModuleAccess('project_users') ||
     hasModuleAccess('shops') ||
+    hasModuleAccess('restaurants') ||
     hasModuleAccess('shoppers') ||
     hasModuleAccess('company_dashboard') ||
     hasModuleAccess('shop_dashboard') ||
