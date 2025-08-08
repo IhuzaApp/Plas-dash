@@ -162,16 +162,16 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger className="text-primary hover:underline">
-                    Order #{generateShortId(order.OrderID?.toString() || order.id)}
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Full ID: {order.OrderID || order.id}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger className="text-primary hover:underline">
+                  Order #{generateShortId(order.OrderID?.toString() || order.id)}
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Full ID: {order.OrderID || order.id}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
               {order.type === 'reel' && (
                 <Badge variant="outline">
                   <Video className="h-3 w-3 mr-1" />
@@ -226,27 +226,27 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
               <div className="space-y-4">
                 {order.type === 'regular' ? (
                   order.Order_Items?.map((item, index) => (
-                    <div key={item.id}>
-                      {index > 0 && <Separator className="my-4" />}
-                      <div className="flex justify-between">
-                        <div>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger className="text-primary hover:underline">
-                                <p className="font-medium">
-                                  Product #{generateShortId(item.product_id)}
-                                </p>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Full Product ID: {item.product_id}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
-                        </div>
-                        <p className="font-medium">{formatCurrency(item.price)}</p>
+                  <div key={item.id}>
+                    {index > 0 && <Separator className="my-4" />}
+                    <div className="flex justify-between">
+                      <div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger className="text-primary hover:underline">
+                              <p className="font-medium">
+                                Product #{generateShortId(item.product_id)}
+                              </p>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Full Product ID: {item.product_id}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
                       </div>
+                      <p className="font-medium">{formatCurrency(item.price)}</p>
                     </div>
+                  </div>
                   ))
                 ) : (
                   <div className="flex justify-between">

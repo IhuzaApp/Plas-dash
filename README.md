@@ -2172,3 +2172,193 @@ This project is proprietary software. All rights reserved.
 ## Support
 
 For support, please contact our team at support@example.com or open an issue in the repository.
+
+
+### 🎬 **Video Reels Management System**
+
+The Plas Dashboard includes a comprehensive **Video Reels Management System** that allows users to create, manage, and monetize video content with advanced features for content creators and businesses.
+
+#### **🎯 Overview**
+
+The Reels system provides a TikTok-like experience for creating and managing video content with category-based video handling, revenue tracking, and comprehensive analytics.
+
+#### **📱 Core Features**
+
+##### **1. Category-Based Video Handling**
+
+- **YouTube Categories**: `tutorial`, `recipe`, `cooking` → YouTube URL integration
+- **Upload Categories**: `shopping`, `organic`, `food`, `delivery` → Direct video upload
+- **Mixed Support**: Other categories can use either method
+- **Smart Validation**: Category-specific video requirements
+
+##### **2. Video Upload System**
+
+- **Base64 Storage**: Videos converted to base64 and stored directly in database
+- **File Validation**: Type and size validation (max 50MB)
+- **Real-time Preview**: Immediate video preview with controls
+- **Progress Tracking**: Upload progress with TikTok-like experience
+- **Error Handling**: Graceful fallback for failed uploads
+
+##### **3. Revenue & Analytics**
+
+- **Revenue Calculation**: `Reel Price × Number of Orders`
+- **Order Tracking**: Real-time order count per reel
+- **Performance Metrics**: Likes, comments, orders, revenue
+- **Dynamic Currency**: System configuration-based currency display
+- **Active/Inactive Status**: Toggle reel visibility
+
+##### **4. Content Management**
+
+- **Active Status Toggle**: Enable/disable reels instantly
+- **Category Color Coding**: Visual category identification
+- **Search & Filter**: Advanced search across all reel data
+- **Pagination**: Efficient content browsing
+- **Bulk Operations**: Manage multiple reels
+
+#### **🔧 Technical Implementation**
+
+##### **1. Database Schema**
+
+```sql
+-- Reels table structure
+CREATE TABLE Reels (
+  id UUID PRIMARY KEY,
+  title VARCHAR NOT NULL,
+  description TEXT,
+  video_url TEXT NOT NULL, -- Base64 data or YouTube URL
+  category VARCHAR NOT NULL,
+  type VARCHAR NOT NULL, -- restaurant, supermarket, chef
+  Price DECIMAL(10,2) DEFAULT 0,
+  delivery_time VARCHAR,
+  is_active BOOLEAN DEFAULT true,
+  isLiked BOOLEAN DEFAULT false,
+  likes INTEGER DEFAULT 0,
+  restaurant_id UUID,
+  shop_id UUID,
+  user_id UUID,
+  created_on TIMESTAMP DEFAULT NOW()
+);
+```
+
+##### **2. Video Processing**
+
+```typescript
+// Video upload and base64 conversion
+const uploadVideoToServer = async (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result); // Base64 data
+      } else {
+        reject(new Error('Failed to convert video to base64'));
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  });
+};
+```
+
+##### **3. Revenue Calculation**
+
+```typescript
+// Revenue calculation logic
+const totalRevenue = reels.reduce((acc, reel) => {
+  const reelPrice = parseFloat(reel.Price || '0');
+  const orderCount = reel.reel_orders.length;
+  const reelRevenue = reelPrice * orderCount;
+  return acc + reelRevenue;
+}, 0);
+```
+
+##### **4. Category-Based Validation**
+
+```typescript
+// Category-specific video handling
+const isYouTubeCategory = (category: string) => {
+  return ['tutorial', 'recipe', 'cooking'].includes(category.toLowerCase());
+};
+
+const isUploadCategory = (category: string) => {
+  return ['shopping', 'organic', 'food', 'delivery'].includes(category.toLowerCase());
+};
+```
+
+#### **🎨 User Interface Components**
+
+##### **1. Reel Cards**
+
+- **Video Player**: Auto-play with controls
+- **Stats Display**: Likes, comments, orders, revenue
+- **Category Badges**: Color-coded category identification
+- **Status Toggle**: Active/inactive control
+- **Action Buttons**: Edit, delete, toggle status
+
+##### **2. Add Reel Drawer**
+
+- **TikTok-Like Experience**: Familiar upload interface
+- **Category Selection**: Dropdown with predefined categories
+- **Conditional Input**: YouTube URL or file upload based on category
+- **Active Status Toggle**: Enable/disable new reels
+- **Form Validation**: Real-time validation and error handling
+
+##### **3. Stats Dashboard**
+
+- **Total Reels**: Count of all created reels
+- **Active Reels**: Count of currently active reels
+- **Total Orders**: Orders generated from all reels
+- **Total Revenue**: Revenue generated from all reels
+
+#### **🎯 Business Logic**
+
+##### **1. Revenue Model**
+
+- **Fixed Price Per Reel**: Each reel has a set price
+- **Order-Based Revenue**: Revenue = Reel Price × Number of Orders
+- **No Commission**: Direct revenue to content creator
+- **Real-time Tracking**: Live revenue updates
+
+##### **2. Content Categories**
+
+| Category    | Video Type | Color Code | Description                    |
+| ----------- | ---------- | ---------- | ------------------------------ |
+| **Shopping** | Upload     | Purple     | Product showcases and reviews  |
+| **Organic**  | Upload     | Emerald    | Health and wellness content    |
+| **Tutorial** | YouTube    | Amber      | How-to and educational videos  |
+| **Recipe**   | YouTube    | Red        | Cooking and recipe videos      |
+| **Food**     | Upload     | Orange     | Food-related content           |
+| **Cooking**  | YouTube    | Red        | Cooking demonstrations         |
+| **Delivery** | Upload     | Blue       | Delivery and service content   |
+
+##### **3. Active Status Management**
+
+- **Toggle Control**: Instant enable/disable
+- **Visibility Control**: Inactive reels hidden from public
+- **Revenue Impact**: Inactive reels don't generate orders
+- **Analytics**: Track active vs inactive performance
+
+#### **🔍 Search & Filtering**
+
+##### **1. Advanced Search**
+
+- **Multi-field Search**: Title, description, category, creator, business
+- **Real-time Results**: Instant search results
+- **Case-insensitive**: Flexible search matching
+- **Pagination**: Efficient result browsing
+
+##### **2. Category Filtering**
+
+- **All Categories**: Show all reels
+- **Category-Specific**: Filter by content type
+- **Status Filtering**: Active/Inactive reels
+- **Type Filtering**: Restaurant/Supermarket/Chef
+
+#### **📊 Analytics & Reporting**
+
+##### **1. Performance Metrics**
+
+- **Engagement**: Likes, comments, shares
+- **Revenue**: Total earnings per reel
+- **Orders**: Number of ord

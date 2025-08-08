@@ -8,6 +8,7 @@ import {
   GET_ORDERS,
   GET_REEL_ORDERS,
   GET_RESTAURANTS,
+  GET_REELS,
   GET_CARTS,
   GET_ADDRESSES,
   GET_INVOICE_DETAILS,
@@ -45,6 +46,7 @@ import {
   UPDATE_ORG_EMPLOYEE,
   DELETE_ORG_EMPLOYEE,
   ADD_RESTAURANT,
+  ADD_REEL,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -277,11 +279,11 @@ interface ReelOrder {
     id: string;
     isLiked: boolean;
     likes: number;
-    restaurant_id: string;
-    shop_id: string;
+    restaurant_id: string | null;
+    shop_id: string | null;
     title: string;
     type: string;
-    user_id: string;
+    user_id: string | null;
     video_url: string;
   };
   Shoppers: {
@@ -326,6 +328,58 @@ interface Restaurant {
   tin: string;
   ussd: string;
   created_at: string;
+}
+
+interface Reel {
+  id: string;
+  title: string;
+  description: string;
+  video_url: string;
+  category: string;
+  type: string;
+  Price: string;
+  Product: any;
+  delivery_time: string;
+  isLiked: boolean;
+  likes: number;
+  is_active: boolean;
+  restaurant_id: string | null;
+  shop_id: string | null;
+  user_id: string | null;
+  created_on: string;
+  Restaurant: Restaurant | null;
+  Shops: {
+    id: string;
+    name: string;
+    logo: string;
+    address: string;
+  } | null;
+  User: {
+    id: string;
+    name: string;
+    email: string;
+    profile_picture: string;
+  } | null;
+  Reels_comments: Array<{
+    id: string;
+    text: string;
+    user_id: string;
+    created_on: string;
+    isLiked: boolean;
+    likes: number;
+  }>;
+  reel_likes: Array<{
+    id: string;
+    user_id: string;
+    created_at: string;
+  }>;
+  reel_orders: Array<{
+    id: string;
+    OrderID: string;
+    status: string;
+    total: string;
+    created_at: string;
+  }>;
 }
 
 export interface SystemConfig {
@@ -718,6 +772,14 @@ export function useRestaurants() {
   });
 }
 
+// Type-safe hook for Reels
+export function useReels() {
+  return useQuery<{ Reels: Reel[] }, Error>({
+    queryKey: ['reels'],
+    queryFn: () => hasuraRequest(GET_REELS, {}),
+  });
+}
+
 // Type-safe hook for adding a restaurant
 export function useAddRestaurant() {
   return useMutation<
@@ -737,6 +799,31 @@ export function useAddRestaurant() {
     }
   >({
     mutationFn: variables => hasuraRequest(ADD_RESTAURANT, variables),
+  });
+}
+
+// Type-safe hook for adding a reel
+export function useAddReel() {
+  return useMutation<
+    { insert_Reels: { affected_rows: number } },
+    Error,
+    {
+      title: string;
+      description: string;
+      video_url: string;
+      category: string;
+      type: string;
+      Price: string;
+      Product?: any;
+      delivery_time: string;
+      likes?: string;
+      restaurant_id?: string | null;
+      shop_id?: string | null;
+      user_id: string | null;
+      is_active?: boolean;
+    }
+  >({
+    mutationFn: variables => hasuraRequest(ADD_REEL, variables),
   });
 }
 
