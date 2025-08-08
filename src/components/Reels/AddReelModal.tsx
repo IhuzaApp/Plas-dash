@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { 
   Loader2, 
   Video, 
@@ -262,15 +262,14 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-sm">
-          <DrawerHeader>
-            <DrawerTitle>Add New Reel</DrawerTitle>
-            <p className="text-sm text-muted-foreground">
-              Create a new video reel with category-specific content requirements.
-            </p>
-          </DrawerHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+        <SheetHeader>
+          <SheetTitle>Add New Reel</SheetTitle>
+          <p className="text-sm text-muted-foreground">
+            Create a new video reel with category-specific content requirements.
+          </p>
+        </SheetHeader>
           <div className="p-4 space-y-4">
             <div>
               <Label htmlFor="title">Title</Label>
@@ -501,10 +500,9 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
               </Button>
             </div>
           </div>
-        </div>
-      </DrawerContent>
-    </Drawer>
-  );
-};
+        </SheetContent>
+      </Sheet>
+    );
+  };
 
 export default AddReelModal; 
