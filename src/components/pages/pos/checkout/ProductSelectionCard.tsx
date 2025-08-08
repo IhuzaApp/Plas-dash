@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ShoppingBag, Search, Plus } from 'lucide-react';
+import { ShoppingBag, Search, Plus, ScanBarcode } from 'lucide-react';
 import { Product } from '@/hooks/useGraphql';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
@@ -13,6 +13,7 @@ interface ProductSelectionCardProps {
   isLoading: boolean;
   onAddProductToCart: (product: Product) => void;
   onAddProductManually: () => void;
+  onScanProduct: () => void;
 }
 
 export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
@@ -20,6 +21,7 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
   isLoading,
   onAddProductToCart,
   onAddProductManually,
+  onScanProduct,
 }) => {
   const [productSearch, setProductSearch] = useState('');
   const { data: systemConfig } = useSystemConfig();
@@ -47,6 +49,10 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
               className="pl-10"
             />
           </div>
+          <Button variant="outline" onClick={onScanProduct}>
+            <ScanBarcode className="h-4 w-4 mr-2" />
+            Scan
+          </Button>
           <Button onClick={onAddProductManually}>Add Manually</Button>
         </div>
         {isLoading ? (
