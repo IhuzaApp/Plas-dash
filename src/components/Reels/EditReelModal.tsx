@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,13 +10,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { 
   Loader2, 
   Video, 
-  Upload, 
-  X, 
-  Youtube, 
-  FileVideo, 
+  Edit,
   ToggleLeft, 
-  ToggleRight,
-  Edit
+  ToggleRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUpdateReel } from '@/hooks/useHasuraApi';
@@ -55,7 +51,6 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
   const updateReelMutation = useUpdateReel();
   const { session } = useAuth();
   const { orgEmployee } = useCurrentOrgEmployee();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state for editing reels
   const [formData, setFormData] = useState({
@@ -68,13 +63,6 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
     delivery_time: '',
     is_active: true,
   });
-
-  // Upload state
-  const [uploadedVideo, setUploadedVideo] = useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isVideoChanged, setIsVideoChanged] = useState(false);
 
   // Initialize form data when reel changes
   useEffect(() => {
@@ -89,107 +77,8 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         delivery_time: reel.delivery_time || '',
         is_active: reel.is_active,
       });
-      setVideoPreview(null);
-      setUploadedVideo(null);
-      setIsVideoChanged(false);
-      setUploadProgress(0);
-      setIsUploading(false);
     }
   }, [reel]);
-
-  // Check if category allows YouTube URLs
-  const isYouTubeCategory = (category: string) => {
-    return YOUTUBE_CATEGORIES.includes(category.toLowerCase());
-  };
-
-  // Check if category requires video upload
-  const isUploadCategory = (category: string) => {
-    return UPLOAD_CATEGORIES.includes(category.toLowerCase());
-  };
-
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Check file type
-      if (!file.type.startsWith('video/')) {
-        toast.error('Please select a valid video file');
-        return;
-      }
-
-      // Check file size (max 50MB for base64 storage)
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error('Video file size must be less than 50MB for database storage');
-        return;
-      }
-
-      setUploadedVideo(file);
-      setIsVideoChanged(true);
-      setIsUploading(true);
-      
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setVideoPreview(previewUrl);
-      
-      // Start base64 conversion progress
-      setUploadProgress(0);
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(interval);
-            return 90;
-          }
-          return prev + Math.random() * 10; // Simulate conversion progress
-        });
-      }, 200);
-
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onload = () => {
-        clearInterval(interval);
-        setUploadProgress(100);
-        setIsUploading(false);
-        toast.success('Video processed successfully!');
-      };
-      reader.onerror = () => {
-        clearInterval(interval);
-        setIsUploading(false);
-        toast.error('Failed to process video');
-        removeUploadedVideo();
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeUploadedVideo = () => {
-    setUploadedVideo(null);
-    setVideoPreview(null);
-    setUploadProgress(0);
-    setIsUploading(false);
-    setIsVideoChanged(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const uploadVideoToServer = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          // Store the base64 video data directly in the database
-          resolve(reader.result);
-        } else {
-          reject(new Error('Failed to convert video to base64'));
-        }
-      };
-      
-      reader.onerror = () => reject(new Error('Failed to read video file'));
-      
-      // Convert video to base64
-      reader.readAsDataURL(file);
-    });
-  };
 
   const handleUpdateReel = async () => {
     if (!reel) {
@@ -201,33 +90,16 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
       let videoUrl = formData.video_url;
 
       // Validate based on category
-      if (isYouTubeCategory(formData.category)) {
+      if (YOUTUBE_CATEGORIES.includes(formData.category.toLowerCase())) {
         if (!videoUrl || !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
           toast.error('Please provide a valid YouTube URL for tutorial, recipe, or cooking categories');
           return;
         }
-      } else if (isUploadCategory(formData.category)) {
-        if (!uploadedVideo && !videoUrl) {
-          toast.error('Please upload a video file for this category');
+      } else if (UPLOAD_CATEGORIES.includes(formData.category.toLowerCase())) {
+        if (!videoUrl) {
+          toast.error('Please provide a video URL for this category');
           return;
         }
-      }
-
-      // If there's an uploaded video, convert it to base64
-      if (uploadedVideo && isVideoChanged) {
-        setUploadProgress(90);
-        try {
-          videoUrl = await uploadVideoToServer(uploadedVideo);
-          setUploadProgress(100);
-        } catch (error) {
-          toast.error('Failed to process video file');
-          return;
-        }
-      }
-
-      if (!videoUrl) {
-        toast.error('Please provide a video URL or upload a video file');
-        return;
       }
 
       // Prepare mutation variables
@@ -273,14 +145,6 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         is_active: reel.is_active,
       });
     }
-    setUploadedVideo(null);
-    setVideoPreview(null);
-    setUploadProgress(0);
-    setIsUploading(false);
-    setIsVideoChanged(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   if (!reel) {
@@ -289,14 +153,14 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+      <SheetContent side="right" className="w-[600px] sm:w-[800px] lg:w-[900px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Edit className="h-5 w-5" />
             Edit Reel
           </SheetTitle>
           <p className="text-sm text-muted-foreground">
-            Update the reel information and content.
+            Update the reel information and content. Note: Videos cannot be edited.
           </p>
         </SheetHeader>
         <div className="p-4 space-y-4">
@@ -353,114 +217,43 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
             </Select>
           </div>
 
-          {/* YouTube URL Input - Only for tutorial, recipe, cooking */}
-          {isYouTubeCategory(formData.category) && (
-            <div>
-              <Label htmlFor="video_url" className="flex items-center gap-2">
-                <Youtube className="h-4 w-4 text-red-500" />
-                YouTube URL
-              </Label>
-              <Input
-                id="video_url"
-                value={formData.video_url}
-                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                placeholder="https://www.youtube.com/watch?v=..."
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Only YouTube URLs are allowed for {formData.category} category
-              </p>
-            </div>
-          )}
-
-          {/* Video Upload - Only for shopping, organic, food, delivery */}
-          {isUploadCategory(formData.category) && (
-            <div>
-              <Label className="flex items-center gap-2">
-                <FileVideo className="h-4 w-4 text-blue-500" />
-                Upload Video
-              </Label>
-              <div className="mt-2">
-                {!uploadedVideo ? (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-                    <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Click to upload new video</p>
-                    <p className="text-xs text-gray-500">MP4, MOV, AVI up to 50MB</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Current video: {reel.video_url ? 'Set' : 'None'}
-                    </p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoUpload}
-                      className="hidden"
+          {/* Video Display - Show current video as read-only */}
+          <div>
+            <Label className="flex items-center gap-2">
+              <Video className="h-4 w-4 text-blue-500" />
+              Current Video (Read-only)
+            </Label>
+            <div className="mt-2">
+              {reel.video_url ? (
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Video className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm font-medium">Current Video</span>
+                  </div>
+                  <div className="relative">
+                    <video
+                      src={reel.video_url}
+                      className="w-full h-48 object-cover rounded-lg"
+                      controls
+                      muted
+                      loop
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="mt-2"
-                    >
-                      Choose New File
-                    </Button>
                   </div>
-                ) : (
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Video className="h-4 w-4 text-green-500" />
-                        <span className="text-sm font-medium">{uploadedVideo.name}</span>
-                        <span className="text-xs text-blue-600">(New)</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={removeUploadedVideo}
-                        disabled={isUploading}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    
-                    {/* Upload Progress */}
-                    {uploadProgress > 0 && (
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
-                    )}
-                    
-                    {/* Video Preview - TikTok-like experience */}
-                    {videoPreview && (
-                      <div className="relative">
-                        <video
-                          src={videoPreview}
-                          className="w-full h-48 object-cover rounded-lg"
-                          controls
-                          autoPlay
-                          muted
-                          loop
-                        />
-                        {isUploading && (
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                            <div className="text-center text-white">
-                              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                              <p className="text-sm">Processing video...</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    This video cannot be edited. To change the video, delete this reel and create a new one.
+                  </p>
+                </div>
+              ) : (
+                <div className="border rounded-lg p-4 bg-gray-50 text-center">
+                  <Video className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">No video available</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Regular URL Input - For other categories */}
-          {!isYouTubeCategory(formData.category) && !isUploadCategory(formData.category) && (
+          {!YOUTUBE_CATEGORIES.includes(formData.category.toLowerCase()) && !UPLOAD_CATEGORIES.includes(formData.category.toLowerCase()) && (
             <div>
               <Label htmlFor="video_url">Video URL</Label>
               <Input
@@ -516,7 +309,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
           <div className="flex gap-2 pt-4">
             <Button 
               onClick={handleUpdateReel} 
-              disabled={updateReelMutation.isPending || isUploading}
+              disabled={updateReelMutation.isPending}
               className="flex-1"
             >
               {updateReelMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
