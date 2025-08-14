@@ -266,9 +266,9 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
       <SheetContent side="right" className="w-[400px] sm:w-[540px]">
         <SheetHeader>
           <SheetTitle>Add New Reel</SheetTitle>
-          <p className="text-sm text-muted-foreground">
-            Create a new video reel with category-specific content requirements.
-          </p>
+            <p className="text-sm text-muted-foreground">
+              Create a new video reel with category-specific content requirements.
+            </p>
         </SheetHeader>
           <div className="p-4 space-y-4">
             <div>
@@ -502,7 +502,7 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
           </div>
         </SheetContent>
       </Sheet>
-    );
-  };
+  );
+};
 
 export default AddReelModal; 
