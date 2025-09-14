@@ -1,0 +1,86 @@
+query GetOrders {
+  Orders {
+    id
+    user_id
+    shopper_id
+    total
+    status
+    delivery_address_id
+    delivery_photo_url
+    delivery_notes
+    created_at
+    updated_at
+    delivery_time
+    combined_order_id
+    Address {
+      city
+      created_at
+      id
+      is_default
+      latitude
+      longitude
+      postal_code
+      street
+      updated_at
+      user_id
+    }
+    Delivery_Issues {
+      created_at
+      description
+      id
+      issue_type
+      order_id
+      shopper_id
+      status
+      updated_at
+      priority
+    }
+    Order_Items {
+      created_at
+      id
+      order_id
+      price
+      product_id
+      quantity
+    }
+    delivery_fee
+    service_fee
+    discount
+    voucher_code
+    OrderID
+    shop_id
+    Invoices {
+      Proof
+      created_at
+      customer_id
+      delivery_fee
+      discount
+      id
+      invoice_items
+      invoice_number
+      order_id
+      reel_order_id
+      service_fee
+      status
+      subtotal
+      tax
+      total_amount
+    }
+    Ratings {
+      created_at
+      customer_id
+      delivery_experience
+      id
+      order_id
+      packaging_quality
+      professionalism
+      rating
+      reel_order_id
+      review
+      reviewed_at
+      shopper_id
+      updated_at
+    }
+    found
+  }
+}

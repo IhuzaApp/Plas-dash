@@ -1,0 +1,94 @@
+{
+  "categories": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "icon": "Compass",
+      "articles": [
+        {
+          "id": "dashboard-overview",
+          "title": "Dashboard Overview",
+          "content": "The dashboard provides a comprehensive view of your delivery operations. Key features include:\n\n- Real-time order tracking\n- Revenue analytics\n- Shopper performance metrics\n- Delivery status updates"
+        },
+        {
+          "id": "first-steps",
+          "title": "First Steps",
+          "content": "1. Log in to your account\n2. Complete your profile setup\n3. Configure your notification preferences\n4. Explore the dashboard sections"
+        }
+      ]
+    },
+    {
+      "id": "orders",
+      "title": "Order Management",
+      "icon": "Package",
+      "articles": [
+        {
+          "id": "create-order",
+          "title": "Creating an Order",
+          "content": "To create a new order:\n\n1. Click the 'New Order' button\n2. Select the delivery location\n3. Choose items from available shops\n4. Review and confirm the order details"
+        },
+        {
+          "id": "track-order",
+          "title": "Tracking Orders",
+          "content": "Track your orders in real-time:\n\n- View current order status\n- See estimated delivery times\n- Contact assigned shoppers\n- Get delivery confirmations"
+        },
+        {
+          "id": "delivery-settings",
+          "title": "Understanding Delivery Settings",
+          "content": "Our delivery system is highly configurable to meet your business needs:\n\n### Base Fees\n- **Delivery Fee**: Standard charge for delivery service\n- **Service Fee**: Additional fee for platform usage\n- **Distance Surcharge**: Extra charges based on delivery distance\n\n### Time-Based Settings\n- **Rush Hour Pricing**: Increased rates during peak hours\n- **Off-Peak Discounts**: Reduced rates during slower periods\n- **Maximum Delivery Time**: Standard 90-minute delivery window\n\n### Delivery Zones\n1. **Zone Configuration**\n   - Define service areas\n   - Set zone-specific pricing\n   - Configure coverage boundaries\n\n2. **Zone Types**\n   - Urban (high density)\n   - Suburban (medium density)\n   - Rural (extended range)\n\n### Time Slots\n- **Scheduling Windows**\n   - Morning slots (6 AM - 12 PM)\n   - Afternoon slots (12 PM - 6 PM)\n   - Evening slots (6 PM - 10 PM)\n\n- **Capacity Management**\n   - Shopper availability\n   - Order volume limits\n   - Buffer time between deliveries\n\n### Special Conditions\n1. **Weather Adjustments**\n   - Rain/snow surcharge\n   - Extreme weather protocols\n   - Safety guidelines\n\n2. **Holiday Settings**\n   - Special holiday rates\n   - Modified delivery times\n   - Service availability\n\n3. **Priority Delivery**\n   - Express delivery options\n   - Premium service fees\n   - Guaranteed delivery times"
+        }
+      ]
+    },
+    {
+      "id": "shoppers",
+      "title": "Shopper Management",
+      "icon": "Users",
+      "articles": [
+        {
+          "id": "shopper-performance",
+          "title": "Understanding Shopper Performance",
+          "content": "Shoppers are ranked based on several metrics:\n\n### Performance Badges\n\n🏆 Elite (95%+ on-time)\n- Exceptional performance\n- Consistently delivers on time\n- Highest priority for new orders\n\n⭐ Great (90-94% on-time)\n- Very reliable\n- Rarely delivers late\n- High priority for orders\n\n👍 Good (80-89% on-time)\n- Meets expectations\n- Generally reliable\n\n⚠️ Needs Work (70-79% on-time)\n- Below target\n- Improvement needed\n- Additional monitoring\n\n❌ Poor (<70% on-time)\n- Significantly below expectations\n- Requires immediate attention\n\n### Time Targets\n- Standard delivery: 1 hour 30 minutes maximum\n- Timer starts at order acceptance\n- Includes pickup and delivery time"
+        },
+        {
+          "id": "manage-shoppers",
+          "title": "Managing Shoppers",
+          "content": "Effectively manage your delivery team:\n\n1. View shopper profiles\n2. Monitor performance metrics\n3. Handle scheduling\n4. Process payments\n5. Review customer feedback"
+        }
+      ]
+    },
+    {
+      "id": "financial",
+      "title": "Financial Management",
+      "icon": "Wallet",
+      "articles": [
+        {
+          "id": "wallet-management",
+          "title": "Wallet Management",
+          "content": "Managing financial transactions:\n\n- View wallet balances\n- Process withdrawals\n- Track earnings\n- Handle refunds"
+        },
+        {
+          "id": "payment-processing",
+          "title": "Payment Processing",
+          "content": "Understanding payment flows:\n\n1. Order payment collection\n2. Shopper earnings calculation\n3. Service fee breakdown\n4. Refund processing"
+        }
+      ]
+    },
+    {
+      "id": "support",
+      "title": "Customer Support",
+      "icon": "Headphones",
+      "articles": [
+        {
+          "id": "create-ticket",
+          "title": "Creating Support Tickets",
+          "content": "To create a support ticket:\n\n1. Navigate to Support section\n2. Click 'New Ticket'\n3. Select issue category\n4. Provide details\n5. Attach relevant files\n6. Submit ticket"
+        },
+        {
+          "id": "track-resolution",
+          "title": "Tracking Issue Resolution",
+          "content": "Monitor support ticket status:\n\n- View ticket history\n- Check resolution progress\n- Communicate with support team\n- Rate support experience"
+        }
+      ]
+    }
+  ]
+}

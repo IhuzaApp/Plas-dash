@@ -1,0 +1,57 @@
+query GetProducts {
+  Products {
+    category
+    created_at
+    id
+    image
+    is_active
+    measurement_unit
+    productName_id
+    price
+    quantity
+    reorder_point
+    shop_id
+    supplier
+    updated_at
+    ProductName {
+      id
+      name
+      barcode
+      sku
+      description
+      image
+      create_at
+    }
+    Shop {
+      address
+      category_id
+      created_at
+      description
+      id
+      image
+      is_active
+      latitude
+      longitude
+      name
+      operating_hours
+      updated_at
+    }
+    Order_Items {
+      quantity
+      product_id
+      price
+      order_id
+      id
+      created_at
+    }
+    Cart_Items {
+      updated_at
+      quantity
+      product_id
+      price
+      id
+      created_at
+      cart_id
+    }
+  }
+}

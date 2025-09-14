@@ -1,0 +1,5 @@
+mutation AddCart($total: String = "", $shop_id: uuid = "", $user_id: uuid = "") {
+  insert_Carts(objects: { total: $total, is_active: true, shop_id: $shop_id, user_id: $user_id }) {
+    affected_rows
+  }
+}

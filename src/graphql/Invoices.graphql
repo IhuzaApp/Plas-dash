@@ -1,0 +1,49 @@
+query GetInvoiceDetails {
+  Invoices {
+    created_at
+    customer_id
+    delivery_fee
+    discount
+    id
+    invoice_items
+    invoice_number
+    order_id
+    service_fee
+    status
+    subtotal
+    tax
+    total_amount
+  }
+}
+
+mutation addInvoiceDetails(
+  $customer_id: uuid = ""
+  $delivery_fee: String = ""
+  $discount: String = ""
+  $invoice_items: jsonb = ""
+  $invoice_number: String = ""
+  $order_id: uuid = ""
+  $service_fee: String = ""
+  $status: String = ""
+  $subtotal: String = ""
+  $tax: String = ""
+  $total_amount: String = ""
+) {
+  insert_Invoices(
+    objects: {
+      customer_id: $customer_id
+      delivery_fee: $delivery_fee
+      discount: $discount
+      invoice_items: $invoice_items
+      invoice_number: $invoice_number
+      order_id: $order_id
+      service_fee: $service_fee
+      status: $status
+      subtotal: $subtotal
+      tax: $tax
+      total_amount: $total_amount
+    }
+  ) {
+    affected_rows
+  }
+}

@@ -1,0 +1,32 @@
+mutation RegisterShopper(
+  $full_name: String!
+  $address: String!
+  $phone_number: String!
+  $national_id: String!
+  $driving_license: String
+  $transport_mode: String!
+  $profile_photo: String
+  $user_id: uuid!
+) {
+  insert_shoppers_one(
+    object: {
+      full_name: $full_name
+      address: $address
+      phone_number: $phone_number
+      national_id: $national_id
+      driving_license: $driving_license
+      transport_mode: $transport_mode
+      profile_photo: $profile_photo
+      status: "pending"
+      active: false
+      background_check_completed: false
+      onboarding_step: "application_submitted"
+      user_id: $user_id
+    }
+  ) {
+    id
+    status
+    active
+    onboarding_step
+  }
+}

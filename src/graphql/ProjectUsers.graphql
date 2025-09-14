@@ -1,0 +1,47 @@
+query getProjectAllUsers {
+  ProjectUsers {
+    MembershipId
+    TwoAuth_enabled
+    created_at
+    device_details
+    email
+    gender
+    id
+    is_active
+    last_Login
+    password
+    privileges
+    profile
+    role
+    username
+  }
+}
+
+mutation AddProjectUsers(
+  $device_details: String = ""
+  $email: String = ""
+  $gender: String = ""
+  $is_active: Boolean = false
+  $password: String = ""
+  $privileges: jsonb = ""
+  $profile: String = ""
+  $role: String = ""
+  $username: String = ""
+) {
+  insert_ProjectUsers(
+    objects: {
+      TwoAuth_enabled: false
+      device_details: $device_details
+      email: $email
+      gender: $gender
+      is_active: $is_active
+      password: $password
+      privileges: $privileges
+      profile: $profile
+      role: $role
+      username: $username
+    }
+  ) {
+    affected_rows
+  }
+}
