@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useOrders } from '@/hooks/useHasuraApi';
+import {
+  useOrders,
+  useReelOrders,
+  useBusinessOrders,
+  useRestaurantOrders,
+} from '@/hooks/useHasuraApi';
 import { Loader2, Maximize2, X } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -13,86 +18,109 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
+const MAX_ORDERS = 12;
 
-// Set to true to use dummy data for development
-const DUMMY_MODE = true;
-
-const DUMMY_ORDERS = [
-  {
-    id: '1',
-    OrderID: '1001',
-    created_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    shopper_id: null,
-    status: 'pending',
-    address: '123 Main St',
-    shop: 'SuperMart',
-  },
-  {
-    id: '2',
-    OrderID: '1002',
-    created_at: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
-    shopper_id: null,
-    status: 'pending',
-    address: '456 Oak Ave',
-    shop: 'FreshFoods',
-  },
-  {
-    id: '3',
-    OrderID: '1003',
-    created_at: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-    shopper_id: null,
-    status: 'pending',
-    address: '789 Pine Rd',
-    shop: 'MegaMarket',
-  },
-  {
-    id: '4',
-    OrderID: '1004',
-    created_at: new Date(Date.now() - 16 * 60 * 1000).toISOString(),
-    shopper_id: null,
-    status: 'pending',
-    address: '321 Maple St',
-    shop: 'QuickShop',
-  },
-  {
-    id: '5',
-    OrderID: '1005',
-    created_at: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
-    shopper_id: null,
-    status: 'pending',
-    address: '654 Elm St',
-    shop: 'SuperMart',
-  },
-  {
-    id: '6',
-    OrderID: '1006',
-    created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    shopper_id: null,
-    status: 'pending',
-    address: '987 Cedar Ave',
-    shop: 'FreshFoods',
-  },
-];
-
-function isDummyOrder(order: any): order is { address: string; shop: string } {
-  return DUMMY_MODE;
-}
+type UnifiedOverdueOrder = {
+  id: string;
+  OrderID: string;
+  type: 'regular' | 'reel' | 'restaurant' | 'business';
+  created_at: string;
+  status: string;
+  shopper_id: string | null;
+  addressLabel: string;
+  shopLabel: string;
+};
 
 const OrdersOverdueCard: React.FC = () => {
-  const { data, isLoading } = useOrders();
+  const { data: ordersData, isLoading: loadingOrders } = useOrders();
+  const { data: reelData, isLoading: loadingReel } = useReelOrders();
+  const { data: businessData, isLoading: loadingBusiness } = useBusinessOrders();
+  const { data: restaurantData, isLoading: loadingRestaurant } = useRestaurantOrders();
+
   const now = Date.now();
   const [open, setOpen] = useState(false);
 
-  const overdueOrders = DUMMY_MODE
-    ? DUMMY_ORDERS
-    : (data?.Orders || []).filter(order => {
-        if (order.shopper_id) return false;
-        const created = new Date(order.created_at).getTime();
-        return now - created > FIFTEEN_MINUTES;
-      });
-  const loading = DUMMY_MODE ? false : isLoading;
+  const overdueOrders = useMemo(() => {
+    const regular = (ordersData?.Orders || []).map((o: any) => ({
+      id: o.id,
+      OrderID: o.OrderID || o.id,
+      type: 'regular' as const,
+      created_at: o.created_at,
+      status: o.status,
+      shopper_id: o.shopper_id ?? null,
+      addressLabel: o.Address?.street || o.Address?.city || 'N/A',
+      shopLabel: o.Shop?.name || o.shop?.name || 'N/A',
+    }));
+    const reel = (reelData?.reel_orders || []).map((o: any) => ({
+      id: o.id,
+      OrderID: o.OrderID ?? o.id,
+      type: 'reel' as const,
+      created_at: o.created_at,
+      status: o.status,
+      shopper_id: o.shopper_id ?? null,
+      addressLabel: o.Address?.street || o.Address?.city || 'N/A',
+      shopLabel: o.Shop?.name || o.Reel?.Shops?.name || 'Reel',
+    }));
+    const business = (businessData?.orders || []).map((o: any) => ({
+      id: o.id,
+      OrderID: o.OrderID ?? o.id,
+      type: 'business' as const,
+      created_at: o.created_at,
+      status: o.status ?? 'PENDING',
+      shopper_id: o.shopper_id ?? null,
+      addressLabel: o.deliveryAddress?.street || o.deliveryAddress?.city || 'N/A',
+      shopLabel: o.business_store?.name || 'Business',
+    }));
+    const restaurant = (restaurantData?.orders || []).map((o: any) => ({
+      id: o.id,
+      OrderID: o.OrderID ?? o.id,
+      type: 'restaurant' as const,
+      created_at: o.created_at,
+      status: o.status,
+      shopper_id: o.shopper_id ?? null,
+      addressLabel: o.Address?.street || o.Address?.city || 'N/A',
+      shopLabel: o.Restaurant?.name || 'Restaurant',
+    }));
+
+    const all: UnifiedOverdueOrder[] = [
+      ...regular,
+      ...reel,
+      ...business,
+      ...restaurant,
+    ].filter((order) => {
+      if (order.shopper_id) return false;
+      const created = new Date(order.created_at).getTime();
+      return now - created > FIFTEEN_MINUTES;
+    });
+
+    const sorted = all.sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    return sorted.slice(0, MAX_ORDERS);
+  }, [
+    ordersData,
+    reelData,
+    businessData,
+    restaurantData,
+    now,
+  ]);
+
+  const loading =
+    loadingOrders || loadingReel || loadingBusiness || loadingRestaurant;
+
+  const typeBadge = (type: UnifiedOverdueOrder['type']) => {
+    const map = {
+      regular: { label: 'Regular', class: 'bg-blue-500/10 text-blue-600' },
+      reel: { label: 'Reel', class: 'bg-purple-500/10 text-purple-600' },
+      restaurant: { label: 'Restaurant', class: 'bg-orange-500/10 text-orange-600' },
+      business: { label: 'Business', class: 'bg-green-500/10 text-green-600' },
+    };
+    const c = map[type];
+    return <Badge variant="secondary" className={c.class}>{c.label}</Badge>;
+  };
 
   return (
     <>
@@ -114,14 +142,19 @@ const OrdersOverdueCard: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="font-bold text-lg mb-2">{overdueOrders.length} order(s)</div>
+              <div className="font-bold text-lg mb-2">
+                {overdueOrders.length} order(s) (max {MAX_ORDERS})
+              </div>
               <ul className="space-y-1">
-                {overdueOrders.slice(0, 5).map(order => (
+                {overdueOrders.slice(0, 5).map((order) => (
                   <li
-                    key={order.id}
-                    className="flex justify-between text-sm border-b pb-1 last:border-b-0"
+                    key={`${order.type}-${order.id}`}
+                    className="flex justify-between items-center text-sm border-b pb-1 last:border-b-0"
                   >
-                    <span>#{order.OrderID}</span>
+                    <span className="flex items-center gap-2">
+                      #{order.OrderID}
+                      {typeBadge(order.type)}
+                    </span>
                     <span className="text-muted-foreground">
                       {formatDistanceToNow(parseISO(order.created_at), { addSuffix: true })}
                     </span>
@@ -130,7 +163,7 @@ const OrdersOverdueCard: React.FC = () => {
               </ul>
               {overdueOrders.length > 5 && (
                 <Button variant="link" size="sm" onClick={() => setOpen(true)} className="px-0">
-                  View all
+                  View all ({overdueOrders.length})
                 </Button>
               )}
             </div>
@@ -140,7 +173,7 @@ const OrdersOverdueCard: React.FC = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-8">
           <DialogHeader className="flex flex-row items-center justify-between mb-4">
-            <DialogTitle className="text-2xl">All Overdue Unassigned Orders</DialogTitle>
+            <DialogTitle className="text-2xl">All Overdue Unassigned Orders (max {MAX_ORDERS})</DialogTitle>
             <Button variant="ghost" size="icon" onClick={() => setOpen(false)} title="Close">
               <X className="w-6 h-6" />
             </Button>
@@ -152,37 +185,29 @@ const OrdersOverdueCard: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-1/12">Order ID</TableHead>
+                    <TableHead className="w-1/12">Type</TableHead>
                     <TableHead className="w-2/12">Status</TableHead>
                     <TableHead className="w-2/12">Age</TableHead>
                     <TableHead className="w-3/12">Address</TableHead>
-                    <TableHead className="w-2/12">Supermarket/Restaurant</TableHead>
+                    <TableHead className="w-2/12">Shop / Restaurant</TableHead>
                     <TableHead className="w-2/12 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {overdueOrders.map((order, idx) => (
-                    <TableRow key={order.id} className={idx % 2 === 0 ? 'bg-white/70' : 'bg-muted'}>
+                    <TableRow key={`${order.type}-${order.id}`} className={idx % 2 === 0 ? 'bg-white/70' : 'bg-muted'}>
                       <TableCell className="font-mono font-semibold">#{order.OrderID}</TableCell>
+                      <TableCell>{typeBadge(order.type)}</TableCell>
                       <TableCell>
-                        {DUMMY_MODE ? (
-                          <span className="inline-block px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold">
-                            {order.status}
-                          </span>
-                        ) : (
-                          <span className="inline-block px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs font-semibold">
-                            {order.status}
-                          </span>
-                        )}
+                        <span className="inline-block px-2 py-1 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs font-semibold">
+                          {order.status}
+                        </span>
                       </TableCell>
                       <TableCell>
                         {formatDistanceToNow(parseISO(order.created_at), { addSuffix: true })}
                       </TableCell>
-                      <TableCell>
-                        {isDummyOrder(order) ? order.address : order.Address?.street || 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        {isDummyOrder(order) ? order.shop : (order as any).Shop?.name || 'N/A'}
-                      </TableCell>
+                      <TableCell>{order.addressLabel}</TableCell>
+                      <TableCell>{order.shopLabel}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button size="sm" variant="outline" disabled>
                           Assign
@@ -199,7 +224,7 @@ const OrdersOverdueCard: React.FC = () => {
             <div className="mt-6">
               <div className="font-semibold mb-2 text-lg">Settings (coming soon):</div>
               <div className="text-muted-foreground text-base">
-                Here you can add actions or settings for overdue orders.
+                Actions or settings for overdue orders.
               </div>
             </div>
           </div>
