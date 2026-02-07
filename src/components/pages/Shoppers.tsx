@@ -35,7 +35,9 @@ const Shoppers = () => {
       .toUpperCase();
   };
 
-  const activeShoppers = shoppers.filter(s => s.active && s.status === 'approved');
+  const activeShoppers = shoppers.filter(
+    s => s.active && (s.status === 'approved' || s.status === 'completed')
+  );
   const pendingShoppers = shoppers.filter(s => (s.status ?? '') === 'pending');
   const backgroundCheckedShoppers = shoppers.filter(s => Boolean(s.background_check_completed));
 
@@ -176,19 +178,21 @@ const Shoppers = () => {
                       <TableCell className="min-w-[90px]">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                            shopper.status === 'approved' && shopper.active
+                            (shopper.status === 'approved' || shopper.status === 'completed') &&
+                            shopper.active
                               ? 'bg-green-100 text-green-800'
                               : shopper.status === 'pending'
                                 ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-gray-100 text-gray-800'
                           }`}
                         >
-                          {shopper.status === 'approved'
+                          {shopper.status === 'approved' || shopper.status === 'completed'
                             ? shopper.active
                               ? 'Active'
                               : 'Inactive'
                             : shopper.status
-                              ? shopper.status.charAt(0).toUpperCase() + shopper.status.slice(1)
+                              ? String(shopper.status).charAt(0).toUpperCase() +
+                                String(shopper.status).slice(1)
                               : '—'}
                         </span>
                       </TableCell>
