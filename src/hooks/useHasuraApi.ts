@@ -685,6 +685,7 @@ export function useShopperDetail(userId: string | null) {
       Orders: any[];
       summary: ShopperDetailSummary | null;
       withdraw_requests?: any[];
+      revenues?: any[];
     },
     Error
   >({
@@ -695,12 +696,14 @@ export function useShopperDetail(userId: string | null) {
         Orders: any[];
         summary: ShopperDetailSummary | null;
         withdraw_requests?: any[];
+        revenues?: any[];
       }>(`/api/queries/shoppers?user_id=${encodeURIComponent(userId || '')}`);
       return {
         shoppers: res.shoppers || [],
         Orders: res.Orders || [],
         summary: res.summary ?? null,
         withdraw_requests: res.withdraw_requests ?? [],
+        revenues: res.revenues ?? [],
       };
     },
     enabled: !!userId,

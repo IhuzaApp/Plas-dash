@@ -25,6 +25,38 @@ interface RevenuesTabProps {
   ) => React.ReactNode;
 }
 
+function parseProducts(products: any): Array<{ product?: string; name?: string; quantity?: number; price?: number; final_price?: number }> {
+  if (products == null) return [];
+  if (Array.isArray(products)) return products;
+  if (typeof products === 'string') {
+    try {
+      const parsed = JSON.parse(products);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function getOrderIdAndSource(revenue: any): { orderId: string; source: string } {
+  const order = revenue.Order ?? revenue.order;
+  const reelOrder = revenue.reel_orders ?? revenue.reel_order;
+  const restaurantOrder = revenue.restaurant_orders ?? revenue.restaurant_order;
+  const businessOrder = revenue.businessProductOrders ?? revenue.businessProductOrder;
+
+  if (order?.OrderID != null) return { orderId: String(order.OrderID), source: 'Regular' };
+  if (reelOrder?.OrderID != null) return { orderId: String(reelOrder.OrderID), source: 'Reel' };
+  if (restaurantOrder?.OrderID != null) return { orderId: String(restaurantOrder.OrderID), source: 'Restaurant' };
+  if (businessOrder?.OrderID != null) return { orderId: String(businessOrder.OrderID), source: 'Business' };
+  // Fallback when nested relations are missing: use FK ids and infer source
+  if (revenue.order_id) return { orderId: String(revenue.order_id).slice(0, 8), source: 'Regular' };
+  if (revenue.reel_order_id) return { orderId: String(revenue.reel_order_id).slice(0, 8), source: 'Reel' };
+  if (revenue.restaurant_order_id) return { orderId: String(revenue.restaurant_order_id).slice(0, 8), source: 'Restaurant' };
+  if (revenue.businessOrder_Id) return { orderId: String(revenue.businessOrder_Id).slice(0, 8), source: 'Business' };
+  return { orderId: '—', source: revenue.type || '—' };
+}
+
 const RevenuesTab: React.FC<RevenuesTabProps> = ({
   paginatedRevenues,
   revenuesPage,
@@ -46,6 +78,7 @@ const RevenuesTab: React.FC<RevenuesTabProps> = ({
           <TableHeader>
             <TableRow>
               <TableHead>Order ID</TableHead>
+              <TableHead>Source</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Commission %</TableHead>
@@ -55,23 +88,50 @@ const RevenuesTab: React.FC<RevenuesTabProps> = ({
           </TableHeader>
           <TableBody>
             {paginatedRevenues && paginatedRevenues.length > 0 ? (
-              paginatedRevenues.map((revenue: any) => (
-                <TableRow key={revenue.id}>
-                  <TableCell className="font-medium">#{revenue.order_id}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {revenue.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-medium">{formatCurrency(revenue.amount)}</TableCell>
-                  <TableCell>{revenue.commission_percentage}%</TableCell>
-                  <TableCell className="max-w-xs truncate">{revenue.products}</TableCell>
-                  <TableCell>{format(new Date(revenue.created_at), 'MMM d, yyyy')}</TableCell>
-                </TableRow>
-              ))
+              paginatedRevenues.map((revenue: any) => {
+                const { orderId, source } = getOrderIdAndSource(revenue);
+                const items = parseProducts(revenue.products);
+                return (
+                  <TableRow key={revenue.id}>
+                    <TableCell className="font-medium">#{orderId}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="capitalize">
+                        {source}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">
+                        {revenue.type || '—'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">{formatCurrency(String(revenue.amount))}</TableCell>
+                    <TableCell>{revenue.commission_percentage != null ? `${revenue.commission_percentage}%` : '—'}</TableCell>
+                    <TableCell className="max-w-sm">
+                      {items.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-0.5 text-xs">
+                          {items.map((item, i) => {
+                            const name = item.product ?? item.name ?? 'Item';
+                            const qty = item.quantity ?? 1;
+                            const price = item.final_price ?? item.price ?? 0;
+                            return (
+                              <li key={i}>
+                                {name} × {qty}
+                                {price ? ` @ ${formatCurrency(String(price))}` : ''}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>{revenue.created_at ? format(new Date(revenue.created_at), 'MMM d, yyyy') : '—'}</TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   {totalRevenues === 0 ? 'No revenues found' : 'Loading revenues...'}
                 </TableCell>
               </TableRow>

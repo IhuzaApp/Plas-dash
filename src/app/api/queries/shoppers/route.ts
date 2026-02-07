@@ -272,6 +272,112 @@ const GET_WITHDRAW_REQUESTS = gql`
   }
 `;
 
+// Full Revenue list for shopper (regular, reel, business, restaurant) with Order, Shop, reel_orders, restaurant_orders
+const GET_REVENUE_BY_SHOPPER = gql`
+  query GetRevenueByShopper($shopper_id: uuid!) {
+    Revenue(
+      where: { shopper_id: { _eq: $shopper_id } }
+      order_by: { created_at: desc }
+    ) {
+      id
+      amount
+      businessOrder_Id
+      commission_percentage
+      created_at
+      order_id
+      products
+      reel_order_id
+      restaurant_id
+      restaurant_order_id
+      shop_id
+      shopper_id
+      type
+      Plasbusiness_id
+      Order {
+        id
+        OrderID
+        delivery_address_id
+        created_at
+        assigned_at
+        combined_order_id
+        pin
+        service_fee
+        shop_id
+        shopper_id
+        status
+        total
+        voucher_code
+        user_id
+        updated_at
+        discount
+        delivery_time
+        delivery_photo_url
+        delivery_notes
+        delivery_fee
+      }
+      Shop {
+        id
+        name
+        address
+        category_id
+        description
+        logo
+        image
+        latitude
+        longitude
+        phone
+        operating_hours
+        is_active
+      }
+      Restaurants {
+        id
+        name
+        logo
+        email
+        location
+        lat
+        long
+        created_at
+      }
+      reel_orders {
+        id
+        OrderID
+        assigned_at
+        combined_order_id
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_note
+        delivery_time
+        discount
+        found
+      }
+      restaurant_orders {
+        id
+        OrderID
+        assigned_at
+        combined_order_id
+        delivery_time
+        delivery_photo_url
+        delivery_notes
+        delivery_fee
+        delivery_address_id
+        found
+        discount
+        pin
+        restaurant_id
+        shopper_id
+        status
+        voucher_code
+      }
+      businessProductOrders {
+        id
+        OrderID
+      }
+    }
+  }
+`;
+
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | null)?.id;
@@ -305,6 +411,7 @@ export async function GET(request: Request) {
           Orders: [],
           summary: null,
           withdraw_requests: [],
+          revenues: [],
         });
       }
       let withdrawRequests: any[] = [];
@@ -315,6 +422,16 @@ export async function GET(request: Request) {
         withdrawRequests = withdrawData.withDraweRequest || [];
       } catch (_) {
         // Withdraw table/query may not exist in all environments
+      }
+      let revenues: any[] = [];
+      try {
+        const revenueData = await hasuraClient.request<{
+          Revenue?: any[];
+        }>(GET_REVENUE_BY_SHOPPER, { shopper_id: shopper.id });
+        revenues = revenueData.Revenue || [];
+      } catch (_) {
+        // Fallback to nested Revenues if root Revenue query fails (e.g. different schema)
+        revenues = shopper.Revenues || [];
       }
       const wallet = shopper.User?.Wallets?.[0];
       const ratings = shopper.User?.Ratings || [];
@@ -373,6 +490,7 @@ export async function GET(request: Request) {
         Orders: orders,
         summary,
         withdraw_requests: withdrawRequests,
+        revenues,
       });
     }
     const data = await hasuraClient.request<{ shoppers: any[] }>(GET_SHOPPERS);
