@@ -207,7 +207,7 @@ const Orders = () => {
       OrderID: order.OrderID || order.id,
     }));
 
-    const reelOrdersMapped: UnifiedOrder[] = reelOrderItems.map(reelOrder => ({
+    const reelOrdersMapped: UnifiedOrder[] = reelOrderItems.map((reelOrder: any) => ({
       id: reelOrder.id,
       OrderID: reelOrder.OrderID,
       type: 'reel' as const,
@@ -234,6 +234,7 @@ const Orders = () => {
       Shoppers: reelOrder.Shoppers,
       Address: reelOrder.Address,
       User: reelOrder.User,
+      Shop: reelOrder.Shop,
     }));
 
     const businessOrdersMapped: UnifiedOrder[] = businessOrderItems.map((o: any) => ({
@@ -533,7 +534,7 @@ const Orders = () => {
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{allOrders.length}</div>
@@ -550,6 +551,18 @@ const Orders = () => {
           <CardContent className="pt-6">
             <div className="text-2xl font-bold">{inProgressOrders.length}</div>
             <p className="text-muted-foreground">In Progress</p>
+          </CardContent>
+        </Card>
+        <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20">
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold text-orange-700 dark:text-orange-400">{delayedOrders.length}</div>
+            <p className="text-muted-foreground">Delayed Orders</p>
+          </CardContent>
+        </Card>
+        <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{deliveredOrders.length}</div>
+            <p className="text-muted-foreground">Delivered</p>
           </CardContent>
         </Card>
         <Card>

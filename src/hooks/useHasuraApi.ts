@@ -3,7 +3,6 @@ import { hasuraRequest } from '../lib/hasura';
 import { apiGet } from '../lib/api';
 import {
   GET_PRODUCTS_BY_SHOP,
-  GET_REEL_ORDERS,
   GET_RESTAURANTS,
   GET_REELS,
   GET_ADDRESSES,
@@ -778,11 +777,14 @@ export function useSearchProductNames(searchTerm: string) {
   });
 }
 
-// Type-safe hook for Reel Orders
+// Admin: all reel orders (from API route; includes User, Address, Reel, Shoppers, Shop)
 export function useReelOrders() {
   return useQuery<{ reel_orders: ReelOrder[] }, Error>({
-    queryKey: ['reel-orders'],
-    queryFn: () => hasuraRequest(GET_REEL_ORDERS, {}),
+    queryKey: ['api', 'all-reel-orders'],
+    queryFn: async () => {
+      const res = await apiGet<{ orders: any[] }>('/api/queries/all-reel-orders');
+      return { reel_orders: res.orders || [] };
+    },
   });
 }
 

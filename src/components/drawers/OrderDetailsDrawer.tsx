@@ -311,11 +311,12 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
 
           {/* Shop / Restaurant / Business (merchant info with logo) */}
           {(order.type === 'regular' && order.Shop) ||
+          (order.type === 'reel' && order.Shop) ||
           (order.type === 'restaurant' && order.Restaurant) ||
           (order.type === 'business' && order.business_store) ? (
             <div>
               <h3 className="text-lg font-semibold mb-3">
-                {order.type === 'regular'
+                {order.type === 'regular' || order.type === 'reel'
                   ? 'Shop'
                   : order.type === 'restaurant'
                     ? 'Restaurant'
@@ -324,18 +325,21 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
               <Card className="p-4">
                 <div className="flex items-center gap-4">
                   {(order.type === 'regular' && order.Shop?.image) ||
+                  (order.type === 'reel' && order.Shop?.image) ||
                   (order.type === 'restaurant' && order.Restaurant?.logo) ||
                   (order.type === 'business' && order.business_store?.image) ? (
                     <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-muted border">
                       <img
                         src={
                           (order.type === 'regular' && order.Shop?.image) ||
+                          (order.type === 'reel' && order.Shop?.image) ||
                           (order.type === 'restaurant' && order.Restaurant?.logo) ||
                           (order.type === 'business' && order.business_store?.image) ||
                           ''
                         }
                         alt={
                           (order.type === 'regular' && order.Shop?.name) ||
+                          (order.type === 'reel' && order.Shop?.name) ||
                           (order.type === 'restaurant' && order.Restaurant?.name) ||
                           (order.type === 'business' && order.business_store?.name) ||
                           'Merchant'
@@ -346,6 +350,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                   ) : (
                     <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-muted border flex items-center justify-center text-xl font-semibold text-muted-foreground">
                       {(order.type === 'regular' && order.Shop?.name?.[0]) ||
+                        (order.type === 'reel' && order.Shop?.name?.[0]) ||
                         (order.type === 'restaurant' && order.Restaurant?.name?.[0]) ||
                         (order.type === 'business' && order.business_store?.name?.[0]) ||
                         '?'}
@@ -354,11 +359,12 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">
                       {(order.type === 'regular' && order.Shop?.name) ||
+                        (order.type === 'reel' && order.Shop?.name) ||
                         (order.type === 'restaurant' && order.Restaurant?.name) ||
                         (order.type === 'business' && order.business_store?.name) ||
                         '—'}
                     </p>
-                    {order.type === 'regular' && order.Shop?.address && (
+                    {(order.type === 'regular' || order.type === 'reel') && order.Shop?.address && (
                       <p className="text-sm text-muted-foreground">{order.Shop.address}</p>
                     )}
                     {order.type === 'restaurant' && order.Restaurant && (
