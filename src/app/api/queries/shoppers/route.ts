@@ -41,6 +41,9 @@ const GET_SHOPPERS = gql`
       guarantorPhone
       guarantorRelationship
       Police_Clearance_Cert
+      User {
+        gender
+      }
     }
   }
 `;

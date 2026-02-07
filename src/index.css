@@ -38,6 +38,13 @@
 
     --radius: 0.5rem;
 
+    /* Chart colors: green, blue, red, yellow, orange */
+    --chart-1: 122 39% 49%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 0 72% 51%;
+    --chart-4: 45 93% 47%;
+    --chart-5: 25 95% 53%;
+
     /* Sidebar light theme */
     --sidebar-background: 122 39% 95%;
     --sidebar-foreground: 140 5% 12%;
@@ -81,6 +88,13 @@
     --border: 140 5% 25%;
     --input: 140 5% 25%;
     --ring: 122 39% 39%;
+
+    /* Chart colors (dark): bright green, blue, red, yellow, orange for visibility */
+    --chart-1: 142 52% 58%;
+    --chart-2: 217 85% 68%;
+    --chart-3: 0 78% 62%;
+    --chart-4: 48 96% 58%;
+    --chart-5: 28 95% 62%;
 
     /* Sidebar dark theme */
     --sidebar-background: 140 5% 12%;

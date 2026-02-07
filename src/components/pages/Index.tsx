@@ -5,6 +5,13 @@ import RecentOrders from '@/components/dashboard/RecentOrders';
 import TopShoppers from '@/components/dashboard/TopShoppers';
 import OrdersChart from '@/components/dashboard/OrdersChart';
 import OrdersOverdueCard from '@/components/dashboard/OrdersOverdueCard';
+import ShoppersByGenderChart from '@/components/dashboard/ShoppersByGenderChart';
+import ShoppersBySignupChart from '@/components/dashboard/ShoppersBySignupChart';
+import ApprovedShoppersOverTimeChart from '@/components/dashboard/ApprovedShoppersOverTimeChart';
+import OrderTypesComparisonChart from '@/components/dashboard/OrderTypesComparisonChart';
+import TicketsComparisonChart from '@/components/dashboard/TicketsComparisonChart';
+import PlatformJoinersChart from '@/components/dashboard/PlatformJoinersChart';
+import GuestVsRegisteredChart from '@/components/dashboard/GuestVsRegisteredChart';
 import {
   ShoppingCart,
   User,
@@ -179,6 +186,21 @@ const Index = () => {
         )}
 
         <OrdersChart />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <ShoppersByGenderChart />
+          <ApprovedShoppersOverTimeChart />
+          <ShoppersBySignupChart />
+        </div>
+
+        <OrderTypesComparisonChart />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TicketsComparisonChart />
+          <GuestVsRegisteredChart />
+        </div>
+
+        <PlatformJoinersChart />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <RecentOrders />

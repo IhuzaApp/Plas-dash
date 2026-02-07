@@ -15,6 +15,7 @@ const GET_USERS = gql`
       updated_at
       gender
       is_active
+      is_guest
       password_hash
       phone
       profile_picture
