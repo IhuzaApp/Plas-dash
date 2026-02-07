@@ -225,12 +225,13 @@ interface OrderType {
   service_fee: string;
   discount: string;
   voucher_code: string | null;
-  User: {
+  User?: {
     id: string;
     name: string;
     email: string;
+    phone?: string;
   };
-  Order_Items: Array<{
+  Order_Items?: Array<{
     id: string;
     product_id: string;
     quantity: number;
@@ -264,6 +265,12 @@ interface ReelOrder {
   updated_at: string;
   user_id: string;
   voucher_code: string | null;
+  User?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
   Reel: {
     Price: string;
     Product: string;
@@ -776,6 +783,28 @@ export function useReelOrders() {
   return useQuery<{ reel_orders: ReelOrder[] }, Error>({
     queryKey: ['reel-orders'],
     queryFn: () => hasuraRequest(GET_REEL_ORDERS, {}),
+  });
+}
+
+// Admin: all business product orders (customer = orderedBy, items = allProducts/units)
+export function useBusinessOrders() {
+  return useQuery<{ orders: any[] }, Error>({
+    queryKey: ['api', 'all-business-orders'],
+    queryFn: async () => {
+      const res = await apiGet<{ orders: any[] }>('/api/queries/all-business-orders');
+      return { orders: res.orders || [] };
+    },
+  });
+}
+
+// Admin: all restaurant orders (customer = orderedBy, items = restaurant_order_items)
+export function useRestaurantOrders() {
+  return useQuery<{ orders: any[] }, Error>({
+    queryKey: ['api', 'all-restaurant-orders'],
+    queryFn: async () => {
+      const res = await apiGet<{ orders: any[] }>('/api/queries/all-restaurant-orders');
+      return { orders: res.orders || [] };
+    },
   });
 }
 

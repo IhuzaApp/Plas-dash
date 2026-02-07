@@ -1459,6 +1459,12 @@ export const GET_REEL_ORDERS = `
       updated_at
       user_id
       voucher_code
+      User {
+        id
+        name
+        email
+        phone
+      }
       Reel {
         Price
         Product

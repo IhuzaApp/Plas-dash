@@ -4,9 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]";
 import { hasuraClient } from "@/lib/hasuraClient";
 import { gql } from "graphql-request";
 
+// Admin dashboard: fetches all products (no filter).
 const GET_PRODUCTS = gql`
   query GetProducts {
-    Products {
+    Products(order_by: { created_at: desc }) {
       id
       ProductName {
         id

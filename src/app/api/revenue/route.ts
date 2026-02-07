@@ -4,9 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]";
 import { hasuraClient } from "@/lib/hasuraClient";
 import { gql } from "graphql-request";
 
+// Admin dashboard: fetches all revenue (no filter).
 const GET_REVENUE = gql`
   query GetRevenue {
-    Revenue {
+    Revenue(order_by: { created_at: desc }) {
       type
       shopper_id
       shop_id

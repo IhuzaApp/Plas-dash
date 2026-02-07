@@ -4,9 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]";
 import { hasuraClient } from "@/lib/hasuraClient";
 import { gql } from "graphql-request";
 
+// Admin dashboard: fetches all users (no filter).
 const GET_USERS = gql`
   query GetUsers {
-    Users {
+    Users(order_by: { created_at: desc }) {
       id
       name
       email

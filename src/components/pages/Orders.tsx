@@ -12,14 +12,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, Loader2, Phone, AlertCircle, Video } from 'lucide-react';
-import { useOrders, useReelOrders, useSystemConfig } from '@/hooks/useHasuraApi';
+import { Search, Filter, Loader2, Phone, AlertCircle, Video, ShoppingBag, UtensilsCrossed } from 'lucide-react';
+import { useOrders, useReelOrders, useBusinessOrders, useRestaurantOrders, useSystemConfig } from '@/hooks/useHasuraApi';
 import { format, differenceInMinutes } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import OrderDetailsDrawer from '@/components/drawers/OrderDetailsDrawer';
-import { Order } from '@/types/order';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { Badge } from '@/components/ui/badge';
 
@@ -38,33 +37,34 @@ const generateShortId = (id: string) => {
   return id.slice(0, 8);
 };
 
-// Unified order interface for both regular and reel orders
+// Unified order interface for regular, reel, business, and restaurant orders
 interface UnifiedOrder {
   id: string;
   OrderID: string;
-  type: 'regular' | 'reel';
+  type: 'regular' | 'reel' | 'business' | 'restaurant';
   status: string;
   total: string;
   created_at: string;
   updated_at: string;
-  delivery_fee: string;
-  service_fee: string;
-  discount: string;
-  voucher_code: string | null;
+  delivery_fee?: string;
+  service_fee?: string;
+  discount?: string;
+  voucher_code?: string | null;
   shopper_id: string | null;
-  user_id: string;
-  delivery_address_id: string;
-  delivery_photo_url: string;
-  delivery_time: string | null;
-  combined_order_id: string | null;
-  shop_id: string;
-  // Regular order specific fields
+  user_id?: string;
+  delivery_address_id?: string;
+  delivery_photo_url?: string;
+  delivery_time?: string | null;
+  combined_order_id?: string | null;
+  shop_id?: string;
+  // Regular order
   delivery_notes?: string;
   Order_Items?: any[];
   User?: {
     id: string;
     name: string;
     email: string;
+    phone?: string;
   };
   Address?: {
     street: string;
@@ -74,10 +74,10 @@ interface UnifiedOrder {
   shopper?: {
     id: string;
     name: string;
-    email: string;
+    email?: string;
     phone: string;
   };
-  // Reel order specific fields
+  // Reel
   quantity?: number;
   reel_id?: string;
   delivery_note?: string;
@@ -96,14 +96,33 @@ interface UnifiedOrder {
     email: string;
     phone: string;
   } | null;
+  // Business order
+  orderedBy?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  allProducts?: any[];
+  units?: string;
+  business_store?: { id: string; name: string; address?: string } | null;
+  // Restaurant order
+  Restaurant?: { id: string; name: string } | null;
+  restaurant_order_items?: any[];
+  itemsCount?: number;
+  unitsCount?: number;
 }
 
 const Orders = () => {
   const { data, isLoading, isError, error } = useOrders();
   const { data: reelOrders } = useReelOrders();
+  const { data: businessOrdersData } = useBusinessOrders();
+  const { data: restaurantOrdersData } = useRestaurantOrders();
   const { data: systemConfig } = useSystemConfig();
-  const orders: Order[] = data?.Orders || [];
+  const orders = data?.Orders || [];
   const reelOrderItems: any[] = reelOrders?.reel_orders || [];
+  const businessOrderItems: any[] = businessOrdersData?.orders || [];
+  const restaurantOrderItems: any[] = restaurantOrdersData?.orders || [];
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -111,7 +130,7 @@ const Orders = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { hasAction } = usePrivilege();
 
-  // Combine regular orders and reel orders into a unified array
+  // Combine regular, reel, business, and restaurant orders into a unified array
   const allOrders: UnifiedOrder[] = useMemo(() => {
     const regularOrders: UnifiedOrder[] = orders.map(order => ({
       ...order,
@@ -119,7 +138,7 @@ const Orders = () => {
       OrderID: order.OrderID || order.id,
     }));
 
-    const reelOrders: UnifiedOrder[] = reelOrderItems.map(reelOrder => ({
+    const reelOrdersMapped: UnifiedOrder[] = reelOrderItems.map(reelOrder => ({
       id: reelOrder.id,
       OrderID: reelOrder.OrderID,
       type: 'reel' as const,
@@ -145,13 +164,49 @@ const Orders = () => {
       Reel: reelOrder.Reel,
       Shoppers: reelOrder.Shoppers,
       Address: reelOrder.Address,
+      User: reelOrder.User,
     }));
 
-    // Combine and sort by creation date (newest first)
-    return [...regularOrders, ...reelOrders].sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    const businessOrdersMapped: UnifiedOrder[] = businessOrderItems.map((o: any) => ({
+      id: o.id,
+      OrderID: o.OrderID ?? o.id,
+      type: 'business' as const,
+      status: o.status ?? 'PENDING',
+      total: o.total,
+      created_at: o.created_at,
+      updated_at: o.updated_at ?? o.created_at,
+      shopper_id: o.shopper_id ?? null,
+      user_id: o.ordered_by ?? '',
+      orderedBy: o.orderedBy,
+      allProducts: o.allProducts,
+      units: o.units,
+      business_store: o.business_store,
+      shopper: o.shopper,
+    }));
+
+    const restaurantOrdersMapped: UnifiedOrder[] = restaurantOrderItems.map((o: any) => ({
+      id: o.id,
+      OrderID: o.OrderID ?? o.id,
+      type: 'restaurant' as const,
+      status: o.status,
+      total: o.total,
+      created_at: o.created_at,
+      updated_at: o.updated_at,
+      shopper_id: o.shopper_id ?? null,
+      user_id: o.user_id ?? '',
+      orderedBy: o.orderedBy,
+      Address: o.Address,
+      Restaurant: o.Restaurant,
+      restaurant_order_items: o.restaurant_order_items,
+      itemsCount: o.itemsCount,
+      unitsCount: o.unitsCount,
+      shopper: o.shopper,
+    }));
+
+    return [...regularOrders, ...reelOrdersMapped, ...businessOrdersMapped, ...restaurantOrdersMapped].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-  }, [orders, reelOrderItems]);
+  }, [orders, reelOrderItems, businessOrderItems, restaurantOrderItems]);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -238,8 +293,11 @@ const Orders = () => {
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    return format(new Date(dateString), 'MMM d, yyyy HH:mm');
+  const formatDateTime = (dateString: string | null | undefined) => {
+    if (dateString == null || dateString === '') return '—';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return '—';
+    return format(date, 'MMM d, yyyy HH:mm');
   };
 
   const pendingOrders = allOrders.filter(order => order.status === 'PENDING');
@@ -249,7 +307,10 @@ const Orders = () => {
     return order.status !== 'PENDING' && statusLower !== 'delivered';
   });
 
-  const totalRevenue = allOrders.reduce((acc, order) => acc + parseFloat(order.total), 0);
+  const totalRevenue = allOrders.reduce(
+    (acc, order) => acc + (parseFloat(String(order.total)) || 0),
+    0
+  );
 
   // Filter orders based on search term
   const filteredOrders = allOrders.filter(order => {
@@ -275,15 +336,27 @@ const Orders = () => {
       return true;
     }
 
-    // Customer name/email match (for regular orders)
-    if (order.User?.name?.toLowerCase().includes(searchLower) ||
-        order.User?.email?.toLowerCase().includes(searchLower)) {
+    // Customer name/email/phone (regular & reel: User; business & restaurant: orderedBy)
+    const customerName = order.User?.name ?? order.orderedBy?.name ?? '';
+    const customerEmail = order.User?.email ?? order.orderedBy?.email ?? '';
+    const customerPhone = order.User?.phone ?? order.orderedBy?.phone ?? '';
+    if (
+      customerName?.toLowerCase().includes(searchLower) ||
+      customerEmail?.toLowerCase().includes(searchLower) ||
+      customerPhone?.toLowerCase().includes(searchLower)
+    ) {
       return true;
     }
 
     // Reel title/description match (for reel orders)
     if (order.Reel?.title?.toLowerCase().includes(searchLower) ||
         order.Reel?.description?.toLowerCase().includes(searchLower)) {
+      return true;
+    }
+
+    // Store/restaurant name (business & restaurant)
+    if (order.business_store?.name?.toLowerCase().includes(searchLower) ||
+        order.Restaurant?.name?.toLowerCase().includes(searchLower)) {
       return true;
     }
 
@@ -349,7 +422,7 @@ const Orders = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{orders.length + reelOrderItems.length}</div>
+            <div className="text-2xl font-bold">{allOrders.length}</div>
             <p className="text-muted-foreground">Total Orders</p>
           </CardContent>
         </Card>
@@ -450,17 +523,42 @@ const Orders = () => {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">
-                          {order.type === 'regular' ? order.User?.name : order.Reel?.title || 'N/A'}
+                          {order.type === 'regular' || order.type === 'reel'
+                            ? (order.User?.name ?? '—')
+                            : (order.orderedBy?.name ?? '—')}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {order.type === 'regular' ? order.User?.email : order.Reel?.description || 'N/A'}
+                          {order.type === 'regular' || order.type === 'reel'
+                            ? (order.User?.email ?? '—')
+                            : (order.orderedBy?.email ?? '—')}
                         </div>
-                        {order.type === 'reel' && (
-                          <Badge variant="outline" className="mt-1">
-                            <Video className="h-3 w-3 mr-1" />
-                            Reel Order
-                          </Badge>
+                        {(order.type === 'regular' ? order.User?.phone : order.orderedBy?.phone) && (
+                          <div className="text-xs text-muted-foreground">
+                            {order.type === 'regular' || order.type === 'reel'
+                              ? order.User?.phone
+                              : order.orderedBy?.phone}
+                          </div>
                         )}
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {order.type === 'reel' && (
+                            <Badge variant="outline" className="gap-0.5">
+                              <Video className="h-3 w-3" />
+                              Reel
+                            </Badge>
+                          )}
+                          {order.type === 'business' && (
+                            <Badge variant="outline" className="gap-0.5">
+                              <ShoppingBag className="h-3 w-3" />
+                              Business
+                            </Badge>
+                          )}
+                          {order.type === 'restaurant' && (
+                            <Badge variant="outline" className="gap-0.5">
+                              <UtensilsCrossed className="h-3 w-3" />
+                              Restaurant
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <span
@@ -470,10 +568,20 @@ const Orders = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {order.type === 'regular' 
-                          ? `${order.Order_Items?.length || 0} items`
-                          : `${order.quantity || 1} item`
-                        }
+                        {order.type === 'regular' &&
+                          `${order.Order_Items?.length ?? 0} item(s)`}
+                        {order.type === 'reel' &&
+                          `${order.quantity ?? 1} item(s)`}
+                        {order.type === 'business' &&
+                          (order.units
+                            ? `${order.units} unit(s)`
+                            : `${
+                                Array.isArray(order.allProducts)
+                                  ? order.allProducts.length
+                                  : 0
+                              } item(s)`)}
+                        {order.type === 'restaurant' &&
+                          `${order.itemsCount ?? order.restaurant_order_items?.length ?? 0} item(s)`}
                       </TableCell>
                       <TableCell>{formatCurrency(order.total)}</TableCell>
                       <TableCell>{formatDateTime(order.created_at)}</TableCell>
@@ -485,8 +593,8 @@ const Orders = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleCallShopper(
-                                order.type === 'regular' 
-                                  ? order.shopper?.phone 
+                                order.type === 'regular' || order.type === 'business' || order.type === 'restaurant'
+                                  ? order.shopper?.phone
                                   : order.Shoppers?.phone
                               )}
                               className="text-yellow-600 hover:text-yellow-700"

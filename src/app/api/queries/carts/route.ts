@@ -4,9 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]";
 import { hasuraClient } from "@/lib/hasuraClient";
 import { gql } from "graphql-request";
 
+// Admin dashboard: fetches all carts (no filter).
 const GET_CARTS = gql`
   query GetCarts {
-    Carts {
+    Carts(order_by: { updated_at: desc }) {
       id
       user_id
       created_at

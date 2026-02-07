@@ -18,33 +18,33 @@ import { Loader2, Video } from 'lucide-react';
 import type { WalletTransaction, Refund } from '@/hooks/useShoppers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-// Unified order interface for both regular and reel orders
+// Unified order interface for regular, reel, business, and restaurant orders
 interface UnifiedOrder {
   id: string;
   OrderID: string;
-  type: 'regular' | 'reel';
+  type: 'regular' | 'reel' | 'business' | 'restaurant';
   status: string;
   total: string;
   created_at: string;
   updated_at: string;
-  delivery_fee: string;
-  service_fee: string;
-  discount: string;
-  voucher_code: string | null;
+  delivery_fee?: string;
+  service_fee?: string;
+  discount?: string;
+  voucher_code?: string | null;
   shopper_id: string | null;
-  user_id: string;
-  delivery_address_id: string;
-  delivery_photo_url: string;
-  delivery_time: string | null;
-  combined_order_id: string | null;
-  shop_id: string;
-  // Regular order specific fields
+  user_id?: string;
+  delivery_address_id?: string;
+  delivery_photo_url?: string;
+  delivery_time?: string | null;
+  combined_order_id?: string | null;
+  shop_id?: string;
   delivery_notes?: string;
   Order_Items?: any[];
   User?: {
     id: string;
     name: string;
     email: string;
+    phone?: string;
   };
   Address?: {
     street: string;
@@ -54,10 +54,9 @@ interface UnifiedOrder {
   shopper?: {
     id: string;
     name: string;
-    email: string;
+    email?: string;
     phone: string;
   };
-  // Reel order specific fields
   quantity?: number;
   reel_id?: string;
   delivery_note?: string;
@@ -76,6 +75,19 @@ interface UnifiedOrder {
     email: string;
     phone: string;
   } | null;
+  orderedBy?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  allProducts?: any[];
+  units?: string;
+  business_store?: { id: string; name: string; address?: string } | null;
+  Restaurant?: { id: string; name: string } | null;
+  restaurant_order_items?: any[];
+  itemsCount?: number;
+  unitsCount?: number;
 }
 
 interface OrderDetailsDrawerProps {
@@ -273,13 +285,13 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                 </div>
                 <div className="flex justify-between">
                   <span>Delivery Fee</span>
-                  <span>{formatCurrency(order.delivery_fee)}</span>
+                  <span>{formatCurrency(order.delivery_fee ?? '0')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Service Fee</span>
-                  <span>{formatCurrency(order.service_fee)}</span>
+                  <span>{formatCurrency(order.service_fee ?? '0')}</span>
                 </div>
-                {order.discount !== '0' && (
+                {order.discount && order.discount !== '0' && (
                   <div className="flex justify-between text-green-600">
                     <span>Discount</span>
                     <span>-{formatCurrency(order.discount)}</span>

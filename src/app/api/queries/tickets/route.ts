@@ -4,9 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]";
 import { hasuraClient } from "@/lib/hasuraClient";
 import { gql } from "graphql-request";
 
+// Admin dashboard: fetches all tickets (no filter).
 const GET_TICKETS = gql`
   query GetTickets {
-    tickets {
+    tickets(order_by: { created_on: desc }) {
       id
       ticket_num
       subject

@@ -20,6 +20,12 @@ query getReelOrders {
     updated_at
     user_id
     voucher_code
+    User {
+      id
+      name
+      email
+      phone
+    }
     Reel {
       Price
       Product

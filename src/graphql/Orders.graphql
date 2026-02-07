@@ -1,6 +1,7 @@
 query GetOrders {
   Orders {
     id
+    OrderID
     user_id
     shopper_id
     total
@@ -47,8 +48,29 @@ query GetOrders {
     service_fee
     discount
     voucher_code
-    OrderID
     shop_id
+    orderedBy {
+      id
+      name
+      email
+      phone
+      profile_picture
+    }
+    Shoppers {
+      id
+      name
+      phone
+      shopper {
+        full_name
+        phone_number
+      }
+    }
+    Shop {
+      id
+      name
+      address
+      image
+    }
     Invoices {
       Proof
       created_at

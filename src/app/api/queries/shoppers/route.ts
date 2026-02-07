@@ -4,9 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]";
 import { hasuraClient } from "@/lib/hasuraClient";
 import { gql } from "graphql-request";
 
+// Admin dashboard: fetches all shoppers (no filter).
 const GET_SHOPPERS = gql`
   query GetShoppers {
-    shoppers {
+    shoppers(order_by: { created_at: desc }) {
       id
       user_id
       active

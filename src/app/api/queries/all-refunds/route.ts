@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]";
 import { hasuraClient } from "@/lib/hasuraClient";
 import { gql } from "graphql-request";
 
+// Admin dashboard: fetches all refunds (no filter).
 const GET_ALL_REFUNDS = gql`
   query GetAllRefunds {
     Refunds(order_by: { created_at: desc }) {

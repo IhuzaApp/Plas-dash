@@ -4,7 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]";
 import { hasuraClient } from "@/lib/hasuraClient";
 import { gql } from "graphql-request";
 
-// Platform-wide order counts: Orders, reel_orders, restaurant_orders, businessProductOrders
+// Admin dashboard: platform-wide order counts (all Orders, reel_orders, restaurant_orders, businessProductOrders).
 const GET_ORDER_STATS = gql`
   query GetOrderStats($month_start: timestamptz!) {
     # Regular orders (all)
