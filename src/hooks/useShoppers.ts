@@ -214,6 +214,7 @@ export function useUpdateShopperStatus() {
     onSuccess: () => {
       // Invalidate relevant queries to trigger refetch
       queryClient.invalidateQueries({ queryKey: ['shopper'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'shopper-detail'] });
     },
   });
 }

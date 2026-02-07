@@ -662,6 +662,51 @@ export function useShoppers() {
   });
 }
 
+// Shopper detail from route: shoppers, Orders, summary (earnings = delivery_fee + service_fee from all order types)
+export interface ShopperDetailSummary {
+  earnings: number;
+  available_balance: number;
+  reserved_balance: number;
+  pending_withdraw_amount?: number;
+  withdraw_requests_count?: number;
+  ratings_count: number;
+  ratings_average: number;
+  total_revenue: number;
+  revenue_regular: number;
+  revenue_business: number;
+  revenue_restaurant: number;
+  revenue_reel: number;
+}
+
+export function useShopperDetail(userId: string | null) {
+  return useQuery<
+    {
+      shoppers: any[];
+      Orders: any[];
+      summary: ShopperDetailSummary | null;
+      withdraw_requests?: any[];
+    },
+    Error
+  >({
+    queryKey: ['api', 'shopper-detail', userId],
+    queryFn: async () => {
+      const res = await apiGet<{
+        shoppers: any[];
+        Orders: any[];
+        summary: ShopperDetailSummary | null;
+        withdraw_requests?: any[];
+      }>(`/api/queries/shoppers?user_id=${encodeURIComponent(userId || '')}`);
+      return {
+        shoppers: res.shoppers || [],
+        Orders: res.Orders || [],
+        summary: res.summary ?? null,
+        withdraw_requests: res.withdraw_requests ?? [],
+      };
+    },
+    enabled: !!userId,
+  });
+}
+
 // Type-safe hook for adding a product name
 export function useAddProductName() {
   return useMutation<

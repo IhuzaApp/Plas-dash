@@ -4,15 +4,8 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
-import {
-  useShopperDetails,
-  useShopperWallet,
-  useShopperOrders,
-  useUpdateShopperStatus,
-  useShopperFullDetails,
-  type Order,
-} from '@/hooks/useShoppers';
-import { useSystemConfig } from '@/hooks/useHasuraApi';
+import { useUpdateShopperStatus, type Order } from '@/hooks/useShoppers';
+import { useShopperDetail, useSystemConfig } from '@/hooks/useHasuraApi';
 
 // Import modular components
 import ShopperProfileCard from './shopper/ShopperProfileCard';
@@ -30,25 +23,20 @@ interface ShopperDetailsProps {
 
 const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const router = useRouter();
-  const { data: shopperData, isLoading: isLoadingShopper } = useShopperDetails(shopperId);
-  const { data: walletData, isLoading: isLoadingWallet } = useShopperWallet(shopperId);
-  const { data: ordersData, isLoading: isLoadingOrders } = useShopperOrders(shopperId);
+  const { data: detailData, isLoading: isLoadingDetail } = useShopperDetail(shopperId);
   const { data: systemConfig } = useSystemConfig();
-  const userId = shopperData?.shoppers[0]?.user_id;
-  const { data: fullDetails, isLoading: isLoadingFullDetails } = useShopperFullDetails(
-    userId || ''
-  );
   const updateShopperStatus = useUpdateShopperStatus();
 
   const handleBackToShoppers = () => {
     router.push('/shoppers');
   };
 
-  const shopper = shopperData?.shoppers[0];
-  const user = shopperData?.Users[0];
-  const wallet = walletData?.Wallets[0];
-  const orders = ordersData?.Orders || [];
-  const detailedShopper = fullDetails?.shoppers[0];
+  const shopper = detailData?.shoppers?.[0];
+  const user = shopper?.User;
+  const wallet = shopper?.User?.Wallets?.[0];
+  const orders = detailData?.Orders || [];
+  const detailedShopper = shopper;
+  const summary = detailData?.summary ?? null;
 
   const [ordersPage, setOrdersPage] = useState(1);
   const [transactionsPage, setTransactionsPage] = useState(1);
@@ -159,16 +147,10 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
     );
   };
 
-  // Calculate earnings and payouts
-  const totalEarnings = orders
-    .filter(order => order.status === 'delivered')
-    .reduce(
-      (sum, order) =>
-        sum + parseFloat(order.delivery_fee || '0') + parseFloat(order.service_fee || '0'),
-      0
-    );
-
-  const pendingPayouts = parseFloat(wallet?.available_balance || '0');
+  // Earnings = total of (delivery_fee + service_fee) from regular, reel, business, restaurant orders
+  const totalEarnings = summary?.earnings ?? 0;
+  const pendingPayouts = 0;
+  const totalRevenue = summary?.total_revenue ?? totalEarnings;
 
   // Ensure data is properly structured
   const ratings = detailedShopper?.User?.Ratings || [];
@@ -194,14 +176,8 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
     deliveryIssues.filter((i: any) => i.status === 'resolved')?.length || 0;
   const totalInvoices = invoices.length;
 
-  // Calculate total revenue from both delivered orders and Revenues table
-  const orderRevenue = totalEarnings;
-  const revenuesTableTotal =
-    revenues.reduce((sum: number, r: any) => sum + parseFloat(r.amount || '0'), 0) || 0;
-  const totalRevenue = orderRevenue + revenuesTableTotal;
-
   // Loading and error states
-  if (isLoadingShopper || isLoadingWallet || isLoadingOrders || isLoadingFullDetails) {
+  if (isLoadingDetail) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -245,7 +221,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
             <ShopperActions
               shopper={shopper}
               detailedShopper={detailedShopper}
-              isLoadingFullDetails={isLoadingFullDetails}
+              isLoadingFullDetails={isLoadingDetail}
               handleApprove={handleApprove}
               handleReject={handleReject}
               calculateAverageRating={calculateAverageRating}
@@ -260,6 +236,7 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
         <ShopperStatsOverview
           orders={orders}
           detailedShopper={detailedShopper}
+          summary={summary}
           totalRevenue={totalRevenue}
           openTickets={openTickets}
           formatCurrency={formatCurrency}

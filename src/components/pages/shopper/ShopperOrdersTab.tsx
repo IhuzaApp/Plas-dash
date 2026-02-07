@@ -52,7 +52,7 @@ const ShopperOrdersTab: React.FC<ShopperOrdersTabProps> = ({
             <TableRow key={order.id}>
               <TableCell className="font-medium">#{order.OrderID}</TableCell>
               <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy HH:mm')}</TableCell>
-              <TableCell>{order.User?.name}</TableCell>
+              <TableCell>{order.orderedBy?.name ?? order.User?.name}</TableCell>
               <TableCell>
                 <Badge
                   className={

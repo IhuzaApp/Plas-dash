@@ -16,11 +16,28 @@ query getShopperInformation {
     updated_at
     user_id
     active
+    phone
+    needCollection
+    national_id_photo_front
+    national_id_photo_back
+    mutual_status
+    longitude
+    mutual_StatusCertificate
+    latitude
+    proofOfResidency
+    signature
+    telegram_id
+    drivingLicense_Image
+    collection_comment
+    guarantor
+    guarantorPhone
+    guarantorRelationship
+    Police_Clearance_Cert
   }
 }
 
 query GetShoppersByUser_id($user_id: uuid = "") {
-  shoppers(where: { user_id: { _eq: $user_id } }) {
+  shoppers(where: {user_id: {_eq: $user_id}}) {
     Employment_id
     address
     background_check_completed
@@ -61,6 +78,7 @@ query GetShoppersByUser_id($user_id: uuid = "") {
         reviewed_at
         shopper_id
         updated_at
+        businessProduct_id
       }
       tickets {
         created_on
@@ -72,6 +90,7 @@ query GetShoppersByUser_id($user_id: uuid = "") {
         ticket_num
         update_on
         user_id
+        category
       }
       Invoices {
         Proof
@@ -101,6 +120,25 @@ query GetShoppersByUser_id($user_id: uuid = "") {
         status
         updated_at
       }
+      Payment_Methods {
+        CCV
+        create_at
+        id
+        is_default
+        method
+        names
+        number
+        update_on
+        user_id
+        validity
+      }
+      Wallets {
+        available_balance
+        id
+        last_updated
+        reserved_balance
+        shopper_id
+      }
     }
     telegram_id
     Revenues {
@@ -113,6 +151,29 @@ query GetShoppersByUser_id($user_id: uuid = "") {
       shop_id
       shopper_id
       type
+      Plasbusiness_id
+      businessOrder_Id
+      reel_order_id
+      restaurant_id
+      restaurant_order_id
     }
+    Police_Clearance_Cert
+    collection_comment
+    drivingLicense_Image
+    guarantor
+    guarantorPhone
+    guarantorRelationship
+    latitude
+    longitude
+    mutual_StatusCertificate
+    mutual_status
+    national_id
+    national_id_photo_back
+    national_id_photo_front
+    needCollection
+    phone
+    profile_photo
+    proofOfResidency
+    signature
   }
 }

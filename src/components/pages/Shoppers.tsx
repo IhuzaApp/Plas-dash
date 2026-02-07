@@ -36,17 +36,17 @@ const Shoppers = () => {
   };
 
   const activeShoppers = shoppers.filter(s => s.active && s.status === 'approved');
-  const pendingShoppers = shoppers.filter(s => s.status === 'pending');
-  const backgroundCheckedShoppers = shoppers.filter(s => s.background_check_completed);
+  const pendingShoppers = shoppers.filter(s => (s.status ?? '') === 'pending');
+  const backgroundCheckedShoppers = shoppers.filter(s => Boolean(s.background_check_completed));
 
   // Filter shoppers based on search term
   const filteredShoppers = shoppers.filter(
     shopper =>
       searchTerm === '' ||
-      shopper.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shopper.phone_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (shopper.full_name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (shopper.phone_number ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       shopper.Employment_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shopper.transport_mode.toLowerCase().includes(searchTerm.toLowerCase())
+      (shopper.transport_mode ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Calculate pagination
@@ -132,87 +132,95 @@ const Shoppers = () => {
         </div>
 
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Shopper</TableHead>
-                <TableHead>Employment ID</TableHead>
-                <TableHead>Transport</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Background Check</TableHead>
-                <TableHead>Onboarding Step</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentShoppers.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table className="min-w-[800px]">
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                    No plasas found.
-                  </TableCell>
+                  <TableHead className="min-w-[180px]">Shopper</TableHead>
+                  <TableHead className="whitespace-nowrap min-w-[100px]">Emp. ID</TableHead>
+                  <TableHead className="whitespace-nowrap min-w-[90px]">Transport</TableHead>
+                  <TableHead className="whitespace-nowrap min-w-[90px]">Status</TableHead>
+                  <TableHead className="whitespace-nowrap min-w-[100px]">Bg Check</TableHead>
+                  <TableHead className="whitespace-nowrap min-w-[110px]">Onboarding</TableHead>
+                  <TableHead className="text-right min-w-[100px]">Actions</TableHead>
                 </TableRow>
-              ) : (
-                currentShoppers.map(shopper => (
-                  <TableRow key={shopper.id}>
-                    <TableCell className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={shopper.profile_photo || undefined} />
-                        <AvatarFallback>{getInitials(shopper.full_name)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{shopper.full_name}</div>
-                        <div className="text-sm text-muted-foreground">{shopper.phone_number}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{shopper.Employment_id}</TableCell>
-                    <TableCell>
-                      <span className="capitalize">{shopper.transport_mode}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          shopper.status === 'approved' && shopper.active
-                            ? 'bg-green-100 text-green-800'
-                            : shopper.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {shopper.status === 'approved'
-                          ? shopper.active
-                            ? 'Active'
-                            : 'Inactive'
-                          : shopper.status.charAt(0).toUpperCase() + shopper.status.slice(1)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          shopper.background_check_completed
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {shopper.background_check_completed ? 'Completed' : 'Pending'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="capitalize">{shopper.onboarding_step}</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {hasAction('shoppers', 'view_shopper_details') && (
-                        <Link href={`/shoppers/${shopper.user_id}`}>
-                          <Button variant="ghost" size="sm">
-                            View Profile
-                          </Button>
-                        </Link>
-                      )}
+              </TableHeader>
+              <TableBody>
+                {currentShoppers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      No plasas found.
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  currentShoppers.map(shopper => (
+                    <TableRow key={shopper.id}>
+                      <TableCell className="min-w-[180px]">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarImage src={shopper.profile_photo || undefined} />
+                            <AvatarFallback>{getInitials(shopper.full_name)}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{shopper.full_name}</div>
+                            <div className="text-sm text-muted-foreground truncate">{shopper.phone_number}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-[100px] max-w-[120px]" title={shopper.Employment_id ?? ''}>
+                        <span className="block truncate">{shopper.Employment_id ?? '—'}</span>
+                      </TableCell>
+                      <TableCell className="min-w-[90px] whitespace-nowrap">
+                        <span className="capitalize">{shopper.transport_mode ?? '—'}</span>
+                      </TableCell>
+                      <TableCell className="min-w-[90px]">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                            shopper.status === 'approved' && shopper.active
+                              ? 'bg-green-100 text-green-800'
+                              : shopper.status === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {shopper.status === 'approved'
+                            ? shopper.active
+                              ? 'Active'
+                              : 'Inactive'
+                            : shopper.status
+                              ? shopper.status.charAt(0).toUpperCase() + shopper.status.slice(1)
+                              : '—'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="min-w-[100px]">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                            shopper.background_check_completed
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {shopper.background_check_completed ? 'Completed' : 'Pending'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="min-w-[110px] max-w-[140px]" title={shopper.onboarding_step ?? ''}>
+                        <span className="block truncate capitalize">{shopper.onboarding_step ?? '—'}</span>
+                      </TableCell>
+                      <TableCell className="text-right min-w-[100px]">
+                        {hasAction('shoppers', 'view_shopper_details') && (
+                          <Link href={`/shoppers/${shopper.user_id}`}>
+                            <Button variant="ghost" size="sm">
+                              View Profile
+                            </Button>
+                          </Link>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
