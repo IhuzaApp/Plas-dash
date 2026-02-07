@@ -39,6 +39,7 @@ const ShopperOrdersTab: React.FC<ShopperOrdersTabProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead>Order ID</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Status</TableHead>
@@ -49,10 +50,16 @@ const ShopperOrdersTab: React.FC<ShopperOrdersTabProps> = ({
         </TableHeader>
         <TableBody>
           {paginatedOrders.map(order => (
-            <TableRow key={order.id}>
-              <TableCell className="font-medium">#{order.OrderID}</TableCell>
-              <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy HH:mm')}</TableCell>
-              <TableCell>{order.orderedBy?.name ?? order.User?.name}</TableCell>
+            <TableRow key={`${order.orderType ?? 'regular'}-${order.id}`}>
+              <TableCell className="font-medium">#{order.displayId ?? order.OrderID}</TableCell>
+              <TableCell>
+                <Badge variant="outline">
+                  {(order.orderType ?? 'regular').charAt(0).toUpperCase() +
+                    (order.orderType ?? 'regular').slice(1)}
+                </Badge>
+              </TableCell>
+              <TableCell>{format(new Date(order.created_at || 0), 'MMM d, yyyy HH:mm')}</TableCell>
+              <TableCell>{order.customerName ?? order.orderedBy?.name ?? order.User?.name}</TableCell>
               <TableCell>
                 <Badge
                   className={
@@ -67,7 +74,7 @@ const ShopperOrdersTab: React.FC<ShopperOrdersTabProps> = ({
                 </Badge>
               </TableCell>
               <TableCell>{formatCurrency(order.total)}</TableCell>
-              <TableCell>{order.Shop?.name}</TableCell>
+              <TableCell>{order.shopName ?? order.Shop?.name}</TableCell>
               <TableCell className="text-right">
                 <Button variant="ghost" size="sm">
                   View Details

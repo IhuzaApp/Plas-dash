@@ -233,23 +233,58 @@ const GET_SHOPPER_BY_USER_ID = gql`
       order_by: { created_at: desc }
     ) {
       id
+      OrderID
+      created_at
+      updated_at
+      status
+      total
       delivery_fee
       service_fee
+      User {
+        name
+      }
+      Reel {
+        title
+        Shops {
+          name
+        }
+      }
     }
     businessProductOrders(
       where: { shopper_id: { _eq: $user_id } }
       order_by: { created_at: desc }
     ) {
       id
+      OrderID
+      created_at
+      status
+      total
       service_fee
       transportation_fee
+      orderedBy {
+        name
+      }
+      business_store {
+        name
+      }
     }
     restaurant_orders(
       where: { shopper_id: { _eq: $user_id } }
       order_by: { created_at: desc }
     ) {
       id
+      OrderID
+      created_at
+      updated_at
+      status
+      total
       delivery_fee
+      orderedBy {
+        name
+      }
+      Restaurant {
+        name
+      }
     }
   }
 `;
@@ -418,6 +453,9 @@ export async function GET(request: Request) {
         return NextResponse.json({
           shoppers: [],
           Orders: [],
+          reel_orders: [],
+          businessProductOrders: [],
+          restaurant_orders: [],
           summary: null,
           withdraw_requests: [],
           revenues: [],
@@ -497,6 +535,9 @@ export async function GET(request: Request) {
       return NextResponse.json({
         shoppers,
         Orders: orders,
+        reel_orders: reelOrders,
+        businessProductOrders: businessOrders,
+        restaurant_orders: restaurantOrders,
         summary,
         withdraw_requests: withdrawRequests,
         revenues,

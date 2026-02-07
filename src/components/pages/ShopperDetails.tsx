@@ -56,8 +56,41 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const shopper = detailData?.shoppers?.[0];
   const user = shopper?.User;
   const wallet = shopper?.User?.Wallets?.[0];
-  const orders = detailData?.Orders || [];
   const detailedShopper = shopper;
+
+  const regularOrders = (detailData?.Orders || []).map((o: any) => ({
+    ...o,
+    orderType: 'regular' as const,
+    displayId: o.OrderID,
+    customerName: o.orderedBy?.name ?? o.User?.name,
+    shopName: o.Shop?.name,
+  }));
+  const reelOrders = (detailData?.reel_orders || []).map((o: any) => ({
+    ...o,
+    orderType: 'reel' as const,
+    displayId: o.OrderID,
+    customerName: o.User?.name,
+    shopName: o.Reel?.Shops?.name ?? o.Reel?.title ?? 'Reel',
+  }));
+  const businessOrders = (detailData?.businessProductOrders || []).map((o: any) => ({
+    ...o,
+    orderType: 'business' as const,
+    displayId: o.OrderID,
+    customerName: o.orderedBy?.name,
+    shopName: o.business_store?.name,
+  }));
+  const restaurantOrders = (detailData?.restaurant_orders || []).map((o: any) => ({
+    ...o,
+    orderType: 'restaurant' as const,
+    displayId: o.OrderID,
+    customerName: o.orderedBy?.name,
+    shopName: o.Restaurant?.name,
+  }));
+
+  const allOrders = [...regularOrders, ...reelOrders, ...businessOrders, ...restaurantOrders].sort(
+    (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+  );
+  const orders = allOrders;
   const summary = detailData?.summary ?? null;
 
   const [ordersPage, setOrdersPage] = useState(1);

@@ -683,6 +683,9 @@ export function useShopperDetail(userId: string | null) {
     {
       shoppers: any[];
       Orders: any[];
+      reel_orders?: any[];
+      businessProductOrders?: any[];
+      restaurant_orders?: any[];
       summary: ShopperDetailSummary | null;
       withdraw_requests?: any[];
       revenues?: any[];
@@ -694,6 +697,9 @@ export function useShopperDetail(userId: string | null) {
       const res = await apiGet<{
         shoppers: any[];
         Orders: any[];
+        reel_orders?: any[];
+        businessProductOrders?: any[];
+        restaurant_orders?: any[];
         summary: ShopperDetailSummary | null;
         withdraw_requests?: any[];
         revenues?: any[];
@@ -701,6 +707,9 @@ export function useShopperDetail(userId: string | null) {
       return {
         shoppers: res.shoppers || [],
         Orders: res.Orders || [],
+        reel_orders: res.reel_orders ?? [],
+        businessProductOrders: res.businessProductOrders ?? [],
+        restaurant_orders: res.restaurant_orders ?? [],
         summary: res.summary ?? null,
         withdraw_requests: res.withdraw_requests ?? [],
         revenues: res.revenues ?? [],
