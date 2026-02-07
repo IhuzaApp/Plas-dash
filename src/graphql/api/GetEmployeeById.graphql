@@ -1,0 +1,10 @@
+query GetEmployeeById($id: uuid!) {
+  orgEmployees_by_pk(id: $id) {
+    id
+    fullnames
+    email
+    phone
+    Position
+    roleType
+  }
+}

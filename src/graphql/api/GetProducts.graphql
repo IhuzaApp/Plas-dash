@@ -1,0 +1,24 @@
+query GetProducts {
+  Products {
+    id
+    ProductName {
+      id
+      name
+      description
+      barcode
+      sku
+      image
+      create_at
+    }
+    price
+    final_price
+    created_at
+    category
+    image
+    is_active
+    measurement_unit
+    quantity
+    shop_id
+    updated_at
+  }
+}

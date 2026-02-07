@@ -1,129 +1,73 @@
 import { useQuery } from '@tanstack/react-query';
-import { hasuraRequest } from '@/lib/hasura';
-import { useGraphqlQuery } from './useGraphql';
-import {
-  GET_ALL_REVENUE,
-  GET_ALL_REFUNDS,
-  GET_SHOPS,
-  GET_USERS,
-  GET_PRODUCTS,
-  GET_ORDERS,
-  GET_SHOPPERS,
-  GET_TICKETS,
-} from '@/lib/graphql/queries';
-
-// Dashboard statistics query
-const GET_DASHBOARD_STATS = `
-  query GetDashboardStats {
-    # Total shops
-    Shops_aggregate {
-      aggregate {
-        count
-      }
-    }
-    
-    # Total users
-    Users_aggregate {
-      aggregate {
-        count
-      }
-    }
-    
-    # Total products
-    Products_aggregate {
-      aggregate {
-        count
-      }
-    }
-    
-    # Total orders
-    Orders_aggregate {
-      aggregate {
-        count
-      }
-    }
-    
-    # Pending orders (not assigned to shopper)
-    pending_orders: Orders_aggregate(where: { shopper_id: { _is_null: true } }) {
-      aggregate {
-        count
-      }
-    }
-    
-    # Active shoppers
-    active_shoppers: shoppers_aggregate(where: { active: { _eq: true } }) {
-      aggregate {
-        count
-      }
-    }
-    
-    # Total tickets
-    tickets_aggregate {
-      aggregate {
-        count
-      }
-    }
-    
-    # Open tickets
-    open_tickets: tickets_aggregate(where: { status: { _eq: "open" } }) {
-      aggregate {
-        count
-      }
-    }
-    
-    # This month's orders
-    monthly_orders: Orders_aggregate(where: { created_at: { _gte: "now() - interval '1 month'" } }) {
-      aggregate {
-        count
-      }
-    }
-    
-    # This month's revenue
-    monthly_revenue: Revenue_aggregate(where: { created_at: { _gte: "now() - interval '1 month'" } }) {
-      aggregate {
-        sum {
-          amount
-        }
-      }
-    }
-  }
-`;
+import { apiGet } from '@/lib/api';
 
 export const useDashboardData = () => {
-  // Use existing queries from queries.ts
-  const { data: shopsData, isLoading: isLoadingShops } = useGraphqlQuery<any>(GET_SHOPS);
-  const { data: usersData, isLoading: isLoadingUsers } = useGraphqlQuery<any>(GET_USERS);
-  const { data: productsData, isLoading: isLoadingProducts } = useGraphqlQuery<any>(GET_PRODUCTS);
-  const { data: ordersData, isLoading: isLoadingOrders } = useGraphqlQuery<any>(GET_ORDERS);
-  const { data: shoppersData, isLoading: isLoadingShoppers } = useGraphqlQuery<any>(GET_SHOPPERS);
-  const { data: revenueData, isLoading: isLoadingRevenue } = useGraphqlQuery<any>(GET_ALL_REVENUE);
-  const { data: refundsData, isLoading: isLoadingRefunds } = useGraphqlQuery<any>(GET_ALL_REFUNDS);
+  const { data: shopsRes, isLoading: isLoadingShops } = useQuery({
+    queryKey: ['api', 'shops'],
+    queryFn: () => apiGet<{ shops: any[] }>('/api/queries/shops'),
+  });
+  const { data: usersRes, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['api', 'users'],
+    queryFn: () => apiGet<{ users: any[] }>('/api/queries/users'),
+  });
+  const { data: productsRes, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['api', 'products'],
+    queryFn: () => apiGet<{ products: any[] }>('/api/queries/products'),
+  });
+  const { data: ordersRes, isLoading: isLoadingOrders } = useQuery({
+    queryKey: ['api', 'orders'],
+    queryFn: () => apiGet<{ orders: any[] }>('/api/queries/orders'),
+  });
+  const { data: orderStatsRes, isLoading: isLoadingOrderStats } = useQuery({
+    queryKey: ['api', 'order-stats'],
+    queryFn: () =>
+      apiGet<{
+        totalOrders: number;
+        monthlyOrders: number;
+        pendingOrders: number;
+        breakdown?: { regular: number; reel: number; restaurant: number; business: number };
+        monthlyBreakdown?: { regular: number; reel: number; restaurant: number; business: number };
+      }>('/api/queries/order-stats'),
+  });
+  const { data: shoppersRes, isLoading: isLoadingShoppers } = useQuery({
+    queryKey: ['api', 'shoppers'],
+    queryFn: () => apiGet<{ shoppers: any[] }>('/api/queries/shoppers'),
+  });
+  const { data: revenueArray, isLoading: isLoadingRevenue } = useQuery({
+    queryKey: ['api', 'revenue'],
+    queryFn: () => apiGet<any[]>('/api/revenue'),
+  });
+  const { data: refundsRes, isLoading: isLoadingRefunds } = useQuery({
+    queryKey: ['api', 'all-refunds'],
+    queryFn: () => apiGet<{ refunds: any[] }>('/api/queries/all-refunds'),
+  });
+  const { data: ticketsRes, isLoading: isLoadingTickets } = useQuery({
+    queryKey: ['api', 'tickets'],
+    queryFn: () => apiGet<{ tickets: any[] }>('/api/queries/tickets'),
+  });
 
-  // Get tickets data
-  const { data: ticketsData, isLoading: isLoadingTickets } = useGraphqlQuery<any>(GET_TICKETS);
+  const shopsData = shopsRes ? { Shops: shopsRes.shops } : undefined;
+  const usersData = usersRes ? { Users: usersRes.users } : undefined;
+  const productsData = productsRes ? { Products: productsRes.products } : undefined;
+  const ordersData = ordersRes ? { Orders: ordersRes.orders } : undefined;
+  const orderStats = orderStatsRes;
+  const shoppersData = shoppersRes ? { shoppers: shoppersRes.shoppers } : undefined;
+  const revenueData = Array.isArray(revenueArray) ? { Revenue: revenueArray } : { Revenue: [] };
+  const refundsData = refundsRes ? { Refunds: refundsRes.refunds } : undefined;
+  const ticketsData = ticketsRes ? { tickets: ticketsRes.tickets } : undefined;
 
   // Calculate counts from arrays
   const totalShops = shopsData?.Shops?.length || 0;
   const totalUsers = usersData?.Users?.length || 0;
   const totalProducts = productsData?.Products?.length || 0;
-  const totalOrders = ordersData?.Orders?.length || 0;
+
+  // Order counts from platform-wide stats (Orders + reel_orders + restaurant_orders + businessProductOrders)
+  const totalOrders = orderStats?.totalOrders ?? 0;
+  const monthlyOrders = orderStats?.monthlyOrders ?? 0;
+  const pendingOrders = orderStats?.pendingOrders ?? 0;
 
   // Calculate active shoppers
   const activeShoppers = shoppersData?.shoppers?.filter((s: any) => s.active)?.length || 0;
-
-  // Calculate pending orders (not delivered)
-  const pendingOrders =
-    ordersData?.Orders?.filter((o: any) => o.status !== 'delivered')?.length || 0;
-
-  // Calculate monthly orders
-  const monthlyOrders =
-    ordersData?.Orders?.filter((o: any) => {
-      const createdAt = new Date(o.created_at);
-      const now = new Date();
-      return (
-        createdAt.getMonth() === now.getMonth() && createdAt.getFullYear() === now.getFullYear()
-      );
-    })?.length || 0;
 
   // Calculate total revenue
   const totalRevenue =
@@ -180,9 +124,13 @@ export const useDashboardData = () => {
       isLoadingUsers ||
       isLoadingProducts ||
       isLoadingOrders ||
+      isLoadingOrderStats ||
       isLoadingShoppers ||
       isLoadingRevenue ||
       isLoadingRefunds ||
       isLoadingTickets,
+    // Expose order breakdown for FinancialOverview / other consumers
+    orderBreakdown: orderStats?.breakdown,
+    monthlyOrderBreakdown: orderStats?.monthlyBreakdown,
   };
 };

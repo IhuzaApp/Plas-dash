@@ -1,24 +1,18 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { hasuraRequest } from '../lib/hasura';
+import { apiGet } from '../lib/api';
 import {
-  GET_USERS,
-  GET_PRODUCTS,
   GET_PRODUCTS_BY_SHOP,
-  GET_SHOPS,
-  GET_ORDERS,
   GET_REEL_ORDERS,
   GET_RESTAURANTS,
   GET_REELS,
-  GET_CARTS,
   GET_ADDRESSES,
   GET_INVOICE_DETAILS,
   GET_ALL_WALLETS,
   GET_SHOPPER_WALLET,
   GET_ALL_WALLET_TRANSACTIONS,
-  GET_ALL_REFUNDS,
   GET_CATEGORIES,
   GET_SHOP_BY_ID,
-  GET_SHOPPERS,
   GET_SYSTEM_CONFIG,
   GET_ORG_EMPLOYEES_BY_SHOP,
   GET_POS_TRANSACTIONS,
@@ -403,28 +397,33 @@ export interface SystemConfig {
   allowScheduledDeliveries: boolean;
 }
 
-// Type-safe hook for Users
+// Type-safe hook for Users (data from API)
 export function useUsers() {
   return useQuery<{ Users: User[] }, Error>({
-    queryKey: ['users'],
-    queryFn: () => hasuraRequest(GET_USERS, {}),
-    select: data => ({
-      Users: data.Users.map(user => ({
-        ...user,
-        Addresses: user.Addresses || [],
-        Invoices: user.Invoices || [],
-        Wallets: user.Wallets || [],
-        shopper: user.shopper || null,
-      })),
-    }),
+    queryKey: ['api', 'users'],
+    queryFn: async () => {
+      const res = await apiGet<{ users: any[] }>('/api/queries/users');
+      return {
+        Users: (res.users || []).map(user => ({
+          ...user,
+          Addresses: user.Addresses ?? [],
+          Invoices: user.Invoices ?? [],
+          Wallets: user.Wallets ?? [],
+          shopper: user.shopper ?? null,
+        })),
+      };
+    },
   });
 }
 
-// Type-safe hook for Products
+// Type-safe hook for Products (data from API)
 export function useProducts() {
   return useQuery<{ Products: Product[] }, Error>({
-    queryKey: ['products'],
-    queryFn: () => hasuraRequest(GET_PRODUCTS, {}),
+    queryKey: ['api', 'products'],
+    queryFn: async () => {
+      const res = await apiGet<{ products: Product[] }>('/api/queries/products');
+      return { Products: res.products || [] };
+    },
   });
 }
 
@@ -437,29 +436,38 @@ export function useProductsByShop(shopId: string) {
   });
 }
 
-// Type-safe hook for Shops
+// Type-safe hook for Shops (data from API)
 export function useShops() {
   return useQuery<{ Shops: Shop[] }, Error>({
-    queryKey: ['shops'],
-    queryFn: () => hasuraRequest(GET_SHOPS, {}),
+    queryKey: ['api', 'shops'],
+    queryFn: async () => {
+      const res = await apiGet<{ shops: Shop[] }>('/api/queries/shops');
+      return { Shops: res.shops || [] };
+    },
     retry: 2,
     retryDelay: 1000,
   });
 }
 
-// Type-safe hook for Orders
+// Type-safe hook for Orders (data from API)
 export function useOrders() {
   return useQuery<{ Orders: OrderType[] }, Error>({
-    queryKey: ['orders'],
-    queryFn: () => hasuraRequest(GET_ORDERS, {}),
+    queryKey: ['api', 'orders'],
+    queryFn: async () => {
+      const res = await apiGet<{ orders: OrderType[] }>('/api/queries/orders');
+      return { Orders: res.orders || [] };
+    },
   });
 }
 
-// Type-safe hook for Carts
+// Type-safe hook for Carts (data from API)
 export function useCarts() {
   return useQuery<{ Carts: Cart[] }, Error>({
-    queryKey: ['carts'],
-    queryFn: () => hasuraRequest(GET_CARTS, {}),
+    queryKey: ['api', 'carts'],
+    queryFn: async () => {
+      const res = await apiGet<{ carts: Cart[] }>('/api/queries/carts');
+      return { Carts: res.carts || [] };
+    },
   });
 }
 
@@ -503,11 +511,14 @@ export function useWalletTransactions() {
   });
 }
 
-// Type-safe hook for Refunds
+// Type-safe hook for Refunds (data from API)
 export function useRefunds() {
   return useQuery<{ Refunds: Refund[] }, Error>({
-    queryKey: ['refunds'],
-    queryFn: () => hasuraRequest(GET_ALL_REFUNDS, {}),
+    queryKey: ['api', 'all-refunds'],
+    queryFn: async () => {
+      const res = await apiGet<{ refunds: Refund[] }>('/api/queries/all-refunds');
+      return { Refunds: res.refunds || [] };
+    },
   });
 }
 
@@ -634,11 +645,14 @@ export function useShopById(id: string) {
   });
 }
 
-// Type-safe hook for Shoppers
+// Type-safe hook for Shoppers (data from API)
 export function useShoppers() {
   return useQuery<{ shoppers: Shopper[] }, Error>({
-    queryKey: ['shoppers'],
-    queryFn: () => hasuraRequest(GET_SHOPPERS, {}),
+    queryKey: ['api', 'shoppers'],
+    queryFn: async () => {
+      const res = await apiGet<{ shoppers: Shopper[] }>('/api/queries/shoppers');
+      return { shoppers: res.shoppers || [] };
+    },
   });
 }
 

@@ -1,0 +1,35 @@
+query GetOrders($user_id: uuid!) {
+  Orders(
+    where: { user_id: { _eq: $user_id } }
+    order_by: { created_at: desc }
+  ) {
+    id
+    OrderID
+    user_id
+    status
+    created_at
+    total
+    service_fee
+    delivery_fee
+    shop_id
+    shopper_id
+    delivery_time
+    Order_Items_aggregate {
+      aggregate {
+        count
+        sum {
+          quantity
+        }
+      }
+    }
+  }
+}
+
+query GetShopsByIds($ids: [uuid!]!) {
+  Shops(where: { id: { _in: $ids } }) {
+    id
+    name
+    address
+    image
+  }
+}

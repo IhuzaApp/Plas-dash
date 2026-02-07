@@ -1,0 +1,17 @@
+query GetShops {
+  Shops {
+    id
+    name
+    description
+    created_at
+    address
+    category_id
+    image
+    logo
+    is_active
+    latitude
+    longitude
+    operating_hours
+    updated_at
+  }
+}

@@ -36,8 +36,8 @@ import { useWalletTransactions, useSystemConfig, useWallets } from '@/hooks/useH
 import { Loader2, Eye } from 'lucide-react';
 import Pagination from '@/components/ui/pagination';
 import { formatDistanceToNow } from 'date-fns';
-import { useGraphqlQuery } from '@/hooks/useGraphql';
-import { GET_ALL_REVENUE, GET_ALL_REFUNDS } from '@/lib/graphql/queries';
+import { useQuery } from '@tanstack/react-query';
+import { apiGet } from '@/lib/api';
 import { isThisMonth, isThisWeek, isThisYear, parseISO } from 'date-fns';
 import RevenueStats from '@/components/dashboard/RevenueStats';
 import RevenueOverview from '@/components/dashboard/RevenueOverview';
@@ -188,8 +188,16 @@ const Wallets = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const itemsPerPage = 5;
   const { data: walletsData, isLoading: isLoadingWallets } = useWallets();
-  const { data: revenueData, isLoading: isLoadingRevenue } = useGraphqlQuery<any>(GET_ALL_REVENUE);
-  const { data: refundsData, isLoading: isLoadingRefunds } = useGraphqlQuery<any>(GET_ALL_REFUNDS);
+  const { data: revenueArray, isLoading: isLoadingRevenue } = useQuery({
+    queryKey: ['api', 'revenue'],
+    queryFn: () => apiGet<any[]>('/api/revenue'),
+  });
+  const { data: refundsRes, isLoading: isLoadingRefunds } = useQuery({
+    queryKey: ['api', 'all-refunds'],
+    queryFn: () => apiGet<{ refunds: any[] }>('/api/queries/all-refunds'),
+  });
+  const revenueData = { Revenue: Array.isArray(revenueArray) ? revenueArray : [] };
+  const refundsData = refundsRes ? { Refunds: refundsRes.refunds } : { Refunds: [] };
   const [revenueFilter, setRevenueFilter] = useState<'month' | 'week' | 'year'>('month');
 
   // Helper to filter revenue by selected period
