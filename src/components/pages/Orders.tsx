@@ -529,7 +529,6 @@ const Orders = () => {
         actions={
           <div className="flex gap-2">
             {hasAction('orders', 'export_orders') && <Button variant="outline">Export</Button>}
-            {hasAction('orders', 'create_orders') && <Button>Create Order</Button>}
           </div>
         }
       />
