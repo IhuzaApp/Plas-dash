@@ -80,14 +80,64 @@ interface UnifiedOrder {
     name: string;
     email: string;
     phone?: string;
+    profile_picture?: string | null;
+    created_at?: string;
   };
   allProducts?: any[];
   units?: string;
-  business_store?: { id: string; name: string; address?: string } | null;
-  Restaurant?: { id: string; name: string } | null;
-  restaurant_order_items?: any[];
+  business_store?: {
+    id: string;
+    name: string;
+    address?: string;
+    image?: string | null;
+    description?: string | null;
+    [key: string]: any;
+  } | null;
+  businessTransactions?: Array<{
+    id: string;
+    action?: string | null;
+    created_at: string;
+    description?: string | null;
+    related_order?: string | null;
+    status: string;
+    type: string;
+    wallet_id: string;
+  }>;
+  Shop?: { id: string; name: string; address?: string; image?: string | null } | null;
+  Restaurant?: {
+    id: string;
+    name: string;
+    logo?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    location?: string | null;
+    [key: string]: any;
+  } | null;
+  restaurant_order_items?: Array<{
+    id: string;
+    quantity: number;
+    price: string;
+    dish_id: string;
+    created_at?: string;
+    order_id?: string;
+    restaurant_dishes?: {
+      dishes?: { name?: string; image?: string; category?: string } | null;
+      price?: string;
+      [key: string]: any;
+    } | null;
+    [key: string]: any;
+  }>;
   itemsCount?: number;
   unitsCount?: number;
+  Wallet_Transactions?: Array<{
+    id: string;
+    amount: string;
+    created_at: string;
+    description?: string | null;
+    status: string;
+    type: string;
+    wallet_id: string;
+  }>;
 }
 
 interface OrderDetailsDrawerProps {
@@ -117,8 +167,19 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
 
   const { data: paymentData, isLoading: isLoadingPayments } = useOrderPayments(order.id);
   const { data: systemConfig } = useSystemConfig();
-  const transactions = (paymentData?.Wallet_Transactions || []) as WalletTransaction[];
+  // Restaurant orders: Wallet_Transactions from list API. Business: businessTransactions (different schema, no amount).
+  const walletTransactions = (
+    order.type === 'restaurant' && order.Wallet_Transactions?.length
+      ? order.Wallet_Transactions
+      : (paymentData?.Wallet_Transactions || [])
+  ) as WalletTransaction[];
+  const businessTransactions = order.type === 'business' ? (order.businessTransactions ?? []) : [];
   const refunds = (paymentData?.Refunds || []) as Refund[];
+  const isLoadingPaymentsResolved =
+    (order.type === 'restaurant' && order.Wallet_Transactions) ||
+    (order.type === 'business' && order.businessTransactions)
+      ? false
+      : isLoadingPayments;
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -200,25 +261,44 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
           {/* Customer Information */}
           <div>
             <h3 className="text-lg font-semibold mb-3">
-              {order.type === 'regular' ? 'Customer Details' : 'Reel Details'}
+              {order.type === 'regular' || order.type === 'business' || order.type === 'restaurant'
+                ? 'Customer Details'
+                : 'Reel Details'}
             </h3>
             <Card className="p-4">
               <div className="flex items-center space-x-4">
                 <Avatar>
                   <AvatarFallback>
-                    {order.type === 'regular' 
-                      ? order.User?.name?.split(' ').map(n => n[0]).join('')
-                      : order.Reel?.title?.split(' ').map(n => n[0]).join('')
-                    }
+                    {(order.type === 'regular' ? order.User?.name : order.orderedBy?.name ?? order.Reel?.title)
+                      ?.split(' ')
+                      .map((n: string) => n[0])
+                      .join('') ?? '?'}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="font-medium">
-                    {order.type === 'regular' ? order.User?.name : order.Reel?.title}
+                    {order.type === 'regular'
+                      ? order.User?.name
+                      : order.type === 'business' || order.type === 'restaurant'
+                        ? order.orderedBy?.name
+                        : order.Reel?.title}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {order.type === 'regular' ? order.User?.email : order.Reel?.description}
+                    {order.type === 'regular'
+                      ? order.User?.email
+                      : order.type === 'business' || order.type === 'restaurant'
+                        ? order.orderedBy?.email
+                        : order.Reel?.description}
                   </p>
+                  {(order.type === 'business' || order.type === 'restaurant') && order.orderedBy?.phone && (
+                    <p className="text-sm text-muted-foreground">Phone: {order.orderedBy.phone}</p>
+                  )}
+                  {order.type === 'restaurant' && order.Restaurant && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Restaurant: {order.Restaurant.name}
+                      {order.Restaurant.phone && ` • ${order.Restaurant.phone}`}
+                    </p>
+                  )}
                   {order.type === 'reel' && (
                     <p className="text-sm text-muted-foreground">
                       Category: {order.Reel?.category} | Price: {formatCurrency(order.Reel?.Price || '0')}
@@ -229,38 +309,173 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
             </Card>
           </div>
 
+          {/* Shop / Restaurant / Business (merchant info with logo) */}
+          {(order.type === 'regular' && order.Shop) ||
+          (order.type === 'restaurant' && order.Restaurant) ||
+          (order.type === 'business' && order.business_store) ? (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">
+                {order.type === 'regular'
+                  ? 'Shop'
+                  : order.type === 'restaurant'
+                    ? 'Restaurant'
+                    : 'Business Store'}
+              </h3>
+              <Card className="p-4">
+                <div className="flex items-center gap-4">
+                  {(order.type === 'regular' && order.Shop?.image) ||
+                  (order.type === 'restaurant' && order.Restaurant?.logo) ||
+                  (order.type === 'business' && order.business_store?.image) ? (
+                    <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-muted border">
+                      <img
+                        src={
+                          (order.type === 'regular' && order.Shop?.image) ||
+                          (order.type === 'restaurant' && order.Restaurant?.logo) ||
+                          (order.type === 'business' && order.business_store?.image) ||
+                          ''
+                        }
+                        alt={
+                          (order.type === 'regular' && order.Shop?.name) ||
+                          (order.type === 'restaurant' && order.Restaurant?.name) ||
+                          (order.type === 'business' && order.business_store?.name) ||
+                          'Merchant'
+                        }
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-muted border flex items-center justify-center text-xl font-semibold text-muted-foreground">
+                      {(order.type === 'regular' && order.Shop?.name?.[0]) ||
+                        (order.type === 'restaurant' && order.Restaurant?.name?.[0]) ||
+                        (order.type === 'business' && order.business_store?.name?.[0]) ||
+                        '?'}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">
+                      {(order.type === 'regular' && order.Shop?.name) ||
+                        (order.type === 'restaurant' && order.Restaurant?.name) ||
+                        (order.type === 'business' && order.business_store?.name) ||
+                        '—'}
+                    </p>
+                    {order.type === 'regular' && order.Shop?.address && (
+                      <p className="text-sm text-muted-foreground">{order.Shop.address}</p>
+                    )}
+                    {order.type === 'restaurant' && order.Restaurant && (
+                      <>
+                        {order.Restaurant.phone && (
+                          <p className="text-sm text-muted-foreground">Phone: {order.Restaurant.phone}</p>
+                        )}
+                        {order.Restaurant.email && (
+                          <p className="text-sm text-muted-foreground">Email: {order.Restaurant.email}</p>
+                        )}
+                        {order.Restaurant.location && (
+                          <p className="text-sm text-muted-foreground">{order.Restaurant.location}</p>
+                        )}
+                      </>
+                    )}
+                    {order.type === 'business' && order.business_store && (
+                      <>
+                        {order.business_store.address && (
+                          <p className="text-sm text-muted-foreground">{order.business_store.address}</p>
+                        )}
+                        {order.business_store.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {order.business_store.description}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </div>
+          ) : null}
+
           {/* Order Items */}
           <div>
             <h3 className="text-lg font-semibold mb-3">
-              {order.type === 'regular' ? 'Order Items' : 'Reel Item'}
+              {order.type === 'regular'
+                ? 'Order Items'
+                : order.type === 'restaurant'
+                  ? 'Restaurant Items'
+                  : order.type === 'business'
+                    ? 'Business Items'
+                    : 'Reel Item'}
             </h3>
             <Card className="p-4">
               <div className="space-y-4">
-                {order.type === 'regular' ? (
+                {order.type === 'regular' && (
                   order.Order_Items?.map((item, index) => (
-                  <div key={item.id}>
-                    {index > 0 && <Separator className="my-4" />}
-                    <div className="flex justify-between">
-                      <div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger className="text-primary hover:underline">
-                              <p className="font-medium">
-                                Product #{generateShortId(item.product_id)}
-                              </p>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Full Product ID: {item.product_id}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                    <div key={item.id}>
+                      {index > 0 && <Separator className="my-4" />}
+                      <div className="flex justify-between">
+                        <div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="text-primary hover:underline">
+                                <p className="font-medium">
+                                  Product #{generateShortId(item.product_id)}
+                                </p>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Full Product ID: {item.product_id}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                        </div>
+                        <p className="font-medium">{formatCurrency(item.price)}</p>
                       </div>
-                      <p className="font-medium">{formatCurrency(item.price)}</p>
                     </div>
-                  </div>
                   ))
-                ) : (
+                )}
+                {order.type === 'restaurant' &&
+                  order.restaurant_order_items?.map((item, index) => {
+                    const dishName =
+                      item.restaurant_dishes?.dishes?.name ?? `Dish #${generateShortId(item.dish_id)}`;
+                    return (
+                      <div key={item.id}>
+                        {index > 0 && <Separator className="my-4" />}
+                        <div className="flex justify-between">
+                          <div>
+                            <p className="font-medium">{dishName}</p>
+                            <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                            {item.restaurant_dishes?.dishes?.category && (
+                              <p className="text-xs text-muted-foreground">
+                                {item.restaurant_dishes.dishes.category}
+                              </p>
+                            )}
+                          </div>
+                          <p className="font-medium">{formatCurrency(item.price)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                {order.type === 'business' &&
+                  (order.allProducts?.length ? (
+                    order.allProducts.map((item: any, index: number) => (
+                      <div key={item?.id ?? index}>
+                        {index > 0 && <Separator className="my-4" />}
+                        <div className="flex justify-between">
+                          <div>
+                            <p className="font-medium">{item?.name ?? `Item ${index + 1}`}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Quantity: {item?.quantity ?? 1}
+                            </p>
+                          </div>
+                          {item?.price != null && (
+                            <p className="font-medium">{formatCurrency(String(item.price))}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {order.units ? `${order.units} unit(s)` : 'No items'}
+                    </p>
+                  ))}
+                {order.type === 'reel' && (
                   <div className="flex justify-between">
                     <div>
                       <p className="font-medium">{order.Reel?.title}</p>
@@ -308,16 +523,36 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                   </p>
                 )}
 
-                {/* Payment Transactions */}
+                {/* Payment Transactions (Wallet for regular/reel/restaurant; businessTransactions for business) */}
                 <div className="mt-4">
                   <h4 className="font-medium mb-2">Payment Transactions</h4>
-                  {isLoadingPayments ? (
+                  {isLoadingPaymentsResolved ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
                     </div>
-                  ) : transactions.length > 0 ? (
+                  ) : order.type === 'business' && businessTransactions.length > 0 ? (
                     <div className="space-y-2">
-                      {transactions.map((transaction: WalletTransaction) => (
+                      {businessTransactions.map((tx: { id: string; type: string; action?: string | null; description?: string | null; created_at: string; status: string }) => (
+                        <div
+                          key={tx.id}
+                          className="flex justify-between items-center text-sm border rounded-md p-2"
+                        >
+                          <div>
+                            <p className="font-medium">{tx.type || tx.action || 'Transaction'}</p>
+                            {tx.description && (
+                              <p className="text-muted-foreground text-xs">{tx.description}</p>
+                            )}
+                            <p className="text-muted-foreground text-xs">
+                              {formatDateTime(tx.created_at)}
+                            </p>
+                          </div>
+                          <Badge className={getPaymentStatusColor(tx.status)}>{tx.status}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : walletTransactions.length > 0 ? (
+                    <div className="space-y-2">
+                      {walletTransactions.map((transaction: WalletTransaction) => (
                         <div
                           key={transaction.id}
                           className="flex justify-between items-center text-sm border rounded-md p-2"

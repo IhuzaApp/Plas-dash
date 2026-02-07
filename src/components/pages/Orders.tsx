@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Filter, Loader2, Phone, AlertCircle, Video, ShoppingBag, UtensilsCrossed } from 'lucide-react';
 import { useOrders, useReelOrders, useBusinessOrders, useRestaurantOrders, useSystemConfig } from '@/hooks/useHasuraApi';
-import { format, differenceInMinutes } from 'date-fns';
+import { format, differenceInMinutes, formatDistanceToNow } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
@@ -102,15 +102,76 @@ interface UnifiedOrder {
     name: string;
     email: string;
     phone?: string;
+    profile_picture?: string | null;
+    created_at?: string;
   };
   allProducts?: any[];
   units?: string;
-  business_store?: { id: string; name: string; address?: string } | null;
+  business_store?: {
+    id: string;
+    name: string;
+    address?: string;
+    image?: string | null;
+    description?: string | null;
+    [key: string]: any;
+  } | null;
+  businessTransactions?: Array<{
+    id: string;
+    action?: string | null;
+    created_at: string;
+    description?: string | null;
+    related_order?: string | null;
+    status: string;
+    type: string;
+    wallet_id: string;
+  }>;
+  // Regular order shop
+  Shop?: { id: string; name: string; address?: string; image?: string | null } | null;
   // Restaurant order
-  Restaurant?: { id: string; name: string } | null;
-  restaurant_order_items?: any[];
+  Restaurant?: {
+    id: string;
+    name: string;
+    logo?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    location?: string | null;
+    lat?: number | null;
+    long?: number | null;
+    is_active?: boolean | null;
+    verified?: boolean | null;
+    [key: string]: any;
+  } | null;
+  restaurant_order_items?: Array<{
+    id: string;
+    quantity: number;
+    price: string;
+    dish_id: string;
+    created_at?: string;
+    order_id?: string;
+    restaurant_dishes?: {
+      dishes?: { name?: string; image?: string; category?: string } | null;
+      price?: string;
+      [key: string]: any;
+    } | null;
+    [key: string]: any;
+  }>;
   itemsCount?: number;
   unitsCount?: number;
+  pin?: string | null;
+  assigned_at?: string | null;
+  Wallet_Transactions?: Array<{
+    id: string;
+    amount: string;
+    created_at: string;
+    description?: string | null;
+    status: string;
+    type: string;
+    wallet_id: string;
+    related_order_id?: string | null;
+    related_reel_orderId?: string | null;
+    related_restaurant_order_id?: string | null;
+    relate_business_order_id?: string | null;
+  }>;
 }
 
 const Orders = () => {
@@ -124,11 +185,19 @@ const Orders = () => {
   const businessOrderItems: any[] = businessOrdersData?.orders || [];
   const restaurantOrderItems: any[] = restaurantOrdersData?.orders || [];
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'delayed' | 'delivered' | 'pending' | 'shopping' | 'on_the_way'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedOrder, setSelectedOrder] = useState<UnifiedOrder | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [tick, setTick] = useState(0);
   const { hasAction } = usePrivilege();
+
+  // Refresh countdown every minute
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Combine regular, reel, business, and restaurant orders into a unified array
   const allOrders: UnifiedOrder[] = useMemo(() => {
@@ -181,7 +250,9 @@ const Orders = () => {
       allProducts: o.allProducts,
       units: o.units,
       business_store: o.business_store,
+      businessTransactions: o.businessTransactions,
       shopper: o.shopper,
+      delivery_time: o.delivery_time ?? o.delivered_time ?? null,
     }));
 
     const restaurantOrdersMapped: UnifiedOrder[] = restaurantOrderItems.map((o: any) => ({
@@ -194,6 +265,11 @@ const Orders = () => {
       updated_at: o.updated_at,
       shopper_id: o.shopper_id ?? null,
       user_id: o.user_id ?? '',
+      delivery_fee: o.delivery_fee,
+      delivery_time: o.delivery_time,
+      delivery_notes: o.delivery_notes,
+      discount: o.discount,
+      voucher_code: o.voucher_code,
       orderedBy: o.orderedBy,
       Address: o.Address,
       Restaurant: o.Restaurant,
@@ -201,6 +277,13 @@ const Orders = () => {
       itemsCount: o.itemsCount,
       unitsCount: o.unitsCount,
       shopper: o.shopper,
+      pin: o.pin,
+      found: o.found,
+      delivery_address_id: o.delivery_address_id,
+      combined_order_id: o.combined_order_id,
+      assigned_at: o.assigned_at,
+      delivery_photo_url: o.delivery_photo_url,
+      Wallet_Transactions: o.Wallet_Transactions,
     }));
 
     return [...regularOrders, ...reelOrdersMapped, ...businessOrdersMapped, ...restaurantOrdersMapped].sort(
@@ -300,43 +383,76 @@ const Orders = () => {
     return format(date, 'MMM d, yyyy HH:mm');
   };
 
-  const pendingOrders = allOrders.filter(order => order.status === 'PENDING');
+  // Countdown to expected delivery (updates with tick every minute)
+  const getDeliveryCountdown = (deliveryTime: string | null | undefined) => {
+    if (deliveryTime == null || deliveryTime === '') return { text: '—', exact: null, isOverdue: false };
+    const date = new Date(deliveryTime);
+    if (Number.isNaN(date.getTime())) return { text: '—', exact: null, isOverdue: false };
+    void tick; // use tick so this re-runs when countdown refreshes
+    const now = new Date();
+    if (date < now) {
+      return {
+        text: `${formatDistanceToNow(date, { addSuffix: true })}`,
+        exact: format(date, 'MMM d, HH:mm'),
+        isOverdue: true,
+      };
+    }
+    return {
+      text: `in ${formatDistanceToNow(date, { addSuffix: false })}`,
+      exact: format(date, 'MMM d, HH:mm'),
+      isOverdue: false,
+    };
+  };
+
+  const pendingOrders = allOrders.filter(order => order.status.toUpperCase() === 'PENDING');
   const deliveredOrders = allOrders.filter(order => order.status.toLowerCase() === 'delivered');
   const inProgressOrders = allOrders.filter(order => {
     const statusLower = order.status.toLowerCase();
-    return order.status !== 'PENDING' && statusLower !== 'delivered';
+    return order.status.toUpperCase() !== 'PENDING' && statusLower !== 'delivered';
   });
+
+  // Delayed = orders with warnings (unassigned 10+ min, shopping 60+ min, on_the_way 50+ min)
+  const delayedOrders = allOrders.filter(order => getOrderWarnings(order).length > 0);
+  const shoppingOrders = allOrders.filter(order => order.status.toLowerCase() === 'shopping');
+  const onTheWayOrders = allOrders.filter(order => order.status.toLowerCase() === 'on_the_way');
 
   const totalRevenue = allOrders.reduce(
     (acc, order) => acc + (parseFloat(String(order.total)) || 0),
     0
   );
 
-  // Filter orders based on search term
-  const filteredOrders = allOrders.filter(order => {
+  // Apply status filter first, then search
+  const statusFilteredOrders = allOrders.filter(order => {
+    const statusLower = order.status.toLowerCase();
+    switch (statusFilter) {
+      case 'delayed':
+        return getOrderWarnings(order).length > 0;
+      case 'delivered':
+        return statusLower === 'delivered';
+      case 'pending':
+        return order.status.toUpperCase() === 'PENDING';
+      case 'shopping':
+        return statusLower === 'shopping';
+      case 'on_the_way':
+        return statusLower === 'on_the_way';
+      default:
+        return true;
+    }
+  });
+
+  // Filter by search term
+  const filteredOrders = statusFilteredOrders.filter(order => {
     const searchLower = searchTerm.toLowerCase();
+    if (!searchLower) return true;
 
     // Direct ID match (case-insensitive)
-    if (order.id?.toLowerCase() === searchLower) {
-      return true;
-    }
-
-    // Direct OrderID match (case-insensitive)
-    if (order.OrderID?.toString().toLowerCase() === searchLower) {
-      return true;
-    }
-
+    if (order.id?.toLowerCase() === searchLower) return true;
+    if (order.OrderID?.toString().toLowerCase() === searchLower) return true;
     // Partial ID match
-    if (order.id?.toLowerCase().includes(searchLower)) {
-      return true;
-    }
+    if (order.id?.toLowerCase().includes(searchLower)) return true;
+    if (order.OrderID?.toString().toLowerCase().includes(searchLower)) return true;
 
-    // Partial OrderID match
-    if (order.OrderID?.toString().toLowerCase().includes(searchLower)) {
-      return true;
-    }
-
-    // Customer name/email/phone (regular & reel: User; business & restaurant: orderedBy)
+    // Customer name/email/phone
     const customerName = order.User?.name ?? order.orderedBy?.name ?? '';
     const customerEmail = order.User?.email ?? order.orderedBy?.email ?? '';
     const customerPhone = order.User?.phone ?? order.orderedBy?.phone ?? '';
@@ -348,22 +464,20 @@ const Orders = () => {
       return true;
     }
 
-    // Reel title/description match (for reel orders)
+    // Reel title/description match
     if (order.Reel?.title?.toLowerCase().includes(searchLower) ||
         order.Reel?.description?.toLowerCase().includes(searchLower)) {
       return true;
     }
 
-    // Store/restaurant name (business & restaurant)
+    // Store/restaurant name
     if (order.business_store?.name?.toLowerCase().includes(searchLower) ||
         order.Restaurant?.name?.toLowerCase().includes(searchLower)) {
       return true;
     }
 
     // Status match
-    if (order.status.toLowerCase().includes(searchLower)) {
-      return true;
-    }
+    if (order.status.toLowerCase().includes(searchLower)) return true;
 
     return false;
   });
@@ -447,22 +561,54 @@ const Orders = () => {
       </div>
 
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by Order ID, UUID, customer name or email..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={e => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page on search
-              }}
-            />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by Order ID, UUID, customer name or email..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={e => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
           </div>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" /> Filter
-          </Button>
+
+          {/* Status filter tabs */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground mr-1">Filter:</span>
+            {[
+              { value: 'all' as const, label: 'All', count: undefined as number | undefined },
+              { value: 'delayed' as const, label: 'Delayed', count: delayedOrders.length },
+              { value: 'delivered' as const, label: 'Delivered', count: deliveredOrders.length },
+              { value: 'pending' as const, label: 'Pending', count: pendingOrders.length },
+              { value: 'shopping' as const, label: 'Shopping', count: shoppingOrders.length },
+              { value: 'on_the_way' as const, label: 'On the way', count: onTheWayOrders.length },
+            ].map(({ value, label, count }) => (
+              <Button
+                key={value}
+                variant={statusFilter === value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setStatusFilter(value);
+                  setCurrentPage(1);
+                }}
+              >
+                {label}
+                {count != null && count > 0 && (
+                  <Badge
+                    variant={statusFilter === value ? 'secondary' : 'outline'}
+                    className="ml-1.5 px-1.5 py-0 text-xs"
+                  >
+                    {count}
+                  </Badge>
+                )}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <Card>
@@ -474,6 +620,7 @@ const Orders = () => {
                 <TableHead>Status</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Total</TableHead>
+                <TableHead>Expected delivery</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Last Updated</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -482,7 +629,7 @@ const Orders = () => {
             <TableBody>
               {currentOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                     No orders found.
                   </TableCell>
                 </TableRow>
@@ -584,6 +731,28 @@ const Orders = () => {
                           `${order.itemsCount ?? order.restaurant_order_items?.length ?? 0} item(s)`}
                       </TableCell>
                       <TableCell>{formatCurrency(order.total)}</TableCell>
+                      <TableCell>
+                        {(() => {
+                          const { text, exact, isOverdue } = getDeliveryCountdown(order.delivery_time);
+                          if (exact) {
+                            return (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger className="text-left">
+                                    <span className={isOverdue ? 'text-muted-foreground' : ''}>
+                                      {text}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Expected: {exact}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            );
+                          }
+                          return <span className="text-muted-foreground">{text}</span>;
+                        })()}
+                      </TableCell>
                       <TableCell>{formatDateTime(order.created_at)}</TableCell>
                       <TableCell>{formatDateTime(order.updated_at)}</TableCell>
                       <TableCell className="text-right space-x-2">
