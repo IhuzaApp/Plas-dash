@@ -254,7 +254,7 @@ const GET_SHOPPER_BY_USER_ID = gql`
   }
 `;
 
-// Withdraw requests by shopper_id (separate query – no relation on shoppers)
+// Withdraw requests by shopper_id (with verification_image and Wallets for proof + balance)
 const GET_WITHDRAW_REQUESTS = gql`
   query GetWithdrawRequestsByShopper($shopper_id: uuid!) {
     withDraweRequest(
@@ -265,9 +265,18 @@ const GET_WITHDRAW_REQUESTS = gql`
       amount
       status
       update_at
+      created_at
       phoneNumber
       shopper_id
       shopperWallet_id
+      verification_image
+      Wallets {
+        id
+        available_balance
+        reserved_balance
+        last_updated
+        shopper_id
+      }
     }
   }
 `;

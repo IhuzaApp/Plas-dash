@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -23,9 +24,30 @@ interface ShopperDetailsProps {
 
 const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: detailData, isLoading: isLoadingDetail } = useShopperDetail(shopperId);
   const { data: systemConfig } = useSystemConfig();
   const updateShopperStatus = useUpdateShopperStatus();
+
+  const handleApproveWithdraw = async (id: string) => {
+    const res = await fetch('/api/mutations/update-withdraw-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: 'approved' }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    await queryClient.invalidateQueries({ queryKey: ['api', 'shopper-detail', shopperId] });
+  };
+
+  const handleRejectWithdraw = async (id: string) => {
+    const res = await fetch('/api/mutations/update-withdraw-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: 'rejected' }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    await queryClient.invalidateQueries({ queryKey: ['api', 'shopper-detail', shopperId] });
+  };
 
   const handleBackToShoppers = () => {
     router.push('/shoppers');
@@ -149,8 +171,10 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
 
   // Earnings = total of (delivery_fee + service_fee) from regular, reel, business, restaurant orders
   const totalEarnings = summary?.earnings ?? 0;
-  const pendingPayouts = 0;
   const totalRevenue = summary?.total_revenue ?? totalEarnings;
+  const withdrawRequests = detailData?.withdraw_requests ?? [];
+  const pendingWithdrawAmount = summary?.pending_withdraw_amount ?? 0;
+  const withdrawRequestsCount = summary?.withdraw_requests_count ?? 0;
 
   // Ensure data is properly structured
   const ratings = detailedShopper?.User?.Ratings || [];
@@ -247,8 +271,12 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
         <ShopperTabs
           wallet={wallet}
           totalEarnings={totalEarnings}
-          pendingPayouts={pendingPayouts}
           formatCurrency={formatCurrency}
+          withdrawRequests={withdrawRequests}
+          pendingWithdrawAmount={pendingWithdrawAmount}
+          withdrawRequestsCount={withdrawRequestsCount}
+          onApproveWithdraw={handleApproveWithdraw}
+          onRejectWithdraw={handleRejectWithdraw}
           paginatedOrders={paginatedOrders}
           ordersPage={ordersPage}
           totalOrders={orders.length}

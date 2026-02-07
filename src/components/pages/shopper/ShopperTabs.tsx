@@ -15,8 +15,12 @@ interface ShopperTabsProps {
   // Wallet tab
   wallet: any;
   totalEarnings: number;
-  pendingPayouts: number;
   formatCurrency: (amount: string) => string;
+  withdrawRequests?: any[];
+  pendingWithdrawAmount?: number;
+  withdrawRequestsCount?: number;
+  onApproveWithdraw?: (id: string) => Promise<void>;
+  onRejectWithdraw?: (id: string) => Promise<void>;
 
   // Orders tab
   paginatedOrders: any[];
@@ -74,8 +78,12 @@ interface ShopperTabsProps {
 const ShopperTabs: React.FC<ShopperTabsProps> = ({
   wallet,
   totalEarnings,
-  pendingPayouts,
   formatCurrency,
+  withdrawRequests = [],
+  pendingWithdrawAmount = 0,
+  withdrawRequestsCount = 0,
+  onApproveWithdraw,
+  onRejectWithdraw,
   paginatedOrders,
   ordersPage,
   totalOrders,
@@ -127,8 +135,12 @@ const ShopperTabs: React.FC<ShopperTabsProps> = ({
         <ShopperWalletTab
           wallet={wallet}
           totalEarnings={totalEarnings}
-          pendingPayouts={pendingPayouts}
           formatCurrency={formatCurrency}
+          withdrawRequests={withdrawRequests}
+          pendingWithdrawAmount={pendingWithdrawAmount}
+          withdrawRequestsCount={withdrawRequestsCount}
+          onApproveWithdraw={onApproveWithdraw}
+          onRejectWithdraw={onRejectWithdraw}
         />
       </TabsContent>
 
