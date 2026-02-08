@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, ScanBarcode, Loader2, Plus, Upload, Pencil } from 'lucide-react';
+import { Search, Filter, ScanBarcode, Loader2, Plus, Upload, Pencil, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useProducts,
@@ -269,24 +269,36 @@ const Products = () => {
           title="Products"
           description="Product catalog (all product names)."
           actions={
-            <>
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 onClick={() => {
                   setEditProductName(null);
                   setIsAddProductNameOpen(true);
                 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 shrink-0"
               >
                 <Plus className="h-4 w-4" /> Add product name
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsImportProductNamesOpen(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 shrink-0"
               >
                 <Upload className="h-4 w-4" /> Import
               </Button>
-            </>
+              <Button
+                variant="outline"
+                onClick={() => productNamesQuery.refetch()}
+                disabled={productNamesQuery.isFetching}
+                className="flex items-center gap-2 shrink-0"
+                title="Refresh data"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${productNamesQuery.isFetching ? 'animate-spin' : ''}`}
+                />
+                Refresh
+              </Button>
+            </div>
           }
         />
         <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
