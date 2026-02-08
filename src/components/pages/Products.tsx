@@ -185,16 +185,21 @@ const Products = () => {
   };
 
   const handleImportProductNames = async (
-    rows: { name: string; description?: string; barcode?: string; sku?: string }[]
+    rows: { name: string; description?: string; barcode?: string; sku?: string; image?: string }[],
+    onProgress?: (current: number, total: number) => void
   ) => {
     try {
-      for (const row of rows) {
+      const total = rows.length;
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
         await addProductName.mutateAsync({
           name: row.name,
           description: row.description ?? undefined,
           barcode: row.barcode ?? undefined,
           sku: row.sku ?? undefined,
+          image: row.image ?? undefined,
         });
+        onProgress?.(i + 1, total);
       }
       toast.success(`Imported ${rows.length} product name(s).`);
       setIsImportProductNamesOpen(false);
