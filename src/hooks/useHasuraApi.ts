@@ -8,8 +8,12 @@ import {
   GET_ADDRESSES,
   GET_INVOICE_DETAILS,
   GET_ALL_WALLETS,
+  GET_ALL_WALLETS_WITH_TRANSACTIONS,
+  GET_PERSONAL_WALLETS,
+  GET_BUSINESS_WALLETS,
   GET_SHOPPER_WALLET,
   GET_ALL_WALLET_TRANSACTIONS,
+  GET_ALL_PENDING_WITHDRAW_REQUESTS,
   GET_CATEGORIES,
   GET_SYSTEM_CONFIG,
   GET_ORG_EMPLOYEES_BY_SHOP,
@@ -538,6 +542,38 @@ export function useWalletTransactions() {
   return useQuery<{ Wallet_Transactions: WalletTransaction[] }, Error>({
     queryKey: ['wallet-transactions'],
     queryFn: () => hasuraRequest(GET_ALL_WALLET_TRANSACTIONS, {}),
+  });
+}
+
+// All Wallets (shopper) with full transactions for Wallets overview tab
+export function useAllWalletsWithTransactions() {
+  return useQuery<{ Wallets: any[] }, Error>({
+    queryKey: ['wallets-with-transactions'],
+    queryFn: () => hasuraRequest(GET_ALL_WALLETS_WITH_TRANSACTIONS, {}),
+  });
+}
+
+// Personal wallets (users) for Wallets overview tab
+export function usePersonalWallets() {
+  return useQuery<{ personalWallet: any[] }, Error>({
+    queryKey: ['personal-wallets'],
+    queryFn: () => hasuraRequest(GET_PERSONAL_WALLETS, {}),
+  });
+}
+
+// Business wallets for Wallets overview tab
+export function useBusinessWallets() {
+  return useQuery<{ business_wallet: any[] }, Error>({
+    queryKey: ['business-wallets'],
+    queryFn: () => hasuraRequest(GET_BUSINESS_WALLETS, {}),
+  });
+}
+
+// All pending withdraw requests (for Process Payouts drawer)
+export function usePendingWithdrawRequests() {
+  return useQuery<{ withDraweRequest: any[] }, Error>({
+    queryKey: ['pending-withdraw-requests'],
+    queryFn: () => hasuraRequest(GET_ALL_PENDING_WITHDRAW_REQUESTS, {}),
   });
 }
 

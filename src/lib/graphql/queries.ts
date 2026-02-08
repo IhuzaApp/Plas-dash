@@ -444,6 +444,114 @@ export const GET_ALL_WALLET_TRANSACTIONS = `
   }
 `;
 
+// All Wallets (shopper) with full transactions for overview tab
+export const GET_ALL_WALLETS_WITH_TRANSACTIONS = `
+  query GetAllWalletsWithTransactions {
+    Wallets {
+      id
+      available_balance
+      reserved_balance
+      last_updated
+      shopper_id
+      Wallet_Transactions {
+        id
+        amount
+        created_at
+        description
+        relate_business_order_id
+        related_order_id
+        related_reel_orderId
+        related_restaurant_order_id
+        status
+        type
+        wallet_id
+      }
+    }
+  }
+`;
+
+// Personal wallets (users) for overview tab
+export const GET_PERSONAL_WALLETS = `
+  query GetPersonalWallets {
+    personalWallet {
+      id
+      balance
+      created_at
+      updated_at
+      user_id
+      Users {
+        id
+        name
+        email
+        gender
+        is_guest
+        is_active
+        phone
+      }
+    }
+  }
+`;
+
+// Business wallets for overview tab
+export const GET_BUSINESS_WALLETS = `
+  query GetBusinessWallets {
+    business_wallet {
+      id
+      amount
+      business_id
+      created_at
+      query_id
+      updated_at
+      businessTransactions {
+        id
+        action
+        created_at
+        description
+        related_order
+        status
+        type
+        wallet_id
+      }
+    }
+  }
+`;
+
+// All pending withdraw requests (for admin Process Payouts drawer)
+export const GET_ALL_PENDING_WITHDRAW_REQUESTS = `
+  query GetAllPendingWithdrawRequests {
+    withDraweRequest(
+      where: { status: { _eq: "pending" } }
+      order_by: { created_at: desc }
+    ) {
+      id
+      amount
+      status
+      created_at
+      update_at
+      phoneNumber
+      shopper_id
+      shopperWallet_id
+      business_id
+      businessWallet_id
+      verification_image
+      Wallets {
+        id
+        available_balance
+        reserved_balance
+        last_updated
+        shopper_id
+        User {
+          id
+          name
+          email
+          phone
+          profile_picture
+        }
+      }
+    }
+  }
+`;
+
 // Refunds queries
 export const GET_ALL_REFUNDS = `
   query getAllREfunds {

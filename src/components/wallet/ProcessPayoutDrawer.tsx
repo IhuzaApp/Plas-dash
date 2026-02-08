@@ -10,60 +10,30 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, CheckCircle2, XCircle, ImageIcon, Eye } from 'lucide-react';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
-import { CreditCard, DollarSign, Wallet } from 'lucide-react';
-import { useWallets, useSystemConfig } from '@/hooks/useHasuraApi';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-
-const formSchema = z.object({
-  userId: z.string({
-    required_error: 'Please select a user',
-  }),
-  amount: z.string().refine(val => !isNaN(Number(val)) && Number(val) > 0, {
-    message: 'Amount must be a positive number',
-  }),
-  paymentMethod: z.enum(['bank', 'card', 'wallet']),
-  notes: z.string().optional(),
-});
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { usePendingWithdrawRequests, useSystemConfig } from '@/hooks/useHasuraApi';
+import { format, formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface ProcessPayoutDrawerProps {
   children: React.ReactNode;
 }
 
 const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
-  const { data: walletsData, isLoading: isLoadingWallets } = useWallets();
+  const { data, isLoading, refetch } = usePendingWithdrawRequests();
   const { data: systemConfig } = useSystemConfig();
-  const [selectedWallet, setSelectedWallet] = useState<any>(null);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      userId: '',
-      amount: '',
-      paymentMethod: 'bank',
-      notes: '',
-    },
-  });
+  const requests = data?.withDraweRequest ?? [];
+  const [actionId, setActionId] = useState<string | null>(null);
+  const [proofImage, setProofImage] = useState<string | null>(null);
+  const [proofOpen, setProofOpen] = useState(false);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -76,171 +46,213 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
     }).format(num);
   };
 
-  const handleUserChange = (userId: string) => {
-    const wallet = walletsData?.Wallets.find((w: any) => w.User?.id === userId);
-    setSelectedWallet(wallet);
-    if (wallet) {
-      form.setValue('amount', wallet.available_balance || '0');
+  const handleAction = async (id: string, status: 'approved' | 'rejected') => {
+    setActionId(id);
+    try {
+      const res = await fetch('/api/mutations/update-withdraw-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        throw new Error(result.error || 'Failed to update');
+      }
+      toast.success(
+        status === 'approved'
+          ? 'Withdrawal approved successfully.'
+          : 'Withdrawal rejected.'
+      );
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || 'Action failed.');
+    } finally {
+      setActionId(null);
     }
   };
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Here you would handle the payout processing
-  }
+  const handleViewProof = (img: string | null) => {
+    if (img) {
+      setProofImage(img);
+      setProofOpen(true);
+    }
+  };
 
   return (
-    <Drawer>
-      <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-sm">
-          <DrawerHeader>
-            <DrawerTitle>Process Payouts</DrawerTitle>
-            <DrawerDescription>
-              Send payments to selected shoppers. Once processed, payments cannot be reversed.
-            </DrawerDescription>
-          </DrawerHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-6">
-              <FormField
-                control={form.control}
-                name="userId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Select User</FormLabel>
-                    <Select
-                      onValueChange={value => {
-                        field.onChange(value);
-                        handleUserChange(value);
-                      }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a user" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {walletsData?.Wallets.map(
-                          (wallet: any) =>
-                            wallet.User && (
-                              <SelectItem key={wallet.User.id} value={wallet.User.id}>
-                                <div className="flex items-center gap-2">
-                                  {wallet.User.profile_picture && (
-                                    <img
-                                      src={wallet.User.profile_picture}
-                                      alt="Profile"
-                                      className="w-6 h-6 rounded-full"
-                                    />
-                                  )}
-                                  <div>
-                                    <div className="font-medium">{wallet.User.name}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                      Balance: {formatCurrency(wallet.available_balance || '0')}
-                                    </div>
-                                  </div>
+    <>
+      <Drawer>
+        <DrawerTrigger asChild>{children}</DrawerTrigger>
+        <DrawerContent className="max-h-[85vh]">
+          <div className="mx-auto w-full max-w-2xl">
+            <DrawerHeader>
+              <DrawerTitle>Process Payouts</DrawerTitle>
+              <DrawerDescription>
+                Pending withdrawal requests. Approve or reject each request.
+              </DrawerDescription>
+            </DrawerHeader>
+
+            <div className="px-4 pb-2">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : requests.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  No pending withdrawal requests.
+                </div>
+              ) : (
+                <ScrollArea className="h-[55vh] pr-2">
+                  <div className="space-y-3">
+                    {requests.map((req: any) => {
+                      const wallet = Array.isArray(req.Wallets)
+                        ? req.Wallets[0]
+                        : req.Wallets;
+                      const user = wallet?.User;
+                      const busy = actionId === req.id;
+
+                      return (
+                        <div
+                          key={req.id}
+                          className="rounded-lg border p-4 space-y-3"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-3 min-w-0">
+                              {user?.profile_picture ? (
+                                <img
+                                  src={user.profile_picture}
+                                  alt=""
+                                  className="h-10 w-10 rounded-full object-cover shrink-0"
+                                />
+                              ) : (
+                                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                                  {(user?.name ?? '?')[0]}
                                 </div>
-                              </SelectItem>
-                            )
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                              )}
+                              <div className="min-w-0">
+                                <div className="font-medium truncate">
+                                  {user?.name ?? 'Unknown'}
+                                </div>
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {user?.email ?? '—'}
+                                  {user?.phone ? ` · ${user.phone}` : ''}
+                                </div>
+                              </div>
+                            </div>
+                            <Badge className="bg-yellow-100 text-yellow-800 shrink-0">
+                              Pending
+                            </Badge>
+                          </div>
 
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Total Amount</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                          {systemConfig?.System_configuratioins[0]?.currency || 'RWF'}
-                        </span>
-                        <Input placeholder="0.00" className="pl-16" {...field} />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Amount</span>
+                              <div className="font-semibold">
+                                {formatCurrency(String(req.amount))}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Phone</span>
+                              <div>{req.phoneNumber || '—'}</div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Wallet balance</span>
+                              <div>
+                                {wallet
+                                  ? formatCurrency(wallet.available_balance || '0')
+                                  : '—'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Requested</span>
+                              <div>
+                                {req.created_at
+                                  ? formatDistanceToNow(new Date(req.created_at), {
+                                      addSuffix: true,
+                                    })
+                                  : '—'}
+                              </div>
+                            </div>
+                          </div>
 
-              <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Payment Method</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="space-y-2"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="bank" id="bank" />
-                          <Label htmlFor="bank" className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4" />
-                            Bank Transfer
-                          </Label>
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            <div>
+                              {req.verification_image && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleViewProof(req.verification_image)
+                                  }
+                                  className="text-muted-foreground"
+                                >
+                                  <Eye className="h-4 w-4 mr-1" /> View proof
+                                </Button>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                disabled={busy}
+                                onClick={() => handleAction(req.id, 'rejected')}
+                              >
+                                {busy && actionId === req.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                ) : (
+                                  <XCircle className="h-4 w-4 mr-1" />
+                                )}
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                disabled={busy}
+                                onClick={() => handleAction(req.id, 'approved')}
+                              >
+                                {busy && actionId === req.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                ) : (
+                                  <CheckCircle2 className="h-4 w-4 mr-1" />
+                                )}
+                                Approve
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="card" id="card" />
-                          <Label htmlFor="card" className="flex items-center gap-2">
-                            <CreditCard className="h-4 w-4" />
-                            Credit Card
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="wallet" id="wallet" />
-                          <Label htmlFor="wallet" className="flex items-center gap-2">
-                            <Wallet className="h-4 w-4" />
-                            Platform Wallet
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
 
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Add any additional information about this payout"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <DrawerFooter className="px-0">
-                <Button type="submit" className="w-full">
-                  Process Payment
+            <DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline" className="w-full">
+                  Close
                 </Button>
-                <DrawerClose asChild>
-                  <Button variant="outline" className="w-full">
-                    Cancel
-                  </Button>
-                </DrawerClose>
-              </DrawerFooter>
-            </form>
-          </Form>
-        </div>
-      </DrawerContent>
-    </Drawer>
+              </DrawerClose>
+            </DrawerFooter>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Dialog open={proofOpen} onOpenChange={setProofOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Verification proof</DialogTitle>
+          </DialogHeader>
+          {proofImage && (
+            <img
+              src={proofImage}
+              alt="Verification"
+              className="w-full rounded-md object-contain max-h-[60vh]"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
