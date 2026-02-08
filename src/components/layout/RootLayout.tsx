@@ -14,9 +14,11 @@ interface SessionData {
   fullName: string;
   email: string;
   phoneNumber: string;
-  shop_id: string;
+  shop_id: string | null;
   privileges: UserPrivileges;
-  expiresAt: number;
+  expiresAt?: number;
+  /** True when the user is from ProjectUsers table (catalog view). False when from orgEmployees (shop/products view). */
+  isProjectUser?: boolean;
 }
 
 interface AuthContextType {

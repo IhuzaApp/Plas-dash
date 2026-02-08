@@ -18,6 +18,10 @@ const GET_PRODUCTS = gql`
         image
         create_at
       }
+      Shop {
+        id
+        name
+      }
       price
       final_price
       created_at
@@ -34,7 +38,7 @@ const GET_PRODUCTS = gql`
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!session?.user || !(session.user as { id?: string }).id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

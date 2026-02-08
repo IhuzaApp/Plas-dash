@@ -12,25 +12,64 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, ScanBarcode, Loader2, Plus } from 'lucide-react';
+import { Search, Filter, ScanBarcode, Loader2, Plus, Upload, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useProducts,
+  useProductNamesFromApi,
   useAddProduct,
   useAddProductName,
+  useUpdateProductName,
   useSystemConfig,
 } from '@/hooks/useHasuraApi';
-import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import AddProductDialog from '@/components/shop/AddProductDialog';
+import {
+  ProductNameFormDialog,
+  type ProductNameRow,
+} from '@/components/shop/ProductNameFormDialog';
+import { ImportProductNamesDialog } from '@/components/shop/ImportProductNamesDialog';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import { useAuth } from '@/components/layout/RootLayout';
+import { format } from 'date-fns';
+
+const PRODUCT_PLACEHOLDER = '/placeholder.svg';
+
+function ProductImage({ src, alt }: { src: string; alt: string }) {
+  const [imgSrc, setImgSrc] = useState(() =>
+    src && src.trim() !== '' ? src : PRODUCT_PLACEHOLDER
+  );
+  return (
+    <img
+      src={imgSrc}
+      alt={alt}
+      className="h-10 w-10 rounded-md object-cover bg-muted"
+      onError={() => setImgSrc(PRODUCT_PLACEHOLDER)}
+    />
+  );
+}
 
 const Products = () => {
-  const { data, isLoading, isError, error, refetch } = useProducts();
+  const { session } = useAuth();
+  const isProjectUser = session?.isProjectUser === true;
+
+  const productsQuery = useProducts(!isProjectUser);
+  const productNamesQuery = useProductNamesFromApi(isProjectUser);
+
+  const productsData = productsQuery.data;
+  const productNamesData = productNamesQuery.data;
+  const data = isProjectUser ? productNamesData : productsData;
+  const isLoading = isProjectUser ? productNamesQuery.isLoading : productsQuery.isLoading;
+  const isError = isProjectUser ? productNamesQuery.isError : productsQuery.isError;
+  const error = isProjectUser ? productNamesQuery.error : productsQuery.error;
+  const refetch = isProjectUser ? productNamesQuery.refetch : productsQuery.refetch;
+
   const { data: systemConfig } = useSystemConfig();
-  const products = data?.Products || [];
+  const products = (productsData?.Products ?? []) as any[];
+  const productNames = productNamesData?.productNames ?? [];
   const addProduct = useAddProduct();
   const addProductName = useAddProductName();
+  const updateProductName = useUpdateProductName();
   const { hasAction } = usePrivilege();
 
   const [isScanning, setIsScanning] = useState(false);
@@ -38,6 +77,10 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  // Project user: product name catalog add/edit/import
+  const [editProductName, setEditProductName] = useState<ProductNameRow | null>(null);
+  const [isAddProductNameOpen, setIsAddProductNameOpen] = useState(false);
+  const [isImportProductNamesOpen, setIsImportProductNamesOpen] = useState(false);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -103,6 +146,66 @@ const Products = () => {
     }
   };
 
+  const handleAddOrEditProductName = async (data: {
+    name: string;
+    description?: string;
+    barcode?: string;
+    sku?: string;
+    image?: string;
+  }) => {
+    try {
+      if (editProductName) {
+        await updateProductName.mutateAsync({
+          id: editProductName.id,
+          name: data.name,
+          description: data.description ?? undefined,
+          barcode: data.barcode ?? undefined,
+          sku: data.sku ?? undefined,
+          image: data.image ?? undefined,
+        });
+        toast.success('Product name updated.');
+      } else {
+        await addProductName.mutateAsync({
+          name: data.name,
+          description: data.description ?? undefined,
+          barcode: data.barcode ?? undefined,
+          sku: data.sku ?? undefined,
+          image: data.image ?? undefined,
+        });
+        toast.success('Product name added.');
+      }
+      setEditProductName(null);
+      setIsAddProductNameOpen(false);
+      productNamesQuery.refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error(editProductName ? 'Failed to update product name.' : 'Failed to add product name.');
+      throw err;
+    }
+  };
+
+  const handleImportProductNames = async (
+    rows: { name: string; description?: string; barcode?: string; sku?: string }[]
+  ) => {
+    try {
+      for (const row of rows) {
+        await addProductName.mutateAsync({
+          name: row.name,
+          description: row.description ?? undefined,
+          barcode: row.barcode ?? undefined,
+          sku: row.sku ?? undefined,
+        });
+      }
+      toast.success(`Imported ${rows.length} product name(s).`);
+      setIsImportProductNamesOpen(false);
+      productNamesQuery.refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error('Import failed.');
+      throw err;
+    }
+  };
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -117,27 +220,182 @@ const Products = () => {
     return (
       <AdminLayout>
         <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)]">
-          <p className="text-red-500">Error loading products.</p>
+          <p className="text-red-500">
+            {isProjectUser ? 'Error loading product catalog.' : 'Error loading products.'}
+          </p>
           {error && <p className="text-sm mt-2">{error.message}</p>}
         </div>
       </AdminLayout>
     );
   }
 
-  const activeProducts = products.filter(p => p.is_active);
-  const lowStockProducts = products.filter(p => p.quantity <= 10 && p.quantity > 0);
-  const outOfStockProducts = products.filter(p => p.quantity <= 0);
+  // Project user: catalog view (productNames only)
+  if (isProjectUser) {
+    const filtered = productNames.filter(
+      pn =>
+        searchTerm === '' ||
+        pn.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (pn.barcode ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (pn.sku ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (pn.description ?? '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const totalItems = filtered.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const currentRows = filtered.slice(startIndex, startIndex + pageSize);
 
-  // Filter products based on search term
+    return (
+      <AdminLayout>
+        <PageHeader
+          title="Products"
+          description="Product catalog (all product names)."
+          actions={
+            <>
+              <Button
+                onClick={() => {
+                  setEditProductName(null);
+                  setIsAddProductNameOpen(true);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" /> Add product name
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsImportProductNamesOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" /> Import
+              </Button>
+            </>
+          }
+        />
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold">{productNames.length}</div>
+              <p className="text-muted-foreground">Total product names</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="space-y-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, barcode, SKU..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={e => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px]">Image</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Barcode</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right w-[80px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      No product names found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  currentRows.map(pn => (
+                    <TableRow key={pn.id}>
+                      <TableCell>
+                        <ProductImage
+                          src={pn.image && pn.image.trim() !== '' ? pn.image : PRODUCT_PLACEHOLDER}
+                          alt={pn.name || 'Product'}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{pn.name || '—'}</TableCell>
+                      <TableCell>{pn.barcode ?? '—'}</TableCell>
+                      <TableCell>{pn.sku ?? '—'}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {pn.description ?? '—'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {pn.create_at
+                          ? format(new Date(pn.create_at), 'MMM d, yyyy')
+                          : '—'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditProductName(pn as ProductNameRow);
+                          }}
+                          className="h-8 w-8 p-0"
+                          title="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={size => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+              totalItems={totalItems}
+            />
+          </Card>
+        </div>
+
+        <ProductNameFormDialog
+          open={isAddProductNameOpen || !!editProductName}
+          onOpenChange={open => {
+            if (!open) {
+              setIsAddProductNameOpen(false);
+              setEditProductName(null);
+            }
+          }}
+          onSubmit={handleAddOrEditProductName}
+          initialValues={editProductName}
+          isLoading={addProductName.isPending || updateProductName.isPending}
+        />
+        <ImportProductNamesDialog
+          open={isImportProductNamesOpen}
+          onOpenChange={setIsImportProductNamesOpen}
+          onImport={handleImportProductNames}
+          isLoading={addProductName.isPending}
+        />
+      </AdminLayout>
+    );
+  }
+
+  // Org employee: full products table (from Products table with shop, prices, stock)
+  const activeProducts = products.filter((p: any) => p.is_active);
+  const lowStockProducts = products.filter((p: any) => p.quantity <= 10 && p.quantity > 0);
+  const outOfStockProducts = products.filter((p: any) => p.quantity <= 0);
   const filteredProducts = products.filter(
-    product =>
+    (product: any) =>
       searchTerm === '' ||
       product.ProductName?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.Shop?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      product.category?.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // Calculate pagination
   const totalItems = filteredProducts.length;
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -200,7 +458,7 @@ const Products = () => {
               value={searchTerm}
               onChange={e => {
                 setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page on search
+                setCurrentPage(1);
               }}
             />
           </div>
@@ -230,6 +488,7 @@ const Products = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[60px]">Image</TableHead>
                 <TableHead>Product Name</TableHead>
                 <TableHead>Shop</TableHead>
                 <TableHead>Category</TableHead>
@@ -243,15 +502,22 @@ const Products = () => {
             <TableBody>
               {currentProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                     No products found.
                   </TableCell>
                 </TableRow>
               ) : (
-                currentProducts.map(product => {
+                currentProducts.map((product: any) => {
                   const stockStatus = getStockStatus(product.quantity);
+                  const imageUrl =
+                    product.image ||
+                    product.ProductName?.image ||
+                    PRODUCT_PLACEHOLDER;
                   return (
                     <TableRow key={product.id}>
+                      <TableCell>
+                        <ProductImage src={imageUrl} alt={product.ProductName?.name || 'Product'} />
+                      </TableCell>
                       <TableCell className="font-medium">
                         {product.ProductName?.name || 'N/A'}
                       </TableCell>
@@ -259,7 +525,7 @@ const Products = () => {
                       <TableCell>
                         {typeof product.category === 'string'
                           ? product.category
-                          : (product.category as any)?.name || 'N/A'}
+                          : product.category?.name || 'N/A'}
                       </TableCell>
                       <TableCell>{formatCurrency(product.price)}</TableCell>
                       <TableCell>{formatCurrency(product.final_price)}</TableCell>
@@ -298,7 +564,7 @@ const Products = () => {
             onPageChange={setCurrentPage}
             onPageSizeChange={size => {
               setPageSize(size);
-              setCurrentPage(1); // Reset to first page when changing page size
+              setCurrentPage(1);
             }}
             totalItems={totalItems}
           />

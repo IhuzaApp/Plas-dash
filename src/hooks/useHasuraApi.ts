@@ -434,13 +434,26 @@ export function useActiveUsersCount() {
 }
 
 // Type-safe hook for Products (data from API)
-export function useProducts() {
+export function useProducts(enabled = true) {
   return useQuery<{ Products: Product[] }, Error>({
     queryKey: ['api', 'products'],
     queryFn: async () => {
       const res = await apiGet<{ products: Product[] }>('/api/queries/products');
       return { Products: res.products || [] };
     },
+    enabled,
+  });
+}
+
+// Product names only (catalog view for project users) from API route
+export function useProductNamesFromApi(enabled = true) {
+  return useQuery<{ productNames: ProductName[] }, Error>({
+    queryKey: ['api', 'product-names'],
+    queryFn: async () => {
+      const res = await apiGet<{ productNames: ProductName[] }>('/api/queries/product-names');
+      return { productNames: res.productNames || [] };
+    },
+    enabled,
   });
 }
 
