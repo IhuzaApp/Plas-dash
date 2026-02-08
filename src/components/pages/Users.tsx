@@ -14,12 +14,16 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Filter, Loader2 } from 'lucide-react';
-import { useUsers } from '@/hooks/useHasuraApi';
+import { useUsers, useActiveUsersCount } from '@/hooks/useHasuraApi';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserDetailsDrawer from '@/components/drawers/UserDetailsDrawer';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import UsersTrendChart from '@/components/dashboard/UsersTrendChart';
+
+type CategoryTab = 'user' | 'shopper' | 'all';
 
 // Add styles for the highlight effect
 const styles = `
@@ -31,19 +35,29 @@ const styles = `
 
 const Users = () => {
   const { data, isLoading, isError, error } = useUsers();
+  const { data: activeData, isLoading: isLoadingActive } = useActiveUsersCount();
   const users = data?.Users || [];
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [categoryTab, setCategoryTab] = useState<CategoryTab>('user');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { hasAction } = usePrivilege();
 
-  // Calculate user statistics (all users including role shopper)
+  // By role for table and stats
+  const usersWithRoleUser = users.filter(
+    user => (user.role?.toLowerCase() ?? '') === 'user'
+  );
+  const usersWithRoleShopper = users.filter(
+    user => (user.role?.toLowerCase() ?? '') === 'shopper'
+  );
+
+  // Stats: total, guest, customers from users list; active = from API (activity in last 3 months)
   const totalUsers = users.length;
-  const activeUsers = users.filter(user => user.is_active).length;
+  const activeUsers = activeData?.activeUsers ?? (isLoadingActive ? null : 0);
   const guestUsers = users.filter(user => user.is_guest).length;
-  const customerUsers = users.filter(
+  const customerUsers = usersWithRoleUser.filter(
     user =>
       user.is_active && // User is active
       (!user.shopper || !user.shopper.active) // Either no shopper record or shopper.active is false
@@ -57,8 +71,16 @@ const Users = () => {
       .toUpperCase();
   };
 
-  // Filter users based on search term
-  const filteredUsers = users.filter(
+  // Table source by category tab (user | shopper | all)
+  const tableSourceUsers =
+    categoryTab === 'user'
+      ? usersWithRoleUser
+      : categoryTab === 'shopper'
+        ? usersWithRoleShopper
+        : users;
+
+  // Filter table by category then by search term
+  const filteredUsers = tableSourceUsers.filter(
     user =>
       searchTerm === '' ||
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -185,8 +207,13 @@ const Users = () => {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{activeUsers}</div>
+            <div className="text-2xl font-bold">
+              {activeUsers === null ? '—' : activeUsers}
+            </div>
             <p className="text-muted-foreground">Active Users</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              With activity in last 3 months
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -201,6 +228,10 @@ const Users = () => {
             <p className="text-muted-foreground">Customers</p>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mb-6">
+        <UsersTrendChart />
       </div>
 
       <div className="space-y-4">
@@ -221,6 +252,26 @@ const Users = () => {
             <Filter className="h-4 w-4" /> Filter
           </Button>
         </div>
+
+        <Tabs
+          value={categoryTab}
+          onValueChange={value => {
+            setCategoryTab(value as CategoryTab);
+            setCurrentPage(1);
+          }}
+        >
+          <TabsList>
+            <TabsTrigger value="user">
+              Users ({usersWithRoleUser.length})
+            </TabsTrigger>
+            <TabsTrigger value="shopper">
+              Shoppers ({usersWithRoleShopper.length})
+            </TabsTrigger>
+            <TabsTrigger value="all">
+              All ({users.length})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         <Card>
           <Table>

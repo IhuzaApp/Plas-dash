@@ -422,6 +422,17 @@ export function useUsers() {
   });
 }
 
+// Active users count: users with activity in the last 3 months (orders, invoices, ratings, etc.)
+export function useActiveUsersCount() {
+  return useQuery<{ activeUsers: number; since: string }, Error>({
+    queryKey: ['api', 'active-users-count'],
+    queryFn: () =>
+      apiGet<{ activeUsers: number; since: string }>(
+        '/api/queries/active-users-count'
+      ),
+  });
+}
+
 // Type-safe hook for Products (data from API)
 export function useProducts() {
   return useQuery<{ Products: Product[] }, Error>({
