@@ -83,13 +83,47 @@ function getGraphQLType(fieldName: string): string {
 }
 
 interface OperatingHours {
-  monday: string;
-  tuesday: string;
-  wednesday: string;
-  thursday: string;
-  friday: string;
-  saturday: string;
-  sunday: string;
+  monday?: string;
+  tuesday?: string;
+  wednesday?: string;
+  thursday?: string;
+  friday?: string;
+  saturday?: string;
+  sunday?: string;
+}
+
+const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+
+function OpeningHoursCalendar({ hours }: { hours: OperatingHours | string | null }) {
+  if (!hours) {
+    return <p className="text-sm text-muted-foreground">Not specified</p>;
+  }
+  if (typeof hours === 'string') {
+    return <p className="text-sm">{hours}</p>;
+  }
+  return (
+    <div className="rounded-lg border border-border overflow-hidden">
+      <div className="grid grid-cols-[1fr_1fr] bg-muted/50">
+        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border">
+          Day
+        </div>
+        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border">
+          Hours
+        </div>
+      </div>
+      {DAY_ORDER.map((day) => (
+        <div
+          key={day}
+          className="grid grid-cols-[1fr_1fr] border-b border-border last:border-b-0 odd:bg-muted/20"
+        >
+          <div className="px-3 py-2.5 text-sm font-medium capitalize">{day}</div>
+          <div className="px-3 py-2.5 text-sm text-muted-foreground">
+            {(hours as Record<string, string>)[day]?.trim() || 'Closed'}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 const productFormSchema = z.object({
@@ -117,21 +151,6 @@ const productFormSchema = z.object({
 
 type ProductFormData = z.infer<typeof productFormSchema>;
 
-const formatOperatingHours = (hours: OperatingHours | string | null) => {
-  if (!hours) return 'Not specified';
-  if (typeof hours === 'string') return hours;
-
-  return (
-    <ol className="space-y-1">
-      {Object.entries(hours).map(([day, time]) => (
-        <li key={day} className="grid grid-cols-2 gap-2">
-          <span className="capitalize">{day}:</span>
-          <span>{time || 'Closed'}</span>
-        </li>
-      ))}
-    </ol>
-  );
-};
 
 const ShopDetail = () => {
   const params = useParams();
@@ -561,25 +580,43 @@ const ShopDetail = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
+                  <CardTitle>Contact & business information</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Address:</p>
-                    <p>{shop.address || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Opening Hours:</p>
-                    {formatOperatingHours(shop.operating_hours)}
-                  </div>
-                  {shop.latitude && shop.longitude && (
+                <CardContent className="space-y-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Location:</p>
-                      <p>
-                        {shop.latitude}, {shop.longitude}
-                      </p>
+                      <p className="text-sm font-medium text-muted-foreground">Address</p>
+                      <p className="text-sm">{shop.address ?? '—'}</p>
                     </div>
-                  )}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                      <p className="text-sm">{String((shop as unknown as Record<string, unknown>).phone ?? shop.phone ?? '').trim() || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">TIN number</p>
+                      <p className="text-sm font-mono">{String((shop as unknown as Record<string, unknown>).tin ?? shop.tin ?? '').trim() || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">SSD</p>
+                      <p className="text-sm">{String((shop as unknown as Record<string, unknown>).ssd ?? shop.ssd ?? '').trim() || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Related to</p>
+                      <p className="text-sm">{String((shop as unknown as Record<string, unknown>).relatedTo ?? shop.relatedTo ?? '').trim() || '—'}</p>
+                    </div>
+                    {shop.latitude != null && shop.longitude != null && (shop.latitude || shop.longitude) && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Coordinates</p>
+                        <p className="text-sm font-mono text-muted-foreground">
+                          {shop.latitude}, {shop.longitude}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Opening hours</p>
+                    <OpeningHoursCalendar hours={shop.operating_hours as OperatingHours | string | null} />
+                  </div>
                 </CardContent>
               </Card>
             </div>

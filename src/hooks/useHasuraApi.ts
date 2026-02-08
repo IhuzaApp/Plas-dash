@@ -11,7 +11,6 @@ import {
   GET_SHOPPER_WALLET,
   GET_ALL_WALLET_TRANSACTIONS,
   GET_CATEGORIES,
-  GET_SHOP_BY_ID,
   GET_SYSTEM_CONFIG,
   GET_ORG_EMPLOYEES_BY_SHOP,
   GET_POS_TRANSACTIONS,
@@ -138,6 +137,10 @@ interface ShopProduct {
 interface ShopDetails extends Shop {
   description: string;
   address: string;
+  phone?: string | null;
+  tin?: string | null;
+  ssd?: string | null;
+  relatedTo?: string | null;
   operating_hours: string;
   latitude: number;
   longitude: number;
@@ -650,11 +653,14 @@ export function useCategories() {
   });
 }
 
-// Type-safe hook for Shop details
+// Type-safe hook for Shop details (fetched via API so phone, tin, ssd, relatedTo are present)
 export function useShopById(id: string) {
   return useQuery<{ Shops_by_pk: ShopDetails }, Error>({
-    queryKey: ['shop', id],
-    queryFn: () => hasuraRequest(GET_SHOP_BY_ID, { id }),
+    queryKey: ['api', 'shop', id],
+    queryFn: async () => {
+      const res = await apiGet<{ shop: ShopDetails }>(`/api/queries/shops/${id}`);
+      return { Shops_by_pk: res.shop };
+    },
     enabled: !!id,
   });
 }

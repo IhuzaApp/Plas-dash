@@ -562,6 +562,10 @@ export const GET_SHOP_BY_ID = `
       name
       description
       address
+      phone
+      relatedTo
+      ssd
+      tin
       operating_hours
       latitude
       longitude
