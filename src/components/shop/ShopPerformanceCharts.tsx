@@ -18,7 +18,7 @@ import {
   Legend,
 } from 'recharts';
 import { format, parseISO, subDays } from 'date-fns';
-import { Loader2, TrendingUp, Package, PieChartIcon, BarChart3 } from 'lucide-react';
+import { Loader2, TrendingUp, Package, PieChartIcon, BarChart3, Star } from 'lucide-react';
 import { PIE_COLORS, CHART_COLORS, CHART_PALETTE } from '@/lib/chartColors';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
@@ -38,6 +38,7 @@ type Order = {
     price: string;
     Product?: { name?: string; ProductName?: { name?: string } } | null;
   }>;
+  Ratings?: Array<{ id: string; rating: number | string; review?: string }>;
 };
 
 type ShopWithOrders = {
@@ -50,6 +51,7 @@ export type ReelOrderForShop = {
   status: string;
   total: string;
   created_at: string;
+  Ratings?: Array<{ id: string; rating: number | string; review?: string }>;
 };
 
 interface ShopPerformanceChartsProps {
@@ -155,7 +157,41 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
     return sorted;
   }, [orders, reels]);
 
-  // 3. Top products by quantity sold
+  // 3. Delivered orders and ratings (from shop Orders + reel orders; ratings on both)
+  const deliveredOrdersCount = useMemo(() => {
+    const regularDelivered = orders.filter((o) => (o.status || '').toLowerCase() === 'delivered').length;
+    const reelDelivered = reels.filter((o) => (o.status || '').toLowerCase() === 'delivered').length;
+    return regularDelivered + reelDelivered;
+  }, [orders, reels]);
+  const allRatings = useMemo(() => {
+    const list: number[] = [];
+    orders.forEach((order) => {
+      (order.Ratings ?? []).forEach((r) => {
+        const n = typeof r.rating === 'number' ? r.rating : parseFloat(String(r.rating));
+        if (!Number.isNaN(n)) list.push(n);
+      });
+    });
+    reels.forEach((reel) => {
+      (reel.Ratings ?? []).forEach((r) => {
+        const n = typeof r.rating === 'number' ? r.rating : parseFloat(String(r.rating));
+        if (!Number.isNaN(n)) list.push(n);
+      });
+    });
+    return list;
+  }, [orders, reels]);
+  const totalRatingsCount = allRatings.length;
+  const averageRating =
+    totalRatingsCount > 0 ? Math.round((allRatings.reduce((a, b) => a + b, 0) / totalRatingsCount) * 10) / 10 : 0;
+  const ratingDistributionData = useMemo(() => {
+    const buckets: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    allRatings.forEach((r) => {
+      const star = Math.min(5, Math.max(1, Math.round(r)));
+      buckets[star] = (buckets[star] ?? 0) + 1;
+    });
+    return [1, 2, 3, 4, 5].map((star) => ({ stars: `${star} star${star === 1 ? '' : 's'}`, count: buckets[star] ?? 0 }));
+  }, [allRatings]);
+
+  // 4. Top products by quantity sold
   const topProductsData = useMemo(() => {
     const byName: Record<string, number> = {};
     orders.forEach((order) => {
@@ -467,6 +503,68 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
                       }}
                     />
                     <Bar dataKey="quantity" name="Units sold" fill={CHART_PALETTE[2]} radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                )}
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Ratings summary: delivered orders, total ratings, average */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              Ratings overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
+                <p className="text-2xl font-semibold">{deliveredOrdersCount}</p>
+                <p className="text-xs text-muted-foreground">Delivered orders</p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
+                <p className="text-2xl font-semibold">{totalRatingsCount}</p>
+                <p className="text-xs text-muted-foreground">Total ratings</p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
+                <p className="text-2xl font-semibold">{totalRatingsCount > 0 ? averageRating : '—'}</p>
+                <p className="text-xs text-muted-foreground">Average rating</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Rating distribution (1–5 stars) */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              Rating distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                {ratingDistributionData.every((d) => d.count === 0) ? (
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                    No ratings yet
+                  </div>
+                ) : (
+                  <BarChart data={ratingDistributionData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                    <XAxis dataKey="stars" tick={{ fill: TICK_FILL }} fontSize={11} />
+                    <YAxis tick={{ fill: TICK_FILL }} fontSize={11} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: 'var(--radius)',
+                      }}
+                      formatter={(value: number) => [value, 'Ratings']}
+                    />
+                    <Bar dataKey="count" name="Ratings" fill={CHART_COLORS.yellow} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 )}
               </ResponsiveContainer>

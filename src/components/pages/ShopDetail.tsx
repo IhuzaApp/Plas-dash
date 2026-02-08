@@ -303,12 +303,15 @@ const ShopDetail = () => {
 
   // Filter products based on search term
   const filteredProducts =
-    shop?.Products.filter(
-      product =>
-        searchTerm === '' ||
-        product.ProductName?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.measurement_unit?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+    shop?.Products.filter(product => {
+      if (searchTerm === '') return true;
+      const term = searchTerm.toLowerCase();
+      const name = product.ProductName?.name?.toLowerCase() ?? '';
+      const sku = (product.ProductName?.sku ?? (product as { sku?: string }).sku ?? '').toString().toLowerCase();
+      const barcode = (product.ProductName?.barcode ?? (product as { barcode?: string }).barcode ?? '').toString().toLowerCase();
+      const unit = product.measurement_unit?.toLowerCase() ?? '';
+      return name.includes(term) || sku.includes(term) || barcode.includes(term) || unit.includes(term);
+    }) ?? [];
 
   // Calculate pagination
   const totalItems = filteredProducts.length;
@@ -631,8 +634,6 @@ const ShopDetail = () => {
                 </CardContent>
               </Card>
             )}
-
-            <ShopPerformanceCharts shop={shop} reelOrders={shopReelOrders} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="products" className="space-y-4 pt-4">
@@ -658,8 +659,10 @@ const ShopDetail = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Image</TableHead>
+                    <TableHead className="w-[72px]">Image</TableHead>
                     <TableHead>Product Name</TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Barcode</TableHead>
                     <TableHead>Base Price</TableHead>
                     <TableHead>Final Price</TableHead>
                     <TableHead>Stock</TableHead>
@@ -671,71 +674,82 @@ const ShopDetail = () => {
                 <TableBody>
                   {currentProducts.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                      <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
                         No products found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    currentProducts.map(product => (
-                      <TableRow key={product.id}>
-                        <TableCell>
-                          <div className="h-10 w-10 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
-                            {product.ProductName?.image ? (
-                              <img
-                                src={product.ProductName.image}
-                                alt={`${product.ProductName?.name || 'Product'} image`}
-                                className="h-full w-full object-contain"
-                                title={product.ProductName?.name || 'Product'}
-                              />
-                            ) : (
-                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                    currentProducts.map(product => {
+                      const imageUrl = product.ProductName?.image ?? (product as { image?: string }).image;
+                      const sku = product.ProductName?.sku ?? (product as { sku?: string }).sku ?? '—';
+                      const barcode = product.ProductName?.barcode ?? (product as { barcode?: string }).barcode ?? '—';
+                      return (
+                        <TableRow key={product.id}>
+                          <TableCell>
+                            <div className="h-12 w-12 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted shrink-0">
+                              {imageUrl ? (
+                                <img
+                                  src={imageUrl}
+                                  alt={`${product.ProductName?.name || 'Product'} image`}
+                                  className="h-full w-full object-cover"
+                                  title={product.ProductName?.name || 'Product'}
+                                />
+                              ) : (
+                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {product.ProductName?.name || 'Unknown Product'}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground font-mono text-sm">
+                            {sku}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground font-mono text-sm">
+                            {barcode}
+                          </TableCell>
+                          <TableCell>{formatCurrencyWithConfig(product.price, config)}</TableCell>
+                          <TableCell>
+                            {formatCurrencyWithConfig(product.final_price, config)}
+                          </TableCell>
+                          <TableCell>{product.quantity}</TableCell>
+                          <TableCell>{product.measurement_unit}</TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                product.is_active
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {product.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {hasAction('products', 'edit_products') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditProduct(product)}
+                              >
+                                Edit
+                              </Button>
                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {product.ProductName?.name || 'Unknown Product'}
-                        </TableCell>
-                        <TableCell>{formatCurrencyWithConfig(product.price, config)}</TableCell>
-                        <TableCell>
-                          {formatCurrencyWithConfig(product.final_price, config)}
-                        </TableCell>
-                        <TableCell>{product.quantity}</TableCell>
-                        <TableCell>{product.measurement_unit}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              product.is_active
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {product.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {hasAction('products', 'edit_products') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditProduct(product)}
-                            >
-                              Edit
-                            </Button>
-                          )}
-                          {hasAction('products', 'delete_products') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteProduct(product)}
-                              className="text-orange-600 hover:text-orange-700"
-                              title="Deactivate product"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
+                            {hasAction('products', 'delete_products') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteProduct(product)}
+                                className="text-orange-600 hover:text-orange-700"
+                                title="Deactivate product"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
@@ -973,11 +987,7 @@ const ShopDetail = () => {
           </TabsContent>
 
           <TabsContent value="analytics" className="pt-4">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">Analytics feature coming soon.</p>
-              </CardContent>
-            </Card>
+            <ShopPerformanceCharts shop={shop} reelOrders={shopReelOrders} isLoading={isLoading} />
           </TabsContent>
         </Tabs>
       </div>
