@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Filter, Loader2 } from 'lucide-react';
 import { useUsers } from '@/hooks/useHasuraApi';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -86,8 +87,65 @@ const Users = () => {
   if (isLoading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <PageHeader
+          title="Users"
+          description="View and manage user accounts."
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" disabled>Export</Button>
+              <Button disabled>Add User</Button>
+            </div>
+          }
+        />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {[1, 2, 3, 4].map(i => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-4 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Skeleton className="h-10 flex-1" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-9 w-9 rounded-full" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-48" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-14" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
         </div>
       </AdminLayout>
     );

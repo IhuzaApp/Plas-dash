@@ -9,6 +9,7 @@ import ShoppersByGenderChart from '@/components/dashboard/ShoppersByGenderChart'
 import ShoppersBySignupChart from '@/components/dashboard/ShoppersBySignupChart';
 import ApprovedShoppersOverTimeChart from '@/components/dashboard/ApprovedShoppersOverTimeChart';
 import OrderTypesComparisonChart from '@/components/dashboard/OrderTypesComparisonChart';
+import OrdersOnTimeTrendChart from '@/components/dashboard/OrdersOnTimeTrendChart';
 import TicketsComparisonChart from '@/components/dashboard/TicketsComparisonChart';
 import PlatformJoinersChart from '@/components/dashboard/PlatformJoinersChart';
 import GuestVsRegisteredChart from '@/components/dashboard/GuestVsRegisteredChart';
@@ -194,6 +195,8 @@ const Index = () => {
         </div>
 
         <OrderTypesComparisonChart />
+
+        <OrdersOnTimeTrendChart />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <TicketsComparisonChart />

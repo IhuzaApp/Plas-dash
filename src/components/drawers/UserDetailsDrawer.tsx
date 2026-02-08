@@ -25,7 +25,7 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
   const { data: userData, isLoading } = useUserDetails(userId || undefined);
   const user = userData?.Users_by_pk;
 
-  if (!userId || !user) return null;
+  if (!open) return null;
 
   const getInitials = (name: string) => {
     return (
@@ -45,17 +45,39 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
     }
   };
 
-  if (isLoading) {
+  if (userId && isLoading) {
     return (
       <Sheet open={open} onOpenChange={onClose}>
-        <SheetContent className="sm:max-w-[600px]">
-          <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <SheetContent className="sm:max-w-[600px]" aria-describedby={undefined}>
+          <SheetHeader>
+            <SheetTitle className="sr-only">User Profile</SheetTitle>
+            <SheetDescription className="sr-only">Loading user details</SheetDescription>
+          </SheetHeader>
+          <div className="flex items-center justify-center min-h-[200px] py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         </SheetContent>
       </Sheet>
     );
   }
+
+  if (userId && !isLoading && !user) {
+    return (
+      <Sheet open={open} onOpenChange={onClose}>
+        <SheetContent className="sm:max-w-[600px]" aria-describedby={undefined}>
+          <SheetHeader>
+            <SheetTitle>User not found</SheetTitle>
+            <SheetDescription>No user could be loaded for this ID.</SheetDescription>
+          </SheetHeader>
+          <div className="flex items-center justify-center min-h-[200px] py-12 text-muted-foreground">
+            User not found.
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  if (!userId || !user) return null;
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
