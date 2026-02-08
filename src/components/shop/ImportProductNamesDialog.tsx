@@ -250,7 +250,7 @@ export function ImportProductNamesDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[720px] w-[95vw]">
         <DialogHeader>
           <DialogTitle>Import product names</DialogTitle>
         </DialogHeader>

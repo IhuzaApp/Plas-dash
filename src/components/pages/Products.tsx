@@ -188,10 +188,12 @@ const Products = () => {
     rows: { name: string; description?: string; barcode?: string; sku?: string; image?: string }[],
     onProgress?: (current: number, total: number) => void
   ) => {
-    try {
-      const total = rows.length;
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
+    const total = rows.length;
+    let imported = 0;
+    let skipped = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      try {
         await addProductName.mutateAsync({
           name: row.name,
           description: row.description ?? undefined,
@@ -199,16 +201,28 @@ const Products = () => {
           sku: row.sku ?? undefined,
           image: row.image ?? undefined,
         });
-        onProgress?.(i + 1, total);
+        imported++;
+      } catch (err: any) {
+        const msg = err?.message ?? String(err);
+        const isDuplicate =
+          /uniqueness violation|duplicate key|productNames_name_key|unique constraint/i.test(msg);
+        if (isDuplicate) {
+          skipped++;
+        } else {
+          console.error(err);
+          toast.error(`Import failed at row ${i + 1}: ${msg}`);
+          throw err;
+        }
       }
-      toast.success(`Imported ${rows.length} product name(s).`);
-      setIsImportProductNamesOpen(false);
-      productNamesQuery.refetch();
-    } catch (err) {
-      console.error(err);
-      toast.error('Import failed.');
-      throw err;
+      onProgress?.(i + 1, total);
     }
+    if (skipped > 0) {
+      toast.success(`Imported ${imported} product name(s), skipped ${skipped} duplicate(s).`);
+    } else {
+      toast.success(`Imported ${imported} product name(s).`);
+    }
+    setIsImportProductNamesOpen(false);
+    productNamesQuery.refetch();
   };
 
   if (isLoading) {
