@@ -10,12 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Wallet, Clock, Eye, Check, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -116,8 +111,12 @@ const ShopperWalletTab: React.FC<ShopperWalletTabProps> = ({
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(String(pendingWithdrawAmount))}</div>
-            <p className="text-xs text-muted-foreground">{withdrawRequestsCount} pending request(s)</p>
+            <div className="text-2xl font-bold">
+              {formatCurrency(String(pendingWithdrawAmount))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {withdrawRequestsCount} pending request(s)
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -152,11 +151,17 @@ const ShopperWalletTab: React.FC<ShopperWalletTabProps> = ({
                   const busy = actionId === req.id;
                   return (
                     <TableRow key={req.id}>
-                      <TableCell className="font-medium">{formatCurrency(String(req.amount))}</TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(String(req.amount))}
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            isPending ? 'secondary' : (req.status || '').toLowerCase() === 'approved' ? 'default' : 'destructive'
+                            isPending
+                              ? 'secondary'
+                              : (req.status || '').toLowerCase() === 'approved'
+                                ? 'default'
+                                : 'destructive'
                           }
                           className="capitalize"
                         >
@@ -193,7 +198,11 @@ const ShopperWalletTab: React.FC<ShopperWalletTabProps> = ({
                             disabled={busy}
                             onClick={() => handleApprove(req.id)}
                           >
-                            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                            {busy ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
                           </Button>
                         )}
                         {isPending && onRejectWithdraw && (
@@ -203,7 +212,11 @@ const ShopperWalletTab: React.FC<ShopperWalletTabProps> = ({
                             disabled={busy}
                             onClick={() => handleReject(req.id)}
                           >
-                            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                            {busy ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <X className="h-4 w-4" />
+                            )}
                           </Button>
                         )}
                       </TableCell>
@@ -224,9 +237,17 @@ const ShopperWalletTab: React.FC<ShopperWalletTabProps> = ({
           <div className="flex justify-center bg-muted/30 rounded-lg p-4">
             {proofImage ? (
               typeof proofImage === 'string' && proofImage.startsWith('data:') ? (
-                <img src={proofImage} alt="Verification" className="max-h-[70vh] max-w-full object-contain" />
+                <img
+                  src={proofImage}
+                  alt="Verification"
+                  className="max-h-[70vh] max-w-full object-contain"
+                />
               ) : (
-                <img src={proofImage} alt="Verification" className="max-h-[70vh] max-w-full object-contain" />
+                <img
+                  src={proofImage}
+                  alt="Verification"
+                  className="max-h-[70vh] max-w-full object-contain"
+                />
               )
             ) : (
               <p className="text-muted-foreground">No image</p>

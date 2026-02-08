@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 // GraphQL query to get all orders (regardless of status or shopper)
 const GET_ALL_ORDERS = gql`
@@ -25,18 +25,15 @@ interface GraphQLResponse {
   Orders: Order[];
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<GraphQLResponse>(GET_ALL_ORDERS);
@@ -49,7 +46,7 @@ export default async function handler(
       .map(() => Array(7).fill(0));
 
     // Count orders by hour and day
-    orders.forEach((order) => {
+    orders.forEach(order => {
       const orderDate = new Date(order.created_at);
       const hour = orderDate.getHours();
       // Convert JavaScript's 0-6 day (Sunday-Saturday) to 0-6 (Monday-Sunday)
@@ -66,8 +63,8 @@ export default async function handler(
     }
 
     // Normalize the data to scale 0-3 for heatmap intensity
-    const normalizedActivityData: number[][] = activityData.map((hourData) =>
-      hourData.map((count) => {
+    const normalizedActivityData: number[][] = activityData.map(hourData =>
+      hourData.map(count => {
         if (count === 0) return 0;
         if (maxCount === 0) return 0;
 
@@ -83,7 +80,7 @@ export default async function handler(
     const ordersByHour = Array(24).fill(0);
 
     // Count orders by day and hour for summary
-    orders.forEach((order) => {
+    orders.forEach(order => {
       const orderDate = new Date(order.created_at);
       const hour = orderDate.getHours();
       const day = (orderDate.getDay() + 6) % 7; // 0 is Monday, 6 is Sunday
@@ -107,15 +104,7 @@ export default async function handler(
       }
     }
 
-    const days = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
-    ];
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     const summary = {
       totalOrders,
@@ -134,12 +123,9 @@ export default async function handler(
       summary,
     });
   } catch (error) {
-    console.error("Error fetching activity heatmap data:", error);
+    console.error('Error fetching activity heatmap data:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch activity heatmap data",
+      error: error instanceof Error ? error.message : 'Failed to fetch activity heatmap data',
     });
   }
 }

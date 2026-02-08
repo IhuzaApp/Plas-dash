@@ -30,15 +30,10 @@ export default function ApprovedShoppersOverTimeChart() {
 
   const chartData = useMemo(() => {
     if (!data?.shoppers?.length) return [];
-    const approved = data.shoppers.filter(
-      (s) => s.status === 'approved' || s.status === 'completed'
-    );
-    const pending = data.shoppers.filter((s) => (s.status ?? '') === 'pending');
+    const approved = data.shoppers.filter(s => s.status === 'approved' || s.status === 'completed');
+    const pending = data.shoppers.filter(s => (s.status ?? '') === 'pending');
     const other = data.shoppers.filter(
-      (s) =>
-        s.status !== 'approved' &&
-        s.status !== 'completed' &&
-        (s.status ?? '') !== 'pending'
+      s => s.status !== 'approved' && s.status !== 'completed' && (s.status ?? '') !== 'pending'
     );
 
     const now = new Date();
@@ -55,9 +50,9 @@ export default function ApprovedShoppersOverTimeChart() {
       const start = startOfMonth(d);
       const endOfMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
 
-      const approvedCount = approved.filter((s) => new Date(s.created_at) <= endOfMonth).length;
-      const pendingCount = pending.filter((s) => new Date(s.created_at) <= endOfMonth).length;
-      const otherCount = other.filter((s) => new Date(s.created_at) <= endOfMonth).length;
+      const approvedCount = approved.filter(s => new Date(s.created_at) <= endOfMonth).length;
+      const pendingCount = pending.filter(s => new Date(s.created_at) <= endOfMonth).length;
+      const otherCount = other.filter(s => new Date(s.created_at) <= endOfMonth).length;
 
       buckets.push({
         key: format(start, 'yyyy-MM'),
@@ -68,7 +63,7 @@ export default function ApprovedShoppersOverTimeChart() {
       });
     }
 
-    return buckets.map((b) => ({
+    return buckets.map(b => ({
       name: format(b.date, 'MMM yy'),
       Approved: b.approved,
       Pending: b.pending,
@@ -120,7 +115,7 @@ export default function ApprovedShoppersOverTimeChart() {
                 />
                 <Legend
                   wrapperStyle={{ fontSize: 11 }}
-                  formatter={(value) => <span style={{ color: TICK_FILL }}>{value}</span>}
+                  formatter={value => <span style={{ color: TICK_FILL }}>{value}</span>}
                 />
                 <Area
                   type="monotone"

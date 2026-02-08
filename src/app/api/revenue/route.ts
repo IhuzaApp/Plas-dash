@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Admin dashboard: fetches all revenue (no filter).
 const GET_REVENUE = gql`
@@ -36,12 +36,12 @@ const GET_REVENUE = gql`
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<{ Revenue: any[] }>(GET_REVENUE);
@@ -56,9 +56,9 @@ export async function GET() {
             : rev.restaurant_orders?.total
               ? parseFloat(String(rev.restaurant_orders.total))
               : 0;
-      const amountNum = parseFloat(rev.amount || "0");
+      const amountNum = parseFloat(rev.amount || '0');
       const calculated_commission_percentage =
-        orderTotal > 0 ? ((amountNum / orderTotal) * 100).toFixed(2) : "0.00";
+        orderTotal > 0 ? ((amountNum / orderTotal) * 100).toFixed(2) : '0.00';
       return {
         ...rev,
         calculated_commission_percentage,
@@ -67,9 +67,9 @@ export async function GET() {
 
     return NextResponse.json(revenueData);
   } catch (err: any) {
-    console.error("Revenue fetch error:", err);
+    console.error('Revenue fetch error:', err);
     return NextResponse.json(
-      { error: err?.message || "Failed to fetch revenue data" },
+      { error: err?.message || 'Failed to fetch revenue data' },
       { status: 500 }
     );
   }

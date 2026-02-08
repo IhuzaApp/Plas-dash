@@ -1,16 +1,12 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 // Fetch recent orders for a shopper with their status delivered
 const GET_SHOPPER_RECENT_ORDERS = gql`
-  query GetShopperRecentOrders(
-    $shopper_id: uuid!
-    $limit: Int!
-    $offset: Int!
-  ) {
+  query GetShopperRecentOrders($shopper_id: uuid!, $limit: Int!, $offset: Int!) {
     Orders(
       where: { shopper_id: { _eq: $shopper_id }, status: { _eq: "delivered" } }
       order_by: { updated_at: desc }
@@ -43,9 +39,7 @@ const GET_SHOPPER_RECENT_ORDERS = gql`
     }
 
     # Get total count of delivered orders
-    Orders_aggregate(
-      where: { shopper_id: { _eq: $shopper_id }, status: { _eq: "delivered" } }
-    ) {
+    Orders_aggregate(where: { shopper_id: { _eq: $shopper_id }, status: { _eq: "delivered" } }) {
       aggregate {
         count
       }
@@ -86,12 +80,9 @@ interface OrdersResponse {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -100,13 +91,11 @@ export default async function handler(
     const shopperId = (session as any)?.user?.id;
 
     if (!shopperId) {
-      return res
-        .status(401)
-        .json({ error: "You must be logged in as a shopper" });
+      return res.status(401).json({ error: 'You must be logged in as a shopper' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get pagination parameters from query params
@@ -115,42 +104,36 @@ export default async function handler(
     const offset = (page - 1) * limit;
 
     // Fetch recent completed orders with pagination
-    const data = await hasuraClient.request<OrdersResponse>(
-      GET_SHOPPER_RECENT_ORDERS,
-      {
-        shopper_id: shopperId,
-        limit,
-        offset,
-      }
-    );
+    const data = await hasuraClient.request<OrdersResponse>(GET_SHOPPER_RECENT_ORDERS, {
+      shopper_id: shopperId,
+      limit,
+      offset,
+    });
 
     // Get total count of orders
     const totalOrders = data.Orders_aggregate.aggregate.count;
 
     // Format orders for the frontend
-    const recentOrders = data.Orders.map((order) => {
+    const recentOrders = data.Orders.map(order => {
       // Get fee amounts
-      const serviceFee = parseFloat(order.service_fee || "0");
-      const deliveryFee = parseFloat(order.delivery_fee || "0");
+      const serviceFee = parseFloat(order.service_fee || '0');
+      const deliveryFee = parseFloat(order.delivery_fee || '0');
       const totalEarnings = serviceFee + deliveryFee;
 
       // Calculate time difference between creation and completion
       const createdAt = new Date(order.created_at);
       const completedAt = new Date(order.updated_at);
-      const minutesTaken = Math.floor(
-        (completedAt.getTime() - createdAt.getTime()) / (1000 * 60)
-      );
+      const minutesTaken = Math.floor((completedAt.getTime() - createdAt.getTime()) / (1000 * 60));
 
       // Format date for display
-      const orderDate = completedAt.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
+      const orderDate = completedAt.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
       });
 
       // Get item counts
-      const itemCount =
-        order.Order_Items_aggregate.aggregate?.sum?.quantity || 0;
+      const itemCount = order.Order_Items_aggregate.aggregate?.sum?.quantity || 0;
 
       return {
         id: order.id,
@@ -175,12 +158,9 @@ export default async function handler(
       totalPages: Math.ceil(totalOrders / limit),
     });
   } catch (error) {
-    console.error("Error fetching recent orders:", error);
+    console.error('Error fetching recent orders:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch recent orders",
+      error: error instanceof Error ? error.message : 'Failed to fetch recent orders',
     });
   }
 }

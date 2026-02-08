@@ -1,15 +1,12 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const UPDATE_SHOPPER_TELEGRAM_ID = gql`
   mutation UpdateShopperTelegramId($shopper_id: uuid!, $telegram_id: String!) {
-    update_shoppers_by_pk(
-      pk_columns: { id: $shopper_id }
-      _set: { telegram_id: $telegram_id }
-    ) {
+    update_shoppers_by_pk(pk_columns: { id: $shopper_id }, _set: { telegram_id: $telegram_id }) {
       id
       telegram_id
       full_name
@@ -21,10 +18,7 @@ const UPDATE_SHOPPER_TELEGRAM_ID = gql`
 
 const UPDATE_SHOPPER_STATUS = gql`
   mutation UpdateShopperStatus($shopper_id: uuid!, $status: String!) {
-    update_shoppers_by_pk(
-      pk_columns: { id: $shopper_id }
-      _set: { status: $status }
-    ) {
+    update_shoppers_by_pk(pk_columns: { id: $shopper_id }, _set: { status: $status }) {
       id
       status
       full_name
@@ -51,12 +45,9 @@ const GET_SHOPPER_BY_TELEGRAM_ID = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -65,20 +56,20 @@ export default async function handler(
     } | null;
 
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { action, shopperId, telegramId, status } = req.body;
 
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Database client not available" });
+      return res.status(500).json({ error: 'Database client not available' });
     }
 
     switch (action) {
-      case "update_telegram_id":
+      case 'update_telegram_id':
         if (!shopperId || !telegramId) {
           return res.status(400).json({
-            error: "Missing required fields: shopperId and telegramId",
+            error: 'Missing required fields: shopperId and telegramId',
           });
         }
 
@@ -96,12 +87,9 @@ export default async function handler(
           { user_id: session.user.id }
         );
 
-        if (
-          !shopperData.shoppers.length ||
-          shopperData.shoppers[0].id !== shopperId
-        ) {
+        if (!shopperData.shoppers.length || shopperData.shoppers[0].id !== shopperId) {
           return res.status(403).json({
-            error: "Not authorized to update this shopper",
+            error: 'Not authorized to update this shopper',
           });
         }
 
@@ -119,19 +107,17 @@ export default async function handler(
           telegram_id: telegramId,
         });
 
-        console.log(
-          `✅ Telegram ID updated for shopper ${shopperId}: ${telegramId}`
-        );
+        console.log(`✅ Telegram ID updated for shopper ${shopperId}: ${telegramId}`);
 
         return res.status(200).json({
           success: true,
           shopper: updateResult.update_shoppers_by_pk,
         });
 
-      case "update_status":
+      case 'update_status':
         if (!shopperId || !status) {
           return res.status(400).json({
-            error: "Missing required fields: shopperId and status",
+            error: 'Missing required fields: shopperId and status',
           });
         }
 
@@ -152,10 +138,10 @@ export default async function handler(
           shopper: statusResult.update_shoppers_by_pk,
         });
 
-      case "get_by_telegram_id":
+      case 'get_by_telegram_id':
         if (!telegramId) {
           return res.status(400).json({
-            error: "Missing required field: telegramId",
+            error: 'Missing required field: telegramId',
           });
         }
 
@@ -183,14 +169,13 @@ export default async function handler(
 
       default:
         return res.status(400).json({
-          error:
-            "Invalid action. Use: update_telegram_id, update_status, or get_by_telegram_id",
+          error: 'Invalid action. Use: update_telegram_id, update_status, or get_by_telegram_id',
         });
     }
   } catch (error) {
-    console.error("Error updating shopper:", error);
+    console.error('Error updating shopper:', error);
     return res.status(500).json({
-      error: "Failed to update shopper",
+      error: 'Failed to update shopper',
     });
   }
 }

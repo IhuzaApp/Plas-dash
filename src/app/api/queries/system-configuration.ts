@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // GraphQL query to fetch system configuration
 const GET_SYSTEM_CONFIGURATION = gql`
@@ -53,19 +53,14 @@ interface SystemConfigurationResponse {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Fetch system configuration from Hasura
-    const data = await hasuraClient.request<SystemConfigurationResponse>(
-      GET_SYSTEM_CONFIGURATION
-    );
+    const data = await hasuraClient.request<SystemConfigurationResponse>(GET_SYSTEM_CONFIGURATION);
 
     // Return the first configuration object (there should only be one)
     const config = data.System_configuratioins[0] || {};
@@ -76,10 +71,10 @@ export default async function handler(
       config,
     });
   } catch (error) {
-    console.error("Error fetching system configuration:", error);
+    console.error('Error fetching system configuration:', error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch system configuration",
+      error: 'Failed to fetch system configuration',
     });
   }
 }

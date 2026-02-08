@@ -2,15 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
 import { format, subMonths, startOfMonth, startOfYear } from 'date-fns';
@@ -42,7 +34,7 @@ export default function ShoppersBySignupChart() {
         const key = format(startOfMonth(d), 'yyyy-MM');
         buckets[key] = 0;
       }
-      data.shoppers.forEach((s) => {
+      data.shoppers.forEach(s => {
         const key = format(startOfMonth(new Date(s.created_at)), 'yyyy-MM');
         if (key in buckets) buckets[key]++;
       });
@@ -56,7 +48,7 @@ export default function ShoppersBySignupChart() {
     for (let y = startYear; y <= now.getFullYear(); y++) {
       buckets[String(y)] = 0;
     }
-    data.shoppers.forEach((s) => {
+    data.shoppers.forEach(s => {
       const y = startOfYear(new Date(s.created_at)).getFullYear();
       const key = String(y);
       if (key in buckets) buckets[key]++;

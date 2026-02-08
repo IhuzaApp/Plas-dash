@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_RFQ_DETAILS_AND_RESPONSES = gql`
   query GetRFQDetailsAndResponses($rfq_id: uuid!) {
@@ -41,10 +41,7 @@ const GET_RFQ_DETAILS_AND_RESPONSES = gql`
         status
       }
     }
-    BusinessQoute(
-      where: { businessRfq_id: { _eq: $rfq_id } }
-      order_by: { created_at: desc }
-    ) {
+    BusinessQoute(where: { businessRfq_id: { _eq: $rfq_id } }, order_by: { created_at: desc }) {
       id
       businessRfq_id
       respond_business_id
@@ -97,33 +94,26 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const { rfq_id } = req.query;
 
-    if (!rfq_id || typeof rfq_id !== "string") {
-      return res.status(400).json({ error: "RFQ ID is required" });
+    if (!rfq_id || typeof rfq_id !== 'string') {
+      return res.status(400).json({ error: 'RFQ ID is required' });
     }
 
     const result = await hasuraClient.request<{
@@ -204,7 +194,7 @@ export default async function handler(
     });
 
     if (!result.bussines_RFQ_by_pk) {
-      return res.status(404).json({ error: "RFQ not found" });
+      return res.status(404).json({ error: 'RFQ not found' });
     }
 
     return res.status(200).json({
@@ -213,9 +203,9 @@ export default async function handler(
       responses: result.BusinessQoute || [],
     });
   } catch (error: any) {
-    console.error("Error fetching RFQ details and responses:", error);
+    console.error('Error fetching RFQ details and responses:', error);
     return res.status(500).json({
-      error: "Failed to fetch RFQ details and responses",
+      error: 'Failed to fetch RFQ details and responses',
       message: error.message,
     });
   }

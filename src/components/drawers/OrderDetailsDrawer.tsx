@@ -171,7 +171,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
   const walletTransactions = (
     order.type === 'restaurant' && order.Wallet_Transactions?.length
       ? order.Wallet_Transactions
-      : (paymentData?.Wallet_Transactions || [])
+      : paymentData?.Wallet_Transactions || []
   ) as WalletTransaction[];
   const businessTransactions = order.type === 'business' ? (order.businessTransactions ?? []) : [];
   const refunds = (paymentData?.Refunds || []) as Refund[];
@@ -235,16 +235,16 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger className="text-primary hover:underline">
-                  Order #{generateShortId(order.OrderID?.toString() || order.id)}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Full ID: {order.OrderID || order.id}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="text-primary hover:underline">
+                    Order #{generateShortId(order.OrderID?.toString() || order.id)}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Full ID: {order.OrderID || order.id}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {order.type === 'reel' && (
                 <Badge variant="outline">
                   <Video className="h-3 w-3 mr-1" />
@@ -269,7 +269,10 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
               <div className="flex items-center space-x-4">
                 <Avatar>
                   <AvatarFallback>
-                    {(order.type === 'regular' ? order.User?.name : order.orderedBy?.name ?? order.Reel?.title)
+                    {(order.type === 'regular'
+                      ? order.User?.name
+                      : (order.orderedBy?.name ?? order.Reel?.title)
+                    )
                       ?.split(' ')
                       .map((n: string) => n[0])
                       .join('') ?? '?'}
@@ -290,9 +293,12 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                         ? order.orderedBy?.email
                         : order.Reel?.description}
                   </p>
-                  {(order.type === 'business' || order.type === 'restaurant') && order.orderedBy?.phone && (
-                    <p className="text-sm text-muted-foreground">Phone: {order.orderedBy.phone}</p>
-                  )}
+                  {(order.type === 'business' || order.type === 'restaurant') &&
+                    order.orderedBy?.phone && (
+                      <p className="text-sm text-muted-foreground">
+                        Phone: {order.orderedBy.phone}
+                      </p>
+                    )}
                   {order.type === 'restaurant' && order.Restaurant && (
                     <p className="text-sm text-muted-foreground mt-1">
                       Restaurant: {order.Restaurant.name}
@@ -301,7 +307,8 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                   )}
                   {order.type === 'reel' && (
                     <p className="text-sm text-muted-foreground">
-                      Category: {order.Reel?.category} | Price: {formatCurrency(order.Reel?.Price || '0')}
+                      Category: {order.Reel?.category} | Price:{' '}
+                      {formatCurrency(order.Reel?.Price || '0')}
                     </p>
                   )}
                 </div>
@@ -370,20 +377,28 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                     {order.type === 'restaurant' && order.Restaurant && (
                       <>
                         {order.Restaurant.phone && (
-                          <p className="text-sm text-muted-foreground">Phone: {order.Restaurant.phone}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Phone: {order.Restaurant.phone}
+                          </p>
                         )}
                         {order.Restaurant.email && (
-                          <p className="text-sm text-muted-foreground">Email: {order.Restaurant.email}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Email: {order.Restaurant.email}
+                          </p>
                         )}
                         {order.Restaurant.location && (
-                          <p className="text-sm text-muted-foreground">{order.Restaurant.location}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.Restaurant.location}
+                          </p>
                         )}
                       </>
                     )}
                     {order.type === 'business' && order.business_store && (
                       <>
                         {order.business_store.address && (
-                          <p className="text-sm text-muted-foreground">{order.business_store.address}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.business_store.address}
+                          </p>
                         )}
                         {order.business_store.description && (
                           <p className="text-sm text-muted-foreground line-clamp-2">
@@ -411,7 +426,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
             </h3>
             <Card className="p-4">
               <div className="space-y-4">
-                {order.type === 'regular' && (
+                {order.type === 'regular' &&
                   order.Order_Items?.map((item, index) => (
                     <div key={item.id}>
                       {index > 0 && <Separator className="my-4" />}
@@ -434,19 +449,21 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                         <p className="font-medium">{formatCurrency(item.price)}</p>
                       </div>
                     </div>
-                  ))
-                )}
+                  ))}
                 {order.type === 'restaurant' &&
                   order.restaurant_order_items?.map((item, index) => {
                     const dishName =
-                      item.restaurant_dishes?.dishes?.name ?? `Dish #${generateShortId(item.dish_id)}`;
+                      item.restaurant_dishes?.dishes?.name ??
+                      `Dish #${generateShortId(item.dish_id)}`;
                     return (
                       <div key={item.id}>
                         {index > 0 && <Separator className="my-4" />}
                         <div className="flex justify-between">
                           <div>
                             <p className="font-medium">{dishName}</p>
-                            <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Quantity: {item.quantity}
+                            </p>
                             {item.restaurant_dishes?.dishes?.category && (
                               <p className="text-xs text-muted-foreground">
                                 {item.restaurant_dishes.dishes.category}
@@ -485,8 +502,12 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                   <div className="flex justify-between">
                     <div>
                       <p className="font-medium">{order.Reel?.title}</p>
-                      <p className="text-sm text-muted-foreground">Quantity: {order.quantity || 1}</p>
-                      <p className="text-sm text-muted-foreground">Product: {order.Reel?.Product}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Quantity: {order.quantity || 1}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Product: {order.Reel?.Product}
+                      </p>
                     </div>
                     <p className="font-medium">{formatCurrency(order.Reel?.Price || '0')}</p>
                   </div>
@@ -538,23 +559,32 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                     </div>
                   ) : order.type === 'business' && businessTransactions.length > 0 ? (
                     <div className="space-y-2">
-                      {businessTransactions.map((tx: { id: string; type: string; action?: string | null; description?: string | null; created_at: string; status: string }) => (
-                        <div
-                          key={tx.id}
-                          className="flex justify-between items-center text-sm border rounded-md p-2"
-                        >
-                          <div>
-                            <p className="font-medium">{tx.type || tx.action || 'Transaction'}</p>
-                            {tx.description && (
-                              <p className="text-muted-foreground text-xs">{tx.description}</p>
-                            )}
-                            <p className="text-muted-foreground text-xs">
-                              {formatDateTime(tx.created_at)}
-                            </p>
+                      {businessTransactions.map(
+                        (tx: {
+                          id: string;
+                          type: string;
+                          action?: string | null;
+                          description?: string | null;
+                          created_at: string;
+                          status: string;
+                        }) => (
+                          <div
+                            key={tx.id}
+                            className="flex justify-between items-center text-sm border rounded-md p-2"
+                          >
+                            <div>
+                              <p className="font-medium">{tx.type || tx.action || 'Transaction'}</p>
+                              {tx.description && (
+                                <p className="text-muted-foreground text-xs">{tx.description}</p>
+                              )}
+                              <p className="text-muted-foreground text-xs">
+                                {formatDateTime(tx.created_at)}
+                              </p>
+                            </div>
+                            <Badge className={getPaymentStatusColor(tx.status)}>{tx.status}</Badge>
                           </div>
-                          <Badge className={getPaymentStatusColor(tx.status)}>{tx.status}</Badge>
-                        </div>
-                      ))}
+                        )
+                      )}
                     </div>
                   ) : walletTransactions.length > 0 ? (
                     <div className="space-y-2">
@@ -627,7 +657,9 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
               <div className="space-y-2">
                 <p className="text-sm">
                   <span className="font-medium">Address: </span>
-                  {order.Address ? `${order.Address.street}, ${order.Address.city} ${order.Address.postal_code}` : 'Address not available'}
+                  {order.Address
+                    ? `${order.Address.street}, ${order.Address.city} ${order.Address.postal_code}`
+                    : 'Address not available'}
                 </p>
                 <p className="text-sm">
                   <span className="font-medium">Delivery Notes: </span>

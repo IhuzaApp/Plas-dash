@@ -80,7 +80,9 @@ function parseCSV(text: string): { headers: string[]; rows: Record<string, strin
   return { headers, rows };
 }
 
-async function parseXLSX(file: File): Promise<{ headers: string[]; rows: Record<string, string>[] }> {
+async function parseXLSX(
+  file: File
+): Promise<{ headers: string[]; rows: Record<string, string>[] }> {
   const data = await file.arrayBuffer();
   const wb = XLSX.read(data, { type: 'array' });
   const firstSheet = wb.Sheets[wb.SheetNames[0]];
@@ -88,7 +90,7 @@ async function parseXLSX(file: File): Promise<{ headers: string[]; rows: Record<
   const json = XLSX.utils.sheet_to_json<string[]>(firstSheet, { header: 1, defval: '' });
   if (json.length === 0) return { headers: [], rows: [] };
   const firstRow = json[0] ?? [];
-  const rawHeaders = firstRow.map((h, i) => (String(h ?? '').trim() || `Column ${i + 1}`));
+  const rawHeaders = firstRow.map((h, i) => String(h ?? '').trim() || `Column ${i + 1}`);
   const seen = new Map<string, number>();
   const headers = rawHeaders.map(h => {
     const n = (seen.get(h) ?? 0) + 1;
@@ -107,7 +109,9 @@ async function parseXLSX(file: File): Promise<{ headers: string[]; rows: Record<
   return { headers, rows };
 }
 
-async function parseFile(file: File): Promise<{ headers: string[]; rows: Record<string, string>[] }> {
+async function parseFile(
+  file: File
+): Promise<{ headers: string[]; rows: Record<string, string>[] }> {
   const isXLSX =
     file.name.endsWith('.xlsx') ||
     file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -152,40 +156,38 @@ export function ImportProductNamesDialog({
     setImportProgress({ current: 0, total: 0 });
   }, []);
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      if (acceptedFiles.length === 0) return;
-      setParseError(null);
-      const f = acceptedFiles[0];
-      setFile(f);
-      try {
-        const result = await parseFile(f);
-        setHeaders(result.headers);
-        setRows(result.rows);
-        if (result.headers.length > 0 && result.rows.length > 0) {
-          const auto: ColumnMapping = {};
-          const lower = result.headers.map(h => h.toLowerCase());
-          DB_FIELDS.forEach(({ key }) => {
-            const i = lower.findIndex(
-              h =>
-                h === key ||
-                h.replace(/\s+/g, '') === key ||
-                h.includes(key) ||
-                (key === 'name' && (h.includes('item') || h.includes('product') || h.includes('name')))
-            );
-            if (i >= 0) auto[key] = result.headers[i];
-          });
-          setMapping(auto);
-          setStep('map');
-        } else {
-          setParseError('File has no headers or data rows.');
-        }
-      } catch (e) {
-        setParseError(e instanceof Error ? e.message : 'Failed to parse file.');
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+    setParseError(null);
+    const f = acceptedFiles[0];
+    setFile(f);
+    try {
+      const result = await parseFile(f);
+      setHeaders(result.headers);
+      setRows(result.rows);
+      if (result.headers.length > 0 && result.rows.length > 0) {
+        const auto: ColumnMapping = {};
+        const lower = result.headers.map(h => h.toLowerCase());
+        DB_FIELDS.forEach(({ key }) => {
+          const i = lower.findIndex(
+            h =>
+              h === key ||
+              h.replace(/\s+/g, '') === key ||
+              h.includes(key) ||
+              (key === 'name' &&
+                (h.includes('item') || h.includes('product') || h.includes('name')))
+          );
+          if (i >= 0) auto[key] = result.headers[i];
+        });
+        setMapping(auto);
+        setStep('map');
+      } else {
+        setParseError('File has no headers or data rows.');
       }
-    },
-    []
-  );
+    } catch (e) {
+      setParseError(e instanceof Error ? e.message : 'Failed to parse file.');
+    }
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -215,8 +217,12 @@ export function ImportProductNamesDialog({
         if (!name) return null;
         return {
           name,
-          description: mapping.description ? String(row[mapping.description] ?? '').trim() || undefined : undefined,
-          barcode: mapping.barcode ? String(row[mapping.barcode] ?? '').trim() || undefined : undefined,
+          description: mapping.description
+            ? String(row[mapping.description] ?? '').trim() || undefined
+            : undefined,
+          barcode: mapping.barcode
+            ? String(row[mapping.barcode] ?? '').trim() || undefined
+            : undefined,
           sku: mapping.sku ? String(row[mapping.sku] ?? '').trim() || undefined : undefined,
           image: mapping.image ? String(row[mapping.image] ?? '').trim() || undefined : undefined,
         };
@@ -258,7 +264,8 @@ export function ImportProductNamesDialog({
         {step === 'upload' && (
           <>
             <p className="text-sm text-muted-foreground">
-              Upload a CSV or Excel (.xlsx) file. Next you will map your columns to the database fields.
+              Upload a CSV or Excel (.xlsx) file. Next you will map your columns to the database
+              fields.
             </p>
             <div
               {...getRootProps()}
@@ -270,7 +277,9 @@ export function ImportProductNamesDialog({
               <input {...getInputProps()} />
               <Upload className="mx-auto h-10 w-10 text-muted-foreground" />
               <p className="mt-2 text-sm font-medium">
-                {isDragActive ? 'Drop the file here' : 'Drag & drop CSV or XLSX, or click to select'}
+                {isDragActive
+                  ? 'Drop the file here'
+                  : 'Drag & drop CSV or XLSX, or click to select'}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">CSV, .xlsx</p>
             </div>

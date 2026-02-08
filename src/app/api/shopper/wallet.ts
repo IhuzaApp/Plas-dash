@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
-import { gql } from "graphql-request";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { logErrorToSlack } from "../../../src/lib/slackErrorReporter";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]';
+import { gql } from 'graphql-request';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { logErrorToSlack } from '../../../src/lib/slackErrorReporter';
 
 // GraphQL query to get wallet information
 const GET_WALLET_BY_SHOPPER_ID = gql`
@@ -27,13 +27,10 @@ interface WalletData {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow GET method
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -41,42 +38,33 @@ export default async function handler(
     const session = await getServerSession(req, res, authOptions);
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { shopperId } = req.query;
 
     // Validate required fields
     if (!shopperId) {
-      return res
-        .status(400)
-        .json({ error: "Missing required field: shopperId" });
+      return res.status(400).json({ error: 'Missing required field: shopperId' });
     }
 
     // Verify the authenticated user matches the shopperId
     if (session.user.id !== shopperId) {
-      return res
-        .status(403)
-        .json({ error: "Not authorized to access this wallet" });
+      return res.status(403).json({ error: 'Not authorized to access this wallet' });
     }
 
     // Check if hasuraClient is available (it should be on server side)
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Database client not available" });
+      return res.status(500).json({ error: 'Database client not available' });
     }
 
     // Get wallet information
-    const walletResponse = await hasuraClient.request<WalletData>(
-      GET_WALLET_BY_SHOPPER_ID,
-      {
-        shopper_id: shopperId,
-      }
-    );
+    const walletResponse = await hasuraClient.request<WalletData>(GET_WALLET_BY_SHOPPER_ID, {
+      shopper_id: shopperId,
+    });
 
     if (!walletResponse.Wallets || walletResponse.Wallets.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "Wallet not found for this shopper" });
+      return res.status(404).json({ error: 'Wallet not found for this shopper' });
     }
 
     const wallet = walletResponse.Wallets[0];
@@ -86,12 +74,11 @@ export default async function handler(
       wallet: wallet,
     });
   } catch (error) {
-    await logErrorToSlack("shopper/wallet", error, {
+    await logErrorToSlack('shopper/wallet', error, {
       shopperId: req.query.shopperId,
     });
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
     });
   }
 }

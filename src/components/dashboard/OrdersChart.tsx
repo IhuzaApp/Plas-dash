@@ -65,8 +65,7 @@ const RevenueChart = () => {
   const { data: businessData, isLoading: loadingBusiness } = useBusinessOrders();
   const { data: restaurantData, isLoading: loadingRestaurant } = useRestaurantOrders();
 
-  const isLoading =
-    loadingOrders || loadingReel || loadingBusiness || loadingRestaurant;
+  const isLoading = loadingOrders || loadingReel || loadingBusiness || loadingRestaurant;
 
   const chartData = React.useMemo(() => {
     const regular = (ordersData?.Orders || []) as OrderWithDate[];
@@ -86,19 +85,19 @@ const RevenueChart = () => {
       dayCounts[dateKey][type] += 1;
     };
 
-    regular.forEach((o) => {
+    regular.forEach(o => {
       const key = format(parseISO(o.created_at), 'yyyy-MM-dd');
       add(key, 'regular');
     });
-    reel.forEach((o) => {
+    reel.forEach(o => {
       const key = format(parseISO(o.created_at), 'yyyy-MM-dd');
       add(key, 'reel');
     });
-    restaurant.forEach((o) => {
+    restaurant.forEach(o => {
       const key = format(parseISO(o.created_at), 'yyyy-MM-dd');
       add(key, 'restaurant');
     });
-    business.forEach((o) => {
+    business.forEach(o => {
       const key = format(parseISO(o.created_at), 'yyyy-MM-dd');
       add(key, 'business');
     });
@@ -106,7 +105,7 @@ const RevenueChart = () => {
     const sortedDays = Object.keys(dayCounts).sort();
     const last30 = sortedDays.length > 30 ? sortedDays.slice(-30) : sortedDays;
 
-    return last30.map((day) => {
+    return last30.map(day => {
       const c = dayCounts[day];
       return {
         name: format(parseISO(day), 'MMM d'),
@@ -144,11 +143,7 @@ const RevenueChart = () => {
                   bottom: 0,
                 }}
               >
-                <CartesianGrid
-                  vertical={false}
-                  strokeDasharray="3 3"
-                  stroke={GRID_STROKE}
-                />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke={GRID_STROKE} />
                 <XAxis
                   dataKey="name"
                   tick={{ fill: TICK_FILL }}
@@ -161,11 +156,7 @@ const RevenueChart = () => {
                   tickLine={{ stroke: GRID_STROKE }}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend
-                  formatter={(value) => (
-                    <span style={{ color: TICK_FILL }}>{value}</span>
-                  )}
-                />
+                <Legend formatter={value => <span style={{ color: TICK_FILL }}>{value}</span>} />
                 <Area
                   type="monotone"
                   dataKey="regular"

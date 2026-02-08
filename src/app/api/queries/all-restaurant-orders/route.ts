@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_ALL_RESTAURANT_ORDERS = gql`
   query GetAllRestaurantOrders {
@@ -153,12 +153,12 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     type RestaurantOrderItem = {
@@ -304,13 +304,17 @@ export async function GET() {
       }>;
     }>(GET_ALL_RESTAURANT_ORDERS);
 
-    const orders = (data.restaurant_orders || []).map((o) => {
-      const itemsCount = o.restaurant_order_items_aggregate?.aggregate?.count ?? o.restaurant_order_items?.length ?? 0;
-      const unitsCount = o.restaurant_order_items?.reduce((s, i) => s + (Number(i.quantity) || 0), 0) ?? 0;
+    const orders = (data.restaurant_orders || []).map(o => {
+      const itemsCount =
+        o.restaurant_order_items_aggregate?.aggregate?.count ??
+        o.restaurant_order_items?.length ??
+        0;
+      const unitsCount =
+        o.restaurant_order_items?.reduce((s, i) => s + (Number(i.quantity) || 0), 0) ?? 0;
       return {
         id: o.id,
         OrderID: o.OrderID != null ? String(o.OrderID) : o.id,
-        type: "restaurant" as const,
+        type: 'restaurant' as const,
         status: o.status,
         total: o.total,
         created_at: o.created_at,
@@ -339,9 +343,9 @@ export async function GET() {
           o.shopper != null
             ? {
                 id: o.shopper.id,
-                name: o.shopper.name ?? o.shopper.shopper?.full_name ?? "",
-                phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? "",
-                email: "",
+                name: o.shopper.name ?? o.shopper.shopper?.full_name ?? '',
+                phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? '',
+                email: '',
                 shopper: o.shopper.shopper,
                 vehicle: o.shopper.vehicle,
                 updated_at: o.shopper.updated_at,
@@ -352,10 +356,7 @@ export async function GET() {
 
     return NextResponse.json({ orders });
   } catch (error) {
-    console.error("Error fetching restaurant orders", error);
-    return NextResponse.json(
-      { error: "Failed to fetch restaurant orders" },
-      { status: 500 }
-    );
+    console.error('Error fetching restaurant orders', error);
+    return NextResponse.json({ error: 'Failed to fetch restaurant orders' }, { status: 500 });
   }
 }

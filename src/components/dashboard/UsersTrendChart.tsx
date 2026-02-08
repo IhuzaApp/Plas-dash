@@ -32,8 +32,7 @@ export interface UsersTrendBucket {
 export default function UsersTrendChart() {
   const { data, isLoading } = useQuery({
     queryKey: ['api', 'users-trend'],
-    queryFn: () =>
-      apiGet<{ buckets: UsersTrendBucket[] }>('/api/queries/users-trend'),
+    queryFn: () => apiGet<{ buckets: UsersTrendBucket[] }>('/api/queries/users-trend'),
   });
 
   const chartData = data?.buckets ?? [];
@@ -58,15 +57,8 @@ export default function UsersTrendChart() {
                 No data
               </div>
             ) : (
-              <LineChart
-                data={chartData}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke={GRID_STROKE}
-                />
+              <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={GRID_STROKE} />
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 11, fill: TICK_FILL }}
@@ -86,11 +78,7 @@ export default function UsersTrendChart() {
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Legend
-                  formatter={value => (
-                    <span style={{ color: TICK_FILL }}>{value}</span>
-                  )}
-                />
+                <Legend formatter={value => <span style={{ color: TICK_FILL }}>{value}</span>} />
                 <Line
                   type="monotone"
                   dataKey="totalUsers"

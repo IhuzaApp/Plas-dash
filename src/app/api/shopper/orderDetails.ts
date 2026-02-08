@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 // Define type for GraphQL response
 interface OrderDetailsResponse {
@@ -418,16 +418,8 @@ const GET_RESTAURANT_ORDER_DETAILS = gql`
 
 // Queries to fetch related orders by combined_order_id
 const GET_RELATED_REGULAR_ORDERS = gql`
-  query GetRelatedRegularOrders(
-    $combinedOrderId: uuid!
-    $currentOrderId: uuid!
-  ) {
-    Orders(
-      where: {
-        combined_order_id: { _eq: $combinedOrderId }
-        id: { _neq: $currentOrderId }
-      }
-    ) {
+  query GetRelatedRegularOrders($combinedOrderId: uuid!, $currentOrderId: uuid!) {
+    Orders(where: { combined_order_id: { _eq: $combinedOrderId }, id: { _neq: $currentOrderId } }) {
       id
       OrderID
       created_at
@@ -539,10 +531,7 @@ const GET_RELATED_REGULAR_ORDERS = gql`
 const GET_RELATED_REEL_ORDERS = gql`
   query GetRelatedReelOrders($combinedOrderId: uuid!, $currentOrderId: uuid!) {
     reel_orders(
-      where: {
-        combined_order_id: { _eq: $combinedOrderId }
-        id: { _neq: $currentOrderId }
-      }
+      where: { combined_order_id: { _eq: $combinedOrderId }, id: { _neq: $currentOrderId } }
     ) {
       id
       OrderID
@@ -585,15 +574,9 @@ const GET_RELATED_REEL_ORDERS = gql`
 `;
 
 const GET_RELATED_RESTAURANT_ORDERS = gql`
-  query GetRelatedRestaurantOrders(
-    $combinedOrderId: uuid!
-    $currentOrderId: uuid!
-  ) {
+  query GetRelatedRestaurantOrders($combinedOrderId: uuid!, $currentOrderId: uuid!) {
     restaurant_orders(
-      where: {
-        combined_order_id: { _eq: $combinedOrderId }
-        id: { _neq: $currentOrderId }
-      }
+      where: { combined_order_id: { _eq: $combinedOrderId }, id: { _neq: $currentOrderId } }
     ) {
       id
       OrderID
@@ -640,14 +623,11 @@ const GET_RELATED_RESTAURANT_ORDERS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Handle only GET requests
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
-    res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
+    res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
@@ -655,64 +635,51 @@ export default async function handler(
     // Get orderId from query params
     const { id } = req.query;
 
-    if (!id || typeof id !== "string") {
-      console.error("❌ [OrderDetails API] Invalid order ID:", {
+    if (!id || typeof id !== 'string') {
+      console.error('❌ [OrderDetails API] Invalid order ID:', {
         id,
         type: typeof id,
       });
-      res.status(400).json({ error: "Missing or invalid order ID" });
+      res.status(400).json({ error: 'Missing or invalid order ID' });
       return;
     }
 
     // Get user session for authentication
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as UserSession | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as UserSession | null;
 
     if (!session || !session.user) {
-      res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: 'Unauthorized' });
       return;
     }
 
     // Fetch order details from Hasura
     if (!hasuraClient) {
-      res.status(500).json({ error: "Failed to initialize Hasura client" });
+      res.status(500).json({ error: 'Failed to initialize Hasura client' });
       return;
     }
 
     let orderData: any = null;
-    let orderType: "regular" | "reel" | "restaurant" = "regular";
+    let orderType: 'regular' | 'reel' | 'restaurant' = 'regular';
 
     try {
       // First try to fetch as a regular order
-      const regularOrderData = await hasuraClient.request<OrderDetailsResponse>(
-        GET_ORDER_DETAILS,
-        {
-          orderId: id,
-        }
-      );
+      const regularOrderData = await hasuraClient.request<OrderDetailsResponse>(GET_ORDER_DETAILS, {
+        orderId: id,
+      });
 
       if (regularOrderData.Orders_by_pk) {
         orderData = regularOrderData.Orders_by_pk;
-        orderType = "regular";
+        orderType = 'regular';
       } else {
         // If regular order not found, try reel order
         try {
-          const reelOrderData = await hasuraClient.request<any>(
-            GET_REEL_ORDER_DETAILS,
-            {
-              orderId: id,
-            }
-          );
+          const reelOrderData = await hasuraClient.request<any>(GET_REEL_ORDER_DETAILS, {
+            orderId: id,
+          });
 
-          if (
-            reelOrderData.reel_orders &&
-            reelOrderData.reel_orders.length > 0
-          ) {
+          if (reelOrderData.reel_orders && reelOrderData.reel_orders.length > 0) {
             orderData = reelOrderData.reel_orders[0];
-            orderType = "reel";
+            orderType = 'reel';
           } else {
             // If reel order not found, try restaurant order
             try {
@@ -728,47 +695,41 @@ export default async function handler(
                 restaurantOrderData.restaurant_orders.length > 0
               ) {
                 orderData = restaurantOrderData.restaurant_orders[0];
-                orderType = "restaurant";
+                orderType = 'restaurant';
               }
             } catch (restaurantError) {
-              console.error("❌ [API] Error fetching restaurant order:", {
+              console.error('❌ [API] Error fetching restaurant order:', {
                 error: restaurantError,
                 message:
-                  restaurantError instanceof Error
-                    ? restaurantError.message
-                    : "Unknown error",
+                  restaurantError instanceof Error ? restaurantError.message : 'Unknown error',
                 orderId: id,
               });
             }
           }
         } catch (reelError) {
-          console.error("❌ [API] Error fetching reel order:", {
+          console.error('❌ [API] Error fetching reel order:', {
             error: reelError,
-            message:
-              reelError instanceof Error ? reelError.message : "Unknown error",
+            message: reelError instanceof Error ? reelError.message : 'Unknown error',
             orderId: id,
           });
         }
       }
     } catch (error) {
-      console.error("❌ [API] Error fetching regular order:", {
+      console.error('❌ [API] Error fetching regular order:', {
         error: error,
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : 'Unknown error',
         orderId: id,
       });
 
       // If regular order query fails, try reel order
       try {
-        const reelOrderData = await hasuraClient.request<any>(
-          GET_REEL_ORDER_DETAILS,
-          {
-            orderId: id,
-          }
-        );
+        const reelOrderData = await hasuraClient.request<any>(GET_REEL_ORDER_DETAILS, {
+          orderId: id,
+        });
 
         if (reelOrderData.reel_orders && reelOrderData.reel_orders.length > 0) {
           orderData = reelOrderData.reel_orders[0];
-          orderType = "reel";
+          orderType = 'reel';
         } else {
           // If reel order not found, try restaurant order
           try {
@@ -784,59 +745,50 @@ export default async function handler(
               restaurantOrderData.restaurant_orders.length > 0
             ) {
               orderData = restaurantOrderData.restaurant_orders[0];
-              orderType = "restaurant";
+              orderType = 'restaurant';
             }
           } catch (restaurantError) {
-            console.error(
-              "❌ [API] Error fetching restaurant order on retry:",
-              {
-                error: restaurantError,
-                message:
-                  restaurantError instanceof Error
-                    ? restaurantError.message
-                    : "Unknown error",
-                orderId: id,
-              }
-            );
+            console.error('❌ [API] Error fetching restaurant order on retry:', {
+              error: restaurantError,
+              message: restaurantError instanceof Error ? restaurantError.message : 'Unknown error',
+              orderId: id,
+            });
           }
         }
       } catch (reelError) {
-        console.error("❌ [API] Error fetching reel order on retry:", {
+        console.error('❌ [API] Error fetching reel order on retry:', {
           error: reelError,
-          message:
-            reelError instanceof Error ? reelError.message : "Unknown error",
+          message: reelError instanceof Error ? reelError.message : 'Unknown error',
           orderId: id,
         });
       }
     }
 
     if (!orderData) {
-      res.status(404).json({ error: "Order not found" });
+      res.status(404).json({ error: 'Order not found' });
       return;
     }
 
     // Format the order data for the frontend based on order type
     let formattedOrder: any;
 
-    if (orderType === "regular") {
+    if (orderType === 'regular') {
       // Handle regular orders
 
       const formattedOrderItems = orderData.Order_Items.map((item: any) => {
         const formattedItem = {
           id: item.id,
-          name: item.Product?.ProductName?.name || "Unknown Product",
+          name: item.Product?.ProductName?.name || 'Unknown Product',
           quantity: item.quantity,
           price: parseFloat(item.price) || 0,
           measurement_unit: item.Product?.measurement_unit || null,
           barcode: item.Product?.ProductName?.barcode || null,
           sku: item.Product?.ProductName?.sku || null,
-          productImage:
-            item.Product?.ProductName?.image || item.Product?.image || null,
+          productImage: item.Product?.ProductName?.image || item.Product?.image || null,
           product: {
             id: item.Product?.id || item.id, // Use Product.id from Products table, fallback to item.id
-            name: item.Product?.ProductName?.name || "Unknown Product",
-            image:
-              item.Product?.ProductName?.image || item.Product?.image || null,
+            name: item.Product?.ProductName?.name || 'Unknown Product',
+            image: item.Product?.ProductName?.image || item.Product?.image || null,
             final_price: item.Product?.final_price || item.price.toString(),
             measurement_unit: item.Product?.measurement_unit || null,
             barcode: item.Product?.ProductName?.barcode || null,
@@ -845,11 +797,11 @@ export default async function handler(
               ? {
                   id: item.Product?.ProductName.id,
                   name: item.Product?.ProductName.name,
-                  description: item.Product?.ProductName.description || "",
-                  barcode: item.Product?.ProductName.barcode || "",
-                  sku: item.Product?.ProductName.sku || "",
+                  description: item.Product?.ProductName.description || '',
+                  barcode: item.Product?.ProductName.barcode || '',
+                  sku: item.Product?.ProductName.sku || '',
                   image: item.Product?.ProductName.image || null,
-                  create_at: item.Product?.ProductName.create_at || "",
+                  create_at: item.Product?.ProductName.create_at || '',
                 }
               : null,
           },
@@ -864,8 +816,8 @@ export default async function handler(
         0
       );
 
-      const serviceFee = parseFloat(orderData.service_fee || "0");
-      const deliveryFee = parseFloat(orderData.delivery_fee || "0");
+      const serviceFee = parseFloat(orderData.service_fee || '0');
+      const deliveryFee = parseFloat(orderData.delivery_fee || '0');
       const totalEarnings = serviceFee + deliveryFee;
 
       formattedOrder = {
@@ -874,19 +826,15 @@ export default async function handler(
         createdAt: orderData.created_at,
         updatedAt: orderData.updated_at,
         status: orderData.status,
-        orderType: "regular",
-        shopName: orderData.shop?.name || "Unknown Shop",
-        shopAddress: orderData.shop?.address || "No Address",
-        shopLatitude: orderData.shop?.latitude
-          ? parseFloat(orderData.shop.latitude)
-          : null,
-        shopLongitude: orderData.shop?.longitude
-          ? parseFloat(orderData.shop.longitude)
-          : null,
+        orderType: 'regular',
+        shopName: orderData.shop?.name || 'Unknown Shop',
+        shopAddress: orderData.shop?.address || 'No Address',
+        shopLatitude: orderData.shop?.latitude ? parseFloat(orderData.shop.latitude) : null,
+        shopLongitude: orderData.shop?.longitude ? parseFloat(orderData.shop.longitude) : null,
         address: orderData.address, // Include raw address object
         customerAddress: orderData.address
-          ? `${orderData.address.street || ""}, ${orderData.address.city || ""}`
-          : "No Address",
+          ? `${orderData.address.street || ''}, ${orderData.address.city || ''}`
+          : 'No Address',
         customerLatitude: orderData.address?.latitude
           ? parseFloat(orderData.address.latitude)
           : null,
@@ -906,14 +854,14 @@ export default async function handler(
         shop: orderData.shop, // Include shop data
         combinedOrderId: orderData.combined_order_id,
       };
-    } else if (orderType === "reel") {
+    } else if (orderType === 'reel') {
       // Handle reel orders
 
-      const serviceFee = parseFloat(orderData.service_fee || "0");
-      const deliveryFee = parseFloat(orderData.delivery_fee || "0");
+      const serviceFee = parseFloat(orderData.service_fee || '0');
+      const deliveryFee = parseFloat(orderData.delivery_fee || '0');
       const totalEarnings = serviceFee + deliveryFee;
-      const reelPrice = parseFloat(orderData.Reel?.Price || "0");
-      const quantity = parseInt(orderData.quantity || "1");
+      const reelPrice = parseFloat(orderData.Reel?.Price || '0');
+      const quantity = parseInt(orderData.quantity || '1');
       const subTotal = reelPrice * quantity;
 
       formattedOrder = {
@@ -922,16 +870,15 @@ export default async function handler(
         createdAt: orderData.created_at,
         updatedAt: orderData.updated_at,
         status: orderData.status,
-        orderType: "reel",
-        shopName: orderData.Reel?.Restaurant?.name || "Reel Order",
-        shopAddress:
-          orderData.Reel?.Restaurant?.location || "From Reel Creator",
+        orderType: 'reel',
+        shopName: orderData.Reel?.Restaurant?.name || 'Reel Order',
+        shopAddress: orderData.Reel?.Restaurant?.location || 'From Reel Creator',
         shopLatitude: orderData.Reel?.Restaurant?.lat || null,
         shopLongitude: orderData.Reel?.Restaurant?.long || null,
         address: orderData.address, // Include raw address object
         customerAddress: orderData.address
-          ? `${orderData.address.street || ""}, ${orderData.address.city || ""}`
-          : "No Address",
+          ? `${orderData.address.street || ''}, ${orderData.address.city || ''}`
+          : 'No Address',
         customerLatitude: orderData.address?.latitude
           ? parseFloat(orderData.address.latitude)
           : null,
@@ -941,7 +888,7 @@ export default async function handler(
         items: [
           {
             id: orderData.Reel?.id || orderData.id,
-            name: orderData.Reel?.Product || "Reel Product",
+            name: orderData.Reel?.Product || 'Reel Product',
             quantity: quantity,
             price: reelPrice,
           },
@@ -950,7 +897,7 @@ export default async function handler(
         subTotal,
         serviceFee,
         deliveryFee,
-        total: parseFloat(orderData.total || "0"),
+        total: parseFloat(orderData.total || '0'),
         estimatedEarnings: totalEarnings,
         reel: {
           ...orderData.Reel,
@@ -970,35 +917,31 @@ export default async function handler(
         deliveryPhotoUrl: orderData.delivery_photo_url, // Add delivery photo URL
         combinedOrderId: orderData.combined_order_id,
       };
-    } else if (orderType === "restaurant") {
+    } else if (orderType === 'restaurant') {
       // Handle restaurant orders
 
-      const deliveryFee = parseFloat(orderData.delivery_fee || "0");
+      const deliveryFee = parseFloat(orderData.delivery_fee || '0');
       const totalEarnings = deliveryFee; // Restaurant orders don't have service fee
 
       // Format dish items (schema: restaurant_order_items -> restaurant_dishes; name/description/image from ProductNames or dishes)
-      const formattedDishItems = orderData.restaurant_order_items.map(
-        (dishOrder: any) => {
-          const rd = dishOrder.restaurant_dishes;
-          const name =
-            rd?.ProductNames?.name ?? rd?.dishes?.name ?? "Unknown Dish";
-          const description =
-            rd?.ProductNames?.description ?? rd?.dishes?.description ?? null;
-          const image = rd?.ProductNames?.image ?? rd?.dishes?.image ?? null;
+      const formattedDishItems = orderData.restaurant_order_items.map((dishOrder: any) => {
+        const rd = dishOrder.restaurant_dishes;
+        const name = rd?.ProductNames?.name ?? rd?.dishes?.name ?? 'Unknown Dish';
+        const description = rd?.ProductNames?.description ?? rd?.dishes?.description ?? null;
+        const image = rd?.ProductNames?.image ?? rd?.dishes?.image ?? null;
 
-          return {
-            id: dishOrder.id,
-            name,
-            quantity: dishOrder.quantity,
-            price: parseFloat(dishOrder.price) || 0,
-            description,
-            image,
-            category: rd?.dishes?.category ?? null,
-            ingredients: rd?.dishes?.ingredients ?? null,
-            preparingTime: rd?.preparingTime || null,
-          };
-        }
-      );
+        return {
+          id: dishOrder.id,
+          name,
+          quantity: dishOrder.quantity,
+          price: parseFloat(dishOrder.price) || 0,
+          description,
+          image,
+          category: rd?.dishes?.category ?? null,
+          ingredients: rd?.dishes?.ingredients ?? null,
+          preparingTime: rd?.preparingTime || null,
+        };
+      });
 
       // Calculate subtotal from dish orders
       const subTotal = formattedDishItems.reduce(
@@ -1012,19 +955,15 @@ export default async function handler(
         createdAt: orderData.created_at,
         updatedAt: orderData.updated_at,
         status: orderData.status,
-        orderType: "restaurant",
-        shopName: orderData.Restaurant?.name || "Unknown Restaurant",
-        shopAddress: orderData.Restaurant?.location || "No Address",
-        shopLatitude: orderData.Restaurant?.lat
-          ? parseFloat(orderData.Restaurant.lat)
-          : null,
-        shopLongitude: orderData.Restaurant?.long
-          ? parseFloat(orderData.Restaurant.long)
-          : null,
+        orderType: 'restaurant',
+        shopName: orderData.Restaurant?.name || 'Unknown Restaurant',
+        shopAddress: orderData.Restaurant?.location || 'No Address',
+        shopLatitude: orderData.Restaurant?.lat ? parseFloat(orderData.Restaurant.lat) : null,
+        shopLongitude: orderData.Restaurant?.long ? parseFloat(orderData.Restaurant.long) : null,
         address: orderData.address,
         customerAddress: orderData.address
-          ? `${orderData.address.street || ""}, ${orderData.address.city || ""}`
-          : "No Address",
+          ? `${orderData.address.street || ''}, ${orderData.address.city || ''}`
+          : 'No Address',
         customerLatitude: orderData.address?.latitude
           ? parseFloat(orderData.address.latitude)
           : null,
@@ -1036,7 +975,7 @@ export default async function handler(
         subTotal,
         serviceFee: 0, // Restaurant orders don't have service fee
         deliveryFee,
-        total: parseFloat(orderData.total || "0"),
+        total: parseFloat(orderData.total || '0'),
         estimatedEarnings: totalEarnings,
         restaurant: orderData.Restaurant,
         deliveryNote: orderData.delivery_notes,
@@ -1061,21 +1000,20 @@ export default async function handler(
         const combinedOrderId = orderData.combined_order_id;
 
         // Run all queries in parallel
-        const [relatedRegular, relatedReel, relatedRestaurant] =
-          await Promise.all([
-            hasuraClient.request<any>(GET_RELATED_REGULAR_ORDERS, {
-              combinedOrderId,
-              currentOrderId: id,
-            }),
-            hasuraClient.request<any>(GET_RELATED_REEL_ORDERS, {
-              combinedOrderId,
-              currentOrderId: id,
-            }),
-            hasuraClient.request<any>(GET_RELATED_RESTAURANT_ORDERS, {
-              combinedOrderId,
-              currentOrderId: id,
-            }),
-          ]);
+        const [relatedRegular, relatedReel, relatedRestaurant] = await Promise.all([
+          hasuraClient.request<any>(GET_RELATED_REGULAR_ORDERS, {
+            combinedOrderId,
+            currentOrderId: id,
+          }),
+          hasuraClient.request<any>(GET_RELATED_REEL_ORDERS, {
+            combinedOrderId,
+            currentOrderId: id,
+          }),
+          hasuraClient.request<any>(GET_RELATED_RESTAURANT_ORDERS, {
+            combinedOrderId,
+            currentOrderId: id,
+          }),
+        ]);
 
         // Process Regular Orders
         if (relatedRegular?.Orders) {
@@ -1083,23 +1021,16 @@ export default async function handler(
             const items =
               order.Order_Items?.map((item: any) => ({
                 id: item.id,
-                name: item.Product?.ProductName?.name || "Unknown Product",
+                name: item.Product?.ProductName?.name || 'Unknown Product',
                 quantity: item.quantity,
                 price: parseFloat(item.price) || 0,
                 measurement_unit: item.Product?.measurement_unit || null,
-                productImage:
-                  item.Product?.ProductName?.image ||
-                  item.Product?.image ||
-                  null,
+                productImage: item.Product?.ProductName?.image || item.Product?.image || null,
                 product: {
                   id: item.Product?.id || item.id, // Use Product.id from Products table
-                  name: item.Product?.ProductName?.name || "Unknown Product",
-                  image:
-                    item.Product?.ProductName?.image ||
-                    item.Product?.image ||
-                    null,
-                  final_price:
-                    item.Product?.final_price || item.price.toString(),
+                  name: item.Product?.ProductName?.name || 'Unknown Product',
+                  image: item.Product?.ProductName?.image || item.Product?.image || null,
+                  final_price: item.Product?.final_price || item.price.toString(),
                   measurement_unit: item.Product?.measurement_unit || null,
                   barcode: item.Product?.ProductName?.barcode || null,
                   sku: item.Product?.ProductName?.sku || null,
@@ -1107,12 +1038,11 @@ export default async function handler(
                     ? {
                         id: item.Product?.ProductName.id,
                         name: item.Product?.ProductName.name,
-                        description:
-                          item.Product?.ProductName.description || "",
-                        barcode: item.Product?.ProductName.barcode || "",
-                        sku: item.Product?.ProductName.sku || "",
+                        description: item.Product?.ProductName.description || '',
+                        barcode: item.Product?.ProductName.barcode || '',
+                        sku: item.Product?.ProductName.sku || '',
                         image: item.Product?.ProductName.image || null,
-                        create_at: item.Product?.ProductName.create_at || "",
+                        create_at: item.Product?.ProductName.create_at || '',
                       }
                     : null,
                 },
@@ -1126,9 +1056,9 @@ export default async function handler(
             return {
               id: order.id,
               OrderID: order.OrderID || order.id,
-              orderType: "regular",
+              orderType: 'regular',
               status: order.status,
-              shopName: order.shop?.name || "Unknown Shop",
+              shopName: order.shop?.name || 'Unknown Shop',
               shopAddress: order.shop?.address,
               shop: order.shop, // Full shop object
               customerId: order.orderedBy?.id,
@@ -1151,9 +1081,9 @@ export default async function handler(
             return {
               id: order.id,
               OrderID: order.OrderID || order.id,
-              orderType: "reel",
+              orderType: 'reel',
               status: order.status,
-              shopName: order.Reel?.Restaurant?.name || "Reel Order",
+              shopName: order.Reel?.Restaurant?.name || 'Reel Order',
               shopAddress: order.Reel?.Restaurant?.location,
               shop: order.Reel?.Restaurant
                 ? {
@@ -1167,13 +1097,13 @@ export default async function handler(
               customerId: order.user?.id,
               customerPhone: order.user?.phone,
               customerName: order.user?.name,
-              total: parseFloat(order.total || "0"),
+              total: parseFloat(order.total || '0'),
               items: [
                 {
                   id: order.id,
-                  name: order.Reel?.Product || "Reel Product",
+                  name: order.Reel?.Product || 'Reel Product',
                   quantity: order.quantity,
-                  price: parseFloat(order.Reel?.Price || "0"),
+                  price: parseFloat(order.Reel?.Price || '0'),
                   productImage: null, // Reel doesn't have a direct product image easily accessible here
                 },
               ],
@@ -1185,51 +1115,49 @@ export default async function handler(
 
         // Process Restaurant Orders
         if (relatedRestaurant?.restaurant_orders) {
-          const processedRestaurant = relatedRestaurant.restaurant_orders.map(
-            (order: any) => {
-              const items =
-                order.restaurant_order_items?.map((item: any) => {
-                  const rd = item.restaurant_dishes;
-                  const dish = rd?.dishes;
+          const processedRestaurant = relatedRestaurant.restaurant_orders.map((order: any) => {
+            const items =
+              order.restaurant_order_items?.map((item: any) => {
+                const rd = item.restaurant_dishes;
+                const dish = rd?.dishes;
 
-                  return {
-                    id: item.id,
-                    name: dish?.name || rd?.name || "Dish",
-                    quantity: item.quantity,
-                    price: parseFloat(item.price) || 0,
-                    productImage: dish?.image || rd?.image || null,
-                  };
-                }) || [];
+                return {
+                  id: item.id,
+                  name: dish?.name || rd?.name || 'Dish',
+                  quantity: item.quantity,
+                  price: parseFloat(item.price) || 0,
+                  productImage: dish?.image || rd?.image || null,
+                };
+              }) || [];
 
-              return {
-                id: order.id,
-                OrderID: order.OrderID || order.id,
-                orderType: "restaurant",
-                status: order.status,
-                shopName: order.Restaurant?.name || "Restaurant",
-                shopAddress: order.Restaurant?.location,
-                shop: order.Restaurant
-                  ? {
-                      id: order.Restaurant.id,
-                      name: order.Restaurant.name,
-                      address: order.Restaurant.location,
-                      phone: order.Restaurant.phone,
-                      image: (order.Restaurant as any).logo,
-                    }
-                  : null,
-                customerId: order.orderedBy?.id,
-                customerPhone: order.orderedBy?.phone,
-                customerName: order.orderedBy?.name,
-                total: parseFloat(order.total || "0"),
-                items: items,
-                combinedOrderId: order.combined_order_id,
-              };
-            }
-          );
+            return {
+              id: order.id,
+              OrderID: order.OrderID || order.id,
+              orderType: 'restaurant',
+              status: order.status,
+              shopName: order.Restaurant?.name || 'Restaurant',
+              shopAddress: order.Restaurant?.location,
+              shop: order.Restaurant
+                ? {
+                    id: order.Restaurant.id,
+                    name: order.Restaurant.name,
+                    address: order.Restaurant.location,
+                    phone: order.Restaurant.phone,
+                    image: (order.Restaurant as any).logo,
+                  }
+                : null,
+              customerId: order.orderedBy?.id,
+              customerPhone: order.orderedBy?.phone,
+              customerName: order.orderedBy?.name,
+              total: parseFloat(order.total || '0'),
+              items: items,
+              combinedOrderId: order.combined_order_id,
+            };
+          });
           relatedOrders = [...relatedOrders, ...processedRestaurant];
         }
       } catch (err) {
-        console.error("❌ [API] Error fetching related orders:", err);
+        console.error('❌ [API] Error fetching related orders:', err);
         // Don't fail the whole request if related orders fail
       }
     }
@@ -1241,25 +1169,23 @@ export default async function handler(
       // specific aggregations for combined orders
       if (orderData.combined_order_id && relatedOrders.length > 0) {
         // Set order type to combined when there are combined orders
-        formattedOrder.orderType = "combined";
+        formattedOrder.orderType = 'combined';
 
         // Create comprehensive lists including the main order and all related orders
         const allOrders = [formattedOrder, ...relatedOrders];
 
         // Extract IDs and Names
-        formattedOrder.orderIds = allOrders.map((o) => o.id).filter(Boolean);
-        formattedOrder.orderIDs = allOrders
-          .map((o) => o.OrderID)
-          .filter(Boolean);
+        formattedOrder.orderIds = allOrders.map(o => o.id).filter(Boolean);
+        formattedOrder.orderIDs = allOrders.map(o => o.OrderID).filter(Boolean);
         formattedOrder.shopNames = Array.from(
-          new Set(allOrders.map((o) => o.shopName).filter(Boolean))
+          new Set(allOrders.map(o => o.shopName).filter(Boolean))
         );
 
         // Update shop name to indicate multiple stores if applicable
         if (formattedOrder.shopNames.length > 1) {
           formattedOrder.shopName = `${
             formattedOrder.shopNames.length
-          } Stores: ${formattedOrder.shopNames.join(", ")}`;
+          } Stores: ${formattedOrder.shopNames.join(', ')}`;
         }
       }
     }
@@ -1269,12 +1195,12 @@ export default async function handler(
       order: formattedOrder,
     });
   } catch (error) {
-    console.error("❌ [API] Error fetching order details:", {
+    console.error('❌ [API] Error fetching order details:', {
       error: error,
-      message: error instanceof Error ? error.message : "Unknown error",
+      message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       orderId: req.query.id,
     });
-    res.status(500).json({ error: "Failed to fetch order details" });
+    res.status(500).json({ error: 'Failed to fetch order details' });
   }
 }

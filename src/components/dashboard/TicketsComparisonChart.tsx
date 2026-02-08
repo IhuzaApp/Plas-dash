@@ -14,7 +14,17 @@ import {
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
-import { format, startOfDay, startOfWeek, startOfMonth, startOfYear, subDays, subWeeks, subMonths, subYears } from 'date-fns';
+import {
+  format,
+  startOfDay,
+  startOfWeek,
+  startOfMonth,
+  startOfYear,
+  subDays,
+  subWeeks,
+  subMonths,
+  subYears,
+} from 'date-fns';
 import { Loader2, MessageSquare } from 'lucide-react';
 import { CHART_COLORS } from '@/lib/chartColors';
 import { Button } from '@/components/ui/button';
@@ -62,7 +72,14 @@ export default function TicketsComparisonChart() {
           : period === 'month'
             ? subMonths(now, range)
             : subYears(now, range);
-    const bucketStart = period === 'day' ? startOfDay(start) : period === 'week' ? startOfWeek(start, { weekStartsOn: 1 }) : period === 'month' ? startOfMonth(start) : startOfYear(start);
+    const bucketStart =
+      period === 'day'
+        ? startOfDay(start)
+        : period === 'week'
+          ? startOfWeek(start, { weekStartsOn: 1 })
+          : period === 'month'
+            ? startOfMonth(start)
+            : startOfYear(start);
     for (let i = 0; i < range; i++) {
       let d: Date;
       if (period === 'day') d = subDays(now, range - 1 - i);
@@ -72,7 +89,7 @@ export default function TicketsComparisonChart() {
       const key = getKey(d);
       buckets[key] = { incoming: 0, closed: 0 };
     }
-    data.tickets.forEach((t) => {
+    data.tickets.forEach(t => {
       const createdKey = getKey(new Date(t.created_on));
       if (createdKey in buckets) buckets[createdKey].incoming += 1;
       if (t.status === 'closed' && t.update_on) {
@@ -80,11 +97,23 @@ export default function TicketsComparisonChart() {
         if (closedKey in buckets) buckets[closedKey].closed += 1;
       }
     });
-    const labelFormat = period === 'day' ? 'MMM d' : period === 'week' ? 'MMM d' : period === 'month' ? 'MMM yy' : 'yyyy';
+    const labelFormat =
+      period === 'day'
+        ? 'MMM d'
+        : period === 'week'
+          ? 'MMM d'
+          : period === 'month'
+            ? 'MMM yy'
+            : 'yyyy';
     return Object.entries(buckets)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, v]) => ({
-        name: period === 'month' ? format(new Date(key + '-01'), labelFormat) : period === 'year' ? key : format(new Date(key), labelFormat),
+        name:
+          period === 'month'
+            ? format(new Date(key + '-01'), labelFormat)
+            : period === 'year'
+              ? key
+              : format(new Date(key), labelFormat),
         Incoming: v.incoming,
         Closed: v.closed,
       }));
@@ -98,7 +127,7 @@ export default function TicketsComparisonChart() {
           Tickets: Incoming vs Closed
         </CardTitle>
         <div className="flex flex-wrap gap-1">
-          {(['day', 'week', 'month', 'year'] as const).map((p) => (
+          {(['day', 'week', 'month', 'year'] as const).map(p => (
             <Button
               key={p}
               variant={period === p ? 'secondary' : 'ghost'}
@@ -143,9 +172,19 @@ export default function TicketsComparisonChart() {
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Legend formatter={(value) => <span style={{ color: TICK_FILL }}>{value}</span>} />
-                <Bar dataKey="Incoming" fill={CHART_COLORS.blue} radius={[4, 4, 0, 0]} name="Incoming" />
-                <Bar dataKey="Closed" fill={CHART_COLORS.green} radius={[4, 4, 0, 0]} name="Closed" />
+                <Legend formatter={value => <span style={{ color: TICK_FILL }}>{value}</span>} />
+                <Bar
+                  dataKey="Incoming"
+                  fill={CHART_COLORS.blue}
+                  radius={[4, 4, 0, 0]}
+                  name="Incoming"
+                />
+                <Bar
+                  dataKey="Closed"
+                  fill={CHART_COLORS.green}
+                  radius={[4, 4, 0, 0]}
+                  name="Closed"
+                />
               </BarChart>
             )}
           </ResponsiveContainer>

@@ -1,9 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
-import { gql } from "graphql-request";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]';
+import { gql } from 'graphql-request';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { logger } from '../../../src/utils/logger';
 
 interface OrdersResponse {
   Orders: Array<{
@@ -20,43 +20,27 @@ interface OrdersResponse {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const session = await getServerSession(req, res, authOptions);
     const userId = session?.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const GET_ACTIVE_ORDERS = gql`
       query GetActiveOrders($shopperId: uuid!) {
-        Orders(
-          where: {
-            shopper_id: { _eq: $shopperId }
-            status: { _neq: "delivered" }
-          }
-        ) {
+        Orders(where: { shopper_id: { _eq: $shopperId }, status: { _neq: "delivered" } }) {
           id
           status
         }
-        reel_orders(
-          where: {
-            shopper_id: { _eq: $shopperId }
-            status: { _neq: "delivered" }
-          }
-        ) {
+        reel_orders(where: { shopper_id: { _eq: $shopperId }, status: { _neq: "delivered" } }) {
           id
           status
         }
         restaurant_orders(
-          where: {
-            shopper_id: { _eq: $shopperId }
-            status: { _neq: "delivered" }
-          }
+          where: { shopper_id: { _eq: $shopperId }, status: { _neq: "delivered" } }
         ) {
           id
           status
@@ -65,7 +49,7 @@ export default async function handler(
     `;
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<OrdersResponse>(GET_ACTIVE_ORDERS, {
@@ -78,7 +62,7 @@ export default async function handler(
       ...(data.restaurant_orders || []),
     ];
 
-    logger.info("Active orders query result:", "ActiveOrdersAPI", {
+    logger.info('Active orders query result:', 'ActiveOrdersAPI', {
       userId,
       orderCount: allOrders.length,
     });
@@ -87,7 +71,7 @@ export default async function handler(
       orders: allOrders,
     });
   } catch (error) {
-    logger.error("Error fetching active orders:", "ActiveOrdersAPI", error);
-    return res.status(500).json({ error: "Failed to fetch active orders" });
+    logger.error('Error fetching active orders:', 'ActiveOrdersAPI', error);
+    return res.status(500).json({ error: 'Failed to fetch active orders' });
   }
 }

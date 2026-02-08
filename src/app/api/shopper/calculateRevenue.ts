@@ -1,9 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { RevenueCalculator } from "../../../src/lib/revenueCalculator";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { RevenueCalculator } from '../../../src/lib/revenueCalculator';
 
 // GraphQL query to get order details with items for revenue calculation
 const GET_ORDER_WITH_ITEMS = gql`
@@ -90,30 +90,27 @@ const CREATE_REVENUE = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   // Authenticate user
   const session = (await getServerSession(req, res, authOptions as any)) as any;
   if (!session?.user?.id) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const { orderId } = req.body;
 
   if (!orderId) {
-    return res.status(400).json({ error: "Missing orderId" });
+    return res.status(400).json({ error: 'Missing orderId' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // 0. Check if revenue already exists for this order
@@ -122,15 +119,13 @@ export default async function handler(
     }>(CHECK_EXISTING_REVENUE, { order_id: orderId });
 
     if (existingRevenue.Revenue && existingRevenue.Revenue.length > 0) {
-      console.log(
-        `Revenue already exists for order ${orderId}, skipping calculation`
-      );
+      console.log(`Revenue already exists for order ${orderId}, skipping calculation`);
       return res.status(200).json({
         success: true,
-        message: "Revenue already calculated for this order",
+        message: 'Revenue already calculated for this order',
         data: {
-          commission_revenue: "0.00",
-          plasa_fee: "0.00",
+          commission_revenue: '0.00',
+          plasa_fee: '0.00',
           product_profits: [],
         },
       });
@@ -161,11 +156,11 @@ export default async function handler(
 
     const order = orderData.Orders_by_pk;
     if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     // 2. Convert order items to cart items format for revenue calculation
-    const cartItems = order.Order_Items.map((item) => ({
+    const cartItems = order.Order_Items.map(item => ({
       quantity: item.quantity,
       Product: {
         price: item.Product.price,
@@ -184,13 +179,12 @@ export default async function handler(
     }>(GET_SYSTEM_CONFIG);
 
     const deliveryCommissionPercentage = parseFloat(
-      systemConfigData.System_configuratioins[0]
-        ?.deliveryCommissionPercentage || "0"
+      systemConfigData.System_configuratioins[0]?.deliveryCommissionPercentage || '0'
     );
 
     // 5. Calculate plasa fee
-    const serviceFeeNum = parseFloat(order.service_fee || "0");
-    const deliveryFeeNum = parseFloat(order.delivery_fee || "0");
+    const serviceFeeNum = parseFloat(order.service_fee || '0');
+    const deliveryFeeNum = parseFloat(order.delivery_fee || '0');
     const plasaFee = RevenueCalculator.calculatePlasaFee(
       serviceFeeNum,
       deliveryFeeNum,
@@ -211,7 +205,7 @@ export default async function handler(
 
     // 6. Create commission revenue record (product profits)
     await hasuraClient.request(CREATE_REVENUE, {
-      type: "commission",
+      type: 'commission',
       order_id: orderId,
       shop_id: order.shop_id,
       shopper_id: shopperId,
@@ -223,7 +217,7 @@ export default async function handler(
     // 7. Create plasa fee revenue record (service + delivery fees)
     if (plasaFee > 0) {
       await hasuraClient.request(CREATE_REVENUE, {
-        type: "plasa_fee",
+        type: 'plasa_fee',
         order_id: null, // Not tied to specific order
         shop_id: order.shop_id,
         shopper_id: shopperId,
@@ -235,7 +229,7 @@ export default async function handler(
 
     return res.status(200).json({
       success: true,
-      message: "Revenue calculated and recorded successfully",
+      message: 'Revenue calculated and recorded successfully',
       data: {
         commission_revenue: revenueData.revenue,
         plasa_fee: plasaFee.toFixed(2),
@@ -243,9 +237,9 @@ export default async function handler(
       },
     });
   } catch (err: any) {
-    console.error("Revenue calculation error:", err);
+    console.error('Revenue calculation error:', err);
     return res.status(500).json({
-      error: err.message || "Failed to calculate revenue",
+      error: err.message || 'Failed to calculate revenue',
     });
   }
 }

@@ -1,9 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { logger } from '../../../src/utils/logger';
 
 // ============================================================================
 // DECLINE OFFER
@@ -105,39 +105,32 @@ const DECLINE_COMBINED_OFFERS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
 
   if (!session) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { orderId, shopperId } = req.body;
 
   if (!orderId || !shopperId) {
     return res.status(400).json({
-      error: "Order ID and Shopper ID are required",
+      error: 'Order ID and Shopper ID are required',
     });
   }
 
   if (shopperId !== session.user.id) {
-    return res
-      .status(403)
-      .json({ error: "You can only decline offers for yourself" });
+    return res.status(403).json({ error: 'You can only decline offers for yourself' });
   }
 
   try {
     if (!hasuraClient) {
-      return res
-        .status(500)
-        .json({ error: "Database connection not available" });
+      return res.status(500).json({ error: 'Database connection not available' });
     }
 
     // ========================================================================
@@ -151,12 +144,7 @@ export default async function handler(
     // accepted or declined, so we don't check expires_at
     // ========================================================================
 
-    console.log(
-      "Verifying offer for decline - order:",
-      orderId,
-      "shopper:",
-      shopperId
-    );
+    console.log('Verifying offer for decline - order:', orderId, 'shopper:', shopperId);
 
     const offerResponse = (await hasuraClient.request(VERIFY_ORDER_OFFER, {
       orderId,
@@ -173,13 +161,10 @@ export default async function handler(
       const combinedOrders = combinedResp.Orders || [];
       if (combinedOrders.length > 0) {
         const combinedOrderIds = combinedOrders.map((o: any) => o.id);
-        const combinedOffersResp = (await hasuraClient.request(
-          VERIFY_COMBINED_OFFERS,
-          {
-            orderIds: combinedOrderIds,
-            shopperId: shopperId,
-          }
-        )) as any;
+        const combinedOffersResp = (await hasuraClient.request(VERIFY_COMBINED_OFFERS, {
+          orderIds: combinedOrderIds,
+          shopperId: shopperId,
+        })) as any;
 
         const combinedOffers = combinedOffersResp.order_offers || [];
         if (combinedOffers.length === combinedOrderIds.length) {
@@ -189,11 +174,11 @@ export default async function handler(
 
           return res.status(200).json({
             success: true,
-            message: "Combined offer declined successfully",
+            message: 'Combined offer declined successfully',
             combined_order_id: orderId,
             orderIds: combinedOrderIds,
             offerIds: combinedOffers.map((o: any) => o.id),
-            note: "Combined order will be rotated as a group to the next eligible shopper",
+            note: 'Combined order will be rotated as a group to the next eligible shopper',
           });
         }
       }
@@ -237,11 +222,11 @@ export default async function handler(
       const anyOffers = anyOfferResponse.order_offers || [];
 
       console.warn(
-        "❌ Offer verification failed - no valid OFFERED offer found for order:",
+        '❌ Offer verification failed - no valid OFFERED offer found for order:',
         orderId,
-        "shopper:",
+        'shopper:',
         shopperId,
-        "Found offers with other statuses:",
+        'Found offers with other statuses:',
         anyOffers.map((o: any) => ({
           id: o.id,
           status: o.status,
@@ -250,10 +235,10 @@ export default async function handler(
       );
 
       if (anyOffers.length > 0) {
-        const statuses = anyOffers.map((o: any) => o.status).join(", ");
+        const statuses = anyOffers.map((o: any) => o.status).join(', ');
         return res.status(403).json({
           error: `You don't have an active offer for this order. Found offers with status: ${statuses}. The offer may have already been accepted, declined, or expired.`,
-          code: "NO_VALID_OFFER",
+          code: 'NO_VALID_OFFER',
           foundOffers: anyOffers.map((o: any) => ({
             id: o.id,
             status: o.status,
@@ -265,11 +250,11 @@ export default async function handler(
       return res.status(403).json({
         error:
           "You don't have an active offer for this order. It may have already been accepted, declined, or assigned to another shopper.",
-        code: "NO_VALID_OFFER",
+        code: 'NO_VALID_OFFER',
       });
     }
 
-    console.log("✅ Offer verified for decline:", {
+    console.log('✅ Offer verified for decline:', {
       offerId: offer.id,
       round: offer.round_number,
       expiresAt: offer.expires_at,
@@ -280,17 +265,17 @@ export default async function handler(
     // STEP 2: Mark the offer as DECLINED
     // ========================================================================
 
-    console.log("Declining offer...");
+    console.log('Declining offer...');
 
     const declineResponse = (await hasuraClient.request(DECLINE_ORDER_OFFER, {
       offerId: offer.id,
     })) as any;
 
     if (!declineResponse.update_order_offers_by_pk) {
-      console.error("❌ Failed to decline offer");
+      console.error('❌ Failed to decline offer');
       return res.status(500).json({
-        error: "Failed to decline offer",
-        code: "OFFER_UPDATE_FAILED",
+        error: 'Failed to decline offer',
+        code: 'OFFER_UPDATE_FAILED',
       });
     }
 
@@ -307,23 +292,23 @@ export default async function handler(
 
     return res.status(200).json({
       success: true,
-      message: "Offer declined successfully",
+      message: 'Offer declined successfully',
       orderId,
       shopperId: shopperId,
       offerId: offer.id,
       roundNumber: offer.round_number,
       orderType: offer.order_type,
-      note: "Order will be rotated to next eligible shopper automatically",
+      note: 'Order will be rotated to next eligible shopper automatically',
     });
   } catch (error) {
-    console.error("Error declining offer:", error);
-    logger.error("Error declining offer", "DeclineOfferAPI", {
+    console.error('Error declining offer:', error);
+    logger.error('Error declining offer', 'DeclineOfferAPI', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
     return res.status(500).json({
-      error: "Failed to decline offer",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to decline offer',
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

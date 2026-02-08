@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Single shop by id – full shop detail including Orders with Order_Items, Address, Ratings, Invoice, Delivery_Issues.
 const GET_SHOP_BY_ID = gql`
@@ -188,30 +188,27 @@ const GET_SHOP_BY_ID = gql`
   }
 `;
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user || !(session.user as { id?: string }).id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { id } = await params;
   if (!id) {
-    return NextResponse.json({ error: "Shop ID required" }, { status: 400 });
+    return NextResponse.json({ error: 'Shop ID required' }, { status: 400 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
     const data = await hasuraClient.request<{
       Shops_by_pk: Record<string, unknown> | null;
     }>(GET_SHOP_BY_ID, { id });
     const raw = data.Shops_by_pk;
     if (!raw) {
-      return NextResponse.json({ error: "Shop not found" }, { status: 404 });
+      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
     }
     const r = raw as Record<string, unknown>;
     const shop = {
@@ -224,10 +221,7 @@ export async function GET(
     };
     return NextResponse.json({ shop });
   } catch (error) {
-    console.error("Error fetching shop by id:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch shop" },
-      { status: 500 }
-    );
+    console.error('Error fetching shop by id:', error);
+    return NextResponse.json({ error: 'Failed to fetch shop' }, { status: 500 });
   }
 }

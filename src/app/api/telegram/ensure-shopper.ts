@@ -1,8 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_SHOPPER_BY_USER_ID = gql`
   query GetShopperByUserId($user_id: uuid!) {
@@ -60,12 +60,9 @@ const GET_USER_INFO = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -74,26 +71,26 @@ export default async function handler(
     } | null;
 
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { userId } = req.body;
 
     if (!userId) {
       return res.status(400).json({
-        error: "Missing required field: userId",
+        error: 'Missing required field: userId',
       });
     }
 
     // Verify the authenticated user matches the request
     if (userId !== session.user.id) {
       return res.status(403).json({
-        error: "Not authorized to access this user",
+        error: 'Not authorized to access this user',
       });
     }
 
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Database client not available" });
+      return res.status(500).json({ error: 'Database client not available' });
     }
 
     // First, check if shopper already exists
@@ -162,9 +159,9 @@ export default async function handler(
       isNew: !existingShopperData.shoppers[0],
     });
   } catch (error) {
-    console.error("Error ensuring shopper:", error);
+    console.error('Error ensuring shopper:', error);
     return res.status(500).json({
-      error: "Failed to ensure shopper",
+      error: 'Failed to ensure shopper',
     });
   }
 }

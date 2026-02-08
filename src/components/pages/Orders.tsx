@@ -12,8 +12,23 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, Loader2, Phone, AlertCircle, Video, ShoppingBag, UtensilsCrossed } from 'lucide-react';
-import { useOrders, useReelOrders, useBusinessOrders, useRestaurantOrders, useSystemConfig } from '@/hooks/useHasuraApi';
+import {
+  Search,
+  Filter,
+  Loader2,
+  Phone,
+  AlertCircle,
+  Video,
+  ShoppingBag,
+  UtensilsCrossed,
+} from 'lucide-react';
+import {
+  useOrders,
+  useReelOrders,
+  useBusinessOrders,
+  useRestaurantOrders,
+  useSystemConfig,
+} from '@/hooks/useHasuraApi';
 import { format, differenceInMinutes, formatDistanceToNow } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -185,7 +200,9 @@ const Orders = () => {
   const businessOrderItems: any[] = businessOrdersData?.orders || [];
   const restaurantOrderItems: any[] = restaurantOrdersData?.orders || [];
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'delayed' | 'delivered' | 'pending' | 'shopping' | 'on_the_way'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'delayed' | 'delivered' | 'pending' | 'shopping' | 'on_the_way'
+  >('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedOrder, setSelectedOrder] = useState<UnifiedOrder | null>(null);
@@ -195,7 +212,7 @@ const Orders = () => {
 
   // Refresh countdown every minute
   useEffect(() => {
-    const interval = setInterval(() => setTick((t) => t + 1), 60_000);
+    const interval = setInterval(() => setTick(t => t + 1), 60_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -287,9 +304,12 @@ const Orders = () => {
       Wallet_Transactions: o.Wallet_Transactions,
     }));
 
-    return [...regularOrders, ...reelOrdersMapped, ...businessOrdersMapped, ...restaurantOrdersMapped].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+    return [
+      ...regularOrders,
+      ...reelOrdersMapped,
+      ...businessOrdersMapped,
+      ...restaurantOrdersMapped,
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [orders, reelOrderItems, businessOrderItems, restaurantOrderItems]);
 
   const formatCurrency = (amount: string) => {
@@ -386,7 +406,8 @@ const Orders = () => {
 
   // Countdown to expected delivery (updates with tick every minute)
   const getDeliveryCountdown = (deliveryTime: string | null | undefined) => {
-    if (deliveryTime == null || deliveryTime === '') return { text: '—', exact: null, isOverdue: false };
+    if (deliveryTime == null || deliveryTime === '')
+      return { text: '—', exact: null, isOverdue: false };
     const date = new Date(deliveryTime);
     if (Number.isNaN(date.getTime())) return { text: '—', exact: null, isOverdue: false };
     void tick; // use tick so this re-runs when countdown refreshes
@@ -466,14 +487,18 @@ const Orders = () => {
     }
 
     // Reel title/description match
-    if (order.Reel?.title?.toLowerCase().includes(searchLower) ||
-        order.Reel?.description?.toLowerCase().includes(searchLower)) {
+    if (
+      order.Reel?.title?.toLowerCase().includes(searchLower) ||
+      order.Reel?.description?.toLowerCase().includes(searchLower)
+    ) {
       return true;
     }
 
     // Store/restaurant name
-    if (order.business_store?.name?.toLowerCase().includes(searchLower) ||
-        order.Restaurant?.name?.toLowerCase().includes(searchLower)) {
+    if (
+      order.business_store?.name?.toLowerCase().includes(searchLower) ||
+      order.Restaurant?.name?.toLowerCase().includes(searchLower)
+    ) {
       return true;
     }
 
@@ -554,13 +579,17 @@ const Orders = () => {
         </Card>
         <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-orange-700 dark:text-orange-400">{delayedOrders.length}</div>
+            <div className="text-2xl font-bold text-orange-700 dark:text-orange-400">
+              {delayedOrders.length}
+            </div>
             <p className="text-muted-foreground">Delayed Orders</p>
           </CardContent>
         </Card>
         <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-700 dark:text-green-400">{deliveredOrders.length}</div>
+            <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+              {deliveredOrders.length}
+            </div>
             <p className="text-muted-foreground">Delivered</p>
           </CardContent>
         </Card>
@@ -691,7 +720,9 @@ const Orders = () => {
                             ? (order.User?.email ?? '—')
                             : (order.orderedBy?.email ?? '—')}
                         </div>
-                        {(order.type === 'regular' ? order.User?.phone : order.orderedBy?.phone) && (
+                        {(order.type === 'regular'
+                          ? order.User?.phone
+                          : order.orderedBy?.phone) && (
                           <div className="text-xs text-muted-foreground">
                             {order.type === 'regular' || order.type === 'reel'
                               ? order.User?.phone
@@ -727,17 +758,13 @@ const Orders = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {order.type === 'regular' &&
-                          `${order.Order_Items?.length ?? 0} item(s)`}
-                        {order.type === 'reel' &&
-                          `${order.quantity ?? 1} item(s)`}
+                        {order.type === 'regular' && `${order.Order_Items?.length ?? 0} item(s)`}
+                        {order.type === 'reel' && `${order.quantity ?? 1} item(s)`}
                         {order.type === 'business' &&
                           (order.units
                             ? `${order.units} unit(s)`
                             : `${
-                                Array.isArray(order.allProducts)
-                                  ? order.allProducts.length
-                                  : 0
+                                Array.isArray(order.allProducts) ? order.allProducts.length : 0
                               } item(s)`)}
                         {order.type === 'restaurant' &&
                           `${order.itemsCount ?? order.restaurant_order_items?.length ?? 0} item(s)`}
@@ -745,7 +772,9 @@ const Orders = () => {
                       <TableCell>{formatCurrency(order.total)}</TableCell>
                       <TableCell>
                         {(() => {
-                          const { text, exact, isOverdue } = getDeliveryCountdown(order.delivery_time);
+                          const { text, exact, isOverdue } = getDeliveryCountdown(
+                            order.delivery_time
+                          );
                           if (exact) {
                             return (
                               <TooltipProvider>
@@ -773,11 +802,15 @@ const Orders = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleCallShopper(
-                                order.type === 'regular' || order.type === 'business' || order.type === 'restaurant'
-                                  ? order.shopper?.phone
-                                  : order.Shoppers?.phone
-                              )}
+                              onClick={() =>
+                                handleCallShopper(
+                                  order.type === 'regular' ||
+                                    order.type === 'business' ||
+                                    order.type === 'restaurant'
+                                    ? order.shopper?.phone
+                                    : order.Shoppers?.phone
+                                )
+                              }
                               className="text-yellow-600 hover:text-yellow-700"
                             >
                               <Phone className="h-4 w-4 mr-1" />

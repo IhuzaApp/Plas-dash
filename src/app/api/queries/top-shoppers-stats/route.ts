@@ -132,7 +132,10 @@ export async function GET(request: Request) {
     const [ordersRes, reelRes, restaurantRes, businessRes] = await Promise.all([
       hasuraClient.request<{ Orders: OrderRow[] }>(GET_DELIVERED_ORDERS, vars),
       hasuraClient.request<{ reel_orders: OrderRow[] }>(GET_DELIVERED_REEL_ORDERS, vars),
-      hasuraClient.request<{ restaurant_orders: OrderRow[] }>(GET_DELIVERED_RESTAURANT_ORDERS, vars),
+      hasuraClient.request<{ restaurant_orders: OrderRow[] }>(
+        GET_DELIVERED_RESTAURANT_ORDERS,
+        vars
+      ),
       hasuraClient.request<{ businessProductOrders: OrderRow[] }>(
         GET_DELIVERED_BUSINESS_ORDERS,
         vars
@@ -144,20 +147,22 @@ export async function GET(request: Request) {
     const restaurantOrders = restaurantRes.restaurant_orders || [];
     const businessOrdersRaw = businessRes.businessProductOrders || [];
     const businessOrders = businessOrdersRaw.map(
-      (o: OrderRow & { transportation_fee?: string | number | null; delivered_time?: string | null }) => ({
+      (
+        o: OrderRow & {
+          transportation_fee?: string | number | null;
+          delivered_time?: string | null;
+        }
+      ) => ({
         ...o,
         delivery_fee: o.transportation_fee ?? o.delivery_fee,
         updated_at: o.delivered_time || o.created_at,
       })
     );
 
-    const byShopper: Record<
-      string,
-      { orders: number; earnings: number; onTime: number }
-    > = {};
+    const byShopper: Record<string, { orders: number; earnings: number; onTime: number }> = {};
 
     const add = (rows: OrderRow[]) => {
-      rows.forEach((row) => {
+      rows.forEach(row => {
         const sid = row.shopper_id;
         if (!sid) return;
         if (!byShopper[sid]) {
@@ -193,7 +198,7 @@ export async function GET(request: Request) {
     }>(GET_SHOPPERS_WITH_USER, { ids: shopperIds });
 
     const shopperMap = new Map(
-      (shoppersData.shoppers || []).map((s) => [
+      (shoppersData.shoppers || []).map(s => [
         s.id,
         {
           user_id: s.user_id,
@@ -204,11 +209,10 @@ export async function GET(request: Request) {
     );
 
     const result = shopperIds
-      .map((id) => {
+      .map(id => {
         const stats = byShopper[id];
         const info = shopperMap.get(id);
-        const onTimePct =
-          stats.orders > 0 ? (stats.onTime / stats.orders) * 100 : 0;
+        const onTimePct = stats.orders > 0 ? (stats.onTime / stats.orders) * 100 : 0;
         return {
           shopper_id: id,
           user_id: info?.user_id,
@@ -220,7 +224,7 @@ export async function GET(request: Request) {
           onTimeCount: stats.onTime,
         };
       })
-      .filter((s) => s.totalOrders > 0)
+      .filter(s => s.totalOrders > 0)
       .sort((a, b) => {
         if (b.onTimeDeliveryPercentage !== a.onTimeDeliveryPercentage) {
           return b.onTimeDeliveryPercentage - a.onTimeDeliveryPercentage;
@@ -233,9 +237,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ shoppers: result });
   } catch (error) {
     console.error('Error fetching top shoppers stats:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch top shoppers stats' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch top shoppers stats' }, { status: 500 });
   }
 }

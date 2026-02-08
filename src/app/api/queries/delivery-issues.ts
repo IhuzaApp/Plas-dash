@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_DELIVERY_ISSUES = gql`
   query GetDeliveryIssues {
@@ -27,21 +27,16 @@ interface DeliveryIssuesResponse {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
-    const data = await hasuraClient.request<DeliveryIssuesResponse>(
-      GET_DELIVERY_ISSUES
-    );
+    const data = await hasuraClient.request<DeliveryIssuesResponse>(GET_DELIVERY_ISSUES);
     res.status(200).json({ delivery_issues: data.Delivery_Issues });
   } catch (error) {
-    console.error("Error fetching delivery issues:", error);
-    res.status(500).json({ error: "Failed to fetch delivery issues" });
+    console.error('Error fetching delivery issues:', error);
+    res.status(500).json({ error: 'Failed to fetch delivery issues' });
   }
 }

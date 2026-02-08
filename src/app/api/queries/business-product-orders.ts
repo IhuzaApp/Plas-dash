@@ -1,18 +1,15 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_BUSINESS_PRODUCT_ORDERS = gql`
   query GetBusinessProductOrders($businessAccount_id: uuid!, $user_id: uuid!) {
     businessProductOrders(
       where: {
         business_store: {
-          business_account: {
-            id: { _eq: $businessAccount_id }
-            user_id: { _eq: $user_id }
-          }
+          business_account: { id: { _eq: $businessAccount_id }, user_id: { _eq: $user_id } }
         }
       }
       order_by: { created_at: desc }
@@ -97,27 +94,20 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
@@ -191,14 +181,12 @@ export default async function handler(
 
     // Collect all unique product IDs from all orders
     const productIdsSet = new Set<string>();
-    ordersResult.businessProductOrders.forEach((order) => {
-      const products = Array.isArray(order.allProducts)
-        ? order.allProducts
-        : [];
+    ordersResult.businessProductOrders.forEach(order => {
+      const products = Array.isArray(order.allProducts) ? order.allProducts : [];
       products.forEach((p: any) => {
         // Check for both 'id' and 'product_id' fields
         const productId = p.id || p.product_id;
-        if (productId && typeof productId === "string") {
+        if (productId && typeof productId === 'string') {
           productIdsSet.add(productId);
         }
       });
@@ -220,7 +208,7 @@ export default async function handler(
         });
 
         // Create a map of product ID to image
-        productsResult.PlasBusinessProductsOrSerive.forEach((product) => {
+        productsResult.PlasBusinessProductsOrSerive.forEach(product => {
           productImageMap[product.id] = product.Image || null;
         });
       } catch (error) {
@@ -229,10 +217,8 @@ export default async function handler(
     }
 
     // Transform orders for frontend and enrich products with images
-    const orders = ordersResult.businessProductOrders.map((order) => {
-      const products = Array.isArray(order.allProducts)
-        ? order.allProducts
-        : [];
+    const orders = ordersResult.businessProductOrders.map(order => {
+      const products = Array.isArray(order.allProducts) ? order.allProducts : [];
 
       // Enrich products with images
       const enrichedProducts = products.map((p: any) => {
@@ -246,35 +232,30 @@ export default async function handler(
 
       const itemsSummary =
         enrichedProducts.length > 0
-          ? enrichedProducts
-              .map((p: any) => `${p.name || "Item"} (${p.quantity || 0})`)
-              .join(", ")
-          : "No items";
+          ? enrichedProducts.map((p: any) => `${p.name || 'Item'} (${p.quantity || 0})`).join(', ')
+          : 'No items';
 
       return {
         id: order.id,
         orderId: order.id.substring(0, 8).toUpperCase(),
-        store: order.business_store?.name || "Unknown Store",
+        store: order.business_store?.name || 'Unknown Store',
         items: itemsSummary,
-        itemsCount: enrichedProducts.reduce(
-          (sum: number, p: any) => sum + (p.quantity || 0),
-          0
-        ),
-        value: parseFloat(order.total || "0"),
+        itemsCount: enrichedProducts.reduce((sum: number, p: any) => sum + (p.quantity || 0), 0),
+        value: parseFloat(order.total || '0'),
         status:
           order.status ||
           (order.delivered_time && new Date(order.delivered_time) > new Date()
-            ? "Pending"
-            : "Delivered"),
+            ? 'Pending'
+            : 'Delivered'),
         deliveryDate: order.delivered_time
           ? new Date(order.delivered_time).toLocaleDateString()
           : new Date(order.created_at).toLocaleDateString(),
-        deliveryTime: order.timeRange || "Pending",
+        deliveryTime: order.timeRange || 'Pending',
         delivered_time: order.delivered_time || null,
         tracking: order.id.substring(0, 12).toUpperCase(),
-        transportation_fee: parseFloat(order.transportation_fee || "0"),
-        service_fee: parseFloat(order.service_fee || "0"),
-        units: parseInt(order.units || "0"),
+        transportation_fee: parseFloat(order.transportation_fee || '0'),
+        service_fee: parseFloat(order.service_fee || '0'),
+        units: parseInt(order.units || '0'),
         deliveryAddress: order.deliveryAddress,
         comment: order.comment,
         created_at: order.created_at,
@@ -291,7 +272,7 @@ export default async function handler(
     return res.status(200).json({ orders });
   } catch (error: any) {
     return res.status(500).json({
-      error: "Failed to fetch orders",
+      error: 'Failed to fetch orders',
       message: error.message,
       details: error.response?.errors || error.message,
     });

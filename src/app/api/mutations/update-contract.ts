@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const UPDATE_CONTRACT = gql`
   mutation UpdateContract(
@@ -69,33 +69,26 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const { contractId, ...updateData } = req.body;
 
     if (!contractId) {
-      return res.status(400).json({ error: "Contract ID is required" });
+      return res.status(400).json({ error: 'Contract ID is required' });
     }
 
     // Get contract to check ownership and status
@@ -110,17 +103,16 @@ export default async function handler(
     });
 
     if (!contractResult.BusinessContracts_by_pk) {
-      return res.status(404).json({ error: "Contract not found" });
+      return res.status(404).json({ error: 'Contract not found' });
     }
 
     const contract = contractResult.BusinessContracts_by_pk;
 
     // Check if contract status allows editing (only waiting_for_supplier)
-    if (contract.status !== "waiting_for_supplier") {
+    if (contract.status !== 'waiting_for_supplier') {
       return res.status(400).json({
-        error: "Contract cannot be edited",
-        message:
-          "Only contracts with status 'waiting_for_supplier' can be edited",
+        error: 'Contract cannot be edited',
+        message: "Only contracts with status 'waiting_for_supplier' can be edited",
       });
     }
 
@@ -140,25 +132,22 @@ export default async function handler(
       }>(CHECK_BUSINESS_ACCOUNT, {
         user_id: user_id,
       });
-      if (
-        accountResult.business_accounts &&
-        accountResult.business_accounts.length > 0
-      ) {
+      if (accountResult.business_accounts && accountResult.business_accounts.length > 0) {
         businessProfileId = accountResult.business_accounts[0].id;
       }
     } catch (error) {
-      console.error("Error fetching business account:", error);
+      console.error('Error fetching business account:', error);
     }
 
     if (!businessProfileId) {
-      return res.status(403).json({ error: "Business account not found" });
+      return res.status(403).json({ error: 'Business account not found' });
     }
 
     // Check if user owns the contract (is the client who created it)
     if (contract.bussinessProfile_id !== businessProfileId) {
       return res.status(403).json({
-        error: "Unauthorized",
-        message: "You can only edit contracts owned by your business",
+        error: 'Unauthorized',
+        message: 'You can only edit contracts owned by your business',
       });
     }
 
@@ -214,18 +203,18 @@ export default async function handler(
     }>(UPDATE_CONTRACT, updateVariables);
 
     if (!updateResult.update_BusinessContracts_by_pk) {
-      return res.status(500).json({ error: "Failed to update contract" });
+      return res.status(500).json({ error: 'Failed to update contract' });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Contract updated successfully",
+      message: 'Contract updated successfully',
       contract: updateResult.update_BusinessContracts_by_pk,
     });
   } catch (error: any) {
-    console.error("Error updating contract:", error);
+    console.error('Error updating contract:', error);
     return res.status(500).json({
-      error: "Failed to update contract",
+      error: 'Failed to update contract',
       message: error.message,
     });
   }

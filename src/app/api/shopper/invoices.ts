@@ -1,10 +1,10 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { logger } from "../../../src/utils/logger";
-import { logErrorToSlack } from "../../../src/lib/slackErrorReporter";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { logger } from '../../../src/utils/logger';
+import { logErrorToSlack } from '../../../src/lib/slackErrorReporter';
 
 // GraphQL query to fetch shopper invoices
 const GET_SHOPPER_INVOICES = gql`
@@ -185,14 +185,11 @@ interface Invoice {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let shopperId: string | null = null;
 
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
@@ -203,11 +200,7 @@ export default async function handler(
     });
 
     // Authenticate user
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as any;
+    const session = (await getServerSession(req, res, authOptions as any)) as any;
 
     console.log({
       hasSession: !!session,
@@ -216,8 +209,8 @@ export default async function handler(
     });
 
     if (!session?.user?.id) {
-      console.error("Invoices API: Unauthorized - No session user ID");
-      return res.status(401).json({ error: "Unauthorized" });
+      console.error('Invoices API: Unauthorized - No session user ID');
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const shopperIdLocal = session.user.id;
@@ -234,8 +227,8 @@ export default async function handler(
     });
 
     if (!hasuraClient) {
-      console.error("Invoices API: Hasura client not initialized");
-      throw new Error("Hasura client is not initialized");
+      console.error('Invoices API: Hasura client not initialized');
+      throw new Error('Hasura client is not initialized');
     }
 
     // Fetch invoices from database
@@ -339,12 +332,8 @@ export default async function handler(
 
       if (isReelOrder || isRestaurantOrder) {
         // Handle reel or restaurant order invoice
-        const orderType = isReelOrder
-          ? ("reel" as const)
-          : ("restaurant" as const);
-        const orderId = isReelOrder
-          ? invoice.reel_order_id
-          : invoice.restarurant_order_id;
+        const orderType = isReelOrder ? ('reel' as const) : ('restaurant' as const);
+        const orderId = isReelOrder ? invoice.reel_order_id : invoice.restarurant_order_id;
 
         return {
           id: invoice.id, // Use the actual invoice ID
@@ -358,30 +347,28 @@ export default async function handler(
           tax: parseFloat(invoice.tax),
           discount: parseFloat(invoice.discount),
           created_at: invoice.created_at,
-          status: invoice.status as "paid" | "pending" | "overdue",
+          status: invoice.status as 'paid' | 'pending' | 'overdue',
           customer_name: invoice.User.name,
           customer_email: invoice.User.email,
           customer_phone: invoice.User.phone,
-          customer_address: "Address not available",
+          customer_address: 'Address not available',
           items_count: invoice.invoice_items?.length || 1,
-          shop_name: isReelOrder ? "Reel Order" : "Restaurant Order",
-          shop_address: "N/A",
+          shop_name: isReelOrder ? 'Reel Order' : 'Restaurant Order',
+          shop_address: 'N/A',
           delivery_time: null,
           delivery_notes: null,
-          order_status: "completed",
+          order_status: 'completed',
           Proof: invoice.Proof,
           delivery_photo_url: invoice.Order?.delivery_photo_url,
           reel_title:
             invoice.invoice_items?.[0]?.description ||
-            (isReelOrder ? "Reel Order" : "Restaurant Order"),
+            (isReelOrder ? 'Reel Order' : 'Restaurant Order'),
           reel_details: {
             title:
               invoice.invoice_items?.[0]?.description ||
-              (isReelOrder ? "Reel Order" : "Restaurant Order"),
-            description: invoice.invoice_items?.[0]?.description || "",
-            product:
-              invoice.invoice_items?.[0]?.name ||
-              (isReelOrder ? "Reel" : "Restaurant"),
+              (isReelOrder ? 'Reel Order' : 'Restaurant Order'),
+            description: invoice.invoice_items?.[0]?.description || '',
+            product: invoice.invoice_items?.[0]?.name || (isReelOrder ? 'Reel' : 'Restaurant'),
             quantity: invoice.invoice_items?.[0]?.quantity || 1,
           },
         };
@@ -391,7 +378,7 @@ export default async function handler(
           id: invoice.id,
           invoice_number: invoice.invoice_number,
           order_id: invoice.order_id,
-          order_type: "regular" as const,
+          order_type: 'regular' as const,
           total_amount: parseFloat(invoice.total_amount),
           subtotal: parseFloat(invoice.subtotal),
           delivery_fee: parseFloat(invoice.delivery_fee),
@@ -399,19 +386,19 @@ export default async function handler(
           tax: parseFloat(invoice.tax),
           discount: parseFloat(invoice.discount),
           created_at: invoice.created_at,
-          status: invoice.status as "paid" | "pending" | "overdue",
+          status: invoice.status as 'paid' | 'pending' | 'overdue',
           customer_name: invoice.User.name,
           customer_email: invoice.User.email,
           customer_phone: invoice.User.phone,
           customer_address: invoice.Order?.Address
             ? `${invoice.Order.Address.street}, ${invoice.Order.Address.city}`
-            : "Address not available",
+            : 'Address not available',
           items_count: invoice.Order?.Order_Items?.length || 0,
-          shop_name: invoice.Order?.Shop?.name || "Shop",
-          shop_address: invoice.Order?.Shop?.address || "Address not available",
+          shop_name: invoice.Order?.Shop?.name || 'Shop',
+          shop_address: invoice.Order?.Shop?.address || 'Address not available',
           delivery_time: invoice.Order?.delivery_time,
           delivery_notes: invoice.Order?.delivery_notes,
-          order_status: invoice.Order?.status || "unknown",
+          order_status: invoice.Order?.status || 'unknown',
           Proof: invoice.Proof,
           delivery_photo_url: invoice.Order?.delivery_photo_url,
         };
@@ -424,14 +411,13 @@ export default async function handler(
 
     // Sort by creation date
     const sortedInvoices = transformedInvoices.sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
     const totalCount = data.Invoices_aggregate.aggregate.count;
     const totalPages = Math.ceil(totalCount / limit);
 
-    logger.info("Invoices fetched successfully", "ShopperInvoicesAPI", {
+    logger.info('Invoices fetched successfully', 'ShopperInvoicesAPI', {
       shopperId,
       count: sortedInvoices.length,
       totalCount,
@@ -447,27 +433,22 @@ export default async function handler(
       totalCount,
     });
   } catch (error) {
-    console.error("Invoices API: Error caught", error);
-    if (error && typeof error === "object" && "response" in error) {
+    console.error('Invoices API: Error caught', error);
+    if (error && typeof error === 'object' && 'response' in error) {
       console.error(
-        "Invoices API: Hasura Error Response",
+        'Invoices API: Hasura Error Response',
         JSON.stringify((error as any).response, null, 2)
       );
     }
 
-    logger.error(
-      "Error fetching shopper invoices",
-      "ShopperInvoicesAPI",
-      error
-    );
+    logger.error('Error fetching shopper invoices', 'ShopperInvoicesAPI', error);
 
-    await logErrorToSlack("ShopperInvoicesAPI", error, {
+    await logErrorToSlack('ShopperInvoicesAPI', error, {
       shopperId,
       method: req.method,
     });
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : "Failed to fetch invoices",
+      error: error instanceof Error ? error.message : 'Failed to fetch invoices',
     });
   }
 }

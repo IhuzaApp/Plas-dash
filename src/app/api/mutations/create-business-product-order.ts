@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { notifyNewOrderToSlack } from "../../../src/lib/slackOrderNotifier";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { notifyNewOrderToSlack } from '../../../src/lib/slackOrderNotifier';
 
 function generateOrderPin(): number {
   return Math.floor(Math.random() * 100);
@@ -80,27 +80,20 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const {
@@ -123,41 +116,40 @@ export default async function handler(
 
     if (!store_id || !allProducts || !total) {
       return res.status(400).json({
-        error: "Missing required fields",
-        required: ["store_id", "allProducts", "total"],
+        error: 'Missing required fields',
+        required: ['store_id', 'allProducts', 'total'],
       });
     }
 
     // Ensure delivered_time and timeRange are strings, not null
     const deliveredTimeValue =
-      delivered_time && delivered_time.trim() !== ""
+      delivered_time && delivered_time.trim() !== ''
         ? delivered_time
         : new Date(Date.now() + 60 * 60000).toISOString(); // Default: 1 hour from now
 
-    const timeRangeValue =
-      timeRange && timeRange.trim() !== "" ? timeRange : "Within 1-2 hours"; // Default time range
+    const timeRangeValue = timeRange && timeRange.trim() !== '' ? timeRange : 'Within 1-2 hours'; // Default time range
 
     // Prepare mutation variables
     const mutationVariables: any = {
       store_id,
       allProducts: Array.isArray(allProducts) ? allProducts : [],
       total: total.toString(),
-      transportation_fee: transportation_fee?.toString() || "0",
-      service_fee: service_fee?.toString() || "0",
-      units: units?.toString() || "0",
-      latitude: latitude || "",
-      longitude: longitude || "",
-      deliveryAddress: deliveryAddress || "",
+      transportation_fee: transportation_fee?.toString() || '0',
+      service_fee: service_fee?.toString() || '0',
+      units: units?.toString() || '0',
+      latitude: latitude || '',
+      longitude: longitude || '',
+      deliveryAddress: deliveryAddress || '',
       comment: comment || null,
       delivered_time: deliveredTimeValue,
       timeRange: timeRangeValue,
-      status: status || "Pending",
+      status: status || 'Pending',
       shopper_id: null, // Explicitly set shopper_id to null as per requirement
       pin: generateOrderPin(),
     };
 
     // Only add ordered_by if it's provided
-    if (ordered_by && ordered_by.trim() !== "") {
+    if (ordered_by && ordered_by.trim() !== '') {
       mutationVariables.ordered_by = ordered_by;
     }
 
@@ -169,7 +161,7 @@ export default async function handler(
     }>(CREATE_BUSINESS_PRODUCT_ORDER, mutationVariables);
 
     if (result.insert_businessProductOrders.affected_rows === 0) {
-      return res.status(500).json({ error: "Failed to create order" });
+      return res.status(500).json({ error: 'Failed to create order' });
     }
 
     const createdOrder = result.insert_businessProductOrders.returning[0];
@@ -193,10 +185,10 @@ export default async function handler(
     // Defer Slack notification for MoMo orders until payment is confirmed
     if (!await_momo_payment) {
       void notifyNewOrderToSlack({
-        id: orderId ?? "",
+        id: orderId ?? '',
         orderID: orderId,
         total: total,
-        orderType: "business",
+        orderType: 'business',
         storeName,
         units,
         customerPhone,
@@ -211,9 +203,9 @@ export default async function handler(
       affected_rows: result.insert_businessProductOrders.affected_rows,
     });
   } catch (error: any) {
-    console.error("Error creating business product order:", error);
+    console.error('Error creating business product order:', error);
     return res.status(500).json({
-      error: "Failed to create order",
+      error: 'Failed to create order',
       message: error.message,
     });
   }

@@ -1,16 +1,13 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { logger } from '../../../src/utils/logger';
 
 const GET_SHOPPER_AVAILABILITY = gql`
   query GetShopperAvailability($userId: uuid!) {
-    Shopper_Availability(
-      where: { user_id: { _eq: $userId } }
-      order_by: { day_of_week: asc }
-    ) {
+    Shopper_Availability(where: { user_id: { _eq: $userId } }, order_by: { day_of_week: asc }) {
       id
       user_id
       is_available
@@ -36,47 +33,39 @@ interface ShopperAvailabilityResponse {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    logger.info(
-      "Shopper availability request received",
-      "ShopperAvailabilityAPI",
-      {
-        method: req.method,
-        hasAuthHeader: Boolean(req.headers.authorization),
-      }
-    );
+    logger.info('Shopper availability request received', 'ShopperAvailabilityAPI', {
+      method: req.method,
+      hasAuthHeader: Boolean(req.headers.authorization),
+    });
 
     const session = await getServerSession(req, res, authOptions);
 
     if (!session) {
-      logger.error("No session found", "ShopperAvailabilityAPI");
-      return res.status(401).json({ error: "Unauthorized - No session found" });
+      logger.error('No session found', 'ShopperAvailabilityAPI');
+      return res.status(401).json({ error: 'Unauthorized - No session found' });
     }
 
     if (!session.user?.id) {
-      logger.error("No user ID in session", "ShopperAvailabilityAPI");
-      return res.status(401).json({ error: "Unauthorized - No user ID found" });
+      logger.error('No user ID in session', 'ShopperAvailabilityAPI');
+      return res.status(401).json({ error: 'Unauthorized - No user ID found' });
     }
 
     if (!hasuraClient) {
-      logger.error("Hasura client not initialized", "ShopperAvailabilityAPI");
-      throw new Error("Hasura client is not initialized");
+      logger.error('Hasura client not initialized', 'ShopperAvailabilityAPI');
+      throw new Error('Hasura client is not initialized');
     }
 
-    logger.info("Fetching availability from Hasura", "ShopperAvailabilityAPI", {
+    logger.info('Fetching availability from Hasura', 'ShopperAvailabilityAPI', {
       userId: session.user.id,
     });
 
-    const data = await hasuraClient.request<ShopperAvailabilityResponse>(
-      GET_SHOPPER_AVAILABILITY,
-      { userId: session.user.id }
-    );
+    const data = await hasuraClient.request<ShopperAvailabilityResponse>(GET_SHOPPER_AVAILABILITY, {
+      userId: session.user.id,
+    });
 
-    logger.info("Shopper availability query result", "ShopperAvailabilityAPI", {
+    logger.info('Shopper availability query result', 'ShopperAvailabilityAPI', {
       userId: session.user.id,
       availabilityCount: data.Shopper_Availability.length,
       hasData: Boolean(data.Shopper_Availability),
@@ -88,17 +77,13 @@ export default async function handler(
         : null,
     });
 
-    return res
-      .status(200)
-      .json({ shopper_availability: data.Shopper_Availability });
+    return res.status(200).json({ shopper_availability: data.Shopper_Availability });
   } catch (error) {
     logger.error(
-      "Error fetching shopper availability",
-      "ShopperAvailabilityAPI",
-      error instanceof Error ? error.message : "Unknown error"
+      'Error fetching shopper availability',
+      'ShopperAvailabilityAPI',
+      error instanceof Error ? error.message : 'Unknown error'
     );
-    return res
-      .status(500)
-      .json({ error: "Failed to fetch shopper availability" });
+    return res.status(500).json({ error: 'Failed to fetch shopper availability' });
   }
 }

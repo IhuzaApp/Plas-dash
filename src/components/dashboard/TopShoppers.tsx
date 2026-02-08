@@ -110,7 +110,9 @@ const TopShoppers = () => {
       <Card>
         <CardHeader>
           <CardTitle>Top Shoppers</CardTitle>
-          <CardDescription>Performance in the last {selectedRange} days (all order types)</CardDescription>
+          <CardDescription>
+            Performance in the last {selectedRange} days (all order types)
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -129,7 +131,7 @@ const TopShoppers = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {timeRanges.map((range) => (
+              {timeRanges.map(range => (
                 <SelectItem key={range.value} value={range.value}>
                   {range.label}
                 </SelectItem>
@@ -138,7 +140,8 @@ const TopShoppers = () => {
           </Select>
         </div>
         <CardDescription>
-          Top performing shoppers (regular, reel, restaurant, business orders) in the last {selectedRange} days
+          Top performing shoppers (regular, reel, restaurant, business orders) in the last{' '}
+          {selectedRange} days
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0">
@@ -148,7 +151,7 @@ const TopShoppers = () => {
               No delivered orders in this period
             </div>
           ) : (
-            shoppers.slice(0, 4).map((shopper) => (
+            shoppers.slice(0, 4).map(shopper => (
               <div
                 key={shopper.shopper_id}
                 className="flex items-center justify-between px-6 py-3 hover:bg-muted/50"
@@ -161,7 +164,7 @@ const TopShoppers = () => {
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {shopper.name
                           .split(' ')
-                          .map((n) => n[0])
+                          .map(n => n[0])
                           .join('')
                           .toUpperCase() || 'S'}
                       </AvatarFallback>
@@ -179,7 +182,8 @@ const TopShoppers = () => {
                       </Badge>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {shopper.totalOrders} orders • {formatPercentage(shopper.onTimeDeliveryPercentage)} on time
+                      {shopper.totalOrders} orders •{' '}
+                      {formatPercentage(shopper.onTimeDeliveryPercentage)} on time
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // GraphQL query to fetch all orders with the same combined_order_id
 const GET_COMBINED_ORDERS = gql`
@@ -139,21 +139,15 @@ const GET_COMBINED_ORDERS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   const { combined_order_id } = req.query;
-  if (
-    !combined_order_id ||
-    (Array.isArray(combined_order_id) && combined_order_id.length === 0)
-  ) {
-    return res.status(400).json({ error: "Missing combined_order_id" });
+  if (!combined_order_id || (Array.isArray(combined_order_id) && combined_order_id.length === 0)) {
+    return res.status(400).json({ error: 'Missing combined_order_id' });
   }
 
   // Ensure we have a single string ID
@@ -163,7 +157,7 @@ export default async function handler(
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<{
@@ -175,8 +169,8 @@ export default async function handler(
     res.status(200).json({ orders });
   } catch (error) {
     res.status(500).json({
-      error: "Failed to fetch combined orders",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to fetch combined orders',
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

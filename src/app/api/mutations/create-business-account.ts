@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { sendNewBusinessAccountRegistrationToSlack } from "../../../src/lib/slackSupportNotifier";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { sendNewBusinessAccountRegistrationToSlack } from '../../../src/lib/slackSupportNotifier';
 
 const CREATE_BUSINESS_ACCOUNT = gql`
   mutation CreateBusinessAccount(
@@ -58,7 +58,7 @@ interface Session {
 }
 
 interface CreateBusinessAccountInput {
-  account_type: "personal" | "business";
+  account_type: 'personal' | 'business';
   business_name?: string;
   business_email?: string;
   business_phone?: string;
@@ -68,27 +68,20 @@ interface CreateBusinessAccountInput {
   face_image?: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
@@ -104,14 +97,11 @@ export default async function handler(
     } = req.body as CreateBusinessAccountInput;
 
     // Validate required fields based on account type
-    if (
-      !account_type ||
-      (account_type !== "personal" && account_type !== "business")
-    ) {
-      return res.status(400).json({ error: "Invalid account type" });
+    if (!account_type || (account_type !== 'personal' && account_type !== 'business')) {
+      return res.status(400).json({ error: 'Invalid account type' });
     }
 
-    if (account_type === "business") {
+    if (account_type === 'business') {
       if (
         !business_name ||
         !business_email ||
@@ -121,14 +111,14 @@ export default async function handler(
         !face_image
       ) {
         return res.status(400).json({
-          error: "Missing required fields for business account",
+          error: 'Missing required fields for business account',
           required: [
-            "business_name",
-            "business_email",
-            "business_phone",
-            "business_location",
-            "rdb_certificate",
-            "face_image",
+            'business_name',
+            'business_email',
+            'business_phone',
+            'business_location',
+            'rdb_certificate',
+            'face_image',
           ],
         });
       }
@@ -136,13 +126,8 @@ export default async function handler(
       // Personal account
       if (!business_name || !face_image || !id_image || !business_location) {
         return res.status(400).json({
-          error: "Missing required fields for personal account",
-          required: [
-            "business_name",
-            "face_image",
-            "id_image",
-            "business_location",
-          ],
+          error: 'Missing required fields for personal account',
+          required: ['business_name', 'face_image', 'id_image', 'business_location'],
         });
       }
     }
@@ -152,14 +137,14 @@ export default async function handler(
     const variables: Record<string, any> = {
       user_id,
       account_type,
-      status: "pending_review",
-      business_name: business_name?.trim() || "",
-      business_email: business_email?.trim() || "",
-      business_phone: business_phone?.trim() || "",
-      business_location: business_location?.trim() || "",
-      rdb_certificate: rdb_certificate || "",
-      id_image: id_image || "",
-      face_image: face_image || "",
+      status: 'pending_review',
+      business_name: business_name?.trim() || '',
+      business_email: business_email?.trim() || '',
+      business_phone: business_phone?.trim() || '',
+      business_location: business_location?.trim() || '',
+      rdb_certificate: rdb_certificate || '',
+      id_image: id_image || '',
+      face_image: face_image || '',
     };
 
     const result = await hasuraClient.request<{
@@ -175,28 +160,19 @@ export default async function handler(
       };
     }>(CREATE_BUSINESS_ACCOUNT, variables);
 
-    if (
-      !result.insert_business_accounts ||
-      result.insert_business_accounts.affected_rows === 0
-    ) {
-      throw new Error("Failed to create business account");
+    if (!result.insert_business_accounts || result.insert_business_accounts.affected_rows === 0) {
+      throw new Error('Failed to create business account');
     }
 
     const createdAccount = result.insert_business_accounts.returning[0];
 
     try {
       await sendNewBusinessAccountRegistrationToSlack({
-        account_type: account_type as "personal" | "business",
-        business_name: (business_name?.trim() || "") as string,
+        account_type: account_type as 'personal' | 'business',
+        business_name: (business_name?.trim() || '') as string,
         contact_name: session.user.name ?? undefined,
-        email:
-          (business_email?.trim() || session.user.email || "").trim() || "—",
-        phone:
-          (
-            business_phone?.trim() ||
-            (session.user as any).phone ||
-            ""
-          ).trim() || "—",
+        email: (business_email?.trim() || session.user.email || '').trim() || '—',
+        phone: (business_phone?.trim() || (session.user as any).phone || '').trim() || '—',
         business_location: business_location?.trim() || undefined,
         provided: {
           business_name: !!(business_name && business_name.trim()),
@@ -210,7 +186,7 @@ export default async function handler(
       });
     } catch (notifyErr: any) {
       console.warn(
-        "Failed to notify Slack of new business account registration:",
+        'Failed to notify Slack of new business account registration:',
         notifyErr?.message || notifyErr
       );
     }
@@ -226,20 +202,19 @@ export default async function handler(
       },
     });
   } catch (error: any) {
-    console.error("Error creating business account:", error);
-    console.error("Error details:", {
+    console.error('Error creating business account:', error);
+    console.error('Error details:', {
       message: error.message,
       response: error.response,
       errors: error.response?.errors,
     });
 
     // Return more detailed error information
-    const errorMessage =
-      error.response?.errors?.[0]?.message || error.message || "Unknown error";
+    const errorMessage = error.response?.errors?.[0]?.message || error.message || 'Unknown error';
     const errorCode = error.response?.errors?.[0]?.extensions?.code;
 
     return res.status(500).json({
-      error: "Failed to create business account",
+      error: 'Failed to create business account',
       message: errorMessage,
       code: errorCode,
       details: error.response?.errors || undefined,

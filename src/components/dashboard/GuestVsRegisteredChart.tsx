@@ -71,14 +71,20 @@ export default function GuestVsRegisteredChart() {
       const key = getKey(d);
       buckets[key] = { guest: 0, registered: 0 };
     }
-    data.users.forEach((u) => {
+    data.users.forEach(u => {
       const key = getKey(new Date(u.created_at));
       if (!(key in buckets)) return;
       if (u.is_guest === true) buckets[key].guest += 1;
       else buckets[key].registered += 1;
     });
     const labelFormat =
-      period === 'day' ? 'MMM d' : period === 'week' ? 'MMM d' : period === 'month' ? 'MMM yy' : 'yyyy';
+      period === 'day'
+        ? 'MMM d'
+        : period === 'week'
+          ? 'MMM d'
+          : period === 'month'
+            ? 'MMM yy'
+            : 'yyyy';
     return Object.entries(buckets)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, v]) => ({
@@ -101,7 +107,7 @@ export default function GuestVsRegisteredChart() {
           Guest vs Registered Users
         </CardTitle>
         <div className="flex flex-wrap gap-1">
-          {(['day', 'week', 'month', 'year'] as const).map((p) => (
+          {(['day', 'week', 'month', 'year'] as const).map(p => (
             <Button
               key={p}
               variant={period === p ? 'secondary' : 'ghost'}
@@ -146,9 +152,19 @@ export default function GuestVsRegisteredChart() {
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Legend formatter={(value) => <span style={{ color: TICK_FILL }}>{value}</span>} />
-                <Bar dataKey="Guest" fill={CHART_COLORS.orange} radius={[4, 4, 0, 0]} name="Guest (is_guest true)" />
-                <Bar dataKey="Registered" fill={CHART_COLORS.green} radius={[4, 4, 0, 0]} name="Registered (is_guest false)" />
+                <Legend formatter={value => <span style={{ color: TICK_FILL }}>{value}</span>} />
+                <Bar
+                  dataKey="Guest"
+                  fill={CHART_COLORS.orange}
+                  radius={[4, 4, 0, 0]}
+                  name="Guest (is_guest true)"
+                />
+                <Bar
+                  dataKey="Registered"
+                  fill={CHART_COLORS.green}
+                  radius={[4, 4, 0, 0]}
+                  name="Registered (is_guest false)"
+                />
               </BarChart>
             )}
           </ResponsiveContainer>

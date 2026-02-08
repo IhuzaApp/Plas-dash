@@ -228,7 +228,7 @@ const Inventory = () => {
       await refetchProducts();
     } catch (error) {
       console.error('Error adding product:', error);
-              console.error('Error details:', {
+      console.error('Error details:', {
         error,
         shopSession: shopSession
           ? { shopId: shopSession.shopId, shopName: shopSession.shopName }

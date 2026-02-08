@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { notifyNewStoreCreatedToSlack } from "../../../src/lib/slackSystemNotifier";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { notifyNewStoreCreatedToSlack } from '../../../src/lib/slackSystemNotifier';
 
 // Single mutation that handles both cases (with or without category_id)
 // Matches the format provided by the user
@@ -69,56 +69,37 @@ interface CreateBusinessStoreInput {
   operating_hours?: any;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
-    const {
-      name,
-      description,
-      category_id,
-      image,
-      latitude,
-      longitude,
-      address,
-      operating_hours,
-    } = req.body as CreateBusinessStoreInput;
+    const { name, description, category_id, image, latitude, longitude, address, operating_hours } =
+      req.body as CreateBusinessStoreInput;
 
     // Validate required fields
     if (!name || !name.trim()) {
-      return res.status(400).json({ error: "Store name is required" });
+      return res.status(400).json({ error: 'Store name is required' });
     }
 
     if (!latitude || !latitude.trim()) {
-      return res
-        .status(400)
-        .json({ error: "Store location (latitude) is required" });
+      return res.status(400).json({ error: 'Store location (latitude) is required' });
     }
 
     if (!longitude || !longitude.trim()) {
-      return res
-        .status(400)
-        .json({ error: "Store location (longitude) is required" });
+      return res.status(400).json({ error: 'Store location (longitude) is required' });
     }
 
     // Get the business account for this user
@@ -138,7 +119,7 @@ export default async function handler(
       !businessAccountResult.business_accounts ||
       businessAccountResult.business_accounts.length === 0
     ) {
-      return res.status(400).json({ error: "Business account not found" });
+      return res.status(400).json({ error: 'Business account not found' });
     }
 
     const business_id = businessAccountResult.business_accounts[0].id;
@@ -164,19 +145,13 @@ export default async function handler(
         }>;
       }>(checkWalletQuery, { business_id });
 
-      const hasWallet =
-        walletResult.business_wallet && walletResult.business_wallet.length > 0;
+      const hasWallet = walletResult.business_wallet && walletResult.business_wallet.length > 0;
 
       if (!hasWallet) {
         // Create wallet with amount "0"
         const createWalletMutation = gql`
-          mutation CreateBusinessWallet(
-            $amount: String = ""
-            $business_id: uuid!
-          ) {
-            insert_business_wallet(
-              objects: { amount: $amount, business_id: $business_id }
-            ) {
+          mutation CreateBusinessWallet($amount: String = "", $business_id: uuid!) {
+            insert_business_wallet(objects: { amount: $amount, business_id: $business_id }) {
               affected_rows
               returning {
                 id
@@ -198,7 +173,7 @@ export default async function handler(
           };
         }>(createWalletMutation, {
           business_id,
-          amount: "0",
+          amount: '0',
         });
 
         if (
@@ -216,7 +191,7 @@ export default async function handler(
     // If empty or not provided, use empty object {} (GraphQL json type needs an object, not empty string)
     let operatingHoursJson: any = {};
     if (operating_hours) {
-      if (typeof operating_hours === "string") {
+      if (typeof operating_hours === 'string') {
         try {
           const parsed = JSON.parse(operating_hours);
           operatingHoursJson = parsed;
@@ -224,10 +199,7 @@ export default async function handler(
           // If parsing fails, use empty object
           operatingHoursJson = {};
         }
-      } else if (
-        typeof operating_hours === "object" &&
-        operating_hours !== null
-      ) {
+      } else if (typeof operating_hours === 'object' && operating_hours !== null) {
         operatingHoursJson = operating_hours;
       }
     }
@@ -235,18 +207,16 @@ export default async function handler(
     // Check if category_id is provided and valid
     const hasValidCategoryId =
       category_id &&
-      category_id.trim() !== "" &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        category_id.trim()
-      );
+      category_id.trim() !== '' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category_id.trim());
 
     // Build variables object
     const variables: Record<string, any> = {
-      address: address?.trim() || "",
+      address: address?.trim() || '',
       business_id,
       name: name.trim(),
-      description: description?.trim() || "",
-      image: image || "",
+      description: description?.trim() || '',
+      image: image || '',
       latitude: latitude.trim(),
       longitude: longitude.trim(),
       operating_hours: operatingHoursJson,
@@ -267,11 +237,8 @@ export default async function handler(
       };
     }>(CREATE_BUSINESS_STORE, variables);
 
-    if (
-      !result.insert_business_stores ||
-      result.insert_business_stores.affected_rows === 0
-    ) {
-      throw new Error("Failed to create business store");
+    if (!result.insert_business_stores || result.insert_business_stores.affected_rows === 0) {
+      throw new Error('Failed to create business store');
     }
 
     const createdStore = result.insert_business_stores.returning[0];
@@ -286,7 +253,7 @@ export default async function handler(
         businessName: session.user.name ?? undefined,
       });
     } catch (notifyErr: any) {
-      console.error("Slack new store notification failed:", notifyErr?.message);
+      console.error('Slack new store notification failed:', notifyErr?.message);
     }
 
     return res.status(200).json({
@@ -301,15 +268,14 @@ export default async function handler(
     });
   } catch (error: any) {
     // Extract error details
-    const errorMessage =
-      error.response?.errors?.[0]?.message || error.message || "Unknown error";
+    const errorMessage = error.response?.errors?.[0]?.message || error.message || 'Unknown error';
     const errorCode = error.response?.errors?.[0]?.extensions?.code;
     const errorPath = error.response?.errors?.[0]?.extensions?.path;
     const allErrors = error.response?.errors || [];
 
     // Return error information
     return res.status(500).json({
-      error: "Failed to create business store",
+      error: 'Failed to create business store',
       message: errorMessage,
       code: errorCode,
       path: errorPath,

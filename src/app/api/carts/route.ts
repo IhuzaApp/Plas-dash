@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_USER_CARTS = gql`
   query GetUserCarts($user_id: uuid!) {
@@ -32,12 +32,12 @@ const GET_SHOPS_BY_IDS = gql`
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const user_id = session.user.id;
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
     const data = await hasuraClient.request<{
       Carts: Array<{
@@ -45,11 +45,14 @@ export async function GET() {
         Cart_Items_aggregate: { aggregate: { count: number } };
       }>;
     }>(GET_USER_CARTS, { user_id });
-    const shopIds = Array.from(new Set(data.Carts.map((c) => c.shop_id)));
-    const countsMap: Record<string, number> = data.Carts.reduce((acc, c) => {
-      acc[c.shop_id] = c.Cart_Items_aggregate.aggregate.count;
-      return acc;
-    }, {} as Record<string, number>);
+    const shopIds = Array.from(new Set(data.Carts.map(c => c.shop_id)));
+    const countsMap: Record<string, number> = data.Carts.reduce(
+      (acc, c) => {
+        acc[c.shop_id] = c.Cart_Items_aggregate.aggregate.count;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
     let carts: Array<{
       id: string;
       name: string;
@@ -68,7 +71,7 @@ export async function GET() {
           logo?: string;
         }>;
       }>(GET_SHOPS_BY_IDS, { ids: shopIds });
-      carts = shopsData.Shops.map((shop) => ({
+      carts = shopsData.Shops.map(shop => ({
         id: shop.id,
         name: shop.name,
         count: countsMap[shop.id] ?? 0,
@@ -79,10 +82,7 @@ export async function GET() {
     }
     return NextResponse.json({ carts });
   } catch (error) {
-    console.error("Error fetching user carts:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch user carts" },
-      { status: 500 }
-    );
+    console.error('Error fetching user carts:', error);
+    return NextResponse.json({ error: 'Failed to fetch user carts' }, { status: 500 });
   }
 }

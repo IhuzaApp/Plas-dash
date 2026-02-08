@@ -1,29 +1,22 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { orderId, pin, orderType = "regular", combinedOrderIds } = req.body;
+    const { orderId, pin, orderType = 'regular', combinedOrderIds } = req.body;
 
     if (!orderId || !pin) {
-      return res.status(400).json({ error: "Missing orderId or PIN" });
+      return res.status(400).json({ error: 'Missing orderId or PIN' });
     }
 
     // Handle combined_customer orders - verify all orders have the same PIN
-    if (
-      orderType === "combined_customer" &&
-      combinedOrderIds &&
-      combinedOrderIds.length > 0
-    ) {
+    if (orderType === 'combined_customer' && combinedOrderIds && combinedOrderIds.length > 0) {
       // Fetch PINs for all orders
       const pinsQuery = gql`
         query GetOrdersPins($orderIds: [uuid!]!) {
@@ -42,14 +35,14 @@ export default async function handler(
 
       if (!orders || orders.length === 0) {
         return res.status(404).json({
-          error: "No orders found",
+          error: 'No orders found',
           verified: false,
         });
       }
 
       if (orders.length !== combinedOrderIds.length) {
         return res.status(400).json({
-          error: "Some orders not found",
+          error: 'Some orders not found',
           verified: false,
         });
       }
@@ -60,15 +53,14 @@ export default async function handler(
 
       if (uniquePins.length === 0) {
         return res.status(400).json({
-          error: "No PINs found for orders",
+          error: 'No PINs found for orders',
           verified: false,
         });
       }
 
       if (uniquePins.length > 1) {
         return res.status(400).json({
-          error:
-            "Orders have different PINs. All orders must have the same PIN.",
+          error: 'Orders have different PINs. All orders must have the same PIN.',
           verified: false,
           pinsMismatch: true,
         });
@@ -80,8 +72,8 @@ export default async function handler(
       return res.status(200).json({
         verified,
         message: verified
-          ? "All orders have the same PIN and verification successful"
-          : "Invalid PIN. All orders must have the same PIN.",
+          ? 'All orders have the same PIN and verification successful'
+          : 'Invalid PIN. All orders must have the same PIN.',
       });
     }
 
@@ -89,7 +81,7 @@ export default async function handler(
     // NOTE: For "combined" orderType (different customers), verify ONLY the specific order
     // Do NOT verify all orders in the combined group - each order should be verified independently
     // Only "combined_customer" (same customer) should verify all orders together
-    if (orderType === "combined") {
+    if (orderType === 'combined') {
       // For combined orders going to different customers/routes,
       // verify only the specific order being delivered
       const orderQuery = gql`
@@ -107,16 +99,14 @@ export default async function handler(
       const order = orderData.Orders_by_pk;
 
       if (!order) {
-        return res
-          .status(404)
-          .json({ error: "Order not found", verified: false });
+        return res.status(404).json({ error: 'Order not found', verified: false });
       }
 
       // Verify only this specific order's PIN
       const verified = order.pin && order.pin === pin;
       return res.status(200).json({
         verified,
-        message: verified ? "PIN verified successfully" : "Invalid PIN",
+        message: verified ? 'PIN verified successfully' : 'Invalid PIN',
       });
     }
 
@@ -124,7 +114,7 @@ export default async function handler(
     let query;
     let variableName;
 
-    if (orderType === "restaurant") {
+    if (orderType === 'restaurant') {
       query = gql`
         query VerifyRestaurantOrderPin($orderId: uuid!) {
           restaurant_orders_by_pk(id: $orderId) {
@@ -133,8 +123,8 @@ export default async function handler(
           }
         }
       `;
-      variableName = "restaurant_orders_by_pk";
-    } else if (orderType === "reel") {
+      variableName = 'restaurant_orders_by_pk';
+    } else if (orderType === 'reel') {
       query = gql`
         query VerifyReelOrderPin($orderId: uuid!) {
           reel_orders_by_pk(id: $orderId) {
@@ -143,8 +133,8 @@ export default async function handler(
           }
         }
       `;
-      variableName = "reel_orders_by_pk";
-    } else if (orderType === "business") {
+      variableName = 'reel_orders_by_pk';
+    } else if (orderType === 'business') {
       query = gql`
         query VerifyBusinessOrderPin($orderId: uuid!) {
           businessProductOrders_by_pk(id: $orderId) {
@@ -153,7 +143,7 @@ export default async function handler(
           }
         }
       `;
-      variableName = "businessProductOrders_by_pk";
+      variableName = 'businessProductOrders_by_pk';
     } else {
       // Regular order
       query = gql`
@@ -164,30 +154,28 @@ export default async function handler(
           }
         }
       `;
-      variableName = "Orders_by_pk";
+      variableName = 'Orders_by_pk';
     }
 
     const data = await hasuraClient.request<any>(query, { orderId });
     const order = data[variableName];
 
     if (!order) {
-      return res
-        .status(404)
-        .json({ error: "Order not found", verified: false });
+      return res.status(404).json({ error: 'Order not found', verified: false });
     }
 
     // Verify the PIN (business orders may store pin as number)
-    const orderPin = order.pin != null ? String(order.pin) : "";
-    const verified = orderPin !== "" && orderPin === pin;
+    const orderPin = order.pin != null ? String(order.pin) : '';
+    const verified = orderPin !== '' && orderPin === pin;
 
     return res.status(200).json({
       verified,
-      message: verified ? "PIN verified successfully" : "Invalid PIN",
+      message: verified ? 'PIN verified successfully' : 'Invalid PIN',
     });
   } catch (error) {
-    console.error("Error verifying PIN:", error);
+    console.error('Error verifying PIN:', error);
     return res.status(500).json({
-      error: "Failed to verify PIN",
+      error: 'Failed to verify PIN',
       verified: false,
     });
   }

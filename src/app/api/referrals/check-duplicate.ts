@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Query to check for duplicates
 const CHECK_DUPLICATE_REFERRAL = gql`
@@ -31,30 +31,25 @@ const CHECK_DUPLICATE_REFERRAL = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { phone, email, deviceFingerprint } = req.body;
 
     if (!phone || !deviceFingerprint) {
-      return res
-        .status(400)
-        .json({ error: "Phone and device fingerprint are required" });
+      return res.status(400).json({ error: 'Phone and device fingerprint are required' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Check for duplicates in database
@@ -69,41 +64,38 @@ export default async function handler(
     }>(CHECK_DUPLICATE_REFERRAL, {
       user_id: session.user.id,
       phone: phone,
-      email: email || "",
+      email: email || '',
       deviceFingerprint: deviceFingerprint,
     });
 
-    if (
-      duplicateCheck.Referral_window &&
-      duplicateCheck.Referral_window.length > 0
-    ) {
+    if (duplicateCheck.Referral_window && duplicateCheck.Referral_window.length > 0) {
       const duplicate = duplicateCheck.Referral_window[0];
 
       if (duplicate.user_id === session.user.id) {
         return res.status(200).json({
           isDuplicate: true,
-          reason: "You already have a referral account",
+          reason: 'You already have a referral account',
         });
       }
 
       if (duplicate.phone === phone) {
         return res.status(200).json({
           isDuplicate: true,
-          reason: "Phone number already registered for referral program",
+          reason: 'Phone number already registered for referral program',
         });
       }
 
       if (email && duplicate.email === email) {
         return res.status(200).json({
           isDuplicate: true,
-          reason: "Email already registered for referral program",
+          reason: 'Email already registered for referral program',
         });
       }
 
       if (duplicate.deviceFingerprint === deviceFingerprint) {
         return res.status(200).json({
           isDuplicate: true,
-          reason: "This device already has a referral account",
+          reason: 'This device already has a referral account',
         });
       }
     }
@@ -113,7 +105,7 @@ export default async function handler(
       needsReview: false,
     });
   } catch (error) {
-    console.error("Error checking duplicate:", error);
-    return res.status(500).json({ error: "Failed to check duplicates" });
+    console.error('Error checking duplicate:', error);
+    return res.status(500).json({ error: 'Failed to check duplicates' });
   }
 }

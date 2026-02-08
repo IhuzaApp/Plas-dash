@@ -112,7 +112,11 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
       tax?: string;
       tin?: string;
       total?: string;
-    }) => apiPost<{ insert_shopCheckouts: { returning: Array<{ id: string; number: number }> } }>('/api/pos-checkout', variables),
+    }) =>
+      apiPost<{ insert_shopCheckouts: { returning: Array<{ id: string; number: number }> } }>(
+        '/api/pos-checkout',
+        variables
+      ),
   });
   const { data: systemConfig } = useSystemConfig();
 
@@ -195,9 +199,14 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           // Fetch employee details from API
           let employee = null;
           try {
-            const employeeResult = await apiGet<{ orgEmployee: { fullnames?: string; email?: string; Position?: string; roleType?: string } | null }>(
-              `/api/queries/org-employee-by-id?id=${encodeURIComponent(currentUser?.id || '')}`
-            );
+            const employeeResult = await apiGet<{
+              orgEmployee: {
+                fullnames?: string;
+                email?: string;
+                Position?: string;
+                roleType?: string;
+              } | null;
+            }>(`/api/queries/org-employee-by-id?id=${encodeURIComponent(currentUser?.id || '')}`);
             employee = employeeResult.orgEmployee;
             console.log('Employee data from DB:', employee);
           } catch (error) {

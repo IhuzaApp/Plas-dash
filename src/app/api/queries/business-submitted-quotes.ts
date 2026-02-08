@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_BUSINESS_SUBMITTED_QUOTES = gql`
   query GetBusinessSubmittedQuotes($respond_business_id: uuid!) {
@@ -100,27 +100,20 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
@@ -140,14 +133,11 @@ export default async function handler(
       }>(CHECK_BUSINESS_ACCOUNT, {
         user_id: user_id,
       });
-      if (
-        accountResult.business_accounts &&
-        accountResult.business_accounts.length > 0
-      ) {
+      if (accountResult.business_accounts && accountResult.business_accounts.length > 0) {
         business_id = accountResult.business_accounts[0].id;
       }
     } catch (error) {
-      console.error("Error fetching business account:", error);
+      console.error('Error fetching business account:', error);
     }
 
     if (!business_id) {
@@ -239,9 +229,9 @@ export default async function handler(
       quotes: result.BusinessQoute || [],
     });
   } catch (error: any) {
-    console.error("Error fetching business submitted quotes:", error);
+    console.error('Error fetching business submitted quotes:', error);
     return res.status(500).json({
-      error: "Failed to fetch quotes",
+      error: 'Failed to fetch quotes',
       message: error.message,
     });
   }

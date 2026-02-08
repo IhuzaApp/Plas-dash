@@ -1,14 +1,10 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { logger } from "../../../src/utils/logger";
-import { sendNewOrderNotification } from "../../../src/services/fcmService";
-import {
-  getShopperLocation,
-  isShopperOnline,
-  logOfferSkip,
-} from "../../../src/lib/redisClient";
-import { logErrorToSlack } from "../../../src/lib/slackErrorReporter";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { logger } from '../../../src/utils/logger';
+import { sendNewOrderNotification } from '../../../src/services/fcmService';
+import { getShopperLocation, isShopperOnline, logOfferSkip } from '../../../src/lib/redisClient';
+import { logErrorToSlack } from '../../../src/lib/slackErrorReporter';
 
 // ============================================================================
 // SYSTEM DESIGN: Dispatch with Exclusive Offers + Nearby Assignment
@@ -403,10 +399,7 @@ const CHECK_SHOPPER_DECLINED_ORDER_REGULAR = gql`
 
 // Query to check if shopper has already declined a reel order
 const CHECK_SHOPPER_DECLINED_ORDER_REEL = gql`
-  query CheckShopperDeclinedOrderReel(
-    $reel_order_id: uuid!
-    $shopper_id: uuid!
-  ) {
+  query CheckShopperDeclinedOrderReel($reel_order_id: uuid!, $shopper_id: uuid!) {
     order_offers(
       where: {
         _and: [
@@ -426,10 +419,7 @@ const CHECK_SHOPPER_DECLINED_ORDER_REEL = gql`
 
 // Query to check if shopper has already declined a restaurant order
 const CHECK_SHOPPER_DECLINED_ORDER_RESTAURANT = gql`
-  query CheckShopperDeclinedOrderRestaurant(
-    $restaurant_order_id: uuid!
-    $shopper_id: uuid!
-  ) {
+  query CheckShopperDeclinedOrderRestaurant($restaurant_order_id: uuid!, $shopper_id: uuid!) {
     order_offers(
       where: {
         _and: [
@@ -449,10 +439,7 @@ const CHECK_SHOPPER_DECLINED_ORDER_RESTAURANT = gql`
 
 // Query to check if shopper has already declined a business order
 const CHECK_SHOPPER_DECLINED_ORDER_BUSINESS = gql`
-  query CheckShopperDeclinedOrderBusiness(
-    $business_order_id: uuid!
-    $shopper_id: uuid!
-  ) {
+  query CheckShopperDeclinedOrderBusiness($business_order_id: uuid!, $shopper_id: uuid!) {
     order_offers(
       where: {
         _and: [
@@ -716,12 +703,7 @@ const VERIFY_COMBINED_ORDERS_UNASSIGNED = gql`
 `;
 
 // Haversine formula to calculate distance in kilometers
-function calculateDistanceKm(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Radius of the Earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -749,13 +731,13 @@ function formatOrderForResponse(
   expiresInMs: number | null
 ): any {
   const deliveryLat =
-    order.orderType === "business"
-      ? parseFloat(order.latitude || order.business_store?.latitude || "0")
-      : parseFloat(order.Address?.latitude || order.address?.latitude || "0");
+    order.orderType === 'business'
+      ? parseFloat(order.latitude || order.business_store?.latitude || '0')
+      : parseFloat(order.Address?.latitude || order.address?.latitude || '0');
   const deliveryLng =
-    order.orderType === "business"
-      ? parseFloat(order.longitude || order.business_store?.longitude || "0")
-      : parseFloat(order.Address?.longitude || order.address?.longitude || "0");
+    order.orderType === 'business'
+      ? parseFloat(order.longitude || order.business_store?.longitude || '0')
+      : parseFloat(order.Address?.longitude || order.address?.longitude || '0');
   const distance = calculateDistanceKm(
     shopperLocation.lat,
     shopperLocation.lng,
@@ -765,35 +747,29 @@ function formatOrderForResponse(
 
   // Calculate items count based on order type
   let itemsCount = 1; // Default
-  if (order.orderType === "regular") {
-    const unitsCount =
-      order.Order_Items_aggregate?.aggregate?.sum?.quantity || 0;
+  if (order.orderType === 'regular') {
+    const unitsCount = order.Order_Items_aggregate?.aggregate?.sum?.quantity || 0;
     const itemsTypeCount = order.Order_Items_aggregate?.aggregate?.count || 0;
     itemsCount = unitsCount || itemsTypeCount || 1;
-  } else if (order.orderType === "reel") {
+  } else if (order.orderType === 'reel') {
     itemsCount = order.quantity || 1;
-  } else if (order.orderType === "restaurant") {
+  } else if (order.orderType === 'restaurant') {
     itemsCount = order.items || order.quantity || 1;
-  } else if (order.orderType === "business") {
+  } else if (order.orderType === 'business') {
     const u = order.units;
-    itemsCount =
-      typeof u === "number"
-        ? u
-        : typeof u === "string"
-        ? parseInt(u, 10) || 1
-        : 1;
+    itemsCount = typeof u === 'number' ? u : typeof u === 'string' ? parseInt(u, 10) || 1 : 1;
   }
 
   const customerAddressStr =
-    order.orderType === "business"
-      ? typeof order.deliveryAddress === "string"
+    order.orderType === 'business'
+      ? typeof order.deliveryAddress === 'string'
         ? order.deliveryAddress
         : order.deliveryAddress
-        ? JSON.stringify(order.deliveryAddress)
-        : "—"
-      : `${order.Address?.street || order.address?.street || ""}, ${
-          order.Address?.city || order.address?.city || ""
-        }`.trim() || "—";
+          ? JSON.stringify(order.deliveryAddress)
+          : '—'
+      : `${order.Address?.street || order.address?.street || ''}, ${
+          order.Address?.city || order.address?.city || ''
+        }`.trim() || '—';
 
   return {
     id: order.id,
@@ -804,20 +780,18 @@ function formatOrderForResponse(
       order.Reel?.title ||
       order.Restaurant?.name ||
       order.business_store?.name ||
-      "Unknown Shop",
+      'Unknown Shop',
     distance: distance,
     travelTimeMinutes: calculateTravelTime(distance),
     createdAt: order.created_at,
     customerAddress: customerAddressStr,
     itemsCount: itemsCount,
     estimatedEarnings:
-      order.orderType === "restaurant"
-        ? parseFloat(order.delivery_fee || "0")
-        : order.orderType === "business"
-        ? parseFloat(order.transportation_fee || "0") +
-          parseFloat(order.service_fee || "0")
-        : parseFloat(order.service_fee || "0") +
-          parseFloat(order.delivery_fee || "0"),
+      order.orderType === 'restaurant'
+        ? parseFloat(order.delivery_fee || '0')
+        : order.orderType === 'business'
+          ? parseFloat(order.transportation_fee || '0') + parseFloat(order.service_fee || '0')
+          : parseFloat(order.service_fee || '0') + parseFloat(order.delivery_fee || '0'),
     orderType: order.orderType,
     priority: order.priority,
     expiresIn: expiresInMs ?? null,
@@ -828,7 +802,7 @@ function formatOrderForResponse(
         order.business_store?.latitude ||
         order.Reel?.Restaurant?.lat ||
         order.Reel?.Shops?.latitude ||
-        "0"
+        '0'
     ),
     shopLongitude: parseFloat(
       order.Shop?.longitude ||
@@ -836,26 +810,26 @@ function formatOrderForResponse(
         order.business_store?.longitude ||
         order.Reel?.Restaurant?.long ||
         order.Reel?.Shops?.longitude ||
-        "0"
+        '0'
     ),
     customerLatitude: deliveryLat,
     customerLongitude: deliveryLng,
     // Add restaurant-specific fields
-    ...(order.orderType === "restaurant" && {
+    ...(order.orderType === 'restaurant' && {
       restaurant: order.Restaurant,
-      total: parseFloat(order.total || "0"),
+      total: parseFloat(order.total || '0'),
       deliveryTime: order.delivery_time,
     }),
     // Add reel-specific fields
-    ...(order.orderType === "reel" && {
+    ...(order.orderType === 'reel' && {
       reel: order.Reel,
     }),
     // Add business-specific fields
-    ...(order.orderType === "business" && {
+    ...(order.orderType === 'business' && {
       business_store: order.business_store,
-      total: parseFloat(order.total || "0"),
-      transportation_fee: parseFloat(order.transportation_fee || "0"),
-      service_fee: parseFloat(order.service_fee || "0"),
+      total: parseFloat(order.total || '0'),
+      transportation_fee: parseFloat(order.transportation_fee || '0'),
+      service_fee: parseFloat(order.service_fee || '0'),
     }),
   };
 }
@@ -883,13 +857,12 @@ function calculateShopperPriority(
   // Get performance metrics
   const avgRating = performance.Ratings_aggregate?.aggregate?.avg?.rating || 0;
   const orderCount = performance.Orders_aggregate?.aggregate?.count || 0;
-  const completionRate =
-    orderCount > 0 ? Math.min(100, (orderCount / 10) * 100) : 0; // Simplified completion rate
+  const completionRate = orderCount > 0 ? Math.min(100, (orderCount / 10) * 100) : 0; // Simplified completion rate
 
   // Calculate order age in minutes
   const orderTimestamp =
-    (order.orderType === "restaurant" && order.updated_at) ||
-    (order.orderType === "business" && order.updated_at)
+    (order.orderType === 'restaurant' && order.updated_at) ||
+    (order.orderType === 'business' && order.updated_at)
       ? new Date(order.updated_at).getTime()
       : new Date(order.created_at).getTime();
   const ageInMinutes = (Date.now() - orderTimestamp) / 60000;
@@ -927,38 +900,35 @@ function calculateShopperPriority(
 
 // Note: Atomic assignment removed - shoppers must accept orders explicitly
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  console.log("=== Smart Assignment API (with Exclusive Offers) ===");
-  console.log("Method:", req.method);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('=== Smart Assignment API (with Exclusive Offers) ===');
+  console.log('Method:', req.method);
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { current_location, user_id } = req.body;
-    console.log("Request body:", { user_id, current_location });
+    console.log('Request body:', { user_id, current_location });
 
     if (!user_id) {
-      console.warn("Missing user_id in request");
+      console.warn('Missing user_id in request');
       return res.status(400).json({
-        error: "User ID is required",
+        error: 'User ID is required',
       });
     }
 
     if (!current_location || !current_location.lat || !current_location.lng) {
-      console.warn("Missing or invalid current_location in request");
+      console.warn('Missing or invalid current_location in request');
       return res.status(400).json({
-        error: "Current location is required",
+        error: 'Current location is required',
       });
     }
 
     if (!hasuraClient) {
-      console.error("Hasura client is not initialized!");
-      throw new Error("Hasura client is not initialized");
+      console.error('Hasura client is not initialized!');
+      throw new Error('Hasura client is not initialized');
     }
 
     // ========================================================================
@@ -976,38 +946,22 @@ export default async function handler(
     // ========================================================================
     const CHECK_ACTIVE_ORDERS = gql`
       query CheckActiveOrders($shopper_id: uuid!) {
-        Orders(
-          where: {
-            shopper_id: { _eq: $shopper_id }
-            status: { _neq: "delivered" }
-          }
-        ) {
+        Orders(where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }) {
           id
           status
         }
-        reel_orders(
-          where: {
-            shopper_id: { _eq: $shopper_id }
-            status: { _neq: "delivered" }
-          }
-        ) {
+        reel_orders(where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }) {
           id
           status
         }
         restaurant_orders(
-          where: {
-            shopper_id: { _eq: $shopper_id }
-            status: { _neq: "delivered" }
-          }
+          where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }
         ) {
           id
           status
         }
         businessProductOrders(
-          where: {
-            shopper_id: { _eq: $shopper_id }
-            status: { _neq: "delivered" }
-          }
+          where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }
         ) {
           id
           status
@@ -1029,7 +983,7 @@ export default async function handler(
 
     if (activeOrderCount >= 2) {
       console.log(
-        "🚫 Shopper already has 2 active orders (not delivered) - cannot receive new offers:",
+        '🚫 Shopper already has 2 active orders (not delivered) - cannot receive new offers:',
         {
           shopperId: user_id,
           activeOrderCount: activeOrderCount,
@@ -1043,23 +997,23 @@ export default async function handler(
       return res.status(200).json({
         success: false,
         message: `You have ${activeOrderCount} active orders. Please deliver at least one before receiving new offers`,
-        reason: "MAX_ACTIVE_ORDERS_REACHED",
+        reason: 'MAX_ACTIVE_ORDERS_REACHED',
         activeOrderCount: activeOrderCount,
         maxAllowed: 2,
         activeOrders: activeOrders.map((order: any) => ({
           orderId: order.id,
           status: order.status,
         })),
-        note: "You can work on up to 2 orders at a time. Deliver at least one to receive new offers",
+        note: 'You can work on up to 2 orders at a time. Deliver at least one to receive new offers',
       });
     }
 
     if (activeOrderCount === 1) {
       console.log(
-        "✅ Shopper has 1 active order - can still receive new offers (max 2 active orders)"
+        '✅ Shopper has 1 active order - can still receive new offers (max 2 active orders)'
       );
     } else {
-      console.log("✅ Shopper has no active orders - can receive new offers");
+      console.log('✅ Shopper has no active orders - can receive new offers');
     }
 
     // ========================================================================
@@ -1071,10 +1025,7 @@ export default async function handler(
     const CHECK_ACTIVE_OFFERED_OFFER = gql`
       query CheckActiveOfferedOffer($shopper_id: uuid!) {
         order_offers(
-          where: {
-            shopper_id: { _eq: $shopper_id }
-            status: { _eq: "OFFERED" }
-          }
+          where: { shopper_id: { _eq: $shopper_id }, status: { _eq: "OFFERED" } }
           order_by: { offered_at: desc }
           limit: 1
         ) {
@@ -1091,17 +1042,11 @@ export default async function handler(
       }
     `;
 
-    const activeOfferedOfferData = (await hasuraClient.request(
-      CHECK_ACTIVE_OFFERED_OFFER,
-      {
-        shopper_id: user_id,
-      }
-    )) as any;
+    const activeOfferedOfferData = (await hasuraClient.request(CHECK_ACTIVE_OFFERED_OFFER, {
+      shopper_id: user_id,
+    })) as any;
 
-    if (
-      activeOfferedOfferData.order_offers &&
-      activeOfferedOfferData.order_offers.length > 0
-    ) {
+    if (activeOfferedOfferData.order_offers && activeOfferedOfferData.order_offers.length > 0) {
       const activeOffer = activeOfferedOfferData.order_offers[0];
       const orderId =
         activeOffer.order_id ||
@@ -1109,42 +1054,36 @@ export default async function handler(
         activeOffer.restaurant_order_id ||
         activeOffer.business_order_id;
 
-      console.log(
-        "🚫 Shopper already has an active OFFERED offer - cannot receive new offer:",
-        {
-          shopperId: user_id,
-          offerId: activeOffer.id,
-          orderId: orderId,
-          orderType: activeOffer.order_type,
-          status: activeOffer.status,
-          expiresAt: activeOffer.expires_at,
-          round: activeOffer.round_number,
-        }
-      );
+      console.log('🚫 Shopper already has an active OFFERED offer - cannot receive new offer:', {
+        shopperId: user_id,
+        offerId: activeOffer.id,
+        orderId: orderId,
+        orderType: activeOffer.order_type,
+        status: activeOffer.status,
+        expiresAt: activeOffer.expires_at,
+        round: activeOffer.round_number,
+      });
 
       // Return existing offer details so the client can show the notification card on refresh/navigate
-      const orderType = activeOffer.order_type || "regular";
+      const orderType = activeOffer.order_type || 'regular';
       const currentLocation = (req.body as any)?.current_location;
       let rawOrder: any = null;
-      if (orderType === "regular" && activeOffer.order_id) {
+      if (orderType === 'regular' && activeOffer.order_id) {
         const r = (await hasuraClient.request(GET_ORDER_BY_PK, {
           id: activeOffer.order_id,
         })) as any;
         rawOrder = r?.Orders_by_pk;
-      } else if (orderType === "reel" && activeOffer.reel_order_id) {
+      } else if (orderType === 'reel' && activeOffer.reel_order_id) {
         const r = (await hasuraClient.request(GET_REEL_ORDER_BY_PK, {
           id: activeOffer.reel_order_id,
         })) as any;
         rawOrder = r?.reel_orders_by_pk;
-      } else if (
-        orderType === "restaurant" &&
-        activeOffer.restaurant_order_id
-      ) {
+      } else if (orderType === 'restaurant' && activeOffer.restaurant_order_id) {
         const r = (await hasuraClient.request(GET_RESTAURANT_ORDER_BY_PK, {
           id: activeOffer.restaurant_order_id,
         })) as any;
         rawOrder = r?.restaurant_orders_by_pk;
-      } else if (orderType === "business" && activeOffer.business_order_id) {
+      } else if (orderType === 'business' && activeOffer.business_order_id) {
         const r = (await hasuraClient.request(GET_BUSINESS_ORDER_BY_PK, {
           id: activeOffer.business_order_id,
         })) as any;
@@ -1154,20 +1093,16 @@ export default async function handler(
         rawOrder.orderType = orderType;
         const shopperLocation =
           currentLocation &&
-          typeof currentLocation.lat === "number" &&
-          typeof currentLocation.lng === "number"
+          typeof currentLocation.lat === 'number' &&
+          typeof currentLocation.lng === 'number'
             ? { lat: currentLocation.lat, lng: currentLocation.lng }
             : { lat: 0, lng: 0 };
-        const formattedOrder = formatOrderForResponse(
-          rawOrder,
-          shopperLocation,
-          null
-        );
+        const formattedOrder = formatOrderForResponse(rawOrder, shopperLocation, null);
         return res.status(200).json({
           success: false,
           message:
-            "You have a pending offer. Please accept or decline it before receiving new offers",
-          reason: "ACTIVE_OFFER_PENDING",
+            'You have a pending offer. Please accept or decline it before receiving new offers',
+          reason: 'ACTIVE_OFFER_PENDING',
           activeOfferId: activeOffer.id,
           activeOrderId: orderId,
           activeOrderType: orderType,
@@ -1175,25 +1110,23 @@ export default async function handler(
             order: formattedOrder,
             offerId: activeOffer.id,
           },
-          note: "Action-based system: You must accept or decline your current offer before receiving a new one",
+          note: 'Action-based system: You must accept or decline your current offer before receiving a new one',
         });
       }
 
       return res.status(200).json({
         success: false,
         message:
-          "You have a pending offer. Please accept or decline it before receiving new offers",
-        reason: "ACTIVE_OFFER_PENDING",
+          'You have a pending offer. Please accept or decline it before receiving new offers',
+        reason: 'ACTIVE_OFFER_PENDING',
         activeOfferId: activeOffer.id,
         activeOrderId: orderId,
         activeOrderType: activeOffer.order_type,
-        note: "Action-based system: You must accept or decline your current offer before receiving a new one",
+        note: 'Action-based system: You must accept or decline your current offer before receiving a new one',
       });
     }
 
-    console.log(
-      "✅ Shopper has no active orders or pending offers - can receive new offer"
-    );
+    console.log('✅ Shopper has no active orders or pending offers - can receive new offer');
 
     // ========================================================================
     // STEP 1: Find Eligible Orders
@@ -1204,7 +1137,7 @@ export default async function handler(
     // - NO active offer (status=OFFERED, expires_at > now())
     // ========================================================================
 
-    console.log("Fetching eligible orders (no active offers)...");
+    console.log('Fetching eligible orders (no active offers)...');
     const [
       regularOrdersData,
       reelOrdersData,
@@ -1223,12 +1156,10 @@ export default async function handler(
 
     const availableOrders = regularOrdersData.Orders || [];
     const availableReelOrders = reelOrdersData.reel_orders || [];
-    const availableRestaurantOrders =
-      restaurantOrdersData.restaurant_orders || [];
-    const availableBusinessOrders =
-      businessOrdersData.businessProductOrders || [];
+    const availableRestaurantOrders = restaurantOrdersData.restaurant_orders || [];
+    const availableBusinessOrders = businessOrdersData.businessProductOrders || [];
 
-    console.log("Eligible orders (no active offers):", {
+    console.log('Eligible orders (no active offers):', {
       regular: availableOrders.length,
       reel: availableReelOrders.length,
       restaurant: availableRestaurantOrders.length,
@@ -1244,27 +1175,27 @@ export default async function handler(
     const allOrders = [
       ...availableOrders.map((order: any) => ({
         ...order,
-        orderType: "regular",
+        orderType: 'regular',
       })),
       ...availableReelOrders.map((order: any) => ({
         ...order,
-        orderType: "reel",
+        orderType: 'reel',
       })),
       ...availableRestaurantOrders.map((order: any) => ({
         ...order,
-        orderType: "restaurant",
+        orderType: 'restaurant',
       })),
       ...availableBusinessOrders.map((order: any) => ({
         ...order,
-        orderType: "business",
+        orderType: 'business',
       })),
     ];
 
     if (allOrders.length === 0) {
-      console.log("No eligible orders found");
+      console.log('No eligible orders found');
       return res.status(200).json({
         success: false,
-        message: "No available orders at the moment",
+        message: 'No available orders at the moment',
         orders: [],
       });
     }
@@ -1278,7 +1209,7 @@ export default async function handler(
     // 3. Log all skips for audit/debugging
     // ========================================================================
 
-    console.log("📍 Performing distance gating checks...");
+    console.log('📍 Performing distance gating checks...');
 
     // Check if shopper has fresh location in Redis
     const redisLocation = await getShopperLocation(user_id);
@@ -1286,33 +1217,24 @@ export default async function handler(
 
     if (useRedisLocation) {
       const locationAge = (Date.now() - redisLocation.updatedAt) / 1000;
-      console.log(
-        `✅ Using Redis location (age: ${locationAge.toFixed(1)}s):`,
-        redisLocation
-      );
+      console.log(`✅ Using Redis location (age: ${locationAge.toFixed(1)}s):`, redisLocation);
 
       // Check if location is fresh enough
       if (locationAge > 30) {
         console.warn(
-          `⚠️ Location is stale (${locationAge.toFixed(
-            1
-          )}s old). Shopper may be offline.`
+          `⚠️ Location is stale (${locationAge.toFixed(1)}s old). Shopper may be offline.`
         );
         await logOfferSkip({
-          orderId: "N/A",
+          orderId: 'N/A',
           shopperId: user_id,
-          reason: "STALE_LOCATION",
+          reason: 'STALE_LOCATION',
           timestamp: Date.now(),
           metadata: { locationAge },
         });
       }
     } else {
-      console.log(
-        "⚠️ No Redis location found. Using fallback client location."
-      );
-      console.log(
-        "   (This is normal if Redis is unavailable or shopper just went online)"
-      );
+      console.log('⚠️ No Redis location found. Using fallback client location.');
+      console.log('   (This is normal if Redis is unavailable or shopper just went online)');
     }
 
     // Use Redis location if available, otherwise fall back to client location
@@ -1325,22 +1247,14 @@ export default async function handler(
 
     for (const order of allOrders) {
       const orderLocation =
-        order.orderType === "business"
+        order.orderType === 'business'
           ? {
-              lat: parseFloat(
-                order.latitude || order.business_store?.latitude || "0"
-              ),
-              lng: parseFloat(
-                order.longitude || order.business_store?.longitude || "0"
-              ),
+              lat: parseFloat(order.latitude || order.business_store?.latitude || '0'),
+              lng: parseFloat(order.longitude || order.business_store?.longitude || '0'),
             }
           : {
-              lat: parseFloat(
-                order.Address?.latitude || order.address?.latitude || "0"
-              ),
-              lng: parseFloat(
-                order.Address?.longitude || order.address?.longitude || "0"
-              ),
+              lat: parseFloat(order.Address?.latitude || order.address?.latitude || '0'),
+              lng: parseFloat(order.Address?.longitude || order.address?.longitude || '0'),
             };
 
       const distance = calculateDistanceKm(
@@ -1352,7 +1266,7 @@ export default async function handler(
 
       // Calculate order age
       const orderTimestamp =
-        order.orderType === "restaurant" && order.updated_at
+        order.orderType === 'restaurant' && order.updated_at
           ? new Date(order.updated_at).getTime()
           : new Date(order.created_at).getTime();
       const orderAgeMinutes = (Date.now() - orderTimestamp) / 60000;
@@ -1380,31 +1294,26 @@ export default async function handler(
         const nextRound = currentRound + 1;
 
         // Get config for next round (capped at max round)
-        const roundConfig =
-          ROUND_CONFIGS[Math.min(nextRound - 1, ROUND_CONFIGS.length - 1)];
+        const roundConfig = ROUND_CONFIGS[Math.min(nextRound - 1, ROUND_CONFIGS.length - 1)];
         maxDistanceKm = roundConfig.maxDistanceKm;
         maxEtaMinutes = roundConfig.maxEtaMinutes;
 
         console.log(
           `📍 Order ${
             order.id
-          } round ${nextRound}: max ${maxDistanceKm}km, distance ${distance.toFixed(
-            2
-          )}km`
+          } round ${nextRound}: max ${maxDistanceKm}km, distance ${distance.toFixed(2)}km`
         );
       }
 
       // Distance check
       if (distance > maxDistanceKm) {
         console.log(
-          `❌ SKIP: Order ${order.id} too far (${distance.toFixed(
-            2
-          )}km > ${maxDistanceKm}km)`
+          `❌ SKIP: Order ${order.id} too far (${distance.toFixed(2)}km > ${maxDistanceKm}km)`
         );
         await logOfferSkip({
           orderId: order.id,
           shopperId: user_id,
-          reason: "DISTANCE_TOO_FAR",
+          reason: 'DISTANCE_TOO_FAR',
           distance,
           timestamp: Date.now(),
           metadata: {
@@ -1418,13 +1327,11 @@ export default async function handler(
       // ETA check (optional but professional)
       const eta = calculateTravelTime(distance);
       if (eta > maxEtaMinutes) {
-        console.log(
-          `❌ SKIP: Order ${order.id} ETA too long (${eta}min > ${maxEtaMinutes}min)`
-        );
+        console.log(`❌ SKIP: Order ${order.id} ETA too long (${eta}min > ${maxEtaMinutes}min)`);
         await logOfferSkip({
           orderId: order.id,
           shopperId: user_id,
-          reason: "ETA_TOO_LONG",
+          reason: 'ETA_TOO_LONG',
           distance,
           timestamp: Date.now(),
           metadata: {
@@ -1440,51 +1347,36 @@ export default async function handler(
       let declinedCheck: any = { order_offers: [] };
 
       try {
-        if (order.orderType === "regular") {
-          declinedCheck = (await hasuraClient.request(
-            CHECK_SHOPPER_DECLINED_ORDER_REGULAR,
-            {
-              order_id: order.id,
-              shopper_id: user_id,
-            }
-          )) as any;
-        } else if (order.orderType === "reel") {
-          declinedCheck = (await hasuraClient.request(
-            CHECK_SHOPPER_DECLINED_ORDER_REEL,
-            {
-              reel_order_id: order.id,
-              shopper_id: user_id,
-            }
-          )) as any;
-        } else if (order.orderType === "restaurant") {
-          declinedCheck = (await hasuraClient.request(
-            CHECK_SHOPPER_DECLINED_ORDER_RESTAURANT,
-            {
-              restaurant_order_id: order.id,
-              shopper_id: user_id,
-            }
-          )) as any;
-        } else if (order.orderType === "business") {
-          declinedCheck = (await hasuraClient.request(
-            CHECK_SHOPPER_DECLINED_ORDER_BUSINESS,
-            {
-              business_order_id: order.id,
-              shopper_id: user_id,
-            }
-          )) as any;
+        if (order.orderType === 'regular') {
+          declinedCheck = (await hasuraClient.request(CHECK_SHOPPER_DECLINED_ORDER_REGULAR, {
+            order_id: order.id,
+            shopper_id: user_id,
+          })) as any;
+        } else if (order.orderType === 'reel') {
+          declinedCheck = (await hasuraClient.request(CHECK_SHOPPER_DECLINED_ORDER_REEL, {
+            reel_order_id: order.id,
+            shopper_id: user_id,
+          })) as any;
+        } else if (order.orderType === 'restaurant') {
+          declinedCheck = (await hasuraClient.request(CHECK_SHOPPER_DECLINED_ORDER_RESTAURANT, {
+            restaurant_order_id: order.id,
+            shopper_id: user_id,
+          })) as any;
+        } else if (order.orderType === 'business') {
+          declinedCheck = (await hasuraClient.request(CHECK_SHOPPER_DECLINED_ORDER_BUSINESS, {
+            business_order_id: order.id,
+            shopper_id: user_id,
+          })) as any;
         }
 
-        if (
-          declinedCheck.order_offers &&
-          declinedCheck.order_offers.length > 0
-        ) {
+        if (declinedCheck.order_offers && declinedCheck.order_offers.length > 0) {
           console.log(
             `❌ SKIP: Order ${order.id} was already declined by this shopper (round ${declinedCheck.order_offers[0].round_number})`
           );
           await logOfferSkip({
             orderId: order.id,
             shopperId: user_id,
-            reason: "ALREADY_DECLINED",
+            reason: 'ALREADY_DECLINED',
             distance,
             timestamp: Date.now(),
             metadata: {
@@ -1495,8 +1387,8 @@ export default async function handler(
         }
       } catch (error) {
         // Log error but don't block the order - better to show it than fail silently
-        console.error("Error checking declined order status:", error);
-        logger.error("Error checking declined order", "SmartAssignOrder", {
+        console.error('Error checking declined order status:', error);
+        logger.error('Error checking declined order', 'SmartAssignOrder', {
           orderId: order.id,
           orderType: order.orderType,
           shopperId: user_id,
@@ -1511,24 +1403,18 @@ export default async function handler(
         distance,
         eta,
       });
-      console.log(
-        `✅ ELIGIBLE: Order ${order.id} (${distance.toFixed(
-          2
-        )}km, ${eta}min ETA)`
-      );
+      console.log(`✅ ELIGIBLE: Order ${order.id} (${distance.toFixed(2)}km, ${eta}min ETA)`);
     }
 
-    console.log(
-      `📊 Distance filtering: ${allOrders.length} total → ${nearbyOrders.length} nearby`
-    );
+    console.log(`📊 Distance filtering: ${allOrders.length} total → ${nearbyOrders.length} nearby`);
 
     if (nearbyOrders.length === 0) {
-      console.log("No nearby orders found after distance gating");
+      console.log('No nearby orders found after distance gating');
       return res.status(200).json({
         success: false,
-        message: "No nearby orders available at the moment",
+        message: 'No nearby orders available at the moment',
         orders: [],
-        reason: "DISTANCE_FILTERED",
+        reason: 'DISTANCE_FILTERED',
       });
     }
 
@@ -1539,14 +1425,10 @@ export default async function handler(
     // to find the best order for THIS shopper
     // ========================================================================
 
-    console.log(
-      "Calculating priority for",
-      nearbyOrders.length,
-      "nearby orders"
-    );
+    console.log('Calculating priority for', nearbyOrders.length, 'nearby orders');
 
     // Calculate priority for each order
-    const ordersWithPriority = nearbyOrders.map((order) => ({
+    const ordersWithPriority = nearbyOrders.map(order => ({
       ...order,
       priority: calculateShopperPriority(
         shopperLocation, // Use validated shopper location
@@ -1561,19 +1443,15 @@ export default async function handler(
     // Randomize among top candidates so restaurant, reel, regular, and business orders get fair exposure
     const topN = Math.min(TOP_CANDIDATES_FOR_RANDOM, ordersWithPriority.length);
     const topCandidates = ordersWithPriority.slice(0, topN);
-    const bestOrder =
-      topCandidates[Math.floor(Math.random() * topCandidates.length)];
+    const bestOrder = topCandidates[Math.floor(Math.random() * topCandidates.length)];
 
-    console.log(
-      `✅ Best order selected for this shopper (random among top ${topN}):`,
-      {
-        id: bestOrder.id,
-        type: bestOrder.orderType,
-        distance: bestOrder.distance.toFixed(2) + "km",
-        eta: bestOrder.eta + "min",
-        priority: bestOrder.priority.toFixed(2),
-      }
-    );
+    console.log(`✅ Best order selected for this shopper (random among top ${topN}):`, {
+      id: bestOrder.id,
+      type: bestOrder.orderType,
+      distance: bestOrder.distance.toFixed(2) + 'km',
+      eta: bestOrder.eta + 'min',
+      priority: bestOrder.priority.toFixed(2),
+    });
 
     // ========================================================================
     // STEP 3: Create Exclusive Offer (THIS IS THE LOCK)
@@ -1583,17 +1461,15 @@ export default async function handler(
     // ========================================================================
 
     // If this is a combined regular order, we'll create offers for ALL orders in the group
-    const isCombinedRegular =
-      bestOrder.orderType === "regular" && !!bestOrder.combined_order_id;
+    const isCombinedRegular = bestOrder.orderType === 'regular' && !!bestOrder.combined_order_id;
 
     let combinedOrders: any[] = [];
     let combinedOrderIds: string[] = [];
 
     if (isCombinedRegular) {
-      const combinedData = (await hasuraClient.request(
-        GET_ORDERS_BY_COMBINED_ORDER_ID,
-        { combined_order_id: bestOrder.combined_order_id }
-      )) as any;
+      const combinedData = (await hasuraClient.request(GET_ORDERS_BY_COMBINED_ORDER_ID, {
+        combined_order_id: bestOrder.combined_order_id,
+      })) as any;
       combinedOrders = combinedData.Orders || [];
       combinedOrderIds = combinedOrders.map((o: any) => o.id);
     }
@@ -1601,10 +1477,9 @@ export default async function handler(
     // Get current round number for this order (or max round across combined group)
     let currentRound = 0;
     if (isCombinedRegular && combinedOrderIds.length > 0) {
-      const roundData = (await hasuraClient.request(
-        GET_CURRENT_ROUND_FOR_ORDER_IDS,
-        { order_ids: combinedOrderIds }
-      )) as any;
+      const roundData = (await hasuraClient.request(GET_CURRENT_ROUND_FOR_ORDER_IDS, {
+        order_ids: combinedOrderIds,
+      })) as any;
       currentRound = roundData.order_offers?.[0]?.round_number || 0;
     } else {
       const roundData = (await hasuraClient.request(GET_CURRENT_ROUND, {
@@ -1618,9 +1493,7 @@ export default async function handler(
     const now = new Date();
     const offeredAt = now.toISOString();
     // Set expiry to 4 hours from now (fallback safety - action-based system means shopper must accept/decline)
-    const expiresAt = new Date(
-      now.getTime() + 4 * 60 * 60 * 1000
-    ).toISOString();
+    const expiresAt = new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString();
 
     // Prepare the order_id field based on order type
     // Set unused foreign keys explicitly to null to avoid constraint violations
@@ -1637,13 +1510,13 @@ export default async function handler(
     };
 
     // Set only the relevant order ID based on type
-    if (bestOrder.orderType === "regular") {
+    if (bestOrder.orderType === 'regular') {
       offerVariables.order_id = bestOrder.id;
-    } else if (bestOrder.orderType === "reel") {
+    } else if (bestOrder.orderType === 'reel') {
       offerVariables.reel_order_id = bestOrder.id;
-    } else if (bestOrder.orderType === "restaurant") {
+    } else if (bestOrder.orderType === 'restaurant') {
       offerVariables.restaurant_order_id = bestOrder.id;
-    } else if (bestOrder.orderType === "business") {
+    } else if (bestOrder.orderType === 'business') {
       offerVariables.business_order_id = bestOrder.id;
     }
 
@@ -1654,42 +1527,30 @@ export default async function handler(
 
     let existingOfferData: any;
 
-    if (bestOrder.orderType === "regular") {
-      existingOfferData = await hasuraClient.request(
-        CHECK_SHOPPER_EXISTING_OFFER_REGULAR,
-        {
-          shopper_id: user_id,
-          order_type: bestOrder.orderType,
-          order_id: bestOrder.id,
-        }
-      );
-    } else if (bestOrder.orderType === "reel") {
-      existingOfferData = await hasuraClient.request(
-        CHECK_SHOPPER_EXISTING_OFFER_REEL,
-        {
-          shopper_id: user_id,
-          order_type: bestOrder.orderType,
-          reel_order_id: bestOrder.id,
-        }
-      );
-    } else if (bestOrder.orderType === "restaurant") {
-      existingOfferData = await hasuraClient.request(
-        CHECK_SHOPPER_EXISTING_OFFER_RESTAURANT,
-        {
-          shopper_id: user_id,
-          order_type: bestOrder.orderType,
-          restaurant_order_id: bestOrder.id,
-        }
-      );
-    } else if (bestOrder.orderType === "business") {
-      existingOfferData = await hasuraClient.request(
-        CHECK_SHOPPER_EXISTING_OFFER_BUSINESS,
-        {
-          shopper_id: user_id,
-          order_type: bestOrder.orderType,
-          business_order_id: bestOrder.id,
-        }
-      );
+    if (bestOrder.orderType === 'regular') {
+      existingOfferData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_REGULAR, {
+        shopper_id: user_id,
+        order_type: bestOrder.orderType,
+        order_id: bestOrder.id,
+      });
+    } else if (bestOrder.orderType === 'reel') {
+      existingOfferData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_REEL, {
+        shopper_id: user_id,
+        order_type: bestOrder.orderType,
+        reel_order_id: bestOrder.id,
+      });
+    } else if (bestOrder.orderType === 'restaurant') {
+      existingOfferData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_RESTAURANT, {
+        shopper_id: user_id,
+        order_type: bestOrder.orderType,
+        restaurant_order_id: bestOrder.id,
+      });
+    } else if (bestOrder.orderType === 'business') {
+      existingOfferData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_BUSINESS, {
+        shopper_id: user_id,
+        order_type: bestOrder.orderType,
+        business_order_id: bestOrder.id,
+      });
     }
 
     const existingOffer = existingOfferData.order_offers?.[0];
@@ -1701,7 +1562,7 @@ export default async function handler(
     if (existingOffer) {
       isExtendingOffer = true; // Mark that we're extending
       // Shopper already has an active offer for this order - just extend the expiry
-      console.log("🔄 Extending existing offer (preventing duplicate):", {
+      console.log('🔄 Extending existing offer (preventing duplicate):', {
         existingOfferId: existingOffer.id,
         orderId: bestOrder.id,
         shopperId: user_id,
@@ -1718,7 +1579,7 @@ export default async function handler(
       offerId = existingOffer.id;
       offerRound = existingOffer.round_number;
 
-      console.log("✅ Offer expiry extended:", {
+      console.log('✅ Offer expiry extended:', {
         offerId,
         newExpiresAt: expiresAt,
         round: offerRound,
@@ -1727,56 +1588,41 @@ export default async function handler(
       // No existing offer found - but double-check before creating to prevent race conditions
       // Re-check one more time to ensure no duplicate was created between our check and now
       let finalCheckData: any;
-      if (bestOrder.orderType === "regular") {
-        finalCheckData = await hasuraClient.request(
-          CHECK_SHOPPER_EXISTING_OFFER_REGULAR,
-          {
-            shopper_id: user_id,
-            order_type: bestOrder.orderType,
-            order_id: bestOrder.id,
-          }
-        );
-      } else if (bestOrder.orderType === "reel") {
-        finalCheckData = await hasuraClient.request(
-          CHECK_SHOPPER_EXISTING_OFFER_REEL,
-          {
-            shopper_id: user_id,
-            order_type: bestOrder.orderType,
-            reel_order_id: bestOrder.id,
-          }
-        );
-      } else if (bestOrder.orderType === "restaurant") {
-        finalCheckData = await hasuraClient.request(
-          CHECK_SHOPPER_EXISTING_OFFER_RESTAURANT,
-          {
-            shopper_id: user_id,
-            order_type: bestOrder.orderType,
-            restaurant_order_id: bestOrder.id,
-          }
-        );
-      } else if (bestOrder.orderType === "business") {
-        finalCheckData = await hasuraClient.request(
-          CHECK_SHOPPER_EXISTING_OFFER_BUSINESS,
-          {
-            shopper_id: user_id,
-            order_type: bestOrder.orderType,
-            business_order_id: bestOrder.id,
-          }
-        );
+      if (bestOrder.orderType === 'regular') {
+        finalCheckData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_REGULAR, {
+          shopper_id: user_id,
+          order_type: bestOrder.orderType,
+          order_id: bestOrder.id,
+        });
+      } else if (bestOrder.orderType === 'reel') {
+        finalCheckData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_REEL, {
+          shopper_id: user_id,
+          order_type: bestOrder.orderType,
+          reel_order_id: bestOrder.id,
+        });
+      } else if (bestOrder.orderType === 'restaurant') {
+        finalCheckData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_RESTAURANT, {
+          shopper_id: user_id,
+          order_type: bestOrder.orderType,
+          restaurant_order_id: bestOrder.id,
+        });
+      } else if (bestOrder.orderType === 'business') {
+        finalCheckData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_BUSINESS, {
+          shopper_id: user_id,
+          order_type: bestOrder.orderType,
+          business_order_id: bestOrder.id,
+        });
       }
 
       const finalCheckOffer = finalCheckData.order_offers?.[0];
 
       if (finalCheckOffer) {
         // Another request created the offer between our checks - extend it instead
-        console.log(
-          "🔄 Race condition detected - offer created by another request, extending:",
-          {
-            existingOfferId: finalCheckOffer.id,
-            orderId: bestOrder.id,
-            shopperId: user_id,
-          }
-        );
+        console.log('🔄 Race condition detected - offer created by another request, extending:', {
+          existingOfferId: finalCheckOffer.id,
+          orderId: bestOrder.id,
+          shopperId: user_id,
+        });
 
         const updateResult = (await hasuraClient.request(UPDATE_OFFER_EXPIRY, {
           offer_id: finalCheckOffer.id,
@@ -1786,21 +1632,17 @@ export default async function handler(
         offerId = finalCheckOffer.id;
         offerRound = finalCheckOffer.round_number;
 
-        console.log("✅ Offer extended (race condition handled):", {
+        console.log('✅ Offer extended (race condition handled):', {
           offerId,
           round: offerRound,
         });
         isExtendingOffer = true; // Mark that we're extending, not creating
       } else {
         // Re-check for ANY active offer right before creating (prevents race when 2 requests run in parallel)
-        const preCreateCheck = (await hasuraClient.request(
-          CHECK_ACTIVE_OFFERED_OFFER,
-          { shopper_id: user_id }
-        )) as any;
-        if (
-          preCreateCheck.order_offers &&
-          preCreateCheck.order_offers.length > 0
-        ) {
+        const preCreateCheck = (await hasuraClient.request(CHECK_ACTIVE_OFFERED_OFFER, {
+          shopper_id: user_id,
+        })) as any;
+        if (preCreateCheck.order_offers && preCreateCheck.order_offers.length > 0) {
           const existing = preCreateCheck.order_offers[0];
           const existingOrderId =
             existing.order_id ||
@@ -1808,28 +1650,28 @@ export default async function handler(
             existing.restaurant_order_id ||
             existing.business_order_id;
           console.log(
-            "🚫 Race prevented: Another request already created offer for this shopper:",
+            '🚫 Race prevented: Another request already created offer for this shopper:',
             { offerId: existing.id, orderId: existingOrderId }
           );
           return res.status(200).json({
             success: false,
             message:
-              "You have a pending offer. Please accept or decline it before receiving new offers",
-            reason: "ACTIVE_OFFER_PENDING",
+              'You have a pending offer. Please accept or decline it before receiving new offers',
+            reason: 'ACTIVE_OFFER_PENDING',
             activeOfferId: existing.id,
             activeOrderId: existingOrderId,
             activeOrderType: existing.order_type,
-            note: "Action-based system: You must accept or decline your current offer before receiving a new one",
+            note: 'Action-based system: You must accept or decline your current offer before receiving a new one',
           });
         }
 
         // Confirmed no existing offer - safe to create new one
-        console.log("Creating exclusive offer:", {
+        console.log('Creating exclusive offer:', {
           orderId: bestOrder.id,
           orderType: bestOrder.orderType,
           shopperId: user_id,
           round: nextRound,
-          note: "No time limit - shopper must accept or decline",
+          note: 'No time limit - shopper must accept or decline',
           isCombinedRegular,
           combinedCount: combinedOrderIds.length,
         });
@@ -1854,7 +1696,7 @@ export default async function handler(
               )) as any;
 
               if (!offerResult.insert_order_offers_one?.id) {
-                throw new Error("Failed to create offer for combined order");
+                throw new Error('Failed to create offer for combined order');
               }
 
               createdOfferIds.push(offerResult.insert_order_offers_one.id);
@@ -1863,7 +1705,7 @@ export default async function handler(
             offerId = createdOfferIds[0];
             offerRound = nextRound;
 
-            console.log("✅ Combined offers created:", {
+            console.log('✅ Combined offers created:', {
               combined_order_id: bestOrder.combined_order_id,
               offerCount: createdOfferIds.length,
               offerId,
@@ -1876,13 +1718,13 @@ export default async function handler(
             )) as any;
 
             if (!offerResult.insert_order_offers_one) {
-              throw new Error("Failed to create order offer");
+              throw new Error('Failed to create order offer');
             }
 
             offerId = offerResult.insert_order_offers_one.id;
             offerRound = nextRound;
 
-            console.log("✅ Exclusive offer created:", {
+            console.log('✅ Exclusive offer created:', {
               offerId,
               round: offerRound,
             });
@@ -1890,11 +1732,11 @@ export default async function handler(
         } catch (error: any) {
           // Handle potential unique constraint violation
           if (
-            error.message?.includes("duplicate") ||
-            error.message?.includes("unique constraint")
+            error.message?.includes('duplicate') ||
+            error.message?.includes('unique constraint')
           ) {
             console.warn(
-              "⚠️ Duplicate offer detected during creation, checking for existing offer:",
+              '⚠️ Duplicate offer detected during creation, checking for existing offer:',
               {
                 orderId: bestOrder.id,
                 shopperId: user_id,
@@ -1903,25 +1745,19 @@ export default async function handler(
 
             // One final check - maybe another request created it
             let recoveryCheckData: any;
-            if (bestOrder.orderType === "regular") {
-              recoveryCheckData = await hasuraClient.request(
-                CHECK_SHOPPER_EXISTING_OFFER_REGULAR,
-                {
-                  shopper_id: user_id,
-                  order_type: bestOrder.orderType,
-                  order_id: bestOrder.id,
-                }
-              );
-            } else if (bestOrder.orderType === "reel") {
-              recoveryCheckData = await hasuraClient.request(
-                CHECK_SHOPPER_EXISTING_OFFER_REEL,
-                {
-                  shopper_id: user_id,
-                  order_type: bestOrder.orderType,
-                  reel_order_id: bestOrder.id,
-                }
-              );
-            } else if (bestOrder.orderType === "restaurant") {
+            if (bestOrder.orderType === 'regular') {
+              recoveryCheckData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_REGULAR, {
+                shopper_id: user_id,
+                order_type: bestOrder.orderType,
+                order_id: bestOrder.id,
+              });
+            } else if (bestOrder.orderType === 'reel') {
+              recoveryCheckData = await hasuraClient.request(CHECK_SHOPPER_EXISTING_OFFER_REEL, {
+                shopper_id: user_id,
+                order_type: bestOrder.orderType,
+                reel_order_id: bestOrder.id,
+              });
+            } else if (bestOrder.orderType === 'restaurant') {
               recoveryCheckData = await hasuraClient.request(
                 CHECK_SHOPPER_EXISTING_OFFER_RESTAURANT,
                 {
@@ -1930,7 +1766,7 @@ export default async function handler(
                   restaurant_order_id: bestOrder.id,
                 }
               );
-            } else if (bestOrder.orderType === "business") {
+            } else if (bestOrder.orderType === 'business') {
               recoveryCheckData = await hasuraClient.request(
                 CHECK_SHOPPER_EXISTING_OFFER_BUSINESS,
                 {
@@ -1944,25 +1780,19 @@ export default async function handler(
             const recoveryOffer = recoveryCheckData.order_offers?.[0];
             if (recoveryOffer) {
               // Found it - extend instead
-              const updateResult = (await hasuraClient.request(
-                UPDATE_OFFER_EXPIRY,
-                {
-                  offer_id: recoveryOffer.id,
-                  expires_at: expiresAt,
-                }
-              )) as any;
+              const updateResult = (await hasuraClient.request(UPDATE_OFFER_EXPIRY, {
+                offer_id: recoveryOffer.id,
+                expires_at: expiresAt,
+              })) as any;
 
               offerId = recoveryOffer.id;
               offerRound = recoveryOffer.round_number;
               isExtendingOffer = true; // Mark that we're extending, not creating
 
-              console.log(
-                "✅ Recovered from duplicate - extended existing offer:",
-                {
-                  offerId,
-                  round: offerRound,
-                }
-              );
+              console.log('✅ Recovered from duplicate - extended existing offer:', {
+                offerId,
+                round: offerRound,
+              });
             } else {
               throw error; // Re-throw if we can't recover
             }
@@ -1989,21 +1819,16 @@ export default async function handler(
     // If this is a combined regular order, return it as ONE logical batch (same as notification)
     let responseOrder: any = orderData;
     if (
-      bestOrder.orderType === "regular" &&
+      bestOrder.orderType === 'regular' &&
       bestOrder.combined_order_id &&
       combinedOrders.length > 1
     ) {
       const totalEarnings = combinedOrders.reduce((sum: number, o: any) => {
-        return (
-          sum +
-          parseFloat(o.service_fee || "0") +
-          parseFloat(o.delivery_fee || "0")
-        );
+        return sum + parseFloat(o.service_fee || '0') + parseFloat(o.delivery_fee || '0');
       }, 0);
 
       const totalItems = combinedOrders.reduce((sum: number, o: any) => {
-        const unitsCount =
-          o.Order_Items_aggregate?.aggregate?.sum?.quantity || 0;
+        const unitsCount = o.Order_Items_aggregate?.aggregate?.sum?.quantity || 0;
         const itemsTypeCount = o.Order_Items_aggregate?.aggregate?.count || 0;
         const items = unitsCount || itemsTypeCount || 0;
         return sum + items;
@@ -2012,7 +1837,7 @@ export default async function handler(
       const storeNames = combinedOrders
         .map((o: any) => o.Shop?.name)
         .filter(Boolean)
-        .join(", ");
+        .join(', ');
 
       const firstOrderId = combinedOrders[0]?.OrderID;
       const firstShop = combinedOrders[0]?.Shop;
@@ -2031,7 +1856,7 @@ export default async function handler(
         displayOrderId:
           firstOrderId !== null && firstOrderId !== undefined
             ? `Combined-${String(firstOrderId)}`
-            : "Combined",
+            : 'Combined',
         // Use first store coords for directions (shopper goes to first store first)
         ...(firstShop?.latitude != null &&
           firstShop?.longitude != null && {
@@ -2056,10 +1881,9 @@ export default async function handler(
 
         if (isCombinedRegular && combinedOrderIds.length > 0) {
           // For combined orders, check all orders in the group
-          const verificationData = (await hasuraClient.request(
-            VERIFY_COMBINED_ORDERS_UNASSIGNED,
-            { order_ids: combinedOrderIds }
-          )) as any;
+          const verificationData = (await hasuraClient.request(VERIFY_COMBINED_ORDERS_UNASSIGNED, {
+            order_ids: combinedOrderIds,
+          })) as any;
 
           const assignedOrders = (verificationData.Orders || []).filter(
             (o: any) => o.shopper_id !== null
@@ -2068,9 +1892,7 @@ export default async function handler(
           if (assignedOrders.length > 0) {
             orderStillUnassigned = false;
             // Check if any order is assigned to this shopper
-            orderAssignedToShopper = assignedOrders.some(
-              (o: any) => o.shopper_id === user_id
-            );
+            orderAssignedToShopper = assignedOrders.some((o: any) => o.shopper_id === user_id);
 
             console.log(
               `❌ BLOCKING notification: Combined order group has ${assignedOrders.length} assigned order(s)`,
@@ -2087,26 +1909,22 @@ export default async function handler(
         } else {
           // For single orders, check the specific order
           let verificationData: any;
-          if (bestOrder.orderType === "regular") {
-            verificationData = (await hasuraClient.request(
-              VERIFY_ORDER_UNASSIGNED_REGULAR,
-              { order_id: bestOrder.id }
-            )) as any;
-          } else if (bestOrder.orderType === "reel") {
-            verificationData = (await hasuraClient.request(
-              VERIFY_ORDER_UNASSIGNED_REEL,
-              { order_id: bestOrder.id }
-            )) as any;
-          } else if (bestOrder.orderType === "restaurant") {
-            verificationData = (await hasuraClient.request(
-              VERIFY_ORDER_UNASSIGNED_RESTAURANT,
-              { order_id: bestOrder.id }
-            )) as any;
-          } else if (bestOrder.orderType === "business") {
-            verificationData = (await hasuraClient.request(
-              VERIFY_ORDER_UNASSIGNED_BUSINESS,
-              { order_id: bestOrder.id }
-            )) as any;
+          if (bestOrder.orderType === 'regular') {
+            verificationData = (await hasuraClient.request(VERIFY_ORDER_UNASSIGNED_REGULAR, {
+              order_id: bestOrder.id,
+            })) as any;
+          } else if (bestOrder.orderType === 'reel') {
+            verificationData = (await hasuraClient.request(VERIFY_ORDER_UNASSIGNED_REEL, {
+              order_id: bestOrder.id,
+            })) as any;
+          } else if (bestOrder.orderType === 'restaurant') {
+            verificationData = (await hasuraClient.request(VERIFY_ORDER_UNASSIGNED_RESTAURANT, {
+              order_id: bestOrder.id,
+            })) as any;
+          } else if (bestOrder.orderType === 'business') {
+            verificationData = (await hasuraClient.request(VERIFY_ORDER_UNASSIGNED_BUSINESS, {
+              order_id: bestOrder.id,
+            })) as any;
           }
 
           const order =
@@ -2119,16 +1937,13 @@ export default async function handler(
             orderStillUnassigned = false;
             orderAssignedToShopper = order.shopper_id === user_id;
 
-            console.log(
-              `❌ BLOCKING notification: Order ${bestOrder.id} is already assigned`,
-              {
-                orderId: bestOrder.id,
-                orderType: bestOrder.orderType,
-                assignedShopperId: order.shopper_id,
-                assignedToThisShopper: orderAssignedToShopper,
-                status: order.status,
-              }
-            );
+            console.log(`❌ BLOCKING notification: Order ${bestOrder.id} is already assigned`, {
+              orderId: bestOrder.id,
+              orderType: bestOrder.orderType,
+              assignedShopperId: order.shopper_id,
+              assignedToThisShopper: orderAssignedToShopper,
+              status: order.status,
+            });
           }
         }
 
@@ -2145,33 +1960,27 @@ export default async function handler(
           // Don't send notification - order is already assigned
           return res.status(200).json({
             success: false,
-            message: "Order is no longer available (already assigned)",
-            reason: "ORDER_ALREADY_ASSIGNED",
+            message: 'Order is no longer available (already assigned)',
+            reason: 'ORDER_ALREADY_ASSIGNED',
             orderId: bestOrder.id,
-            note: "Order was assigned between query and notification send",
+            note: 'Order was assigned between query and notification send',
           });
         }
 
         // For reel/restaurant orders: do not notify the same order again if this shopper already declined it
         let skipFcmForDeclined = false;
-        if (bestOrder.orderType === "reel") {
-          const reelDeclinedCheck = (await hasuraClient.request(
-            CHECK_SHOPPER_DECLINED_ORDER_REEL,
-            {
-              reel_order_id: bestOrder.id,
-              shopper_id: user_id,
-            }
-          )) as any;
-          if (
-            reelDeclinedCheck.order_offers &&
-            reelDeclinedCheck.order_offers.length > 0
-          ) {
+        if (bestOrder.orderType === 'reel') {
+          const reelDeclinedCheck = (await hasuraClient.request(CHECK_SHOPPER_DECLINED_ORDER_REEL, {
+            reel_order_id: bestOrder.id,
+            shopper_id: user_id,
+          })) as any;
+          if (reelDeclinedCheck.order_offers && reelDeclinedCheck.order_offers.length > 0) {
             console.log(
               `⏭️ Skipping FCM for reel order ${bestOrder.id} - shopper already declined this order (no duplicate notification)`
             );
             skipFcmForDeclined = true;
           }
-        } else if (bestOrder.orderType === "restaurant") {
+        } else if (bestOrder.orderType === 'restaurant') {
           const restaurantDeclinedCheck = (await hasuraClient.request(
             CHECK_SHOPPER_DECLINED_ORDER_RESTAURANT,
             {
@@ -2188,7 +1997,7 @@ export default async function handler(
             );
             skipFcmForDeclined = true;
           }
-        } else if (bestOrder.orderType === "business") {
+        } else if (bestOrder.orderType === 'business') {
           const businessDeclinedCheck = (await hasuraClient.request(
             CHECK_SHOPPER_DECLINED_ORDER_BUSINESS,
             {
@@ -2196,10 +2005,7 @@ export default async function handler(
               shopper_id: user_id,
             }
           )) as any;
-          if (
-            businessDeclinedCheck.order_offers &&
-            businessDeclinedCheck.order_offers.length > 0
-          ) {
+          if (businessDeclinedCheck.order_offers && businessDeclinedCheck.order_offers.length > 0) {
             console.log(
               `⏭️ Skipping FCM for business order ${bestOrder.id} - shopper already declined this order (no duplicate notification)`
             );
@@ -2234,23 +2040,21 @@ export default async function handler(
           });
 
           console.log(
-            "✅ FCM notification sent to shopper:",
+            '✅ FCM notification sent to shopper:',
             user_id,
-            "for order:",
+            'for order:',
             bestOrder.id,
-            responseOrder.isCombinedOrder
-              ? `(Combined: ${responseOrder.orderCount} stores)`
-              : "",
-            "| No time limit - waiting for explicit action"
+            responseOrder.isCombinedOrder ? `(Combined: ${responseOrder.orderCount} stores)` : '',
+            '| No time limit - waiting for explicit action'
           );
         }
       } catch (fcmError) {
-        console.error("Failed to send FCM notification:", fcmError);
+        console.error('Failed to send FCM notification:', fcmError);
         // Continue even if notification fails - shopper can still poll
       }
     } else {
       console.log(
-        "⏭️ Skipping FCM notification - extending existing offer (preventing duplicate notification)"
+        '⏭️ Skipping FCM notification - extending existing offer (preventing duplicate notification)'
       );
     }
 
@@ -2258,39 +2062,33 @@ export default async function handler(
       success: true,
       order: responseOrder,
       message: isExtendingOffer
-        ? "Offer refreshed - still waiting for shopper action"
-        : "Exclusive offer created - shopper must accept or decline",
+        ? 'Offer refreshed - still waiting for shopper action'
+        : 'Exclusive offer created - shopper must accept or decline',
       offerId: offerId,
       round: offerRound,
       expiresIn: null, // No time limit
       wasExtended: isExtendingOffer,
-      note: "Action-based system: offer stays until shopper accepts or declines",
+      note: 'Action-based system: offer stays until shopper accepts or declines',
     });
   } catch (error) {
-    console.error("=== ERROR in Smart Assignment API ===");
-    console.error("Error:", error);
-    console.error(
-      "Error message:",
-      error instanceof Error ? error.message : String(error)
-    );
-    console.error(
-      "Error stack:",
-      error instanceof Error ? error.stack : "No stack trace"
-    );
+    console.error('=== ERROR in Smart Assignment API ===');
+    console.error('Error:', error);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
 
-    logger.error("Error in smart assignment", "SmartAssignmentAPI", {
+    logger.error('Error in smart assignment', 'SmartAssignmentAPI', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
 
-    await logErrorToSlack("SmartAssignmentAPI", error, {
+    await logErrorToSlack('SmartAssignmentAPI', error, {
       method: req.method,
       userId: (req.body as any)?.user_id,
     });
 
     return res.status(500).json({
-      error: "Failed to find order",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to find order',
+      details: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
     });
   }

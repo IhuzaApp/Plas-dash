@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { logger } from "../../../src/utils/logger";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { logger } from '../../../src/utils/logger';
 
 // GraphQL mutation to mark notifications as read
 const MARK_NOTIFICATIONS_READ = gql`
@@ -33,12 +33,9 @@ const CHECK_ORDER_ASSIGNMENT = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
@@ -47,18 +44,18 @@ export default async function handler(
   const userId = (session as any)?.user?.id;
 
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { orderId, orderType = "regular" } = req.body;
+  const { orderId, orderType = 'regular' } = req.body;
 
   if (!orderId) {
-    return res.status(400).json({ error: "Missing orderId" });
+    return res.status(400).json({ error: 'Missing orderId' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Check if order is already assigned to this shopper
@@ -71,13 +68,13 @@ export default async function handler(
     const order = regularOrder || reelOrder;
 
     if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     // Check if order is assigned to this shopper
     if (order.shopper_id !== userId) {
       return res.status(403).json({
-        error: "Order not assigned to this shopper",
+        error: 'Order not assigned to this shopper',
         success: false,
       });
     }
@@ -89,24 +86,20 @@ export default async function handler(
       order_id: notificationPattern,
     });
 
-    logger.info(
-      `Cleaned up notifications for order ${orderId}`,
-      "CleanupNotificationAPI",
-      { userId, orderId, orderType }
-    );
+    logger.info(`Cleaned up notifications for order ${orderId}`, 'CleanupNotificationAPI', {
+      userId,
+      orderId,
+      orderType,
+    });
 
     return res.status(200).json({
       success: true,
-      message: "Notifications cleaned up successfully",
+      message: 'Notifications cleaned up successfully',
       orderId,
       orderType,
     });
   } catch (error) {
-    logger.error(
-      "Error cleaning up notifications",
-      "CleanupNotificationAPI",
-      error
-    );
-    return res.status(500).json({ error: "Failed to cleanup notifications" });
+    logger.error('Error cleaning up notifications', 'CleanupNotificationAPI', error);
+    return res.status(500).json({ error: 'Failed to cleanup notifications' });
   }
 }

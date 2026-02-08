@@ -1,20 +1,17 @@
-import { NextResponse } from "next/server";
-import { hasuraClient } from "@/lib/hasuraClient";
+import { NextResponse } from 'next/server';
+import { hasuraClient } from '@/lib/hasuraClient';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q");
-  if (!query || typeof query !== "string") {
-    return NextResponse.json(
-      { message: "Query parameter is required" },
-      { status: 400 }
-    );
+  const query = searchParams.get('q');
+  if (!query || typeof query !== 'string') {
+    return NextResponse.json({ message: 'Query parameter is required' }, { status: 400 });
   }
   try {
     const searchTerm = `%${query}%`;
     const results: any[] = [];
     if (!hasuraClient) {
-      throw new Error("Hasura client not initialized");
+      throw new Error('Hasura client not initialized');
     }
     const productsQuery = `
       query SearchProducts($searchTerm: String!) {
@@ -41,7 +38,7 @@ export async function GET(request: Request) {
       ...product,
       name: product.ProductName?.name || product.name,
       description: product.ProductName?.description || product.description,
-      type: "product",
+      type: 'product',
       shop_name: product.Shop?.name,
       shop_id: product.Shop?.id,
       image_url: product.image,
@@ -64,7 +61,7 @@ export async function GET(request: Request) {
     })) as any;
     const shops = shopsResponse.Shops.map((shop: any) => ({
       ...shop,
-      type: "shop",
+      type: 'shop',
       image_url: shop.image,
     }));
     results.push(...shops);
@@ -77,19 +74,19 @@ export async function GET(request: Request) {
         const recipes = recipesData.meals.map((recipe: any) => ({
           id: recipe.idMeal,
           name: recipe.strMeal,
-          description: recipe.strCategory || "Recipe",
-          cooking_time: recipe.strArea || "Various",
+          description: recipe.strCategory || 'Recipe',
+          cooking_time: recipe.strArea || 'Various',
           image_url: recipe.strMealThumb,
-          type: "recipe",
+          type: 'recipe',
         }));
         results.push(...recipes);
       }
     } catch {
-      console.log("TheMealDB API error, skipping recipes search");
+      console.log('TheMealDB API error, skipping recipes search');
     }
     const sortedResults = results.sort((a, b) => {
-      const aName = a.name?.toLowerCase() || "";
-      const bName = b.name?.toLowerCase() || "";
+      const aName = a.name?.toLowerCase() || '';
+      const bName = b.name?.toLowerCase() || '';
       const searchLower = query.toLowerCase();
       const aExact = aName === searchLower;
       const bExact = bName === searchLower;
@@ -103,10 +100,7 @@ export async function GET(request: Request) {
     });
     return NextResponse.json({ results: sortedResults });
   } catch (error) {
-    console.error("Search error:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    console.error('Search error:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

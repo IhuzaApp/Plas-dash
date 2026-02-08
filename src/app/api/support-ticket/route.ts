@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
 import {
   sendSupportTicketToSlack,
   sendRequestEnableStoreToSlack,
   type SupportTicketPayload,
-} from "@/lib/slackSupportNotifier";
-import { logErrorToSlack } from "@/lib/slackErrorReporter";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+} from '@/lib/slackSupportNotifier';
+import { logErrorToSlack } from '@/lib/slackErrorReporter';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const ADD_TICKET_REQUEST = gql`
   mutation AddTicketRequest(
@@ -37,16 +37,16 @@ const ADD_TICKET_REQUEST = gql`
 
 type Body =
   | {
-      requestType?: "order";
+      requestType?: 'order';
       orderId: string;
       orderDisplayId?: string;
-      orderType: "regular" | "reel" | "restaurant" | "business";
+      orderType: 'regular' | 'reel' | 'restaurant' | 'business';
       storeName?: string;
       status?: string;
       message: string;
     }
   | {
-      requestType: "enable_store";
+      requestType: 'enable_store';
       storeId: string;
       storeName: string;
       message?: string;
@@ -56,23 +56,23 @@ type Body =
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   let body: Body | undefined;
   try {
     body = (await request.json()) as Body;
-    if (body.requestType === "enable_store") {
+    if (body.requestType === 'enable_store') {
       const { storeId, storeName, message, businessAccountId } = body;
       if (!storeId || !storeName?.trim()) {
         return NextResponse.json(
-          { error: "Missing required fields: storeId, storeName" },
+          { error: 'Missing required fields: storeId, storeName' },
           { status: 400 }
         );
       }
       await sendRequestEnableStoreToSlack({
         storeId,
         storeName: storeName.trim(),
-        message: typeof message === "string" ? message.trim() : undefined,
+        message: typeof message === 'string' ? message.trim() : undefined,
         userEmail: session.user?.email ?? undefined,
         userName: session.user?.name ?? undefined,
         userPhone: session.user?.phone ?? undefined,
@@ -81,17 +81,16 @@ export async function POST(request: Request) {
       });
       return NextResponse.json({ success: true });
     }
-    if (!("orderId" in body) || !("orderType" in body)) {
+    if (!('orderId' in body) || !('orderType' in body)) {
       return NextResponse.json(
-        { error: "Missing required fields: orderId, orderType, message" },
+        { error: 'Missing required fields: orderId, orderType, message' },
         { status: 400 }
       );
     }
-    const { orderId, orderDisplayId, orderType, storeName, status, message } =
-      body;
-    if (!orderId || !orderType || typeof message !== "string") {
+    const { orderId, orderDisplayId, orderType, storeName, status, message } = body;
+    if (!orderId || !orderType || typeof message !== 'string') {
       return NextResponse.json(
-        { error: "Missing required fields: orderId, orderType, message" },
+        { error: 'Missing required fields: orderId, orderType, message' },
         { status: 400 }
       );
     }
@@ -105,11 +104,11 @@ export async function POST(request: Request) {
           returning: Array<{ ticket_num: number }>;
         };
       }>(ADD_TICKET_REQUEST, {
-        priority: "critical",
-        status: "open",
+        priority: 'critical',
+        status: 'open',
         subject,
-        user_id: session.user?.id ?? "",
-        category: "Customer",
+        user_id: session.user?.id ?? '',
+        category: 'Customer',
       });
       ticketNum = result?.insert_tickets?.returning?.[0]?.ticket_num;
     }
@@ -128,16 +127,12 @@ export async function POST(request: Request) {
     await sendSupportTicketToSlack(slackPayload);
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Support ticket error:", err);
-    await logErrorToSlack("api/support-ticket", err as Error, {
-      orderId: body && "orderId" in body ? body.orderId : undefined,
-      orderDisplayId:
-        body && "orderDisplayId" in body ? body.orderDisplayId : undefined,
+    console.error('Support ticket error:', err);
+    await logErrorToSlack('api/support-ticket', err as Error, {
+      orderId: body && 'orderId' in body ? body.orderId : undefined,
+      orderDisplayId: body && 'orderDisplayId' in body ? body.orderDisplayId : undefined,
       userId: session?.user?.id,
     });
-    return NextResponse.json(
-      { error: "Failed to submit support ticket" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to submit support ticket' }, { status: 500 });
   }
 }

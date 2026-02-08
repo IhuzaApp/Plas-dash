@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_ALL_BUSINESS_ORDERS = gql`
   query GetAllBusinessProductOrders {
@@ -120,12 +120,12 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<{
@@ -207,13 +207,13 @@ export async function GET() {
       }>;
     }>(GET_ALL_BUSINESS_ORDERS);
 
-    const orders = (data.businessProductOrders || []).map((o) => {
+    const orders = (data.businessProductOrders || []).map(o => {
       const nested = o.shopper?.shopper;
       return {
         id: o.id,
         OrderID: o.OrderID ?? o.id,
-        type: "business" as const,
-        status: o.status ?? "PENDING",
+        type: 'business' as const,
+        status: o.status ?? 'PENDING',
         total: o.total,
         created_at: o.created_at,
         updated_at: o.created_at,
@@ -236,9 +236,9 @@ export async function GET() {
         shopper: o.shopper
           ? {
               id: o.shopper.id,
-              name: (o.shopper as any).name ?? nested?.full_name ?? "",
-              phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? "",
-              email: (o.shopper as any).email ?? "",
+              name: (o.shopper as any).name ?? nested?.full_name ?? '',
+              phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
+              email: (o.shopper as any).email ?? '',
             }
           : undefined,
       };
@@ -246,10 +246,7 @@ export async function GET() {
 
     return NextResponse.json({ orders });
   } catch (error) {
-    console.error("Error fetching business orders", error);
-    return NextResponse.json(
-      { error: "Failed to fetch business orders" },
-      { status: 500 }
-    );
+    console.error('Error fetching business orders', error);
+    return NextResponse.json({ error: 'Failed to fetch business orders' }, { status: 500 });
   }
 }

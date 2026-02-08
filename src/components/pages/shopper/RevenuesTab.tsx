@@ -25,7 +25,15 @@ interface RevenuesTabProps {
   ) => React.ReactNode;
 }
 
-function parseProducts(products: any): Array<{ product?: string; name?: string; quantity?: number; price?: number; final_price?: number }> {
+function parseProducts(
+  products: any
+): Array<{
+  product?: string;
+  name?: string;
+  quantity?: number;
+  price?: number;
+  final_price?: number;
+}> {
   if (products == null) return [];
   if (Array.isArray(products)) return products;
   if (typeof products === 'string') {
@@ -47,13 +55,18 @@ function getOrderIdAndSource(revenue: any): { orderId: string; source: string } 
 
   if (order?.OrderID != null) return { orderId: String(order.OrderID), source: 'Regular' };
   if (reelOrder?.OrderID != null) return { orderId: String(reelOrder.OrderID), source: 'Reel' };
-  if (restaurantOrder?.OrderID != null) return { orderId: String(restaurantOrder.OrderID), source: 'Restaurant' };
-  if (businessOrder?.OrderID != null) return { orderId: String(businessOrder.OrderID), source: 'Business' };
+  if (restaurantOrder?.OrderID != null)
+    return { orderId: String(restaurantOrder.OrderID), source: 'Restaurant' };
+  if (businessOrder?.OrderID != null)
+    return { orderId: String(businessOrder.OrderID), source: 'Business' };
   // Fallback when nested relations are missing: use FK ids and infer source
   if (revenue.order_id) return { orderId: String(revenue.order_id).slice(0, 8), source: 'Regular' };
-  if (revenue.reel_order_id) return { orderId: String(revenue.reel_order_id).slice(0, 8), source: 'Reel' };
-  if (revenue.restaurant_order_id) return { orderId: String(revenue.restaurant_order_id).slice(0, 8), source: 'Restaurant' };
-  if (revenue.businessOrder_Id) return { orderId: String(revenue.businessOrder_Id).slice(0, 8), source: 'Business' };
+  if (revenue.reel_order_id)
+    return { orderId: String(revenue.reel_order_id).slice(0, 8), source: 'Reel' };
+  if (revenue.restaurant_order_id)
+    return { orderId: String(revenue.restaurant_order_id).slice(0, 8), source: 'Restaurant' };
+  if (revenue.businessOrder_Id)
+    return { orderId: String(revenue.businessOrder_Id).slice(0, 8), source: 'Business' };
   return { orderId: '—', source: revenue.type || '—' };
 }
 
@@ -104,8 +117,14 @@ const RevenuesTab: React.FC<RevenuesTabProps> = ({
                         {revenue.type || '—'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-medium">{formatCurrency(String(revenue.amount))}</TableCell>
-                    <TableCell>{revenue.commission_percentage != null ? `${revenue.commission_percentage}%` : '—'}</TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(String(revenue.amount))}
+                    </TableCell>
+                    <TableCell>
+                      {revenue.commission_percentage != null
+                        ? `${revenue.commission_percentage}%`
+                        : '—'}
+                    </TableCell>
                     <TableCell className="max-w-sm">
                       {items.length > 0 ? (
                         <ul className="list-disc list-inside space-y-0.5 text-xs">
@@ -125,7 +144,11 @@ const RevenuesTab: React.FC<RevenuesTabProps> = ({
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell>{revenue.created_at ? format(new Date(revenue.created_at), 'MMM d, yyyy') : '—'}</TableCell>
+                    <TableCell>
+                      {revenue.created_at
+                        ? format(new Date(revenue.created_at), 'MMM d, yyyy')
+                        : '—'}
+                    </TableCell>
                   </TableRow>
                 );
               })

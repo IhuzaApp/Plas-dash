@@ -1,18 +1,13 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_BUSINESS_RFQS = gql`
   query GetBusinessRFQs($user_id: uuid, $business_id: uuid) {
     bussines_RFQ(
-      where: {
-        _and: [
-          { user_id: { _eq: $user_id } }
-          { business_id: { _eq: $business_id } }
-        ]
-      }
+      where: { _and: [{ user_id: { _eq: $user_id } }, { business_id: { _eq: $business_id } }] }
       order_by: { created_at: desc }
     ) {
       id
@@ -54,27 +49,20 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
@@ -94,10 +82,7 @@ export default async function handler(
       }>(CHECK_BUSINESS_ACCOUNT, {
         user_id: user_id,
       });
-      if (
-        accountResult.business_accounts &&
-        accountResult.business_accounts.length > 0
-      ) {
+      if (accountResult.business_accounts && accountResult.business_accounts.length > 0) {
         business_id = accountResult.business_accounts[0].id;
       }
     } catch (error) {
@@ -117,12 +102,7 @@ export default async function handler(
       const GET_RFQS_BY_USER = gql`
         query GetRFQsByUser($user_id: uuid!) {
           bussines_RFQ(
-            where: {
-              _and: [
-                { user_id: { _eq: $user_id } }
-                { business_id: { _is_null: true } }
-              ]
-            }
+            where: { _and: [{ user_id: { _eq: $user_id } }, { business_id: { _is_null: true } }] }
             order_by: { created_at: desc }
           ) {
             id
@@ -214,7 +194,7 @@ export default async function handler(
     });
   } catch (error: any) {
     return res.status(500).json({
-      error: "Failed to fetch business RFQs",
+      error: 'Failed to fetch business RFQs',
       message: error.message,
     });
   }

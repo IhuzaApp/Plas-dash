@@ -1,8 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { Client as GoogleMapsClient } from "@googlemaps/google-maps-services-js";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { Client as GoogleMapsClient } from '@googlemaps/google-maps-services-js';
+import { logger } from '../../../src/utils/logger';
 
 const googleMapsClient = new GoogleMapsClient({});
 
@@ -151,18 +151,15 @@ async function calculateDistance(
 
     return response.data.rows[0].elements[0].duration.value / 60; // Convert seconds to minutes
   } catch (error) {
-    console.error("Error calculating distance:", error);
+    console.error('Error calculating distance:', error);
     return Infinity;
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get batches created in the last 10 minutes (NEW orders only)
@@ -187,38 +184,42 @@ export default async function handler(
 
     // Get current time and day for schedule checking
     const now = new Date();
-    const currentTime = now.toTimeString().split(" ")[0] + "+00:00"; // HH:MM:SS+00:00 format with timezone
+    const currentTime = now.toTimeString().split(' ')[0] + '+00:00'; // HH:MM:SS+00:00 format with timezone
     const currentDay = now.getDay() === 0 ? 7 : now.getDay(); // Sunday = 7
 
-    const { Shopper_Availability: availableDashers } =
-      await hasuraClient.request<{ Shopper_Availability: Dasher[] }>(
-        GET_AVAILABLE_DASHERS,
-        {
-          current_time: currentTime,
-          current_day: currentDay,
-        }
-      );
+    const { Shopper_Availability: availableDashers } = await hasuraClient.request<{
+      Shopper_Availability: Dasher[];
+    }>(GET_AVAILABLE_DASHERS, {
+      current_time: currentTime,
+      current_day: currentDay,
+    });
 
     // Group regular batches by shop
-    const batchesByShop = availableBatches.reduce((acc, batch) => {
-      if (!acc[batch.shop_id]) {
-        acc[batch.shop_id] = [];
-      }
-      acc[batch.shop_id].push(batch);
-      return acc;
-    }, {} as Record<string, Batch[]>);
+    const batchesByShop = availableBatches.reduce(
+      (acc, batch) => {
+        if (!acc[batch.shop_id]) {
+          acc[batch.shop_id] = [];
+        }
+        acc[batch.shop_id].push(batch);
+        return acc;
+      },
+      {} as Record<string, Batch[]>
+    );
 
     // Group reel batches by creator location (using customer address as pickup point)
-    const reelBatchesByLocation = availableReelBatches.reduce((acc, batch) => {
-      const locationKey = `${batch.address.latitude.toFixed(
-        4
-      )},${batch.address.longitude.toFixed(4)}`;
-      if (!acc[locationKey]) {
-        acc[locationKey] = [];
-      }
-      acc[locationKey].push(batch);
-      return acc;
-    }, {} as Record<string, ReelBatch[]>);
+    const reelBatchesByLocation = availableReelBatches.reduce(
+      (acc, batch) => {
+        const locationKey = `${batch.address.latitude.toFixed(
+          4
+        )},${batch.address.longitude.toFixed(4)}`;
+        if (!acc[locationKey]) {
+          acc[locationKey] = [];
+        }
+        acc[locationKey].push(batch);
+        return acc;
+      },
+      {} as Record<string, ReelBatch[]>
+    );
 
     // Get notification settings for all dashers
     const GET_NOTIFICATION_SETTINGS = gql`
@@ -234,22 +235,18 @@ export default async function handler(
       }
     `;
 
-    const dasherIds = availableDashers.map((d) => d.user_id);
-    const settingsResponse = (await hasuraClient.request(
-      GET_NOTIFICATION_SETTINGS,
-      {
-        user_ids: dasherIds,
-      }
-    )) as any;
+    const dasherIds = availableDashers.map(d => d.user_id);
+    const settingsResponse = (await hasuraClient.request(GET_NOTIFICATION_SETTINGS, {
+      user_ids: dasherIds,
+    })) as any;
 
-    const settingsByUser =
-      settingsResponse.shopper_notification_settings.reduce(
-        (acc: any, setting: any) => {
-          acc[setting.user_id] = setting;
-          return acc;
-        },
-        {}
-      );
+    const settingsByUser = settingsResponse.shopper_notification_settings.reduce(
+      (acc: any, setting: any) => {
+        acc[setting.user_id] = setting;
+        return acc;
+      },
+      {}
+    );
 
     // For each dasher, find nearby shops with available batches
     const notificationObjects: Array<{
@@ -260,7 +257,7 @@ export default async function handler(
     }> = [];
 
     await Promise.all(
-      availableDashers.map(async (dasher) => {
+      availableDashers.map(async dasher => {
         // Get dasher's notification settings
         const dasherSettings = settingsByUser[dasher.user_id] || {
           use_live_location: true,
@@ -272,7 +269,7 @@ export default async function handler(
             system: true,
           },
           sound_settings: { enabled: true, volume: 0.8 },
-          max_distance: "10",
+          max_distance: '10',
         };
 
         // Check if notifications are enabled for this dasher
@@ -282,7 +279,7 @@ export default async function handler(
         ) {
           logger.info(
             `Skipping notifications for dasher ${dasher.user_id} - notifications disabled`,
-            "NotifyNearbyDashers"
+            'NotifyNearbyDashers'
           );
           return;
         }
@@ -296,16 +293,13 @@ export default async function handler(
 
         if (dasherSettings.use_live_location) {
           locationsToCheck.push({
-            name: "Live Location",
+            name: 'Live Location',
             latitude: dasher.last_known_latitude,
             longitude: dasher.last_known_longitude,
           });
         }
 
-        if (
-          !dasherSettings.use_live_location &&
-          dasherSettings.custom_locations?.length > 0
-        ) {
+        if (!dasherSettings.use_live_location && dasherSettings.custom_locations?.length > 0) {
           dasherSettings.custom_locations.forEach((location: any) => {
             locationsToCheck.push({
               name: location.name,
@@ -318,7 +312,7 @@ export default async function handler(
         if (locationsToCheck.length === 0) {
           logger.info(
             `No locations configured for dasher ${dasher.user_id}`,
-            "NotifyNearbyDashers"
+            'NotifyNearbyDashers'
           );
           return;
         }
@@ -327,7 +321,7 @@ export default async function handler(
         const nearbyReelBatches: ReelBatch[] = [];
 
         // Get dasher's max distance from settings
-        const maxDistanceKm = parseFloat(dasherSettings.max_distance || "10");
+        const maxDistanceKm = parseFloat(dasherSettings.max_distance || '10');
         const maxDistanceMinutes = maxDistanceKm * 2; // Rough conversion: 1km ≈ 2 minutes
 
         // Check each location sequentially for regular orders
@@ -382,7 +376,7 @@ export default async function handler(
         }
 
         // Create notification message combining both types of orders
-        let notificationMessage = "";
+        let notificationMessage = '';
         let hasRegularBatches = nearbyBatches.length > 0;
         let hasReelBatches = nearbyReelBatches.length > 0;
 
@@ -407,38 +401,34 @@ export default async function handler(
 
         if (hasRegularBatches && hasReelBatches) {
           // Both types of orders available
-          const uniqueShops = Array.from(
-            new Set(nearbyBatches.map((batch) => batch.Shops.name))
-          );
+          const uniqueShops = Array.from(new Set(nearbyBatches.map(batch => batch.Shops.name)));
           const uniqueReelCreators = Array.from(
-            new Set(nearbyReelBatches.map((batch) => batch.user.name))
+            new Set(nearbyReelBatches.map(batch => batch.user.name))
           );
           notificationMessage = `${
             nearbyBatches.length
-          } regular batch(es) at ${uniqueShops.join(", ")} and ${
+          } regular batch(es) at ${uniqueShops.join(', ')} and ${
             nearbyReelBatches.length
           } reel order(s) from ${uniqueReelCreators.join(
-            ", "
+            ', '
           )} - 📦 ${totalItems} items • 💰 RWF${totalEarnings}`;
         } else if (hasRegularBatches) {
           // Only regular orders
-          const uniqueShops = Array.from(
-            new Set(nearbyBatches.map((batch) => batch.Shops.name))
-          );
+          const uniqueShops = Array.from(new Set(nearbyBatches.map(batch => batch.Shops.name)));
           notificationMessage = `${
             nearbyBatches.length
           } new batch(es) available at ${uniqueShops.join(
-            ", "
+            ', '
           )} - 📦 ${totalItems} items • 💰 RWF${totalEarnings}`;
         } else if (hasReelBatches) {
           // Only reel orders
           const uniqueReelCreators = Array.from(
-            new Set(nearbyReelBatches.map((batch) => batch.user.name))
+            new Set(nearbyReelBatches.map(batch => batch.user.name))
           );
           notificationMessage = `${
             nearbyReelBatches.length
           } new reel order(s) available from ${uniqueReelCreators.join(
-            ", "
+            ', '
           )} - 📦 ${totalItems} items • 💰 RWF${totalEarnings}`;
         }
 
@@ -447,7 +437,7 @@ export default async function handler(
           notificationObjects.push({
             user_id: dasher.user_id,
             message: notificationMessage,
-            type: "NEW_BATCHES",
+            type: 'NEW_BATCHES',
             is_read: false,
           });
         }
@@ -468,7 +458,7 @@ export default async function handler(
       reelBatchesCount: availableReelBatches.length,
     });
   } catch (error) {
-    console.error("Error processing batch notifications:", error);
-    res.status(500).json({ error: "Failed to process batch notifications" });
+    console.error('Error processing batch notifications:', error);
+    res.status(500).json({ error: 'Failed to process batch notifications' });
   }
 }

@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const ACCEPT_CONTRACT = gql`
   mutation AcceptContract(
@@ -32,10 +32,7 @@ const ACCEPT_CONTRACT = gql`
 
 const UPDATE_QUOTE_STATUS = gql`
   mutation UpdateQuoteStatus($quoteId: uuid!, $status: String!) {
-    update_BusinessQoute_by_pk(
-      pk_columns: { id: $quoteId }
-      _set: { status: $status }
-    ) {
+    update_BusinessQoute_by_pk(pk_columns: { id: $quoteId }, _set: { status: $status }) {
       id
       status
     }
@@ -65,41 +62,34 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const { contractId, supplierSignature, supplierPhoto } = req.body;
 
     if (!contractId) {
-      return res.status(400).json({ error: "Contract ID is required" });
+      return res.status(400).json({ error: 'Contract ID is required' });
     }
 
     if (!supplierSignature) {
-      return res.status(400).json({ error: "Supplier signature is required" });
+      return res.status(400).json({ error: 'Supplier signature is required' });
     }
 
     if (!supplierPhoto) {
-      return res.status(400).json({ error: "Supplier photo is required" });
+      return res.status(400).json({ error: 'Supplier photo is required' });
     }
 
     // Get contract to find quote ID
@@ -114,16 +104,15 @@ export default async function handler(
     });
 
     if (!contractResult.BusinessContracts_by_pk) {
-      return res.status(404).json({ error: "Contract not found" });
+      return res.status(404).json({ error: 'Contract not found' });
     }
 
     const contract = contractResult.BusinessContracts_by_pk;
 
-    if (contract.status !== "waiting_for_supplier") {
+    if (contract.status !== 'waiting_for_supplier') {
       return res.status(400).json({
-        error: "Contract cannot be accepted",
-        message:
-          "Only contracts with status 'waiting_for_supplier' can be accepted",
+        error: 'Contract cannot be accepted',
+        message: "Only contracts with status 'waiting_for_supplier' can be accepted",
       });
     }
 
@@ -139,14 +128,14 @@ export default async function handler(
       } | null;
     }>(ACCEPT_CONTRACT, {
       contractId: contractId,
-      status: "active",
+      status: 'active',
       supplierSignature: supplierSignature || null,
       supplierPhoto: supplierPhoto || null,
       updateOn: currentTimestamp,
     });
 
     if (!updateResult.update_BusinessContracts_by_pk) {
-      return res.status(500).json({ error: "Failed to update contract" });
+      return res.status(500).json({ error: 'Failed to update contract' });
     }
 
     // Update quote status to "accepted" if quote ID exists
@@ -159,23 +148,23 @@ export default async function handler(
           } | null;
         }>(UPDATE_QUOTE_STATUS, {
           quoteId: contract.rfq_response_id,
-          status: "accepted",
+          status: 'accepted',
         });
       } catch (error) {
-        console.error("Error updating quote status:", error);
+        console.error('Error updating quote status:', error);
         // Don't fail the request if quote update fails
       }
     }
 
     return res.status(200).json({
       success: true,
-      message: "Contract accepted successfully",
+      message: 'Contract accepted successfully',
       contract: updateResult.update_BusinessContracts_by_pk,
     });
   } catch (error: any) {
-    console.error("Error accepting contract:", error);
+    console.error('Error accepting contract:', error);
     return res.status(500).json({
-      error: "Failed to accept contract",
+      error: 'Failed to accept contract',
       message: error.message,
     });
   }

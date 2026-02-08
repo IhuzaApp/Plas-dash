@@ -13,12 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, CheckCircle2, XCircle, ImageIcon, Eye } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { usePendingWithdrawRequests, useSystemConfig } from '@/hooks/useHasuraApi';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -59,9 +54,7 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
         throw new Error(result.error || 'Failed to update');
       }
       toast.success(
-        status === 'approved'
-          ? 'Withdrawal approved successfully.'
-          : 'Withdrawal rejected.'
+        status === 'approved' ? 'Withdrawal approved successfully.' : 'Withdrawal rejected.'
       );
       refetch();
     } catch (err: any) {
@@ -104,17 +97,12 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                 <ScrollArea className="h-[55vh] pr-2">
                   <div className="space-y-3">
                     {requests.map((req: any) => {
-                      const wallet = Array.isArray(req.Wallets)
-                        ? req.Wallets[0]
-                        : req.Wallets;
+                      const wallet = Array.isArray(req.Wallets) ? req.Wallets[0] : req.Wallets;
                       const user = wallet?.User;
                       const busy = actionId === req.id;
 
                       return (
-                        <div
-                          key={req.id}
-                          className="rounded-lg border p-4 space-y-3"
-                        >
+                        <div key={req.id} className="rounded-lg border p-4 space-y-3">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-3 min-w-0">
                               {user?.profile_picture ? (
@@ -157,9 +145,7 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                             <div>
                               <span className="text-muted-foreground">Wallet balance</span>
                               <div>
-                                {wallet
-                                  ? formatCurrency(wallet.available_balance || '0')
-                                  : '—'}
+                                {wallet ? formatCurrency(wallet.available_balance || '0') : '—'}
                               </div>
                             </div>
                             <div>
@@ -180,9 +166,7 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() =>
-                                    handleViewProof(req.verification_image)
-                                  }
+                                  onClick={() => handleViewProof(req.verification_image)}
                                   className="text-muted-foreground"
                                 >
                                   <Eye className="h-4 w-4 mr-1" /> View proof

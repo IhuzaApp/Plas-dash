@@ -1,9 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../api/auth/[...nextauth]";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../api/auth/[...nextauth]';
+import { logger } from '../../../src/utils/logger';
 
 const UPDATE_SHOPPER_ADDRESS = gql`
   mutation UpdateShopperAddress($shopper_id: uuid!, $address: String!) {
@@ -32,32 +32,26 @@ interface UpdateShopperAddressResult {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
     const { shopper_id, address } = req.body;
 
     if (!shopper_id || !address) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client not initialized");
+      throw new Error('Hasura client not initialized');
     }
 
-    const result = await hasuraClient.request<UpdateShopperAddressResult>(
-      UPDATE_SHOPPER_ADDRESS,
-      {
-        shopper_id,
-        address,
-      }
-    );
+    const result = await hasuraClient.request<UpdateShopperAddressResult>(UPDATE_SHOPPER_ADDRESS, {
+      shopper_id,
+      address,
+    });
 
     const shopper = result.update_shoppers_by_pk;
 
@@ -66,9 +60,9 @@ export default async function handler(
     });
   } catch (error) {
     logger.error(
-      "Error updating shopper address:",
+      'Error updating shopper address:',
       error instanceof Error ? error.message : String(error)
     );
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 }

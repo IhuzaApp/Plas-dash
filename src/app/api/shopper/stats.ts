@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
-import { gql } from "graphql-request";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { logger } from "../../../src/utils/logger";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]';
+import { gql } from 'graphql-request';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { logger } from '../../../src/utils/logger';
 
 interface ShopperStatsResponse {
   totalDeliveries: number;
@@ -43,7 +43,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user) {
-      return res.status(401).json({ error: "Not authenticated" });
+      return res.status(401).json({ error: 'Not authenticated' });
     }
 
     const userId = session.user.id;
@@ -59,10 +59,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         }
         # Get completed deliveries
         CompletedOrders: Orders_aggregate(
-          where: {
-            shopper_id: { _eq: $shopperId }
-            status: { _eq: "delivered" }
-          }
+          where: { shopper_id: { _eq: $shopperId }, status: { _eq: "delivered" } }
         ) {
           aggregate {
             count
@@ -88,7 +85,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     `;
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<GraphQLResponse>(query, {
@@ -101,9 +98,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     // Calculate completion rate
     const completedDeliveries = data.CompletedOrders.aggregate.count || 0;
     const completionRate =
-      totalDeliveries > 0
-        ? Math.round((completedDeliveries / totalDeliveries) * 100)
-        : 0;
+      totalDeliveries > 0 ? Math.round((completedDeliveries / totalDeliveries) * 100) : 0;
 
     // Calculate average rating
     const averageRating = data.Ratings_aggregate.aggregate.avg?.rating || 0;
@@ -113,8 +108,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     let totalEarnings = 0;
     if (data.Orders && Array.isArray(data.Orders)) {
       totalEarnings = data.Orders.reduce((sum: number, order) => {
-        const serviceFee = parseFloat(order.service_fee || "0");
-        const deliveryFee = parseFloat(order.delivery_fee || "0");
+        const serviceFee = parseFloat(order.service_fee || '0');
+        const deliveryFee = parseFloat(order.delivery_fee || '0');
         const orderTotal = serviceFee + deliveryFee;
         return sum + orderTotal;
       }, 0);
@@ -129,10 +124,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     return res.status(200).json(response);
   } catch (error: any) {
-    logger.error("Error fetching shopper stats:", error);
-    return res
-      .status(500)
-      .json({ error: error.message || "Failed to fetch shopper stats" });
+    logger.error('Error fetching shopper stats:', error);
+    return res.status(500).json({ error: error.message || 'Failed to fetch shopper stats' });
   }
 };
 

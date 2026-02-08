@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { gql } from "graphql-request";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { gql } from 'graphql-request';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
 
 // GraphQL mutation to create refund record
 const CREATE_REFUND = gql`
@@ -86,12 +86,9 @@ interface OrderDetailsResponse {
   } | null;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -99,7 +96,7 @@ export default async function handler(
     const session = await getServerSession(req, res, authOptions);
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Get request data
@@ -107,21 +104,17 @@ export default async function handler(
 
     // Validate required fields
     if (!orderId || refundAmount === undefined) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
     // Format refund amount to ensure consistent handling
     const formattedRefundAmount = parseFloat(Number(refundAmount).toFixed(2));
 
     if (formattedRefundAmount <= 0) {
-      return res
-        .status(400)
-        .json({ error: "Refund amount must be greater than 0" });
+      return res.status(400).json({ error: 'Refund amount must be greater than 0' });
     }
 
-    console.log(
-      `Creating refund record for order ${orderId}, amount: ${formattedRefundAmount}`
-    );
+    console.log(`Creating refund record for order ${orderId}, amount: ${formattedRefundAmount}`);
 
     // If no custom reason is provided, get order details to generate a detailed reason
     let detailedReason = reason;
@@ -129,27 +122,24 @@ export default async function handler(
 
     if (!detailedReason && hasuraClient) {
       // Get order details to create a detailed refund reason
-      const orderResponse = await hasuraClient.request<OrderDetailsResponse>(
-        GET_ORDER_DETAILS,
-        {
-          order_id: orderId,
-        }
-      );
+      const orderResponse = await hasuraClient.request<OrderDetailsResponse>(GET_ORDER_DETAILS, {
+        order_id: orderId,
+      });
 
       const order = orderResponse.Orders_by_pk;
 
       if (!order) {
-        return res.status(404).json({ error: "Order not found" });
+        return res.status(404).json({ error: 'Order not found' });
       }
 
       userId = order.user_id;
 
       // Get shop name
-      const shopName = order.Shop?.name || "Unknown Shop";
+      const shopName = order.Shop?.name || 'Unknown Shop';
 
       // Get information about found and not found items
-      const foundItems = order.Order_Items.filter((item) => item.found);
-      const notFoundItems = order.Order_Items.filter((item) => !item.found);
+      const foundItems = order.Order_Items.filter(item => item.found);
+      const notFoundItems = order.Order_Items.filter(item => !item.found);
 
       // Calculate original total
       const originalTotal = parseFloat(order.total);
@@ -160,23 +150,18 @@ export default async function handler(
       if (foundItems.length > 0) {
         detailedReason += `Found items: ${foundItems
           .map(
-            (item) =>
-              `${item.Product.ProductName?.name || "Unknown Product"} (${
+            item =>
+              `${item.Product.ProductName?.name || 'Unknown Product'} (${
                 item.foundQuantity || item.quantity
               })`
           )
-          .join(", ")}. `;
+          .join(', ')}. `;
       }
 
       if (notFoundItems.length > 0) {
         detailedReason += `Not found items: ${notFoundItems
-          .map(
-            (item) =>
-              `${item.Product.ProductName?.name || "Unknown Product"} (${
-                item.quantity
-              })`
-          )
-          .join(", ")}.`;
+          .map(item => `${item.Product.ProductName?.name || 'Unknown Product'} (${item.quantity})`)
+          .join(', ')}.`;
       }
 
       detailedReason += ` Original total: ${originalTotal}, found items total: ${
@@ -186,16 +171,16 @@ export default async function handler(
 
     // Check if hasuraClient is available
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Database client not available" });
+      return res.status(500).json({ error: 'Database client not available' });
     }
 
     // Create refund record
     const refundRecord = {
       order_id: orderId,
       amount: formattedRefundAmount.toString(),
-      status: "pending",
-      reason: detailedReason || "Refund for items not found during shopping",
-      generated_by: "System",
+      status: 'pending',
+      reason: detailedReason || 'Refund for items not found during shopping',
+      generated_by: 'System',
       user_id: userId,
       paid: false,
     };
@@ -206,14 +191,13 @@ export default async function handler(
 
     return res.status(201).json({
       success: true,
-      message: "Refund record created successfully",
+      message: 'Refund record created successfully',
       refund: response.insert_Refunds_one,
     });
   } catch (error) {
-    console.error("Error creating refund record:", error);
+    console.error('Error creating refund record:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
     });
   }
 }

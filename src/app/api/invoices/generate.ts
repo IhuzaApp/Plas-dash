@@ -1,14 +1,14 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
-import { gql } from "graphql-request";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]';
+import { gql } from 'graphql-request';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
 import {
   getTaxRate,
   calculateTaxAmount,
   calculateSubtotalFromTotal,
-} from "../../../src/lib/getTaxRate";
-import { logErrorToSlack } from "../../../src/lib/slackErrorReporter";
+} from '../../../src/lib/getTaxRate';
+import { logErrorToSlack } from '../../../src/lib/slackErrorReporter';
 
 // GraphQL query to get regular order details for invoice
 const GET_ORDER_DETAILS_FOR_INVOICE = gql`
@@ -357,13 +357,10 @@ interface AddInvoiceResult {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow POST method
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -371,40 +368,35 @@ export default async function handler(
     const session = await getServerSession(req, res, authOptions);
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const {
-      orderId,
-      orderType = "regular",
-      invoiceProofPhoto,
-      foundItemsTotal,
-    } = req.body;
+    const { orderId, orderType = 'regular', invoiceProofPhoto, foundItemsTotal } = req.body;
 
     // Validate required fields
     if (!orderId) {
-      return res.status(400).json({ error: "Missing required field: orderId" });
+      return res.status(400).json({ error: 'Missing required field: orderId' });
     }
 
     // Handle invoice proof photo - store directly as image data
-    let invoiceProofData = "";
+    let invoiceProofData = '';
     if (invoiceProofPhoto) {
       try {
         // Store the image data directly in the database instead of uploading to Cloudinary
         invoiceProofData = invoiceProofPhoto;
       } catch (error) {
-        console.error("Error processing invoice proof:", error);
+        console.error('Error processing invoice proof:', error);
         // Continue without the proof data rather than failing the entire invoice
       }
     }
 
     // Check if hasuraClient is available (it should be on server side)
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Database client not available" });
+      return res.status(500).json({ error: 'Database client not available' });
     }
 
-    const isReelOrder = orderType === "reel";
-    const isRestaurantOrder = orderType === "restaurant";
+    const isReelOrder = orderType === 'reel';
+    const isRestaurantOrder = orderType === 'restaurant';
 
     // Get order details for invoice based on order type
     let orderDetails: any;
@@ -424,22 +416,19 @@ export default async function handler(
           }
         );
       } else {
-        orderDetails = await hasuraClient.request<OrderDetails>(
-          GET_ORDER_DETAILS_FOR_INVOICE,
-          {
-            order_id: orderId,
-          }
-        );
+        orderDetails = await hasuraClient.request<OrderDetails>(GET_ORDER_DETAILS_FOR_INVOICE, {
+          order_id: orderId,
+        });
       }
     } catch (error) {
-      console.error("Error fetching order details for invoice:", error);
-      await logErrorToSlack("GenerateInvoiceAPI:getOrderDetails", error, {
+      console.error('Error fetching order details for invoice:', error);
+      await logErrorToSlack('GenerateInvoiceAPI:getOrderDetails', error, {
         orderId,
         orderType,
         userId: session.user.id,
       });
       return res.status(500).json({
-        error: "Failed to fetch order details",
+        error: 'Failed to fetch order details',
         details: error instanceof Error ? error.message : String(error),
       });
     }
@@ -447,15 +436,15 @@ export default async function handler(
     const order = isReelOrder
       ? orderDetails.reel_orders_by_pk
       : isRestaurantOrder
-      ? orderDetails.restaurant_orders_by_pk
-      : orderDetails.Orders_by_pk;
+        ? orderDetails.restaurant_orders_by_pk
+        : orderDetails.Orders_by_pk;
 
     if (!order) {
-      console.warn("Order not found for invoice generation:", {
+      console.warn('Order not found for invoice generation:', {
         orderId,
         orderType,
       });
-      return res.status(404).json({ error: "Order not found" });
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     // Verify the user is authorized to access this order (either as customer or shopper)
@@ -463,17 +452,15 @@ export default async function handler(
     const isCustomer = isReelOrder
       ? order.User.id === session.user.id
       : isRestaurantOrder
-      ? order.User.id === session.user.id
-      : order.orderedBy.id === session.user.id;
+        ? order.User.id === session.user.id
+        : order.orderedBy.id === session.user.id;
 
     if (!isShopper && !isCustomer) {
-      console.warn("Unauthorized invoice request:", {
+      console.warn('Unauthorized invoice request:', {
         orderId,
         userId: session.user.id,
       });
-      return res
-        .status(403)
-        .json({ error: "Not authorized to access this order" });
+      return res.status(403).json({ error: 'Not authorized to access this order' });
     }
 
     // Calculate totals based on order type
@@ -487,8 +474,8 @@ export default async function handler(
       const reel = order.Reel;
 
       itemsTotal = parseFloat(reel.Price);
-      shopName = reel.Restaurant?.name || "Reel Order";
-      shopAddress = reel.Restaurant?.location || "From Reel Creator";
+      shopName = reel.Restaurant?.name || 'Reel Order';
+      shopAddress = reel.Restaurant?.location || 'From Reel Creator';
 
       // Create invoice items for reel orders
       invoiceItems = [
@@ -498,7 +485,7 @@ export default async function handler(
           quantity: 1,
           unit_price: parseFloat(reel.Price),
           total: parseFloat(reel.Price),
-          unit: "item",
+          unit: 'item',
           description: reel.description,
           type: reel.type,
         },
@@ -520,8 +507,8 @@ export default async function handler(
         const product = menu?.ProductNames || null;
         const dish = menu?.dishes || null;
 
-        const name = product?.name || dish?.name || "Dish";
-        const description = product?.description || dish?.description || "";
+        const name = product?.name || dish?.name || 'Dish';
+        const description = product?.description || dish?.description || '';
 
         return {
           id: dishOrder.id,
@@ -529,7 +516,7 @@ export default async function handler(
           quantity: dishOrder.quantity,
           unit_price: parseFloat(dishOrder.price),
           total: parseFloat(dishOrder.price) * dishOrder.quantity,
-          unit: "dish",
+          unit: 'dish',
           description,
         };
       });
@@ -546,11 +533,11 @@ export default async function handler(
         invoiceItems = [
           {
             id: `found_items_${order.id}`,
-            name: "Found Items",
+            name: 'Found Items',
             quantity: 1,
             unit_price: foundItemsTotal,
             total: foundItemsTotal,
-            unit: "batch",
+            unit: 'batch',
           },
         ];
       } else {
@@ -562,11 +549,11 @@ export default async function handler(
         // Create invoice items for regular orders
         invoiceItems = items.map((item: any) => ({
           id: item.id,
-          name: item.Product.ProductName?.name || "Unknown Product",
+          name: item.Product.ProductName?.name || 'Unknown Product',
           quantity: item.quantity,
           unit_price: parseFloat(item.price),
           total: parseFloat(item.price) * item.quantity,
-          unit: item.Product.measurement_unit || "item",
+          unit: item.Product.measurement_unit || 'item',
         }));
       }
 
@@ -574,10 +561,8 @@ export default async function handler(
       shopAddress = order.Shop.address;
     }
 
-    const serviceFee = isRestaurantOrder
-      ? 0
-      : parseFloat(order.service_fee || "0");
-    const deliveryFee = parseFloat(order.delivery_fee || "0");
+    const serviceFee = isRestaurantOrder ? 0 : parseFloat(order.service_fee || '0');
+    const deliveryFee = parseFloat(order.delivery_fee || '0');
 
     // Create a unique invoice number
     const invoiceNumber = `INV-${
@@ -607,7 +592,7 @@ export default async function handler(
           );
         }
       } catch (error) {
-        console.error("Error fetching wallet transaction amount:", error);
+        console.error('Error fetching wallet transaction amount:', error);
       }
     }
 
@@ -632,7 +617,7 @@ export default async function handler(
     const subtotalStr = subtotalAfterTax.toFixed(2);
     const serviceFeeStr = serviceFee.toFixed(2);
     const deliveryFeeStr = deliveryFee.toFixed(2);
-    const discountStr = "0.00"; // Assuming no discount for now
+    const discountStr = '0.00'; // Assuming no discount for now
     const taxStr = taxAmount.toFixed(2);
 
     // For invoice proof uploads, always use the wallet transaction amount
@@ -641,15 +626,15 @@ export default async function handler(
       walletTransactionAmount !== null
         ? walletTransactionAmount.toFixed(2)
         : hasFoundItemsTotal
-        ? itemsTotal.toFixed(2)
-        : finalTotalBeforeTax.toFixed(2);
+          ? itemsTotal.toFixed(2)
+          : finalTotalBeforeTax.toFixed(2);
 
     const invoicePayload = {
       customer_id: isReelOrder
         ? order.User.id
         : isRestaurantOrder
-        ? order.User.id
-        : order.orderedBy.id,
+          ? order.User.id
+          : order.orderedBy.id,
       delivery_fee: deliveryFeeStr,
       discount: discountStr,
       invoice_items: invoiceItems,
@@ -657,7 +642,7 @@ export default async function handler(
       order_id: isReelOrder || isRestaurantOrder ? null : order.id,
       reel_order_id: isReelOrder ? order.id : null,
       service_fee: serviceFeeStr,
-      status: "completed",
+      status: 'completed',
       subtotal: subtotalStr,
       tax: taxStr,
       total_amount: totalAmount,
@@ -667,19 +652,16 @@ export default async function handler(
     // Save invoice data to the database
     let saveResult;
     try {
-      saveResult = await hasuraClient.request<AddInvoiceResult>(
-        ADD_INVOICE,
-        invoicePayload
-      );
+      saveResult = await hasuraClient.request<AddInvoiceResult>(ADD_INVOICE, invoicePayload);
     } catch (error) {
-      console.error("Failed to save invoice to database:", error);
-      await logErrorToSlack("GenerateInvoiceAPI:saveInvoice", error, {
+      console.error('Failed to save invoice to database:', error);
+      await logErrorToSlack('GenerateInvoiceAPI:saveInvoice', error, {
         orderId,
         orderType,
         userId: session.user.id,
       });
       return res.status(500).json({
-        error: "Failed to save invoice to database",
+        error: 'Failed to save invoice to database',
         details: error instanceof Error ? error.message : String(error),
       });
     }
@@ -693,29 +675,29 @@ export default async function handler(
       customer: isReelOrder
         ? order.User.name
         : isRestaurantOrder
-        ? order.User.name
-        : order.orderedBy.name,
+          ? order.User.name
+          : order.orderedBy.name,
       customerEmail: isReelOrder
         ? order.User.email
         : isRestaurantOrder
-        ? order.User.email
-        : order.orderedBy.email,
+          ? order.User.email
+          : order.orderedBy.email,
       customerPhone: isReelOrder
-        ? order.User?.phone || ""
+        ? order.User?.phone || ''
         : isRestaurantOrder
-        ? order.User?.phone || ""
-        : order.orderedBy?.phone || "",
+          ? order.User?.phone || ''
+          : order.orderedBy?.phone || '',
       shop: shopName,
       shopAddress: shopAddress,
-      deliveryStreet: order.Address?.street || "",
-      deliveryCity: order.Address?.city || "",
-      deliveryPostalCode: order.Address?.postal_code || "",
+      deliveryStreet: order.Address?.street || '',
+      deliveryCity: order.Address?.city || '',
+      deliveryPostalCode: order.Address?.postal_code || '',
       deliveryPlaceDetails: order.Address?.placeDetails || null,
       deliveryAddress: order.Address
-        ? `${order.Address.street || ""}, ${order.Address.city || ""}${
-            order.Address.postal_code ? `, ${order.Address.postal_code}` : ""
+        ? `${order.Address.street || ''}, ${order.Address.city || ''}${
+            order.Address.postal_code ? `, ${order.Address.postal_code}` : ''
           }`
-        : "",
+        : '',
       dateCreated: new Date(order.created_at).toLocaleString(),
       dateCompleted: new Date(order.updated_at).toLocaleString(),
       status: order.status,
@@ -725,11 +707,7 @@ export default async function handler(
       deliveryFee,
       // Total includes items, service fee, and delivery fee
       total: itemsTotal + serviceFee + deliveryFee,
-      orderType: isReelOrder
-        ? "reel"
-        : isRestaurantOrder
-        ? "restaurant"
-        : "regular",
+      orderType: isReelOrder ? 'reel' : isRestaurantOrder ? 'restaurant' : 'regular',
       isReelOrder,
       isRestaurantOrder,
     };
@@ -740,14 +718,13 @@ export default async function handler(
       dbRecord: saveResult.insert_Invoices.returning[0] || null,
     });
   } catch (error) {
-    await logErrorToSlack("GenerateInvoiceAPI", error, {
+    await logErrorToSlack('GenerateInvoiceAPI', error, {
       method: req.method,
       orderId: (req.body as any)?.orderId,
       orderType: (req.body as any)?.orderType,
     });
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
     });
   }
 }

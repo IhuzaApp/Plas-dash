@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Admin dashboard: full shopper list from getShopperInformation.graphql
 const GET_SHOPPERS = gql`
@@ -202,10 +202,7 @@ const GET_SHOPPER_BY_USER_ID = gql`
         restaurant_order_id
       }
     }
-    Orders(
-      where: { shopper_id: { _eq: $user_id } }
-      order_by: { created_at: desc }
-    ) {
+    Orders(where: { shopper_id: { _eq: $user_id } }, order_by: { created_at: desc }) {
       id
       OrderID
       status
@@ -231,10 +228,7 @@ const GET_SHOPPER_BY_USER_ID = gql`
         postal_code
       }
     }
-    reel_orders(
-      where: { shopper_id: { _eq: $user_id } }
-      order_by: { created_at: desc }
-    ) {
+    reel_orders(where: { shopper_id: { _eq: $user_id } }, order_by: { created_at: desc }) {
       id
       OrderID
       created_at
@@ -271,10 +265,7 @@ const GET_SHOPPER_BY_USER_ID = gql`
         name
       }
     }
-    restaurant_orders(
-      where: { shopper_id: { _eq: $user_id } }
-      order_by: { created_at: desc }
-    ) {
+    restaurant_orders(where: { shopper_id: { _eq: $user_id } }, order_by: { created_at: desc }) {
       id
       OrderID
       created_at
@@ -295,10 +286,7 @@ const GET_SHOPPER_BY_USER_ID = gql`
 // Withdraw requests by shopper_id (with verification_image and Wallets for proof + balance)
 const GET_WITHDRAW_REQUESTS = gql`
   query GetWithdrawRequestsByShopper($shopper_id: uuid!) {
-    withDraweRequest(
-      where: { shopper_id: { _eq: $shopper_id } }
-      order_by: { update_at: desc }
-    ) {
+    withDraweRequest(where: { shopper_id: { _eq: $shopper_id } }, order_by: { update_at: desc }) {
       id
       amount
       status
@@ -322,10 +310,7 @@ const GET_WITHDRAW_REQUESTS = gql`
 // Full Revenue list for shopper (regular, reel, business, restaurant) with Order, Shop, reel_orders, restaurant_orders
 const GET_REVENUE_BY_SHOPPER = gql`
   query GetRevenueByShopper($shopper_id: uuid!) {
-    Revenue(
-      where: { shopper_id: { _eq: $shopper_id } }
-      order_by: { created_at: desc }
-    ) {
+    Revenue(where: { shopper_id: { _eq: $shopper_id } }, order_by: { created_at: desc }) {
       id
       amount
       businessOrder_Id
@@ -429,15 +414,15 @@ export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | null)?.id;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
     const { searchParams } = new URL(request.url);
-    const user_id = searchParams.get("user_id");
+    const user_id = searchParams.get('user_id');
     if (user_id) {
       const data = await hasuraClient.request<{
         shoppers: any[];
@@ -487,33 +472,27 @@ export async function GET(request: Request) {
       const ratings = shopper.User?.Ratings || [];
 
       const pendingWithdrawAmount = withdrawRequests
-        .filter((w: any) => (w.status || "").toLowerCase() === "pending")
-        .reduce((sum: number, w: any) => sum + parseFloat(w.amount || "0"), 0);
+        .filter((w: any) => (w.status || '').toLowerCase() === 'pending')
+        .reduce((sum: number, w: any) => sum + parseFloat(w.amount || '0'), 0);
 
       const sumOrderFees = (list: any[], deliveryKey: string, serviceKey: string) =>
         list.reduce(
-          (sum, o) =>
-            sum +
-            parseFloat(o[deliveryKey] || "0") +
-            parseFloat(o[serviceKey] || "0"),
+          (sum, o) => sum + parseFloat(o[deliveryKey] || '0') + parseFloat(o[serviceKey] || '0'),
           0
         );
 
-      const revenueRegular = sumOrderFees(orders, "delivery_fee", "service_fee");
-      const revenueReel = sumOrderFees(reelOrders, "delivery_fee", "service_fee");
+      const revenueRegular = sumOrderFees(orders, 'delivery_fee', 'service_fee');
+      const revenueReel = sumOrderFees(reelOrders, 'delivery_fee', 'service_fee');
       const revenueBusiness = businessOrders.reduce(
         (sum, o) =>
-          sum +
-          parseFloat(o.service_fee || "0") +
-          parseFloat(o.transportation_fee || "0"),
+          sum + parseFloat(o.service_fee || '0') + parseFloat(o.transportation_fee || '0'),
         0
       );
       const revenueRestaurant = restaurantOrders.reduce(
-        (sum, o) => sum + parseFloat(o.delivery_fee || "0"),
+        (sum, o) => sum + parseFloat(o.delivery_fee || '0'),
         0
       );
-      const totalRevenue =
-        revenueRegular + revenueReel + revenueBusiness + revenueRestaurant;
+      const totalRevenue = revenueRegular + revenueReel + revenueBusiness + revenueRestaurant;
 
       const ratingsCount = ratings.length;
       const ratingsAverage =
@@ -523,8 +502,8 @@ export async function GET(request: Request) {
 
       const summary = {
         earnings: totalRevenue,
-        available_balance: wallet ? parseFloat(wallet.available_balance || "0") : 0,
-        reserved_balance: wallet ? parseFloat(wallet.reserved_balance || "0") : 0,
+        available_balance: wallet ? parseFloat(wallet.available_balance || '0') : 0,
+        reserved_balance: wallet ? parseFloat(wallet.reserved_balance || '0') : 0,
         pending_withdraw_amount: pendingWithdrawAmount,
         withdraw_requests_count: withdrawRequests.length,
         ratings_count: ratingsCount,
@@ -549,10 +528,7 @@ export async function GET(request: Request) {
     const data = await hasuraClient.request<{ shoppers: any[] }>(GET_SHOPPERS);
     return NextResponse.json({ shoppers: data.shoppers || [] });
   } catch (error) {
-    console.error("Error fetching shoppers:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch shoppers" },
-      { status: 500 }
-    );
+    console.error('Error fetching shoppers:', error);
+    return NextResponse.json({ error: 'Failed to fetch shoppers' }, { status: 500 });
   }
 }

@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const INSERT_SHOP_CHECKOUT = gql`
   mutation InsertShopCheckout(
@@ -39,35 +39,31 @@ const INSERT_SHOP_CHECKOUT = gql`
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const body = await request.json();
-    const result = await hasuraClient.request(
-      INSERT_SHOP_CHECKOUT,
-      {
-        Processed_By: body.Processed_By || null,
-        cartItems: body.cartItems ?? null,
-        payment_method: body.payment_method || null,
-        shop_id: body.shop_id || null,
-        subtotal: body.subtotal || null,
-        tax: body.tax || null,
-        tin: body.tin || null,
-        total: body.total || null,
-      }
-    );
+    const result = await hasuraClient.request(INSERT_SHOP_CHECKOUT, {
+      Processed_By: body.Processed_By || null,
+      cartItems: body.cartItems ?? null,
+      payment_method: body.payment_method || null,
+      shop_id: body.shop_id || null,
+      subtotal: body.subtotal || null,
+      tax: body.tax || null,
+      tin: body.tin || null,
+      total: body.total || null,
+    });
     return NextResponse.json(result);
   } catch (error) {
-    console.error("POS checkout error:", error);
+    console.error('POS checkout error:', error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Checkout failed",
+        error: error instanceof Error ? error.message : 'Checkout failed',
       },
       { status: 500 }
     );

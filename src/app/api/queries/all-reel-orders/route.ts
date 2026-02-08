@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_ALL_REEL_ORDERS = gql`
   query GetAllReelOrders {
@@ -89,12 +89,12 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<{
@@ -173,10 +173,10 @@ export async function GET() {
       }>;
     }>(GET_ALL_REEL_ORDERS);
 
-    const orders = (data.reel_orders || []).map((o) => ({
+    const orders = (data.reel_orders || []).map(o => ({
       id: o.id,
       OrderID: o.OrderID != null ? String(o.OrderID) : o.id,
-      type: "reel" as const,
+      type: 'reel' as const,
       status: o.status,
       total: o.total,
       created_at: o.created_at,
@@ -211,10 +211,7 @@ export async function GET() {
 
     return NextResponse.json({ orders });
   } catch (error) {
-    console.error("Error fetching reel orders", error);
-    return NextResponse.json(
-      { error: "Failed to fetch reel orders" },
-      { status: 500 }
-    );
+    console.error('Error fetching reel orders', error);
+    return NextResponse.json({ error: 'Failed to fetch reel orders' }, { status: 500 });
   }
 }

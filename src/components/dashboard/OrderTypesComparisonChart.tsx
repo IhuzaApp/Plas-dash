@@ -106,9 +106,7 @@ export default function OrderTypesComparisonChart() {
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Legend
-                  formatter={(value) => <span style={{ color: TICK_FILL }}>{value}</span>}
-                />
+                <Legend formatter={value => <span style={{ color: TICK_FILL }}>{value}</span>} />
                 <Bar dataKey="orders" name="Orders" radius={[0, 4, 4, 0]}>
                   {chartData.map((entry, index) => (
                     <Cell key={index} fill={entry.fill} stroke={entry.fill} strokeWidth={1} />

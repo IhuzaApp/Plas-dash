@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const CREATE_BUSINESS_RFQ = gql`
   mutation CreateBusinessRFQ(
@@ -105,27 +105,20 @@ interface CreateBusinessRFQInput {
   user_id?: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const {
@@ -155,35 +148,35 @@ export default async function handler(
 
     // Validate required fields
     if (!title || !title.trim()) {
-      return res.status(400).json({ error: "Title is required" });
+      return res.status(400).json({ error: 'Title is required' });
     }
 
     if (!description || !description.trim()) {
-      return res.status(400).json({ error: "Description is required" });
+      return res.status(400).json({ error: 'Description is required' });
     }
 
     if (!category || !category.trim()) {
-      return res.status(400).json({ error: "Category is required" });
+      return res.status(400).json({ error: 'Category is required' });
     }
 
     if (!location || !location.trim()) {
-      return res.status(400).json({ error: "Location is required" });
+      return res.status(400).json({ error: 'Location is required' });
     }
 
     if (!response_date || !response_date.trim()) {
-      return res.status(400).json({ error: "Response date is required" });
+      return res.status(400).json({ error: 'Response date is required' });
     }
 
     if (!contact_name || !contact_name.trim()) {
-      return res.status(400).json({ error: "Contact name is required" });
+      return res.status(400).json({ error: 'Contact name is required' });
     }
 
     if (!email || !email.trim()) {
-      return res.status(400).json({ error: "Email is required" });
+      return res.status(400).json({ error: 'Email is required' });
     }
 
     // Get user_id from session if not provided
-    const final_user_id = user_id || session?.user?.id || "";
+    const final_user_id = user_id || session?.user?.id || '';
 
     // Get business_id from business account if not provided
     let final_business_id = business_id;
@@ -201,10 +194,7 @@ export default async function handler(
         }>(CHECK_BUSINESS_ACCOUNT, {
           user_id: final_user_id,
         });
-        if (
-          accountResult.business_accounts &&
-          accountResult.business_accounts.length > 0
-        ) {
+        if (accountResult.business_accounts && accountResult.business_accounts.length > 0) {
           final_business_id = accountResult.business_accounts[0].id;
         }
       } catch (error) {
@@ -213,13 +203,11 @@ export default async function handler(
     }
 
     // Convert requirements array to JSON if it's an array
-    let requirementsJson = "";
+    let requirementsJson = '';
     if (requirements) {
       if (Array.isArray(requirements)) {
-        requirementsJson = JSON.stringify(
-          requirements.filter((r) => r.trim() !== "")
-        );
-      } else if (typeof requirements === "string") {
+        requirementsJson = JSON.stringify(requirements.filter(r => r.trim() !== ''));
+      } else if (typeof requirements === 'string') {
         requirementsJson = requirements;
       } else {
         requirementsJson = JSON.stringify(requirements);
@@ -234,24 +222,20 @@ export default async function handler(
       response_date: response_date.trim(),
       contact_name: contact_name.trim(),
       email: email.trim(),
-      min_budget: min_budget ? min_budget.trim() : "",
-      max_budget: max_budget ? max_budget.trim() : "",
-      urgency_level: urgency_level ? urgency_level.trim() : "",
-      estimated_quantity: estimated_quantity ? estimated_quantity.trim() : "",
-      expected_delivery_date: expected_delivery_date
-        ? expected_delivery_date.trim()
-        : "",
-      payment_terms: payment_terms ? payment_terms.trim() : "",
-      delivery_terms: delivery_terms ? delivery_terms.trim() : "",
-      warranty_information: warranty_information
-        ? warranty_information.trim()
-        : "",
-      cancellation_terms: cancellation_terms ? cancellation_terms.trim() : "",
-      requirements: requirementsJson || "[]",
-      notes: notes ? notes.trim() : "",
-      phone: phone ? phone.trim() : "",
-      attachment: attachment ? attachment.trim() : "",
-      business_id: final_business_id || "",
+      min_budget: min_budget ? min_budget.trim() : '',
+      max_budget: max_budget ? max_budget.trim() : '',
+      urgency_level: urgency_level ? urgency_level.trim() : '',
+      estimated_quantity: estimated_quantity ? estimated_quantity.trim() : '',
+      expected_delivery_date: expected_delivery_date ? expected_delivery_date.trim() : '',
+      payment_terms: payment_terms ? payment_terms.trim() : '',
+      delivery_terms: delivery_terms ? delivery_terms.trim() : '',
+      warranty_information: warranty_information ? warranty_information.trim() : '',
+      cancellation_terms: cancellation_terms ? cancellation_terms.trim() : '',
+      requirements: requirementsJson || '[]',
+      notes: notes ? notes.trim() : '',
+      phone: phone ? phone.trim() : '',
+      attachment: attachment ? attachment.trim() : '',
+      business_id: final_business_id || '',
       user_id: final_user_id,
     };
 
@@ -268,11 +252,8 @@ export default async function handler(
       };
     }>(CREATE_BUSINESS_RFQ, variables);
 
-    if (
-      !result.insert_bussines_RFQ ||
-      result.insert_bussines_RFQ.affected_rows === 0
-    ) {
-      throw new Error("Failed to create business RFQ");
+    if (!result.insert_bussines_RFQ || result.insert_bussines_RFQ.affected_rows === 0) {
+      throw new Error('Failed to create business RFQ');
     }
 
     const createdRFQ = result.insert_bussines_RFQ.returning[0];
@@ -288,14 +269,13 @@ export default async function handler(
       },
     });
   } catch (error: any) {
-    const errorMessage =
-      error.response?.errors?.[0]?.message || error.message || "Unknown error";
+    const errorMessage = error.response?.errors?.[0]?.message || error.message || 'Unknown error';
     const errorCode = error.response?.errors?.[0]?.extensions?.code;
     const errorPath = error.response?.errors?.[0]?.extensions?.path;
     const allErrors = error.response?.errors || [];
 
     return res.status(500).json({
-      error: "Failed to create business RFQ",
+      error: 'Failed to create business RFQ',
       message: errorMessage,
       code: errorCode,
       path: errorPath,

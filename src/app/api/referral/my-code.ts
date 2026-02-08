@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Query to get user's referral code
 const GET_REFERRAL_CODE = gql`
@@ -28,24 +28,21 @@ const GET_USER = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const user_id = session.user.id;
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get user info to check phone number
@@ -54,7 +51,7 @@ export default async function handler(
     }>(GET_USER, { user_id });
 
     if (!userData.Users_by_pk) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     // Get referral code
@@ -78,12 +75,9 @@ export default async function handler(
       },
     });
   } catch (error) {
-    console.error("Error fetching referral code:", error);
+    console.error('Error fetching referral code:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch referral code",
+      error: error instanceof Error ? error.message : 'Failed to fetch referral code',
     });
   }
 }

@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // GraphQL query to get refunds and wallet balance
 const GET_USER_BALANCES = gql`
@@ -16,25 +16,20 @@ const GET_USER_BALANCES = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { userId } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
+      return res.status(400).json({ error: 'User ID is required' });
     }
 
     if (!hasuraClient) {
-      return res
-        .status(500)
-        .json({ error: "GraphQL client is not initialized" });
+      return res.status(500).json({ error: 'GraphQL client is not initialized' });
     }
 
     const response = await hasuraClient.request(GET_USER_BALANCES, {
@@ -43,10 +38,9 @@ export default async function handler(
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error("Error fetching user balances:", error);
+    console.error('Error fetching user balances:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
     });
   }
 }

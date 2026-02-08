@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Admin dashboard: fetches all shops with category, aggregates, and recent orders.
 const GET_SHOPS = gql`
@@ -84,12 +84,12 @@ const GET_SHOPS = gql`
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user || !(session.user as { id?: string }).id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
     const data = await hasuraClient.request<{
       Shops: Array<{
@@ -129,15 +129,15 @@ export async function GET() {
     }>(GET_SHOPS);
 
     // Normalize for frontend: orderedBy -> User, Category -> category (component expects order.User)
-    const shops = (data.Shops || []).map((shop) => ({
+    const shops = (data.Shops || []).map(shop => ({
       ...shop,
       category: shop.Category ?? null,
       Products_aggregate: shop.Products_aggregate ?? { aggregate: { count: 0 } },
       Orders_aggregate: shop.Orders_aggregate ?? { aggregate: { count: 0 } },
-      Orders: (shop.Orders ?? []).map((order) => ({
+      Orders: (shop.Orders ?? []).map(order => ({
         ...order,
         User: order.orderedBy ?? null,
-        Order_Items: (order.Order_Items ?? []).map((item) => ({
+        Order_Items: (order.Order_Items ?? []).map(item => ({
           ...item,
           Product: item.Product
             ? {
@@ -151,10 +151,7 @@ export async function GET() {
 
     return NextResponse.json({ shops });
   } catch (error) {
-    console.error("Error fetching shops:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch shops" },
-      { status: 500 }
-    );
+    console.error('Error fetching shops:', error);
+    return NextResponse.json({ error: 'Failed to fetch shops' }, { status: 500 });
   }
 }

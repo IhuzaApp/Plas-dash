@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Admin dashboard: platform-wide order counts (all Orders, reel_orders, restaurant_orders, businessProductOrders).
 const GET_ORDER_STATS = gql`
@@ -29,16 +29,12 @@ const GET_ORDER_STATS = gql`
         count
       }
     }
-    reel_orders_monthly: reel_orders_aggregate(
-      where: { created_at: { _gte: $month_start } }
-    ) {
+    reel_orders_monthly: reel_orders_aggregate(where: { created_at: { _gte: $month_start } }) {
       aggregate {
         count
       }
     }
-    reel_orders_pending: reel_orders_aggregate(
-      where: { status: { _neq: "delivered" } }
-    ) {
+    reel_orders_pending: reel_orders_aggregate(where: { status: { _neq: "delivered" } }) {
       aggregate {
         count
       }
@@ -96,12 +92,12 @@ function getMonthStart(): string {
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const month_start = getMonthStart();
@@ -143,8 +139,7 @@ export async function GET() {
       monthlyOrders,
       pendingOrders,
       breakdown: {
-        regular:
-          data.Orders_aggregate?.aggregate?.count ?? 0,
+        regular: data.Orders_aggregate?.aggregate?.count ?? 0,
         reel: data.reel_orders_aggregate?.aggregate?.count ?? 0,
         restaurant: data.restaurant_orders_aggregate?.aggregate?.count ?? 0,
         business: data.businessProductOrders_aggregate?.aggregate?.count ?? 0,
@@ -157,10 +152,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Error fetching order stats:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch order stats" },
-      { status: 500 }
-    );
+    console.error('Error fetching order stats:', error);
+    return NextResponse.json({ error: 'Failed to fetch order stats' }, { status: 500 });
   }
 }

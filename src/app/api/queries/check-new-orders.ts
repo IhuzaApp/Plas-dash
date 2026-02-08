@@ -1,23 +1,15 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { Client as GoogleMapsClient } from "@googlemaps/google-maps-services-js";
-import {
-  startOrderNotifications,
-  stopOrderNotifications,
-} from "../../../src/utils/orderNotifier";
-import { logger } from "../../../src/utils/logger";
-import { logErrorToSlack } from "../../../src/lib/slackErrorReporter";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { Client as GoogleMapsClient } from '@googlemaps/google-maps-services-js';
+import { startOrderNotifications, stopOrderNotifications } from '../../../src/utils/orderNotifier';
+import { logger } from '../../../src/utils/logger';
+import { logErrorToSlack } from '../../../src/lib/slackErrorReporter';
 
 const googleMapsClient = new GoogleMapsClient({});
 
 // Haversine formula to calculate distance in kilometers between two coordinates
-function calculateDistanceKm(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Radius of the Earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -141,13 +133,10 @@ interface Shopper {
 
 let lastCheckTime: Date | null = null;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get shopper's location and settings from query params
@@ -162,7 +151,7 @@ export default async function handler(
         // 3 minutes in milliseconds
         return res.status(200).json({
           success: true,
-          message: "Skipping check - less than 3 minutes since last check",
+          message: 'Skipping check - less than 3 minutes since last check',
           notifications: [],
         });
       }
@@ -185,18 +174,12 @@ export default async function handler(
       `;
 
       try {
-        const settingsResponse = (await hasuraClient.request(
-          GET_NOTIFICATION_SETTINGS,
-          { user_id: userId }
-        )) as any;
-        notificationSettings =
-          settingsResponse.shopper_notification_settings?.[0];
+        const settingsResponse = (await hasuraClient.request(GET_NOTIFICATION_SETTINGS, {
+          user_id: userId,
+        })) as any;
+        notificationSettings = settingsResponse.shopper_notification_settings?.[0];
       } catch (error) {
-        logger.warn(
-          "Failed to fetch notification settings",
-          "CheckNewOrdersAPI",
-          error
-        );
+        logger.warn('Failed to fetch notification settings', 'CheckNewOrdersAPI', error);
       }
     }
 
@@ -211,22 +194,17 @@ export default async function handler(
     if (newOrders.length === 0) {
       return res.status(200).json({
         success: true,
-        message: "No new orders found",
+        message: 'No new orders found',
         notifications: [],
       });
     }
 
     // Calculate distance and travel time for each order
-    const ordersWithDistance = newOrders.map((order) => {
+    const ordersWithDistance = newOrders.map(order => {
       const shopLat = order.Shop.latitude;
       const shopLng = order.Shop.longitude;
 
-      const distanceKm = calculateDistanceKm(
-        shopperLatitude,
-        shopperLongitude,
-        shopLat,
-        shopLng
-      );
+      const distanceKm = calculateDistanceKm(shopperLatitude, shopperLongitude, shopLat, shopLng);
 
       const travelTimeMinutes = estimateTravelTimeMinutes(distanceKm);
 
@@ -245,79 +223,72 @@ export default async function handler(
 
     // Filter orders by travel time
     const nearbyOrders = ordersWithDistance.filter(
-      (order) => order.travelTimeMinutes <= maxTravelTime
+      order => order.travelTimeMinutes <= maxTravelTime
     );
 
     if (nearbyOrders.length === 0) {
       return res.status(200).json({
         success: true,
-        message: "No nearby orders found",
+        message: 'No nearby orders found',
         notifications: [],
       });
     }
 
     // Group orders by shop for better notifications
-    const ordersByShop = nearbyOrders.reduce((acc, order) => {
-      if (!acc[order.Shop.name]) {
-        acc[order.Shop.name] = [];
-      }
-      acc[order.Shop.name].push(order);
-      return acc;
-    }, {} as Record<string, Order[]>);
+    const ordersByShop = nearbyOrders.reduce(
+      (acc, order) => {
+        if (!acc[order.Shop.name]) {
+          acc[order.Shop.name] = [];
+        }
+        acc[order.Shop.name].push(order);
+        return acc;
+      },
+      {} as Record<string, Order[]>
+    );
 
     // Create notifications for nearby orders
-    const notifications = Object.entries(ordersByShop).map(
-      ([shopName, orders]) => {
-        const totalOrders = orders.length;
-        const totalItems = orders.reduce(
-          (sum, order) =>
-            sum + (order.Order_Items_aggregate?.aggregate?.count || 0),
-          0
-        );
-        const totalEarnings = orders.reduce(
-          (sum, order) => sum + parseFloat(order.total || "0"),
-          0
-        );
+    const notifications = Object.entries(ordersByShop).map(([shopName, orders]) => {
+      const totalOrders = orders.length;
+      const totalItems = orders.reduce(
+        (sum, order) => sum + (order.Order_Items_aggregate?.aggregate?.count || 0),
+        0
+      );
+      const totalEarnings = orders.reduce((sum, order) => sum + parseFloat(order.total || '0'), 0);
 
-        // Get the closest order's distance
-        const closestOrder = orders.reduce((closest, current) =>
-          (current.distance || 0) < (closest.distance || Infinity)
-            ? current
-            : closest
-        );
+      // Get the closest order's distance
+      const closestOrder = orders.reduce((closest, current) =>
+        (current.distance || 0) < (closest.distance || Infinity) ? current : closest
+      );
 
-        return {
-          id: `${shopName}-${Date.now()}`,
-          type: "NEW_ORDERS",
-          title: `🔔 New Orders at ${shopName}!`,
-          message: `${totalOrders} new order${
-            totalOrders > 1 ? "s" : ""
-          } (${totalItems} items) - ${
-            closestOrder.distance
-          }km away. Potential earnings: RWF${totalEarnings.toFixed(0)}`,
-          orders: orders.map((order) => ({
-            id: order.id,
-            shop_name: shopName,
-            items: order.Order_Items_aggregate?.aggregate?.count || 0,
-            total: order.total,
-            distance: order.distance,
-            travelTime: order.travelTimeMinutes,
-          })),
-          timestamp: new Date().toISOString(),
-          priority: totalOrders > 2 ? "high" : "normal",
-          // Add order details for notifications
-          itemsCount: totalItems,
-          estimatedEarnings: totalEarnings,
-          totalOrders: totalOrders,
-        };
-      }
-    );
+      return {
+        id: `${shopName}-${Date.now()}`,
+        type: 'NEW_ORDERS',
+        title: `🔔 New Orders at ${shopName}!`,
+        message: `${totalOrders} new order${totalOrders > 1 ? 's' : ''} (${totalItems} items) - ${
+          closestOrder.distance
+        }km away. Potential earnings: RWF${totalEarnings.toFixed(0)}`,
+        orders: orders.map(order => ({
+          id: order.id,
+          shop_name: shopName,
+          items: order.Order_Items_aggregate?.aggregate?.count || 0,
+          total: order.total,
+          distance: order.distance,
+          travelTime: order.travelTimeMinutes,
+        })),
+        timestamp: new Date().toISOString(),
+        priority: totalOrders > 2 ? 'high' : 'normal',
+        // Add order details for notifications
+        itemsCount: totalItems,
+        estimatedEarnings: totalEarnings,
+        totalOrders: totalOrders,
+      };
+    });
 
     // Send notifications
     if (notifications.length > 0) {
       logger.info(
         `Sending ${notifications.length} notifications for nearby orders`,
-        "CheckNewOrdersAPI",
+        'CheckNewOrdersAPI',
         {
           notifications,
           shopperLocation: {
@@ -333,8 +304,7 @@ export default async function handler(
         notifications,
         should_play_sound:
           notifications.length > 0 &&
-          (!notificationSettings?.sound_settings ||
-            notificationSettings.sound_settings.enabled),
+          (!notificationSettings?.sound_settings || notificationSettings.sound_settings.enabled),
         sound_settings: notificationSettings?.sound_settings || {
           enabled: true,
           volume: 0.8,
@@ -350,17 +320,17 @@ export default async function handler(
     } else {
       res.status(200).json({
         success: true,
-        message: "No new nearby orders found",
+        message: 'No new nearby orders found',
         notifications: [],
       });
     }
   } catch (error) {
-    logger.error("Error checking new orders", "CheckNewOrdersAPI", error);
-    await logErrorToSlack("queries/check-new-orders", error, {
+    logger.error('Error checking new orders', 'CheckNewOrdersAPI', error);
+    await logErrorToSlack('queries/check-new-orders', error, {
       user_id: req.query.user_id,
       latitude: req.query.latitude,
       longitude: req.query.longitude,
     });
-    res.status(500).json({ error: "Failed to check new orders" });
+    res.status(500).json({ error: 'Failed to check new orders' });
   }
 }

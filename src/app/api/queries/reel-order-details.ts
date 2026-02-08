@@ -1,10 +1,10 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import type { Session } from "next-auth";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import type { Session } from 'next-auth';
+import { logger } from '../../../src/utils/logger';
 
 // Fetch reel order details
 const GET_REEL_ORDER_DETAILS = gql`
@@ -80,31 +80,24 @@ const GET_REEL_ORDER_DETAILS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get the user ID from the session
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
     if (!session?.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { id } = req.query;
-    if (!id || typeof id !== "string") {
-      return res.status(400).json({ error: "Order ID is required" });
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'Order ID is required' });
     }
 
-    logger.info("Fetching reel order details", "ReelOrderDetailsAPI", {
+    logger.info('Fetching reel order details', 'ReelOrderDetailsAPI', {
       orderId: id,
     });
 
@@ -181,7 +174,7 @@ export default async function handler(
 
     const orderData = data.reel_orders_by_pk;
     if (!orderData) {
-      return res.status(404).json({ error: "Reel order not found" });
+      return res.status(404).json({ error: 'Reel order not found' });
     }
 
     // If there's an assigned shopper, fetch their complete stats
@@ -218,10 +211,7 @@ export default async function handler(
           }
           # Count delivered regular orders
           Orders_aggregate(
-            where: {
-              shopper_id: { _eq: $shopperId }
-              status: { _eq: "delivered" }
-            }
+            where: { shopper_id: { _eq: $shopperId }, status: { _eq: "delivered" } }
           ) {
             aggregate {
               count
@@ -229,10 +219,7 @@ export default async function handler(
           }
           # Count delivered reel orders
           reel_orders_aggregate(
-            where: {
-              shopper_id: { _eq: $shopperId }
-              status: { _eq: "delivered" }
-            }
+            where: { shopper_id: { _eq: $shopperId }, status: { _eq: "delivered" } }
           ) {
             aggregate {
               count
@@ -240,10 +227,7 @@ export default async function handler(
           }
           # Count delivered restaurant orders
           restaurant_orders_aggregate(
-            where: {
-              shopper_id: { _eq: $shopperId }
-              status: { _eq: "delivered" }
-            }
+            where: { shopper_id: { _eq: $shopperId }, status: { _eq: "delivered" } }
           ) {
             aggregate {
               count
@@ -274,24 +258,18 @@ export default async function handler(
       // Calculate average rating from all ratings
       const averageRating =
         statsData.Ratings.length > 0
-          ? statsData.Ratings.reduce(
-              (sum, rating) => sum + parseFloat(rating.rating || "0"),
-              0
-            ) / statsData.Ratings.length
+          ? statsData.Ratings.reduce((sum, rating) => sum + parseFloat(rating.rating || '0'), 0) /
+            statsData.Ratings.length
           : 0;
 
       // Count total delivered orders (regular + reel + restaurant)
-      const regularOrdersCount =
-        statsData.Orders_aggregate?.aggregate?.count || 0;
-      const reelOrdersCount =
-        statsData.reel_orders_aggregate?.aggregate?.count || 0;
-      const restaurantOrdersCount =
-        statsData.restaurant_orders_aggregate?.aggregate?.count || 0;
-      const totalDeliveredOrders =
-        regularOrdersCount + reelOrdersCount + restaurantOrdersCount;
+      const regularOrdersCount = statsData.Orders_aggregate?.aggregate?.count || 0;
+      const reelOrdersCount = statsData.reel_orders_aggregate?.aggregate?.count || 0;
+      const restaurantOrdersCount = statsData.restaurant_orders_aggregate?.aggregate?.count || 0;
+      const totalDeliveredOrders = regularOrdersCount + reelOrdersCount + restaurantOrdersCount;
 
       // Debug logging
-      console.log("Shopper Stats for", shopperId, {
+      console.log('Shopper Stats for', shopperId, {
         ratingsCount: statsData.Ratings.length,
         averageRating,
         regularOrdersCount,
@@ -317,12 +295,12 @@ export default async function handler(
       OrderID: orderData.OrderID,
       status: orderData.status,
       created_at: orderData.created_at,
-      placedAt: new Date(orderData.created_at).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+      placedAt: new Date(orderData.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
       }),
       total: parseFloat(orderData.total),
       service_fee: parseFloat(orderData.service_fee),
@@ -335,14 +313,14 @@ export default async function handler(
       quantity: parseInt(orderData.quantity),
       found: orderData.found,
       pin:
-        orderData.pin != null && String(orderData.pin).trim() !== ""
+        orderData.pin != null && String(orderData.pin).trim() !== ''
           ? String(orderData.pin)
           : orderData.OrderID != null
-          ? String(orderData.OrderID).padStart(4, "0").slice(-4)
-          : orderData.id
-          ? orderData.id.slice(0, 4).toUpperCase()
-          : "",
-      orderType: "reel" as const,
+            ? String(orderData.OrderID).padStart(4, '0').slice(-4)
+            : orderData.id
+              ? orderData.id.slice(0, 4).toUpperCase()
+              : '',
+      orderType: 'reel' as const,
       reel: orderData.Reel,
       assignedTo: orderData.Shoppers
         ? {
@@ -365,11 +343,7 @@ export default async function handler(
 
     res.status(200).json({ order: formattedOrder });
   } catch (error) {
-    logger.error(
-      "Error fetching reel order details",
-      "ReelOrderDetailsAPI",
-      error
-    );
-    res.status(500).json({ error: "Failed to fetch reel order details" });
+    logger.error('Error fetching reel order details', 'ReelOrderDetailsAPI', error);
+    res.status(500).json({ error: 'Failed to fetch reel order details' });
   }
 }

@@ -1,8 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../api/auth/[...nextauth]";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../api/auth/[...nextauth]';
 
 const GET_SHOPPER_PROFILE = gql`
   query GetShopperProfile($user_id: uuid!) {
@@ -55,12 +55,9 @@ const GET_SHOPPER_PROFILE = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ message: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
@@ -69,11 +66,11 @@ export default async function handler(
     } | null;
 
     if (!session?.user?.id) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      return res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({ message: 'Internal server error' });
     }
 
     // Allow fetching by user_id query param or default to session user
@@ -81,18 +78,15 @@ export default async function handler(
     const targetUserId = user_id || session.user.id;
 
     type ShopperProfileResponse = { shoppers: any[] };
-    const { shoppers } = await hasuraClient.request<ShopperProfileResponse>(
-      GET_SHOPPER_PROFILE,
-      {
-        user_id: targetUserId,
-      }
-    );
+    const { shoppers } = await hasuraClient.request<ShopperProfileResponse>(GET_SHOPPER_PROFILE, {
+      user_id: targetUserId,
+    });
 
     return res.status(200).json({
       shopper: shoppers[0] || null,
     });
   } catch (error) {
-    console.error("Error fetching shopper profile:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Error fetching shopper profile:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 }

@@ -1,23 +1,16 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_ORDERS_BY_STORE = gql`
-  query GetOrdersByStore(
-    $store_id: uuid!
-    $businessAccount_id: uuid!
-    $user_id: uuid!
-  ) {
+  query GetOrdersByStore($store_id: uuid!, $businessAccount_id: uuid!, $user_id: uuid!) {
     businessProductOrders(
       where: {
         store_id: { _eq: $store_id }
         business_store: {
-          business_account: {
-            id: { _eq: $businessAccount_id }
-            user_id: { _eq: $user_id }
-          }
+          business_account: { id: { _eq: $businessAccount_id }, user_id: { _eq: $user_id } }
         }
       }
     ) {
@@ -37,12 +30,9 @@ const GET_BUSINESS_ACCOUNT = gql`
 
 export type ProductStats = { orders: number; unitsSold: number };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -51,16 +41,16 @@ export default async function handler(
     } | null;
 
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { store_id } = req.query;
-    if (!store_id || typeof store_id !== "string") {
-      return res.status(400).json({ error: "store_id is required" });
+    if (!store_id || typeof store_id !== 'string') {
+      return res.status(400).json({ error: 'store_id is required' });
     }
 
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Service unavailable" });
+      return res.status(500).json({ error: 'Service unavailable' });
     }
 
     const { business_accounts } = await hasuraClient.request<{
@@ -84,18 +74,16 @@ export default async function handler(
     const stats: Record<string, ProductStats> = {};
     const orderIdsByProduct: Record<string, Set<string>> = {};
     for (const order of businessProductOrders || []) {
-      const products = Array.isArray(order.allProducts)
-        ? order.allProducts
-        : [];
+      const products = Array.isArray(order.allProducts) ? order.allProducts : [];
       const seenInOrder = new Set<string>();
       for (const p of products) {
         const productId = p.id || p.product_id;
-        if (!productId || typeof productId !== "string") continue;
+        if (!productId || typeof productId !== 'string') continue;
         if (!stats[productId]) {
           stats[productId] = { orders: 0, unitsSold: 0 };
           orderIdsByProduct[productId] = new Set();
         }
-        stats[productId].unitsSold += parseInt(p.quantity || "0", 10) || 0;
+        stats[productId].unitsSold += parseInt(p.quantity || '0', 10) || 0;
         if (!seenInOrder.has(productId)) {
           seenInOrder.add(productId);
           orderIdsByProduct[productId].add(order.id);
@@ -108,9 +96,9 @@ export default async function handler(
 
     return res.status(200).json({ stats });
   } catch (error: any) {
-    console.error("Store product stats error:", error);
+    console.error('Store product stats error:', error);
     return res.status(500).json({
-      error: "Failed to fetch product stats",
+      error: 'Failed to fetch product stats',
       message: error.message,
     });
   }

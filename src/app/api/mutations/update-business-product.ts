@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { PRODUCT_CATEGORIES } from "../../../src/constants/productCategories";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { PRODUCT_CATEGORIES } from '../../../src/constants/productCategories';
 
 const UPDATE_BUSINESS_PRODUCT = gql`
   mutation UpdateBusinessProduct(
@@ -101,112 +101,100 @@ interface UpdateBusinessProductInput {
   otherDetails?: OtherDetailsInput | null;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "PUT") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'PUT') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const {
       product_id,
       name,
-      description = "",
-      image = "",
+      description = '',
+      image = '',
       price,
-      unit = "",
-      category = "",
-      status = "active",
-      minimumOrders: minOrders = "0",
-      maxOrders = "",
-      delveryArea = "",
-      speciality = "",
+      unit = '',
+      category = '',
+      status = 'active',
+      minimumOrders: minOrders = '0',
+      maxOrders = '',
+      delveryArea = '',
+      speciality = '',
       store_id,
-      user_id = "",
-      Plasbusiness_id = "",
+      user_id = '',
+      Plasbusiness_id = '',
       otherDetails,
     } = req.body as UpdateBusinessProductInput;
 
     // Validate required fields
     if (!product_id || !product_id.trim()) {
-      return res.status(400).json({ error: "Product ID is required" });
+      return res.status(400).json({ error: 'Product ID is required' });
     }
 
     if (!name || !name.trim()) {
-      return res.status(400).json({ error: "Product name is required" });
+      return res.status(400).json({ error: 'Product name is required' });
     }
 
     if (!price || !price.trim()) {
-      return res.status(400).json({ error: "Product price is required" });
+      return res.status(400).json({ error: 'Product price is required' });
     }
 
     // minimumOrders is required by the database, default to "0" if not provided
-    const minimumOrders =
-      minOrders && minOrders.trim() !== "" ? minOrders.trim() : "0";
+    const minimumOrders = minOrders && minOrders.trim() !== '' ? minOrders.trim() : '0';
 
     const categoryTrimmed =
-      category !== null && category !== undefined
-        ? String(category).trim()
-        : "";
+      category !== null && category !== undefined ? String(category).trim() : '';
     const validCategory =
       categoryTrimmed &&
-      PRODUCT_CATEGORIES.includes(
-        categoryTrimmed as typeof PRODUCT_CATEGORIES[number]
-      )
+      PRODUCT_CATEGORIES.includes(categoryTrimmed as (typeof PRODUCT_CATEGORIES)[number])
         ? categoryTrimmed
-        : "";
+        : '';
 
     // Get user_id from session if not provided
-    const final_user_id = user_id || session?.user?.id || "";
+    const final_user_id = user_id || session?.user?.id || '';
 
     const variables: Record<string, any> = {
       product_id: product_id.trim(),
       name: name.trim(),
-      Description: description ? description.trim() : "",
-      Image: image ? image.trim() : "",
+      Description: description ? description.trim() : '',
+      Image: image ? image.trim() : '',
       category: validCategory,
       price: price.trim(),
-      unit: unit ? unit.trim() : "",
-      status: status ? status.trim() : "active",
+      unit: unit ? unit.trim() : '',
+      status: status ? status.trim() : 'active',
       minimumOrders: minimumOrders,
-      maxOrders: maxOrders ? maxOrders.trim() : "",
-      delveryArea: delveryArea ? delveryArea.trim() : "",
-      speciality: speciality ? speciality.trim() : "",
+      maxOrders: maxOrders ? maxOrders.trim() : '',
+      delveryArea: delveryArea ? delveryArea.trim() : '',
+      speciality: speciality ? speciality.trim() : '',
       user_id: final_user_id,
-      Plasbusiness_id: Plasbusiness_id ? Plasbusiness_id.trim() : "",
+      Plasbusiness_id: Plasbusiness_id ? Plasbusiness_id.trim() : '',
     };
 
     // Only include store_id if it's provided (not null/empty for services)
-    if (store_id && store_id.trim() !== "") {
+    if (store_id && store_id.trim() !== '') {
       variables.store_id = store_id.trim();
     } else {
       variables.store_id = null;
     }
 
     // otherDetails: jsonb for product options (size, color, model, etc.)
-    if (otherDetails != null && typeof otherDetails === "object") {
+    if (otherDetails != null && typeof otherDetails === 'object') {
       const opts = Array.isArray(otherDetails.options)
         ? otherDetails.options.filter(
             (o: any) =>
               o &&
-              typeof o.key === "string" &&
-              typeof o.label === "string" &&
+              typeof o.key === 'string' &&
+              typeof o.label === 'string' &&
               Array.isArray(o.values)
           )
         : [];
@@ -235,11 +223,10 @@ export default async function handler(
       !result.update_PlasBusinessProductsOrSerive ||
       result.update_PlasBusinessProductsOrSerive.affected_rows === 0
     ) {
-      throw new Error("Failed to update business product");
+      throw new Error('Failed to update business product');
     }
 
-    const updatedProduct =
-      result.update_PlasBusinessProductsOrSerive.returning[0];
+    const updatedProduct = result.update_PlasBusinessProductsOrSerive.returning[0];
 
     return res.status(200).json({
       success: true,
@@ -255,14 +242,13 @@ export default async function handler(
       },
     });
   } catch (error: any) {
-    const errorMessage =
-      error.response?.errors?.[0]?.message || error.message || "Unknown error";
+    const errorMessage = error.response?.errors?.[0]?.message || error.message || 'Unknown error';
     const errorCode = error.response?.errors?.[0]?.extensions?.code;
     const errorPath = error.response?.errors?.[0]?.extensions?.path;
     const allErrors = error.response?.errors || [];
 
     return res.status(500).json({
-      error: "Failed to update business product",
+      error: 'Failed to update business product',
       message: errorMessage,
       code: errorCode,
       path: errorPath,

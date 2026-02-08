@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 // Helper function to calculate overall performance score
 const calculatePerformanceScore = (metrics: {
@@ -31,9 +31,7 @@ const calculatePerformanceScore = (metrics: {
 const GET_EARNINGS_STATS = gql`
   query GetEarningsStats($shopperId: uuid!) {
     # Get earnings
-    Orders(
-      where: { shopper_id: { _eq: $shopperId }, status: { _eq: "delivered" } }
-    ) {
+    Orders(where: { shopper_id: { _eq: $shopperId }, status: { _eq: "delivered" } }) {
       id
       delivery_fee
       service_fee
@@ -97,9 +95,7 @@ const GET_EARNINGS_STATS = gql`
     AssignedOrders: Orders_aggregate(
       where: {
         shopper_id: { _eq: $shopperId }
-        status: {
-          _in: ["assigned", "accepted", "shopping", "delivering", "delivered"]
-        }
+        status: { _in: ["assigned", "accepted", "shopping", "delivering", "delivered"] }
       }
     ) {
       aggregate {
@@ -200,12 +196,9 @@ interface StoreEarnings {
   percentage: number;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
@@ -214,22 +207,17 @@ export default async function handler(
   const userId = (session as any)?.user?.id;
 
   if (!userId) {
-    return res
-      .status(401)
-      .json({ error: "You must be logged in as a shopper" });
+    return res.status(401).json({ error: 'You must be logged in as a shopper' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
-    const data = await hasuraClient.request<GraphQLResponse>(
-      GET_EARNINGS_STATS,
-      {
-        shopperId: userId,
-      }
-    );
+    const data = await hasuraClient.request<GraphQLResponse>(GET_EARNINGS_STATS, {
+      shopperId: userId,
+    });
 
     // Calculate total earnings from completed orders (delivery_fee + service_fee)
     let totalEarnings = 0;
@@ -239,9 +227,9 @@ export default async function handler(
     const storeEarningsMap = new Map<string, number>();
 
     if (data.Orders && Array.isArray(data.Orders)) {
-      data.Orders.forEach((order) => {
-        const serviceFee = parseFloat(order.service_fee || "0");
-        const deliveryFee = parseFloat(order.delivery_fee || "0");
+      data.Orders.forEach(order => {
+        const serviceFee = parseFloat(order.service_fee || '0');
+        const deliveryFee = parseFloat(order.delivery_fee || '0');
         const orderTotal = serviceFee + deliveryFee;
 
         // Add to total earnings
@@ -250,17 +238,13 @@ export default async function handler(
         // Calculate active hours
         const startTime = new Date(order.created_at);
         const endTime = new Date(order.updated_at);
-        const hoursDiff =
-          (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+        const hoursDiff = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
         totalActiveHours += hoursDiff;
 
         // Add to store earnings
-        const storeName = order.Shop?.name || "Unknown Store";
+        const storeName = order.Shop?.name || 'Unknown Store';
         if (storeEarningsMap.has(storeName)) {
-          storeEarningsMap.set(
-            storeName,
-            storeEarningsMap.get(storeName)! + orderTotal
-          );
+          storeEarningsMap.set(storeName, storeEarningsMap.get(storeName)! + orderTotal);
         } else {
           storeEarningsMap.set(storeName, orderTotal);
         }
@@ -281,17 +265,13 @@ export default async function handler(
       const topStores = storeEarnings.slice(0, 3);
       const otherStores = storeEarnings.slice(3);
 
-      const otherStoresAmount = otherStores.reduce(
-        (sum, store) => sum + store.amount,
-        0
-      );
-      const otherStoresPercentage =
-        Math.round((otherStoresAmount / totalEarnings) * 100) || 0;
+      const otherStoresAmount = otherStores.reduce((sum, store) => sum + store.amount, 0);
+      const otherStoresPercentage = Math.round((otherStoresAmount / totalEarnings) * 100) || 0;
 
       storeEarnings = [
         ...topStores,
         {
-          store: "Other Stores",
+          store: 'Other Stores',
           amount: otherStoresAmount,
           percentage: otherStoresPercentage,
         },
@@ -306,27 +286,20 @@ export default async function handler(
     // Mock data for earnings components
     const earningsComponents = [
       {
-        type: "Delivery Fee",
-        amount: data.Orders.reduce(
-          (sum, order) => sum + parseFloat(order.delivery_fee || "0"),
-          0
-        ),
+        type: 'Delivery Fee',
+        amount: data.Orders.reduce((sum, order) => sum + parseFloat(order.delivery_fee || '0'), 0),
         percentage: 0,
       },
       {
-        type: "Service Fee",
-        amount: data.Orders.reduce(
-          (sum, order) => sum + parseFloat(order.service_fee || "0"),
-          0
-        ),
+        type: 'Service Fee',
+        amount: data.Orders.reduce((sum, order) => sum + parseFloat(order.service_fee || '0'), 0),
         percentage: 0,
       },
     ];
 
     // Calculate percentages for earnings components
-    earningsComponents.forEach((component) => {
-      component.percentage =
-        Math.round((component.amount / totalEarnings) * 100) || 0;
+    earningsComponents.forEach(component => {
+      component.percentage = Math.round((component.amount / totalEarnings) * 100) || 0;
     });
 
     // Calculate performance metrics
@@ -334,8 +307,7 @@ export default async function handler(
     const assignedOrdersCount = data.AssignedOrders.aggregate.count || 0;
 
     // Get completed orders with delivery photos from both regular and reel orders
-    const completedRegularOrdersWithPhotos =
-      data.CompletedOrdersWithPhotos?.aggregate?.count || 0;
+    const completedRegularOrdersWithPhotos = data.CompletedOrdersWithPhotos?.aggregate?.count || 0;
     const completedReelOrdersWithPhotos =
       (data as any).CompletedReelOrdersWithPhotos?.aggregate?.count || 0;
     const completedOrdersWithPhotos =
@@ -391,12 +363,12 @@ export default async function handler(
     let quarterlyEarnings = 0;
 
     if (data.Orders && Array.isArray(data.Orders)) {
-      data.Orders.forEach((order) => {
+      data.Orders.forEach(order => {
         // Use updated_at as the delivery completion date since orders are filtered by status: "delivered"
         // This ensures we're only counting orders that were actually completed
         const deliveryDate = new Date(order.updated_at);
-        const serviceFee = parseFloat(order.service_fee || "0");
-        const deliveryFee = parseFloat(order.delivery_fee || "0");
+        const serviceFee = parseFloat(order.service_fee || '0');
+        const deliveryFee = parseFloat(order.delivery_fee || '0');
         const orderTotal = serviceFee + deliveryFee;
 
         // Weekly earnings (this week: Sunday to Saturday)
@@ -446,25 +418,20 @@ export default async function handler(
           monthly: {
             current: monthlyEarnings || 3820.75,
             target: monthlyTarget,
-            percentage:
-              Math.round((monthlyEarnings / monthlyTarget) * 100) || 64,
+            percentage: Math.round((monthlyEarnings / monthlyTarget) * 100) || 64,
           },
           quarterly: {
             current: quarterlyEarnings || 8500.0,
             target: quarterlyTarget,
-            percentage:
-              Math.round((quarterlyEarnings / quarterlyTarget) * 100) || 57,
+            percentage: Math.round((quarterlyEarnings / quarterlyTarget) * 100) || 57,
           },
         },
       },
     });
   } catch (error) {
-    console.error("Error fetching earnings stats:", error);
+    console.error('Error fetching earnings stats:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch earnings stats",
+      error: error instanceof Error ? error.message : 'Failed to fetch earnings stats',
     });
   }
 }

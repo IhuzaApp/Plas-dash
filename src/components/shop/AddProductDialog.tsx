@@ -157,8 +157,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       ...(hideCommission
         ? {}
         : {
-      has_commission: true,
-      commission_percentage: Number(defaultCommission) || 0,
+            has_commission: true,
+            commission_percentage: Number(defaultCommission) || 0,
           }),
       final_price: '',
     },
@@ -197,10 +197,10 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   // Update commission percentage when has_commission changes
   useEffect(() => {
     if (!hideCommission) {
-    if (hasCommission) {
-      form.setValue('commission_percentage', Number(defaultCommission) || 0);
-    } else {
-      form.setValue('commission_percentage', 0);
+      if (hasCommission) {
+        form.setValue('commission_percentage', Number(defaultCommission) || 0);
+      } else {
+        form.setValue('commission_percentage', 0);
       }
     }
   }, [hasCommission, defaultCommission, form, hideCommission]);

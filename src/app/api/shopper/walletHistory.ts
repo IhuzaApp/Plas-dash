@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { logErrorToSlack } from "../../../src/lib/slackErrorReporter";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { logErrorToSlack } from '../../../src/lib/slackErrorReporter';
 
 // GraphQL query to get wallet and transaction information
 const GET_WALLET_AND_TRANSACTIONS = gql`
@@ -62,12 +62,9 @@ interface GraphQLResponse {
   Wallet_Transactions: WalletTransaction[];
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
@@ -76,44 +73,35 @@ export default async function handler(
   const userId = (session as any)?.user?.id;
 
   if (!userId) {
-    return res
-      .status(401)
-      .json({ error: "You must be logged in as a shopper" });
+    return res.status(401).json({ error: 'You must be logged in as a shopper' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
-    const data = await hasuraClient.request<GraphQLResponse>(
-      GET_WALLET_AND_TRANSACTIONS,
-      {
-        shopper_id: userId,
-      }
-    );
+    const data = await hasuraClient.request<GraphQLResponse>(GET_WALLET_AND_TRANSACTIONS, {
+      shopper_id: userId,
+    });
 
     // Format wallet data
     const wallet =
       data.Wallets.length > 0
         ? {
             id: data.Wallets[0].id,
-            availableBalance: parseFloat(
-              data.Wallets[0].available_balance || "0"
-            ),
-            reservedBalance: parseFloat(
-              data.Wallets[0].reserved_balance || "0"
-            ),
+            availableBalance: parseFloat(data.Wallets[0].available_balance || '0'),
+            reservedBalance: parseFloat(data.Wallets[0].reserved_balance || '0'),
           }
         : null;
 
     // Format transaction history
-    const transactions = data.Wallet_Transactions.map((tx) => ({
+    const transactions = data.Wallet_Transactions.map(tx => ({
       id: tx.id,
-      amount: parseFloat(tx.amount || "0"),
+      amount: parseFloat(tx.amount || '0'),
       type: tx.type,
       status: tx.status,
-      description: tx.description || "",
+      description: tx.description || '',
       date: new Date(tx.created_at).toLocaleDateString(),
       time: new Date(tx.created_at).toLocaleTimeString(),
       orderId: tx.related_order_id,
@@ -126,12 +114,11 @@ export default async function handler(
       transactions,
     });
   } catch (error) {
-    await logErrorToSlack("shopper/walletHistory", error, {
+    await logErrorToSlack('shopper/walletHistory', error, {
       userId,
     });
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : "Failed to fetch wallet data",
+      error: error instanceof Error ? error.message : 'Failed to fetch wallet data',
     });
   }
 }

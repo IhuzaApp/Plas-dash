@@ -51,7 +51,7 @@ export default function OrdersOnTimeTrendChart() {
           Delivered On Time vs Late
         </CardTitle>
         <div className="flex flex-wrap gap-1">
-          {(['day', 'week', 'month', 'year'] as const).map((p) => (
+          {(['day', 'week', 'month', 'year'] as const).map(p => (
             <Button
               key={p}
               variant={groupBy === p ? 'secondary' : 'ghost'}
@@ -71,7 +71,8 @@ export default function OrdersOnTimeTrendChart() {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground mb-2">
-          Total delivered orders: on time (≤90 min) vs late. All order types combined. Default: weekly.
+          Total delivered orders: on time (≤90 min) vs late. All order types combined. Default:
+          weekly.
         </p>
         <div className="h-[320px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -105,9 +106,7 @@ export default function OrdersOnTimeTrendChart() {
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Legend
-                  formatter={(value) => <span style={{ color: TICK_FILL }}>{value}</span>}
-                />
+                <Legend formatter={value => <span style={{ color: TICK_FILL }}>{value}</span>} />
                 <Area
                   type="monotone"
                   dataKey="on_time"

@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_WALLET_BY_BUSINESS = gql`
   query GetWalletByBusiness($business_id: uuid!) {
@@ -43,28 +43,21 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { business_id } = req.query as { business_id?: string };
     if (!business_id) {
-      return res.status(400).json({ error: "business_id is required" });
+      return res.status(400).json({ error: 'business_id is required' });
     }
 
     // Verify the user owns this business
@@ -85,7 +78,7 @@ export default async function handler(
       user_id: session.user.id,
     });
     if (!check.business_accounts || check.business_accounts.length === 0) {
-      return res.status(403).json({ error: "Forbidden" });
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     const walletResult = await hasuraClient.request<{
@@ -119,10 +112,10 @@ export default async function handler(
       transactions,
     });
   } catch (error: any) {
-    console.error("Error fetching business transactions:", error);
+    console.error('Error fetching business transactions:', error);
     return res.status(500).json({
-      error: "Failed to fetch business transactions",
-      message: error?.message ?? "Unknown error",
+      error: 'Failed to fetch business transactions',
+      message: error?.message ?? 'Unknown error',
     });
   }
 }

@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import crypto from "crypto";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import crypto from 'crypto';
 
 // Query to check if phone number already has a referral code
 const CHECK_PHONE_REFERRAL = gql`
@@ -43,10 +43,7 @@ const CREATE_REFERRAL_CODE = gql`
 // Generate unique referral code
 function generateReferralCode(userId: string, phone: string): string {
   // Create a hash from user ID and phone
-  const hash = crypto
-    .createHash("sha256")
-    .update(`${userId}-${phone}-${Date.now()}`)
-    .digest("hex");
+  const hash = crypto.createHash('sha256').update(`${userId}-${phone}-${Date.now()}`).digest('hex');
 
   // Take first 8 characters and convert to uppercase
   const code = hash.substring(0, 8).toUpperCase();
@@ -55,24 +52,21 @@ function generateReferralCode(userId: string, phone: string): string {
   return `REF${code}`;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const user_id = session.user.id;
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get user info
@@ -81,13 +75,13 @@ export default async function handler(
     }>(GET_USER, { user_id });
 
     if (!userData.Users_by_pk) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     const phone = userData.Users_by_pk.phone;
     if (!phone) {
       return res.status(400).json({
-        error: "Phone number is required to create a referral code",
+        error: 'Phone number is required to create a referral code',
       });
     }
 
@@ -103,7 +97,7 @@ export default async function handler(
     if (existingCode.referral_codes && existingCode.referral_codes.length > 0) {
       return res.status(400).json({
         error:
-          "A referral code already exists for this phone number. Each phone number can only have one referral code.",
+          'A referral code already exists for this phone number. Each phone number can only have one referral code.',
         existingCode: existingCode.referral_codes[0].code,
       });
     }
@@ -123,13 +117,10 @@ export default async function handler(
       { user_id }
     );
 
-    if (
-      userCodeCheck.referral_codes &&
-      userCodeCheck.referral_codes.length > 0
-    ) {
+    if (userCodeCheck.referral_codes && userCodeCheck.referral_codes.length > 0) {
       return res.status(200).json({
         referralCode: userCodeCheck.referral_codes[0],
-        message: "Referral code already exists",
+        message: 'Referral code already exists',
       });
     }
 
@@ -164,7 +155,7 @@ export default async function handler(
 
     if (attempts >= maxAttempts) {
       return res.status(500).json({
-        error: "Failed to generate unique referral code. Please try again.",
+        error: 'Failed to generate unique referral code. Please try again.',
       });
     }
 
@@ -188,15 +179,12 @@ export default async function handler(
     return res.status(200).json({
       success: true,
       referralCode: result.insert_referral_codes_one,
-      message: "Referral code created successfully",
+      message: 'Referral code created successfully',
     });
   } catch (error) {
-    console.error("Error creating referral code:", error);
+    console.error('Error creating referral code:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to create referral code",
+      error: error instanceof Error ? error.message : 'Failed to create referral code',
     });
   }
 }

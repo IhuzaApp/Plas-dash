@@ -92,7 +92,15 @@ interface OperatingHours {
   sunday?: string;
 }
 
-const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+const DAY_ORDER = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const;
 
 function OpeningHoursCalendar({ hours }: { hours: OperatingHours | string | null }) {
   if (!hours) {
@@ -111,7 +119,7 @@ function OpeningHoursCalendar({ hours }: { hours: OperatingHours | string | null
           Hours
         </div>
       </div>
-      {DAY_ORDER.map((day) => (
+      {DAY_ORDER.map(day => (
         <div
           key={day}
           className="grid grid-cols-[1fr_1fr] border-b border-border last:border-b-0 odd:bg-muted/20"
@@ -151,7 +159,6 @@ const productFormSchema = z.object({
 
 type ProductFormData = z.infer<typeof productFormSchema>;
 
-
 const ShopDetail = () => {
   const params = useParams();
   const id = params?.id?.toString() || '';
@@ -175,10 +182,17 @@ const ShopDetail = () => {
   const shop = data?.Shops_by_pk;
   const { data: reelOrdersData } = useReelOrders();
   const shopReelOrders = useMemo(() => {
-    const list = (reelOrdersData?.reel_orders ?? []) as { id: string; status: string; total: string; created_at: string; Shop?: { id?: string }; Reel?: { shop_id?: string } }[];
+    const list = (reelOrdersData?.reel_orders ?? []) as {
+      id: string;
+      status: string;
+      total: string;
+      created_at: string;
+      Shop?: { id?: string };
+      Reel?: { shop_id?: string };
+    }[];
     return list
-      .filter((o) => o.Shop?.id === id || o.Reel?.shop_id === id)
-      .map((o) => ({ id: o.id, status: o.status, total: o.total, created_at: o.created_at }));
+      .filter(o => o.Shop?.id === id || o.Reel?.shop_id === id)
+      .map(o => ({ id: o.id, status: o.status, total: o.total, created_at: o.created_at }));
   }, [reelOrdersData?.reel_orders, id]);
 
   const addProduct = useAddProduct();
@@ -307,10 +321,20 @@ const ShopDetail = () => {
       if (searchTerm === '') return true;
       const term = searchTerm.toLowerCase();
       const name = product.ProductName?.name?.toLowerCase() ?? '';
-      const sku = (product.ProductName?.sku ?? (product as { sku?: string }).sku ?? '').toString().toLowerCase();
-      const barcode = (product.ProductName?.barcode ?? (product as { barcode?: string }).barcode ?? '').toString().toLowerCase();
+      const sku = (product.ProductName?.sku ?? (product as { sku?: string }).sku ?? '')
+        .toString()
+        .toLowerCase();
+      const barcode = (
+        product.ProductName?.barcode ??
+        (product as { barcode?: string }).barcode ??
+        ''
+      )
+        .toString()
+        .toLowerCase();
       const unit = product.measurement_unit?.toLowerCase() ?? '';
-      return name.includes(term) || sku.includes(term) || barcode.includes(term) || unit.includes(term);
+      return (
+        name.includes(term) || sku.includes(term) || barcode.includes(term) || unit.includes(term)
+      );
     }) ?? [];
 
   // Calculate pagination
@@ -593,32 +617,54 @@ const ShopDetail = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                      <p className="text-sm">{String((shop as unknown as Record<string, unknown>).phone ?? shop.phone ?? '').trim() || '—'}</p>
+                      <p className="text-sm">
+                        {String(
+                          (shop as unknown as Record<string, unknown>).phone ?? shop.phone ?? ''
+                        ).trim() || '—'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">TIN number</p>
-                      <p className="text-sm font-mono">{String((shop as unknown as Record<string, unknown>).tin ?? shop.tin ?? '').trim() || '—'}</p>
+                      <p className="text-sm font-mono">
+                        {String(
+                          (shop as unknown as Record<string, unknown>).tin ?? shop.tin ?? ''
+                        ).trim() || '—'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">SSD</p>
-                      <p className="text-sm">{String((shop as unknown as Record<string, unknown>).ssd ?? shop.ssd ?? '').trim() || '—'}</p>
+                      <p className="text-sm">
+                        {String(
+                          (shop as unknown as Record<string, unknown>).ssd ?? shop.ssd ?? ''
+                        ).trim() || '—'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Related to</p>
-                      <p className="text-sm">{String((shop as unknown as Record<string, unknown>).relatedTo ?? shop.relatedTo ?? '').trim() || '—'}</p>
+                      <p className="text-sm">
+                        {String(
+                          (shop as unknown as Record<string, unknown>).relatedTo ??
+                            shop.relatedTo ??
+                            ''
+                        ).trim() || '—'}
+                      </p>
                     </div>
-                    {shop.latitude != null && shop.longitude != null && (shop.latitude || shop.longitude) && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Coordinates</p>
-                        <p className="text-sm font-mono text-muted-foreground">
-                          {shop.latitude}, {shop.longitude}
-                        </p>
-                      </div>
-                    )}
+                    {shop.latitude != null &&
+                      shop.longitude != null &&
+                      (shop.latitude || shop.longitude) && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Coordinates</p>
+                          <p className="text-sm font-mono text-muted-foreground">
+                            {shop.latitude}, {shop.longitude}
+                          </p>
+                        </div>
+                      )}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-2">Opening hours</p>
-                    <OpeningHoursCalendar hours={shop.operating_hours as OperatingHours | string | null} />
+                    <OpeningHoursCalendar
+                      hours={shop.operating_hours as OperatingHours | string | null}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -680,9 +726,14 @@ const ShopDetail = () => {
                     </TableRow>
                   ) : (
                     currentProducts.map(product => {
-                      const imageUrl = product.ProductName?.image ?? (product as { image?: string }).image;
-                      const sku = product.ProductName?.sku ?? (product as { sku?: string }).sku ?? '—';
-                      const barcode = product.ProductName?.barcode ?? (product as { barcode?: string }).barcode ?? '—';
+                      const imageUrl =
+                        product.ProductName?.image ?? (product as { image?: string }).image;
+                      const sku =
+                        product.ProductName?.sku ?? (product as { sku?: string }).sku ?? '—';
+                      const barcode =
+                        product.ProductName?.barcode ??
+                        (product as { barcode?: string }).barcode ??
+                        '—';
                       return (
                         <TableRow key={product.id}>
                           <TableCell>

@@ -5,21 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { 
-  Loader2, 
-  Video, 
-  Edit,
-  ToggleLeft, 
-  ToggleRight
-} from 'lucide-react';
+import { Loader2, Video, Edit, ToggleLeft, ToggleRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUpdateReel } from '@/hooks/useHasuraApi';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 
-type PostType = "restaurant" | "supermarket" | "chef";
+type PostType = 'restaurant' | 'supermarket' | 'chef';
 
 // Category types for video handling
 const YOUTUBE_CATEGORIES = ['tutorial', 'recipe', 'cooking'];
@@ -91,8 +91,10 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
 
       // Validate based on category
       if (YOUTUBE_CATEGORIES.includes(formData.category.toLowerCase())) {
-        if (!videoUrl || !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
-          toast.error('Please provide a valid YouTube URL for tutorial, recipe, or cooking categories');
+        if (!videoUrl || (!videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be'))) {
+          toast.error(
+            'Please provide a valid YouTube URL for tutorial, recipe, or cooking categories'
+          );
           return;
         }
       } else if (UPLOAD_CATEGORIES.includes(formData.category.toLowerCase())) {
@@ -122,7 +124,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
       }
 
       await updateReelMutation.mutateAsync(mutationVariables);
-      
+
       toast.success('Reel updated successfully!');
       onOpenChange(false);
       onSuccess();
@@ -169,17 +171,17 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
               placeholder="Enter reel title"
             />
           </div>
-          
+
           <div>
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter reel description"
               rows={3}
             />
@@ -187,7 +189,10 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
 
           <div>
             <Label htmlFor="type">Post Type</Label>
-            <Select value={formData.type} onValueChange={(value: PostType) => setFormData({ ...formData, type: value })}>
+            <Select
+              value={formData.type}
+              onValueChange={(value: PostType) => setFormData({ ...formData, type: value })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -201,7 +206,10 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
 
           <div>
             <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+            <Select
+              value={formData.category}
+              onValueChange={value => setFormData({ ...formData, category: value })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -240,7 +248,8 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
                     />
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    This video cannot be edited. To change the video, delete this reel and create a new one.
+                    This video cannot be edited. To change the video, delete this reel and create a
+                    new one.
                   </p>
                 </div>
               ) : (
@@ -253,17 +262,18 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
           </div>
 
           {/* Regular URL Input - For other categories */}
-          {!YOUTUBE_CATEGORIES.includes(formData.category.toLowerCase()) && !UPLOAD_CATEGORIES.includes(formData.category.toLowerCase()) && (
-            <div>
-              <Label htmlFor="video_url">Video URL</Label>
-              <Input
-                id="video_url"
-                value={formData.video_url}
-                onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                placeholder="Enter video URL"
-              />
-            </div>
-          )}
+          {!YOUTUBE_CATEGORIES.includes(formData.category.toLowerCase()) &&
+            !UPLOAD_CATEGORIES.includes(formData.category.toLowerCase()) && (
+              <div>
+                <Label htmlFor="video_url">Video URL</Label>
+                <Input
+                  id="video_url"
+                  value={formData.video_url}
+                  onChange={e => setFormData({ ...formData, video_url: e.target.value })}
+                  placeholder="Enter video URL"
+                />
+              </div>
+            )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -271,7 +281,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
               <Input
                 id="price"
                 value={formData.Price}
-                onChange={(e) => setFormData({ ...formData, Price: e.target.value })}
+                onChange={e => setFormData({ ...formData, Price: e.target.value })}
                 placeholder="Enter price"
               />
             </div>
@@ -280,7 +290,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
               <Input
                 id="delivery_time"
                 value={formData.delivery_time}
-                onChange={(e) => setFormData({ ...formData, delivery_time: e.target.value })}
+                onChange={e => setFormData({ ...formData, delivery_time: e.target.value })}
                 placeholder="e.g., 30-45 min"
               />
             </div>
@@ -299,24 +309,34 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
                 variant="outline"
                 size="sm"
                 onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
-                className={formData.is_active ? 'text-green-600 border-green-600' : 'text-gray-400 border-gray-400'}
+                className={
+                  formData.is_active
+                    ? 'text-green-600 border-green-600'
+                    : 'text-gray-400 border-gray-400'
+                }
               >
-                {formData.is_active ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                {formData.is_active ? (
+                  <ToggleRight className="h-4 w-4" />
+                ) : (
+                  <ToggleLeft className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
 
           <div className="flex gap-2 pt-4">
-            <Button 
-              onClick={handleUpdateReel} 
+            <Button
+              onClick={handleUpdateReel}
               disabled={updateReelMutation.isPending}
               className="flex-1"
             >
-              {updateReelMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {updateReelMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               Update Reel
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 onOpenChange(false);
                 resetForm();
@@ -331,4 +351,4 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
   );
 };
 
-export default EditReelModal; 
+export default EditReelModal;

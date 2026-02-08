@@ -1,14 +1,11 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_BUSINESS_CONTRACTS = gql`
-  query GetBusinessContracts(
-    $businessProfileId: uuid!
-    $supplierBusinessId: uuid!
-  ) {
+  query GetBusinessContracts($businessProfileId: uuid!, $supplierBusinessId: uuid!) {
     # Contracts where user is the client (created the contract)
     BusinessContracts_Client: BusinessContracts(
       where: { bussinessProfile_id: { _eq: $businessProfileId } }
@@ -54,9 +51,7 @@ const GET_BUSINESS_CONTRACTS = gql`
     }
     # Contracts where user is the supplier (quote was submitted by them)
     # First get quotes where user is supplier
-    SupplierQuotes: BusinessQoute(
-      where: { respond_business_id: { _eq: $supplierBusinessId } }
-    ) {
+    SupplierQuotes: BusinessQoute(where: { respond_business_id: { _eq: $supplierBusinessId } }) {
       id
       businessRfq_id
       qouteAmount
@@ -128,27 +123,20 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
@@ -168,14 +156,11 @@ export default async function handler(
       }>(CHECK_BUSINESS_ACCOUNT, {
         user_id: user_id,
       });
-      if (
-        accountResult.business_accounts &&
-        accountResult.business_accounts.length > 0
-      ) {
+      if (accountResult.business_accounts && accountResult.business_accounts.length > 0) {
         businessProfileId = accountResult.business_accounts[0].id;
       }
     } catch (error) {
-      console.error("Error fetching business account:", error);
+      console.error('Error fetching business account:', error);
     }
 
     if (!businessProfileId) {
@@ -284,36 +269,25 @@ export default async function handler(
     });
 
     // Get supplier quote IDs and their RFQ IDs
-    const supplierQuoteIds = new Set(
-      (result.SupplierQuotes || []).map((q) => q.id)
-    );
-    const supplierRfqIds = new Set(
-      (result.SupplierQuotes || []).map((q) => q.businessRfq_id)
-    );
+    const supplierQuoteIds = new Set((result.SupplierQuotes || []).map(q => q.id));
+    const supplierRfqIds = new Set((result.SupplierQuotes || []).map(q => q.businessRfq_id));
 
     // Create a map of RFQ ID to quote data for supplier quotes
-    const supplierQuoteMap = new Map(
-      (result.SupplierQuotes || []).map((q) => [q.businessRfq_id, q])
-    );
+    const supplierQuoteMap = new Map((result.SupplierQuotes || []).map(q => [q.businessRfq_id, q]));
 
     // Filter supplier contracts: contracts where the RFQ ID matches supplier's RFQ IDs
-    const supplierContracts = (result.BusinessContracts_Supplier || []).filter(
-      (contract) => {
-        const rfqId = contract.bussines_RFQ?.id;
-        return rfqId && supplierRfqIds.has(rfqId);
-      }
-    );
+    const supplierContracts = (result.BusinessContracts_Supplier || []).filter(contract => {
+      const rfqId = contract.bussines_RFQ?.id;
+      return rfqId && supplierRfqIds.has(rfqId);
+    });
 
     // Combine contracts from both perspectives (client and supplier)
-    const allContracts = [
-      ...(result.BusinessContracts_Client || []),
-      ...supplierContracts,
-    ];
+    const allContracts = [...(result.BusinessContracts_Client || []), ...supplierContracts];
 
     // Remove duplicates based on contract ID and sort by update_on (most recent first)
-    const supplierContractIds = new Set(supplierContracts.map((c) => c.id));
+    const supplierContractIds = new Set(supplierContracts.map(c => c.id));
     const uniqueContracts = Array.from(
-      new Map(allContracts.map((contract) => [contract.id, contract])).values()
+      new Map(allContracts.map(contract => [contract.id, contract])).values()
     ).sort((a, b) => {
       // Sort by update_on descending (most recent first)
       const dateA = a.update_on ? new Date(a.update_on).getTime() : 0;
@@ -322,40 +296,37 @@ export default async function handler(
     });
 
     // Transform contracts to match the expected format
-    const contracts = uniqueContracts.map((contract) => {
+    const contracts = uniqueContracts.map(contract => {
       const rfq = contract.bussines_RFQ;
       // For supplier contracts, get quote info from the supplierQuoteMap
       // For client contracts, use business_account from contract
       const rfqId = rfq?.id;
       const supplierQuote = rfqId ? supplierQuoteMap.get(rfqId) : null;
-      const supplierAccount =
-        supplierQuote?.business_account || contract.business_account;
-      const role = supplierContractIds.has(contract.id) ? "supplier" : "client";
+      const supplierAccount = supplierQuote?.business_account || contract.business_account;
+      const role = supplierContractIds.has(contract.id) ? 'supplier' : 'client';
 
       return {
         id: contract.id,
         role,
         contractId: contract.id.slice(0, 8).toUpperCase(),
-        title: rfq?.title || "Contract",
-        supplierName: supplierAccount?.business_name || "Unknown Supplier",
-        supplierCompany: supplierAccount?.business_name || "Unknown Company",
-        contractType: contract.type || "Service Agreement",
-        status: (contract.status || "pending") as
-          | "draft"
-          | "pending"
-          | "waiting_for_supplier"
-          | "active"
-          | "completed"
-          | "terminated"
-          | "expired"
-          | "rejected",
+        title: rfq?.title || 'Contract',
+        supplierName: supplierAccount?.business_name || 'Unknown Supplier',
+        supplierCompany: supplierAccount?.business_name || 'Unknown Company',
+        contractType: contract.type || 'Service Agreement',
+        status: (contract.status || 'pending') as
+          | 'draft'
+          | 'pending'
+          | 'waiting_for_supplier'
+          | 'active'
+          | 'completed'
+          | 'terminated'
+          | 'expired'
+          | 'rejected',
         startDate: contract.startDate,
         endDate: contract.endDate,
-        totalValue: parseFloat(
-          contract.contract_Value || contract.value || "0"
-        ),
-        currency: supplierQuote?.currency || "RWF",
-        paymentSchedule: contract.paymentSchedule || "Not specified",
+        totalValue: parseFloat(contract.contract_Value || contract.value || '0'),
+        currency: supplierQuote?.currency || 'RWF',
+        paymentSchedule: contract.paymentSchedule || 'Not specified',
         progress: 0, // Can be calculated based on deliverables if needed
         // Additional fields
         duration: contract.duration,
@@ -363,11 +334,11 @@ export default async function handler(
         terminationTerms: contract.terminationTerms,
         specialConditions: contract.specialConditions,
         deliverables: contract.projecDeliverables || [],
-        supplierId: supplierAccount?.id || "",
-        quoteId: supplierQuote?.id || "",
-        rfqId: rfq?.id || "",
-        lastActivity: contract.update_on || contract.done_at || "",
-        created: contract.update_on || contract.done_at || "",
+        supplierId: supplierAccount?.id || '',
+        quoteId: supplierQuote?.id || '',
+        rfqId: rfq?.id || '',
+        lastActivity: contract.update_on || contract.done_at || '',
+        created: contract.update_on || contract.done_at || '',
         clientSignature: contract.clientSignature,
         supplierSignature: contract.supplierSignature,
         updated_at: contract.update_on,
@@ -381,9 +352,9 @@ export default async function handler(
       contracts: contracts,
     });
   } catch (error: any) {
-    console.error("Error fetching business contracts:", error);
+    console.error('Error fetching business contracts:', error);
     return res.status(500).json({
-      error: "Failed to fetch contracts",
+      error: 'Failed to fetch contracts',
       message: error.message,
     });
   }

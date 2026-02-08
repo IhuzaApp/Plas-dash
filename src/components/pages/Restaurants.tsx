@@ -14,7 +14,17 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, Loader2, Plus, MapPin, Phone, Mail, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  Loader2,
+  Plus,
+  MapPin,
+  Phone,
+  Mail,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
 import { useRestaurants } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
@@ -172,7 +182,11 @@ const Restaurants = () => {
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={restaurant.logo} alt={restaurant.name} />
                           <AvatarFallback>
-                            {restaurant.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            {restaurant.name
+                              ?.split(' ')
+                              .map(n => n[0])
+                              .join('')
+                              .slice(0, 2)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -255,4 +269,4 @@ const Restaurants = () => {
   );
 };
 
-export default Restaurants; 
+export default Restaurants;

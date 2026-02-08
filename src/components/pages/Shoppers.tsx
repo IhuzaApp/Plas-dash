@@ -165,11 +165,16 @@ const Shoppers = () => {
                           </Avatar>
                           <div className="min-w-0">
                             <div className="font-medium truncate">{shopper.full_name}</div>
-                            <div className="text-sm text-muted-foreground truncate">{shopper.phone_number}</div>
+                            <div className="text-sm text-muted-foreground truncate">
+                              {shopper.phone_number}
+                            </div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="min-w-[100px] max-w-[120px]" title={shopper.Employment_id ?? ''}>
+                      <TableCell
+                        className="min-w-[100px] max-w-[120px]"
+                        title={shopper.Employment_id ?? ''}
+                      >
                         <span className="block truncate">{shopper.Employment_id ?? '—'}</span>
                       </TableCell>
                       <TableCell className="min-w-[90px] whitespace-nowrap">
@@ -207,8 +212,13 @@ const Shoppers = () => {
                           {shopper.background_check_completed ? 'Completed' : 'Pending'}
                         </span>
                       </TableCell>
-                      <TableCell className="min-w-[110px] max-w-[140px]" title={shopper.onboarding_step ?? ''}>
-                        <span className="block truncate capitalize">{shopper.onboarding_step ?? '—'}</span>
+                      <TableCell
+                        className="min-w-[110px] max-w-[140px]"
+                        title={shopper.onboarding_step ?? ''}
+                      >
+                        <span className="block truncate capitalize">
+                          {shopper.onboarding_step ?? '—'}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right min-w-[100px]">
                         {hasAction('shoppers', 'view_shopper_details') && (

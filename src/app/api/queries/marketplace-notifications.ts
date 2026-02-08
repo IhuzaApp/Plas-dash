@@ -3,12 +3,12 @@
  * Sends push notifications via fcmService when user has updates; clients receive via fcmClient
  * (useFCMNotifications) and can refetch on "fcm-marketplace-update" event.
  */
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { sendNotificationToUser } from "../../../src/services/fcmService";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { sendNotificationToUser } from '../../../src/services/fcmService';
 
 // Throttle: send at most one marketplace FCM per user per 5 minutes
 const lastMarketplaceNotifyAt = new Map<string, number>();
@@ -31,10 +31,7 @@ const GET_RFQ_RESPONSES_COUNT = gql`
 const GET_RFQ_RESPONSES = gql`
   query GetRFQResponses($rfq_ids: [uuid!]!) {
     BusinessQoute(
-      where: {
-        businessRfq_id: { _in: $rfq_ids }
-        status: { _nin: ["rejected", "cancelled"] }
-      }
+      where: { businessRfq_id: { _in: $rfq_ids }, status: { _nin: ["rejected", "cancelled"] } }
     ) {
       id
       businessRfq_id
@@ -44,19 +41,14 @@ const GET_RFQ_RESPONSES = gql`
 
 const GET_NEW_RFQS_COUNT = gql`
   query GetNewRFQsCount($seven_days_ago: timestamptz!) {
-    bussines_RFQ(
-      where: { open: { _eq: true }, created_at: { _gte: $seven_days_ago } }
-    ) {
+    bussines_RFQ(where: { open: { _eq: true }, created_at: { _gte: $seven_days_ago } }) {
       id
     }
   }
 `;
 
 const GET_INCOMPLETE_ORDERS_COUNT = gql`
-  query GetIncompleteOrdersCount(
-    $user_id: uuid!
-    $seven_days_ago: timestamptz!
-  ) {
+  query GetIncompleteOrdersCount($user_id: uuid!, $seven_days_ago: timestamptz!) {
     Orders(
       where: {
         user_id: { _eq: $user_id }
@@ -109,20 +101,13 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
       return res.status(200).json({
@@ -135,7 +120,7 @@ export default async function handler(
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const userId = session.user.id;
@@ -158,7 +143,7 @@ export default async function handler(
     // Fetch responses for those RFQs
     let rfqResponsesCount = 0;
     if (rfqResult.bussines_RFQ.length > 0) {
-      const rfqIds = rfqResult.bussines_RFQ.map((rfq) => rfq.id);
+      const rfqIds = rfqResult.bussines_RFQ.map(rfq => rfq.id);
       const responsesResult = await hasuraClient.request<{
         BusinessQoute: Array<{
           id: string;
@@ -207,15 +192,11 @@ export default async function handler(
       seven_days_ago: sevenDaysAgoISO,
     });
 
-    const newBusinessOrdersCount =
-      newBusinessOrdersResult.businessProductOrders?.length || 0;
+    const newBusinessOrdersCount = newBusinessOrdersResult.businessProductOrders?.length || 0;
 
     // Total count: RFQ responses + incomplete orders + new RFQs + new business orders
     const totalCount =
-      rfqResponsesCount +
-      incompleteOrdersCount +
-      newRFQsCount +
-      newBusinessOrdersCount;
+      rfqResponsesCount + incompleteOrdersCount + newRFQsCount + newBusinessOrdersCount;
 
     // Notify user via FCM when they have marketplace updates (throttled)
     if (totalCount > 0) {
@@ -223,13 +204,13 @@ export default async function handler(
       if (Date.now() - lastSent >= MARKETPLACE_NOTIFY_THROTTLE_MS) {
         try {
           await sendNotificationToUser(userId, {
-            title: "Marketplace updates",
+            title: 'Marketplace updates',
             body:
               totalCount === 1
-                ? "You have 1 new marketplace update"
+                ? 'You have 1 new marketplace update'
                 : `You have ${totalCount} new marketplace updates`,
             data: {
-              type: "marketplace_update",
+              type: 'marketplace_update',
               totalCount: String(totalCount),
               rfqResponsesCount: String(rfqResponsesCount),
               newRFQsCount: String(newRFQsCount),
@@ -239,10 +220,7 @@ export default async function handler(
           });
           lastMarketplaceNotifyAt.set(userId, Date.now());
         } catch (fcmErr: any) {
-          console.warn(
-            "Marketplace FCM notify failed:",
-            fcmErr?.message || fcmErr
-          );
+          console.warn('Marketplace FCM notify failed:', fcmErr?.message || fcmErr);
         }
       }
     }
@@ -256,22 +234,18 @@ export default async function handler(
     });
   } catch (error: any) {
     // Check if it's a server error (502, 520, 503, 504, etc.) - Hasura/Cloudflare issues
-    const serverErrorStatus =
-      error?.response?.status || error?.response?.statusCode;
+    const serverErrorStatus = error?.response?.status || error?.response?.statusCode;
     const isServerError =
       serverErrorStatus >= 500 ||
       serverErrorStatus === 520 ||
-      error?.message?.includes("502") ||
-      error?.message?.includes("520") ||
-      error?.message?.includes("503") ||
-      error?.message?.includes("504");
+      error?.message?.includes('502') ||
+      error?.message?.includes('520') ||
+      error?.message?.includes('503') ||
+      error?.message?.includes('504');
 
     // Only log non-server errors (client errors, etc.)
     if (!isServerError) {
-      console.error(
-        "Error fetching marketplace notifications:",
-        error.message || error
-      );
+      console.error('Error fetching marketplace notifications:', error.message || error);
     }
 
     // For server errors, return 200 with default values (graceful degradation)
@@ -279,12 +253,8 @@ export default async function handler(
     const statusCode = isServerError ? 200 : 500;
 
     return res.status(statusCode).json({
-      error: isServerError
-        ? "service_unavailable"
-        : "Failed to fetch notifications",
-      message: isServerError
-        ? "Service temporarily unavailable"
-        : error.message,
+      error: isServerError ? 'service_unavailable' : 'Failed to fetch notifications',
+      message: isServerError ? 'Service temporarily unavailable' : error.message,
       rfqResponsesCount: 0,
       incompleteOrdersCount: 0,
       newRFQsCount: 0,

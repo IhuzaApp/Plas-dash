@@ -103,10 +103,7 @@ const GET_USER_BY_ID = gql`
   }
 `;
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user || !(session.user as { id?: string }).id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -127,9 +124,6 @@ export async function GET(
     return NextResponse.json({ user: data.Users_by_pk ?? null });
   } catch (error) {
     console.error('Error fetching user:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
   }
 }

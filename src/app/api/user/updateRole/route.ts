@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const CHECK_SHOPPER_STATUS = gql`
   query CheckShopperStatus($user_id: uuid!) {
@@ -26,29 +26,26 @@ const UPDATE_USER_ROLE = gql`
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Not authenticated" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
   const body = await request.json();
   const { role } = body;
-  if (!role || (role !== "user" && role !== "shopper")) {
-    return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+  if (!role || (role !== 'user' && role !== 'shopper')) {
+    return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
   }
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
-    if (role === "shopper") {
+    if (role === 'shopper') {
       const { shoppers } = await hasuraClient.request<{
         shoppers: Array<{ id: string; status: string; active: boolean }>;
       }>(CHECK_SHOPPER_STATUS, { user_id: session.user.id });
       if (!shoppers?.length || !shoppers[0].active) {
         return NextResponse.json(
           {
-            error: "User is not an active shopper",
-            code: "NOT_ACTIVE_SHOPPER",
+            error: 'User is not an active shopper',
+            code: 'NOT_ACTIVE_SHOPPER',
           },
           { status: 403 }
         );
@@ -61,19 +58,19 @@ export async function POST(request: Request) {
       role,
     });
     if (!response.update_Users_by_pk) {
-      throw new Error("Failed to update user role");
+      throw new Error('Failed to update user role');
     }
     return NextResponse.json({
       success: true,
       role,
-      redirectTo: "/",
+      redirectTo: '/',
     });
   } catch (error) {
-    console.error("Error updating user role:", error);
+    console.error('Error updating user role:', error);
     return NextResponse.json(
       {
-        error: "Failed to update user role",
-        details: error instanceof Error ? error.message : "Unknown error",
+        error: 'Failed to update user role',
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

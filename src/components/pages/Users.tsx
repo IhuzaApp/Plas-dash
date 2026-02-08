@@ -46,12 +46,8 @@ const Users = () => {
   const { hasAction } = usePrivilege();
 
   // By role for table and stats
-  const usersWithRoleUser = users.filter(
-    user => (user.role?.toLowerCase() ?? '') === 'user'
-  );
-  const usersWithRoleShopper = users.filter(
-    user => (user.role?.toLowerCase() ?? '') === 'shopper'
-  );
+  const usersWithRoleUser = users.filter(user => (user.role?.toLowerCase() ?? '') === 'user');
+  const usersWithRoleShopper = users.filter(user => (user.role?.toLowerCase() ?? '') === 'shopper');
 
   // Stats: total, guest, customers from users list; active = from API (activity in last 3 months)
   const totalUsers = users.length;
@@ -114,7 +110,9 @@ const Users = () => {
           description="View and manage user accounts."
           actions={
             <div className="flex gap-2">
-              <Button variant="outline" disabled>Export</Button>
+              <Button variant="outline" disabled>
+                Export
+              </Button>
               <Button disabled>Add User</Button>
             </div>
           }
@@ -158,11 +156,21 @@ const Users = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-14" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-14" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-24" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-24" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Skeleton className="h-8 w-20 ml-auto" />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -207,13 +215,9 @@ const Users = () => {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">
-              {activeUsers === null ? '—' : activeUsers}
-            </div>
+            <div className="text-2xl font-bold">{activeUsers === null ? '—' : activeUsers}</div>
             <p className="text-muted-foreground">Active Users</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              With activity in last 3 months
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">With activity in last 3 months</p>
           </CardContent>
         </Card>
         <Card>
@@ -261,15 +265,9 @@ const Users = () => {
           }}
         >
           <TabsList>
-            <TabsTrigger value="user">
-              Users ({usersWithRoleUser.length})
-            </TabsTrigger>
-            <TabsTrigger value="shopper">
-              Shoppers ({usersWithRoleShopper.length})
-            </TabsTrigger>
-            <TabsTrigger value="all">
-              All ({users.length})
-            </TabsTrigger>
+            <TabsTrigger value="user">Users ({usersWithRoleUser.length})</TabsTrigger>
+            <TabsTrigger value="shopper">Shoppers ({usersWithRoleShopper.length})</TabsTrigger>
+            <TabsTrigger value="all">All ({users.length})</TabsTrigger>
           </TabsList>
         </Tabs>
 

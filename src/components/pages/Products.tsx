@@ -12,7 +12,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, ScanBarcode, Loader2, Plus, Upload, Pencil, RefreshCw } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  ScanBarcode,
+  Loader2,
+  Plus,
+  Upload,
+  Pencil,
+  RefreshCw,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useProducts,
@@ -179,7 +188,9 @@ const Products = () => {
       productNamesQuery.refetch();
     } catch (err) {
       console.error(err);
-      toast.error(editProductName ? 'Failed to update product name.' : 'Failed to add product name.');
+      toast.error(
+        editProductName ? 'Failed to update product name.' : 'Failed to add product name.'
+      );
       throw err;
     }
   };
@@ -358,9 +369,7 @@ const Products = () => {
                         {pn.description ?? '—'}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {pn.create_at
-                          ? format(new Date(pn.create_at), 'MMM d, yyyy')
-                          : '—'}
+                        {pn.create_at ? format(new Date(pn.create_at), 'MMM d, yyyy') : '—'}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -541,9 +550,7 @@ const Products = () => {
                 currentProducts.map((product: any) => {
                   const stockStatus = getStockStatus(product.quantity);
                   const imageUrl =
-                    product.image ||
-                    product.ProductName?.image ||
-                    PRODUCT_PLACEHOLDER;
+                    product.image || product.ProductName?.image || PRODUCT_PLACEHOLDER;
                   return (
                     <TableRow key={product.id}>
                       <TableCell>

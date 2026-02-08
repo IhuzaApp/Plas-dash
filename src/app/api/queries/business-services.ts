@@ -1,16 +1,13 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_BUSINESS_SERVICES = gql`
   query GetBusinessServices($business_id: uuid!) {
     PlasBusinessProductsOrSerive(
-      where: {
-        Plasbusiness_id: { _eq: $business_id }
-        store_id: { _is_null: true }
-      }
+      where: { Plasbusiness_id: { _eq: $business_id }, store_id: { _is_null: true } }
       order_by: { created_at: desc }
     ) {
       id
@@ -46,27 +43,20 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
@@ -87,14 +77,11 @@ export default async function handler(
       }>(CHECK_BUSINESS_ACCOUNT, {
         user_id: user_id,
       });
-      if (
-        accountResult.business_accounts &&
-        accountResult.business_accounts.length > 0
-      ) {
+      if (accountResult.business_accounts && accountResult.business_accounts.length > 0) {
         business_id = accountResult.business_accounts[0].id;
       }
     } catch (error) {
-      console.error("Error fetching business account:", error);
+      console.error('Error fetching business account:', error);
     }
 
     if (!business_id) {
@@ -129,9 +116,9 @@ export default async function handler(
       services: result.PlasBusinessProductsOrSerive || [],
     });
   } catch (error: any) {
-    console.error("Error fetching business services:", error);
+    console.error('Error fetching business services:', error);
     return res.status(500).json({
-      error: "Failed to fetch services",
+      error: 'Failed to fetch services',
       message: error.message,
     });
   }

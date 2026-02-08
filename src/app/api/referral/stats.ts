@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Query to get referral code
 const GET_REFERRAL_CODE = gql`
@@ -22,10 +22,7 @@ const GET_REFERRAL_STATS = gql`
         count
       }
     }
-    referrals(
-      where: { referral_code: { _eq: $referral_code } }
-      order_by: { created_at: desc }
-    ) {
+    referrals(where: { referral_code: { _eq: $referral_code } }, order_by: { created_at: desc }) {
       id
       referred_user_id
       referral_code
@@ -47,24 +44,21 @@ const GET_REFERRAL_STATS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const user_id = session.user.id;
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get user's referral code
@@ -72,10 +66,7 @@ export default async function handler(
       referral_codes: Array<{ id: string; code: string }>;
     }>(GET_REFERRAL_CODE, { user_id });
 
-    if (
-      !referralCodeData.referral_codes ||
-      referralCodeData.referral_codes.length === 0
-    ) {
+    if (!referralCodeData.referral_codes || referralCodeData.referral_codes.length === 0) {
       return res.status(200).json({
         totalReferrals: 0,
         totalOrders: 0,
@@ -116,13 +107,13 @@ export default async function handler(
     const referrals = statsData.referrals || [];
 
     // Calculate total orders and earnings
-    const ordersWithReferrals = referrals.filter((r) => r.order_id && r.Order);
+    const ordersWithReferrals = referrals.filter(r => r.order_id && r.Order);
     const totalOrders = ordersWithReferrals.length;
 
     // Calculate earnings (you can customize this based on your commission structure)
     // Example: 5% commission on each order
     const totalEarnings = ordersWithReferrals.reduce((sum, ref) => {
-      const orderTotal = parseFloat(ref.Order?.total || "0");
+      const orderTotal = parseFloat(ref.Order?.total || '0');
       const commission = orderTotal * 0.05; // 5% commission
       return sum + commission;
     }, 0);
@@ -131,7 +122,7 @@ export default async function handler(
       totalReferrals,
       totalOrders,
       totalEarnings: totalEarnings.toFixed(2),
-      referrals: referrals.map((ref) => ({
+      referrals: referrals.map(ref => ({
         id: ref.id,
         referredUser: ref.ReferredUser
           ? {
@@ -153,12 +144,9 @@ export default async function handler(
       })),
     });
   } catch (error) {
-    console.error("Error fetching referral stats:", error);
+    console.error('Error fetching referral stats:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch referral statistics",
+      error: error instanceof Error ? error.message : 'Failed to fetch referral statistics',
     });
   }
 }

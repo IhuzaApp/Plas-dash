@@ -1,12 +1,14 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { notifyNewOrderToSlack } from "@/lib/slackOrderNotifier";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { notifyNewOrderToSlack } from '@/lib/slackOrderNotifier';
 
 function generateOrderPin(): string {
-  return Math.floor(Math.random() * 100).toString().padStart(2, "0");
+  return Math.floor(Math.random() * 100)
+    .toString()
+    .padStart(2, '0');
 }
 
 const CREATE_FOOD_ORDER = gql`
@@ -54,11 +56,7 @@ const CREATE_FOOD_ORDER = gql`
 `;
 
 const GET_RESTAURANT_ADDRESS_USER = gql`
-  query GetRestaurantAddressUser(
-    $restaurant_id: uuid!
-    $address_id: uuid!
-    $user_id: uuid!
-  ) {
+  query GetRestaurantAddressUser($restaurant_id: uuid!, $address_id: uuid!, $user_id: uuid!) {
     Restaurants_by_pk(id: $restaurant_id) {
       name
     }
@@ -81,12 +79,7 @@ const ADD_DISHES_TO_ORDER = gql`
     $price: String!
   ) {
     insert_restaurant_order_items(
-      objects: {
-        order_id: $order_id
-        dish_id: $dish_id
-        quantity: $quantity
-        price: $price
-      }
+      objects: { order_id: $order_id, dish_id: $dish_id, quantity: $quantity, price: $price }
     ) {
       affected_rows
       returning {
@@ -116,7 +109,7 @@ interface FoodCheckoutRequest {
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {
     const body = (await request.json()) as FoodCheckoutRequest;
@@ -130,26 +123,20 @@ export async function POST(request: Request) {
       delivery_notes,
       items,
     } = body;
-    if (
-      !restaurant_id ||
-      !delivery_address_id ||
-      !items ||
-      items.length === 0
-    ) {
+    if (!restaurant_id || !delivery_address_id || !items || items.length === 0) {
       return NextResponse.json(
         {
-          error:
-            "Missing required fields: restaurant_id, delivery_address_id, and items",
+          error: 'Missing required fields: restaurant_id, delivery_address_id, and items',
         },
         { status: 400 }
       );
     }
     let subtotal = 0;
-    items.forEach((item) => {
+    items.forEach(item => {
       let price = parseFloat(item.price);
-      if (item.discount && item.discount !== "0" && item.discount !== "0%") {
-        if (item.discount.includes("%")) {
-          const discountPercent = parseFloat(item.discount.replace("%", ""));
+      if (item.discount && item.discount !== '0' && item.discount !== '0%') {
+        if (item.discount.includes('%')) {
+          const discountPercent = parseFloat(item.discount.replace('%', ''));
           price = price * (1 - discountPercent / 100);
         } else {
           price = Math.max(0, price - parseFloat(item.discount));
@@ -161,10 +148,7 @@ export async function POST(request: Request) {
     const discountAmount = discount ? parseFloat(discount) : 0;
     const totalAmount = subtotal + deliveryFeeAmount - discountAmount;
     if (!hasuraClient) {
-      return NextResponse.json(
-        { error: "Database connection error" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Database connection error' }, { status: 500 });
     }
     const orderPin = generateOrderPin();
     const orderResponse = (await hasuraClient.request(CREATE_FOOD_ORDER, {
@@ -183,14 +167,11 @@ export async function POST(request: Request) {
       !orderResponse.insert_restaurant_orders ||
       orderResponse.insert_restaurant_orders.affected_rows === 0
     ) {
-      return NextResponse.json(
-        { error: "Failed to create food order" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to create food order' }, { status: 500 });
     }
     const createdOrder = orderResponse.insert_restaurant_orders.returning[0];
     const orderId = createdOrder.id;
-    const dishPromises = items.map((item) =>
+    const dishPromises = items.map(item =>
       hasuraClient!.request(ADD_DISHES_TO_ORDER, {
         order_id: orderId,
         dish_id: item.dish_id,
@@ -204,7 +185,7 @@ export async function POST(request: Request) {
       0
     );
     if (totalDishesAdded !== items.length) {
-      console.error("Not all dishes were added to the order");
+      console.error('Not all dishes were added to the order');
     }
     let storeName: string | undefined;
     let customerAddress: string | undefined;
@@ -226,9 +207,7 @@ export async function POST(request: Request) {
       storeName = aux.Restaurants_by_pk?.name;
       if (aux.Addresses_by_pk) {
         const a = aux.Addresses_by_pk;
-        customerAddress = [a.street, a.city, a.postal_code]
-          .filter(Boolean)
-          .join(", ");
+        customerAddress = [a.street, a.city, a.postal_code].filter(Boolean).join(', ');
       }
       customerPhone = aux.User_by_pk?.phone ?? undefined;
     } catch {
@@ -238,7 +217,7 @@ export async function POST(request: Request) {
       id: orderId,
       orderID: createdOrder.OrderID ?? orderId,
       total: totalAmount,
-      orderType: "restaurant",
+      orderType: 'restaurant',
       storeName,
       units: totalDishesAdded,
       customerPhone,
@@ -250,17 +229,17 @@ export async function POST(request: Request) {
       order_id: createdOrder.id,
       order_number: createdOrder.OrderID,
       pin: createdOrder.pin,
-      message: "Food order created successfully",
+      message: 'Food order created successfully',
       total_amount: totalAmount,
       delivery_time: createdOrder.delivery_time,
       dishes_added: totalDishesAdded,
     });
   } catch (error) {
-    console.error("Food checkout error:", error);
+    console.error('Food checkout error:', error);
     return NextResponse.json(
       {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

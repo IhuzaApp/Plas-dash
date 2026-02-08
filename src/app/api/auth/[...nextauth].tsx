@@ -1,33 +1,31 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { GraphQLClient, gql } from "graphql-request";
-import bcrypt from "bcryptjs";
+import NextAuth, { NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { GraphQLClient, gql } from 'graphql-request';
+import bcrypt from 'bcryptjs';
 
 const HASURA_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET!;
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET!;
 
 const hasuraClient = new GraphQLClient(HASURA_URL, {
-  headers: { "x-hasura-admin-secret": HASURA_SECRET },
+  headers: { 'x-hasura-admin-secret': HASURA_SECRET },
 });
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        identifier: { label: "Email, Username, or Phone", type: "text" },
-        password: { label: "Password", type: "password" },
+        identifier: { label: 'Email, Username, or Phone', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
-      authorize: async (credentials) => {
+      authorize: async credentials => {
         if (!credentials) return null;
         const { identifier, password } = credentials;
 
         // Determine if identifier is email, phone, or username
-        const isEmail = identifier.includes("@");
-        const isPhone = /^\+?[\d\s\-\(\)]+$/.test(
-          identifier.replace(/\s/g, "")
-        );
+        const isEmail = identifier.includes('@');
+        const isPhone = /^\+?[\d\s\-\(\)]+$/.test(identifier.replace(/\s/g, ''));
 
         let query;
         let variables;
@@ -35,9 +33,7 @@ export const authOptions: NextAuthOptions = {
         if (isEmail) {
           query = gql`
             query GetUserByEmail($email: String!) {
-              Users(
-                where: { email: { _eq: $email }, is_active: { _eq: true } }
-              ) {
+              Users(where: { email: { _eq: $email }, is_active: { _eq: true } }) {
                 id
                 name
                 email
@@ -56,12 +52,10 @@ export const authOptions: NextAuthOptions = {
           variables = { email: identifier };
         } else if (isPhone) {
           // Clean phone number for comparison
-          const cleanPhone = identifier.replace(/\D/g, "");
+          const cleanPhone = identifier.replace(/\D/g, '');
           query = gql`
             query GetUserByPhone($phone: String!) {
-              Users(
-                where: { phone: { _eq: $phone }, is_active: { _eq: true } }
-              ) {
+              Users(where: { phone: { _eq: $phone }, is_active: { _eq: true } }) {
                 id
                 name
                 email
@@ -115,11 +109,11 @@ export const authOptions: NextAuthOptions = {
         }>(query, variables);
         const user = res.Users[0];
         if (!user) {
-          throw new Error("No user found");
+          throw new Error('No user found');
         }
         const isValid = await bcrypt.compare(password, user.password_hash);
         if (!isValid) {
-          throw new Error("Invalid credentials");
+          throw new Error('Invalid credentials');
         }
         return {
           id: user.id,
@@ -133,7 +127,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: 'jwt' },
   jwt: { secret: NEXTAUTH_SECRET },
   secret: NEXTAUTH_SECRET,
   cookies: {
@@ -141,40 +135,40 @@ export const authOptions: NextAuthOptions = {
       name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NEXTAUTH_SECURE_COOKIES === "true",
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NEXTAUTH_SECURE_COOKIES === 'true',
       },
     },
     callbackUrl: {
       name: `next-auth.callback-url`,
       options: {
         httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NEXTAUTH_SECURE_COOKIES === "true",
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NEXTAUTH_SECURE_COOKIES === 'true',
       },
     },
     csrfToken: {
       name: `next-auth.csrf-token`,
       options: {
         httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NEXTAUTH_SECURE_COOKIES === "true",
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NEXTAUTH_SECURE_COOKIES === 'true',
       },
     },
   },
-  useSecureCookies: process.env.NEXTAUTH_SECURE_COOKIES === "true",
+  useSecureCookies: process.env.NEXTAUTH_SECURE_COOKIES === 'true',
   pages: {
-    signIn: "/Auth/Login",
-    signOut: "/",
+    signIn: '/Auth/Login',
+    signOut: '/',
   },
   events: {
     async signOut() {
       // This event is called when the user signs out
       // We can use this to clear any server-side session data if needed
-      console.log("User signed out");
+      console.log('User signed out');
     },
   },
   callbacks: {
@@ -209,9 +203,9 @@ export const authOptions: NextAuthOptions = {
             token.is_guest = res.Users_by_pk.is_guest || false;
           }
         } catch (error) {
-          console.error("Error fetching user data:", error);
+          console.error('Error fetching user data:', error);
           // If Hasura is unavailable, set default values to allow authentication to continue
-          token.role = token.role || "user"; // Default to user role
+          token.role = token.role || 'user'; // Default to user role
           token.is_guest = token.is_guest || false;
         }
       }

@@ -85,31 +85,21 @@ const OrdersOverdueCard: React.FC = () => {
       shopLabel: o.Restaurant?.name || 'Restaurant',
     }));
 
-    const all: UnifiedOverdueOrder[] = [
-      ...regular,
-      ...reel,
-      ...business,
-      ...restaurant,
-    ].filter((order) => {
-      if (order.shopper_id) return false;
-      const created = new Date(order.created_at).getTime();
-      return now - created > FIFTEEN_MINUTES;
-    });
+    const all: UnifiedOverdueOrder[] = [...regular, ...reel, ...business, ...restaurant].filter(
+      order => {
+        if (order.shopper_id) return false;
+        const created = new Date(order.created_at).getTime();
+        return now - created > FIFTEEN_MINUTES;
+      }
+    );
 
     const sorted = all.sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
     return sorted.slice(0, MAX_ORDERS);
-  }, [
-    ordersData,
-    reelData,
-    businessData,
-    restaurantData,
-    now,
-  ]);
+  }, [ordersData, reelData, businessData, restaurantData, now]);
 
-  const loading =
-    loadingOrders || loadingReel || loadingBusiness || loadingRestaurant;
+  const loading = loadingOrders || loadingReel || loadingBusiness || loadingRestaurant;
 
   const typeBadge = (type: UnifiedOverdueOrder['type']) => {
     const map = {
@@ -119,7 +109,11 @@ const OrdersOverdueCard: React.FC = () => {
       business: { label: 'Business', class: 'bg-green-500/10 text-green-600' },
     };
     const c = map[type];
-    return <Badge variant="secondary" className={c.class}>{c.label}</Badge>;
+    return (
+      <Badge variant="secondary" className={c.class}>
+        {c.label}
+      </Badge>
+    );
   };
 
   return (
@@ -146,7 +140,7 @@ const OrdersOverdueCard: React.FC = () => {
                 {overdueOrders.length} order(s) (max {MAX_ORDERS})
               </div>
               <ul className="space-y-1">
-                {overdueOrders.slice(0, 5).map((order) => (
+                {overdueOrders.slice(0, 5).map(order => (
                   <li
                     key={`${order.type}-${order.id}`}
                     className="flex justify-between items-center text-sm border-b pb-1 last:border-b-0"
@@ -173,7 +167,9 @@ const OrdersOverdueCard: React.FC = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-8">
           <DialogHeader className="flex flex-row items-center justify-between mb-4">
-            <DialogTitle className="text-2xl">All Overdue Unassigned Orders (max {MAX_ORDERS})</DialogTitle>
+            <DialogTitle className="text-2xl">
+              All Overdue Unassigned Orders (max {MAX_ORDERS})
+            </DialogTitle>
             <Button variant="ghost" size="icon" onClick={() => setOpen(false)} title="Close">
               <X className="w-6 h-6" />
             </Button>
@@ -195,7 +191,10 @@ const OrdersOverdueCard: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {overdueOrders.map((order, idx) => (
-                    <TableRow key={`${order.type}-${order.id}`} className={idx % 2 === 0 ? 'bg-white/70' : 'bg-muted'}>
+                    <TableRow
+                      key={`${order.type}-${order.id}`}
+                      className={idx % 2 === 0 ? 'bg-white/70' : 'bg-muted'}
+                    >
                       <TableCell className="font-mono font-semibold">#{order.OrderID}</TableCell>
                       <TableCell>{typeBadge(order.type)}</TableCell>
                       <TableCell>

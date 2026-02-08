@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_USER_RFQ_QUOTE = gql`
   query GetUserRFQQuote($businessRfq_id: uuid!, $respond_business_id: uuid!) {
@@ -49,34 +49,27 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
     const { rfqId } = req.query;
 
-    if (!rfqId || typeof rfqId !== "string") {
-      return res.status(400).json({ error: "RFQ ID is required" });
+    if (!rfqId || typeof rfqId !== 'string') {
+      return res.status(400).json({ error: 'RFQ ID is required' });
     }
 
     // Get business_id from business account
@@ -94,10 +87,7 @@ export default async function handler(
       }>(CHECK_BUSINESS_ACCOUNT, {
         user_id: user_id,
       });
-      if (
-        accountResult.business_accounts &&
-        accountResult.business_accounts.length > 0
-      ) {
+      if (accountResult.business_accounts && accountResult.business_accounts.length > 0) {
         business_id = accountResult.business_accounts[0].id;
       }
     } catch (error) {
@@ -136,15 +126,13 @@ export default async function handler(
     });
 
     const quote =
-      result.BusinessQoute && result.BusinessQoute.length > 0
-        ? result.BusinessQoute[0]
-        : null;
+      result.BusinessQoute && result.BusinessQoute.length > 0 ? result.BusinessQoute[0] : null;
 
     return res.status(200).json({ quote });
   } catch (error: any) {
-    console.error("Error fetching user RFQ quote:", error);
+    console.error('Error fetching user RFQ quote:', error);
     return res.status(500).json({
-      error: "Failed to fetch quote",
+      error: 'Failed to fetch quote',
       message: error.message,
     });
   }

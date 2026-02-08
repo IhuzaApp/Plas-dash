@@ -3,7 +3,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { ScanBarcode, Camera } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,7 +32,7 @@ export default function CheckoutBarcodeScanner({
   open,
   onOpenChange,
   onScanSuccess,
-  title = 'Scan Product Code'
+  title = 'Scan Product Code',
 }: CheckoutBarcodeScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState<string | null>(null);
@@ -68,7 +74,7 @@ export default function CheckoutBarcodeScanner({
   const initializeScanner = useCallback(async () => {
     try {
       console.log('Initializing Quagga scanner for checkout...');
-      
+
       // Get available cameras
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
@@ -79,7 +85,7 @@ export default function CheckoutBarcodeScanner({
         const firstCamera = videoDevices[0].deviceId;
         setSelectedCamera(firstCamera);
         console.log('Using camera:', firstCamera);
-        
+
         // Start scanning
         startScanning(firstCamera);
       } else {
@@ -91,111 +97,116 @@ export default function CheckoutBarcodeScanner({
     }
   }, []);
 
-  const startScanning = useCallback((cameraId: string) => {
-    if (!window.Quagga || !videoRef.current) {
-      console.error('Quagga not loaded or video element not found');
-      return;
-    }
+  const startScanning = useCallback(
+    (cameraId: string) => {
+      if (!window.Quagga || !videoRef.current) {
+        console.error('Quagga not loaded or video element not found');
+        return;
+      }
 
-    try {
-      console.log('Starting Quagga scanner with camera:', cameraId);
-      setIsScanning(true);
-      setScanError(null);
-      setHasScanned(false);
+      try {
+        console.log('Starting Quagga scanner with camera:', cameraId);
+        setIsScanning(true);
+        setScanError(null);
+        setHasScanned(false);
 
-      // Configure Quagga
-      window.Quagga.init({
-        inputStream: {
-          name: 'Live',
-          type: 'LiveStream',
-          target: videoRef.current,
-          constraints: {
-            width: { min: 640 },
-            height: { min: 480 },
-            facingMode: 'environment',
-            deviceId: cameraId
+        // Configure Quagga
+        window.Quagga.init(
+          {
+            inputStream: {
+              name: 'Live',
+              type: 'LiveStream',
+              target: videoRef.current,
+              constraints: {
+                width: { min: 640 },
+                height: { min: 480 },
+                facingMode: 'environment',
+                deviceId: cameraId,
+              },
+            },
+            decoder: {
+              readers: [
+                'code_128_reader',
+                'ean_reader',
+                'ean_8_reader',
+                'code_39_reader',
+                'code_39_vin_reader',
+                'codabar_reader',
+                'upc_reader',
+                'upc_e_reader',
+                'i2of5_reader',
+              ],
+            },
+            locate: true,
           },
-        },
-        decoder: {
-          readers: [
-            'code_128_reader',
-            'ean_reader',
-            'ean_8_reader',
-            'code_39_reader',
-            'code_39_vin_reader',
-            'codabar_reader',
-            'upc_reader',
-            'upc_e_reader',
-            'i2of5_reader'
-          ]
-        },
-        locate: true
-      }, (err: any) => {
-        if (err) {
-          console.error('Quagga initialization error:', err);
-          setScanError(`Scanner error: ${err.message}`);
-          setIsScanning(false);
-          return;
-        }
+          (err: any) => {
+            if (err) {
+              console.error('Quagga initialization error:', err);
+              setScanError(`Scanner error: ${err.message}`);
+              setIsScanning(false);
+              return;
+            }
 
-        console.log('Quagga started successfully');
-        
-        // Start processing
-        window.Quagga.start();
-        
-        // Set timeout
-        scanTimeoutRef.current = setTimeout(() => {
-          if (isScanning) {
-            console.log('Scan timeout reached');
-            setScanError('Scanning timeout. Please try again.');
-            setIsScanning(false);
-            window.Quagga.stop();
+            console.log('Quagga started successfully');
+
+            // Start processing
+            window.Quagga.start();
+
+            // Set timeout
+            scanTimeoutRef.current = setTimeout(() => {
+              if (isScanning) {
+                console.log('Scan timeout reached');
+                setScanError('Scanning timeout. Please try again.');
+                setIsScanning(false);
+                window.Quagga.stop();
+              }
+            }, 30000);
           }
-        }, 30000);
-      });
+        );
 
-      // Listen for scan results
-      window.Quagga.onDetected((result: any) => {
-        if (hasScanned) return;
-        
-        const code = result.codeResult.code;
-        console.log('Product code detected:', code);
-        console.log('Code format:', result.codeResult.format);
-        
-        setScannedCode(code);
+        // Listen for scan results
+        window.Quagga.onDetected((result: any) => {
+          if (hasScanned) return;
+
+          const code = result.codeResult.code;
+          console.log('Product code detected:', code);
+          console.log('Code format:', result.codeResult.format);
+
+          setScannedCode(code);
+          setIsScanning(false);
+          setHasScanned(true);
+
+          // Stop Quagga
+          window.Quagga.stop();
+
+          // Play success sound
+          playScanSound();
+
+          toast.success(`Product scanned: ${code}`);
+
+          // Return result
+          setTimeout(() => {
+            onScanSuccess(code);
+            onOpenChange(false);
+            setScannedCode(null);
+            setHasScanned(false);
+          }, 1000);
+        });
+
+        // Listen for errors
+        window.Quagga.onProcessed((result: any) => {
+          if (result) {
+            console.log('Frame processed');
+          }
+        });
+      } catch (error) {
+        console.error('Error starting scanner:', error);
+        setScanError('Failed to start scanner. Please try again.');
         setIsScanning(false);
-        setHasScanned(true);
-        
-        // Stop Quagga
-        window.Quagga.stop();
-        
-        // Play success sound
-        playScanSound();
-        
-        toast.success(`Product scanned: ${code}`);
-        
-        // Return result
-        setTimeout(() => {
-          onScanSuccess(code);
-          onOpenChange(false);
-          setScannedCode(null);
-          setHasScanned(false);
-        }, 1000);
-      });
-
-      // Listen for errors
-      window.Quagga.onProcessed((result: any) => {
-        if (result) {
-          console.log('Frame processed');
-        }
-      });
-
-    } catch (error) {
-      console.error('Error starting scanner:', error);
-      setScanError('Failed to start scanner. Please try again.');
-      setIsScanning(false);
-    }
-  }, [hasScanned, onScanSuccess, onOpenChange]);
+      }
+    },
+    [hasScanned, onScanSuccess, onOpenChange]
+  );
 
   const stopScanning = useCallback(() => {
     if (window.Quagga) {
@@ -207,13 +218,16 @@ export default function CheckoutBarcodeScanner({
     setIsScanning(false);
   }, []);
 
-  const handleCameraChange = useCallback((cameraId: string) => {
-    if (isScanning) {
-      stopScanning();
-    }
-    setSelectedCamera(cameraId);
-    setTimeout(() => startScanning(cameraId), 500);
-  }, [isScanning, stopScanning, startScanning]);
+  const handleCameraChange = useCallback(
+    (cameraId: string) => {
+      if (isScanning) {
+        stopScanning();
+      }
+      setSelectedCamera(cameraId);
+      setTimeout(() => startScanning(cameraId), 500);
+    },
+    [isScanning, stopScanning, startScanning]
+  );
 
   const handleRetry = useCallback(() => {
     setScanError(null);
@@ -273,7 +287,7 @@ export default function CheckoutBarcodeScanner({
                   <SelectValue placeholder="Select camera" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableCameras.map((camera) => (
+                  {availableCameras.map(camera => (
                     <SelectItem key={camera.deviceId} value={camera.deviceId}>
                       {camera.label || `Camera ${camera.deviceId.slice(0, 8)}...`}
                     </SelectItem>
@@ -336,12 +350,7 @@ export default function CheckoutBarcodeScanner({
 
             {scanError && (
               <div className="flex justify-center">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleRetry}
-                  className="text-xs"
-                >
+                <Button size="sm" variant="outline" onClick={handleRetry} className="text-xs">
                   🔄 Retry Scanner
                 </Button>
               </div>
@@ -350,15 +359,11 @@ export default function CheckoutBarcodeScanner({
 
           {/* Instructions */}
           <div className="text-sm text-center text-muted-foreground">
-            <p className="mb-1">
-              🔍 Point camera at the product barcode or SKU
-            </p>
-            <p className="text-xs opacity-70">
-              Ensure good lighting and hold steady
-            </p>
+            <p className="mb-1">🔍 Point camera at the product barcode or SKU</p>
+            <p className="text-xs opacity-70">Ensure good lighting and hold steady</p>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-} 
+}

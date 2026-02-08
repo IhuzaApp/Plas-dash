@@ -1,27 +1,23 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { v4 as uuidv4 } from "uuid";
-import { notifyNewOrderToSlack } from "../../../src/lib/slackOrderNotifier";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { v4 as uuidv4 } from 'uuid';
+import { notifyNewOrderToSlack } from '../../../src/lib/slackOrderNotifier';
 
 // Generate a random 2-digit PIN (00-99)
 function generateOrderPin(): string {
   return Math.floor(Math.random() * 100)
     .toString()
-    .padStart(2, "0");
+    .padStart(2, '0');
 }
 
 // Fetch active cart with its items for a specific store
 const GET_CART_WITH_ITEMS = gql`
   query GetCartWithItems($user_id: uuid!, $shop_id: uuid!) {
     Carts(
-      where: {
-        user_id: { _eq: $user_id }
-        shop_id: { _eq: $shop_id }
-        is_active: { _eq: true }
-      }
+      where: { user_id: { _eq: $user_id }, shop_id: { _eq: $shop_id }, is_active: { _eq: true } }
       limit: 1
     ) {
       id
@@ -159,27 +155,20 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
@@ -195,13 +184,13 @@ export default async function handler(
     // Validate required fields
     if (!stores || !Array.isArray(stores) || stores.length === 0) {
       return res.status(400).json({
-        error: "Missing required field: stores (must be a non-empty array)",
+        error: 'Missing required field: stores (must be a non-empty array)',
       });
     }
 
     if (!delivery_address_id || !delivery_time) {
       return res.status(400).json({
-        error: "Missing required fields: delivery_address_id, delivery_time",
+        error: 'Missing required fields: delivery_address_id, delivery_time',
       });
     }
 
@@ -222,13 +211,10 @@ export default async function handler(
 
     // Process each store's cart
     for (const storeData of stores as StoreCheckoutData[]) {
-      const { store_id, delivery_fee, service_fee, discount, voucher_code } =
-        storeData;
+      const { store_id, delivery_fee, service_fee, discount, voucher_code } = storeData;
 
       if (!store_id || !delivery_fee || !service_fee) {
-        throw new Error(
-          `Invalid store data: missing store_id, delivery_fee, or service_fee`
-        );
+        throw new Error(`Invalid store data: missing store_id, delivery_fee, or service_fee`);
       }
 
       // 1. Load cart and items for this store
@@ -264,14 +250,12 @@ export default async function handler(
       }
 
       // 2. Validate product availability
-      const productIds = items.map((i) => i.product_id);
+      const productIds = items.map(i => i.product_id);
       const prodData = await hasuraClient.request<{
         Products: Array<{ id: string; quantity: number }>;
       }>(GET_PRODUCTS_BY_IDS, { ids: productIds });
 
-      const stockMap = new Map(
-        prodData.Products.map((p) => [p.id, p.quantity])
-      );
+      const stockMap = new Map(prodData.Products.map(p => [p.id, p.quantity]));
 
       for (const item of items) {
         const available = stockMap.get(item.product_id);
@@ -279,9 +263,7 @@ export default async function handler(
           throw new Error(`Product ${item.product_id} not found`);
         }
         if (item.quantity > available) {
-          throw new Error(
-            `Insufficient stock for product ${item.product_id} in store ${store_id}`
-          );
+          throw new Error(`Insufficient stock for product ${item.product_id} in store ${store_id}`);
         }
       }
 
@@ -304,7 +286,7 @@ export default async function handler(
         shop_id: store_id,
         delivery_address_id,
         total: actualTotal.toFixed(2),
-        status: "PENDING",
+        status: 'PENDING',
         service_fee,
         delivery_fee,
         discount: discount ?? null,
@@ -322,7 +304,7 @@ export default async function handler(
       totalUnits += items.reduce((sum, i) => sum + i.quantity, 0);
 
       // 5. Create order items
-      const orderItems = items.map((i) => ({
+      const orderItems = items.map(i => ({
         order_id: orderId,
         product_id: i.product_id,
         quantity: i.quantity,
@@ -338,9 +320,7 @@ export default async function handler(
 
       // Track created order
       const orderTotal =
-        actualTotal +
-        parseFloat(service_fee || "0") +
-        parseFloat(delivery_fee || "0");
+        actualTotal + parseFloat(service_fee || '0') + parseFloat(delivery_fee || '0');
       createdOrders.push({
         id: orderId,
         OrderID: orderID,
@@ -353,8 +333,8 @@ export default async function handler(
     }
 
     // Fetch delivery address and customer phone for Slack
-    let customerAddress = "";
-    let customerPhone = "";
+    let customerAddress = '';
+    let customerPhone = '';
     try {
       const addrRes = await hasuraClient.request<{
         Addresses_by_pk: {
@@ -369,9 +349,7 @@ export default async function handler(
       });
       if (addrRes.Addresses_by_pk) {
         const a = addrRes.Addresses_by_pk;
-        customerAddress = [a.street, a.city, a.postal_code]
-          .filter(Boolean)
-          .join(", ");
+        customerAddress = [a.street, a.city, a.postal_code].filter(Boolean).join(', ');
       }
       if (addrRes.User_by_pk?.phone) customerPhone = addrRes.User_by_pk.phone;
     } catch (_) {
@@ -386,8 +364,8 @@ export default async function handler(
       id: combinedOrderId,
       orderID: displayOrderID,
       total: grandTotal,
-      orderType: "combined",
-      storeName: storeNames.length ? storeNames.join(", ") : undefined,
+      orderType: 'combined',
+      storeName: storeNames.length ? storeNames.join(', ') : undefined,
       units: totalUnits,
       customerPhone: customerPhone || undefined,
       customerAddress: customerAddress || undefined,
@@ -403,9 +381,9 @@ export default async function handler(
       message: `Successfully created ${createdOrders.length} orders with combined_order_id`,
     });
   } catch (error: any) {
-    console.error("Error creating combined orders:", error);
+    console.error('Error creating combined orders:', error);
     return res.status(500).json({
-      error: "Failed to create combined orders",
+      error: 'Failed to create combined orders',
       message: error.message,
     });
   }

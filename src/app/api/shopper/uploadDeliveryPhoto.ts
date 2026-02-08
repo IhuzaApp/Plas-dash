@@ -1,8 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 // GraphQL mutation to update regular order with delivery photo and updated_at
 const UPDATE_ORDER_DELIVERY_PHOTO = gql`
@@ -72,13 +72,10 @@ const CHECK_REEL_ORDER_STATUS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow POST requests
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -87,30 +84,26 @@ export default async function handler(
       user?: any;
     };
     if (!session || !session.user) {
-      return res
-        .status(401)
-        .json({ error: "You must be authenticated to upload delivery photos" });
+      return res.status(401).json({ error: 'You must be authenticated to upload delivery photos' });
     }
 
     // Get the order ID, photo data, updated_at, and order type from the request
-    const { orderId, file, updatedAt, orderType = "regular" } = req.body;
+    const { orderId, file, updatedAt, orderType = 'regular' } = req.body;
 
     if (!orderId || !file || !updatedAt) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
     // Convert base64 to a data URL if it's not already
-    const photoUrl = file.startsWith("data:")
-      ? file
-      : `data:image/jpeg;base64,${file}`;
+    const photoUrl = file.startsWith('data:') ? file : `data:image/jpeg;base64,${file}`;
 
     // Check hasuraClient is not null
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
-    const isReelOrder = orderType === "reel";
-    const isRestaurantOrder = orderType === "restaurant";
+    const isReelOrder = orderType === 'reel';
+    const isRestaurantOrder = orderType === 'restaurant';
 
     // Update the order with the delivery photo and updated_at based on order type
     let data: any;
@@ -137,15 +130,14 @@ export default async function handler(
           affected_rows: number;
         };
       };
-      data =
-        await hasuraClient.request<UpdateRestaurantOrderDeliveryPhotoResponse>(
-          UPDATE_RESTAURANT_ORDER_DELIVERY_PHOTO,
-          {
-            order_id: orderId,
-            delivery_photo_url: photoUrl,
-            updated_at: updatedAt,
-          }
-        );
+      data = await hasuraClient.request<UpdateRestaurantOrderDeliveryPhotoResponse>(
+        UPDATE_RESTAURANT_ORDER_DELIVERY_PHOTO,
+        {
+          order_id: orderId,
+          delivery_photo_url: photoUrl,
+          updated_at: updatedAt,
+        }
+      );
     } else {
       // Update regular order
       type UpdateOrderDeliveryPhotoResponse = {
@@ -167,12 +159,12 @@ export default async function handler(
     const affectedRows = isReelOrder
       ? data.update_reel_orders.affected_rows
       : isRestaurantOrder
-      ? data.update_restaurant_orders.affected_rows
-      : data.update_Orders.affected_rows;
+        ? data.update_restaurant_orders.affected_rows
+        : data.update_Orders.affected_rows;
 
     if (affectedRows === 0) {
       return res.status(404).json({
-        error: "Order not found or update failed",
+        error: 'Order not found or update failed',
       });
     }
 
@@ -184,7 +176,7 @@ export default async function handler(
     // Return success response
     return res.status(200).json({
       success: true,
-      message: "Delivery photo uploaded successfully",
+      message: 'Delivery photo uploaded successfully',
       data: {
         orderId,
         photoUrl,
@@ -193,9 +185,9 @@ export default async function handler(
       },
     });
   } catch (error) {
-    console.error("Error uploading delivery photo:", error);
+    console.error('Error uploading delivery photo:', error);
     return res.status(500).json({
-      error: "Failed to upload delivery photo",
+      error: 'Failed to upload delivery photo',
     });
   }
 }

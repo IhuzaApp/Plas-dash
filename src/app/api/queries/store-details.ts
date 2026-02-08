@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_STORE_DETAILS = gql`
   query GetStoreDetails($id: uuid!) {
@@ -80,23 +80,20 @@ interface ProductsResponse {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const { id } = req.query;
 
-    if (!id || typeof id !== "string") {
-      return res.status(400).json({ error: "Store ID is required" });
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'Store ID is required' });
     }
 
     const [storeData, productsData] = await Promise.all([
@@ -107,46 +104,44 @@ export default async function handler(
     ]);
 
     if (!storeData.business_stores_by_pk) {
-      return res.status(404).json({ error: "Store not found" });
+      return res.status(404).json({ error: 'Store not found' });
     }
 
     // Transform products to match FreshMarkPage format (active only)
-    const transformedProducts =
-      productsData.PlasBusinessProductsOrSerive.filter(
-        (p) => p.status === "active"
-      ).map((product) => ({
+    const transformedProducts = productsData.PlasBusinessProductsOrSerive.filter(
+      p => p.status === 'active'
+    ).map(product => ({
+      id: product.id,
+      name: product.name,
+      ProductName: {
         id: product.id,
         name: product.name,
-        ProductName: {
-          id: product.id,
-          name: product.name,
-          description: product.Description || "",
-        },
-        image: product.Image || "",
-        price: product.price,
-        final_price: product.price,
-        unit: product.unit || "",
-        category:
-          product.category?.trim() || product.speciality?.trim() || "Other",
-        measurement_unit: product.unit || "",
-        quantity: 1, // Default quantity for services
-        is_active: product.status === "active",
-        created_at: product.created_at,
-        updated_at: product.created_at,
-        shop_id: id, // Use store id as shop_id for compatibility
-        otherDetails: product.otherDetails ?? null,
-      }));
+        description: product.Description || '',
+      },
+      image: product.Image || '',
+      price: product.price,
+      final_price: product.price,
+      unit: product.unit || '',
+      category: product.category?.trim() || product.speciality?.trim() || 'Other',
+      measurement_unit: product.unit || '',
+      quantity: 1, // Default quantity for services
+      is_active: product.status === 'active',
+      created_at: product.created_at,
+      updated_at: product.created_at,
+      shop_id: id, // Use store id as shop_id for compatibility
+      otherDetails: product.otherDetails ?? null,
+    }));
 
     // Transform store to match Shop format for FreshMarkPage
     const store = {
       id: storeData.business_stores_by_pk.id,
       name: storeData.business_stores_by_pk.name,
-      description: storeData.business_stores_by_pk.description || "",
-      image: storeData.business_stores_by_pk.image || "",
-      logo: storeData.business_stores_by_pk.image || "",
-      address: "", // Stores may not have address field
-      latitude: storeData.business_stores_by_pk.latitude || "",
-      longitude: storeData.business_stores_by_pk.longitude || "",
+      description: storeData.business_stores_by_pk.description || '',
+      image: storeData.business_stores_by_pk.image || '',
+      logo: storeData.business_stores_by_pk.image || '',
+      address: '', // Stores may not have address field
+      latitude: storeData.business_stores_by_pk.latitude || '',
+      longitude: storeData.business_stores_by_pk.longitude || '',
       operating_hours: storeData.business_stores_by_pk.operating_hours,
       is_active: storeData.business_stores_by_pk.is_active,
     };
@@ -156,9 +151,9 @@ export default async function handler(
       products: transformedProducts,
     });
   } catch (error: any) {
-    console.error("Error fetching store details:", error);
+    console.error('Error fetching store details:', error);
     return res.status(500).json({
-      error: "Failed to fetch store details",
+      error: 'Failed to fetch store details',
       message: error.message,
     });
   }

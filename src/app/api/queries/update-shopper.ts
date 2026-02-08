@@ -1,9 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../api/auth/[...nextauth]";
-import { Session } from "next-auth";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../api/auth/[...nextauth]';
+import { Session } from 'next-auth';
 
 interface UpdateShopperResult {
   update_shoppers: {
@@ -79,29 +79,22 @@ const UPDATE_USER_ROLE = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    console.log("=== Starting update-shopper request ===");
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
-    console.log("Session:", session);
+    console.log('=== Starting update-shopper request ===');
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
+    console.log('Session:', session);
 
     if (!session?.user?.id) {
-      console.log("No session or user ID found");
-      return res.status(401).json({ message: "Unauthorized" });
+      console.log('No session or user ID found');
+      return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    console.log("Request body:", JSON.stringify(req.body, null, 2));
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
 
     const {
       address,
@@ -124,30 +117,27 @@ export default async function handler(
         national_id: !national_id,
         transport_mode: !transport_mode,
       };
-      console.log("Missing required fields:", missingFields);
+      console.log('Missing required fields:', missingFields);
       return res.status(400).json({
-        message: "Missing required fields",
+        message: 'Missing required fields',
         details: missingFields,
       });
     }
 
     if (!hasuraClient) {
-      console.error("Hasura client not initialized");
-      throw new Error("Hasura client not initialized");
+      console.error('Hasura client not initialized');
+      throw new Error('Hasura client not initialized');
     }
 
     // Get current shopper data
-    const { shoppers } = await hasuraClient.request<GetShopperResult>(
-      GET_SHOPPER,
-      {
-        user_id: session.user.id,
-      }
-    );
+    const { shoppers } = await hasuraClient.request<GetShopperResult>(GET_SHOPPER, {
+      user_id: session.user.id,
+    });
 
     if (!shoppers || shoppers.length === 0) {
-      console.log("No shopper found for user:", session.user.id);
+      console.log('No shopper found for user:', session.user.id);
       return res.status(404).json({
-        message: "Shopper not found",
+        message: 'Shopper not found',
       });
     }
 
@@ -156,78 +146,60 @@ export default async function handler(
     // Only include profile_photo in variables if it's provided
     const variables = {
       user_id: session.user.id,
-      address: address || "",
-      driving_license: driving_license || "",
+      address: address || '',
+      driving_license: driving_license || '',
       full_name,
       national_id,
-      onboarding_step: onboarding_step || "profile_updated",
+      onboarding_step: onboarding_step || 'profile_updated',
       phone_number,
-      status: status || "pending",
+      status: status || 'pending',
       transport_mode,
       updated_at: updated_at || new Date().toISOString(),
-      profile_photo: profile_photo || currentShopper.profile_photo || "",
+      profile_photo: profile_photo || currentShopper.profile_photo || '',
     };
 
-    console.log("Mutation variables:", JSON.stringify(variables, null, 2));
+    console.log('Mutation variables:', JSON.stringify(variables, null, 2));
 
     try {
-      const result = await hasuraClient.request<UpdateShopperResult>(
-        UPDATE_SHOPPER,
-        variables
-      );
-      console.log("Shopper update result:", JSON.stringify(result, null, 2));
+      const result = await hasuraClient.request<UpdateShopperResult>(UPDATE_SHOPPER, variables);
+      console.log('Shopper update result:', JSON.stringify(result, null, 2));
 
       if (result.update_shoppers.affected_rows === 0) {
-        console.log("No shopper found for user:", session.user.id);
+        console.log('No shopper found for user:', session.user.id);
         return res.status(404).json({
-          message: "Shopper not found",
+          message: 'Shopper not found',
         });
       }
 
       // If shopper update was successful, update the user role
       try {
-        const roleResult = await hasuraClient.request<UpdateUserRoleResult>(
-          UPDATE_USER_ROLE,
-          {
-            user_id: session.user.id,
-            role: "user",
-          }
-        );
-        console.log(
-          "User role update result:",
-          JSON.stringify(roleResult, null, 2)
-        );
+        const roleResult = await hasuraClient.request<UpdateUserRoleResult>(UPDATE_USER_ROLE, {
+          user_id: session.user.id,
+          role: 'user',
+        });
+        console.log('User role update result:', JSON.stringify(roleResult, null, 2));
       } catch (roleError) {
-        console.error("Error updating user role:", roleError);
+        console.error('Error updating user role:', roleError);
         // Continue with the response even if role update fails
       }
 
       return res.status(200).json({
-        message: "Shopper profile updated and sent for review",
+        message: 'Shopper profile updated and sent for review',
         success: true,
       });
     } catch (graphqlError) {
-      console.error("GraphQL Error:", graphqlError);
+      console.error('GraphQL Error:', graphqlError);
       throw graphqlError; // Re-throw to be caught by outer catch block
     }
   } catch (error) {
-    console.error("=== Error in update-shopper ===");
-    console.error(
-      "Error type:",
-      error instanceof Error ? error.constructor.name : typeof error
-    );
-    console.error(
-      "Error message:",
-      error instanceof Error ? error.message : String(error)
-    );
-    console.error(
-      "Error stack:",
-      error instanceof Error ? error.stack : "No stack trace"
-    );
-    console.error("=== End of error details ===");
+    console.error('=== Error in update-shopper ===');
+    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('=== End of error details ===');
 
     return res.status(500).json({
-      message: "Error updating shopper",
+      message: 'Error updating shopper',
       error: error instanceof Error ? error.message : String(error),
     });
   }

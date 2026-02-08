@@ -3,7 +3,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScanBarcode, Camera, X, RotateCcw } from 'lucide-react';
@@ -29,7 +35,7 @@ export default function BarcodeScanner({
   onOpenChange,
   onScanSuccess,
   scanType,
-  title = 'Scan Barcode'
+  title = 'Scan Barcode',
 }: BarcodeScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState<string | null>(null);
@@ -73,7 +79,7 @@ export default function BarcodeScanner({
   const initializeScanner = useCallback(async () => {
     try {
       console.log('Initializing Quagga scanner...');
-      
+
       // Get available cameras
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
@@ -84,7 +90,7 @@ export default function BarcodeScanner({
         const firstCamera = videoDevices[0].deviceId;
         setSelectedCamera(firstCamera);
         console.log('Using camera:', firstCamera);
-        
+
         // Start scanning
         startScanning(firstCamera);
       } else {
@@ -96,111 +102,116 @@ export default function BarcodeScanner({
     }
   }, []);
 
-  const startScanning = useCallback((cameraId: string) => {
-    if (!window.Quagga || !videoRef.current) {
-      console.error('Quagga not loaded or video element not found');
-      return;
-    }
+  const startScanning = useCallback(
+    (cameraId: string) => {
+      if (!window.Quagga || !videoRef.current) {
+        console.error('Quagga not loaded or video element not found');
+        return;
+      }
 
-    try {
-      console.log('Starting Quagga scanner with camera:', cameraId);
-      setIsScanning(true);
-      setScanError(null);
-      setHasScanned(false);
+      try {
+        console.log('Starting Quagga scanner with camera:', cameraId);
+        setIsScanning(true);
+        setScanError(null);
+        setHasScanned(false);
 
-      // Configure Quagga
-      window.Quagga.init({
-        inputStream: {
-          name: 'Live',
-          type: 'LiveStream',
-          target: videoRef.current,
-          constraints: {
-            width: { min: 640 },
-            height: { min: 480 },
-            facingMode: 'environment',
-            deviceId: cameraId
+        // Configure Quagga
+        window.Quagga.init(
+          {
+            inputStream: {
+              name: 'Live',
+              type: 'LiveStream',
+              target: videoRef.current,
+              constraints: {
+                width: { min: 640 },
+                height: { min: 480 },
+                facingMode: 'environment',
+                deviceId: cameraId,
+              },
+            },
+            decoder: {
+              readers: [
+                'code_128_reader',
+                'ean_reader',
+                'ean_8_reader',
+                'code_39_reader',
+                'code_39_vin_reader',
+                'codabar_reader',
+                'upc_reader',
+                'upc_e_reader',
+                'i2of5_reader',
+              ],
+            },
+            locate: true,
           },
-        },
-        decoder: {
-          readers: [
-            'code_128_reader',
-            'ean_reader',
-            'ean_8_reader',
-            'code_39_reader',
-            'code_39_vin_reader',
-            'codabar_reader',
-            'upc_reader',
-            'upc_e_reader',
-            'i2of5_reader'
-          ]
-        },
-        locate: true
-      }, (err: any) => {
-        if (err) {
-          console.error('Quagga initialization error:', err);
-          setScanError(`Scanner error: ${err.message}`);
-          setIsScanning(false);
-          return;
-        }
+          (err: any) => {
+            if (err) {
+              console.error('Quagga initialization error:', err);
+              setScanError(`Scanner error: ${err.message}`);
+              setIsScanning(false);
+              return;
+            }
 
-        console.log('Quagga started successfully');
-        
-        // Start processing
-        window.Quagga.start();
-        
-        // Set timeout
-        scanTimeoutRef.current = setTimeout(() => {
-          if (isScanning) {
-            console.log('Scan timeout reached');
-            setScanError('Scanning timeout. Please try again or enter manually.');
-            setIsScanning(false);
-            window.Quagga.stop();
+            console.log('Quagga started successfully');
+
+            // Start processing
+            window.Quagga.start();
+
+            // Set timeout
+            scanTimeoutRef.current = setTimeout(() => {
+              if (isScanning) {
+                console.log('Scan timeout reached');
+                setScanError('Scanning timeout. Please try again or enter manually.');
+                setIsScanning(false);
+                window.Quagga.stop();
+              }
+            }, 30000);
           }
-        }, 30000);
-      });
+        );
 
-      // Listen for scan results
-      window.Quagga.onDetected((result: any) => {
-        if (hasScanned) return;
-        
-        const code = result.codeResult.code;
-        console.log('Barcode detected:', code);
-        console.log('Barcode format:', result.codeResult.format);
-        
-        setScannedCode(code);
+        // Listen for scan results
+        window.Quagga.onDetected((result: any) => {
+          if (hasScanned) return;
+
+          const code = result.codeResult.code;
+          console.log('Barcode detected:', code);
+          console.log('Barcode format:', result.codeResult.format);
+
+          setScannedCode(code);
+          setIsScanning(false);
+          setHasScanned(true);
+
+          // Stop Quagga
+          window.Quagga.stop();
+
+          // Play success sound
+          playScanSound();
+
+          toast.success(`Scanned ${scanType}: ${code}`);
+
+          // Return result
+          setTimeout(() => {
+            onScanSuccess(code);
+            onOpenChange(false);
+            setScannedCode(null);
+            setHasScanned(false);
+          }, 1000);
+        });
+
+        // Listen for errors
+        window.Quagga.onProcessed((result: any) => {
+          if (result) {
+            console.log('Frame processed');
+          }
+        });
+      } catch (error) {
+        console.error('Error starting scanner:', error);
+        setScanError('Failed to start scanner. Please try again.');
         setIsScanning(false);
-        setHasScanned(true);
-        
-        // Stop Quagga
-        window.Quagga.stop();
-        
-        // Play success sound
-        playScanSound();
-        
-        toast.success(`Scanned ${scanType}: ${code}`);
-        
-        // Return result
-        setTimeout(() => {
-          onScanSuccess(code);
-          onOpenChange(false);
-          setScannedCode(null);
-          setHasScanned(false);
-        }, 1000);
-      });
-
-      // Listen for errors
-      window.Quagga.onProcessed((result: any) => {
-        if (result) {
-          console.log('Frame processed');
-        }
-      });
-
-    } catch (error) {
-      console.error('Error starting scanner:', error);
-      setScanError('Failed to start scanner. Please try again.');
-      setIsScanning(false);
-    }
-  }, [hasScanned, scanType, onScanSuccess, onOpenChange]);
+      }
+    },
+    [hasScanned, scanType, onScanSuccess, onOpenChange]
+  );
 
   const stopScanning = useCallback(() => {
     if (window.Quagga) {
@@ -212,13 +223,16 @@ export default function BarcodeScanner({
     setIsScanning(false);
   }, []);
 
-  const handleCameraChange = useCallback((cameraId: string) => {
-    if (isScanning) {
-      stopScanning();
-    }
-    setSelectedCamera(cameraId);
-    setTimeout(() => startScanning(cameraId), 500);
-  }, [isScanning, stopScanning, startScanning]);
+  const handleCameraChange = useCallback(
+    (cameraId: string) => {
+      if (isScanning) {
+        stopScanning();
+      }
+      setSelectedCamera(cameraId);
+      setTimeout(() => startScanning(cameraId), 500);
+    },
+    [isScanning, stopScanning, startScanning]
+  );
 
   const handleRetry = useCallback(() => {
     setScanError(null);
@@ -227,15 +241,18 @@ export default function BarcodeScanner({
     }
   }, [selectedCamera, startScanning]);
 
-  const handleManualSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (manualCode.trim()) {
-      onScanSuccess(manualCode.trim());
-      onOpenChange(false);
-      setManualCode('');
-      setManualInputMode(false);
-    }
-  }, [manualCode, onScanSuccess, onOpenChange]);
+  const handleManualSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (manualCode.trim()) {
+        onScanSuccess(manualCode.trim());
+        onOpenChange(false);
+        setManualCode('');
+        setManualInputMode(false);
+      }
+    },
+    [manualCode, onScanSuccess, onOpenChange]
+  );
 
   const playScanSound = useCallback(() => {
     try {
@@ -291,7 +308,7 @@ export default function BarcodeScanner({
                     <SelectValue placeholder="Select camera" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableCameras.map((camera) => (
+                    {availableCameras.map(camera => (
                       <SelectItem key={camera.deviceId} value={camera.deviceId}>
                         {camera.label || `Camera ${camera.deviceId.slice(0, 8)}...`}
                       </SelectItem>
@@ -362,12 +379,7 @@ export default function BarcodeScanner({
                   📝 Enter Manually
                 </Button>
                 {scanError && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRetry}
-                    className="text-xs"
-                  >
+                  <Button size="sm" variant="outline" onClick={handleRetry} className="text-xs">
                     🔄 Retry Scanner
                   </Button>
                 )}
@@ -376,12 +388,8 @@ export default function BarcodeScanner({
 
             {/* Instructions */}
             <div className="text-sm text-center text-muted-foreground">
-              <p className="mb-1">
-                🔍 Point camera at the {scanType}
-              </p>
-              <p className="text-xs opacity-70">
-                Ensure good lighting and hold steady
-              </p>
+              <p className="mb-1">🔍 Point camera at the {scanType}</p>
+              <p className="text-xs opacity-70">Ensure good lighting and hold steady</p>
             </div>
           </div>
         ) : (
@@ -392,21 +400,17 @@ export default function BarcodeScanner({
               <Input
                 id="manual-code"
                 value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
+                onChange={e => setManualCode(e.target.value)}
                 placeholder={`Enter ${scanType} code`}
                 autoFocus
               />
             </div>
-            
+
             <div className="flex gap-2 justify-center">
               <Button type="submit" disabled={!manualCode.trim()}>
                 Submit
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setManualInputMode(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setManualInputMode(false)}>
                 Back to Scanner
               </Button>
             </div>

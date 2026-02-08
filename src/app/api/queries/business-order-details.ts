@@ -1,15 +1,12 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_BUSINESS_ORDER = gql`
   query GetBusinessOrderForCustomer($id: uuid!, $ordered_by: uuid!) {
-    businessProductOrders(
-      where: { id: { _eq: $id }, ordered_by: { _eq: $ordered_by } }
-      limit: 1
-    ) {
+    businessProductOrders(where: { id: { _eq: $id }, ordered_by: { _eq: $ordered_by } }, limit: 1) {
       id
       OrderID
       store_id
@@ -168,12 +165,9 @@ interface SessionUser {
   [key: string]: any;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const session = (await getServerSession(req, res, authOptions as any)) as {
@@ -181,19 +175,18 @@ export default async function handler(
   } | null;
 
   if (!session?.user?.id) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const id = Array.isArray(req.query.id) ? req.query.id[0] : req.query.id;
-  const forShopper =
-    req.query.forShopper === "1" || req.query.forShopper === "true";
+  const forShopper = req.query.forShopper === '1' || req.query.forShopper === 'true';
   if (!id) {
-    return res.status(400).json({ error: "Missing order id" });
+    return res.status(400).json({ error: 'Missing order id' });
   }
 
   try {
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Server not configured" });
+      return res.status(500).json({ error: 'Server not configured' });
     }
 
     interface BusinessOrderRow {
@@ -237,18 +230,15 @@ export default async function handler(
           businessProductOrders: BusinessOrderRow[];
         }>(GET_BUSINESS_ORDER, { id, ordered_by: session.user.id });
 
-    if (
-      !data.businessProductOrders ||
-      data.businessProductOrders.length === 0
-    ) {
-      return res.status(404).json({ error: "Order not found" });
+    if (!data.businessProductOrders || data.businessProductOrders.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     const row = data.businessProductOrders[0];
     // DB stores grand total; fees are stored separately
-    const total = parseFloat(row.total || "0");
-    const transportFee = parseFloat(row.transportation_fee || "0");
-    const serviceFee = parseFloat(row.service_fee || "0");
+    const total = parseFloat(row.total || '0');
+    const transportFee = parseFloat(row.transportation_fee || '0');
+    const serviceFee = parseFloat(row.service_fee || '0');
     const subtotal = Math.max(0, total - transportFee - serviceFee);
     let products = Array.isArray(row.allProducts) ? row.allProducts : [];
     const bs = row.business_store;
@@ -281,15 +271,9 @@ export default async function handler(
             const img = x.Image ?? x.image ?? null;
             imageMap.set(id, img && String(img).trim() ? String(img) : null);
             const desc = x.Description ?? null;
-            descriptionMap.set(
-              id,
-              desc && String(desc).trim() ? String(desc) : null
-            );
+            descriptionMap.set(id, desc && String(desc).trim() ? String(desc) : null);
             const qid = x.query_id ?? null;
-            queryIdMap.set(
-              id,
-              qid != null && String(qid).trim() ? String(qid) : null
-            );
+            queryIdMap.set(id, qid != null && String(qid).trim() ? String(qid) : null);
           }
         });
         products = products.map((p: any) => {
@@ -347,11 +331,8 @@ export default async function handler(
 
     const order = {
       id: row.id,
-      OrderID:
-        row.OrderID != null
-          ? row.OrderID
-          : row.id.substring(0, 8).toUpperCase(),
-      status: row.status || "Pending",
+      OrderID: row.OrderID != null ? row.OrderID : row.id.substring(0, 8).toUpperCase(),
+      status: row.status || 'Pending',
       created_at: row.created_at,
       delivery_time: row.delivered_time || row.created_at,
       timeRange: row.timeRange,
@@ -362,19 +343,18 @@ export default async function handler(
       deliveryAddress: row.deliveryAddress,
       comment: row.comment,
       units: row.units,
-      pin: row.pin != null ? String(row.pin) : "",
+      pin: row.pin != null ? String(row.pin) : '',
       shop: bs
         ? {
             id: bs.id,
-            name:
-              bs.name ?? bs.business_account?.business_name ?? "Business Store",
+            name: bs.name ?? bs.business_account?.business_name ?? 'Business Store',
             image: bs.image,
             address:
               (bs as any).address ??
               bs.business_account?.business_location ??
               (bs.latitude != null && bs.longitude != null
                 ? `${bs.latitude}, ${bs.longitude}`
-                : ""),
+                : ''),
             description: (bs as any).description ?? null,
             operating_hours: (bs as any).operating_hours ?? null,
             category: (bs as any).Category
@@ -386,15 +366,13 @@ export default async function handler(
             latitude: bs.latitude ?? null,
             longitude: bs.longitude ?? null,
             phone:
-              (bs.business_account?.business_phone?.trim() &&
-                bs.business_account.business_phone) ||
+              (bs.business_account?.business_phone?.trim() && bs.business_account.business_phone) ||
               (bs as any).business_account?.Users?.phone ||
               null,
             business_account: bs.business_account
               ? {
                   business_email: bs.business_account.business_email ?? null,
-                  business_location:
-                    bs.business_account.business_location ?? null,
+                  business_location: bs.business_account.business_location ?? null,
                   business_name: bs.business_account.business_name ?? null,
                   business_phone: bs.business_account.business_phone ?? null,
                 }
@@ -407,13 +385,13 @@ export default async function handler(
       shop_id: row.store_id,
       allProducts: products,
       orderedBy: row.orderedBy,
-      orderType: "business",
+      orderType: 'business',
       Shoppers,
     };
 
     return res.status(200).json({ order });
   } catch (err) {
-    console.error("Business order details error:", err);
-    return res.status(500).json({ error: "Failed to fetch order" });
+    console.error('Business order details error:', err);
+    return res.status(500).json({ error: 'Failed to fetch order' });
   }
 }

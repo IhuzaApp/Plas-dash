@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Catalog view for project users: product names only (no shop, no prices).
 const GET_PRODUCT_NAMES = gql`
@@ -22,20 +22,17 @@ const GET_PRODUCT_NAMES = gql`
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user || !(session.user as { id?: string }).id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
     const data = await hasuraClient.request<{ productNames: any[] }>(GET_PRODUCT_NAMES);
     return NextResponse.json({ productNames: data.productNames || [] });
   } catch (error) {
-    console.error("Error fetching product names:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch product names" },
-      { status: 500 }
-    );
+    console.error('Error fetching product names:', error);
+    return NextResponse.json({ error: 'Failed to fetch product names' }, { status: 500 });
   }
 }

@@ -1,8 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../api/auth/[...nextauth]";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../api/auth/[...nextauth]';
 
 const GET_SHOPPER_APPLICATION = gql`
   query GetShopperApplication($user_id: uuid!) {
@@ -85,59 +85,47 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow GET requests
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     // Verify the user is authenticated
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
       return res.status(401).json({
-        error: "You must be authenticated to get shopper application",
+        error: 'You must be authenticated to get shopper application',
       });
     }
 
     if (!hasuraClient) {
-      console.error(
-        "Hasura client is not initialized. Check environment variables."
-      );
-      throw new Error(
-        "Hasura client is not initialized. Please check server configuration."
-      );
+      console.error('Hasura client is not initialized. Check environment variables.');
+      throw new Error('Hasura client is not initialized. Please check server configuration.');
     }
 
     const user_id = session.user.id;
 
     // Get the full shopper application data
-    const shopperData =
-      await hasuraClient.request<GetShopperApplicationResponse>(
-        GET_SHOPPER_APPLICATION,
-        { user_id }
-      );
+    const shopperData = await hasuraClient.request<GetShopperApplicationResponse>(
+      GET_SHOPPER_APPLICATION,
+      { user_id }
+    );
 
     if (shopperData.shoppers.length > 0) {
       const shopper = shopperData.shoppers[0];
       return res.status(200).json({ shopper });
     } else {
-      return res.status(404).json({ error: "No shopper application found" });
+      return res.status(404).json({ error: 'No shopper application found' });
     }
   } catch (error: any) {
-    console.error("Error getting shopper application:", error);
+    console.error('Error getting shopper application:', error);
     res.status(500).json({
-      error: "Failed to get shopper application",
+      error: 'Failed to get shopper application',
       message: error.message,
-      details: error.response?.errors || "No additional details available",
+      details: error.response?.errors || 'No additional details available',
     });
   }
 }

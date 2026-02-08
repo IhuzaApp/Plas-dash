@@ -1,9 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../api/auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../api/auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { logger } from '../../../src/utils/logger';
 
 // Define the GraphQL query
 const GET_VEHICLES = gql`
@@ -21,28 +21,25 @@ const GET_VEHICLES = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { user_id } = req.query;
-    if (!user_id || typeof user_id !== "string") {
-      return res.status(400).json({ error: "User ID is required" });
+    if (!user_id || typeof user_id !== 'string') {
+      return res.status(400).json({ error: 'User ID is required' });
     }
 
     if (!hasuraClient) {
-      logger.error("Hasura client not initialized", "get-shopper-vehicles");
-      return res.status(500).json({ error: "Internal server error" });
+      logger.error('Hasura client not initialized', 'get-shopper-vehicles');
+      return res.status(500).json({ error: 'Internal server error' });
     }
 
     const response = await hasuraClient.request(GET_VEHICLES, {
@@ -52,10 +49,10 @@ export default async function handler(
     return res.status(200).json(response);
   } catch (error) {
     logger.error(
-      "Error fetching vehicles:",
+      'Error fetching vehicles:',
       error instanceof Error ? error.message : String(error),
-      "get-shopper-vehicles"
+      'get-shopper-vehicles'
     );
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }

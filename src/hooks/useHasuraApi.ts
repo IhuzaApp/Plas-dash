@@ -431,9 +431,7 @@ export function useActiveUsersCount() {
   return useQuery<{ activeUsers: number; since: string }, Error>({
     queryKey: ['api', 'active-users-count'],
     queryFn: () =>
-      apiGet<{ activeUsers: number; since: string }>(
-        '/api/queries/active-users-count'
-      ),
+      apiGet<{ activeUsers: number; since: string }>('/api/queries/active-users-count'),
   });
 }
 
@@ -996,17 +994,19 @@ export function useAddReel() {
 // Type-safe hook for updating a reel
 export function useUpdateReel() {
   return useMutation<
-    { update_Reels_by_pk: {
-      id: string;
-      title: string;
-      description: string;
-      video_url: string;
-      category: string;
-      type: string;
-      Price: string;
-      delivery_time: string;
-      is_active: boolean;
-    } },
+    {
+      update_Reels_by_pk: {
+        id: string;
+        title: string;
+        description: string;
+        video_url: string;
+        category: string;
+        type: string;
+        Price: string;
+        delivery_time: string;
+        is_active: boolean;
+      };
+    },
     Error,
     {
       id: string;

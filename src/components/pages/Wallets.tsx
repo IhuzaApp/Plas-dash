@@ -77,11 +77,7 @@ const getTypeBadge = (type: string) => {
 };
 
 // Combined overview: stats + graphs for all wallet types + transactions
-function WalletsOverviewTab({
-  formatCurrency,
-}: {
-  formatCurrency: (amount: string) => string;
-}) {
+function WalletsOverviewTab({ formatCurrency }: { formatCurrency: (amount: string) => string }) {
   const { data: walletsWithTx, isLoading: loadingShopper } = useAllWalletsWithTransactions();
   const { data: personalData, isLoading: loadingPersonal } = usePersonalWallets();
   const { data: businessData, isLoading: loadingBusiness } = useBusinessWallets();
@@ -118,10 +114,7 @@ function WalletsOverviewTab({
   const [txPage, setTxPage] = useState(1);
   const txPerPage = 10;
   const txTotalPages = Math.ceil(combinedTransactions.length / txPerPage);
-  const currentTx = combinedTransactions.slice(
-    (txPage - 1) * txPerPage,
-    txPage * txPerPage
-  );
+  const currentTx = combinedTransactions.slice((txPage - 1) * txPerPage, txPage * txPerPage);
 
   const isLoading = loadingShopper || loadingPersonal || loadingBusiness;
   const chartData = [
@@ -166,9 +159,7 @@ function WalletsOverviewTab({
             <div className="text-2xl font-bold mt-1">
               {formatCurrency(personalTotal.toString())}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {personalWallets.length} wallet(s)
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{personalWallets.length} wallet(s)</p>
           </CardContent>
         </Card>
         <Card>
@@ -179,9 +170,7 @@ function WalletsOverviewTab({
             <div className="text-2xl font-bold mt-1">
               {formatCurrency(businessTotal.toString())}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {businessWallets.length} wallet(s)
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{businessWallets.length} wallet(s)</p>
           </CardContent>
         </Card>
         <Card>
@@ -254,9 +243,7 @@ function WalletsOverviewTab({
                 currentTx.map((tx: any) => (
                   <TableRow key={tx._source === 'shopper' ? tx.id : `b-${tx.id}`}>
                     <TableCell className="text-muted-foreground">
-                      {tx.created_at
-                        ? format(new Date(tx.created_at), 'MMM d, yyyy HH:mm')
-                        : '—'}
+                      {tx.created_at ? format(new Date(tx.created_at), 'MMM d, yyyy HH:mm') : '—'}
                     </TableCell>
                     <TableCell>
                       <Badge variant={tx._source === 'shopper' ? 'default' : 'secondary'}>
@@ -265,9 +252,7 @@ function WalletsOverviewTab({
                     </TableCell>
                     <TableCell>{tx.type || tx.action || '—'}</TableCell>
                     <TableCell>
-                      {tx.amount != null
-                        ? formatCurrency(String(tx.amount))
-                        : '—'}
+                      {tx.amount != null ? formatCurrency(String(tx.amount)) : '—'}
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusBadge(tx.status)} variant="secondary">
@@ -312,11 +297,7 @@ function WalletsOverviewTab({
 }
 
 // Personal wallets tab
-function PersonalWalletsTab({
-  formatCurrency,
-}: {
-  formatCurrency: (amount: string) => string;
-}) {
+function PersonalWalletsTab({ formatCurrency }: { formatCurrency: (amount: string) => string }) {
   const { data, isLoading } = usePersonalWallets();
   const wallets = data?.personalWallet ?? [];
   const [page, setPage] = useState(1);
@@ -415,11 +396,7 @@ function PersonalWalletsTab({
 }
 
 // Business wallets tab
-function BusinessWalletsTab({
-  formatCurrency,
-}: {
-  formatCurrency: (amount: string) => string;
-}) {
+function BusinessWalletsTab({ formatCurrency }: { formatCurrency: (amount: string) => string }) {
   const { data, isLoading } = useBusinessWallets();
   const wallets = data?.business_wallet ?? [];
   const [page, setPage] = useState(1);
@@ -490,9 +467,7 @@ function BusinessWalletsTab({
                     <TableCell>{formatCurrency(w.amount || '0')}</TableCell>
                     <TableCell>{w.businessTransactions?.length || 0}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {w.created_at
-                        ? format(new Date(w.created_at), 'MMM d, yyyy')
-                        : '—'}
+                      {w.created_at ? format(new Date(w.created_at), 'MMM d, yyyy') : '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {w.updated_at
@@ -503,62 +478,56 @@ function BusinessWalletsTab({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() =>
-                          setExpandedId(expandedId === w.id ? null : w.id)
-                        }
+                        onClick={() => setExpandedId(expandedId === w.id ? null : w.id)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         {expandedId === w.id ? 'Hide' : 'Transactions'}
                       </Button>
                     </TableCell>
                   </TableRow>
-                  {expandedId === w.id &&
-                    w.businessTransactions?.length > 0 && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="bg-muted/50 p-0">
-                          <div className="p-4">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Date</TableHead>
-                                  <TableHead>Type</TableHead>
-                                  <TableHead>Action</TableHead>
-                                  <TableHead>Status</TableHead>
-                                  <TableHead>Description</TableHead>
+                  {expandedId === w.id && w.businessTransactions?.length > 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="bg-muted/50 p-0">
+                        <div className="p-4">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Action</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Description</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {w.businessTransactions.map((tx: any) => (
+                                <TableRow key={tx.id}>
+                                  <TableCell className="text-muted-foreground">
+                                    {tx.created_at
+                                      ? format(new Date(tx.created_at), 'MMM d, yyyy HH:mm')
+                                      : '—'}
+                                  </TableCell>
+                                  <TableCell>{tx.type || '—'}</TableCell>
+                                  <TableCell>{tx.action || '—'}</TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      className={getStatusBadge(tx.status)}
+                                      variant="secondary"
+                                    >
+                                      {tx.status || '—'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="max-w-[180px] truncate">
+                                    {tx.description || '—'}
+                                  </TableCell>
                                 </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {w.businessTransactions.map((tx: any) => (
-                                  <TableRow key={tx.id}>
-                                    <TableCell className="text-muted-foreground">
-                                      {tx.created_at
-                                        ? format(
-                                            new Date(tx.created_at),
-                                            'MMM d, yyyy HH:mm'
-                                          )
-                                        : '—'}
-                                    </TableCell>
-                                    <TableCell>{tx.type || '—'}</TableCell>
-                                    <TableCell>{tx.action || '—'}</TableCell>
-                                    <TableCell>
-                                      <Badge
-                                        className={getStatusBadge(tx.status)}
-                                        variant="secondary"
-                                      >
-                                        {tx.status || '—'}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell className="max-w-[180px] truncate">
-                                      {tx.description || '—'}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </React.Fragment>
               ))
             )}

@@ -1,33 +1,30 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
     const session = await getServerSession(req, res, authOptions);
 
     if (!session) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: 'Unauthorized' });
     }
 
     const { user_id } = req.body;
 
     if (!user_id) {
-      return res.status(400).json({ message: "User ID is required" });
+      return res.status(400).json({ message: 'User ID is required' });
     }
 
     if (!hasuraClient) {
       return res.status(500).json({
         success: false,
-        message: "Database client not available",
+        message: 'Database client not available',
       });
     }
 
@@ -59,10 +56,10 @@ export default async function handler(
       settings: response.shopper_notification_settings,
     });
   } catch (error) {
-    console.error("Error fetching notification settings:", error);
+    console.error('Error fetching notification settings:', error);
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch notification settings",
+      message: 'Failed to fetch notification settings',
     });
   }
 }

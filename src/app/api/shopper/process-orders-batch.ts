@@ -1,8 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { logger } from "../../../src/utils/logger";
-import { sendBatchOrdersNotification } from "../../../src/services/fcmService";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { logger } from '../../../src/utils/logger';
+import { sendBatchOrdersNotification } from '../../../src/services/fcmService';
 
 // GraphQL query to get available dashers
 const GET_AVAILABLE_DASHERS = gql`
@@ -96,10 +96,7 @@ const GET_AVAILABLE_RESTAURANT_ORDERS = gql`
         shopper_id: { _is_null: true }
         _or: [
           { updated_at: { _gte: $updated_after } }
-          {
-            updated_at: { _is_null: true }
-            created_at: { _gte: $updated_after }
-          }
+          { updated_at: { _is_null: true }, created_at: { _gte: $updated_after } }
         ]
       }
       order_by: { updated_at: desc_nulls_last, created_at: desc }
@@ -128,12 +125,7 @@ const GET_AVAILABLE_RESTAURANT_ORDERS = gql`
 `;
 
 // Haversine formula to calculate distance in kilometers
-function calculateDistanceKm(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Radius of the Earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -155,7 +147,7 @@ function groupShoppersByLocation(shoppers: any[], clusterRadiusKm: number = 2) {
     id: string;
   }> = [];
 
-  shoppers.forEach((shopper) => {
+  shoppers.forEach(shopper => {
     let assignedToCluster = false;
 
     for (const cluster of clusters) {
@@ -189,36 +181,22 @@ function groupShoppersByLocation(shoppers: any[], clusterRadiusKm: number = 2) {
 }
 
 // Group orders by location
-function groupOrdersByLocation(
-  orders: any[],
-  orderType: "regular" | "reel" | "restaurant"
-) {
+function groupOrdersByLocation(orders: any[], orderType: 'regular' | 'reel' | 'restaurant') {
   const orderGroups: Array<{
     location: { lat: number; lng: number };
     orders: any[];
     shopName: string;
   }> = [];
 
-  orders.forEach((order) => {
+  orders.forEach(order => {
     const lat = parseFloat(order.Address?.latitude || order.address?.latitude);
-    const lng = parseFloat(
-      order.Address?.longitude || order.address?.longitude
-    );
-    const shopName =
-      order.Shops?.name ||
-      order.Reel?.title ||
-      order.Restaurant?.name ||
-      "Unknown";
+    const lng = parseFloat(order.Address?.longitude || order.address?.longitude);
+    const shopName = order.Shops?.name || order.Reel?.title || order.Restaurant?.name || 'Unknown';
 
     let assignedToGroup = false;
 
     for (const group of orderGroups) {
-      const distance = calculateDistanceKm(
-        group.location.lat,
-        group.location.lng,
-        lat,
-        lng
-      );
+      const distance = calculateDistanceKm(group.location.lat, group.location.lng, lat, lng);
 
       if (distance <= 1) {
         // 1km radius for order grouping
@@ -241,14 +219,10 @@ function groupOrdersByLocation(
 }
 
 // Find nearby orders for a cluster
-function findNearbyOrdersForCluster(
-  cluster: any,
-  orderGroups: any[],
-  maxDistanceKm: number = 10
-) {
+function findNearbyOrdersForCluster(cluster: any, orderGroups: any[], maxDistanceKm: number = 10) {
   const nearbyOrders: any[] = [];
 
-  orderGroups.forEach((group) => {
+  orderGroups.forEach(group => {
     const distance = calculateDistanceKm(
       cluster.center.lat,
       cluster.center.lng,
@@ -264,75 +238,55 @@ function findNearbyOrdersForCluster(
   return nearbyOrders;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get current time and day for schedule checking
     const now = new Date();
-    const currentTime = now.toTimeString().split(" ")[0] + "+00:00";
+    const currentTime = now.toTimeString().split(' ')[0] + '+00:00';
     const currentDay = now.getDay() === 0 ? 7 : now.getDay();
 
     // Get orders created in the last 29 minutes
-    const twentyNineMinutesAgo = new Date(
-      Date.now() - 29 * 60 * 1000
-    ).toISOString();
+    const twentyNineMinutesAgo = new Date(Date.now() - 29 * 60 * 1000).toISOString();
 
     // Fetch data in parallel
-    const [
-      dashersData,
-      regularOrdersData,
-      reelOrdersData,
-      restaurantOrdersData,
-    ] = await Promise.all([
-      hasuraClient.request(GET_AVAILABLE_DASHERS, {
-        current_time: currentTime,
-        current_day: currentDay,
-      }) as any,
-      hasuraClient.request(GET_AVAILABLE_ORDERS, {
-        created_after: twentyNineMinutesAgo,
-      }) as any,
-      hasuraClient.request(GET_AVAILABLE_REEL_ORDERS, {
-        created_after: twentyNineMinutesAgo,
-      }) as any,
-      hasuraClient.request(GET_AVAILABLE_RESTAURANT_ORDERS, {
-        updated_after: twentyNineMinutesAgo,
-      }) as any,
-    ]);
+    const [dashersData, regularOrdersData, reelOrdersData, restaurantOrdersData] =
+      await Promise.all([
+        hasuraClient.request(GET_AVAILABLE_DASHERS, {
+          current_time: currentTime,
+          current_day: currentDay,
+        }) as any,
+        hasuraClient.request(GET_AVAILABLE_ORDERS, {
+          created_after: twentyNineMinutesAgo,
+        }) as any,
+        hasuraClient.request(GET_AVAILABLE_REEL_ORDERS, {
+          created_after: twentyNineMinutesAgo,
+        }) as any,
+        hasuraClient.request(GET_AVAILABLE_RESTAURANT_ORDERS, {
+          updated_after: twentyNineMinutesAgo,
+        }) as any,
+      ]);
 
     const availableDashers = dashersData.Shopper_Availability || [];
     const availableOrders = regularOrdersData.Orders || [];
     const availableReelOrders = reelOrdersData.reel_orders || [];
-    const availableRestaurantOrders =
-      restaurantOrdersData.restaurant_orders || [];
+    const availableRestaurantOrders = restaurantOrdersData.restaurant_orders || [];
 
     // Use database-based clustering for FCM notifications
     const shopperClusters = groupShoppersByLocation(availableDashers, 2);
 
     // Group orders by location
-    const regularOrderGroups = groupOrdersByLocation(
-      availableOrders,
-      "regular"
-    );
-    const reelOrderGroups = groupOrdersByLocation(availableReelOrders, "reel");
-    const restaurantOrderGroups = groupOrdersByLocation(
-      availableRestaurantOrders,
-      "restaurant"
-    );
-    const allOrderGroups = [
-      ...regularOrderGroups,
-      ...reelOrderGroups,
-      ...restaurantOrderGroups,
-    ];
+    const regularOrderGroups = groupOrdersByLocation(availableOrders, 'regular');
+    const reelOrderGroups = groupOrdersByLocation(availableReelOrders, 'reel');
+    const restaurantOrderGroups = groupOrdersByLocation(availableRestaurantOrders, 'restaurant');
+    const allOrderGroups = [...regularOrderGroups, ...reelOrderGroups, ...restaurantOrderGroups];
 
     // Process each cluster with real-time notifications
     const clusterAssignments: Array<{
@@ -346,18 +300,14 @@ export default async function handler(
     // WebSocket instance is available globally
 
     for (const cluster of shopperClusters) {
-      const nearbyOrders = findNearbyOrdersForCluster(
-        cluster,
-        allOrderGroups,
-        10
-      );
+      const nearbyOrders = findNearbyOrdersForCluster(cluster, allOrderGroups, 10);
 
       let notificationsSent = 0;
 
       // Send real-time notifications if WebSocket is available
       if (nearbyOrders.length > 0) {
         const clusterId = cluster.id;
-        const orderNotifications = nearbyOrders.map((order) => {
+        const orderNotifications = nearbyOrders.map(order => {
           const distance = calculateDistanceKm(
             cluster.center.lat,
             cluster.center.lng,
@@ -375,10 +325,7 @@ export default async function handler(
           return {
             id: order.id,
             shopName:
-              order.Shops?.name ||
-              order.Reel?.title ||
-              order.Restaurant?.name ||
-              "Unknown Shop",
+              order.Shops?.name || order.Reel?.title || order.Restaurant?.name || 'Unknown Shop',
             distance: distance,
             travelTimeMinutes: calculateTravelTime(distance),
             createdAt: order.created_at,
@@ -387,26 +334,25 @@ export default async function handler(
             }, ${order.Address?.city || order.address?.city}`,
             itemsCount: order.quantity || 1,
             estimatedEarnings:
-              order.orderType === "restaurant"
-                ? parseFloat(order.delivery_fee || "0") // Restaurant orders: delivery only
-                : parseFloat(order.service_fee || "0") +
-                  parseFloat(order.delivery_fee || "0"), // Regular and reel orders: service + delivery
-            orderType: order.orderType || "regular",
+              order.orderType === 'restaurant'
+                ? parseFloat(order.delivery_fee || '0') // Restaurant orders: delivery only
+                : parseFloat(order.service_fee || '0') + parseFloat(order.delivery_fee || '0'), // Regular and reel orders: service + delivery
+            orderType: order.orderType || 'regular',
             // Add restaurant-specific fields
-            ...(order.orderType === "restaurant" && {
+            ...(order.orderType === 'restaurant' && {
               restaurant: order.Restaurant,
-              total: parseFloat(order.total || "0"),
+              total: parseFloat(order.total || '0'),
               deliveryTime: order.delivery_time,
             }),
             // Add reel-specific fields
-            ...(order.orderType === "reel" && {
+            ...(order.orderType === 'reel' && {
               reel: order.Reel,
             }),
           };
         });
 
         // Send batch notification to cluster
-        notificationsSent = sendToCluster(clusterId, "batch-orders", {
+        notificationsSent = sendToCluster(clusterId, 'batch-orders', {
           orders: orderNotifications,
           clusterId: clusterId,
           expiresIn: 60000,
@@ -418,10 +364,7 @@ export default async function handler(
         clusterId: cluster.id,
         shopperCount: cluster.shoppers.length,
         nearbyOrders: nearbyOrders.length,
-        assignments: nearbyOrders.slice(
-          0,
-          Math.min(cluster.shoppers.length, nearbyOrders.length)
-        ),
+        assignments: nearbyOrders.slice(0, Math.min(cluster.shoppers.length, nearbyOrders.length)),
         notificationsSent,
       });
     }
@@ -429,9 +372,7 @@ export default async function handler(
     // Calculate efficiency metrics
     const totalShoppers = availableDashers.length;
     const totalOrders =
-      availableOrders.length +
-      availableReelOrders.length +
-      availableRestaurantOrders.length;
+      availableOrders.length + availableReelOrders.length + availableRestaurantOrders.length;
     const totalClusters = shopperClusters.length;
     const totalNotifications = clusterAssignments.reduce(
       (sum, cluster) => sum + cluster.notificationsSent,
@@ -448,8 +389,7 @@ export default async function handler(
       avgShoppersPerCluster: Math.round(avgShoppersPerCluster * 100) / 100,
       avgOrdersPerCluster: Math.round(avgOrdersPerCluster * 100) / 100,
       clusterUtilization: Math.round((totalOrders / totalShoppers) * 100) / 100,
-      notificationRate:
-        Math.round((totalNotifications / totalShoppers) * 100) / 100,
+      notificationRate: Math.round((totalNotifications / totalShoppers) * 100) / 100,
     };
 
     return res.status(200).json({
@@ -470,10 +410,10 @@ export default async function handler(
       },
     });
   } catch (error) {
-    logger.error("Error in batch processing:", "ProcessOrdersBatch", error);
+    logger.error('Error in batch processing:', 'ProcessOrdersBatch', error);
     return res.status(500).json({
-      error: "Failed to process batch",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to process batch',
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_ALL_STORES = gql`
   query GetAllStores {
@@ -36,21 +36,16 @@ interface StoresResponse {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<StoresResponse>(GET_ALL_STORES);
     res.status(200).json({ stores: data.business_stores || [] });
   } catch (error: any) {
-    console.error("Error fetching stores:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to fetch stores", message: error.message });
+    console.error('Error fetching stores:', error);
+    res.status(500).json({ error: 'Failed to fetch stores', message: error.message });
   }
 }

@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_CATEGORIES = gql`
   query GetCategories {
@@ -24,13 +24,10 @@ interface CategoriesResponse {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
     const data = await hasuraClient.request<CategoriesResponse>(GET_CATEGORIES);
 
@@ -41,7 +38,7 @@ export default async function handler(
     res.status(200).json({ categories: data.Categories });
   } catch (error: any) {
     res.status(500).json({
-      error: "Failed to fetch categories",
+      error: 'Failed to fetch categories',
       details: error?.message,
       response: error?.response,
       request: error?.request,

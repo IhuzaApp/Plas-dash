@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_CURRENT_USER = gql`
   query GetCurrentUser($id: uuid!) {
@@ -47,11 +47,7 @@ const GET_SHOPPER_WALLET = gql`
 const CREATE_SHOPPER_WALLET = gql`
   mutation CreateShopperWallet($shopper_id: uuid!) {
     insert_Wallets_one(
-      object: {
-        shopper_id: $shopper_id
-        available_balance: "0"
-        reserved_balance: "0"
-      }
+      object: { shopper_id: $shopper_id, available_balance: "0", reserved_balance: "0" }
     ) {
       id
       available_balance
@@ -62,17 +58,16 @@ const CREATE_SHOPPER_WALLET = gql`
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const user_id = (session.user as { id?: string }).id as string;
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
-    const userData = await hasuraClient.request<{ Users_by_pk: any }>(
-      GET_CURRENT_USER,
-      { id: user_id }
-    );
+    const userData = await hasuraClient.request<{ Users_by_pk: any }>(GET_CURRENT_USER, {
+      id: user_id,
+    });
     const user = userData.Users_by_pk;
     const orderData = await hasuraClient.request<{
       Orders_aggregate: { aggregate: { count: number } };
@@ -100,9 +95,7 @@ export async function GET() {
           }
         }
         if (walletData.Wallets?.length > 0) {
-          walletBalance = parseFloat(
-            walletData.Wallets[0].available_balance || "0"
-          );
+          walletBalance = parseFloat(walletData.Wallets[0].available_balance || '0');
         }
       }
     } catch {
@@ -110,10 +103,7 @@ export async function GET() {
     }
     return NextResponse.json({ user, orderCount, walletBalance });
   } catch (error) {
-    console.error("Error fetching current user:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch current user info" },
-      { status: 500 }
-    );
+    console.error('Error fetching current user:', error);
+    return NextResponse.json({ error: 'Failed to fetch current user info' }, { status: 500 });
   }
 }

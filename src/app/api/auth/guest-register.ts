@@ -1,20 +1,17 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { GraphQLClient, gql } from "graphql-request";
-import bcrypt from "bcryptjs";
-import { randomBytes } from "crypto";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { GraphQLClient, gql } from 'graphql-request';
+import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 
 const HASURA_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET!;
 const hasuraClient = new GraphQLClient(HASURA_URL, {
-  headers: { "x-hasura-admin-secret": HASURA_SECRET },
+  headers: { 'x-hasura-admin-secret': HASURA_SECRET },
 });
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
@@ -22,16 +19,16 @@ export default async function handler(
 
   // Validate required fields
   if (!name || !phone) {
-    return res.status(400).json({ error: "Name and phone are required" });
+    return res.status(400).json({ error: 'Name and phone are required' });
   }
 
   // Clean phone number
-  const cleanPhone = phone.replace(/\D/g, "");
+  const cleanPhone = phone.replace(/\D/g, '');
 
   // Validate phone format
   const phoneRegex = /^[\+]?[0-9]{10,15}$/;
   if (!phoneRegex.test(cleanPhone) || cleanPhone.length < 10) {
-    return res.status(400).json({ error: "Invalid phone number format" });
+    return res.status(400).json({ error: 'Invalid phone number format' });
   }
 
   try {
@@ -59,18 +56,10 @@ export default async function handler(
 
       // Update the existing guest's password
       const updateGuestQuery = gql`
-        mutation UpdateGuestPassword(
-          $id: uuid!
-          $password_hash: String!
-          $name: String!
-        ) {
+        mutation UpdateGuestPassword($id: uuid!, $password_hash: String!, $name: String!) {
           update_Users_by_pk(
             pk_columns: { id: $id }
-            _set: {
-              password_hash: $password_hash
-              name: $name
-              updated_at: "now()"
-            }
+            _set: { password_hash: $password_hash, name: $name, updated_at: "now()" }
           ) {
             id
             email
@@ -89,7 +78,7 @@ export default async function handler(
         guestId: existingGuest.id,
         guestEmail: existingGuest.email,
         guestPassword: tempPassword,
-        message: "Guest account updated",
+        message: 'Guest account updated',
       });
     }
 
@@ -109,13 +98,12 @@ export default async function handler(
     if (existingUsers.Users.length > 0) {
       return res.status(400).json({
         error:
-          "A registered account with this phone number already exists. Please sign in instead.",
+          'A registered account with this phone number already exists. Please sign in instead.',
       });
     }
 
     // Generate guest email and password
-    const guestEmail =
-      email && email.trim() ? email.trim() : `guest_${cleanPhone}@guest.local`;
+    const guestEmail = email && email.trim() ? email.trim() : `guest_${cleanPhone}@guest.local`;
 
     // Generate a secure random password for the guest
     const tempPassword = `guest_${cleanPhone}_${Date.now()}`;
@@ -165,28 +153,27 @@ export default async function handler(
       guestId: newGuest.id,
       guestEmail: newGuest.email,
       guestPassword: tempPassword,
-      message: "Guest account created successfully",
+      message: 'Guest account created successfully',
     });
   } catch (error: any) {
-    console.error("Error creating guest user:", error);
+    console.error('Error creating guest user:', error);
 
     // Handle specific Hasura errors
-    if (error.message?.includes("duplicate key")) {
+    if (error.message?.includes('duplicate key')) {
       return res.status(400).json({
-        error: "An account with this phone number already exists",
+        error: 'An account with this phone number already exists',
       });
     }
 
-    if (error.message?.includes("is_guest")) {
+    if (error.message?.includes('is_guest')) {
       // If is_guest column doesn't exist, provide a helpful error
       return res.status(500).json({
-        error:
-          "Database schema update required. Please add 'is_guest' column to Users table.",
+        error: "Database schema update required. Please add 'is_guest' column to Users table.",
       });
     }
 
     return res.status(500).json({
-      error: "Failed to create guest account. Please try again.",
+      error: 'Failed to create guest account. Please try again.',
     });
   }
 }

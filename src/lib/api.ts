@@ -3,12 +3,12 @@
  */
 
 const getBaseUrl = () =>
-  typeof window !== "undefined" ? "" : process.env.NEXTAUTH_URL || "http://localhost:3000";
+  typeof window !== 'undefined' ? '' : process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
 export async function apiGet<T = unknown>(path: string): Promise<T> {
   const base = getBaseUrl();
-  const res = await fetch(`${base}${path.startsWith("/") ? path : `/${path}`}`, {
-    credentials: "include",
+  const res = await fetch(`${base}${path.startsWith('/') ? path : `/${path}`}`, {
+    credentials: 'include',
   });
   const data = await res.json();
   if (!res.ok) {
@@ -19,10 +19,10 @@ export async function apiGet<T = unknown>(path: string): Promise<T> {
 
 export async function apiPost<T = unknown>(path: string, body: unknown): Promise<T> {
   const base = getBaseUrl();
-  const res = await fetch(`${base}${path.startsWith("/") ? path : `/${path}`}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
+  const res = await fetch(`${base}${path.startsWith('/') ? path : `/${path}`}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(body),
   });
   const data = await res.json();

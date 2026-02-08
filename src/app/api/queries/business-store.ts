@@ -1,14 +1,12 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_BUSINESS_STORE = gql`
   query GetBusinessStore($store_id: uuid!, $business_id: uuid!) {
-    business_stores(
-      where: { id: { _eq: $store_id }, business_id: { _eq: $business_id } }
-    ) {
+    business_stores(where: { id: { _eq: $store_id }, business_id: { _eq: $business_id } }) {
       id
       name
       description
@@ -38,34 +36,27 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const user_id = session.user.id;
     const { storeId } = req.query;
 
-    if (!storeId || typeof storeId !== "string") {
-      return res.status(400).json({ error: "Store ID is required" });
+    if (!storeId || typeof storeId !== 'string') {
+      return res.status(400).json({ error: 'Store ID is required' });
     }
 
     // First, get the business account for this user
@@ -85,7 +76,7 @@ export default async function handler(
       !businessAccountResult.business_accounts ||
       businessAccountResult.business_accounts.length === 0
     ) {
-      return res.status(404).json({ error: "Business account not found" });
+      return res.status(404).json({ error: 'Business account not found' });
     }
 
     const business_id = businessAccountResult.business_accounts[0].id;
@@ -107,13 +98,13 @@ export default async function handler(
     }>(GET_BUSINESS_STORE, { store_id: storeId, business_id });
 
     if (!result.business_stores || result.business_stores.length === 0) {
-      return res.status(404).json({ error: "Store not found" });
+      return res.status(404).json({ error: 'Store not found' });
     }
 
     return res.status(200).json({ store: result.business_stores[0] });
   } catch (error: any) {
     return res.status(500).json({
-      error: "Failed to fetch business store",
+      error: 'Failed to fetch business store',
       message: error.message,
     });
   }

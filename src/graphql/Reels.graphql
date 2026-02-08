@@ -116,8 +116,39 @@ query getAllReels {
   }
 }
 
-mutation addReels($Price: String = "", $Product: jsonb = "", $category: String = "", $delivery_time: String = "", $description: String = "", $likes: String = "0", $restaurant_id: uuid = null, $shop_id: uuid = null, $title: String = "", $type: String = "", $user_id: uuid = null, $video_url: String = "", $is_active: Boolean = true) {
-  insert_Reels(objects: {Price: $Price, Product: $Product, category: $category, delivery_time: $delivery_time, description: $description, isLiked: false, likes: $likes, restaurant_id: $restaurant_id, shop_id: $shop_id, title: $title, type: $type, user_id: $user_id, video_url: $video_url, is_active: $is_active}) {
+mutation addReels(
+  $Price: String = ""
+  $Product: jsonb = ""
+  $category: String = ""
+  $delivery_time: String = ""
+  $description: String = ""
+  $likes: String = "0"
+  $restaurant_id: uuid = null
+  $shop_id: uuid = null
+  $title: String = ""
+  $type: String = ""
+  $user_id: uuid = null
+  $video_url: String = ""
+  $is_active: Boolean = true
+) {
+  insert_Reels(
+    objects: {
+      Price: $Price
+      Product: $Product
+      category: $category
+      delivery_time: $delivery_time
+      description: $description
+      isLiked: false
+      likes: $likes
+      restaurant_id: $restaurant_id
+      shop_id: $shop_id
+      title: $title
+      type: $type
+      user_id: $user_id
+      video_url: $video_url
+      is_active: $is_active
+    }
+  ) {
     affected_rows
   }
 }

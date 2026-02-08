@@ -94,11 +94,13 @@ export default function PlatformJoinersChart() {
     ) => {
       if (key in buckets) buckets[key][type] += 1;
     };
-    (data.shops || []).forEach((s) => add(getKey(new Date(s.created_at), period), 'shops'));
-    (data.users || []).forEach((u) => add(getKey(new Date(u.created_at), period), 'users'));
-    (data.restaurants || []).forEach((r) => add(getKey(new Date(r.created_at), period), 'restaurants'));
-    (data.businesses || []).forEach((b) => add(getKey(new Date(b.created_at), period), 'businesses'));
-    (data.stores || []).forEach((s) => add(getKey(new Date(s.created_at), period), 'stores'));
+    (data.shops || []).forEach(s => add(getKey(new Date(s.created_at), period), 'shops'));
+    (data.users || []).forEach(u => add(getKey(new Date(u.created_at), period), 'users'));
+    (data.restaurants || []).forEach(r =>
+      add(getKey(new Date(r.created_at), period), 'restaurants')
+    );
+    (data.businesses || []).forEach(b => add(getKey(new Date(b.created_at), period), 'businesses'));
+    (data.stores || []).forEach(s => add(getKey(new Date(s.created_at), period), 'stores'));
     return Object.entries(buckets)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, v]) => ({
@@ -119,7 +121,7 @@ export default function PlatformJoinersChart() {
           Platform Joiners (Shops, Restaurants, Businesses, Stores, Users)
         </CardTitle>
         <div className="flex flex-wrap gap-1">
-          {(['day', 'week', 'month', 'year'] as const).map((p) => (
+          {(['day', 'week', 'month', 'year'] as const).map(p => (
             <Button
               key={p}
               variant={period === p ? 'secondary' : 'ghost'}
@@ -164,7 +166,7 @@ export default function PlatformJoinersChart() {
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Legend formatter={(value) => <span style={{ color: TICK_FILL }}>{value}</span>} />
+                <Legend formatter={value => <span style={{ color: TICK_FILL }}>{value}</span>} />
                 <Area
                   type="monotone"
                   dataKey="Shops"

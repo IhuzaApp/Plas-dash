@@ -60,7 +60,11 @@ interface ShopPerformanceChartsProps {
   isLoading?: boolean;
 }
 
-export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading }: ShopPerformanceChartsProps) {
+export default function ShopPerformanceCharts({
+  shop,
+  reelOrders = [],
+  isLoading,
+}: ShopPerformanceChartsProps) {
   const { data: configData } = useSystemConfig();
   const config = configData?.System_configuratioins?.[0]
     ? {
@@ -73,21 +77,21 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
 
   // Combined list for status pie and trend (regular + reel)
   const allOrdersForStatus = useMemo(() => {
-    const regular = orders.map((o) => ({ status: o.status }));
-    const reel = reels.map((o) => ({ status: o.status }));
+    const regular = orders.map(o => ({ status: o.status }));
+    const reel = reels.map(o => ({ status: o.status }));
     return [...regular, ...reel];
   }, [orders, reels]);
 
   const allOrdersForTrend = useMemo(() => {
-    const regular = orders.map((o) => ({ total: o.total, created_at: o.created_at }));
-    const reel = reels.map((o) => ({ total: o.total, created_at: o.created_at }));
+    const regular = orders.map(o => ({ total: o.total, created_at: o.created_at }));
+    const reel = reels.map(o => ({ total: o.total, created_at: o.created_at }));
     return [...regular, ...reel];
   }, [orders, reels]);
 
   // 1. Order status breakdown (pie) – includes regular + reel orders
   const statusData = useMemo(() => {
     const counts: Record<string, number> = {};
-    allOrdersForStatus.forEach((o) => {
+    allOrdersForStatus.forEach(o => {
       const s = (o.status || 'unknown').toLowerCase().replace(/_/g, ' ');
       const label = s.charAt(0).toUpperCase() + s.slice(1);
       counts[label] = (counts[label] || 0) + 1;
@@ -119,7 +123,7 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
         reelOrders: 0,
       };
     }
-    orders.forEach((o) => {
+    orders.forEach(o => {
       const key = format(parseISO(o.created_at), 'yyyy-MM-dd');
       if (!dayMap[key]) {
         dayMap[key] = {
@@ -135,7 +139,7 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
       dayMap[key].orders += 1;
       dayMap[key].regularOrders! += 1;
     });
-    reels.forEach((o) => {
+    reels.forEach(o => {
       const key = format(parseISO(o.created_at), 'yyyy-MM-dd');
       if (!dayMap[key]) {
         dayMap[key] = {
@@ -159,20 +163,22 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
 
   // 3. Delivered orders and ratings (from shop Orders + reel orders; ratings on both)
   const deliveredOrdersCount = useMemo(() => {
-    const regularDelivered = orders.filter((o) => (o.status || '').toLowerCase() === 'delivered').length;
-    const reelDelivered = reels.filter((o) => (o.status || '').toLowerCase() === 'delivered').length;
+    const regularDelivered = orders.filter(
+      o => (o.status || '').toLowerCase() === 'delivered'
+    ).length;
+    const reelDelivered = reels.filter(o => (o.status || '').toLowerCase() === 'delivered').length;
     return regularDelivered + reelDelivered;
   }, [orders, reels]);
   const allRatings = useMemo(() => {
     const list: number[] = [];
-    orders.forEach((order) => {
-      (order.Ratings ?? []).forEach((r) => {
+    orders.forEach(order => {
+      (order.Ratings ?? []).forEach(r => {
         const n = typeof r.rating === 'number' ? r.rating : parseFloat(String(r.rating));
         if (!Number.isNaN(n)) list.push(n);
       });
     });
-    reels.forEach((reel) => {
-      (reel.Ratings ?? []).forEach((r) => {
+    reels.forEach(reel => {
+      (reel.Ratings ?? []).forEach(r => {
         const n = typeof r.rating === 'number' ? r.rating : parseFloat(String(r.rating));
         if (!Number.isNaN(n)) list.push(n);
       });
@@ -181,28 +187,36 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
   }, [orders, reels]);
   const totalRatingsCount = allRatings.length;
   const averageRating =
-    totalRatingsCount > 0 ? Math.round((allRatings.reduce((a, b) => a + b, 0) / totalRatingsCount) * 10) / 10 : 0;
+    totalRatingsCount > 0
+      ? Math.round((allRatings.reduce((a, b) => a + b, 0) / totalRatingsCount) * 10) / 10
+      : 0;
   const ratingDistributionData = useMemo(() => {
     const buckets: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    allRatings.forEach((r) => {
+    allRatings.forEach(r => {
       const star = Math.min(5, Math.max(1, Math.round(r)));
       buckets[star] = (buckets[star] ?? 0) + 1;
     });
-    return [1, 2, 3, 4, 5].map((star) => ({ stars: `${star} star${star === 1 ? '' : 's'}`, count: buckets[star] ?? 0 }));
+    return [1, 2, 3, 4, 5].map(star => ({
+      stars: `${star} star${star === 1 ? '' : 's'}`,
+      count: buckets[star] ?? 0,
+    }));
   }, [allRatings]);
 
   // 4. Top products by quantity sold
   const topProductsData = useMemo(() => {
     const byName: Record<string, number> = {};
-    orders.forEach((order) => {
-      order.Order_Items?.forEach((item) => {
-        const name =
-          item.Product?.ProductName?.name ?? item.Product?.name ?? 'Unknown';
+    orders.forEach(order => {
+      order.Order_Items?.forEach(item => {
+        const name = item.Product?.ProductName?.name ?? item.Product?.name ?? 'Unknown';
         byName[name] = (byName[name] || 0) + (item.quantity || 0);
       });
     });
     return Object.entries(byName)
-      .map(([name, quantity]) => ({ name: name.length > 20 ? name.slice(0, 20) + '…' : name, quantity, fullName: name }))
+      .map(([name, quantity]) => ({
+        name: name.length > 20 ? name.slice(0, 20) + '…' : name,
+        quantity,
+        fullName: name,
+      }))
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 8);
   }, [orders]);
@@ -276,7 +290,7 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
                       }}
                       labelStyle={{ color: 'hsl(var(--foreground))' }}
                     />
-                    <Legend formatter={(v) => <span style={{ color: TICK_FILL }}>{v}</span>} />
+                    <Legend formatter={v => <span style={{ color: TICK_FILL }}>{v}</span>} />
                   </PieChart>
                 )}
               </ResponsiveContainer>
@@ -313,9 +327,14 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
                       yAxisId="revenue"
                       tick={{ fill: TICK_FILL }}
                       fontSize={11}
-                      tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : String(v))}
+                      tickFormatter={v => (v >= 1000 ? `${v / 1000}k` : String(v))}
                     />
-                    <YAxis yAxisId="orders" orientation="right" tick={{ fill: TICK_FILL }} fontSize={11} />
+                    <YAxis
+                      yAxisId="orders"
+                      orientation="right"
+                      tick={{ fill: TICK_FILL }}
+                      fontSize={11}
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
@@ -354,7 +373,7 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
                         );
                       }}
                     />
-                    <Legend formatter={(v) => <span style={{ color: TICK_FILL }}>{v}</span>} />
+                    <Legend formatter={v => <span style={{ color: TICK_FILL }}>{v}</span>} />
                     <Area
                       yAxisId="revenue"
                       type="monotone"
@@ -439,7 +458,7 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
                         );
                       }}
                     />
-                    <Legend formatter={(v) => <span style={{ color: TICK_FILL }}>{v}</span>} />
+                    <Legend formatter={v => <span style={{ color: TICK_FILL }}>{v}</span>} />
                     <Bar
                       dataKey="regularOrders"
                       name="Regular orders"
@@ -502,7 +521,12 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
                         return [value, payload?.fullName ?? 'Units sold'];
                       }}
                     />
-                    <Bar dataKey="quantity" name="Units sold" fill={CHART_PALETTE[2]} radius={[0, 4, 4, 0]} />
+                    <Bar
+                      dataKey="quantity"
+                      name="Units sold"
+                      fill={CHART_PALETTE[2]}
+                      radius={[0, 4, 4, 0]}
+                    />
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -529,7 +553,9 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
                 <p className="text-xs text-muted-foreground">Total ratings</p>
               </div>
               <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
-                <p className="text-2xl font-semibold">{totalRatingsCount > 0 ? averageRating : '—'}</p>
+                <p className="text-2xl font-semibold">
+                  {totalRatingsCount > 0 ? averageRating : '—'}
+                </p>
                 <p className="text-xs text-muted-foreground">Average rating</p>
               </div>
             </div>
@@ -547,12 +573,15 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
           <CardContent>
             <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
-                {ratingDistributionData.every((d) => d.count === 0) ? (
+                {ratingDistributionData.every(d => d.count === 0) ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
                     No ratings yet
                   </div>
                 ) : (
-                  <BarChart data={ratingDistributionData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <BarChart
+                    data={ratingDistributionData}
+                    margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                     <XAxis dataKey="stars" tick={{ fill: TICK_FILL }} fontSize={11} />
                     <YAxis tick={{ fill: TICK_FILL }} fontSize={11} />
@@ -564,7 +593,12 @@ export default function ShopPerformanceCharts({ shop, reelOrders = [], isLoading
                       }}
                       formatter={(value: number) => [value, 'Ratings']}
                     />
-                    <Bar dataKey="count" name="Ratings" fill={CHART_COLORS.yellow} radius={[4, 4, 0, 0]} />
+                    <Bar
+                      dataKey="count"
+                      name="Ratings"
+                      fill={CHART_COLORS.yellow}
+                      radius={[4, 4, 0, 0]}
+                    />
                   </BarChart>
                 )}
               </ResponsiveContainer>

@@ -1,9 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { RevenueCalculator } from "../../../src/lib/revenueCalculator";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { RevenueCalculator } from '../../../src/lib/revenueCalculator';
 
 // GraphQL query to get order details for plasa fee calculation (regular orders)
 const GET_ORDER_DETAILS = gql`
@@ -85,9 +85,7 @@ const GET_SYSTEM_CONFIG = gql`
 // Check if plasa fee revenue already exists for this order (regular)
 const CHECK_EXISTING_PLASA_FEE_REVENUE = gql`
   query CheckExistingPlasaFeeRevenue($order_id: uuid!) {
-    Revenue(
-      where: { order_id: { _eq: $order_id }, type: { _eq: "plasa_fee" } }
-    ) {
+    Revenue(where: { order_id: { _eq: $order_id }, type: { _eq: "plasa_fee" } }) {
       id
       type
     }
@@ -97,12 +95,7 @@ const CHECK_EXISTING_PLASA_FEE_REVENUE = gql`
 // Check if plasa fee revenue already exists for this business order
 const CHECK_EXISTING_PLASA_FEE_BUSINESS = gql`
   query CheckExistingPlasaFeeBusiness($businessOrder_Id: uuid!) {
-    Revenue(
-      where: {
-        businessOrder_Id: { _eq: $businessOrder_Id }
-        type: { _eq: "plasa_fee" }
-      }
-    ) {
+    Revenue(where: { businessOrder_Id: { _eq: $businessOrder_Id }, type: { _eq: "plasa_fee" } }) {
       id
       type
     }
@@ -112,12 +105,7 @@ const CHECK_EXISTING_PLASA_FEE_BUSINESS = gql`
 // Check if plasa fee revenue already exists for this reel order
 const CHECK_EXISTING_PLASA_FEE_REEL = gql`
   query CheckExistingPlasaFeeReel($reel_order_id: uuid!) {
-    Revenue(
-      where: {
-        reel_order_id: { _eq: $reel_order_id }
-        type: { _eq: "plasa_fee" }
-      }
-    ) {
+    Revenue(where: { reel_order_id: { _eq: $reel_order_id }, type: { _eq: "plasa_fee" } }) {
       id
       type
     }
@@ -128,10 +116,7 @@ const CHECK_EXISTING_PLASA_FEE_REEL = gql`
 const CHECK_EXISTING_PLASA_FEE_RESTAURANT = gql`
   query CheckExistingPlasaFeeRestaurant($restaurant_order_id: uuid!) {
     Revenue(
-      where: {
-        restaurant_order_id: { _eq: $restaurant_order_id }
-        type: { _eq: "plasa_fee" }
-      }
+      where: { restaurant_order_id: { _eq: $restaurant_order_id }, type: { _eq: "plasa_fee" } }
     ) {
       id
       type
@@ -176,33 +161,30 @@ const CREATE_PLASA_FEE_REVENUE = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   // Authenticate user
   const session = (await getServerSession(req, res, authOptions as any)) as any;
   if (!session?.user?.id) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { orderId, orderType = "regular" } = req.body;
+  const { orderId, orderType = 'regular' } = req.body;
 
   if (!orderId) {
-    return res.status(400).json({ error: "Missing orderId" });
+    return res.status(400).json({ error: 'Missing orderId' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
-    if (orderType === "business") {
+    if (orderType === 'business') {
       // --- Business order flow ---
       const existingRevenue = await hasuraClient.request<{
         Revenue: Array<{ id: string; type: string }>;
@@ -211,9 +193,8 @@ export default async function handler(
       if (existingRevenue.Revenue && existingRevenue.Revenue.length > 0) {
         return res.status(200).json({
           success: true,
-          message:
-            "Plasa fee revenue already calculated for this business order",
-          data: { plasa_fee: "0.00" },
+          message: 'Plasa fee revenue already calculated for this business order',
+          data: { plasa_fee: '0.00' },
         });
       }
 
@@ -230,21 +211,18 @@ export default async function handler(
 
       const order = businessOrderData.businessProductOrders_by_pk;
       if (!order) {
-        return res.status(404).json({ error: "Order not found" });
+        return res.status(404).json({ error: 'Order not found' });
       }
 
       const systemConfigData = await hasuraClient.request<{
         System_configuratioins: Array<{ deliveryCommissionPercentage: string }>;
       }>(GET_SYSTEM_CONFIG);
       const deliveryCommissionPercentage = parseFloat(
-        systemConfigData.System_configuratioins[0]
-          ?.deliveryCommissionPercentage || "0"
+        systemConfigData.System_configuratioins[0]?.deliveryCommissionPercentage || '0'
       );
 
-      const serviceFeeNum = parseFloat(String(order.service_fee || "0"));
-      const transportFeeNum = parseFloat(
-        String(order.transportation_fee || "0")
-      );
+      const serviceFeeNum = parseFloat(String(order.service_fee || '0'));
+      const transportFeeNum = parseFloat(String(order.transportation_fee || '0'));
       const plasaFee = RevenueCalculator.calculatePlasaFee(
         serviceFeeNum,
         transportFeeNum,
@@ -269,8 +247,7 @@ export default async function handler(
 
       return res.status(200).json({
         success: true,
-        message:
-          "Plasa fee revenue calculated and recorded successfully (business order)",
+        message: 'Plasa fee revenue calculated and recorded successfully (business order)',
         data: {
           plasa_fee: plasaFee.toFixed(2),
           commission_percentage: deliveryCommissionPercentage,
@@ -278,7 +255,7 @@ export default async function handler(
       });
     }
 
-    if (orderType === "reel") {
+    if (orderType === 'reel') {
       // --- Reel order flow ---
       const existingRevenue = await hasuraClient.request<{
         Revenue: Array<{ id: string; type: string }>;
@@ -287,8 +264,8 @@ export default async function handler(
       if (existingRevenue.Revenue && existingRevenue.Revenue.length > 0) {
         return res.status(200).json({
           success: true,
-          message: "Plasa fee revenue already calculated for this reel order",
-          data: { plasa_fee: "0.00" },
+          message: 'Plasa fee revenue already calculated for this reel order',
+          data: { plasa_fee: '0.00' },
         });
       }
 
@@ -306,19 +283,18 @@ export default async function handler(
 
       const order = reelOrderData.reel_orders_by_pk;
       if (!order) {
-        return res.status(404).json({ error: "Order not found" });
+        return res.status(404).json({ error: 'Order not found' });
       }
 
       const systemConfigData = await hasuraClient.request<{
         System_configuratioins: Array<{ deliveryCommissionPercentage: string }>;
       }>(GET_SYSTEM_CONFIG);
       const deliveryCommissionPercentage = parseFloat(
-        systemConfigData.System_configuratioins[0]
-          ?.deliveryCommissionPercentage || "0"
+        systemConfigData.System_configuratioins[0]?.deliveryCommissionPercentage || '0'
       );
 
-      const serviceFeeNum = parseFloat(order.service_fee || "0");
-      const deliveryFeeNum = parseFloat(order.delivery_fee || "0");
+      const serviceFeeNum = parseFloat(order.service_fee || '0');
+      const deliveryFeeNum = parseFloat(order.delivery_fee || '0');
       const plasaFee = RevenueCalculator.calculatePlasaFee(
         serviceFeeNum,
         deliveryFeeNum,
@@ -353,8 +329,7 @@ export default async function handler(
 
       return res.status(200).json({
         success: true,
-        message:
-          "Plasa fee revenue calculated and recorded successfully (reel order)",
+        message: 'Plasa fee revenue calculated and recorded successfully (reel order)',
         data: {
           plasa_fee: plasaFee.toFixed(2),
           commission_percentage: deliveryCommissionPercentage,
@@ -362,7 +337,7 @@ export default async function handler(
       });
     }
 
-    if (orderType === "restaurant") {
+    if (orderType === 'restaurant') {
       // --- Restaurant order flow ---
       const existingRevenue = await hasuraClient.request<{
         Revenue: Array<{ id: string; type: string }>;
@@ -371,9 +346,8 @@ export default async function handler(
       if (existingRevenue.Revenue && existingRevenue.Revenue.length > 0) {
         return res.status(200).json({
           success: true,
-          message:
-            "Plasa fee revenue already calculated for this restaurant order",
-          data: { plasa_fee: "0.00" },
+          message: 'Plasa fee revenue already calculated for this restaurant order',
+          data: { plasa_fee: '0.00' },
         });
       }
 
@@ -390,19 +364,18 @@ export default async function handler(
 
       const order = restaurantOrderData.restaurant_orders_by_pk;
       if (!order) {
-        return res.status(404).json({ error: "Order not found" });
+        return res.status(404).json({ error: 'Order not found' });
       }
 
       const systemConfigData = await hasuraClient.request<{
         System_configuratioins: Array<{ deliveryCommissionPercentage: string }>;
       }>(GET_SYSTEM_CONFIG);
       const deliveryCommissionPercentage = parseFloat(
-        systemConfigData.System_configuratioins[0]
-          ?.deliveryCommissionPercentage || "0"
+        systemConfigData.System_configuratioins[0]?.deliveryCommissionPercentage || '0'
       );
 
       // Restaurant: only delivery fee for plasa fee (no service fee)
-      const deliveryFeeNum = parseFloat(order.delivery_fee || "0");
+      const deliveryFeeNum = parseFloat(order.delivery_fee || '0');
       const plasaFee = RevenueCalculator.calculatePlasaFee(
         0,
         deliveryFeeNum,
@@ -437,8 +410,7 @@ export default async function handler(
 
       return res.status(200).json({
         success: true,
-        message:
-          "Plasa fee revenue calculated and recorded successfully (restaurant order)",
+        message: 'Plasa fee revenue calculated and recorded successfully (restaurant order)',
         data: {
           plasa_fee: plasaFee.toFixed(2),
           commission_percentage: deliveryCommissionPercentage,
@@ -454,8 +426,8 @@ export default async function handler(
     if (existingRevenue.Revenue && existingRevenue.Revenue.length > 0) {
       return res.status(200).json({
         success: true,
-        message: "Plasa fee revenue already calculated for this order",
-        data: { plasa_fee: "0.00" },
+        message: 'Plasa fee revenue already calculated for this order',
+        data: { plasa_fee: '0.00' },
       });
     }
 
@@ -472,19 +444,18 @@ export default async function handler(
 
     const order = orderData.Orders_by_pk;
     if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     const systemConfigData = await hasuraClient.request<{
       System_configuratioins: Array<{ deliveryCommissionPercentage: string }>;
     }>(GET_SYSTEM_CONFIG);
     const deliveryCommissionPercentage = parseFloat(
-      systemConfigData.System_configuratioins[0]
-        ?.deliveryCommissionPercentage || "0"
+      systemConfigData.System_configuratioins[0]?.deliveryCommissionPercentage || '0'
     );
 
-    const serviceFeeNum = parseFloat(order.service_fee || "0");
-    const deliveryFeeNum = parseFloat(order.delivery_fee || "0");
+    const serviceFeeNum = parseFloat(order.service_fee || '0');
+    const deliveryFeeNum = parseFloat(order.delivery_fee || '0');
     const plasaFee = RevenueCalculator.calculatePlasaFee(
       serviceFeeNum,
       deliveryFeeNum,
@@ -519,19 +490,16 @@ export default async function handler(
 
     return res.status(200).json({
       success: true,
-      message: "Plasa fee revenue calculated and recorded successfully",
+      message: 'Plasa fee revenue calculated and recorded successfully',
       data: {
         plasa_fee: plasaFee.toFixed(2),
         commission_percentage: deliveryCommissionPercentage,
       },
     });
   } catch (error) {
-    console.error("Error calculating plasa fee revenue:", error);
+    console.error('Error calculating plasa fee revenue:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to calculate plasa fee revenue",
+      error: error instanceof Error ? error.message : 'Failed to calculate plasa fee revenue',
     });
   }
 }

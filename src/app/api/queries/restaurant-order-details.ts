@@ -1,10 +1,10 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import type { Session } from "next-auth";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import type { Session } from 'next-auth';
+import { logger } from '../../../src/utils/logger';
 
 // Fetch restaurant order details with all related data
 // Schema: restaurant_order_items -> restaurant_dishes -> dishes (nested)
@@ -178,70 +178,61 @@ interface RestaurantOrderDetailsResponse {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get the user ID from the session
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
     if (!session?.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Extract user ID from session
     const userId = (session.user as any).id;
     if (!userId) {
-      return res.status(400).json({ error: "Missing user ID in session" });
+      return res.status(400).json({ error: 'Missing user ID in session' });
     }
 
     const { id: orderId } = req.query;
-    if (!orderId || typeof orderId !== "string") {
-      return res.status(400).json({ error: "Order ID is required" });
+    if (!orderId || typeof orderId !== 'string') {
+      return res.status(400).json({ error: 'Order ID is required' });
     }
 
-    logger.info(
-      "Fetching restaurant order details",
-      "RestaurantOrderDetailsAPI",
-      { orderId, userId }
-    );
+    logger.info('Fetching restaurant order details', 'RestaurantOrderDetailsAPI', {
+      orderId,
+      userId,
+    });
 
     // Fetch restaurant order details
-    const orderData =
-      await hasuraClient.request<RestaurantOrderDetailsResponse>(
-        GET_RESTAURANT_ORDER_DETAILS,
-        { order_id: orderId }
-      );
+    const orderData = await hasuraClient.request<RestaurantOrderDetailsResponse>(
+      GET_RESTAURANT_ORDER_DETAILS,
+      { order_id: orderId }
+    );
 
     const restaurantOrder = orderData.restaurant_orders[0];
 
     if (!restaurantOrder) {
-      return res.status(404).json({ error: "Restaurant order not found" });
+      return res.status(404).json({ error: 'Restaurant order not found' });
     }
 
     // Verify that the order belongs to the current user
     if (restaurantOrder.user_id !== userId) {
-      return res.status(403).json({ error: "Access denied" });
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     // Enrich the order data
     const itemsCount = restaurantOrder.restaurant_order_items?.length ?? 0;
     const unitsCount =
       restaurantOrder.restaurant_order_items?.reduce((sum, item) => {
-        return sum + parseInt(item.quantity || "0");
+        return sum + parseInt(item.quantity || '0');
       }, 0) ?? 0;
 
-    const baseTotal = parseFloat(restaurantOrder.total || "0");
-    const deliveryFee = parseFloat(restaurantOrder.delivery_fee || "0");
-    const discountAmount = parseFloat(restaurantOrder.discount || "0");
+    const baseTotal = parseFloat(restaurantOrder.total || '0');
+    const deliveryFee = parseFloat(restaurantOrder.delivery_fee || '0');
+    const discountAmount = parseFloat(restaurantOrder.discount || '0');
 
     // Calculate subtotal (dishes total excluding delivery fee)
     const dishesTotal = baseTotal - deliveryFee;
@@ -255,9 +246,7 @@ export default async function handler(
     const enrichedOrder = {
       id: restaurantOrder.id,
       OrderID:
-        restaurantOrder.OrderID != null
-          ? String(restaurantOrder.OrderID)
-          : restaurantOrder.id,
+        restaurantOrder.OrderID != null ? String(restaurantOrder.OrderID) : restaurantOrder.id,
       user_id: restaurantOrder.user_id,
       status: restaurantOrder.status,
       created_at: restaurantOrder.created_at,
@@ -276,7 +265,7 @@ export default async function handler(
         : null,
       itemsCount,
       unitsCount,
-      orderType: "restaurant" as const,
+      orderType: 'restaurant' as const,
       delivery_note: restaurantOrder.delivery_notes,
       delivery_fee: deliveryFee,
       discount: discountAmount,
@@ -290,30 +279,28 @@ export default async function handler(
       Address: restaurantOrder.Address,
       Restaurant: restaurantOrder.Restaurant,
       // Include dish orders with dish details (restaurant_dishes -> dishes)
-      restaurant_order_items: restaurantOrder.restaurant_order_items.map(
-        (item) => {
-          const rd = item.restaurant_dishes;
-          const d = rd?.dishes ?? null;
-          const dish = rd
-            ? {
-                id: rd.id,
-                name: d?.name ?? "Unnamed Dish",
-                description: d?.description ?? "",
-                price: rd.price,
-                image: d?.image ?? null,
-                preparingTime: rd.preparingTime ?? "",
-                ingredients: d?.ingredients ?? null,
-                category: d?.category ?? null,
-                is_active: rd.is_active,
-              }
-            : null;
+      restaurant_order_items: restaurantOrder.restaurant_order_items.map(item => {
+        const rd = item.restaurant_dishes;
+        const d = rd?.dishes ?? null;
+        const dish = rd
+          ? {
+              id: rd.id,
+              name: d?.name ?? 'Unnamed Dish',
+              description: d?.description ?? '',
+              price: rd.price,
+              image: d?.image ?? null,
+              preparingTime: rd.preparingTime ?? '',
+              ingredients: d?.ingredients ?? null,
+              category: d?.category ?? null,
+              is_active: rd.is_active,
+            }
+          : null;
 
-          return {
-            ...item,
-            dish,
-          };
-        }
-      ),
+        return {
+          ...item,
+          dish,
+        };
+      }),
     };
 
     res.status(200).json({ order: enrichedOrder });
@@ -322,21 +309,21 @@ export default async function handler(
       message?: string;
       response?: { errors?: Array<{ message?: string }> };
     };
-    const message = err?.message ?? "Unknown error";
+    const message = err?.message ?? 'Unknown error';
     const graphqlErrors = err?.response?.errors;
     const detail = graphqlErrors?.length
       ? graphqlErrors
-          .map((e) => e?.message ?? "")
+          .map(e => e?.message ?? '')
           .filter(Boolean)
-          .join("; ")
+          .join('; ')
       : message;
-    logger.error(
-      "Error fetching restaurant order details",
-      "RestaurantOrderDetailsAPI",
-      { error, detail, graphqlErrors }
-    );
+    logger.error('Error fetching restaurant order details', 'RestaurantOrderDetailsAPI', {
+      error,
+      detail,
+      graphqlErrors,
+    });
     res.status(500).json({
-      error: "Failed to fetch restaurant order details",
+      error: 'Failed to fetch restaurant order details',
       detail,
     });
   }

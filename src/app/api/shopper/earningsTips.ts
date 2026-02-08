@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 // GraphQL query to fetch order patterns for analysis
 const GET_ORDER_PATTERNS = gql`
@@ -153,12 +153,9 @@ interface EarningsTips {
   tips: string[];
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
@@ -167,29 +164,23 @@ export default async function handler(
   const userId = (session as any)?.user?.id;
 
   if (!userId) {
-    return res
-      .status(401)
-      .json({ error: "You must be logged in as a shopper" });
+    return res.status(401).json({ error: 'You must be logged in as a shopper' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
-    const data = await hasuraClient.request<GraphQLResponse>(
-      GET_ORDER_PATTERNS,
-      {
-        shopperId: userId,
-      }
-    );
+    const data = await hasuraClient.request<GraphQLResponse>(GET_ORDER_PATTERNS, {
+      shopperId: userId,
+    });
 
     const regularOrders = data.Orders || [];
     const reelOrders = data.reel_orders || [];
     const allOrders = [...regularOrders, ...reelOrders];
     const totalOrderCount =
-      (data.TotalOrders.aggregate.count || 0) +
-      (data.TotalReelOrders.aggregate.count || 0);
+      (data.TotalOrders.aggregate.count || 0) + (data.TotalReelOrders.aggregate.count || 0);
     const customerRating = data.Ratings_aggregate.aggregate.avg?.rating || 0;
 
     if (allOrders.length === 0) {
@@ -202,10 +193,10 @@ export default async function handler(
           batchOrderPercentage: 0,
           totalOrders: 0,
           tips: [
-            "Start accepting orders to see personalized tips based on your performance",
-            "Focus on maintaining high customer ratings",
-            "Consider working during weekends when demand is typically higher",
-            "Stay active during meal times (lunch 12-2pm, dinner 6-8pm)",
+            'Start accepting orders to see personalized tips based on your performance',
+            'Focus on maintaining high customer ratings',
+            'Consider working during weekends when demand is typically higher',
+            'Stay active during meal times (lunch 12-2pm, dinner 6-8pm)',
           ],
         },
       });
@@ -214,29 +205,17 @@ export default async function handler(
     // Analyze order patterns
     const timeSlots: TimeSlot[] = [];
     const storeMap = new Map<string, StorePerformance>();
-    const dayNames = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     // Process regular orders
-    regularOrders.forEach((order) => {
+    regularOrders.forEach(order => {
       const orderDate = new Date(order.created_at);
       const day = dayNames[orderDate.getDay()];
       const hour = orderDate.getHours();
-      const earnings =
-        parseFloat(order.service_fee || "0") +
-        parseFloat(order.delivery_fee || "0");
+      const earnings = parseFloat(order.service_fee || '0') + parseFloat(order.delivery_fee || '0');
 
       // Track time slots
-      const existingSlot = timeSlots.find(
-        (slot) => slot.day === day && slot.hour === hour
-      );
+      const existingSlot = timeSlots.find(slot => slot.day === day && slot.hour === hour);
 
       if (existingSlot) {
         existingSlot.count++;
@@ -251,7 +230,7 @@ export default async function handler(
       }
 
       // Track store performance
-      const storeName = order.Shop?.name || "Unknown Store";
+      const storeName = order.Shop?.name || 'Unknown Store';
       if (storeMap.has(storeName)) {
         const store = storeMap.get(storeName)!;
         store.orderCount++;
@@ -268,18 +247,14 @@ export default async function handler(
     });
 
     // Process reel orders
-    reelOrders.forEach((order) => {
+    reelOrders.forEach(order => {
       const orderDate = new Date(order.created_at);
       const day = dayNames[orderDate.getDay()];
       const hour = orderDate.getHours();
-      const earnings =
-        parseFloat(order.service_fee || "0") +
-        parseFloat(order.delivery_fee || "0");
+      const earnings = parseFloat(order.service_fee || '0') + parseFloat(order.delivery_fee || '0');
 
       // Track time slots
-      const existingSlot = timeSlots.find(
-        (slot) => slot.day === day && slot.hour === hour
-      );
+      const existingSlot = timeSlots.find(slot => slot.day === day && slot.hour === hour);
 
       if (existingSlot) {
         existingSlot.count++;
@@ -294,8 +269,7 @@ export default async function handler(
       }
 
       // Track restaurant performance (reel orders)
-      const restaurantName =
-        order.Reel?.Restaurant?.name || "Unknown Restaurant";
+      const restaurantName = order.Reel?.Restaurant?.name || 'Unknown Restaurant';
       if (storeMap.has(restaurantName)) {
         const store = storeMap.get(restaurantName)!;
         store.orderCount++;
@@ -315,7 +289,7 @@ export default async function handler(
     const peakHours = timeSlots
       .sort((a, b) => b.count - a.count)
       .slice(0, 3)
-      .map((slot) => ({
+      .map(slot => ({
         day: slot.day,
         timeRange: `${slot.hour}:00 - ${slot.hour + 1}:00`,
         orderCount: slot.count,
@@ -348,15 +322,11 @@ export default async function handler(
         );
       }
     } else {
-      tips.push(
-        "Shop during peak hours (Fri 4-8pm, Sat 10am-2pm, Sun 11am-3pm)"
-      );
+      tips.push('Shop during peak hours (Fri 4-8pm, Sat 10am-2pm, Sun 11am-3pm)');
     }
 
     // Tip 2: General batch order tip
-    tips.push(
-      "📦 Accept batch orders with multiple deliveries for higher earnings per trip"
-    );
+    tips.push('📦 Accept batch orders with multiple deliveries for higher earnings per trip');
 
     // Tip 3: Top stores with earnings data
     if (topStores.length > 0) {
@@ -369,10 +339,7 @@ export default async function handler(
             topStore.store
           } - your highest earner (avg RWF ${Math.round(topStore.avgEarnings)})`
         );
-      } else if (
-        secondStore &&
-        topStore.avgEarnings - secondStore.avgEarnings > 500
-      ) {
+      } else if (secondStore && topStore.avgEarnings - secondStore.avgEarnings > 500) {
         tips.push(
           `🏪 ${topStore.store} pays ${Math.round(
             topStore.avgEarnings - secondStore.avgEarnings
@@ -389,15 +356,11 @@ export default async function handler(
     if (customerRating > 0) {
       if (customerRating >= 4.5) {
         tips.push(
-          `⭐ Excellent rating (${customerRating.toFixed(
-            1
-          )}/5)! You'll get priority for new orders`
+          `⭐ Excellent rating (${customerRating.toFixed(1)}/5)! You'll get priority for new orders`
         );
       } else if (customerRating >= 4.0) {
         tips.push(
-          `⭐ Good rating (${customerRating.toFixed(
-            1
-          )}/5)! Keep maintaining high quality service`
+          `⭐ Good rating (${customerRating.toFixed(1)}/5)! Keep maintaining high quality service`
         );
       } else if (customerRating >= 3.5) {
         tips.push(
@@ -416,12 +379,8 @@ export default async function handler(
 
     // Tip 5: Order type insights
     if (regularOrderCount > 0 && reelOrderCount > 0) {
-      const regularPercentage = Math.round(
-        (regularOrderCount / totalOrderCount) * 100
-      );
-      const reelPercentage = Math.round(
-        (reelOrderCount / totalOrderCount) * 100
-      );
+      const regularPercentage = Math.round((regularOrderCount / totalOrderCount) * 100);
+      const reelPercentage = Math.round((reelOrderCount / totalOrderCount) * 100);
       tips.push(
         `📊 Order mix: ${regularPercentage}% grocery, ${reelPercentage}% food delivery - great diversification!`
       );
@@ -430,28 +389,20 @@ export default async function handler(
         `🍽️ Try accepting reel orders (food delivery) to expand your earning opportunities`
       );
     } else if (regularOrderCount === 0 && reelOrderCount > 0) {
-      tips.push(
-        `🛒 Consider accepting regular grocery orders for more consistent work`
-      );
+      tips.push(`🛒 Consider accepting regular grocery orders for more consistent work`);
     }
 
     // Tip 6: Experience-based tips
     if (totalOrderCount < 5) {
-      tips.push(
-        "🚀 Complete more orders to unlock personalized performance insights"
-      );
+      tips.push('🚀 Complete more orders to unlock personalized performance insights');
     } else if (totalOrderCount < 20) {
-      tips.push(
-        "⭐ You're building a great reputation! Keep maintaining high customer ratings"
-      );
+      tips.push("⭐ You're building a great reputation! Keep maintaining high customer ratings");
     } else if (totalOrderCount < 50) {
       tips.push(
-        "⭐ Excellent progress! Experienced shoppers like you get priority for high-value orders"
+        '⭐ Excellent progress! Experienced shoppers like you get priority for high-value orders'
       );
     } else {
-      tips.push(
-        "⭐ Outstanding experience! Top performers like you get the best opportunities"
-      );
+      tips.push('⭐ Outstanding experience! Top performers like you get the best opportunities');
     }
 
     // Tip 7: Time-based tip
@@ -461,18 +412,15 @@ export default async function handler(
 
     // Check if current time is a peak time
     const currentTimeSlot = timeSlots.find(
-      (slot) =>
-        slot.day === currentDay && Math.abs(slot.hour - currentHour) <= 1
+      slot => slot.day === currentDay && Math.abs(slot.hour - currentHour) <= 1
     );
 
     if (currentTimeSlot && currentTimeSlot.count >= 2) {
-      tips.push(
-        `⏰ Right now is a peak time! (${currentTimeSlot.count} orders in this hour)`
-      );
+      tips.push(`⏰ Right now is a peak time! (${currentTimeSlot.count} orders in this hour)`);
     } else if (currentHour >= 11 && currentHour <= 14) {
-      tips.push("🍽️ Lunch rush time (11am-2pm) - high demand for food orders");
+      tips.push('🍽️ Lunch rush time (11am-2pm) - high demand for food orders');
     } else if (currentHour >= 17 && currentHour <= 20) {
-      tips.push("🍽️ Dinner rush time (5pm-8pm) - peak delivery hours");
+      tips.push('🍽️ Dinner rush time (5pm-8pm) - peak delivery hours');
     }
 
     // Tip 8: Rating count insight
@@ -480,7 +428,7 @@ export default async function handler(
       if (ratingCount < 10) {
         tips.push(
           `📝 You have ${ratingCount} customer rating${
-            ratingCount > 1 ? "s" : ""
+            ratingCount > 1 ? 's' : ''
           } - more ratings will help build your reputation`
         );
       } else if (ratingCount < 25) {
@@ -505,12 +453,9 @@ export default async function handler(
       },
     });
   } catch (error) {
-    console.error("Error fetching earnings tips:", error);
+    console.error('Error fetching earnings tips:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch earnings tips",
+      error: error instanceof Error ? error.message : 'Failed to fetch earnings tips',
     });
   }
 }

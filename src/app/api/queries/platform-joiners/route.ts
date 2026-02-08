@@ -52,9 +52,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching platform joiners:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch platform joiners' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch platform joiners' }, { status: 500 });
   }
 }

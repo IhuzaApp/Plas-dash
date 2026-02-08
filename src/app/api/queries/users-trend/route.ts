@@ -35,10 +35,7 @@ const GET_ACTIVITY_FOR_TREND = gql`
       user_id
     }
     businessProductOrders(
-      where: {
-        created_at: { _gte: $since }
-        ordered_by: { _is_null: false }
-      }
+      where: { created_at: { _gte: $since }, ordered_by: { _is_null: false } }
     ) {
       created_at
       ordered_by
@@ -105,19 +102,15 @@ export async function GET() {
       const monthKey = format(bucketStart, 'yyyy-MM');
       const monthLabel = format(bucketStart, 'MMM yy');
 
-      const totalUsers = users.filter(
-        u => new Date(u.created_at) <= bucketEnd
-      ).length;
+      const totalUsers = users.filter(u => new Date(u.created_at) <= bucketEnd).length;
       const guestUsers = users.filter(
-        u =>
-          u.is_guest &&
-          new Date(u.created_at) <= bucketEnd
+        u => u.is_guest && new Date(u.created_at) <= bucketEnd
       ).length;
       const customers = users.filter(
         u =>
           (u.role?.toLowerCase() ?? '') === 'user' &&
           new Date(u.created_at) <= bucketEnd &&
-          (u.shopper?.active !== true)
+          u.shopper?.active !== true
       ).length;
 
       const activeIds = new Set<string>();
@@ -127,18 +120,12 @@ export async function GET() {
       };
       (activityData.Orders || []).forEach(o => addActive(o.created_at, o.user_id));
       (activityData.reel_orders || []).forEach(o => addActive(o.created_at, o.user_id));
-      (activityData.restaurant_orders || []).forEach(o =>
-        addActive(o.created_at, o.user_id)
-      );
+      (activityData.restaurant_orders || []).forEach(o => addActive(o.created_at, o.user_id));
       (activityData.businessProductOrders || []).forEach(o =>
         addActive(o.created_at, o.ordered_by)
       );
-      (activityData.Invoices || []).forEach(i =>
-        addActive(i.created_at, i.customer_id)
-      );
-      (activityData.Ratings || []).forEach(r =>
-        addActive(r.created_at, r.customer_id)
-      );
+      (activityData.Invoices || []).forEach(i => addActive(i.created_at, i.customer_id));
+      (activityData.Ratings || []).forEach(r => addActive(r.created_at, r.customer_id));
 
       buckets.push({
         month: monthKey,
@@ -153,9 +140,6 @@ export async function GET() {
     return NextResponse.json({ buckets });
   } catch (error) {
     console.error('Error fetching users trend:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch users trend' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch users trend' }, { status: 500 });
   }
 }

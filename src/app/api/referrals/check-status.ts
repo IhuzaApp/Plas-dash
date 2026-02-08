@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Query to check referral status
 const GET_REFERRAL_STATUS = gql`
@@ -16,22 +16,19 @@ const GET_REFERRAL_STATUS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Find user's registration
@@ -56,8 +53,7 @@ export default async function handler(
     const registration = result.Referral_window[0];
 
     // Treat "active" or "approved" status as approved
-    const isApproved =
-      registration.status === "approved" || registration.status === "active";
+    const isApproved = registration.status === 'approved' || registration.status === 'active';
 
     return res.status(200).json({
       registered: true,
@@ -66,7 +62,7 @@ export default async function handler(
       referralCode: registration.referralCode,
     });
   } catch (error) {
-    console.error("Error checking referral status:", error);
-    return res.status(500).json({ error: "Failed to check status" });
+    console.error('Error checking referral status:', error);
+    return res.status(500).json({ error: 'Failed to check status' });
   }
 }

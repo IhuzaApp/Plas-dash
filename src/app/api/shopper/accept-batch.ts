@@ -1,9 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getShopperLocation } from "../../../src/lib/redisClient";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getShopperLocation } from '../../../src/lib/redisClient';
 
 // ============================================================================
 // ACCEPT BATCH WITH OFFER VERIFICATION + DISTANCE RE-VALIDATION
@@ -21,11 +21,7 @@ import { getShopperLocation } from "../../../src/lib/redisClient";
 const MAX_ACCEPTANCE_DISTANCE_KM = 10;
 
 const ACCEPT_BATCH_MUTATION = gql`
-  mutation AcceptBatch(
-    $orderId: uuid!
-    $shopperId: uuid!
-    $assigned_at: timestamptz!
-  ) {
+  mutation AcceptBatch($orderId: uuid!, $shopperId: uuid!, $assigned_at: timestamptz!) {
     update_Orders_by_pk(
       pk_columns: { id: $orderId }
       _set: {
@@ -45,11 +41,7 @@ const ACCEPT_BATCH_MUTATION = gql`
 `;
 
 const ACCEPT_REEL_BATCH_MUTATION = gql`
-  mutation AcceptReelBatch(
-    $orderId: uuid!
-    $shopperId: uuid!
-    $assigned_at: timestamptz!
-  ) {
+  mutation AcceptReelBatch($orderId: uuid!, $shopperId: uuid!, $assigned_at: timestamptz!) {
     update_reel_orders_by_pk(
       pk_columns: { id: $orderId }
       _set: {
@@ -69,11 +61,7 @@ const ACCEPT_REEL_BATCH_MUTATION = gql`
 `;
 
 const ACCEPT_RESTAURANT_BATCH_MUTATION = gql`
-  mutation AcceptRestaurantBatch(
-    $orderId: uuid!
-    $shopperId: uuid!
-    $assigned_at: timestamptz!
-  ) {
+  mutation AcceptRestaurantBatch($orderId: uuid!, $shopperId: uuid!, $assigned_at: timestamptz!) {
     update_restaurant_orders_by_pk(
       pk_columns: { id: $orderId }
       _set: {
@@ -271,21 +259,15 @@ const ACCEPT_ORDER_OFFER = gql`
 // Query to check if shopper already has active orders
 const CHECK_ACTIVE_ORDERS = gql`
   query CheckActiveOrders($shopper_id: uuid!) {
-    Orders(
-      where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }
-    ) {
+    Orders(where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }) {
       id
       status
     }
-    reel_orders(
-      where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }
-    ) {
+    reel_orders(where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }) {
       id
       status
     }
-    restaurant_orders(
-      where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }
-    ) {
+    restaurant_orders(where: { shopper_id: { _eq: $shopper_id }, status: { _neq: "delivered" } }) {
       id
       status
     }
@@ -298,37 +280,30 @@ const CHECK_ACTIVE_ORDERS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
 
   if (!session) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { orderId, userId, orderType: clientOrderType } = req.body;
 
   if (!orderId || !userId) {
-    return res.status(400).json({ error: "Order ID and User ID are required" });
+    return res.status(400).json({ error: 'Order ID and User ID are required' });
   }
 
   if (userId !== session.user.id) {
-    return res
-      .status(403)
-      .json({ error: "You can only accept batches for yourself" });
+    return res.status(403).json({ error: 'You can only accept batches for yourself' });
   }
 
   try {
     if (!hasuraClient) {
-      return res
-        .status(500)
-        .json({ error: "Database connection not available" });
+      return res.status(500).json({ error: 'Database connection not available' });
     }
 
     // ========================================================================
@@ -352,8 +327,7 @@ export default async function handler(
     const isRestaurantOrder = !!restaurantOrder;
     const isBusinessOrder = !!businessOrder;
 
-    const isSingleOrder =
-      !!regularOrder || !!reelOrder || !!restaurantOrder || !!businessOrder;
+    const isSingleOrder = !!regularOrder || !!reelOrder || !!restaurantOrder || !!businessOrder;
 
     // Handle combined regular orders (accept all linked orders at once)
     if (!isSingleOrder) {
@@ -364,18 +338,15 @@ export default async function handler(
 
       const combinedOrders = combinedResp.Orders || [];
       if (combinedOrders.length === 0) {
-        return res.status(404).json({ error: "Order not found" });
+        return res.status(404).json({ error: 'Order not found' });
       }
 
       const combinedOrderIds: string[] = combinedOrders.map((o: any) => o.id);
 
       // Verify shopper max active orders first (same rule)
-      const activeOrdersData = (await hasuraClient.request(
-        CHECK_ACTIVE_ORDERS,
-        {
-          shopper_id: userId,
-        }
-      )) as any;
+      const activeOrdersData = (await hasuraClient.request(CHECK_ACTIVE_ORDERS, {
+        shopper_id: userId,
+      })) as any;
       const activeOrders = [
         ...(activeOrdersData.Orders || []),
         ...(activeOrdersData.reel_orders || []),
@@ -386,7 +357,7 @@ export default async function handler(
       if (activeOrderCount >= 2) {
         return res.status(403).json({
           error: `You already have ${activeOrderCount} active orders. Please deliver at least one before accepting more.`,
-          code: "MAX_ACTIVE_ORDERS_REACHED",
+          code: 'MAX_ACTIVE_ORDERS_REACHED',
           activeOrderCount,
         });
       }
@@ -402,7 +373,7 @@ export default async function handler(
         return res.status(403).json({
           error:
             "You don't have active offers for all orders in this combined batch, or some offers expired",
-          code: "NO_VALID_OFFER",
+          code: 'NO_VALID_OFFER',
         });
       }
 
@@ -410,14 +381,14 @@ export default async function handler(
       for (const o of combinedOrders) {
         if (o.shopper_id && o.shopper_id !== userId) {
           return res.status(409).json({
-            error: "This batch has already been assigned to another shopper",
-            code: "ALREADY_ASSIGNED",
+            error: 'This batch has already been assigned to another shopper',
+            code: 'ALREADY_ASSIGNED',
           });
         }
-        if (o.status !== "PENDING") {
+        if (o.status !== 'PENDING') {
           return res.status(409).json({
-            error: "This batch is no longer available for assignment",
-            code: "INVALID_STATUS",
+            error: 'This batch is no longer available for assignment',
+            code: 'INVALID_STATUS',
           });
         }
       }
@@ -426,12 +397,8 @@ export default async function handler(
       const shopperLocation = await getShopperLocation(userId);
       if (shopperLocation) {
         const first = combinedOrders[0];
-        const orderLat = parseFloat(
-          first.Address?.latitude || first.address?.latitude || "0"
-        );
-        const orderLng = parseFloat(
-          first.Address?.longitude || first.address?.longitude || "0"
-        );
+        const orderLat = parseFloat(first.Address?.latitude || first.address?.latitude || '0');
+        const orderLng = parseFloat(first.Address?.longitude || first.address?.longitude || '0');
 
         const calculateDistance = (
           lat1: number,
@@ -461,10 +428,8 @@ export default async function handler(
 
         if (distance > MAX_ACCEPTANCE_DISTANCE_KM) {
           return res.status(403).json({
-            error: `You are too far from the order location (${distance.toFixed(
-              1
-            )}km away)`,
-            code: "TOO_FAR",
+            error: `You are too far from the order location (${distance.toFixed(1)}km away)`,
+            code: 'TOO_FAR',
             distance: distance.toFixed(2),
             maxDistance: MAX_ACCEPTANCE_DISTANCE_KM,
           });
@@ -501,7 +466,7 @@ export default async function handler(
     // - Offer must not have expired (expires_at > now())
     // ========================================================================
 
-    console.log("Verifying offer for order:", orderId, "shopper:", userId);
+    console.log('Verifying offer for order:', orderId, 'shopper:', userId);
 
     const offerResponse = (await hasuraClient.request(VERIFY_ORDER_OFFER, {
       orderId,
@@ -512,19 +477,18 @@ export default async function handler(
 
     if (!offer) {
       console.warn(
-        "❌ Offer verification failed - no valid offer found for order:",
+        '❌ Offer verification failed - no valid offer found for order:',
         orderId,
-        "shopper:",
+        'shopper:',
         userId
       );
       return res.status(403).json({
-        error:
-          "You don't have an active offer for this order, or the offer has expired",
-        code: "NO_VALID_OFFER",
+        error: "You don't have an active offer for this order, or the offer has expired",
+        code: 'NO_VALID_OFFER',
       });
     }
 
-    console.log("✅ Offer verified:", {
+    console.log('✅ Offer verified:', {
       offerId: offer.id,
       round: offer.round_number,
       expiresAt: offer.expires_at,
@@ -549,13 +513,10 @@ export default async function handler(
     const activeOrderCount = activeOrders.length;
 
     if (activeOrderCount >= 2) {
-      console.warn(
-        "❌ Acceptance blocked - shopper already has 2 active orders:",
-        userId
-      );
+      console.warn('❌ Acceptance blocked - shopper already has 2 active orders:', userId);
       return res.status(403).json({
         error: `You already have ${activeOrderCount} active orders. Please deliver at least one before accepting more.`,
-        code: "MAX_ACTIVE_ORDERS_REACHED",
+        code: 'MAX_ACTIVE_ORDERS_REACHED',
         activeOrderCount,
       });
     }
@@ -572,15 +533,12 @@ export default async function handler(
     const shopperLocation = await getShopperLocation(userId);
 
     if (!shopperLocation) {
-      console.warn(
-        "⚠️ No location found for shopper at acceptance time:",
-        userId
-      );
-      console.warn("   This could mean:");
-      console.warn("   - Redis unavailable (degraded mode)");
-      console.warn("   - Shopper went offline");
-      console.warn("   - Location TTL expired");
-      console.warn("   Proceeding with acceptance (graceful degradation)");
+      console.warn('⚠️ No location found for shopper at acceptance time:', userId);
+      console.warn('   This could mean:');
+      console.warn('   - Redis unavailable (degraded mode)');
+      console.warn('   - Shopper went offline');
+      console.warn('   - Location TTL expired');
+      console.warn('   Proceeding with acceptance (graceful degradation)');
     }
 
     // ========================================================================
@@ -592,29 +550,21 @@ export default async function handler(
 
     // Check if order is already assigned to someone else
     if (order.shopper_id && order.shopper_id !== userId) {
-      console.warn(
-        "❌ Order already assigned to another shopper:",
-        order.shopper_id
-      );
+      console.warn('❌ Order already assigned to another shopper:', order.shopper_id);
       return res.status(409).json({
-        error: "This batch has already been assigned to another shopper",
-        code: "ALREADY_ASSIGNED",
+        error: 'This batch has already been assigned to another shopper',
+        code: 'ALREADY_ASSIGNED',
       });
     }
 
     // Check if order is in valid state for acceptance
     // Regular/reel/restaurant use PENDING; business uses "Ready for Pickup"
-    const validStatusForAccept = isBusinessOrder
-      ? "Ready for Pickup"
-      : "PENDING";
+    const validStatusForAccept = isBusinessOrder ? 'Ready for Pickup' : 'PENDING';
     if (order.status !== validStatusForAccept) {
-      console.warn(
-        "❌ Order is not in valid state for acceptance:",
-        order.status
-      );
+      console.warn('❌ Order is not in valid state for acceptance:', order.status);
       return res.status(409).json({
-        error: "This batch is no longer available for assignment",
-        code: "INVALID_STATUS",
+        error: 'This batch is no longer available for assignment',
+        code: 'INVALID_STATUS',
       });
     }
 
@@ -627,13 +577,11 @@ export default async function handler(
     if (shopperLocation) {
       // Get order location (pickup/store for distance validation)
       const orderLat = isBusinessOrder
-        ? parseFloat(order.business_store?.latitude || order.latitude || "0")
-        : parseFloat(order.Address?.latitude || order.address?.latitude || "0");
+        ? parseFloat(order.business_store?.latitude || order.latitude || '0')
+        : parseFloat(order.Address?.latitude || order.address?.latitude || '0');
       const orderLng = isBusinessOrder
-        ? parseFloat(order.business_store?.longitude || order.longitude || "0")
-        : parseFloat(
-            order.Address?.longitude || order.address?.longitude || "0"
-          );
+        ? parseFloat(order.business_store?.longitude || order.longitude || '0')
+        : parseFloat(order.Address?.longitude || order.address?.longitude || '0');
 
       // Calculate distance using Haversine formula
       const calculateDistance = (
@@ -663,9 +611,7 @@ export default async function handler(
       );
 
       console.log(
-        `📍 Distance re-validation: ${distance.toFixed(
-          2
-        )}km (max: ${MAX_ACCEPTANCE_DISTANCE_KM}km)`
+        `📍 Distance re-validation: ${distance.toFixed(2)}km (max: ${MAX_ACCEPTANCE_DISTANCE_KM}km)`
       );
 
       if (distance > MAX_ACCEPTANCE_DISTANCE_KM) {
@@ -675,10 +621,8 @@ export default async function handler(
           )}km away (max: ${MAX_ACCEPTANCE_DISTANCE_KM}km)`
         );
         return res.status(403).json({
-          error: `You are too far from the order location (${distance.toFixed(
-            1
-          )}km away)`,
-          code: "TOO_FAR",
+          error: `You are too far from the order location (${distance.toFixed(1)}km away)`,
+          code: 'TOO_FAR',
           distance: distance.toFixed(2),
           maxDistance: MAX_ACCEPTANCE_DISTANCE_KM,
         });
@@ -686,9 +630,7 @@ export default async function handler(
 
       console.log(`✅ Distance re-validation passed: ${distance.toFixed(2)}km`);
     } else {
-      console.log(
-        "⚠️ Skipping distance re-validation (Redis unavailable or location expired)"
-      );
+      console.log('⚠️ Skipping distance re-validation (Redis unavailable or location expired)');
     }
 
     // ========================================================================
@@ -699,21 +641,18 @@ export default async function handler(
 
     const assignedAt = new Date().toISOString();
 
-    console.log("Accepting offer and assigning order atomically...");
+    console.log('Accepting offer and assigning order atomically...');
 
     // First, mark the offer as ACCEPTED
-    const acceptOfferResponse = (await hasuraClient.request(
-      ACCEPT_ORDER_OFFER,
-      {
-        offerId: offer.id,
-      }
-    )) as any;
+    const acceptOfferResponse = (await hasuraClient.request(ACCEPT_ORDER_OFFER, {
+      offerId: offer.id,
+    })) as any;
 
     if (!acceptOfferResponse.update_order_offers_by_pk) {
-      console.error("❌ Failed to accept offer");
+      console.error('❌ Failed to accept offer');
       return res.status(500).json({
-        error: "Failed to accept offer",
-        code: "OFFER_UPDATE_FAILED",
+        error: 'Failed to accept offer',
+        code: 'OFFER_UPDATE_FAILED',
       });
     }
 
@@ -721,23 +660,17 @@ export default async function handler(
     let acceptResponse;
 
     if (isBusinessOrder) {
-      acceptResponse = (await hasuraClient.request(
-        ACCEPT_BUSINESS_BATCH_MUTATION,
-        {
-          orderId,
-          shopperId: userId,
-        }
-      )) as any;
+      acceptResponse = (await hasuraClient.request(ACCEPT_BUSINESS_BATCH_MUTATION, {
+        orderId,
+        shopperId: userId,
+      })) as any;
     } else if (isRestaurantOrder) {
       // Restaurant orders: update restaurant_orders row and set status to "accepted"
-      acceptResponse = (await hasuraClient.request(
-        ACCEPT_RESTAURANT_BATCH_MUTATION,
-        {
-          orderId,
-          shopperId: userId,
-          assigned_at: assignedAt,
-        }
-      )) as any;
+      acceptResponse = (await hasuraClient.request(ACCEPT_RESTAURANT_BATCH_MUTATION, {
+        orderId,
+        shopperId: userId,
+        assigned_at: assignedAt,
+      })) as any;
     } else if (isReelOrder) {
       // Reel orders: update reel_orders row and set status to "accepted"
       acceptResponse = (await hasuraClient.request(ACCEPT_REEL_BATCH_MUTATION, {
@@ -765,31 +698,31 @@ export default async function handler(
 
       return res.status(200).json({
         success: true,
-        message: "Batch accepted successfully",
+        message: 'Batch accepted successfully',
         orderId,
         shopperId: userId,
         offerId: offer.id,
         roundNumber: offer.round_number,
         orderType: isBusinessOrder
-          ? "business"
+          ? 'business'
           : isRestaurantOrder
-          ? "restaurant"
-          : isReelOrder
-          ? "reel"
-          : "regular",
+            ? 'restaurant'
+            : isReelOrder
+              ? 'reel'
+              : 'regular',
       });
     } else {
-      console.error("❌ Failed to assign order after accepting offer");
+      console.error('❌ Failed to assign order after accepting offer');
       return res.status(500).json({
-        error: "Failed to accept batch",
-        code: "ORDER_UPDATE_FAILED",
+        error: 'Failed to accept batch',
+        code: 'ORDER_UPDATE_FAILED',
       });
     }
   } catch (error) {
-    console.error("Error accepting batch:", error);
+    console.error('Error accepting batch:', error);
     return res.status(500).json({
-      error: "Failed to accept batch",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to accept batch',
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

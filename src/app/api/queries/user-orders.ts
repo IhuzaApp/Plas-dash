@@ -1,10 +1,10 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import type { Session } from "next-auth";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import type { Session } from 'next-auth';
+import { logger } from '../../../src/utils/logger';
 
 // Default and max limits for pagination
 const DEFAULT_LIMIT = 20;
@@ -284,30 +284,23 @@ interface OrdersResponse {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get the user ID from the session (works for both guest and regular users)
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session?.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const userId = (session.user as any).id;
 
     if (!userId) {
-      return res.status(400).json({ error: "User ID not found in session" });
+      return res.status(400).json({ error: 'User ID not found in session' });
     }
 
     // Parse pagination params from query string
@@ -317,7 +310,7 @@ export default async function handler(
       Math.max(1, parseInt(req.query.limit as string, 10) || DEFAULT_LIMIT)
     );
     const offset = (page - 1) * limit;
-    const minimal = req.query.minimal === "1" || req.query.minimal === "true";
+    const minimal = req.query.minimal === '1' || req.query.minimal === 'true';
 
     // Fetch orders for this specific user only with pagination
     const data = await hasuraClient.request<OrdersResponse>(GET_USER_ORDERS, {
@@ -333,15 +326,9 @@ export default async function handler(
     // Get total counts for pagination
     const totalOrders = data.Orders_aggregate?.aggregate?.count || 0;
     const totalReelOrders = data.reel_orders_aggregate?.aggregate?.count || 0;
-    const totalRestaurantOrders =
-      data.restaurant_orders_aggregate?.aggregate?.count || 0;
-    const totalBusinessOrders =
-      data.businessProductOrders_aggregate?.aggregate?.count || 0;
-    const totalCount =
-      totalOrders +
-      totalReelOrders +
-      totalRestaurantOrders +
-      totalBusinessOrders;
+    const totalRestaurantOrders = data.restaurant_orders_aggregate?.aggregate?.count || 0;
+    const totalBusinessOrders = data.businessProductOrders_aggregate?.aggregate?.count || 0;
+    const totalCount = totalOrders + totalReelOrders + totalRestaurantOrders + totalBusinessOrders;
 
     // If no orders of any type, return empty array
     if (
@@ -350,20 +337,16 @@ export default async function handler(
       restaurantOrders.length === 0 &&
       businessOrders.length === 0
     ) {
-      console.log("📭 No orders found for this user");
+      console.log('📭 No orders found for this user');
       return res.status(200).json({ orders: [] });
     }
 
     // Collect all shop IDs from regular orders and reel orders (via reel.Shops)
-    const regularShopIds = orders.map((o) => o.shop_id);
-    const reelShopIds = reelOrders
-      .map((r) => r.reel?.Shops?.id)
-      .filter(Boolean) as string[];
+    const regularShopIds = orders.map(o => o.shop_id);
+    const reelShopIds = reelOrders.map(r => r.reel?.Shops?.id).filter(Boolean) as string[];
     // restaurant orders use Restaurant as the "shop-like" entity but we don't
     // join them through Shops; we'll embed restaurant data directly below
-    const shopIds = Array.from(
-      new Set([...regularShopIds, ...reelShopIds])
-    ).filter(Boolean);
+    const shopIds = Array.from(new Set([...regularShopIds, ...reelShopIds])).filter(Boolean);
 
     // Fetch shop data if we have any shop IDs
     const shopsData = shopIds.length
@@ -379,20 +362,20 @@ export default async function handler(
         }>(GET_SHOPS_BY_IDS, { ids: shopIds })
       : { Shops: [] };
 
-    const shopMap = new Map(shopsData.Shops.map((s) => [s.id, s]));
+    const shopMap = new Map(shopsData.Shops.map(s => [s.id, s]));
 
     // Enrich regular orders with shop details and item counts
-    const regularEnriched = orders.map((o) => {
+    const regularEnriched = orders.map(o => {
       const agg = o.Order_Items_aggregate.aggregate;
       const itemsCount = agg?.count ?? 0;
       const unitsCount = agg?.sum?.quantity ?? 0;
       // Compute grand total including fees
-      const baseTotal = parseFloat(o.total || "0");
-      const serviceFee = parseFloat(o.service_fee || "0");
-      const deliveryFee = parseFloat(o.delivery_fee || "0");
+      const baseTotal = parseFloat(o.total || '0');
+      const serviceFee = parseFloat(o.service_fee || '0');
+      const deliveryFee = parseFloat(o.delivery_fee || '0');
       const grandTotal = baseTotal + serviceFee + deliveryFee;
       return {
-        orderType: "regular" as const,
+        orderType: 'regular' as const,
         id: o.id,
         OrderID: o.OrderID,
         user_id: o.user_id,
@@ -410,13 +393,13 @@ export default async function handler(
       };
     });
     // Enrich reel orders into same shape
-    const reelEnriched = reelOrders.map((r) => {
-      const baseTotal = parseFloat(r.total || "0");
-      const serviceFee = parseFloat(r.service_fee || "0");
-      const deliveryFee = parseFloat(r.delivery_fee || "0");
+    const reelEnriched = reelOrders.map(r => {
+      const baseTotal = parseFloat(r.total || '0');
+      const serviceFee = parseFloat(r.service_fee || '0');
+      const deliveryFee = parseFloat(r.delivery_fee || '0');
       const grandTotal = baseTotal + serviceFee + deliveryFee;
 
-      const reelShopId = r.reel?.Shops?.id || r.reel?.shop_id || "";
+      const reelShopId = r.reel?.Shops?.id || r.reel?.shop_id || '';
       const reelShop =
         (reelShopId && shopMap.get(reelShopId)) ||
         (r.reel?.Shops
@@ -426,12 +409,12 @@ export default async function handler(
               address: r.reel.Shops.address,
               image: r.reel.Shops.image,
               logo: r.reel.Shops.logo,
-              category_id: "",
+              category_id: '',
             }
           : null);
 
       return {
-        orderType: "reel" as const,
+        orderType: 'reel' as const,
         id: r.id,
         OrderID: r.OrderID,
         user_id: r.user_id,
@@ -439,20 +422,20 @@ export default async function handler(
         created_at: r.created_at,
         delivery_time: r.delivery_time,
         pin:
-          r.pin != null && String(r.pin).trim() !== ""
+          r.pin != null && String(r.pin).trim() !== ''
             ? String(r.pin)
             : r.OrderID != null
-            ? String(r.OrderID).padStart(4, "0").slice(-4)
-            : r.id
-            ? r.id.slice(0, 4).toUpperCase()
-            : "",
+              ? String(r.OrderID).padStart(4, '0').slice(-4)
+              : r.id
+                ? r.id.slice(0, 4).toUpperCase()
+                : '',
         combined_order_id: r.combined_order_id,
         total: grandTotal,
         shop_id: reelShopId,
         shopper_id: null,
         shop: reelShop,
         itemsCount: 1,
-        unitsCount: parseInt(r.quantity || "0", 10) || 0,
+        unitsCount: parseInt(r.quantity || '0', 10) || 0,
         reel: r.reel
           ? {
               id: r.reel.id,
@@ -464,29 +447,28 @@ export default async function handler(
               video_url: r.reel.video_url,
             }
           : null,
-        quantity: parseInt(r.quantity || "0", 10) || 0,
+        quantity: parseInt(r.quantity || '0', 10) || 0,
         discount: r.discount ? parseFloat(r.discount) : 0,
         voucher_code: r.voucher_code,
       };
     });
 
     // Enrich restaurant orders into same shape
-    const restaurantEnriched = restaurantOrders.map((ro) => {
-      const baseTotal = parseFloat(ro.total || "0");
-      const deliveryFee = parseFloat(ro.delivery_fee || "0");
+    const restaurantEnriched = restaurantOrders.map(ro => {
+      const baseTotal = parseFloat(ro.total || '0');
+      const deliveryFee = parseFloat(ro.delivery_fee || '0');
       const grandTotal = baseTotal + deliveryFee;
-      const itemsCount =
-        ro.restaurant_order_items_aggregate?.aggregate?.count ?? 0;
+      const itemsCount = ro.restaurant_order_items_aggregate?.aggregate?.count ?? 0;
 
       return {
-        orderType: "restaurant" as const,
+        orderType: 'restaurant' as const,
         id: ro.id,
         OrderID: ro.OrderID || ro.id,
         user_id: ro.user_id,
         status: ro.status,
         created_at: ro.created_at,
         delivery_time: ro.delivery_time,
-        pin: ro.pin ?? "",
+        pin: ro.pin ?? '',
         combined_order_id: ro.combined_order_id,
         total: grandTotal,
         shop_id: ro.restaurant_id,
@@ -497,9 +479,9 @@ export default async function handler(
               id: ro.Restaurant.id,
               name: ro.Restaurant.name,
               address: ro.Restaurant.location,
-              image: "",
-              logo: ro.Restaurant.logo || "",
-              category_id: "",
+              image: '',
+              logo: ro.Restaurant.logo || '',
+              category_id: '',
             }
           : null,
         itemsCount: itemsCount || 1,
@@ -512,10 +494,10 @@ export default async function handler(
     });
 
     // Enrich business (store) orders into same shape for CurrentPendingOrders
-    const businessEnriched = businessOrders.map((bo) => {
-      const baseTotal = parseFloat(bo.total || "0");
-      const transportFee = parseFloat(bo.transportation_fee || "0");
-      const serviceFee = parseFloat(bo.service_fee || "0");
+    const businessEnriched = businessOrders.map(bo => {
+      const baseTotal = parseFloat(bo.total || '0');
+      const transportFee = parseFloat(bo.transportation_fee || '0');
+      const serviceFee = parseFloat(bo.service_fee || '0');
       const grandTotal = baseTotal + transportFee + serviceFee;
       const products = Array.isArray(bo.allProducts) ? bo.allProducts : [];
       const itemsCount = products.length;
@@ -524,19 +506,17 @@ export default async function handler(
         0
       );
       const status =
-        (bo.status || "").toLowerCase() === "delivered"
-          ? "delivered"
-          : bo.status || "Pending";
+        (bo.status || '').toLowerCase() === 'delivered' ? 'delivered' : bo.status || 'Pending';
       const bs = bo.business_store;
       return {
-        orderType: "business" as const,
+        orderType: 'business' as const,
         id: bo.id,
         OrderID: bo.id.substring(0, 8).toUpperCase(),
         user_id: null,
         status,
         created_at: bo.created_at,
         delivery_time: bo.delivered_time || bo.created_at,
-        pin: bo.pin != null ? String(bo.pin) : "",
+        pin: bo.pin != null ? String(bo.pin) : '',
         combined_order_id: null,
         total: grandTotal,
         shop_id: bo.store_id,
@@ -545,10 +525,10 @@ export default async function handler(
           ? {
               id: bs.id,
               name: bs.name,
-              address: "",
-              image: bs.image || "",
-              logo: (bs as any).logo || "",
-              category_id: "",
+              address: '',
+              image: bs.image || '',
+              logo: (bs as any).logo || '',
+              category_id: '',
             }
           : null,
         itemsCount: itemsCount || 1,
@@ -566,10 +546,7 @@ export default async function handler(
       ...reelEnriched,
       ...restaurantEnriched,
       ...businessEnriched,
-    ].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     // For sidebar/badge: return minimal payload to stay under 4MB and respond quickly
     const ordersToSend = minimal
@@ -610,7 +587,7 @@ export default async function handler(
       },
     });
   } catch (error) {
-    logger.error("Error fetching user orders", "UserOrdersAPI", error);
-    res.status(500).json({ error: "Failed to fetch user orders" });
+    logger.error('Error fetching user orders', 'UserOrdersAPI', error);
+    res.status(500).json({ error: 'Failed to fetch user orders' });
   }
 }

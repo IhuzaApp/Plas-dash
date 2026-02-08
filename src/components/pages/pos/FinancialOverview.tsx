@@ -60,9 +60,7 @@ const FinancialOverview = () => {
             <div className="text-2xl font-bold">
               {isLoading ? '—' : formatCurrency(totalRevenue)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              All-time platform revenue
-            </p>
+            <p className="text-xs text-muted-foreground">All-time platform revenue</p>
           </CardContent>
         </Card>
         <Card>
@@ -75,9 +73,7 @@ const FinancialOverview = () => {
             <div className="text-2xl font-bold">
               {isLoading ? '—' : totalSales.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Regular + Reel + Restaurant + Business
-            </p>
+            <p className="text-xs text-muted-foreground">Regular + Reel + Restaurant + Business</p>
             {orderBreakdown && (
               <p className="text-xs text-muted-foreground mt-1">
                 Regular: {orderBreakdown.regular} · Reel: {orderBreakdown.reel} · Restaurant:{' '}
@@ -97,8 +93,8 @@ const FinancialOverview = () => {
               {isLoading ? '—' : formatCurrency(averageSaleValue)}
             </div>
             <p className="text-xs text-muted-foreground">
-              This month: {monthlyOrders.toLocaleString()} orders,{' '}
-              {formatCurrency(monthlyRevenue)} revenue
+              This month: {monthlyOrders.toLocaleString()} orders, {formatCurrency(monthlyRevenue)}{' '}
+              revenue
             </p>
           </CardContent>
         </Card>

@@ -1,7 +1,7 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { notifyNewOrderToSlack } from "../../../src/lib/slackOrderNotifier";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { notifyNewOrderToSlack } from '../../../src/lib/slackOrderNotifier';
 
 const GET_ORDER_FOR_SLACK = gql`
   query GetOrderForSlack($id: uuid!) {
@@ -28,23 +28,20 @@ const GET_ORDER_FOR_SLACK = gql`
  * Called when MoMo payment is confirmed on the payment-pending page.
  * Sends the deferred Slack notification for the order.
  */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { orderId } = req.body;
 
     if (!orderId) {
-      return res.status(400).json({ error: "orderId is required" });
+      return res.status(400).json({ error: 'orderId is required' });
     }
 
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Server not configured" });
+      return res.status(500).json({ error: 'Server not configured' });
     }
 
     const result = await hasuraClient.request<{
@@ -62,14 +59,14 @@ export default async function handler(
 
     const order = result.businessProductOrders_by_pk;
     if (!order) {
-      return res.status(404).json({ error: "Order not found" });
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     void notifyNewOrderToSlack({
       id: order.id,
       orderID: order.id,
       total: order.total,
-      orderType: "business",
+      orderType: 'business',
       storeName: order.business_store?.name ?? undefined,
       units: order.units,
       customerPhone: order.orderedBy?.phone ?? undefined,
@@ -79,9 +76,9 @@ export default async function handler(
 
     return res.status(200).json({ success: true });
   } catch (error: any) {
-    console.error("[notify-momo-paid] Error:", error);
+    console.error('[notify-momo-paid] Error:', error);
     return res.status(500).json({
-      error: "Failed to send notification",
+      error: 'Failed to send notification',
       message: error.message,
     });
   }

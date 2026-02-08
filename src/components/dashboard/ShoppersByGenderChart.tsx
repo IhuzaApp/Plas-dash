@@ -13,13 +13,14 @@ const TICK_FILL = 'hsl(var(--foreground) / 0.9)';
 export default function ShoppersByGenderChart() {
   const { data, isLoading } = useQuery({
     queryKey: ['api', 'shoppers'],
-    queryFn: () => apiGet<{ shoppers: { User?: { gender?: string | null } }[] }>('/api/queries/shoppers'),
+    queryFn: () =>
+      apiGet<{ shoppers: { User?: { gender?: string | null } }[] }>('/api/queries/shoppers'),
   });
 
   const chartData = useMemo(() => {
     if (!data?.shoppers?.length) return [];
     const counts: Record<string, number> = {};
-    data.shoppers.forEach((s) => {
+    data.shoppers.forEach(s => {
       const g = (s.User?.gender ?? 'Unknown').trim() || 'Unknown';
       const key = g.charAt(0).toUpperCase() + g.slice(1).toLowerCase();
       counts[key] = (counts[key] || 0) + 1;
@@ -85,7 +86,7 @@ export default function ShoppersByGenderChart() {
                   }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Legend formatter={(value) => <span style={{ color: TICK_FILL }}>{value}</span>} />
+                <Legend formatter={value => <span style={{ color: TICK_FILL }}>{value}</span>} />
               </PieChart>
             )}
           </ResponsiveContainer>

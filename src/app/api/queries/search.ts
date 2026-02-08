@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const SEARCH_ITEMS = gql`
   query SearchItems($searchTerm: String!) {
@@ -34,10 +34,7 @@ const SEARCH_ITEMS = gql`
         address
       }
     }
-    Shops(
-      where: { name: { _ilike: $searchTerm }, is_active: { _eq: true } }
-      limit: 5
-    ) {
+    Shops(where: { name: { _ilike: $searchTerm }, is_active: { _eq: true } }, limit: 5) {
       id
       name
       description
@@ -47,10 +44,7 @@ const SEARCH_ITEMS = gql`
       category_id
       operating_hours
     }
-    business_stores(
-      where: { name: { _ilike: $searchTerm }, is_active: { _eq: true } }
-      limit: 5
-    ) {
+    business_stores(where: { name: { _ilike: $searchTerm }, is_active: { _eq: true } }, limit: 5) {
       id
       name
       description
@@ -108,23 +102,20 @@ interface SearchResponse {
   }>;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ message: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
     const searchTerm = req.query.term as string;
 
     if (!searchTerm) {
-      return res.status(400).json({ message: "Search term is required" });
+      return res.status(400).json({ message: 'Search term is required' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<SearchResponse>(SEARCH_ITEMS, {
@@ -132,10 +123,10 @@ export default async function handler(
     });
 
     // Transform products with enhanced details
-    const products = data.Products.map((product) => ({
+    const products = data.Products.map(product => ({
       id: product.id,
       name: product.ProductName.name,
-      type: "product" as const,
+      type: 'product' as const,
       image: product.image,
       price: parseFloat(product.final_price),
       description: product.ProductName.description,
@@ -150,10 +141,10 @@ export default async function handler(
     }));
 
     // Transform shops
-    const shops = data.Shops.map((shop) => ({
+    const shops = data.Shops.map(shop => ({
       id: shop.id,
       name: shop.name,
-      type: "shop" as const,
+      type: 'shop' as const,
       logo: shop.image,
       description: shop.description,
       isOpen: shop.is_active,
@@ -163,12 +154,12 @@ export default async function handler(
     }));
 
     // Transform stores
-    const stores = (data.business_stores || []).map((store) => ({
+    const stores = (data.business_stores || []).map(store => ({
       id: store.id,
       name: store.name,
-      type: "store" as const,
+      type: 'store' as const,
       logo: store.image,
-      description: store.description || "",
+      description: store.description || '',
       isOpen: store.is_active,
       address: null,
       categoryId: store.category_id,
@@ -179,7 +170,7 @@ export default async function handler(
 
     // Group products by name to show all supermarkets selling the same product
     const productGroups = new Map<string, typeof products>();
-    products.forEach((product) => {
+    products.forEach(product => {
       const key = product.name.toLowerCase();
       if (!productGroups.has(key)) {
         productGroups.set(key, []);
@@ -188,7 +179,7 @@ export default async function handler(
     });
 
     // Sort products within each group by price (lowest first)
-    productGroups.forEach((group) => {
+    productGroups.forEach(group => {
       group.sort((a, b) => a.price! - b.price!);
     });
 
@@ -202,10 +193,8 @@ export default async function handler(
       if (!aExactMatch && bExactMatch) return 1;
 
       // Products before shops/stores
-      if (a.type === "product" && (b.type === "shop" || b.type === "store"))
-        return -1;
-      if ((a.type === "shop" || a.type === "store") && b.type === "product")
-        return 1;
+      if (a.type === 'product' && (b.type === 'shop' || b.type === 'store')) return -1;
+      if ((a.type === 'shop' || a.type === 'store') && b.type === 'product') return 1;
 
       // Then by name
       return a.name.localeCompare(b.name);
@@ -218,7 +207,7 @@ export default async function handler(
       shopsCount: shops.length + stores.length,
     });
   } catch (error) {
-    console.error("Search error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error('Search error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 }

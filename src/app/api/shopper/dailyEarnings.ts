@@ -1,17 +1,13 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { logErrorToSlack } from "../../../src/lib/slackErrorReporter";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { logErrorToSlack } from '../../../src/lib/slackErrorReporter';
 
 // Fetch daily earnings for a shopper for the selected period based on delivery completion time
 const GET_DAILY_EARNINGS = gql`
-  query GetDailyEarnings(
-    $shopper_id: uuid!
-    $start_date: timestamptz!
-    $end_date: timestamptz!
-  ) {
+  query GetDailyEarnings($shopper_id: uuid!, $start_date: timestamptz!, $end_date: timestamptz!) {
     Orders(
       where: {
         shopper_id: { _eq: $shopper_id }
@@ -100,13 +96,13 @@ const getDateRange = (period: string) => {
   const endDate = new Date();
 
   switch (period) {
-    case "today":
+    case 'today':
       // Today (00:00 to 23:59)
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
       break;
 
-    case "this-week":
+    case 'this-week':
       // This week (Sunday to Saturday)
       const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
       startDate.setDate(now.getDate() - dayOfWeek); // Go back to Sunday
@@ -117,7 +113,7 @@ const getDateRange = (period: string) => {
       endDate.setHours(23, 59, 59, 999);
       break;
 
-    case "last-week":
+    case 'last-week':
       // Last week (previous Sunday to Saturday)
       const lastWeekDay = now.getDay();
       startDate.setDate(now.getDate() - lastWeekDay - 7); // Go back to previous Sunday
@@ -128,7 +124,7 @@ const getDateRange = (period: string) => {
       endDate.setHours(23, 59, 59, 999);
       break;
 
-    case "this-month":
+    case 'this-month':
       // This month (1st day to last day)
       startDate.setDate(1); // First day of current month
       startDate.setHours(0, 0, 0, 0);
@@ -137,7 +133,7 @@ const getDateRange = (period: string) => {
       endDate.setHours(23, 59, 59, 999);
       break;
 
-    case "last-month":
+    case 'last-month':
       // Last month (1st day to last day of previous month)
       startDate.setMonth(now.getMonth() - 1, 1); // First day of previous month
       startDate.setHours(0, 0, 0, 0);
@@ -175,14 +171,10 @@ const getCommissionPercentage = async (): Promise<number> => {
       }
     `);
     return parseFloat(
-      systemConfigResponse.System_configuratioins[0]
-        ?.deliveryCommissionPercentage || "20"
+      systemConfigResponse.System_configuratioins[0]?.deliveryCommissionPercentage || '20'
     );
   } catch (error) {
-    console.error(
-      "Error fetching commission percentage, using default 20%:",
-      error
-    );
+    console.error('Error fetching commission percentage, using default 20%:', error);
     return 20;
   }
 };
@@ -194,21 +186,18 @@ const applyCommission = (rawTotal: number, commissionPct: number): number => {
 };
 
 // Calculate net earnings from an order row (Orders or reel_orders)
-const rowToNetEarnings = (
-  order: OrderEarningRow,
-  commissionPct: number
-): number => {
-  const serviceFee = parseFloat(order.service_fee || "0");
-  const deliveryFee = parseFloat(order.delivery_fee || "0");
+const rowToNetEarnings = (order: OrderEarningRow, commissionPct: number): number => {
+  const serviceFee = parseFloat(order.service_fee || '0');
+  const deliveryFee = parseFloat(order.delivery_fee || '0');
   return applyCommission(serviceFee + deliveryFee, commissionPct);
 };
 
 // Calculate net earnings from a restaurant order (delivery_fee only)
 const restaurantRowToNetEarnings = (
-  order: RestaurantOrdersResponse["restaurant_orders"][0],
+  order: RestaurantOrdersResponse['restaurant_orders'][0],
   commissionPct: number
 ): number => {
-  const deliveryFee = parseFloat(order.delivery_fee || "0");
+  const deliveryFee = parseFloat(order.delivery_fee || '0');
   return applyCommission(deliveryFee, commissionPct);
 };
 
@@ -224,7 +213,7 @@ const formatEarningsData = (
   period: string
 ): Array<{ day: string; earnings: number }> => {
   // For 'today', we show hourly data
-  if (period === "today") {
+  if (period === 'today') {
     const hourlyEarningsMap = new Map<number, number>();
 
     // Initialize all hours with zero earnings
@@ -254,7 +243,7 @@ const formatEarningsData = (
   }
 
   // For 'this-week' or 'last-week', we show daily data
-  else if (period === "this-week" || period === "last-week") {
+  else if (period === 'this-week' || period === 'last-week') {
     const dailyEarningsMap = new Map<number, number>();
 
     // Initialize all days of the week with zero earnings
@@ -271,7 +260,7 @@ const formatEarningsData = (
     }
 
     // Format the data for the chart
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     return Array.from(dailyEarningsMap.entries())
       .map(([dayIndex, earnings]) => ({
         day: dayNames[dayIndex],
@@ -288,20 +277,11 @@ const formatEarningsData = (
     const weeklyEarningsMap = new Map<number, number>();
 
     // Get the first day of the month from the first item or current date
-    const firstItemDate =
-      items.length > 0 ? new Date(items[0].updated_at) : new Date();
-    const startOfMonth = new Date(
-      firstItemDate.getFullYear(),
-      firstItemDate.getMonth(),
-      1
-    );
+    const firstItemDate = items.length > 0 ? new Date(items[0].updated_at) : new Date();
+    const startOfMonth = new Date(firstItemDate.getFullYear(), firstItemDate.getMonth(), 1);
 
     // Calculate number of weeks in the month
-    const lastDay = new Date(
-      startOfMonth.getFullYear(),
-      startOfMonth.getMonth() + 1,
-      0
-    ).getDate();
+    const lastDay = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0).getDate();
     const numWeeks = Math.ceil(lastDay / 7);
 
     // Initialize all weeks with zero earnings
@@ -325,8 +305,8 @@ const formatEarningsData = (
       }))
       .sort((a, b) => {
         // Sort by week number
-        const aParts = a.day.split(" ");
-        const bParts = b.day.split(" ");
+        const aParts = a.day.split(' ');
+        const bParts = b.day.split(' ');
         const aWeek = aParts.length > 1 ? parseInt(aParts[1]) : 0;
         const bWeek = bParts.length > 1 ? parseInt(bParts[1]) : 0;
         return aWeek - bWeek;
@@ -334,12 +314,9 @@ const formatEarningsData = (
   }
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -348,25 +325,23 @@ export default async function handler(
     const shopperId = (session as any)?.user?.id;
 
     if (!shopperId) {
-      return res
-        .status(401)
-        .json({ error: "You must be logged in as a shopper" });
+      return res.status(401).json({ error: 'You must be logged in as a shopper' });
     }
 
     // Check if user has shopper role
     const userRole = (session as any)?.user?.role;
-    if (userRole !== "shopper") {
+    if (userRole !== 'shopper') {
       return res.status(403).json({
-        error: "Access denied. This endpoint is only for shoppers.",
+        error: 'Access denied. This endpoint is only for shoppers.',
       });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get period from query params or use default
-    const period = (req.query.period as string) || "this-week";
+    const period = (req.query.period as string) || 'this-week';
 
     // Calculate date range based on period
     const { startDate, endDate } = getDateRange(period);
@@ -381,10 +356,7 @@ export default async function handler(
     const [ordersData, reelData, restaurantData] = await Promise.all([
       hasuraClient.request<OrdersResponse>(GET_DAILY_EARNINGS, vars),
       hasuraClient.request<ReelOrdersResponse>(GET_DAILY_REEL_EARNINGS, vars),
-      hasuraClient.request<RestaurantOrdersResponse>(
-        GET_DAILY_RESTAURANT_EARNINGS,
-        vars
-      ),
+      hasuraClient.request<RestaurantOrdersResponse>(GET_DAILY_RESTAURANT_EARNINGS, vars),
     ]);
 
     // Get commission percentage once for all order types
@@ -392,15 +364,15 @@ export default async function handler(
 
     // Build unified list of { updated_at, earnings } from all order types
     const allItems: EarningsItem[] = [
-      ...ordersData.Orders.map((order) => ({
+      ...ordersData.Orders.map(order => ({
         updated_at: order.updated_at,
         earnings: rowToNetEarnings(order, commissionPct),
       })),
-      ...reelData.reel_orders.map((order) => ({
+      ...reelData.reel_orders.map(order => ({
         updated_at: order.updated_at,
         earnings: rowToNetEarnings(order, commissionPct),
       })),
-      ...restaurantData.restaurant_orders.map((order) => ({
+      ...restaurantData.restaurant_orders.map(order => ({
         updated_at: order.updated_at,
         earnings: restaurantRowToNetEarnings(order, commissionPct),
       })),
@@ -410,10 +382,7 @@ export default async function handler(
     const formattedData = formatEarningsData(allItems, period);
 
     // Total net earnings (Orders + reel_orders + restaurant_orders, after commission)
-    const totalEarnings = allItems.reduce(
-      (sum, item) => sum + item.earnings,
-      0
-    );
+    const totalEarnings = allItems.reduce((sum, item) => sum + item.earnings, 0);
     const totalOrderCount =
       ordersData.Orders.length +
       reelData.reel_orders.length +
@@ -440,15 +409,12 @@ export default async function handler(
       },
     });
   } catch (error) {
-    console.error("Error fetching daily earnings:", error);
-    await logErrorToSlack("api/shopper/dailyEarnings", error, {
-      period: (req.query.period as string) || "this-week",
+    console.error('Error fetching daily earnings:', error);
+    await logErrorToSlack('api/shopper/dailyEarnings', error, {
+      period: (req.query.period as string) || 'this-week',
     });
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch daily earnings",
+      error: error instanceof Error ? error.message : 'Failed to fetch daily earnings',
     });
   }
 }

@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 const GET_RESTAURANT_DISHES = gql`
   query GetRestaurantDishes($restaurant_id: uuid!) {
@@ -47,9 +47,7 @@ const GET_RESTAURANT_DISHES = gql`
 
 const GET_ALL_RESTAURANT_DISHES = gql`
   query GetAllRestaurantDishes {
-    restaurant_menu(
-      order_by: { ProductNames: { name: asc }, dishes: { name: asc } }
-    ) {
+    restaurant_menu(order_by: { ProductNames: { name: asc }, dishes: { name: asc } }) {
       id
       price
       discount
@@ -148,76 +146,63 @@ interface TransformedDish {
 
 // Helper function to validate UUID format
 const isValidUUID = (uuid: string): boolean => {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const { restaurant_id } = req.query;
 
     let data: RestaurantMenuResponse;
 
-    if (
-      restaurant_id &&
-      restaurant_id !== "undefined" &&
-      isValidUUID(restaurant_id as string)
-    ) {
+    if (restaurant_id && restaurant_id !== 'undefined' && isValidUUID(restaurant_id as string)) {
       // Fetch dishes for a specific restaurant (restaurant_menu rows)
-      data = await hasuraClient.request<RestaurantMenuResponse>(
-        GET_RESTAURANT_DISHES,
-        { restaurant_id }
-      );
+      data = await hasuraClient.request<RestaurantMenuResponse>(GET_RESTAURANT_DISHES, {
+        restaurant_id,
+      });
     } else {
       // If restaurant_id is invalid, log the issue and return empty dishes
-      if (restaurant_id && restaurant_id !== "undefined") {
+      if (restaurant_id && restaurant_id !== 'undefined') {
         console.warn(
           `Invalid restaurant_id provided: ${restaurant_id}. Expected valid UUID format.`
         );
       }
 
       // Fetch all dishes if no valid restaurant_id provided
-      data = await hasuraClient.request<RestaurantMenuResponse>(
-        GET_ALL_RESTAURANT_DISHES
-      );
+      data = await hasuraClient.request<RestaurantMenuResponse>(GET_ALL_RESTAURANT_DISHES);
     }
 
     // Transform restaurant_menu rows into the Dish[] shape expected by the frontend
-    const dishes: TransformedDish[] = (data.restaurant_menu || []).map(
-      (menuItem) => {
-        const product = menuItem.ProductNames;
-        const dish = menuItem.dishes;
+    const dishes: TransformedDish[] = (data.restaurant_menu || []).map(menuItem => {
+      const product = menuItem.ProductNames;
+      const dish = menuItem.dishes;
 
-        return {
-          id: menuItem.id,
-          name: product?.name || dish?.name || "Unnamed Dish",
-          description: product?.description || dish?.description || "",
-          price: menuItem.price,
-          image: product?.image || dish?.image || undefined,
-          ingredients: dish?.ingredients ?? undefined,
-          discount: menuItem.discount || undefined,
-          quantity: menuItem.quantity,
-          restaurant_id: menuItem.restaurant_id,
-          is_active: menuItem.is_active,
-          category: dish?.category || undefined,
-          promo: !!menuItem.promo,
-          promo_type: menuItem.promo_type || undefined,
-          preparingTime: menuItem.preparingTime || undefined,
-        };
-      }
-    );
+      return {
+        id: menuItem.id,
+        name: product?.name || dish?.name || 'Unnamed Dish',
+        description: product?.description || dish?.description || '',
+        price: menuItem.price,
+        image: product?.image || dish?.image || undefined,
+        ingredients: dish?.ingredients ?? undefined,
+        discount: menuItem.discount || undefined,
+        quantity: menuItem.quantity,
+        restaurant_id: menuItem.restaurant_id,
+        is_active: menuItem.is_active,
+        category: dish?.category || undefined,
+        promo: !!menuItem.promo,
+        promo_type: menuItem.promo_type || undefined,
+        preparingTime: menuItem.preparingTime || undefined,
+      };
+    });
 
     res.status(200).json({ dishes });
   } catch (error) {
-    console.error("Error fetching restaurant dishes:", error);
-    res.status(500).json({ error: "Failed to fetch restaurant dishes" });
+    console.error('Error fetching restaurant dishes:', error);
+    res.status(500).json({ error: 'Failed to fetch restaurant dishes' });
   }
 }

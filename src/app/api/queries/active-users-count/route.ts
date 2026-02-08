@@ -17,10 +17,7 @@ const GET_ACTIVE_USER_IDS = gql`
       user_id
     }
     businessProductOrders(
-      where: {
-        created_at: { _gte: $since }
-        ordered_by: { _is_null: false }
-      }
+      where: { created_at: { _gte: $since }, ordered_by: { _is_null: false } }
     ) {
       ordered_by
     }
@@ -84,9 +81,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching active users count:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch active users count' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch active users count' }, { status: 500 });
   }
 }

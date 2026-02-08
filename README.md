@@ -2173,7 +2173,6 @@ This project is proprietary software. All rights reserved.
 
 For support, please contact our team at support@example.com or open an issue in the repository.
 
-
 ### 🎬 **Video Reels Management System**
 
 The Plas Dashboard includes a comprehensive **Video Reels Management System** that allows users to create, manage, and monetize video content with advanced features for content creators and businesses.
@@ -2247,7 +2246,7 @@ CREATE TABLE Reels (
 const uploadVideoToServer = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = () => {
       if (typeof reader.result === 'string') {
         resolve(reader.result); // Base64 data
@@ -2255,7 +2254,7 @@ const uploadVideoToServer = async (file: File): Promise<string> => {
         reject(new Error('Failed to convert video to base64'));
       }
     };
-    
+
     reader.readAsDataURL(file);
   });
 };
@@ -2322,15 +2321,15 @@ const isUploadCategory = (category: string) => {
 
 ##### **2. Content Categories**
 
-| Category    | Video Type | Color Code | Description                    |
-| ----------- | ---------- | ---------- | ------------------------------ |
-| **Shopping** | Upload     | Purple     | Product showcases and reviews  |
-| **Organic**  | Upload     | Emerald    | Health and wellness content    |
-| **Tutorial** | YouTube    | Amber      | How-to and educational videos  |
-| **Recipe**   | YouTube    | Red        | Cooking and recipe videos      |
-| **Food**     | Upload     | Orange     | Food-related content           |
-| **Cooking**  | YouTube    | Red        | Cooking demonstrations         |
-| **Delivery** | Upload     | Blue       | Delivery and service content   |
+| Category     | Video Type | Color Code | Description                   |
+| ------------ | ---------- | ---------- | ----------------------------- |
+| **Shopping** | Upload     | Purple     | Product showcases and reviews |
+| **Organic**  | Upload     | Emerald    | Health and wellness content   |
+| **Tutorial** | YouTube    | Amber      | How-to and educational videos |
+| **Recipe**   | YouTube    | Red        | Cooking and recipe videos     |
+| **Food**     | Upload     | Orange     | Food-related content          |
+| **Cooking**  | YouTube    | Red        | Cooking demonstrations        |
+| **Delivery** | Upload     | Blue       | Delivery and service content  |
 
 ##### **3. Active Status Management**
 
@@ -2368,23 +2367,26 @@ const isUploadCategory = (category: string) => {
 ## 📹 Reels Component (`src/components/pages/Reels.tsx`)
 
 ### 🎯 Overview
+
 The Reels component is a comprehensive video content management system that allows users to create, manage, and view video reels with TikTok-like functionality. It supports both YouTube URLs and direct video uploads, with category-based content handling and business context integration.
 
 ### 🏗️ Component Architecture
 
 #### **Main Component Structure**
+
 ```typescript
 const Reels = () => {
   // State management
   // Data fetching
   // Event handlers
   // UI rendering
-}
+};
 ```
 
 ### 📊 Data Management
 
 #### **GraphQL Queries & Mutations**
+
 - **`useReels()`**: Fetches all reels with related data
 - **`useAddReel()`**: Creates new reels
 - **`useSystemConfig()`**: Gets system configuration (currency, etc.)
@@ -2392,6 +2394,7 @@ const Reels = () => {
 - **`useCurrentOrgEmployee()`**: Gets employee data including restaurant_id
 
 #### **Data Interfaces**
+
 ```typescript
 interface Reel {
   id: string;
@@ -2422,22 +2425,26 @@ interface Reel {
 ### 🎨 UI Components
 
 #### **1. Page Header**
+
 - **Title**: "Reels"
 - **Description**: "Manage and view video reels with editing capabilities"
 - **Actions**: Add Reel button with drawer trigger
 
 #### **2. Statistics Cards**
+
 - **Total Reels**: Count of all reels
 - **Active Reels**: Count of active reels (`is_active: true`)
 - **Total Orders**: Sum of all reel orders
 - **Total Revenue**: Calculated as `reel.Price * reel.reel_orders.length`
 
 #### **3. Search & Filter**
+
 - **Search Input**: Searches across title, description, category, creator names
 - **Filter Button**: Placeholder for future filtering options
 - **Real-time Search**: Updates results as user types
 
 #### **4. Reel Grid**
+
 - **Responsive Layout**: 1 column (mobile) → 2 columns (tablet) → 3 columns (desktop)
 - **Card-based Design**: Each reel displayed in a card format
 - **Video Player**: HTML5 video with play/pause controls
@@ -2446,6 +2453,7 @@ interface Reel {
 ### 🎥 Video Management
 
 #### **Video Upload System**
+
 ```typescript
 // Category-based video handling
 const YOUTUBE_CATEGORIES = ['tutorial', 'recipe', 'cooking'];
@@ -2453,17 +2461,20 @@ const UPLOAD_CATEGORIES = ['shopping', 'organic', 'food', 'delivery'];
 ```
 
 #### **Video Input Types**
+
 1. **YouTube URLs**: For tutorial, recipe, cooking categories
 2. **Direct Upload**: For shopping, organic, food, delivery categories
 3. **Generic URLs**: For other categories
 
 #### **Video Processing**
+
 - **File Validation**: Type and size checks (max 50MB)
 - **Base64 Conversion**: Videos converted to base64 for database storage
 - **Progress Tracking**: Upload progress indicator
 - **Preview Generation**: Video preview before upload
 
 #### **Video Display**
+
 - **HTML5 Video Player**: Native browser video controls
 - **Play/Pause Controls**: Custom play/pause buttons
 - **Mute/Unmute**: Individual video mute controls
@@ -2473,20 +2484,23 @@ const UPLOAD_CATEGORIES = ['shopping', 'organic', 'food', 'delivery'];
 ### 🏪 Business Context Integration
 
 #### **Creator Attribution System**
+
 ```typescript
 // Fallback logic for creator display
 const creatorInfo = {
   avatar: reel.User?.profile_picture || reel.Shops?.logo || reel.Restaurant?.logo,
-  name: reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Unknown Creator'
+  name: reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Unknown Creator',
 };
 ```
 
 #### **Authentication Context**
+
 - **Shop Users**: Reels associated with `shop_id`
 - **Restaurant Users**: Reels associated with `restaurant_id`
 - **Individual Users**: Reels associated with `user_id`
 
 #### **Foreign Key Handling**
+
 - **Null Safety**: Proper handling of nullable UUID fields
 - **Constraint Avoidance**: Prevents foreign key violations
 - **Context-aware**: Sets appropriate IDs based on user type
@@ -2494,6 +2508,7 @@ const creatorInfo = {
 ### 📝 Content Management
 
 #### **Reel Categories**
+
 - **Shopping**: Direct video upload
 - **Organic**: Direct video upload
 - **Tutorial**: YouTube URL only
@@ -2503,11 +2518,13 @@ const creatorInfo = {
 - **Delivery**: Direct video upload
 
 #### **Post Types**
+
 - **Restaurant**: Restaurant-related content
 - **Supermarket**: Supermarket-related content
 - **Chef**: Chef-related content
 
 #### **Form Fields**
+
 - **Title**: Reel title (required)
 - **Description**: Reel description
 - **Category**: Content category (required)
@@ -2519,27 +2536,38 @@ const creatorInfo = {
 ### 🎨 Visual Design
 
 #### **Color System**
+
 ```typescript
 const getCategoryColor = (category: string) => {
   switch (category.toLowerCase()) {
-    case "shopping": return "#8b5cf6"; // Purple
-    case "organic": return "#10b981"; // Emerald
-    case "tutorial": return "#f59e0b"; // Amber
-    case "recipe": return "#ef4444"; // Red
-    case "food": return "#f97316"; // Orange
-    case "cooking": return "#dc2626"; // Red
-    case "delivery": return "#3b82f6"; // Blue
-    default: return "#6b7280"; // Gray
+    case 'shopping':
+      return '#8b5cf6'; // Purple
+    case 'organic':
+      return '#10b981'; // Emerald
+    case 'tutorial':
+      return '#f59e0b'; // Amber
+    case 'recipe':
+      return '#ef4444'; // Red
+    case 'food':
+      return '#f97316'; // Orange
+    case 'cooking':
+      return '#dc2626'; // Red
+    case 'delivery':
+      return '#3b82f6'; // Blue
+    default:
+      return '#6b7280'; // Gray
   }
 };
 ```
 
 #### **Badge System**
+
 - **Category Badges**: Color-coded by category
 - **Type Badges**: Secondary styling
 - **Status Badges**: Active/Inactive indicators
 
 #### **Card Layout**
+
 - **Video Section**: 16:9 aspect ratio
 - **Header Section**: Title, description, actions
 - **Stats Section**: Likes, comments, orders, revenue
@@ -2548,6 +2576,7 @@ const getCategoryColor = (category: string) => {
 ### 🔧 State Management
 
 #### **Local State**
+
 ```typescript
 // UI State
 const [searchTerm, setSearchTerm] = useState('');
@@ -2568,6 +2597,7 @@ const [isUploading, setIsUploading] = useState(false);
 ```
 
 #### **Form State**
+
 ```typescript
 const [formData, setFormData] = useState({
   title: '',
@@ -2586,17 +2616,19 @@ const [formData, setFormData] = useState({
 ### 📊 Data Processing
 
 #### **Statistics Calculation**
+
 ```typescript
 const totalOrders = reels.reduce((acc, reel) => acc + reel.reel_orders.length, 0);
 const totalRevenue = reels.reduce((acc, reel) => {
   const reelPrice = parseFloat(reel.Price || '0');
   const orderCount = reel.reel_orders.length;
-  return acc + (reelPrice * orderCount);
+  return acc + reelPrice * orderCount;
 }, 0);
 const activeReels = reels.filter(reel => reel.is_active).length;
 ```
 
 #### **Sorting & Filtering**
+
 ```typescript
 const filteredReels = reels
   .filter(reel => {
@@ -2613,17 +2645,20 @@ const filteredReels = reels
 ### 🎮 User Interactions
 
 #### **Video Controls**
+
 - **Play/Pause**: Click video or control button
 - **Mute/Unmute**: Individual video mute toggle
 - **Auto-play**: Videos play on hover (muted)
 
 #### **Reel Management**
+
 - **Add Reel**: Opens drawer with form
 - **Edit Reel**: Opens edit dialog
 - **Toggle Status**: Enable/disable reel
 - **Delete**: Remove reel (future feature)
 
 #### **Search & Navigation**
+
 - **Real-time Search**: Instant filtering
 - **Pagination**: Navigate through results
 - **Page Size**: Adjust items per page
@@ -2631,16 +2666,19 @@ const filteredReels = reels
 ### 🔒 Security & Validation
 
 #### **File Validation**
+
 - **Type Check**: Only video files allowed
 - **Size Limit**: Maximum 50MB for base64 storage
 - **Format Support**: MP4, MOV, AVI formats
 
 #### **Form Validation**
+
 - **Required Fields**: Title, video, category
 - **Category Rules**: YouTube URLs for specific categories
 - **Business Logic**: Proper ID assignment based on context
 
 #### **Error Handling**
+
 - **Video Load Errors**: Fallback for failed videos
 - **Upload Errors**: Progress tracking and error messages
 - **Network Errors**: Toast notifications for failures
@@ -2648,16 +2686,19 @@ const filteredReels = reels
 ### 🌐 Integration Points
 
 #### **Authentication System**
+
 - **Session Management**: Uses `useAuth()` hook
 - **Employee Data**: Uses `useCurrentOrgEmployee()` hook
 - **Privilege System**: Integrates with role-based access
 
 #### **Database Integration**
+
 - **GraphQL Queries**: Real-time data fetching
 - **Mutations**: Optimistic updates
 - **Error Handling**: Proper error boundaries
 
 #### **External Services**
+
 - **YouTube Integration**: URL validation and embedding
 - **File Storage**: Base64 encoding for database storage
 - **Currency System**: Dynamic currency from system config
@@ -2665,11 +2706,13 @@ const filteredReels = reels
 ### 📱 Responsive Design
 
 #### **Breakpoints**
+
 - **Mobile**: Single column layout
 - **Tablet**: Two column layout
 - **Desktop**: Three column layout
 
 #### **Adaptive Features**
+
 - **Touch-friendly**: Large touch targets
 - **Keyboard Navigation**: Accessible controls
 - **Screen Reader**: Proper ARIA labels
@@ -2677,11 +2720,13 @@ const filteredReels = reels
 ### 🔄 Performance Optimizations
 
 #### **Data Loading**
+
 - **React Query**: Caching and background updates
 - **Pagination**: Load only visible items
 - **Lazy Loading**: Images and videos load on demand
 
 #### **UI Performance**
+
 - **Memoization**: Optimized re-renders
 - **Debounced Search**: Reduced API calls
 - **Virtual Scrolling**: Future optimization for large lists
@@ -2689,16 +2734,19 @@ const filteredReels = reels
 ### 🧪 Testing Considerations
 
 #### **Unit Tests**
+
 - **Component Rendering**: Verify UI elements
 - **State Management**: Test state changes
 - **Event Handlers**: Test user interactions
 
 #### **Integration Tests**
+
 - **API Integration**: Test data fetching
 - **Form Submission**: Test reel creation
 - **Error Scenarios**: Test error handling
 
 #### **E2E Tests**
+
 - **User Workflows**: Complete reel creation flow
 - **Search Functionality**: Test search and filtering
 - **Video Playback**: Test video controls
@@ -2706,6 +2754,7 @@ const filteredReels = reels
 ### 🚀 Future Enhancements
 
 #### **Planned Features**
+
 - **Video Editing**: In-browser video editing
 - **Analytics**: View count and engagement metrics
 - **Comments System**: User comments on reels
@@ -2713,6 +2762,7 @@ const filteredReels = reels
 - **Advanced Filtering**: Date range, category filters
 
 #### **Performance Improvements**
+
 - **Video Compression**: Automatic video optimization
 - **CDN Integration**: Faster video delivery
 - **Caching Strategy**: Improved data caching
@@ -2720,6 +2770,7 @@ const filteredReels = reels
 ### 📚 Related Components
 
 #### **Dependencies**
+
 - **AdminLayout**: Main layout wrapper
 - **PageHeader**: Page title and actions
 - **Drawer**: Add reel form container
@@ -2727,6 +2778,7 @@ const filteredReels = reels
 - **Pagination**: Results navigation
 
 #### **Shared Utilities**
+
 - **formatCurrency**: Currency formatting
 - **formatDateTime**: Date formatting
 - **hasuraRequest**: GraphQL requests

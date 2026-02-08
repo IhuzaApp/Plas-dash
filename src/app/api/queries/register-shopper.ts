@@ -1,10 +1,10 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../api/auth/[...nextauth]";
-import { logErrorToSlack } from "../../../src/lib/slackErrorReporter";
-import { sendNewShopperRegistrationToSlack } from "../../../src/lib/slackSupportNotifier";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../api/auth/[...nextauth]';
+import { logErrorToSlack } from '../../../src/lib/slackErrorReporter';
+import { sendNewShopperRegistrationToSlack } from '../../../src/lib/slackSupportNotifier';
 
 const REGISTER_SHOPPER = gql`
   mutation RegisterShopper(
@@ -232,13 +232,10 @@ interface Session {
   expires: string;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow POST requests
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   let userId: string | null = null;
@@ -246,30 +243,20 @@ export default async function handler(
 
   try {
     // Verify the user is authenticated
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
 
     if (!session || !session.user) {
-      return res
-        .status(401)
-        .json({ error: "You must be authenticated to register as a shopper" });
+      return res.status(401).json({ error: 'You must be authenticated to register as a shopper' });
     }
 
     if (!hasuraClient) {
-      throw new Error(
-        "Hasura client is not initialized. Please check server configuration."
-      );
+      throw new Error('Hasura client is not initialized. Please check server configuration.');
     }
 
     // Log the request data size for debugging
     requestDataSize = JSON.stringify(req.body).length;
     console.log(
-      `Received shopper registration request, data size: ${(
-        requestDataSize / 1024
-      ).toFixed(2)} KB`
+      `Received shopper registration request, data size: ${(requestDataSize / 1024).toFixed(2)} KB`
     );
 
     const {
@@ -301,24 +288,17 @@ export default async function handler(
     userId = user_id;
 
     // Validate required fields
-    if (
-      !full_name ||
-      !address ||
-      !phone_number ||
-      !national_id ||
-      !transport_mode ||
-      !user_id
-    ) {
+    if (!full_name || !address || !phone_number || !national_id || !transport_mode || !user_id) {
       return res.status(400).json({
-        error: "Missing required fields",
-        message: "All required fields must be provided",
+        error: 'Missing required fields',
+        message: 'All required fields must be provided',
       });
     }
 
     // Verify the user ID in the request matches the authenticated user
     if (user_id !== session.user.id) {
       return res.status(403).json({
-        error: "User ID mismatch. You can only register yourself as a shopper.",
+        error: 'User ID mismatch. You can only register yourself as a shopper.',
       });
     }
 
@@ -327,12 +307,7 @@ export default async function handler(
       const phoneCheckData = await hasuraClient.request<CheckPhoneResponse>(
         gql`
           query CheckPhoneNumber($phone_number: String!, $user_id: uuid!) {
-            shoppers(
-              where: {
-                phone_number: { _eq: $phone_number }
-                user_id: { _neq: $user_id }
-              }
-            ) {
+            shoppers(where: { phone_number: { _eq: $phone_number }, user_id: { _neq: $user_id } }) {
               id
               user_id
               full_name
@@ -347,13 +322,13 @@ export default async function handler(
       if (phoneCheckData.shoppers.length > 0) {
         const existingPhoneUser = phoneCheckData.shoppers[0];
         return res.status(409).json({
-          error: "Phone number already registered",
+          error: 'Phone number already registered',
           message: `This phone number is already registered by another user. Please use a different phone number.`,
           existing_user: existingPhoneUser.user_id,
         });
       }
     } catch (phoneCheckError) {
-      await logErrorToSlack("RegisterShopperAPI:phoneCheck", phoneCheckError, {
+      await logErrorToSlack('RegisterShopperAPI:phoneCheck', phoneCheckError, {
         user_id,
         phone_number,
       });
@@ -361,44 +336,43 @@ export default async function handler(
     }
 
     // Check if the user is already registered as a shopper
-    const existingShopperData =
-      await hasuraClient.request<CheckShopperResponse>(CHECK_SHOPPER_EXISTS, {
+    const existingShopperData = await hasuraClient.request<CheckShopperResponse>(
+      CHECK_SHOPPER_EXISTS,
+      {
         user_id,
-      });
+      }
+    );
 
     if (existingShopperData.shoppers.length > 0) {
       const existingShopper = existingShopperData.shoppers[0];
 
       // Always update the existing shopper record (automatic update for existing users)
       try {
-        const updateData = await hasuraClient.request<UpdateShopperResponse>(
-          UPDATE_SHOPPER,
-          {
-            shopper_id: existingShopper.id,
-            full_name,
-            address,
-            phone_number: existingShopper.phone_number || phone_number, // Use existing phone number or new one
-            national_id,
-            driving_license: driving_license || "",
-            drivingLicense_Image: drivingLicense_Image || "",
-            transport_mode,
-            profile_photo: profile_photo || "",
-            Police_Clearance_Cert: Police_Clearance_Cert || "",
-            guarantor: guarantor || "",
-            guarantorPhone: guarantorPhone || "",
-            guarantorRelationship: guarantorRelationship || "",
-            latitude: latitude || "",
-            longitude: longitude || "",
-            mutual_StatusCertificate: mutual_StatusCertificate || "",
-            mutual_status: mutual_status || "",
-            national_id_photo_back: national_id_photo_back || "",
-            national_id_photo_front: national_id_photo_front || "",
-            proofOfResidency: proofOfResidency || "",
-            signature: signature || "",
-            collection_comment: "", // Clear the collection comment after update
-            needCollection: false, // Set needCollection to false after update
-          }
-        );
+        const updateData = await hasuraClient.request<UpdateShopperResponse>(UPDATE_SHOPPER, {
+          shopper_id: existingShopper.id,
+          full_name,
+          address,
+          phone_number: existingShopper.phone_number || phone_number, // Use existing phone number or new one
+          national_id,
+          driving_license: driving_license || '',
+          drivingLicense_Image: drivingLicense_Image || '',
+          transport_mode,
+          profile_photo: profile_photo || '',
+          Police_Clearance_Cert: Police_Clearance_Cert || '',
+          guarantor: guarantor || '',
+          guarantorPhone: guarantorPhone || '',
+          guarantorRelationship: guarantorRelationship || '',
+          latitude: latitude || '',
+          longitude: longitude || '',
+          mutual_StatusCertificate: mutual_StatusCertificate || '',
+          mutual_status: mutual_status || '',
+          national_id_photo_back: national_id_photo_back || '',
+          national_id_photo_front: national_id_photo_front || '',
+          proofOfResidency: proofOfResidency || '',
+          signature: signature || '',
+          collection_comment: '', // Clear the collection comment after update
+          needCollection: false, // Set needCollection to false after update
+        });
 
         return res.status(200).json({
           success: true,
@@ -406,50 +380,46 @@ export default async function handler(
           updated: true,
         });
       } catch (updateError: any) {
-        console.error("Error updating existing shopper:", updateError);
-        await logErrorToSlack("RegisterShopperAPI:updateShopper", updateError, {
+        console.error('Error updating existing shopper:', updateError);
+        await logErrorToSlack('RegisterShopperAPI:updateShopper', updateError, {
           user_id,
           shopper_id: existingShopper.id,
         });
         return res.status(500).json({
-          error: "Failed to update shopper application",
+          error: 'Failed to update shopper application',
           message: updateError.message,
-          details:
-            updateError.response?.errors || "No additional details available",
+          details: updateError.response?.errors || 'No additional details available',
         });
       }
     }
 
     // Register new shopper with all data in one operation
-    const data = await hasuraClient.request<RegisterShopperResponse>(
-      REGISTER_SHOPPER,
-      {
-        Police_Clearance_Cert: Police_Clearance_Cert || "",
-        address,
-        driving_license: driving_license || "",
-        drivingLicense_Image: drivingLicense_Image || "",
-        full_name,
-        guarantor: guarantor || "",
-        guarantorPhone: guarantorPhone || "",
-        guarantorRelationship: guarantorRelationship || "",
-        latitude: latitude || "",
-        longitude: longitude || "",
-        mutual_StatusCertificate: mutual_StatusCertificate || "",
-        mutual_status: mutual_status || "",
-        national_id,
-        national_id_photo_back: national_id_photo_back || "",
-        national_id_photo_front: national_id_photo_front || "",
-        onboarding_step: "application_submitted",
-        phone: "",
-        phone_number,
-        profile_photo: profile_photo || "",
-        proofOfResidency: proofOfResidency || "",
-        signature: signature || "",
-        status: "pending",
-        transport_mode,
-        user_id,
-      }
-    );
+    const data = await hasuraClient.request<RegisterShopperResponse>(REGISTER_SHOPPER, {
+      Police_Clearance_Cert: Police_Clearance_Cert || '',
+      address,
+      driving_license: driving_license || '',
+      drivingLicense_Image: drivingLicense_Image || '',
+      full_name,
+      guarantor: guarantor || '',
+      guarantorPhone: guarantorPhone || '',
+      guarantorRelationship: guarantorRelationship || '',
+      latitude: latitude || '',
+      longitude: longitude || '',
+      mutual_StatusCertificate: mutual_StatusCertificate || '',
+      mutual_status: mutual_status || '',
+      national_id,
+      national_id_photo_back: national_id_photo_back || '',
+      national_id_photo_front: national_id_photo_front || '',
+      onboarding_step: 'application_submitted',
+      phone: '',
+      phone_number,
+      profile_photo: profile_photo || '',
+      proofOfResidency: proofOfResidency || '',
+      signature: signature || '',
+      status: 'pending',
+      transport_mode,
+      user_id,
+    });
 
     try {
       await sendNewShopperRegistrationToSlack({
@@ -467,9 +437,7 @@ export default async function handler(
             (driving_license && driving_license.trim()) ||
             (drivingLicense_Image && drivingLicense_Image.trim())
           ),
-          police_clearance: !!(
-            Police_Clearance_Cert && Police_Clearance_Cert.trim()
-          ),
+          police_clearance: !!(Police_Clearance_Cert && Police_Clearance_Cert.trim()),
           guarantor: !!(
             (guarantor && guarantor.trim()) ||
             (guarantorPhone && guarantorPhone.trim()) ||
@@ -480,36 +448,33 @@ export default async function handler(
         },
       });
     } catch (notifyErr: any) {
-      console.error(
-        "Failed to notify Slack of new shopper registration:",
-        notifyErr
-      );
-      await logErrorToSlack(
-        "RegisterShopperAPI:newShopperSlackNotify",
-        notifyErr,
-        { user_id, full_name, phone_number }
-      );
+      console.error('Failed to notify Slack of new shopper registration:', notifyErr);
+      await logErrorToSlack('RegisterShopperAPI:newShopperSlackNotify', notifyErr, {
+        user_id,
+        full_name,
+        phone_number,
+      });
     }
 
     res.status(200).json({
       success: true,
       affected_rows: data.insert_shoppers.affected_rows,
       shopper: {
-        status: "pending",
+        status: 'pending',
         active: false,
-        onboarding_step: "application_submitted",
+        onboarding_step: 'application_submitted',
       },
     });
   } catch (error: any) {
     // Log the error for debugging
-    console.error("Shopper registration error:", error);
-    console.error("Error details:", {
+    console.error('Shopper registration error:', error);
+    console.error('Error details:', {
       message: error.message,
       stack: error.stack,
       response: error.response?.errors,
     });
 
-    await logErrorToSlack("RegisterShopperAPI", error, {
+    await logErrorToSlack('RegisterShopperAPI', error, {
       userId,
       method: req.method,
       requestDataSize,
@@ -517,10 +482,10 @@ export default async function handler(
 
     // Return a more detailed error message
     res.status(500).json({
-      error: "Failed to register shopper",
+      error: 'Failed to register shopper',
       message: error.message,
-      details: error.response?.errors || "No additional details available",
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      details: error.response?.errors || 'No additional details available',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 }

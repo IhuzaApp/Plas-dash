@@ -1,9 +1,9 @@
-import { GraphQLClient } from "graphql-request";
-import { NextApiRequest, NextApiResponse } from "next";
+import { GraphQLClient } from 'graphql-request';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 const client = new GraphQLClient(process.env.HASURA_GRAPHQL_ENDPOINT!, {
   headers: {
-    "x-hasura-admin-secret": process.env.HASURA_GRAPHQL_ADMIN_SECRET!,
+    'x-hasura-admin-secret': process.env.HASURA_GRAPHQL_ADMIN_SECRET!,
   },
 });
 
@@ -11,7 +11,7 @@ const client = new GraphQLClient(process.env.HASURA_GRAPHQL_ENDPOINT!, {
 function generateOrderPin(): string {
   return Math.floor(Math.random() * 100)
     .toString()
-    .padStart(2, "0");
+    .padStart(2, '0');
 }
 
 // Mutation to create a restaurant order
@@ -285,12 +285,9 @@ interface GetRestaurantOrderResponse {
   restaurant_orders: any[];
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -319,15 +316,15 @@ export default async function handler(
       !items?.length
     ) {
       return res.status(400).json({
-        error: "Missing required fields",
+        error: 'Missing required fields',
         required: [
-          "restaurant_id",
-          "user_id",
-          "delivery_address_id",
-          "total",
-          "delivery_fee",
-          "delivery_time",
-          "items",
+          'restaurant_id',
+          'user_id',
+          'delivery_address_id',
+          'total',
+          'delivery_fee',
+          'delivery_time',
+          'items',
         ],
       });
     }
@@ -342,7 +339,7 @@ export default async function handler(
         delivery_address_id,
         total,
         delivery_fee,
-        service_fee: service_fee || "0",
+        service_fee: service_fee || '0',
         discount: discount || null,
         voucher_code: voucher_code || null,
         delivery_time,
@@ -352,16 +349,14 @@ export default async function handler(
     );
 
     if (!orderResponse.insert_restaurant_orders.returning.length) {
-      return res
-        .status(500)
-        .json({ error: "Failed to create restaurant order" });
+      return res.status(500).json({ error: 'Failed to create restaurant order' });
     }
 
     const createdOrder = orderResponse.insert_restaurant_orders.returning[0];
     const orderId = createdOrder.id;
 
     // Step 2: Add dishes to the order
-    const dishPromises = items.map((item) =>
+    const dishPromises = items.map(item =>
       client.request<AddDishesResponse>(ADD_DISHES_TO_ORDER, {
         order_id: orderId,
         dish_id: item.dish_id,
@@ -380,16 +375,13 @@ export default async function handler(
     );
 
     if (totalDishesAdded !== items.length) {
-      console.error("Not all dishes were added to the order");
+      console.error('Not all dishes were added to the order');
     }
 
     // Step 3: Fetch the complete order details
-    const orderDetails = await client.request<GetRestaurantOrderResponse>(
-      GET_RESTAURANT_ORDER,
-      {
-        order_id: orderId,
-      }
-    );
+    const orderDetails = await client.request<GetRestaurantOrderResponse>(GET_RESTAURANT_ORDER, {
+      order_id: orderId,
+    });
 
     return res.status(200).json({
       success: true,
@@ -403,10 +395,10 @@ export default async function handler(
       order_details: orderDetails.restaurant_orders[0],
     });
   } catch (error) {
-    console.error("Error creating restaurant order:", error);
+    console.error('Error creating restaurant order:', error);
     return res.status(500).json({
-      error: "Failed to create restaurant order",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to create restaurant order',
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

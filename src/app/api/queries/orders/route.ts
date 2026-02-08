@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Admin dashboard: fetches all orders with customer (orderedBy), address, items, and shopper (Shoppers).
 const GET_ORDERS = gql`
@@ -74,12 +74,12 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<{
@@ -125,13 +125,14 @@ export async function GET() {
       return NextResponse.json({ orders: [] });
     }
 
-    const enriched = orders.map((o) => {
+    const enriched = orders.map(o => {
       const agg = o.Order_Items_aggregate?.aggregate;
       const itemsCount = agg?.count ?? o.Order_Items?.length ?? 0;
-      const unitsCount = agg?.sum?.quantity ?? (o.Order_Items?.reduce((s, i) => s + i.quantity, 0) ?? 0);
-      const baseTotal = parseFloat(o.total || "0");
-      const serviceFee = parseFloat(o.service_fee || "0");
-      const deliveryFee = parseFloat(o.delivery_fee || "0");
+      const unitsCount =
+        agg?.sum?.quantity ?? o.Order_Items?.reduce((s, i) => s + i.quantity, 0) ?? 0;
+      const baseTotal = parseFloat(o.total || '0');
+      const serviceFee = parseFloat(o.service_fee || '0');
+      const deliveryFee = parseFloat(o.delivery_fee || '0');
       const grandTotal = baseTotal + serviceFee + deliveryFee;
       return {
         id: o.id,
@@ -156,10 +157,10 @@ export async function GET() {
         shopper:
           o.Shoppers != null
             ? {
-                id: o.Shoppers.id ?? "",
-                name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? "",
-                phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? "",
-                email: "",
+                id: o.Shoppers.id ?? '',
+                name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
+                phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
+                email: '',
               }
             : undefined,
         itemsCount,
@@ -169,10 +170,7 @@ export async function GET() {
 
     return NextResponse.json({ orders: enriched });
   } catch (error) {
-    console.error("Error fetching orders", error);
-    return NextResponse.json(
-      { error: "Failed to fetch orders" },
-      { status: 500 }
-    );
+    console.error('Error fetching orders', error);
+    return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
   }
 }

@@ -1,20 +1,16 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { v4 as uuidv4 } from "uuid";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { v4 as uuidv4 } from 'uuid';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { amount, currency, payerNumber, externalId, payerMessage, payeeNote } =
-    req.body;
+  const { amount, currency, payerNumber, externalId, payerMessage, payeeNote } = req.body;
 
   // Validate required fields
   if (!amount || !currency || !payerNumber) {
-    console.error("❌ [MoMo Transfer API] Validation Error:", {
+    console.error('❌ [MoMo Transfer API] Validation Error:', {
       missingFields: {
         amount: !amount,
         currency: !currency,
@@ -30,7 +26,7 @@ export default async function handler(
       },
     });
     return res.status(400).json({
-      error: "Missing required fields: amount, currency, payerNumber",
+      error: 'Missing required fields: amount, currency, payerNumber',
     });
   }
 
@@ -38,22 +34,13 @@ export default async function handler(
 
   try {
     // Check if we have valid MoMo credentials
+    console.log('💰 [MoMo Transfer API] Sandbox URL:', process.env.MOMO_SANDBOX_URL);
     console.log(
-      "💰 [MoMo Transfer API] Sandbox URL:",
-      process.env.MOMO_SANDBOX_URL
-    );
-    console.log(
-      "💰 [MoMo Transfer API] Subscription Key configured:",
+      '💰 [MoMo Transfer API] Subscription Key configured:',
       !!process.env.MOMO_SUBSCRIPTION_KEY_SANDBOX
     );
-    console.log(
-      "💰 [MoMo Transfer API] API User configured:",
-      !!process.env.MOMO_API_USER_SANDBOX
-    );
-    console.log(
-      "💰 [MoMo Transfer API] API Key configured:",
-      !!process.env.MOMO_API_KEY_SANDBOX
-    );
+    console.log('💰 [MoMo Transfer API] API User configured:', !!process.env.MOMO_API_USER_SANDBOX);
+    console.log('💰 [MoMo Transfer API] API Key configured:', !!process.env.MOMO_API_KEY_SANDBOX);
 
     if (
       !process.env.MOMO_SUBSCRIPTION_KEY_SANDBOX ||
@@ -61,7 +48,7 @@ export default async function handler(
       !process.env.MOMO_API_KEY_SANDBOX
     ) {
       console.log(
-        "🧪 [MoMo Transfer API] Credentials not configured, simulating payment for testing"
+        '🧪 [MoMo Transfer API] Credentials not configured, simulating payment for testing'
       );
 
       const simulatedResponse = {
@@ -72,14 +59,14 @@ export default async function handler(
         externalId,
         payerMessage,
         payeeNote,
-        status: "SUCCESSFUL",
+        status: 'SUCCESSFUL',
         timestamp: new Date().toISOString(),
       };
       // Simulate successful payment for testing
       return res.status(200).json({
         referenceId,
-        message: "Payment simulated successfully (testing mode)",
-        status: "SUCCESSFUL",
+        message: 'Payment simulated successfully (testing mode)',
+        status: 'SUCCESSFUL',
       });
     }
 
@@ -87,34 +74,31 @@ export default async function handler(
     const tokenUrl = `${process.env.MOMO_SANDBOX_URL}/collection/token/`;
 
     const tokenHeaders = {
-      "Ocp-Apim-Subscription-Key": process.env.MOMO_SUBSCRIPTION_KEY_SANDBOX!,
+      'Ocp-Apim-Subscription-Key': process.env.MOMO_SUBSCRIPTION_KEY_SANDBOX!,
       Authorization: `Basic ${Buffer.from(
         `${process.env.MOMO_API_USER_SANDBOX}:${process.env.MOMO_API_KEY_SANDBOX}`
-      ).toString("base64")}`,
+      ).toString('base64')}`,
     };
 
     console.log({
-      "Ocp-Apim-Subscription-Key": "***HIDDEN***",
-      Authorization: "***HIDDEN***",
+      'Ocp-Apim-Subscription-Key': '***HIDDEN***',
+      Authorization: '***HIDDEN***',
     });
 
     const tokenRes = await fetch(tokenUrl, {
-      method: "POST",
+      method: 'POST',
       headers: tokenHeaders,
     });
 
+    console.log('🔑 [MoMo Transfer API] Token Response Status:', tokenRes.status);
     console.log(
-      "🔑 [MoMo Transfer API] Token Response Status:",
-      tokenRes.status
-    );
-    console.log(
-      "🔑 [MoMo Transfer API] Token Response Headers:",
+      '🔑 [MoMo Transfer API] Token Response Headers:',
       Object.fromEntries(tokenRes.headers.entries())
     );
 
     if (!tokenRes.ok) {
       const errorText = await tokenRes.text();
-      console.error("❌ [MoMo Transfer API] Token API Error:", {
+      console.error('❌ [MoMo Transfer API] Token API Error:', {
         status: tokenRes.status,
         statusText: tokenRes.statusText,
         error: errorText,
@@ -122,29 +106,23 @@ export default async function handler(
 
       // If it's a credentials issue, simulate successful payment
       if (tokenRes.status === 401 || tokenRes.status === 403) {
-        console.log(
-          "🧪 [MoMo Transfer API] Credentials invalid, simulating payment for testing"
-        );
-        console.log(
-          "🧪 [MoMo Transfer API] Simulated Payment Details (Invalid Credentials):",
-          {
-            referenceId,
-            amount,
-            currency,
-            payerNumber,
-            externalId,
-            payerMessage,
-            payeeNote,
-            status: "SUCCESSFUL",
-            reason: "Invalid credentials - testing mode",
-            timestamp: new Date().toISOString(),
-          }
-        );
+        console.log('🧪 [MoMo Transfer API] Credentials invalid, simulating payment for testing');
+        console.log('🧪 [MoMo Transfer API] Simulated Payment Details (Invalid Credentials):', {
+          referenceId,
+          amount,
+          currency,
+          payerNumber,
+          externalId,
+          payerMessage,
+          payeeNote,
+          status: 'SUCCESSFUL',
+          reason: 'Invalid credentials - testing mode',
+          timestamp: new Date().toISOString(),
+        });
         return res.status(200).json({
           referenceId,
-          message:
-            "Payment simulated successfully (testing mode - invalid credentials)",
-          status: "SUCCESSFUL",
+          message: 'Payment simulated successfully (testing mode - invalid credentials)',
+          status: 'SUCCESSFUL',
         });
       }
 
@@ -154,7 +132,7 @@ export default async function handler(
     const tokenData = await tokenRes.json();
     const { access_token } = tokenData;
     console.log({
-      access_token: access_token ? "***TOKEN_RECEIVED***" : "NO_TOKEN",
+      access_token: access_token ? '***TOKEN_RECEIVED***' : 'NO_TOKEN',
       token_type: tokenData.token_type,
       expires_in: tokenData.expires_in,
     });
@@ -167,11 +145,11 @@ export default async function handler(
       currency,
       externalId: externalId || `SHOPPER-PAYMENT-${Date.now()}`,
       payee: {
-        partyIdType: "MSISDN",
+        partyIdType: 'MSISDN',
         partyId: payerNumber, // e.g. "2507xxxxxxx"
       },
-      payerMessage: payerMessage || "Payment for Shopper Items",
-      payeeNote: payeeNote || "Shopper payment confirmation",
+      payerMessage: payerMessage || 'Payment for Shopper Items',
+      payeeNote: payeeNote || 'Shopper payment confirmation',
     };
 
     console.log({
@@ -184,40 +162,37 @@ export default async function handler(
     });
 
     const transferHeaders = {
-      "Content-Type": "application/json",
-      "Ocp-Apim-Subscription-Key": process.env.MOMO_SUBSCRIPTION_KEY_SANDBOX!,
+      'Content-Type': 'application/json',
+      'Ocp-Apim-Subscription-Key': process.env.MOMO_SUBSCRIPTION_KEY_SANDBOX!,
       Authorization: `Bearer ${access_token}`,
-      "X-Reference-Id": referenceId,
-      "X-Target-Environment": "sandbox",
+      'X-Reference-Id': referenceId,
+      'X-Target-Environment': 'sandbox',
     };
 
     console.log({
-      "Content-Type": transferHeaders["Content-Type"],
-      "Ocp-Apim-Subscription-Key": "***HIDDEN***",
-      Authorization: "***HIDDEN***",
-      "X-Reference-Id": transferHeaders["X-Reference-Id"],
-      "X-Target-Environment": transferHeaders["X-Target-Environment"],
+      'Content-Type': transferHeaders['Content-Type'],
+      'Ocp-Apim-Subscription-Key': '***HIDDEN***',
+      Authorization: '***HIDDEN***',
+      'X-Reference-Id': transferHeaders['X-Reference-Id'],
+      'X-Target-Environment': transferHeaders['X-Target-Environment'],
     });
 
     const transferRes = await fetch(transferUrl, {
-      method: "POST",
+      method: 'POST',
       headers: transferHeaders,
       body: JSON.stringify(transferPayload),
     });
 
+    console.log('💰 [MoMo Transfer API] Transfer Response Status:', transferRes.status);
     console.log(
-      "💰 [MoMo Transfer API] Transfer Response Status:",
-      transferRes.status
-    );
-    console.log(
-      "💰 [MoMo Transfer API] Transfer Response Headers:",
+      '💰 [MoMo Transfer API] Transfer Response Headers:',
       Object.fromEntries(transferRes.headers.entries())
     );
 
     if (transferRes.status === 202) {
       console.log({
         referenceId,
-        status: "PENDING",
+        status: 'PENDING',
         amount: transferPayload.amount,
         currency: transferPayload.currency,
         payerNumber: transferPayload.payee.partyId,
@@ -226,12 +201,12 @@ export default async function handler(
       });
       res.status(200).json({
         referenceId,
-        message: "Payment request accepted",
-        status: "PENDING",
+        message: 'Payment request accepted',
+        status: 'PENDING',
       });
     } else {
       const error = await transferRes.text();
-      console.error("❌ [MoMo Transfer API] Transfer Error:", {
+      console.error('❌ [MoMo Transfer API] Transfer Error:', {
         status: transferRes.status,
         statusText: transferRes.statusText,
         error,
@@ -244,7 +219,7 @@ export default async function handler(
       res.status(transferRes.status).json({ error });
     }
   } catch (error) {
-    console.error("💥 [MoMo Transfer API] Exception:", {
+    console.error('💥 [MoMo Transfer API] Exception:', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       referenceId,
@@ -254,6 +229,6 @@ export default async function handler(
       externalId,
       timestamp: new Date().toISOString(),
     });
-    res.status(500).json({ error: "Payment request failed" });
+    res.status(500).json({ error: 'Payment request failed' });
   }
 }

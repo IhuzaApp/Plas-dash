@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { processWalletOperation } from "../../../src/lib/walletOperations";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { processWalletOperation } from '../../../src/lib/walletOperations';
 
 // Combined order update mutations - update orders with same combined_order_id AND same shop_id
 const UPDATE_COMBINED_ORDERS = gql`
@@ -47,10 +47,7 @@ const UPDATE_COMBINED_REEL_ORDERS = gql`
     $updated_at: timestamptz!
   ) {
     update_reel_orders(
-      where: {
-        combined_order_id: { _eq: $combinedId }
-        Reel: { shop_id: { _eq: $shopId } }
-      }
+      where: { combined_order_id: { _eq: $combinedId }, Reel: { shop_id: { _eq: $shopId } } }
       _set: { status: $status, updated_at: $updated_at }
     ) {
       affected_rows
@@ -93,10 +90,7 @@ const UPDATE_COMBINED_RESTAURANT_ORDERS = gql`
     $updated_at: timestamptz!
   ) {
     update_restaurant_orders(
-      where: {
-        combined_order_id: { _eq: $combinedId }
-        restaurant_id: { _eq: $restaurantId }
-      }
+      where: { combined_order_id: { _eq: $combinedId }, restaurant_id: { _eq: $restaurantId } }
       _set: { status: $status, updated_at: $updated_at }
     ) {
       affected_rows
@@ -108,12 +102,9 @@ const UPDATE_COMBINED_RESTAURANT_ORDERS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
@@ -122,15 +113,13 @@ export default async function handler(
   const userId = (session as any)?.user?.id;
 
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const { orderId, status, updateOnlyThisOrder } = req.body;
 
   if (!orderId || !status) {
-    return res
-      .status(400)
-      .json({ error: "Missing required fields: orderId and status" });
+    return res.status(400).json({ error: 'Missing required fields: orderId and status' });
   }
 
   // If updateOnlyThisOrder is true, we should only update the specific order
@@ -139,26 +128,24 @@ export default async function handler(
 
   // Validate status value
   const validStatuses = [
-    "accepted",
-    "shopping",
-    "picked",
-    "in_progress",
-    "on_the_way",
-    "at_customer",
-    "delivered",
-    "cancelled",
+    'accepted',
+    'shopping',
+    'picked',
+    'in_progress',
+    'on_the_way',
+    'at_customer',
+    'delivered',
+    'cancelled',
   ];
   if (!validStatuses.includes(status)) {
-    return res.status(400).json({ error: "Invalid status value" });
+    return res.status(400).json({ error: 'Invalid status value' });
   }
 
   try {
     // First check if this is a regular order or reel order
     const CHECK_REGULAR_ORDER = gql`
       query CheckRegularOrder($orderId: uuid!, $shopperId: uuid!) {
-        Orders(
-          where: { id: { _eq: $orderId }, shopper_id: { _eq: $shopperId } }
-        ) {
+        Orders(where: { id: { _eq: $orderId }, shopper_id: { _eq: $shopperId } }) {
           id
           status
           combined_order_id
@@ -168,9 +155,7 @@ export default async function handler(
 
     const CHECK_REEL_ORDER = gql`
       query CheckReelOrder($orderId: uuid!, $shopperId: uuid!) {
-        reel_orders(
-          where: { id: { _eq: $orderId }, shopper_id: { _eq: $shopperId } }
-        ) {
+        reel_orders(where: { id: { _eq: $orderId }, shopper_id: { _eq: $shopperId } }) {
           id
           status
           combined_order_id
@@ -180,9 +165,7 @@ export default async function handler(
 
     const CHECK_RESTAURANT_ORDER = gql`
       query CheckRestaurantOrder($orderId: uuid!, $shopperId: uuid!) {
-        restaurant_orders(
-          where: { id: { _eq: $orderId }, shopper_id: { _eq: $shopperId } }
-        ) {
+        restaurant_orders(where: { id: { _eq: $orderId }, shopper_id: { _eq: $shopperId } }) {
           id
           status
           combined_order_id
@@ -192,9 +175,7 @@ export default async function handler(
 
     const CHECK_BUSINESS_ORDER = gql`
       query CheckBusinessOrder($orderId: uuid!, $shopperId: uuid!) {
-        businessProductOrders(
-          where: { id: { _eq: $orderId }, shopper_id: { _eq: $shopperId } }
-        ) {
+        businessProductOrders(where: { id: { _eq: $orderId }, shopper_id: { _eq: $shopperId } }) {
           id
           status
           store_id
@@ -203,13 +184,13 @@ export default async function handler(
     `;
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     let isReelOrder = false;
     let isRestaurantOrder = false;
     let isBusinessOrder = false;
-    let orderType = "regular";
+    let orderType = 'regular';
 
     // Check regular orders first
     const regularOrderCheck = await hasuraClient.request<{
@@ -225,7 +206,7 @@ export default async function handler(
 
     if (regularOrderCheck.Orders && regularOrderCheck.Orders.length > 0) {
       // Found regular order assignment
-      orderType = "regular";
+      orderType = 'regular';
     } else {
       // Check reel orders
       const reelOrderCheck = await hasuraClient.request<{
@@ -242,7 +223,7 @@ export default async function handler(
       if (reelOrderCheck.reel_orders && reelOrderCheck.reel_orders.length > 0) {
         // Found reel order assignment
         isReelOrder = true;
-        orderType = "reel";
+        orderType = 'reel';
       } else {
         // Check restaurant orders
         const restaurantOrderCheck = await hasuraClient.request<{
@@ -262,7 +243,7 @@ export default async function handler(
         ) {
           // Found restaurant order assignment
           isRestaurantOrder = true;
-          orderType = "restaurant";
+          orderType = 'restaurant';
         } else {
           // Check business orders
           const businessOrderCheck = await hasuraClient.request<{
@@ -281,21 +262,17 @@ export default async function handler(
             businessOrderCheck.businessProductOrders.length > 0
           ) {
             isBusinessOrder = true;
-            orderType = "business";
+            orderType = 'business';
           } else {
-            console.error(
-              "Authorization failed: Shopper not assigned to this order"
-            );
-            return res
-              .status(403)
-              .json({ error: "You are not assigned to this order" });
+            console.error('Authorization failed: Shopper not assigned to this order');
+            return res.status(403).json({ error: 'You are not assigned to this order' });
           }
         }
       }
     }
 
     // Prevent restaurant and business orders from being updated to "shopping" status
-    if ((isRestaurantOrder || isBusinessOrder) && status === "shopping") {
+    if ((isRestaurantOrder || isBusinessOrder) && status === 'shopping') {
       return res.status(400).json({
         error:
           "Restaurant and business orders cannot be updated to 'shopping' status. Use 'on_the_way' instead.",
@@ -304,24 +281,16 @@ export default async function handler(
 
     // Handle shopping status - process wallet operations only for regular/combined orders
     // Reel and restaurant orders don't use wallet "shopping"; others are skipped (no wallet op)
-    if (status === "shopping" && !isRestaurantOrder && !isReelOrder) {
+    if (status === 'shopping' && !isRestaurantOrder && !isReelOrder) {
       try {
-        await processWalletOperation(
-          userId,
-          orderId,
-          "shopping",
-          false,
-          false,
-          false,
-          req
-        );
+        await processWalletOperation(userId, orderId, 'shopping', false, false, false, req);
       } catch (walletError) {
-        console.error("Error processing wallet operation:", walletError);
+        console.error('Error processing wallet operation:', walletError);
         return res.status(500).json({
           error:
             walletError instanceof Error
               ? walletError.message
-              : "Failed to process wallet operation",
+              : 'Failed to process wallet operation',
         });
       }
     }
@@ -331,7 +300,7 @@ export default async function handler(
 
     // Update the order status based on order type
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Get order details to check for combined orders
@@ -450,22 +419,15 @@ export default async function handler(
     // If updateOnlyThisOrder is true, we should only update the specific order
     // even if it's part of a combined order (e.g., orders going to different customers)
     if (shouldUpdateOnlyThisOrder) {
-      console.log(
-        "🔄 [UPDATE ORDER STATUS] Updating ONLY this order (different customers):",
-        {
-          orderId,
-          combinedId,
-          status,
-        }
-      );
+      console.log('🔄 [UPDATE ORDER STATUS] Updating ONLY this order (different customers):', {
+        orderId,
+        combinedId,
+        status,
+      });
 
       // Single order update - skip combined order logic
       const UPDATE_ORDER_STATUS = gql`
-        mutation UpdateOrderStatus(
-          $id: uuid!
-          $status: String!
-          $updated_at: timestamptz!
-        ) {
+        mutation UpdateOrderStatus($id: uuid!, $status: String!, $updated_at: timestamptz!) {
           update_Orders_by_pk(
             pk_columns: { id: $id }
             _set: { status: $status, updated_at: $updated_at }
@@ -477,11 +439,7 @@ export default async function handler(
         }
       `;
       const UPDATE_REEL_ORDER_STATUS = gql`
-        mutation UpdateReelOrderStatus(
-          $id: uuid!
-          $status: String!
-          $updated_at: timestamptz!
-        ) {
+        mutation UpdateReelOrderStatus($id: uuid!, $status: String!, $updated_at: timestamptz!) {
           update_reel_orders_by_pk(
             pk_columns: { id: $id }
             _set: { status: $status, updated_at: $updated_at }
@@ -510,10 +468,7 @@ export default async function handler(
       `;
       const UPDATE_BUSINESS_ORDER_STATUS = gql`
         mutation UpdateBusinessOrderStatus($id: uuid!, $status: String!) {
-          update_businessProductOrders_by_pk(
-            pk_columns: { id: $id }
-            _set: { status: $status }
-          ) {
+          update_businessProductOrders_by_pk(pk_columns: { id: $id }, _set: { status: $status }) {
             id
             status
           }
@@ -521,33 +476,24 @@ export default async function handler(
       `;
 
       if (isReelOrder) {
-        const result = await hasuraClient.request<any>(
-          UPDATE_REEL_ORDER_STATUS,
-          {
-            id: orderId,
-            status,
-            updated_at: currentTimestamp,
-          }
-        );
+        const result = await hasuraClient.request<any>(UPDATE_REEL_ORDER_STATUS, {
+          id: orderId,
+          status,
+          updated_at: currentTimestamp,
+        });
         updatedOrders = [result.update_reel_orders_by_pk];
       } else if (isRestaurantOrder) {
-        const result = await hasuraClient.request<any>(
-          UPDATE_RESTAURANT_ORDER_STATUS,
-          {
-            id: orderId,
-            status,
-            updated_at: currentTimestamp,
-          }
-        );
+        const result = await hasuraClient.request<any>(UPDATE_RESTAURANT_ORDER_STATUS, {
+          id: orderId,
+          status,
+          updated_at: currentTimestamp,
+        });
         updatedOrders = [result.update_restaurant_orders_by_pk];
       } else if (isBusinessOrder) {
-        const result = await hasuraClient.request<any>(
-          UPDATE_BUSINESS_ORDER_STATUS,
-          {
-            id: orderId,
-            status,
-          }
-        );
+        const result = await hasuraClient.request<any>(UPDATE_BUSINESS_ORDER_STATUS, {
+          id: orderId,
+          status,
+        });
         updatedOrders = [result.update_businessProductOrders_by_pk];
       } else {
         const result = await hasuraClient.request<any>(UPDATE_ORDER_STATUS, {
@@ -569,9 +515,7 @@ export default async function handler(
       const updatePromises = [];
 
       if (!isRestaurantOrder) {
-        updatePromises.push(
-          hasuraClient.request(UPDATE_COMBINED_ORDERS, { ...variables, shopId })
-        );
+        updatePromises.push(hasuraClient.request(UPDATE_COMBINED_ORDERS, { ...variables, shopId }));
       }
       if (isReelOrder) {
         if (shopId) {
@@ -616,11 +560,7 @@ export default async function handler(
     } else {
       // Single order update (no combined orders)
       const UPDATE_ORDER_STATUS = gql`
-        mutation UpdateOrderStatus(
-          $id: uuid!
-          $status: String!
-          $updated_at: timestamptz!
-        ) {
+        mutation UpdateOrderStatus($id: uuid!, $status: String!, $updated_at: timestamptz!) {
           update_Orders_by_pk(
             pk_columns: { id: $id }
             _set: { status: $status, updated_at: $updated_at }
@@ -632,11 +572,7 @@ export default async function handler(
         }
       `;
       const UPDATE_REEL_ORDER_STATUS = gql`
-        mutation UpdateReelOrderStatus(
-          $id: uuid!
-          $status: String!
-          $updated_at: timestamptz!
-        ) {
+        mutation UpdateReelOrderStatus($id: uuid!, $status: String!, $updated_at: timestamptz!) {
           update_reel_orders_by_pk(
             pk_columns: { id: $id }
             _set: { status: $status, updated_at: $updated_at }
@@ -665,10 +601,7 @@ export default async function handler(
       `;
       const UPDATE_BUSINESS_ORDER_STATUS_SINGLE = gql`
         mutation UpdateBusinessOrderStatusSingle($id: uuid!, $status: String!) {
-          update_businessProductOrders_by_pk(
-            pk_columns: { id: $id }
-            _set: { status: $status }
-          ) {
+          update_businessProductOrders_by_pk(pk_columns: { id: $id }, _set: { status: $status }) {
             id
             status
           }
@@ -676,33 +609,24 @@ export default async function handler(
       `;
 
       if (isReelOrder) {
-        const result = await hasuraClient.request<any>(
-          UPDATE_REEL_ORDER_STATUS,
-          {
-            id: orderId,
-            status,
-            updated_at: currentTimestamp,
-          }
-        );
+        const result = await hasuraClient.request<any>(UPDATE_REEL_ORDER_STATUS, {
+          id: orderId,
+          status,
+          updated_at: currentTimestamp,
+        });
         updatedOrders = [result.update_reel_orders_by_pk];
       } else if (isRestaurantOrder) {
-        const result = await hasuraClient.request<any>(
-          UPDATE_RESTAURANT_ORDER_STATUS,
-          {
-            id: orderId,
-            status,
-            updated_at: currentTimestamp,
-          }
-        );
+        const result = await hasuraClient.request<any>(UPDATE_RESTAURANT_ORDER_STATUS, {
+          id: orderId,
+          status,
+          updated_at: currentTimestamp,
+        });
         updatedOrders = [result.update_restaurant_orders_by_pk];
       } else if (isBusinessOrder) {
-        const result = await hasuraClient.request<any>(
-          UPDATE_BUSINESS_ORDER_STATUS_SINGLE,
-          {
-            id: orderId,
-            status,
-          }
-        );
+        const result = await hasuraClient.request<any>(UPDATE_BUSINESS_ORDER_STATUS_SINGLE, {
+          id: orderId,
+          status,
+        });
         updatedOrders = [result.update_businessProductOrders_by_pk];
       } else {
         const result = await hasuraClient.request<any>(UPDATE_ORDER_STATUS, {
@@ -717,8 +641,7 @@ export default async function handler(
     // Business order pickup (on_the_way): credit business wallet and record transaction
     // business_wallet is keyed by business_id; store belongs to business, so we use store.business_id
     const businessIdFromStore =
-      orderDetails?.store?.business_id ??
-      (orderDetails as any)?.business_store?.business_id;
+      orderDetails?.store?.business_id ?? (orderDetails as any)?.business_store?.business_id;
 
     let businessOrderPickup: {
       walletUpdated: boolean;
@@ -726,40 +649,33 @@ export default async function handler(
       message?: string;
     } | null = null;
 
-    console.log("[updateOrderStatus] BUSINESS ORDER PICKUP – check:", {
+    console.log('[updateOrderStatus] BUSINESS ORDER PICKUP – check:', {
       status,
       isBusinessOrder,
       orderId,
       orderDetailsTotal: orderDetails?.total,
       businessIdFromStore,
       willEnterWalletBlock:
-        status === "on_the_way" &&
+        status === 'on_the_way' &&
         isBusinessOrder &&
         orderDetails?.total != null &&
         !!businessIdFromStore,
     });
 
     if (
-      status === "on_the_way" &&
+      status === 'on_the_way' &&
       isBusinessOrder &&
       orderDetails?.total != null &&
       businessIdFromStore
     ) {
       try {
         const totalNum = parseFloat(String(orderDetails.total));
-        const serviceFeeNum = parseFloat(
-          String(orderDetails.service_fee || "0")
-        );
-        const transportFeeNum = parseFloat(
-          String(orderDetails.transportation_fee || "0")
-        );
-        const itemAmount = Math.max(
-          0,
-          totalNum - serviceFeeNum - transportFeeNum
-        );
+        const serviceFeeNum = parseFloat(String(orderDetails.service_fee || '0'));
+        const transportFeeNum = parseFloat(String(orderDetails.transportation_fee || '0'));
+        const itemAmount = Math.max(0, totalNum - serviceFeeNum - transportFeeNum);
         const businessId = businessIdFromStore;
 
-        console.log("[updateOrderStatus] BUSINESS ORDER PICKUP – amounts:", {
+        console.log('[updateOrderStatus] BUSINESS ORDER PICKUP – amounts:', {
           totalNum,
           serviceFeeNum,
           transportFeeNum,
@@ -779,39 +695,30 @@ export default async function handler(
           business_wallet: Array<{ id: string; amount: string }>;
         }>(GET_BUSINESS_WALLET, { business_id: businessId });
 
-        console.log(
-          "[updateOrderStatus] BUSINESS ORDER PICKUP – wallet lookup:",
-          {
-            business_id: businessId,
-            walletCount: walletResult.business_wallet?.length ?? 0,
-            wallet: walletResult.business_wallet?.[0]
-              ? {
-                  id: walletResult.business_wallet[0].id,
-                  amount: walletResult.business_wallet[0].amount,
-                }
-              : null,
-          }
-        );
+        console.log('[updateOrderStatus] BUSINESS ORDER PICKUP – wallet lookup:', {
+          business_id: businessId,
+          walletCount: walletResult.business_wallet?.length ?? 0,
+          wallet: walletResult.business_wallet?.[0]
+            ? {
+                id: walletResult.business_wallet[0].id,
+                amount: walletResult.business_wallet[0].amount,
+              }
+            : null,
+        });
 
-        if (
-          walletResult.business_wallet &&
-          walletResult.business_wallet.length > 0
-        ) {
+        if (walletResult.business_wallet && walletResult.business_wallet.length > 0) {
           const wallet = walletResult.business_wallet[0];
-          const currentAmount = parseFloat(wallet.amount || "0");
+          const currentAmount = parseFloat(wallet.amount || '0');
           const newAmount = (currentAmount + itemAmount).toFixed(2);
           const updatedAt = new Date().toISOString();
 
-          console.log(
-            "[updateOrderStatus] BUSINESS ORDER PICKUP – updating wallet:",
-            {
-              wallet_id: wallet.id,
-              currentAmount,
-              itemAmount,
-              newAmount,
-              business_id: businessId,
-            }
-          );
+          console.log('[updateOrderStatus] BUSINESS ORDER PICKUP – updating wallet:', {
+            wallet_id: wallet.id,
+            currentAmount,
+            itemAmount,
+            newAmount,
+            business_id: businessId,
+          });
 
           const UPDATE_BUSINESS_WALLET = gql`
             mutation UpdateBusinessWallet(
@@ -835,13 +742,9 @@ export default async function handler(
             business_id: businessId,
           });
 
-          console.log(
-            "[updateOrderStatus] BUSINESS ORDER PICKUP – wallet updated in DB:",
-            {
-              affected_rows:
-                updateWalletResult.update_business_wallet?.affected_rows,
-            }
-          );
+          console.log('[updateOrderStatus] BUSINESS ORDER PICKUP – wallet updated in DB:', {
+            affected_rows: updateWalletResult.update_business_wallet?.affected_rows,
+          });
 
           const products: Array<{
             name?: string;
@@ -849,26 +752,25 @@ export default async function handler(
             unit?: string;
           }> = Array.isArray(orderDetails.allProducts)
             ? orderDetails.allProducts
-            : typeof orderDetails.allProducts === "string"
-            ? (() => {
-                try {
-                  const parsed = JSON.parse(orderDetails.allProducts);
-                  return Array.isArray(parsed) ? parsed : [];
-                } catch {
-                  return [];
-                }
-              })()
-            : [];
+            : typeof orderDetails.allProducts === 'string'
+              ? (() => {
+                  try {
+                    const parsed = JSON.parse(orderDetails.allProducts);
+                    return Array.isArray(parsed) ? parsed : [];
+                  } catch {
+                    return [];
+                  }
+                })()
+              : [];
           const itemLines = products.map(
             (p: { name?: string; quantity?: number; unit?: string }) => {
-              const name = p.name ?? "Item";
+              const name = p.name ?? 'Item';
               const qty = p.quantity ?? 0;
-              const unit = p.unit ? ` ${p.unit}` : "";
+              const unit = p.unit ? ` ${p.unit}` : '';
               return `${name} × ${qty}${unit}`;
             }
           );
-          const itemsDescription =
-            itemLines.length > 0 ? itemLines.join("; ") : "Order items";
+          const itemsDescription = itemLines.length > 0 ? itemLines.join('; ') : 'Order items';
           const description = `${itemsDescription} | Amount credited to wallet: ${Number(
             itemAmount
           ).toLocaleString()}`;
@@ -899,58 +801,48 @@ export default async function handler(
           const insertTxResult = await hasuraClient.request<{
             insert_businessTransactions: { affected_rows: number };
           }>(INSERT_BUSINESS_TRANSACTION, {
-            action: "credit",
-            type: "order_item_amount",
+            action: 'credit',
+            type: 'order_item_amount',
             related_order: orderId,
             wallet_id: wallet.id,
-            status: "completed",
+            status: 'completed',
             description,
           });
 
-          console.log(
-            "[updateOrderStatus] BUSINESS ORDER PICKUP – transaction inserted in DB:",
-            {
-              affected_rows:
-                insertTxResult.insert_businessTransactions?.affected_rows,
-            }
-          );
+          console.log('[updateOrderStatus] BUSINESS ORDER PICKUP – transaction inserted in DB:', {
+            affected_rows: insertTxResult.insert_businessTransactions?.affected_rows,
+          });
 
           businessOrderPickup = {
-            walletUpdated:
-              (updateWalletResult.update_business_wallet?.affected_rows ?? 0) >
-              0,
+            walletUpdated: (updateWalletResult.update_business_wallet?.affected_rows ?? 0) > 0,
             transactionInserted:
-              (insertTxResult.insert_businessTransactions?.affected_rows ?? 0) >
-              0,
+              (insertTxResult.insert_businessTransactions?.affected_rows ?? 0) > 0,
           };
         } else {
           console.log(
-            "[updateOrderStatus] BUSINESS ORDER PICKUP – no business_wallet row found for business_id, skipping wallet/transaction update"
+            '[updateOrderStatus] BUSINESS ORDER PICKUP – no business_wallet row found for business_id, skipping wallet/transaction update'
           );
           businessOrderPickup = {
             walletUpdated: false,
             transactionInserted: false,
-            message: "No business_wallet row found for business_id",
+            message: 'No business_wallet row found for business_id',
           };
         }
       } catch (businessWalletError) {
-        console.error(
-          "Error updating business wallet / transaction:",
-          businessWalletError
-        );
+        console.error('Error updating business wallet / transaction:', businessWalletError);
         businessOrderPickup = {
           walletUpdated: false,
           transactionInserted: false,
           message:
             businessWalletError instanceof Error
               ? businessWalletError.message
-              : "Wallet/transaction update failed",
+              : 'Wallet/transaction update failed',
         };
         // Don't fail the status update; wallet/transaction can be reconciled later
       }
-    } else if (status === "on_the_way" && isBusinessOrder) {
+    } else if (status === 'on_the_way' && isBusinessOrder) {
       console.log(
-        "[updateOrderStatus] BUSINESS ORDER PICKUP – skipped (missing total or business_id):",
+        '[updateOrderStatus] BUSINESS ORDER PICKUP – skipped (missing total or business_id):',
         {
           hasTotal: orderDetails?.total != null,
           hasBusinessId: !!businessIdFromStore,
@@ -959,37 +851,35 @@ export default async function handler(
       businessOrderPickup = {
         walletUpdated: false,
         transactionInserted: false,
-        message: !businessIdFromStore
-          ? "Missing business_id from store"
-          : "Missing order total",
+        message: !businessIdFromStore ? 'Missing business_id from store' : 'Missing order total',
       };
     }
 
     // Handle cancelled status - process wallet operations directly
-    if (status === "cancelled") {
+    if (status === 'cancelled') {
       try {
         await processWalletOperation(
           userId,
           orderId,
-          "cancelled",
+          'cancelled',
           isReelOrder,
           isRestaurantOrder,
           false,
           req
         );
       } catch (walletError) {
-        console.error("Error processing wallet operation:", walletError);
+        console.error('Error processing wallet operation:', walletError);
         return res.status(500).json({
           error:
             walletError instanceof Error
               ? walletError.message
-              : "Failed to process wallet operation",
+              : 'Failed to process wallet operation',
         });
       }
     }
 
     // Clean up order offers when orders are delivered
-    if (status === "delivered" && updatedOrders.length > 0) {
+    if (status === 'delivered' && updatedOrders.length > 0) {
       try {
         const orderIdsToClean = updatedOrders.map((order: any) => order.id);
         await hasuraClient.request(DELETE_ORDER_OFFERS, {
@@ -997,7 +887,7 @@ export default async function handler(
         });
       } catch (cleanupError) {
         // Log the error but don't fail the entire operation
-        console.error("Error cleaning up order offers:", cleanupError);
+        console.error('Error cleaning up order offers:', cleanupError);
       }
     }
 
@@ -1014,12 +904,9 @@ export default async function handler(
     }
     return res.status(200).json(responsePayload);
   } catch (error) {
-    console.error("Error updating order status:", error);
+    console.error('Error updating order status:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to update order status",
+      error: error instanceof Error ? error.message : 'Failed to update order status',
     });
   }
 }

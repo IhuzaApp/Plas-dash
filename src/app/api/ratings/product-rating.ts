@@ -1,8 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 const INSERT_PRODUCT_RATING = gql`
   mutation InsertProductRating(
@@ -26,42 +26,39 @@ const INSERT_PRODUCT_RATING = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const session = await getServerSession(req, res, authOptions as any);
     if (!session?.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { product_id, ratings, comment, feedback } = req.body;
     if (!product_id) {
-      return res.status(400).json({ error: "product_id is required" });
+      return res.status(400).json({ error: 'product_id is required' });
     }
 
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Server not configured" });
+      return res.status(500).json({ error: 'Server not configured' });
     }
 
     const result = await hasuraClient.request(INSERT_PRODUCT_RATING, {
       product_id,
       user_id: session.user.id,
-      ratings: ratings?.toString() ?? "",
-      comment: comment ?? "",
-      feedback: feedback ?? "",
+      ratings: ratings?.toString() ?? '',
+      comment: comment ?? '',
+      feedback: feedback ?? '',
     });
 
     return res.status(201).json({ success: true, ...result });
   } catch (error: any) {
-    console.error("[product-rating] Error:", error);
+    console.error('[product-rating] Error:', error);
     return res.status(500).json({
-      error: "Failed to submit rating",
+      error: 'Failed to submit rating',
       details: error.message,
     });
   }

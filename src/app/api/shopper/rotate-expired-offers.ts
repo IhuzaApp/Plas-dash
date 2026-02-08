@@ -1,8 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { logger } from "../../../src/utils/logger";
-import { sendNewOrderNotification } from "../../../src/services/fcmService";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { logger } from '../../../src/utils/logger';
+import { sendNewOrderNotification } from '../../../src/services/fcmService';
 
 // ============================================================================
 // OFFER EXPIRATION AND ROTATION
@@ -25,12 +25,7 @@ const OFFER_DURATION_MS = 60000; // 60 seconds
 const GET_EXPIRED_OFFERS = gql`
   query GetExpiredOffers {
     order_offers(
-      where: {
-        _and: [
-          { status: { _eq: "OFFERED" } }
-          { expires_at: { _lte: "now()" } }
-        ]
-      }
+      where: { _and: [{ status: { _eq: "OFFERED" } }, { expires_at: { _lte: "now()" } }] }
     ) {
       id
       order_id
@@ -118,9 +113,7 @@ const GET_REEL_ORDER_DETAILS = gql`
 
 const GET_RESTAURANT_ORDER_DETAILS = gql`
   query GetRestaurantOrderDetails($orderId: uuid!) {
-    restaurant_orders(
-      where: { id: { _eq: $orderId }, status: { _eq: "PENDING" } }
-    ) {
+    restaurant_orders(where: { id: { _eq: $orderId }, status: { _eq: "PENDING" } }) {
       id
       created_at
       delivery_fee
@@ -181,20 +174,13 @@ const GET_AVAILABLE_SHOPPERS = gql`
       longitude
       full_name
       phone_number
-      Orders_aggregate(
-        where: { status: { _in: ["accepted", "in_progress", "picked_up"] } }
-      ) {
+      Orders_aggregate(where: { status: { _in: ["accepted", "in_progress", "picked_up"] } }) {
         aggregate {
           count
         }
       }
       orderOffers_aggregate(
-        where: {
-          _and: [
-            { status: { _eq: "OFFERED" } }
-            { expires_at: { _gt: "now()" } }
-          ]
-        }
+        where: { _and: [{ status: { _eq: "OFFERED" } }, { expires_at: { _gt: "now()" } }] }
       ) {
         aggregate {
           count
@@ -259,12 +245,7 @@ const CREATE_ORDER_OFFER = gql`
 `;
 
 // Haversine formula to calculate distance in kilometers
-function calculateDistanceKm(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Radius of the Earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
@@ -300,8 +281,7 @@ function calculateShopperPriority(
   // Get performance metrics
   const avgRating = performance.Ratings_aggregate?.aggregate?.avg?.rating || 0;
   const orderCount = performance.Orders_aggregate?.aggregate?.count || 0;
-  const completionRate =
-    orderCount > 0 ? Math.min(100, (orderCount / 10) * 100) : 0;
+  const completionRate = orderCount > 0 ? Math.min(100, (orderCount / 10) * 100) : 0;
 
   // Calculate order age in minutes
   const orderTimestamp = new Date(order.created_at).getTime();
@@ -331,66 +311,58 @@ function calculateShopperPriority(
 }
 
 // Get order details based on type
-async function getOrderDetails(
-  orderId: string,
-  orderType: string
-): Promise<any> {
+async function getOrderDetails(orderId: string, orderType: string): Promise<any> {
   let orderData;
 
-  if (orderType === "regular") {
+  if (orderType === 'regular') {
     orderData = (await hasuraClient.request(GET_ORDER_DETAILS, {
       orderId,
     })) as any;
     const order = orderData.Orders?.[0];
-    return order ? { ...order, orderType: "regular" } : null;
-  } else if (orderType === "reel") {
+    return order ? { ...order, orderType: 'regular' } : null;
+  } else if (orderType === 'reel') {
     orderData = (await hasuraClient.request(GET_REEL_ORDER_DETAILS, {
       orderId,
     })) as any;
     const order = orderData.reel_orders?.[0];
-    return order ? { ...order, orderType: "reel" } : null;
-  } else if (orderType === "restaurant") {
+    return order ? { ...order, orderType: 'reel' } : null;
+  } else if (orderType === 'restaurant') {
     orderData = (await hasuraClient.request(GET_RESTAURANT_ORDER_DETAILS, {
       orderId,
     })) as any;
     const order = orderData.restaurant_orders?.[0];
-    return order ? { ...order, orderType: "restaurant" } : null;
+    return order ? { ...order, orderType: 'restaurant' } : null;
   }
 
   return null;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  console.log("=== Rotating Expired Offers ===");
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('=== Rotating Expired Offers ===');
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // ========================================================================
     // STEP 1: Find all expired offers
     // ========================================================================
 
-    console.log("Finding expired offers...");
-    const expiredOffersData = (await hasuraClient.request(
-      GET_EXPIRED_OFFERS
-    )) as any;
+    console.log('Finding expired offers...');
+    const expiredOffersData = (await hasuraClient.request(GET_EXPIRED_OFFERS)) as any;
 
     const expiredOffers = expiredOffersData.order_offers || [];
 
     if (expiredOffers.length === 0) {
-      console.log("No expired offers found");
+      console.log('No expired offers found');
       return res.status(200).json({
         success: true,
-        message: "No expired offers to rotate",
+        message: 'No expired offers to rotate',
         rotatedCount: 0,
       });
     }
@@ -416,42 +388,33 @@ export default async function handler(
 
         // Get order details
         const orderId =
-          expiredOffer.order_id ||
-          expiredOffer.reel_order_id ||
-          expiredOffer.restaurant_order_id;
+          expiredOffer.order_id || expiredOffer.reel_order_id || expiredOffer.restaurant_order_id;
 
         if (!orderId) {
-          console.error("No order ID found for expired offer");
+          console.error('No order ID found for expired offer');
           continue;
         }
 
         const order = await getOrderDetails(orderId, expiredOffer.order_type);
 
         if (!order) {
-          console.log(
-            `Order ${orderId} is no longer available (might have been accepted)`
-          );
+          console.log(`Order ${orderId} is no longer available (might have been accepted)`);
           continue;
         }
 
         // Get shoppers who have already been offered this order
-        const offeredShoppersData = (await hasuraClient.request(
-          GET_SHOPPERS_ALREADY_OFFERED,
-          { orderId }
-        )) as any;
+        const offeredShoppersData = (await hasuraClient.request(GET_SHOPPERS_ALREADY_OFFERED, {
+          orderId,
+        })) as any;
 
         const offeredShopperIds = new Set(
           offeredShoppersData.order_offers.map((o: any) => o.shopper_id)
         );
 
-        console.log(
-          `${offeredShopperIds.size} shoppers have already been offered this order`
-        );
+        console.log(`${offeredShopperIds.size} shoppers have already been offered this order`);
 
         // Get all available shoppers
-        const availableShoppersData = (await hasuraClient.request(
-          GET_AVAILABLE_SHOPPERS
-        )) as any;
+        const availableShoppersData = (await hasuraClient.request(GET_AVAILABLE_SHOPPERS)) as any;
 
         const availableShoppers = availableShoppersData.Shoppers || [];
 
@@ -461,10 +424,8 @@ export default async function handler(
         // 3. Already have an active pending offer (one offer at a time rule)
         const eligibleShoppers = availableShoppers.filter((shopper: any) => {
           const alreadyOffered = offeredShopperIds.has(shopper.id);
-          const activeOrderCount =
-            shopper.Orders_aggregate?.aggregate?.count || 0;
-          const activeOfferCount =
-            shopper.orderOffers_aggregate?.aggregate?.count || 0;
+          const activeOrderCount = shopper.Orders_aggregate?.aggregate?.count || 0;
+          const activeOfferCount = shopper.orderOffers_aggregate?.aggregate?.count || 0;
 
           if (alreadyOffered) return false;
 
@@ -476,9 +437,7 @@ export default async function handler(
           }
 
           if (activeOfferCount > 0) {
-            console.log(
-              `⏭️ Skipping shopper ${shopper.full_name}: Already has a pending offer`
-            );
+            console.log(`⏭️ Skipping shopper ${shopper.full_name}: Already has a pending offer`);
             return false;
           }
 
@@ -486,25 +445,18 @@ export default async function handler(
         });
 
         if (eligibleShoppers.length === 0) {
-          console.log(
-            `⚠️ No more shoppers to rotate for order ${orderId} - all have been offered`
-          );
+          console.log(`⚠️ No more shoppers to rotate for order ${orderId} - all have been offered`);
           continue;
         }
 
-        console.log(
-          `Found ${eligibleShoppers.length} eligible shoppers for rotation`
-        );
+        console.log(`Found ${eligibleShoppers.length} eligible shoppers for rotation`);
 
         // Calculate priority for each shopper
         const shoppersWithPriority = await Promise.all(
           eligibleShoppers.map(async (shopper: any) => {
-            const performance = (await hasuraClient.request(
-              GET_SHOPPER_PERFORMANCE,
-              {
-                shopper_id: shopper.id,
-              }
-            )) as any;
+            const performance = (await hasuraClient.request(GET_SHOPPER_PERFORMANCE, {
+              shopper_id: shopper.id,
+            })) as any;
 
             const priority = calculateShopperPriority(
               {
@@ -530,9 +482,7 @@ export default async function handler(
         // Create new offer for next shopper
         const now = new Date();
         const offeredAt = now.toISOString();
-        const expiresAt = new Date(
-          now.getTime() + OFFER_DURATION_MS
-        ).toISOString();
+        const expiresAt = new Date(now.getTime() + OFFER_DURATION_MS).toISOString();
         const nextRound = expiredOffer.round_number + 1;
 
         const offerVariables: any = {
@@ -548,11 +498,11 @@ export default async function handler(
         };
 
         // Set only the relevant order ID based on type
-        if (expiredOffer.order_type === "regular") {
+        if (expiredOffer.order_type === 'regular') {
           offerVariables.order_id = orderId;
-        } else if (expiredOffer.order_type === "reel") {
+        } else if (expiredOffer.order_type === 'reel') {
           offerVariables.reel_order_id = orderId;
-        } else if (expiredOffer.order_type === "restaurant") {
+        } else if (expiredOffer.order_type === 'restaurant') {
           offerVariables.restaurant_order_id = orderId;
         }
 
@@ -575,18 +525,14 @@ export default async function handler(
           );
 
           const estimatedEarnings =
-            expiredOffer.order_type === "restaurant"
-              ? parseFloat(order.delivery_fee || "0")
-              : parseFloat(order.service_fee || "0") +
-                parseFloat(order.delivery_fee || "0");
+            expiredOffer.order_type === 'restaurant'
+              ? parseFloat(order.delivery_fee || '0')
+              : parseFloat(order.service_fee || '0') + parseFloat(order.delivery_fee || '0');
 
           await sendNewOrderNotification(nextShopper.id, {
             id: orderId,
             shopName:
-              order.Shop?.name ||
-              order.Reel?.title ||
-              order.Restaurant?.name ||
-              "Unknown Shop",
+              order.Shop?.name || order.Reel?.title || order.Restaurant?.name || 'Unknown Shop',
             customerAddress: `${
               order.Address?.street || order.address?.street
             }, ${order.Address?.city || order.address?.city}`,
@@ -600,7 +546,7 @@ export default async function handler(
 
           console.log(`✅ FCM notification sent to ${nextShopper.full_name}`);
         } catch (fcmError) {
-          console.error("Failed to send FCM notification:", fcmError);
+          console.error('Failed to send FCM notification:', fcmError);
           // Continue even if notification fails
         }
 
@@ -629,15 +575,15 @@ export default async function handler(
       results: rotationResults,
     });
   } catch (error) {
-    console.error("Error rotating expired offers:", error);
-    logger.error("Error in offer rotation", "OfferRotationAPI", {
+    console.error('Error rotating expired offers:', error);
+    logger.error('Error in offer rotation', 'OfferRotationAPI', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
 
     return res.status(500).json({
-      error: "Failed to rotate expired offers",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to rotate expired offers',
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

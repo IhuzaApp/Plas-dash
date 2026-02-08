@@ -66,9 +66,9 @@ interface EditProductDialogProps {
     id: string;
     productName_id: string;
     ProductName?: {
-    id: string;
-    name: string;
-    description?: string;
+      id: string;
+      name: string;
+      description?: string;
       barcode?: string;
       sku?: string;
       image?: string;

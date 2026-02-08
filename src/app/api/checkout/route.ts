@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]";
-import { hasuraClient } from "@/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { notifyNewOrderToSlack } from "@/lib/slackOrderNotifier";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { hasuraClient } from '@/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { notifyNewOrderToSlack } from '@/lib/slackOrderNotifier';
 
 interface CartItem {
   product_id: string;
@@ -20,11 +20,7 @@ interface Cart {
 const GET_CART_WITH_ITEMS = gql`
   query GetCartWithItems($user_id: uuid!, $shop_id: uuid!) {
     Carts(
-      where: {
-        user_id: { _eq: $user_id }
-        shop_id: { _eq: $shop_id }
-        is_active: { _eq: true }
-      }
+      where: { user_id: { _eq: $user_id }, shop_id: { _eq: $shop_id }, is_active: { _eq: true } }
       limit: 1
     ) {
       id
@@ -55,7 +51,9 @@ const GET_PRODUCTS_BY_IDS = gql`
 `;
 
 function generateOrderPin(): string {
-  return Math.floor(Math.random() * 100).toString().padStart(2, "0");
+  return Math.floor(Math.random() * 100)
+    .toString()
+    .padStart(2, '0');
 }
 
 const GET_ADDRESS_AND_USER = gql`
@@ -139,7 +137,7 @@ const DELETE_CART = gql`
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const user_id = session.user.id;
   const body = await request.json();
@@ -153,45 +151,30 @@ export async function POST(request: Request) {
     delivery_time,
     delivery_notes,
   } = body;
-  if (
-    !shop_id ||
-    !delivery_address_id ||
-    !service_fee ||
-    !delivery_fee ||
-    !delivery_time
-  ) {
-    return NextResponse.json(
-      { error: "Missing required checkout fields" },
-      { status: 400 }
-    );
+  if (!shop_id || !delivery_address_id || !service_fee || !delivery_fee || !delivery_time) {
+    return NextResponse.json({ error: 'Missing required checkout fields' }, { status: 400 });
   }
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
-    const cartData = await hasuraClient.request<{ Carts: Cart[] }>(
-      GET_CART_WITH_ITEMS,
-      { user_id, shop_id }
-    );
+    const cartData = await hasuraClient.request<{ Carts: Cart[] }>(GET_CART_WITH_ITEMS, {
+      user_id,
+      shop_id,
+    });
     const cart = cartData.Carts[0];
     if (!cart) {
-      return NextResponse.json(
-        { error: "No active cart found for this shop." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No active cart found for this shop.' }, { status: 400 });
     }
     const items = cart.Cart_Items;
     if (items.length === 0) {
-      return NextResponse.json(
-        { error: "Your cart is empty." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Your cart is empty.' }, { status: 400 });
     }
-    const productIds = items.map((i) => i.product_id);
+    const productIds = items.map(i => i.product_id);
     const prodData = await hasuraClient.request<{
       Products: Array<{ id: string; quantity: number }>;
     }>(GET_PRODUCTS_BY_IDS, { ids: productIds });
-    const stockMap = new Map(prodData.Products.map((p) => [p.id, p.quantity]));
+    const stockMap = new Map(prodData.Products.map(p => [p.id, p.quantity]));
     for (const item of items) {
       const available = stockMap.get(item.product_id);
       if (available === undefined) {
@@ -221,7 +204,7 @@ export async function POST(request: Request) {
       shop_id,
       delivery_address_id,
       total: actualTotal.toFixed(2),
-      status: "PENDING",
+      status: 'PENDING',
       service_fee,
       delivery_fee,
       discount: discount ?? null,
@@ -231,7 +214,7 @@ export async function POST(request: Request) {
       pin: orderPin,
     });
     const orderId = orderRes.insert_Orders_one.id;
-    const orderItems = items.map((i) => ({
+    const orderItems = items.map(i => ({
       order_id: orderId,
       product_id: i.product_id,
       quantity: i.quantity,
@@ -241,9 +224,7 @@ export async function POST(request: Request) {
     await hasuraClient.request(DELETE_CART_ITEMS, { cart_id: cart.id });
     await hasuraClient.request(DELETE_CART, { cart_id: cart.id });
     const orderTotal =
-      actualTotal +
-      parseFloat(service_fee || "0") +
-      parseFloat(delivery_fee || "0");
+      actualTotal + parseFloat(service_fee || '0') + parseFloat(delivery_fee || '0');
     const units = items.reduce((sum, i) => sum + i.quantity, 0);
     const orderID = orderRes.insert_Orders_one.OrderID;
     const storeName = cart.Shop?.name;
@@ -265,9 +246,7 @@ export async function POST(request: Request) {
       }>(GET_ADDRESS_AND_USER, { address_id: delivery_address_id });
       if (aux.Addresses_by_pk) {
         const a = aux.Addresses_by_pk;
-        customerAddress = [a.street, a.city, a.postal_code]
-          .filter(Boolean)
-          .join(", ");
+        customerAddress = [a.street, a.city, a.postal_code].filter(Boolean).join(', ');
         customerName = a.User?.name ?? undefined;
         customerPhone = a.User?.phone ?? undefined;
       }
@@ -278,7 +257,7 @@ export async function POST(request: Request) {
       id: orderId,
       orderID: orderID ?? orderId,
       total: orderTotal,
-      orderType: "regular",
+      orderType: 'regular',
       storeName,
       units,
       customerName,
@@ -294,10 +273,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (err: any) {
-    console.error("Checkout error:", err);
-    return NextResponse.json(
-      { error: err?.message || "Checkout failed" },
-      { status: 500 }
-    );
+    console.error('Checkout error:', err);
+    return NextResponse.json({ error: err?.message || 'Checkout failed' }, { status: 500 });
   }
 }

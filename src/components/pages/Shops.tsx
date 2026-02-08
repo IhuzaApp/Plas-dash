@@ -375,7 +375,7 @@ const Shops = () => {
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                                      <span>{(order.Order_Items?.length ?? 0)} items</span>
+                                      <span>{order.Order_Items?.length ?? 0} items</span>
                                     </div>
                                   </div>
 
@@ -391,8 +391,8 @@ const Shops = () => {
                                             className="flex justify-between text-xs"
                                           >
                                             <span>
-                                              {item.Product?.name ?? 'Unknown Product'}{' '}
-                                              x{item.quantity}
+                                              {item.Product?.name ?? 'Unknown Product'} x
+                                              {item.quantity}
                                             </span>
                                             <span>{formatCurrency(item.price)}</span>
                                           </div>

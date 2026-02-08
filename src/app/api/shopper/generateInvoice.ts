@@ -1,16 +1,13 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { generateInvoice } from "../../../src/lib/walletTransactions";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { generateInvoice } from '../../../src/lib/walletTransactions';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
@@ -19,14 +16,14 @@ export default async function handler(
   const userId = (session as any)?.user?.id;
 
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const { orderId } = req.query;
 
-  if (!orderId || typeof orderId !== "string") {
+  if (!orderId || typeof orderId !== 'string') {
     return res.status(400).json({
-      error: "Missing required parameter: orderId",
+      error: 'Missing required parameter: orderId',
     });
   }
 
@@ -37,10 +34,7 @@ export default async function handler(
         Orders(
           where: {
             id: { _eq: $orderId }
-            _or: [
-              { user_id: { _eq: $userId } }
-              { shopper_id: { _eq: $userId } }
-            ]
+            _or: [{ user_id: { _eq: $userId } }, { shopper_id: { _eq: $userId } }]
           }
         ) {
           id
@@ -49,7 +43,7 @@ export default async function handler(
     `;
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const accessCheck = await hasuraClient.request<{
@@ -73,10 +67,9 @@ export default async function handler(
       invoice: invoiceData,
     });
   } catch (error) {
-    console.error("Error generating invoice:", error);
+    console.error('Error generating invoice:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : "Failed to generate invoice",
+      error: error instanceof Error ? error.message : 'Failed to generate invoice',
     });
   }
 }

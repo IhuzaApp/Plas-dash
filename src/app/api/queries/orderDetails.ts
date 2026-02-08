@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // GraphQL query to fetch a single order with nested details
 const GET_ORDER_DETAILS = gql`
@@ -126,33 +126,29 @@ const GET_ORDER_DETAILS = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", ["GET"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   const { id } = req.query;
   if (!id || (Array.isArray(id) && id.length === 0)) {
-    return res.status(400).json({ error: "Missing order ID" });
+    return res.status(400).json({ error: 'Missing order ID' });
   }
 
   // Ensure we have a single string ID
   const orderId = Array.isArray(id) ? id[0] : id;
 
   // Validate the UUID format
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(orderId)) {
-    return res.status(400).json({ error: "Invalid order ID format" });
+    return res.status(400).json({ error: 'Invalid order ID format' });
   }
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<{
@@ -278,7 +274,7 @@ export default async function handler(
 
     // Check if order exists
     if (!data.Orders || data.Orders.length === 0) {
-      return res.status(404).json({ error: "Order not found" });
+      return res.status(404).json({ error: 'Order not found' });
     }
 
     const order = data.Orders[0];
@@ -317,10 +313,7 @@ export default async function handler(
           }
           # Count delivered regular orders
           Orders_aggregate(
-            where: {
-              shopper_id: { _eq: $shopperId }
-              status: { _eq: "delivered" }
-            }
+            where: { shopper_id: { _eq: $shopperId }, status: { _eq: "delivered" } }
           ) {
             aggregate {
               count
@@ -328,10 +321,7 @@ export default async function handler(
           }
           # Count delivered reel orders
           reel_orders_aggregate(
-            where: {
-              shopper_id: { _eq: $shopperId }
-              status: { _eq: "delivered" }
-            }
+            where: { shopper_id: { _eq: $shopperId }, status: { _eq: "delivered" } }
           ) {
             aggregate {
               count
@@ -339,10 +329,7 @@ export default async function handler(
           }
           # Count delivered restaurant orders
           restaurant_orders_aggregate(
-            where: {
-              shopper_id: { _eq: $shopperId }
-              status: { _eq: "delivered" }
-            }
+            where: { shopper_id: { _eq: $shopperId }, status: { _eq: "delivered" } }
           ) {
             aggregate {
               count
@@ -373,21 +360,15 @@ export default async function handler(
       // Calculate average rating from all ratings
       const averageRating =
         statsData.Ratings.length > 0
-          ? statsData.Ratings.reduce(
-              (sum, rating) => sum + parseFloat(rating.rating || "0"),
-              0
-            ) / statsData.Ratings.length
+          ? statsData.Ratings.reduce((sum, rating) => sum + parseFloat(rating.rating || '0'), 0) /
+            statsData.Ratings.length
           : 0;
 
       // Count total delivered orders (regular + reel + restaurant)
-      const regularOrdersCount =
-        statsData.Orders_aggregate?.aggregate?.count || 0;
-      const reelOrdersCount =
-        statsData.reel_orders_aggregate?.aggregate?.count || 0;
-      const restaurantOrdersCount =
-        statsData.restaurant_orders_aggregate?.aggregate?.count || 0;
-      const totalDeliveredOrders =
-        regularOrdersCount + reelOrdersCount + restaurantOrdersCount;
+      const regularOrdersCount = statsData.Orders_aggregate?.aggregate?.count || 0;
+      const reelOrdersCount = statsData.reel_orders_aggregate?.aggregate?.count || 0;
+      const restaurantOrdersCount = statsData.restaurant_orders_aggregate?.aggregate?.count || 0;
+      const totalDeliveredOrders = regularOrdersCount + reelOrdersCount + restaurantOrdersCount;
 
       shopperStats = {
         rating: averageRating,
@@ -403,9 +384,9 @@ export default async function handler(
     // Format timestamps to human-readable strings
     const formattedOrder = {
       ...order,
-      placedAt: new Date(order.placedAt).toLocaleString("en-US", {
-        dateStyle: "medium",
-        timeStyle: "short",
+      placedAt: new Date(order.placedAt).toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
       }),
       // Handle case where estimatedDelivery might be null
       estimatedDelivery: order.estimatedDelivery
@@ -421,29 +402,26 @@ export default async function handler(
               recentReviews: shopperStats.recentReviews,
             }
           : order.Shoppers
-          ? {
-              ...order.Shoppers,
-              rating: 0,
-              orders_aggregate: {
-                aggregate: {
-                  count: 0,
+            ? {
+                ...order.Shoppers,
+                rating: 0,
+                orders_aggregate: {
+                  aggregate: {
+                    count: 0,
+                  },
                 },
-              },
-              recentReviews: [],
-            }
-          : null,
+                recentReviews: [],
+              }
+            : null,
     };
 
     res.status(200).json({ order: formattedOrder });
   } catch (error) {
-    console.error("❌ Order Details API Error:", error);
-    console.error(
-      "❌ Error details:",
-      error instanceof Error ? error.message : "Unknown error"
-    );
+    console.error('❌ Order Details API Error:', error);
+    console.error('❌ Error details:', error instanceof Error ? error.message : 'Unknown error');
     res.status(500).json({
-      error: "Failed to fetch order details",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to fetch order details',
+      details: error instanceof Error ? error.message : 'Unknown error',
       fullError: JSON.stringify(error, null, 2),
     });
   }

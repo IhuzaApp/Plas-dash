@@ -1,9 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
-import { gql } from "graphql-request";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { formatCurrency } from "../../../src/lib/formatCurrency";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]';
+import { gql } from 'graphql-request';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { formatCurrency } from '../../../src/lib/formatCurrency';
 
 // GraphQL query to get wallet information
 const GET_WALLET_BY_SHOPPER_ID = gql`
@@ -58,9 +58,7 @@ const UPDATE_WALLET_BALANCES = gql`
 
 // GraphQL mutation to create wallet transactions
 const CREATE_WALLET_TRANSACTIONS = gql`
-  mutation createMultipleWalletTransactions(
-    $transactions: [Wallet_Transactions_insert_input!]!
-  ) {
+  mutation createMultipleWalletTransactions($transactions: [Wallet_Transactions_insert_input!]!) {
     insert_Wallet_Transactions(objects: $transactions) {
       returning {
         id
@@ -136,13 +134,10 @@ interface RefundResponse {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow POST method
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -150,47 +145,36 @@ export default async function handler(
     const session = await getServerSession(req, res, authOptions);
 
     if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const {
-      shopperId,
-      orderId,
-      orderAmount,
-      originalOrderTotal,
-      momoReferenceId,
-      momoSuccess,
-    } = req.body;
+    const { shopperId, orderId, orderAmount, originalOrderTotal, momoReferenceId, momoSuccess } =
+      req.body;
 
     // Validate required fields
     if (!shopperId || !orderId || orderAmount === undefined) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
     // Verify the authenticated user matches the shopperId
     if (session.user.id !== shopperId) {
       return res.status(403).json({
-        error: "Not authorized to record transactions for this shopper",
+        error: 'Not authorized to record transactions for this shopper',
       });
     }
 
     // Check if hasuraClient is available (it should be on server side)
     if (!hasuraClient) {
-      return res.status(500).json({ error: "Database client not available" });
+      return res.status(500).json({ error: 'Database client not available' });
     }
 
     // Get wallet information
-    const walletResponse = await hasuraClient.request<WalletData>(
-      GET_WALLET_BY_SHOPPER_ID,
-      {
-        shopper_id: shopperId,
-      }
-    );
+    const walletResponse = await hasuraClient.request<WalletData>(GET_WALLET_BY_SHOPPER_ID, {
+      shopper_id: shopperId,
+    });
 
     if (!walletResponse.Wallets || walletResponse.Wallets.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "Wallet not found for this shopper" });
+      return res.status(404).json({ error: 'Wallet not found for this shopper' });
     }
 
     const wallet = walletResponse.Wallets[0];
@@ -204,14 +188,10 @@ export default async function handler(
     const formattedOrderAmount = parseFloat(orderAmount.toFixed(2));
 
     console.log(`Available balance: ${wallet.available_balance}`);
-    console.log(
-      `Reserved balance: ${formattedReservedBalance} (raw: ${currentReserved})`
-    );
+    console.log(`Reserved balance: ${formattedReservedBalance} (raw: ${currentReserved})`);
     console.log(`Order amount: ${formattedOrderAmount} (raw: ${orderAmount})`);
     console.log(
-      `Is reserved balance sufficient: ${
-        formattedReservedBalance >= formattedOrderAmount
-      }`
+      `Is reserved balance sufficient: ${formattedReservedBalance >= formattedOrderAmount}`
     );
 
     // Check if the formatted reserved balance is less than the order amount
@@ -230,71 +210,59 @@ export default async function handler(
     let orderData;
     let refundAmount = 0;
     let refundNeeded = false;
-    let refundReason = "";
+    let refundReason = '';
 
     try {
       // Get order details
-      const orderResponse = await hasuraClient.request<OrderDetailsData>(
-        GET_ORDER_DETAILS,
-        { order_id: orderId }
-      );
+      const orderResponse = await hasuraClient.request<OrderDetailsData>(GET_ORDER_DETAILS, {
+        order_id: orderId,
+      });
 
       orderData = orderResponse.Orders_by_pk;
 
       if (orderData) {
         // Check if refund is needed
         // If originalOrderTotal is provided, use it; otherwise get from orderData
-        const totalOrderValue =
-          originalOrderTotal || parseFloat(orderData.total);
+        const totalOrderValue = originalOrderTotal || parseFloat(orderData.total);
 
         // Calculate if there's a difference between original total and found items total
         if (totalOrderValue > formattedOrderAmount) {
-          refundAmount = parseFloat(
-            (totalOrderValue - formattedOrderAmount).toFixed(2)
-          );
+          refundAmount = parseFloat((totalOrderValue - formattedOrderAmount).toFixed(2));
           refundNeeded = true;
 
           // Get shop name
-          const shopName = orderData.Shop?.name || "Unknown Shop";
+          const shopName = orderData.Shop?.name || 'Unknown Shop';
 
           // Get information about found and not found items
-          const foundItems = orderData.Order_Items.filter((item) => item.found);
-          const notFoundItems = orderData.Order_Items.filter(
-            (item) => !item.found
-          );
+          const foundItems = orderData.Order_Items.filter(item => item.found);
+          const notFoundItems = orderData.Order_Items.filter(item => !item.found);
 
           // Create detailed reason with found/not found items
           refundReason = `Refund for items not found during shopping at ${shopName}. `;
 
           if (foundItems.length > 0) {
             refundReason += `Found items: ${foundItems
-              .map(
-                (item) =>
-                  `${item.Product.name} (${
-                    item.foundQuantity || item.quantity
-                  })`
-              )
-              .join(", ")}. `;
+              .map(item => `${item.Product.name} (${item.foundQuantity || item.quantity})`)
+              .join(', ')}. `;
           }
 
           if (notFoundItems.length > 0) {
             refundReason += `Not found items: ${notFoundItems
-              .map((item) => `${item.Product.name} (${item.quantity})`)
-              .join(", ")}.`;
+              .map(item => `${item.Product.name} (${item.quantity})`)
+              .join(', ')}.`;
           }
 
           refundReason += ` Original total: ${totalOrderValue}, found items total: ${formattedOrderAmount}.`;
         }
       }
     } catch (orderError) {
-      console.error("Error getting order details:", orderError);
+      console.error('Error getting order details:', orderError);
       // Continue without refund if we can't get order details
     }
 
     // Calculate the new reserved balance after deducting the FULL original amount
     // This is different from before - we deduct the full original amount, not just the found items amount
-    const newReserved =
-      currentReserved - (originalOrderTotal || formattedOrderAmount);
+    const newReserved = currentReserved - (originalOrderTotal || formattedOrderAmount);
     console.log(
       `Updating reserved balance: ${currentReserved} - ${
         originalOrderTotal || formattedOrderAmount
@@ -309,11 +277,10 @@ export default async function handler(
 
     // Create wallet transaction records for payment
     // Build description with MoMo payment details
-    let description =
-      "Payment for found order items (excluding service and delivery fees)";
+    let description = 'Payment for found order items (excluding service and delivery fees)';
 
     if (momoReferenceId && momoSuccess !== undefined) {
-      const momoStatus = momoSuccess ? "SUCCESSFUL" : "FAILED";
+      const momoStatus = momoSuccess ? 'SUCCESSFUL' : 'FAILED';
       description += ` | MoMo Payment: ${momoStatus} | Reference ID: ${momoReferenceId}`;
     }
 
@@ -321,8 +288,8 @@ export default async function handler(
       {
         wallet_id: walletId,
         amount: formattedOrderAmount.toFixed(2),
-        type: "payment",
-        status: "completed",
+        type: 'payment',
+        status: 'completed',
         related_order_id: orderId,
         related_reel_orderId: null,
         related_restaurant_order_id: null,
@@ -349,30 +316,27 @@ export default async function handler(
         const refundRecord = {
           order_id: orderId,
           amount: refundAmount.toString(),
-          status: "pending",
+          status: 'pending',
           reason: refundReason,
-          generated_by: "System",
+          generated_by: 'System',
           user_id: orderData.user_id,
           paid: false,
         };
 
-        refundResponse = await hasuraClient.request<RefundResponse>(
-          CREATE_REFUND,
-          {
-            refund: refundRecord,
-          }
-        );
+        refundResponse = await hasuraClient.request<RefundResponse>(CREATE_REFUND, {
+          refund: refundRecord,
+        });
 
-        console.log("Refund record created:", refundResponse);
+        console.log('Refund record created:', refundResponse);
       } catch (refundError) {
-        console.error("Error creating refund record:", refundError);
+        console.error('Error creating refund record:', refundError);
         // Don't fail the transaction if refund creation fails, just log it
       }
     }
 
     return res.status(200).json({
       success: true,
-      message: "Transaction recorded and wallet balance updated successfully",
+      message: 'Transaction recorded and wallet balance updated successfully',
       data: response,
       refund: refundResponse ? refundResponse.insert_Refunds_one : null,
       refundAmount: refundNeeded ? refundAmount : 0,
@@ -381,10 +345,9 @@ export default async function handler(
       },
     });
   } catch (error) {
-    console.error("Error recording transaction:", error);
+    console.error('Error recording transaction:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
     });
   }
 }

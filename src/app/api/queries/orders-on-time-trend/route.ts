@@ -142,8 +142,14 @@ export async function GET(request: Request) {
     const [ordersRes, reelRes, restaurantRes, businessRes] = await Promise.all([
       hasuraClient.request<{ Orders: OrderRow[] }>(GET_DELIVERED_ORDERS, vars),
       hasuraClient.request<{ reel_orders: OrderRow[] }>(GET_DELIVERED_REEL_ORDERS, vars),
-      hasuraClient.request<{ restaurant_orders: OrderRow[] }>(GET_DELIVERED_RESTAURANT_ORDERS, vars),
-      hasuraClient.request<{ businessProductOrders: OrderRow[] }>(GET_DELIVERED_BUSINESS_ORDERS, vars),
+      hasuraClient.request<{ restaurant_orders: OrderRow[] }>(
+        GET_DELIVERED_RESTAURANT_ORDERS,
+        vars
+      ),
+      hasuraClient.request<{ businessProductOrders: OrderRow[] }>(
+        GET_DELIVERED_BUSINESS_ORDERS,
+        vars
+      ),
     ]);
 
     const orders = ordersRes.Orders || [];
@@ -160,7 +166,7 @@ export async function GET(request: Request) {
     const buckets: Record<string, { on_time: number; late: number }> = {};
 
     const add = (rows: OrderRow[]) => {
-      rows.forEach((row) => {
+      rows.forEach(row => {
         const key = getPeriodKey(new Date(row.created_at), period);
         if (!buckets[key]) {
           buckets[key] = { on_time: 0, late: 0 };
@@ -179,7 +185,7 @@ export async function GET(request: Request) {
     add(businessOrders);
 
     const sortedKeys = Object.keys(buckets).sort();
-    const data = sortedKeys.map((key) => ({
+    const data = sortedKeys.map(key => ({
       period: key,
       name: getPeriodLabel(key, period),
       on_time: buckets[key].on_time,
@@ -189,9 +195,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ data, groupBy: period });
   } catch (error) {
     console.error('Error fetching orders on-time trend:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch orders on-time trend' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch orders on-time trend' }, { status: 500 });
   }
 }

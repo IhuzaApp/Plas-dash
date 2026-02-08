@@ -1,10 +1,10 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import type { Session } from "next-auth";
-import { logger } from "../../../src/utils/logger";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import type { Session } from 'next-auth';
+import { logger } from '../../../src/utils/logger';
 
 // Add comment to reel
 const ADD_REEL_COMMENT = gql`
@@ -15,13 +15,7 @@ const ADD_REEL_COMMENT = gql`
     $user_id: uuid = ""
   ) {
     insert_Reels_comments(
-      objects: {
-        isLiked: false
-        likes: $likes
-        reel_id: $reel_id
-        text: $text
-        user_id: $user_id
-      }
+      objects: { isLiked: false, likes: $likes, reel_id: $reel_id, text: $text, user_id: $user_id }
     ) {
       affected_rows
       returning {
@@ -77,10 +71,7 @@ const GET_ALL_COMMENTS = gql`
 // Get comments by reel ID
 const GET_COMMENTS_BY_REEL = gql`
   query GetCommentsWhereReelID($reel_id: uuid = "") {
-    Reels_comments(
-      where: { reel_id: { _eq: $reel_id } }
-      order_by: { created_on: desc }
-    ) {
+    Reels_comments(where: { reel_id: { _eq: $reel_id } }, order_by: { created_on: desc }) {
       user_id
       text
       reel_id
@@ -179,37 +170,34 @@ interface AddCommentResponse {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const { method } = req;
 
     switch (method) {
-      case "GET":
+      case 'GET':
         await handleGetComments(req, res);
         break;
-      case "POST":
+      case 'POST':
         await handleAddComment(req, res);
         break;
-      case "PUT":
+      case 'PUT':
         await handleUpdateComment(req, res);
         break;
-      case "DELETE":
+      case 'DELETE':
         await handleDeleteComment(req, res);
         break;
       default:
-        res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
+        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
         res.status(405).end(`Method ${method} Not Allowed`);
     }
   } catch (error) {
-    logger.error("Error in reel comments API", "ReelCommentsAPI", error);
-    res.status(500).json({ error: "Internal server error" });
+    logger.error('Error in reel comments API', 'ReelCommentsAPI', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
 
@@ -229,53 +217,43 @@ async function handleGetComments(req: NextApiRequest, res: NextApiResponse) {
       data = await hasuraClient.request<CommentResponse>(GET_ALL_COMMENTS);
     }
 
-    logger.info(
-      `Found ${data.Reels_comments.length} comments`,
-      "ReelCommentsAPI"
-    );
+    logger.info(`Found ${data.Reels_comments.length} comments`, 'ReelCommentsAPI');
     res.status(200).json({ comments: data.Reels_comments });
   } catch (error) {
-    logger.error("Error fetching comments", "ReelCommentsAPI", error);
-    res.status(500).json({ error: "Failed to fetch comments" });
+    logger.error('Error fetching comments', 'ReelCommentsAPI', error);
+    res.status(500).json({ error: 'Failed to fetch comments' });
   }
 }
 
 async function handleAddComment(req: NextApiRequest, res: NextApiResponse) {
   try {
     // Get the user ID from the session
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
     if (!session?.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const userId = (session.user as any).id;
     if (!userId) {
-      return res.status(400).json({ error: "Missing user ID in session" });
+      return res.status(400).json({ error: 'Missing user ID in session' });
     }
 
     const { reel_id, text } = req.body;
 
     if (!reel_id || !text?.trim()) {
       return res.status(400).json({
-        error: "Missing required fields: reel_id and text are required",
+        error: 'Missing required fields: reel_id and text are required',
       });
     }
 
-    const result = await hasuraClient.request<AddCommentResponse>(
-      ADD_REEL_COMMENT,
-      {
-        likes: "0",
-        reel_id,
-        text: text.trim(),
-        user_id: userId,
-      }
-    );
+    const result = await hasuraClient.request<AddCommentResponse>(ADD_REEL_COMMENT, {
+      likes: '0',
+      reel_id,
+      text: text.trim(),
+      user_id: userId,
+    });
 
-    logger.info("Added new comment", "ReelCommentsAPI", {
+    logger.info('Added new comment', 'ReelCommentsAPI', {
       commentId: result.insert_Reels_comments.returning[0]?.id,
       reelId: reel_id,
     });
@@ -285,38 +263,34 @@ async function handleAddComment(req: NextApiRequest, res: NextApiResponse) {
       comment: result.insert_Reels_comments.returning[0],
     });
   } catch (error) {
-    logger.error("Error adding comment", "ReelCommentsAPI", error);
-    res.status(500).json({ error: "Failed to add comment" });
+    logger.error('Error adding comment', 'ReelCommentsAPI', error);
+    res.status(500).json({ error: 'Failed to add comment' });
   }
 }
 
 async function handleUpdateComment(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
     if (!session?.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { comment_id, action } = req.body;
 
     if (!comment_id) {
-      return res.status(400).json({ error: "Missing comment ID" });
+      return res.status(400).json({ error: 'Missing comment ID' });
     }
 
     switch (action) {
-      case "toggle_like":
+      case 'toggle_like':
         await handleToggleCommentLike(req, res, comment_id);
         break;
       default:
-        res.status(400).json({ error: "Invalid action" });
+        res.status(400).json({ error: 'Invalid action' });
     }
   } catch (error) {
-    logger.error("Error updating comment", "ReelCommentsAPI", error);
-    res.status(500).json({ error: "Failed to update comment" });
+    logger.error('Error updating comment', 'ReelCommentsAPI', error);
+    res.status(500).json({ error: 'Failed to update comment' });
   }
 }
 
@@ -326,13 +300,9 @@ async function handleToggleCommentLike(
   commentId: string
 ) {
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
     if (!session?.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Get current comment data
@@ -350,15 +320,13 @@ async function handleToggleCommentLike(
     );
 
     if (!commentData.Reels_comments.length) {
-      return res.status(404).json({ error: "Comment not found" });
+      return res.status(404).json({ error: 'Comment not found' });
     }
 
     const comment = commentData.Reels_comments[0];
-    const currentLikes = parseInt(comment.likes || "0");
+    const currentLikes = parseInt(comment.likes || '0');
     const newIsLiked = !comment.isLiked;
-    const newLikes = newIsLiked
-      ? (currentLikes + 1).toString()
-      : (currentLikes - 1).toString();
+    const newLikes = newIsLiked ? (currentLikes + 1).toString() : (currentLikes - 1).toString();
 
     const result = await hasuraClient.request(UPDATE_COMMENT_LIKE, {
       id: commentId,
@@ -372,27 +340,23 @@ async function handleToggleCommentLike(
       likes: newLikes,
     });
   } catch (error) {
-    logger.error("Error toggling comment like", "ReelCommentsAPI", error);
-    res.status(500).json({ error: "Failed to toggle comment like" });
+    logger.error('Error toggling comment like', 'ReelCommentsAPI', error);
+    res.status(500).json({ error: 'Failed to toggle comment like' });
   }
 }
 
 async function handleDeleteComment(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const session = (await getServerSession(
-      req,
-      res,
-      authOptions as any
-    )) as Session | null;
+    const session = (await getServerSession(req, res, authOptions as any)) as Session | null;
     if (!session?.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const userId = (session.user as any).id;
     const { comment_id } = req.body;
 
     if (!comment_id) {
-      return res.status(400).json({ error: "Missing comment ID" });
+      return res.status(400).json({ error: 'Missing comment ID' });
     }
 
     // Verify the comment belongs to the user or user has admin rights
@@ -410,31 +374,27 @@ async function handleDeleteComment(req: NextApiRequest, res: NextApiResponse) {
     );
 
     if (!commentData.Reels_comments.length) {
-      return res.status(404).json({ error: "Comment not found" });
+      return res.status(404).json({ error: 'Comment not found' });
     }
 
     const comment = commentData.Reels_comments[0];
 
     // Check if user owns the comment or has admin role
     const userRole = (session.user as any).role;
-    if (comment.user_id !== userId && userRole !== "admin") {
-      return res
-        .status(403)
-        .json({ error: "Not authorized to delete this comment" });
+    if (comment.user_id !== userId && userRole !== 'admin') {
+      return res.status(403).json({ error: 'Not authorized to delete this comment' });
     }
 
     const result = await hasuraClient.request(DELETE_COMMENT, {
       id: comment_id,
     });
 
-    logger.info("Deleted comment", "ReelCommentsAPI", {
+    logger.info('Deleted comment', 'ReelCommentsAPI', {
       commentId: comment_id,
     });
-    res
-      .status(200)
-      .json({ success: true, message: "Comment deleted successfully" });
+    res.status(200).json({ success: true, message: 'Comment deleted successfully' });
   } catch (error) {
-    logger.error("Error deleting comment", "ReelCommentsAPI", error);
-    res.status(500).json({ error: "Failed to delete comment" });
+    logger.error('Error deleting comment', 'ReelCommentsAPI', error);
+    res.status(500).json({ error: 'Failed to delete comment' });
   }
 }

@@ -1,6 +1,6 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // Define types for the GraphQL response
 interface Order {
@@ -129,38 +129,32 @@ const GET_ASSIGNED_BATCHES = gql`
   }
 `;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { userId } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
+      return res.status(400).json({ error: 'userId is required' });
     }
 
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Fetch assigned orders for this shopper
-    const data = await hasuraClient.request<GraphQLResponse>(
-      GET_ASSIGNED_BATCHES,
-      {
-        shopper_id: userId,
-      }
-    );
+    const data = await hasuraClient.request<GraphQLResponse>(GET_ASSIGNED_BATCHES, {
+      shopper_id: userId,
+    });
 
     // Group orders by combined_order_id
     const combinedOrdersMap = new Map<string, Order[]>();
     const standaloneOrders: Order[] = [];
 
-    data.Orders.forEach((order) => {
+    data.Orders.forEach(order => {
       if (order.combined_order_id) {
         const existing = combinedOrdersMap.get(order.combined_order_id) || [];
         existing.push(order);
@@ -175,11 +169,11 @@ export default async function handler(
       ([combinedOrderId, orders]) => {
         // Aggregate data from all orders
         const totalServiceFee = orders.reduce(
-          (sum, o) => sum + parseFloat(o.service_fee || "0"),
+          (sum, o) => sum + parseFloat(o.service_fee || '0'),
           0
         );
         const totalDeliveryFee = orders.reduce(
-          (sum, o) => sum + parseFloat(o.delivery_fee || "0"),
+          (sum, o) => sum + parseFloat(o.delivery_fee || '0'),
           0
         );
         const totalEarnings = totalServiceFee + totalDeliveryFee;
@@ -187,30 +181,24 @@ export default async function handler(
           (sum, o) => sum + (o.Order_Items_aggregate.aggregate?.count || 0),
           0
         );
-        const shopNames = orders
-          .map((o) => o.shop?.name || "Unknown Shop")
-          .join(", ");
+        const shopNames = orders.map(o => o.shop?.name || 'Unknown Shop').join(', ');
 
         const firstOrder = orders[0];
-        const deliveryTime = firstOrder.delivery_time
-          ? new Date(firstOrder.delivery_time)
-          : null;
+        const deliveryTime = firstOrder.delivery_time ? new Date(firstOrder.delivery_time) : null;
         const timeRemaining = deliveryTime
           ? Math.max(0, deliveryTime.getTime() - Date.now())
           : null;
-        const minutesRemaining = timeRemaining
-          ? Math.floor(timeRemaining / (1000 * 60))
-          : null;
+        const minutesRemaining = timeRemaining ? Math.floor(timeRemaining / (1000 * 60)) : null;
 
         return {
           id: combinedOrderId,
           orderId: `Combined-${firstOrder.OrderID}`,
-          type: "combined",
+          type: 'combined',
           status: firstOrder.status,
           shopName: `🛒 ${orders.length} Stores: ${shopNames}`,
           shopAddress: `Combined order from ${orders.length} stores`,
-          customerAddress: `${firstOrder.address?.street || "No street"}, ${
-            firstOrder.address?.city || "No city"
+          customerAddress: `${firstOrder.address?.street || 'No street'}, ${
+            firstOrder.address?.city || 'No city'
           }`,
           earnings: totalEarnings,
           serviceFee: totalServiceFee,
@@ -223,36 +211,30 @@ export default async function handler(
           combinedOrderId: combinedOrderId,
           pin: firstOrder.pin,
           orderCount: orders.length,
-          orderIds: orders.map((o) => o.id),
+          orderIds: orders.map(o => o.id),
         };
       }
     );
 
     // Process standalone regular orders
-    const regularOrders = standaloneOrders.map((order) => {
-      const serviceFee = parseFloat(order.service_fee || "0");
-      const deliveryFee = parseFloat(order.delivery_fee || "0");
+    const regularOrders = standaloneOrders.map(order => {
+      const serviceFee = parseFloat(order.service_fee || '0');
+      const deliveryFee = parseFloat(order.delivery_fee || '0');
       const totalEarnings = serviceFee + deliveryFee;
 
-      const deliveryTime = order.delivery_time
-        ? new Date(order.delivery_time)
-        : null;
-      const timeRemaining = deliveryTime
-        ? Math.max(0, deliveryTime.getTime() - Date.now())
-        : null;
-      const minutesRemaining = timeRemaining
-        ? Math.floor(timeRemaining / (1000 * 60))
-        : null;
+      const deliveryTime = order.delivery_time ? new Date(order.delivery_time) : null;
+      const timeRemaining = deliveryTime ? Math.max(0, deliveryTime.getTime() - Date.now()) : null;
+      const minutesRemaining = timeRemaining ? Math.floor(timeRemaining / (1000 * 60)) : null;
 
       return {
         id: order.id,
         orderId: order.OrderID,
-        type: "regular",
+        type: 'regular',
         status: order.status,
-        shopName: order.shop?.name || "Unknown Shop",
-        shopAddress: order.shop?.address || "No address",
-        customerAddress: `${order.address?.street || "No street"}, ${
-          order.address?.city || "No city"
+        shopName: order.shop?.name || 'Unknown Shop',
+        shopAddress: order.shop?.address || 'No address',
+        customerAddress: `${order.address?.street || 'No street'}, ${
+          order.address?.city || 'No city'
         }`,
         earnings: totalEarnings,
         serviceFee,
@@ -267,24 +249,18 @@ export default async function handler(
     });
 
     // Process reel orders
-    const reelOrders = data.reel_orders.map((order) => {
-      const serviceFee = parseFloat(order.service_fee || "0");
-      const deliveryFee = parseFloat(order.delivery_fee || "0");
+    const reelOrders = data.reel_orders.map(order => {
+      const serviceFee = parseFloat(order.service_fee || '0');
+      const deliveryFee = parseFloat(order.delivery_fee || '0');
       const totalEarnings = serviceFee + deliveryFee;
 
-      const deliveryTime = order.delivery_time
-        ? new Date(order.delivery_time)
-        : null;
-      const timeRemaining = deliveryTime
-        ? Math.max(0, deliveryTime.getTime() - Date.now())
-        : null;
-      const minutesRemaining = timeRemaining
-        ? Math.floor(timeRemaining / (1000 * 60))
-        : null;
+      const deliveryTime = order.delivery_time ? new Date(order.delivery_time) : null;
+      const timeRemaining = deliveryTime ? Math.max(0, deliveryTime.getTime() - Date.now()) : null;
+      const minutesRemaining = timeRemaining ? Math.floor(timeRemaining / (1000 * 60)) : null;
 
       return {
         id: order.id,
-        type: "reel",
+        type: 'reel',
         status: order.status,
         title: order.Reel.title,
         description: order.Reel.description,
@@ -292,8 +268,8 @@ export default async function handler(
         price: order.Reel.Price,
         customerName: order.user.name,
         customerPhone: order.user.phone,
-        customerAddress: `${order.address?.street || "No street"}, ${
-          order.address?.city || "No city"
+        customerAddress: `${order.address?.street || 'No street'}, ${
+          order.address?.city || 'No city'
         }`,
         earnings: totalEarnings,
         serviceFee,
@@ -307,13 +283,8 @@ export default async function handler(
     });
 
     // Combine and sort all orders by creation time (newest first)
-    const allOrders = [
-      ...combinedOrderBatches,
-      ...regularOrders,
-      ...reelOrders,
-    ].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    const allOrders = [...combinedOrderBatches, ...regularOrders, ...reelOrders].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
     return res.status(200).json({
@@ -327,12 +298,9 @@ export default async function handler(
       },
     });
   } catch (error) {
-    console.error("Error fetching assigned batches:", error);
+    console.error('Error fetching assigned batches:', error);
     return res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch assigned batches",
+      error: error instanceof Error ? error.message : 'Failed to fetch assigned batches',
     });
   }
 }

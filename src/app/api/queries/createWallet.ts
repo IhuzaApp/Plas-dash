@@ -1,18 +1,14 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // GraphQL mutation to create a wallet
 const CREATE_WALLET = gql`
   mutation CreateWallet($shopper_id: uuid!) {
     insert_Wallets_one(
-      object: {
-        shopper_id: $shopper_id
-        available_balance: "0"
-        reserved_balance: "0"
-      }
+      object: { shopper_id: $shopper_id, available_balance: "0", reserved_balance: "0" }
     ) {
       id
       shopper_id
@@ -50,30 +46,23 @@ interface WalletResponse {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
   // Authenticate the shopper
-  const session = (await getServerSession(
-    req,
-    res,
-    authOptions as any
-  )) as SessionUser;
+  const session = (await getServerSession(req, res, authOptions as any)) as SessionUser;
   const userId = session?.user?.id;
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
     // Check if wallet already exists
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const checkResult = await hasuraClient.request<{
@@ -86,14 +75,14 @@ export default async function handler(
     if (checkResult.Wallets && checkResult.Wallets.length > 0) {
       return res.status(200).json({
         success: true,
-        message: "Wallet already exists",
+        message: 'Wallet already exists',
         walletId: checkResult.Wallets[0].id,
       });
     }
 
     // Create new wallet
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     const data = await hasuraClient.request<WalletResponse>(CREATE_WALLET, {
@@ -102,11 +91,11 @@ export default async function handler(
 
     return res.status(200).json({
       success: true,
-      message: "Wallet created successfully",
+      message: 'Wallet created successfully',
       wallet: data.insert_Wallets_one,
     });
   } catch (error) {
-    console.error("Error creating wallet:", error);
-    return res.status(500).json({ error: "Failed to create wallet" });
+    console.error('Error creating wallet:', error);
+    return res.status(500).json({ error: 'Failed to create wallet' });
   }
 }

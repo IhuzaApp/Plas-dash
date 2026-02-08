@@ -214,7 +214,9 @@ const ShopperDetails: React.FC<ShopperDetailsProps> = ({ shopperId }) => {
   const tickets = detailedShopper?.User?.tickets || [];
   const deliveryIssues = detailedShopper?.User?.Delivery_Issues || [];
   const invoices = detailedShopper?.User?.Invoices || [];
-  const revenues = detailData?.revenues?.length ? detailData.revenues : (detailedShopper?.Revenues || []);
+  const revenues = detailData?.revenues?.length
+    ? detailData.revenues
+    : detailedShopper?.Revenues || [];
 
   // Get paginated data
   const paginatedOrders = paginateData(orders, ordersPage);

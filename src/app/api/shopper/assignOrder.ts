@@ -1,8 +1,8 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 // GraphQL mutation to assign a shopper and update status for regular orders
 const ASSIGN_ORDER = gql`
@@ -131,9 +131,7 @@ const UPDATE_WALLET_BALANCES = gql`
 
 // GraphQL mutation to create wallet transactions
 const CREATE_WALLET_TRANSACTIONS = gql`
-  mutation CreateWalletTransactions(
-    $transactions: [Wallet_Transactions_insert_input!]!
-  ) {
+  mutation CreateWalletTransactions($transactions: [Wallet_Transactions_insert_input!]!) {
     insert_Wallet_Transactions(objects: $transactions) {
       affected_rows
     }
@@ -197,36 +195,25 @@ interface ReelOrderDetails {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
   // Authenticate the shopper
-  const session = (await getServerSession(
-    req,
-    res,
-    authOptions as any
-  )) as SessionUser;
+  const session = (await getServerSession(req, res, authOptions as any)) as SessionUser;
   const userId = session?.user?.id;
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { orderId, orderType = "regular" } = req.body;
-  if (typeof orderId !== "string") {
-    return res.status(400).json({ error: "Missing or invalid orderId" });
+  const { orderId, orderType = 'regular' } = req.body;
+  if (typeof orderId !== 'string') {
+    return res.status(400).json({ error: 'Missing or invalid orderId' });
   }
 
-  if (
-    orderType !== "regular" &&
-    orderType !== "reel" &&
-    orderType !== "restaurant"
-  ) {
+  if (orderType !== 'regular' && orderType !== 'reel' && orderType !== 'restaurant') {
     return res.status(400).json({
       error: "Invalid orderType. Must be 'regular', 'reel', or 'restaurant'",
     });
@@ -234,20 +221,17 @@ export default async function handler(
 
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // Check if shopper has a wallet
-    const walletData = await hasuraClient.request<WalletResponse>(
-      CHECK_WALLET,
-      {
-        shopper_id: userId,
-      }
-    );
+    const walletData = await hasuraClient.request<WalletResponse>(CHECK_WALLET, {
+      shopper_id: userId,
+    });
 
     // If no wallet exists, return an error
     if (!walletData.Wallets || walletData.Wallets.length === 0) {
-      return res.status(400).json({ error: "no_wallet" });
+      return res.status(400).json({ error: 'no_wallet' });
     }
 
     // Get current timestamp for updated_at and assigned_at
@@ -256,7 +240,7 @@ export default async function handler(
 
     let data: OrderResponse | ReelOrderResponse | RestaurantOrderResponse;
 
-    if (orderType === "reel") {
+    if (orderType === 'reel') {
       // For reel orders, we need to update wallet balances during assignment
       // since they don't go through the shopping phase
       try {
@@ -270,7 +254,7 @@ export default async function handler(
 
         const order = reelOrderDetails.reel_orders_by_pk;
         if (!order) {
-          return res.status(404).json({ error: "Reel order not found" });
+          return res.status(404).json({ error: 'Reel order not found' });
         }
 
         const wallet = walletData.Wallets[0];
@@ -281,9 +265,7 @@ export default async function handler(
 
         // NOTE: Earnings are NOT added here - they will be added when the order is delivered
         // Only add order total to reserved balance
-        const newReservedBalance = (
-          currentReservedBalance + orderTotal
-        ).toFixed(2);
+        const newReservedBalance = (currentReservedBalance + orderTotal).toFixed(2);
 
         // Update wallet balances (only reserved balance changes, available balance stays the same)
         await hasuraClient.request(UPDATE_WALLET_BALANCES, {
@@ -295,21 +277,14 @@ export default async function handler(
         // Note: Wallet_Transactions table is designed for regular orders only
         // For reel orders, we skip transaction creation to avoid foreign key constraint issues
         // The wallet balances are still updated correctly above
-        console.log(
-          "Wallet balances updated for reel order assignment (no transactions created)"
-        );
+        console.log('Wallet balances updated for reel order assignment (no transactions created)');
 
-        console.log("Wallet balances updated for reel order assignment");
+        console.log('Wallet balances updated for reel order assignment');
       } catch (walletError) {
-        console.error(
-          "Error updating wallet balances for reel order:",
-          walletError
-        );
+        console.error('Error updating wallet balances for reel order:', walletError);
         return res.status(500).json({
           error:
-            walletError instanceof Error
-              ? walletError.message
-              : "Failed to update wallet balances",
+            walletError instanceof Error ? walletError.message : 'Failed to update wallet balances',
         });
       }
 
@@ -320,17 +295,14 @@ export default async function handler(
         updated_at: currentTimestamp,
         assigned_at: assignedAt,
       });
-    } else if (orderType === "restaurant") {
+    } else if (orderType === 'restaurant') {
       // Assign restaurant order (no wallet updates here, they happen during delivery)
-      data = await hasuraClient.request<RestaurantOrderResponse>(
-        ASSIGN_RESTAURANT_ORDER,
-        {
-          id: orderId,
-          shopper_id: userId,
-          updated_at: currentTimestamp,
-          assigned_at: assignedAt,
-        }
-      );
+      data = await hasuraClient.request<RestaurantOrderResponse>(ASSIGN_RESTAURANT_ORDER, {
+        id: orderId,
+        shopper_id: userId,
+        updated_at: currentTimestamp,
+        assigned_at: assignedAt,
+      });
     } else {
       // Assign regular order (no wallet updates here, they happen during shopping status)
       data = await hasuraClient.request<OrderResponse>(ASSIGN_ORDER, {
@@ -342,25 +314,23 @@ export default async function handler(
     }
 
     const result =
-      orderType === "reel"
+      orderType === 'reel'
         ? (data as ReelOrderResponse).update_reel_orders_by_pk
-        : orderType === "restaurant"
-        ? (data as RestaurantOrderResponse).update_restaurant_orders_by_pk
-        : (data as OrderResponse).update_Orders_by_pk;
+        : orderType === 'restaurant'
+          ? (data as RestaurantOrderResponse).update_restaurant_orders_by_pk
+          : (data as OrderResponse).update_Orders_by_pk;
 
     // Clean up notifications for this order
     try {
       const cleanupResponse = await fetch(
         `${
-          req.headers.host
-            ? `http://${req.headers.host}`
-            : "http://localhost:3000"
+          req.headers.host ? `http://${req.headers.host}` : 'http://localhost:3000'
         }/api/shopper/cleanup-notification`,
         {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            Cookie: req.headers.cookie || "",
+            'Content-Type': 'application/json',
+            Cookie: req.headers.cookie || '',
           },
           body: JSON.stringify({
             orderId,
@@ -370,14 +340,12 @@ export default async function handler(
       );
 
       if (cleanupResponse.ok) {
-        console.log("Notifications cleaned up successfully");
+        console.log('Notifications cleaned up successfully');
       } else {
-        console.warn(
-          "Failed to cleanup notifications, but order assignment succeeded"
-        );
+        console.warn('Failed to cleanup notifications, but order assignment succeeded');
       }
     } catch (cleanupError) {
-      console.warn("Error cleaning up notifications:", cleanupError);
+      console.warn('Error cleaning up notifications:', cleanupError);
       // Don't fail the assignment if cleanup fails
     }
 
@@ -387,7 +355,7 @@ export default async function handler(
       orderType: orderType,
     });
   } catch (error) {
-    console.error("Error assigning order:", error);
-    return res.status(500).json({ error: "Failed to assign order" });
+    console.error('Error assigning order:', error);
+    return res.status(500).json({ error: 'Failed to assign order' });
   }
 }

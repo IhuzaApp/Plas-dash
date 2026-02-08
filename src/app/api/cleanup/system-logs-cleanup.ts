@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { hasuraClient } from "../../../src/lib/hasuraClient";
-import { gql } from "graphql-request";
+import { NextApiRequest, NextApiResponse } from 'next';
+import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { gql } from 'graphql-request';
 
 interface DeleteSystemLogsResponse {
   delete_System_Logs: {
@@ -10,9 +10,7 @@ interface DeleteSystemLogsResponse {
 
 const DELETE_OLD_SYSTEM_LOGS = gql`
   mutation DeleteOldSystemLogs {
-    delete_System_Logs(
-      where: { time: { _lt: "now() - interval '24 hours'" } }
-    ) {
+    delete_System_Logs(where: { time: { _lt: "now() - interval '24 hours'" } }) {
       affected_rows
     }
   }
@@ -20,9 +18,7 @@ const DELETE_OLD_SYSTEM_LOGS = gql`
 
 const GET_OLD_LOGS_COUNT = gql`
   query GetOldLogsCount {
-    System_Logs_aggregate(
-      where: { time: { _lt: "now() - interval '24 hours'" } }
-    ) {
+    System_Logs_aggregate(where: { time: { _lt: "now() - interval '24 hours'" } }) {
       aggregate {
         count
       }
@@ -33,7 +29,7 @@ const GET_OLD_LOGS_COUNT = gql`
 export async function cleanupOldSystemLogs() {
   try {
     if (!hasuraClient) {
-      throw new Error("Hasura client is not initialized");
+      throw new Error('Hasura client is not initialized');
     }
 
     // First, get count of logs to be deleted
@@ -49,14 +45,12 @@ export async function cleanupOldSystemLogs() {
       return {
         success: true,
         deletedCount: 0,
-        message: "No old logs found to delete",
+        message: 'No old logs found to delete',
       };
     }
 
     // Delete logs older than 24 hours
-    const response = await hasuraClient.request<DeleteSystemLogsResponse>(
-      DELETE_OLD_SYSTEM_LOGS
-    );
+    const response = await hasuraClient.request<DeleteSystemLogsResponse>(DELETE_OLD_SYSTEM_LOGS);
 
     const deletedCount = response.delete_System_Logs.affected_rows;
 
@@ -66,21 +60,18 @@ export async function cleanupOldSystemLogs() {
       message: `Successfully deleted ${deletedCount} logs older than 24 hours`,
     };
   } catch (error) {
-    console.error("Failed to cleanup old system logs:", error);
+    console.error('Failed to cleanup old system logs:', error);
     return {
       success: false,
       deletedCount: 0,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"]);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
@@ -90,15 +81,10 @@ export default async function handler(
 
   // Skip authentication in development mode (localhost)
   const isDevelopment =
-    req.headers.host?.includes("localhost") ||
-    req.headers.host?.includes("127.0.0.1");
+    req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1');
 
-  if (
-    expectedToken &&
-    !isDevelopment &&
-    authHeader !== `Bearer ${expectedToken}`
-  ) {
-    return res.status(401).json({ error: "Unauthorized" });
+  if (expectedToken && !isDevelopment && authHeader !== `Bearer ${expectedToken}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
@@ -121,8 +107,8 @@ export default async function handler(
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: "Failed to cleanup system logs",
-      details: error instanceof Error ? error.message : "Unknown error",
+      error: 'Failed to cleanup system logs',
+      details: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
     });
   }

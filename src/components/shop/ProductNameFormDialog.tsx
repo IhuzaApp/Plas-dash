@@ -95,7 +95,7 @@ export function ProductNameFormDialog({
     }
   }, [open, initialValues, form]);
 
-  const handleSubmit = form.handleSubmit(async (data) => {
+  const handleSubmit = form.handleSubmit(async data => {
     await onSubmit({
       ...data,
       image: data.image && data.image.trim() !== '' ? data.image : undefined,
@@ -104,10 +104,7 @@ export function ProductNameFormDialog({
   });
 
   const imageValue = form.watch('image');
-  const imagePreviewSrc =
-    imageValue && imageValue.trim() !== ''
-      ? imageValue
-      : IMAGE_PLACEHOLDER;
+  const imagePreviewSrc = imageValue && imageValue.trim() !== '' ? imageValue : IMAGE_PLACEHOLDER;
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
