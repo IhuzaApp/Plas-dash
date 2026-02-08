@@ -616,7 +616,7 @@ export const GET_SHOP_BY_ID = `
         updated_at
         delivery_fee
         service_fee
-        User {
+        orderedBy {
           id
           name
           email

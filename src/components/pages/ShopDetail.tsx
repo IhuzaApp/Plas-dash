@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import {
   useShopById,
+  useReelOrders,
   useAddProduct,
   useAddProductName,
   useUpdateProduct,
@@ -55,6 +56,7 @@ import ImportProductsDialog from '@/components/shop/ImportProductsDialog';
 import EditProductDialog from '@/components/shop/EditProductDialog';
 import AddStaffDialog from '@/components/shop/AddStaffDialog';
 import EditStaffDialog from '@/components/shop/EditStaffDialog';
+import ShopPerformanceCharts from '@/components/shop/ShopPerformanceCharts';
 import { toast } from 'sonner';
 import { formatCurrency, formatCurrencyWithConfig } from '@/lib/utils';
 import { hasuraRequest } from '@/lib/hasura';
@@ -152,6 +154,13 @@ const ShopDetail = () => {
 
   const { data, isLoading, isError, error, refetch } = useShopById(id);
   const shop = data?.Shops_by_pk;
+  const { data: reelOrdersData } = useReelOrders();
+  const shopReelOrders = useMemo(() => {
+    const list = (reelOrdersData?.reel_orders ?? []) as { id: string; status: string; total: string; created_at: string; Shop?: { id?: string }; Reel?: { shop_id?: string } }[];
+    return list
+      .filter((o) => o.Shop?.id === id || o.Reel?.shop_id === id)
+      .map((o) => ({ id: o.id, status: o.status, total: o.total, created_at: o.created_at }));
+  }, [reelOrdersData?.reel_orders, id]);
 
   const addProduct = useAddProduct();
   const addProductName = useAddProductName();
@@ -585,6 +594,8 @@ const ShopDetail = () => {
                 </CardContent>
               </Card>
             )}
+
+            <ShopPerformanceCharts shop={shop} reelOrders={shopReelOrders} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="products" className="space-y-4 pt-4">
@@ -740,9 +751,9 @@ const ShopDetail = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="font-medium">{order.User?.name || 'N/A'}</div>
+                            <div className="font-medium">{order.orderedBy?.name || 'N/A'}</div>
                             <div className="text-sm text-muted-foreground">
-                              {order.User?.email || 'N/A'}
+                              {order.orderedBy?.email || 'N/A'}
                             </div>
                           </TableCell>
                           <TableCell>

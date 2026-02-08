@@ -101,18 +101,13 @@ interface Shop {
     created_at: string;
     delivery_fee: string;
     service_fee: string;
-    User: {
-      id: string;
-      name: string;
-      email: string;
-    };
+    User?: { id: string; name: string; email: string } | null;
+    orderedBy?: { id: string; name: string; email: string; phone?: string } | null;
     Order_Items: Array<{
       id: string;
       quantity: number;
       price: string;
-      Product: {
-        name: string;
-      };
+      Product: { name: string };
     }>;
   }>;
 }
@@ -160,12 +155,12 @@ interface ShopDetails extends Shop {
     updated_at: string;
     delivery_fee: string;
     service_fee: string;
-    User: {
+    orderedBy?: {
       id: string;
       name: string;
       email: string;
       phone: string;
-    };
+    } | null;
     Order_Items: Array<{
       id: string;
       quantity: number;
