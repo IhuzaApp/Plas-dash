@@ -1,5 +1,5 @@
 query GetShops {
-  Shops {
+  Shops(order_by: { created_at: desc }) {
     id
     name
     description
@@ -13,5 +13,61 @@ query GetShops {
     longitude
     operating_hours
     updated_at
+    phone
+    relatedTo
+    Category {
+      id
+      name
+    }
+    Products_aggregate {
+      aggregate {
+        count
+      }
+    }
+    Orders_aggregate {
+      aggregate {
+        count
+      }
+    }
+    Orders(order_by: { created_at: desc }, limit: 50) {
+      id
+      OrderID
+      status
+      total
+      created_at
+      delivery_fee
+      service_fee
+      updated_at
+      user_id
+      shop_id
+      orderedBy {
+        id
+        name
+        email
+        updated_at
+        role
+        phone
+        profile_picture
+      }
+      Order_Items {
+        id
+        quantity
+        price
+        created_at
+        order_id
+        product_id
+        Product {
+          ProductName {
+            name
+            id
+            image
+            barcode
+            create_at
+            description
+            sku
+          }
+        }
+      }
+    }
   }
 }

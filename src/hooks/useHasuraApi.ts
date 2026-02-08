@@ -76,6 +76,8 @@ interface Shop {
   id: string;
   name: string;
   category_id: string;
+  logo?: string | null;
+  image?: string | null;
   category: {
     id: string;
     name: string;

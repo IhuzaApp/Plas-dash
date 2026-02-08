@@ -257,7 +257,7 @@ const Shops = () => {
                   <React.Fragment key={shop.id}>
                     <TableRow>
                       <TableCell>
-                        {shop.Orders.length > 0 && (
+                        {(shop.Orders?.length ?? 0) > 0 && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -290,8 +290,8 @@ const Shops = () => {
                       </TableCell>
                       <TableCell className="font-medium">{shop.name}</TableCell>
                       <TableCell>{shop.category?.name || 'Uncategorized'}</TableCell>
-                      <TableCell>{shop.Products_aggregate.aggregate.count}</TableCell>
-                      <TableCell>{shop.Orders_aggregate.aggregate.count}</TableCell>
+                      <TableCell>{shop.Products_aggregate?.aggregate?.count ?? 0}</TableCell>
+                      <TableCell>{shop.Orders_aggregate?.aggregate?.count ?? 0}</TableCell>
                       <TableCell>
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -338,15 +338,15 @@ const Shops = () => {
                     </TableRow>
 
                     {/* Expanded Orders Section */}
-                    {expandedShops.has(shop.id) && shop.Orders.length > 0 && (
+                    {expandedShops.has(shop.id) && (shop.Orders?.length ?? 0) > 0 && (
                       <TableRow>
                         <TableCell colSpan={8} className="p-0">
                           <div className="bg-muted/30 p-4">
                             <h4 className="font-semibold mb-3 text-sm text-muted-foreground">
-                              Recent Orders ({shop.Orders.length})
+                              Recent Orders ({shop.Orders?.length ?? 0})
                             </h4>
                             <div className="space-y-3">
-                              {shop.Orders.map(order => (
+                              {(shop.Orders ?? []).map(order => (
                                 <div key={order.id} className="bg-background rounded-lg p-4 border">
                                   <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-3">
@@ -367,7 +367,7 @@ const Shops = () => {
                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                     <div className="flex items-center gap-2">
                                       <User className="h-4 w-4 text-muted-foreground" />
-                                      <span>{order.User.name}</span>
+                                      <span>{order.User?.name ?? '—'}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -375,31 +375,31 @@ const Shops = () => {
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                                      <span>{order.Order_Items.length} items</span>
+                                      <span>{(order.Order_Items?.length ?? 0)} items</span>
                                     </div>
                                   </div>
 
-                                  {order.Order_Items.length > 0 && (
+                                  {(order.Order_Items?.length ?? 0) > 0 && (
                                     <div className="mt-3 pt-3 border-t">
                                       <div className="text-xs font-medium text-muted-foreground mb-2">
                                         Items:
                                       </div>
                                       <div className="space-y-1">
-                                        {order.Order_Items.slice(0, 3).map(item => (
+                                        {(order.Order_Items ?? []).slice(0, 3).map(item => (
                                           <div
                                             key={item.id}
                                             className="flex justify-between text-xs"
                                           >
                                             <span>
-                                              {item.Product.ProductName?.name || 'Unknown Product'}{' '}
+                                              {item.Product?.name ?? 'Unknown Product'}{' '}
                                               x{item.quantity}
                                             </span>
                                             <span>{formatCurrency(item.price)}</span>
                                           </div>
                                         ))}
-                                        {order.Order_Items.length > 3 && (
+                                        {(order.Order_Items?.length ?? 0) > 3 && (
                                           <div className="text-xs text-muted-foreground">
-                                            +{order.Order_Items.length - 3} more items
+                                            +{(order.Order_Items?.length ?? 0) - 3} more items
                                           </div>
                                         )}
                                       </div>
