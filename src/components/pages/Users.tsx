@@ -39,10 +39,10 @@ const Users = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { hasAction } = usePrivilege();
 
-  // Calculate user statistics
+  // Calculate user statistics (all users including role shopper)
   const totalUsers = users.length;
   const activeUsers = users.filter(user => user.is_active).length;
-  const adminUsers = 0; // Currently set to 0 as requested
+  const guestUsers = users.filter(user => user.is_guest).length;
   const customerUsers = users.filter(
     user =>
       user.is_active && // User is active
@@ -191,8 +191,8 @@ const Users = () => {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{adminUsers}</div>
-            <p className="text-muted-foreground">Admins</p>
+            <div className="text-2xl font-bold">{guestUsers}</div>
+            <p className="text-muted-foreground">Guest Users</p>
           </CardContent>
         </Card>
         <Card>

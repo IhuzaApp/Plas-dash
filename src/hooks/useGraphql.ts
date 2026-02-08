@@ -72,6 +72,7 @@ export interface User {
   profile_picture: string | null;
   password_hash: string;
   is_active: boolean;
+  is_guest?: boolean;
   Addresses: Array<{
     id: string;
     user_id: string;

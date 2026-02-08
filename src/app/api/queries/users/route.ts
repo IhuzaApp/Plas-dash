@@ -4,7 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]";
 import { hasuraClient } from "@/lib/hasuraClient";
 import { gql } from "graphql-request";
 
-// Admin dashboard: fetches all users (no filter).
+// Admin dashboard: fetches all users (including role shopper).
 const GET_USERS = gql`
   query GetUsers {
     Users(order_by: { created_at: desc }) {
