@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
-import { notifyNewOrderToSlack } from '@/lib/slackOrderNotifier';
+// import { notifyNewOrderToSlack } from '@/lib/slackOrderNotifier';
 
 interface CartItem {
   product_id: string;
