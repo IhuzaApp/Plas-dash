@@ -8,12 +8,90 @@
         {
           "id": "dashboard-overview",
           "title": "Dashboard Overview",
-          "content": "The dashboard provides a comprehensive view of your delivery operations. Key features include:\n\n- Real-time order tracking\n- Revenue analytics\n- Shopper performance metrics\n- Delivery status updates"
+          "content": "The dashboard provides a comprehensive view of your delivery operations. Key features include:\n\n- **Real-time Analytics**: Monitor revenue trends, order volume, and active plasa statistics.\n- **Order Tracking**: Follow every order from creation to delivery confirmation.\n- **Financial Insights**: Real-time balance tracking for both company and shopper wallets.\n- **Service Monitoring**: Keep an eye on pending alerts and system performance metrics."
         },
         {
           "id": "first-steps",
           "title": "First Steps",
-          "content": "1. Log in to your account\n2. Complete your profile setup\n3. Configure your notification preferences\n4. Explore the dashboard sections"
+          "content": "1. **Log in to your account**: Use your system credentials to access the secure dashboard.\n2. **Explore Navigation**: Use the sidebar to access Management, POS, and Configuration tools.\n3. **Set Up Notifications**: Ensure you stay informed about pending orders and ticket updates.\n4. **Review Documentation**: Check the 'Marketing & Growth' section to understand how to leverage promotions and referrals."
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "title": "Product Management",
+      "icon": "Package",
+      "articles": [
+        {
+          "id": "manual-product-entry",
+          "title": "Manual Product Entry",
+          "content": "Administrators and shop owners can add products manually through the 'Add New Product' dialog:\n\n1. **Select Product Name**: Choose an existing name from the global catalog or create a new one.\n2. **Define Inventory Settings**: Set the base price, final price (what customers pay), and current quantity.\n3. **Stock Control**: Specify measurement units (e.g., kg, pieces) and the reorder point for low-stock alerts.\n4. **Status**: Toggle 'Is Active' to control visibility on the marketplace."
+        },
+        {
+          "id": "bulk-import-catalog",
+          "title": "Bulk Import via CSV",
+          "content": "To manage large inventories, use the Import feature in the Products section:\n\n- **CSV Format**: Upload a structured file containing Product Name, Barcode, SKU, and Description.\n- **Duplicate Handling**: The system automatically detects existing barcodes to prevent duplicate entries.\n- **Catalog Synchronization**: Imported items become part of the 'Global Product Names' catalog, making them available for all shops to link to.\n- **Progress Tracking**: View a real-time progress bar during the import process to monitor success and skip rates."
+        },
+        {
+          "id": "product-catalog-logic",
+          "title": "Global Catalog vs. Shop Inventory",
+          "content": "Our system separates the 'What' from the 'Where':\n\n- **Product Names (Catalog)**: A global database of items (labels, barcodes, images) that are shop-independent.\n- **Products (Inventory)**: Specific instances of catalog items assigned to a shop with unique prices and stock levels.\n- **Relationship**: One 'Product Name' can be linked to multiple 'Products' in different shops, ensuring consistent branding across the platform."
+        }
+      ]
+    },
+    {
+      "id": "marketing-growth",
+      "title": "Marketing & Growth",
+      "icon": "TrendingUp",
+      "articles": [
+        {
+          "id": "referral-system-core",
+          "title": "Referral System & Logic",
+          "content": "The referral system is designed to incentivize user growth through performance-based commissions:\n\n- **Relationship**: Every referral record is linked to a unique user and their generated voucher code.\n- **Order Tracking**: When a customer uses a referral code at checkout, that order is permanently linked to the referrer.\n- **Earning Trigger**: Earning calculations only begin after a referral is manually reviewed and marked as 'Active' by an administrator.\n- **Case Sensitivity**: Referral codes are processed case-insensitively to ensure users never miss out on earnings due to typing errors."
+        },
+        {
+          "id": "commission-calculations",
+          "title": "Commission & Payout Logic",
+          "content": "Commissions are calculated based on the actual markup generated, not the gross sale amount:\n\n- **The Formula**: `Referral Earnings = (SellingTotal - CostTotal) * 0.0075`.\n- **Definitions**:\n  - **SellingTotal**: The final price paid by the customer for all items in the order.\n  - **CostTotal**: The base price paid to the shop for those items.\n- **Exclusions**: System fees and delivery charges are excluded from the commission pool to protect platform margins.\n- **Real-time Stats**: Referrers can see their 'Orders Count', 'Total Volume', and 'Live Earnings' directly in their dashboard."
+        },
+        {
+          "id": "promotions-vouchers",
+          "title": "Promotions & Vouchers",
+          "content": "Manage your marketing campaigns efficiently:\n\n- **Voucher Generation**: Create unique codes for discounts.\n- **Campaign Management**: Define start/end dates and usage limits.\n- **Discount Rules**: Configure percentage or fixed-amount discounts.\n- **Performance Tracking**: Monitor how effectively each promotion is driving sales."
+        }
+      ]
+    },
+    {
+      "id": "analytics",
+      "title": "System Analytics",
+      "icon": "TrendingUp",
+      "articles": [
+        {
+          "id": "order-analytics",
+          "title": "Order & Delivery Trends",
+          "content": "Visualizing your delivery performance:\n\n- **Orders Chart**: Displays total order volume over time, helping identify peak demand periods.\n- **On-Time Trend**: Tracks the percentage of orders delivered within target timeframes (e.g., 90 minutes).\n- **Overdue Monitoring**: Real-time visualization of orders exceeding delivery SLAs, requiring immediate attention.\n- **Plasa Performance**: Comparison of delivery times across different regions or hubs."
+        },
+        {
+          "id": "financial-analytics",
+          "title": "Financial & Revenue Charts",
+          "content": "Monitor the financial health of the platform:\n\n- **Revenue Overview**: Monthly and daily revenue trends with comparative indicators.\n- **Refunds Analysis**: Breakdown of refund amounts, status distributions, and volume over time.\n- **Transaction History**: Trend visualization of payment methods (Cash, Card, Momo) and volume."
+        }
+      ]
+    },
+    {
+      "id": "access-control",
+      "title": "Access Control (RBAC)",
+      "icon": "Shield",
+      "articles": [
+        {
+          "id": "understanding-roles",
+          "title": "User Roles & Levels",
+          "content": "The system uses a hierarchical Role-Based Access Control (RBAC) system:\n\n- **Global Admin**: Full access to all system modules, including privilege management and financial overrides.\n- **System Admin**: Broad operational access, focused on system-wide configurations.\n- **Project Admin**: Management access for specific project components.\n- **Support Staff**: Access limited to customer tickets, refunds, and order monitoring."
+        },
+        {
+          "id": "managing-privileges",
+          "title": "Managing User Privileges",
+          "content": "Privileges are managed in the 'Project Users' section:\n\n1. **Module Access**: Toggle visibility and entry access for entire sections (e.g., Wallet, Inventory).\n2. **Action Privileges**: Specific permissions for Add, Edit, or Delete actions within a module.\n3. **Two-Factor Auth**: Admins can monitor and enforce 2FA for sensitive accounts."
         }
       ]
     },
@@ -25,34 +103,12 @@
         {
           "id": "create-order",
           "title": "Creating an Order",
-          "content": "To create a new order:\n\n1. Click the 'New Order' button\n2. Select the delivery location\n3. Choose items from available shops\n4. Review and confirm the order details"
+          "content": "To create a new order manually or via POS:\n\n1. Select the items from the available inventory.\n2. Add customer details or select existing ones.\n3. Choose the payment method (Cash, Card, or Momo).\n4. Confirm and print the invoice for the customer."
         },
         {
-          "id": "track-order",
-          "title": "Tracking Orders",
-          "content": "Track your orders in real-time:\n\n- View current order status\n- See estimated delivery times\n- Contact assigned shoppers\n- Get delivery confirmations"
-        },
-        {
-          "id": "delivery-settings",
-          "title": "Understanding Delivery Settings",
-          "content": "Our delivery system is highly configurable to meet your business needs:\n\n### Base Fees\n- **Delivery Fee**: Standard charge for delivery service\n- **Service Fee**: Additional fee for platform usage\n- **Distance Surcharge**: Extra charges based on delivery distance\n\n### Time-Based Settings\n- **Rush Hour Pricing**: Increased rates during peak hours\n- **Off-Peak Discounts**: Reduced rates during slower periods\n- **Maximum Delivery Time**: Standard 90-minute delivery window\n\n### Delivery Zones\n1. **Zone Configuration**\n   - Define service areas\n   - Set zone-specific pricing\n   - Configure coverage boundaries\n\n2. **Zone Types**\n   - Urban (high density)\n   - Suburban (medium density)\n   - Rural (extended range)\n\n### Time Slots\n- **Scheduling Windows**\n   - Morning slots (6 AM - 12 PM)\n   - Afternoon slots (12 PM - 6 PM)\n   - Evening slots (6 PM - 10 PM)\n\n- **Capacity Management**\n   - Shopper availability\n   - Order volume limits\n   - Buffer time between deliveries\n\n### Special Conditions\n1. **Weather Adjustments**\n   - Rain/snow surcharge\n   - Extreme weather protocols\n   - Safety guidelines\n\n2. **Holiday Settings**\n   - Special holiday rates\n   - Modified delivery times\n   - Service availability\n\n3. **Priority Delivery**\n   - Express delivery options\n   - Premium service fees\n   - Guaranteed delivery times"
-        }
-      ]
-    },
-    {
-      "id": "shoppers",
-      "title": "Shopper Management",
-      "icon": "Users",
-      "articles": [
-        {
-          "id": "shopper-performance",
-          "title": "Understanding Shopper Performance",
-          "content": "Shoppers are ranked based on several metrics:\n\n### Performance Badges\n\n🏆 Elite (95%+ on-time)\n- Exceptional performance\n- Consistently delivers on time\n- Highest priority for new orders\n\n⭐ Great (90-94% on-time)\n- Very reliable\n- Rarely delivers late\n- High priority for orders\n\n👍 Good (80-89% on-time)\n- Meets expectations\n- Generally reliable\n\n⚠️ Needs Work (70-79% on-time)\n- Below target\n- Improvement needed\n- Additional monitoring\n\n❌ Poor (<70% on-time)\n- Significantly below expectations\n- Requires immediate attention\n\n### Time Targets\n- Standard delivery: 1 hour 30 minutes maximum\n- Timer starts at order acceptance\n- Includes pickup and delivery time"
-        },
-        {
-          "id": "manage-shoppers",
-          "title": "Managing Shoppers",
-          "content": "Effectively manage your delivery team:\n\n1. View shopper profiles\n2. Monitor performance metrics\n3. Handle scheduling\n4. Process payments\n5. Review customer feedback"
+          "id": "barcode-scanning-advanced",
+          "title": "Advanced Scanning Logic",
+          "content": "Our system features a hardware-integrated scanning system:\n\n- **Live Camera Feed**: Access real-time scanning using your device camera.\n- **Quick Linking**: Scanned codes automatically search the Global Catalog.\n- **Fallback Mode**: If camera access fails, the system provides a manual entry field with real-time suggestions.\n- **Compatibility**: Supports EAN-13, EAN-8, UPC, Code 128, and standard QR codes."
         }
       ]
     },
@@ -62,14 +118,14 @@
       "icon": "Wallet",
       "articles": [
         {
-          "id": "wallet-management",
-          "title": "Wallet Management",
-          "content": "Managing financial transactions:\n\n- View wallet balances\n- Process withdrawals\n- Track earnings\n- Handle refunds"
+          "id": "refunds-management",
+          "title": "Refunds Management",
+          "content": "Handle financial reversals with confidence:\n\n- **Automated Processing**: Trigger refunds directly from the dashboard.\n- **Wallet Integration**: Refunded amounts are automatically reconciled with relevant wallet balances.\n- **Audit Trail**: Every refund is documented for financial reconciliation."
         },
         {
-          "id": "payment-processing",
-          "title": "Payment Processing",
-          "content": "Understanding payment flows:\n\n1. Order payment collection\n2. Shopper earnings calculation\n3. Service fee breakdown\n4. Refund processing"
+          "id": "wallet-management",
+          "title": "Wallet Operations",
+          "content": "Managing financial transactions for the entire system:\n\n- **Company Payouts**: process withdrawals for system users.\n- **Reconciliation**: Audit transaction history against order records.\n- **Multi-currency**: Support for various currency formats as configured in system settings."
         }
       ]
     },
@@ -81,7 +137,7 @@
         {
           "id": "create-ticket",
           "title": "Creating Support Tickets",
-          "content": "To create a support ticket:\n\n1. Navigate to Support section\n2. Click 'New Ticket'\n3. Select issue category\n4. Provide details\n5. Attach relevant files\n6. Submit ticket"
+          "content": "1. Navigate to Support section\n2. Click 'New Ticket'\n3. Select issue category\n4. Provide details\n5. Attach relevant files\n6. Submit ticket"
         },
         {
           "id": "track-resolution",
