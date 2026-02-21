@@ -58,8 +58,8 @@ export async function GET(req: Request) {
                     orderSellingTotal += (finalPrice * qty);
                 });
 
-                // Earnings: 1% * (SellingTotal - CostTotal)
-                const earnings = (orderSellingTotal - orderCostTotal) * 0.01;
+                // Earnings: 0.75% * (SellingTotal - CostTotal)
+                const earnings = (orderSellingTotal - orderCostTotal) * 0.0075;
 
                 sellingTotal += orderSellingTotal;
                 costTotal += orderCostTotal;

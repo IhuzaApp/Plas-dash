@@ -187,7 +187,7 @@ export const ReviewReferralDrawer: React.FC<ReviewReferralDrawerProps> = ({
                                             <tr>
                                                 <th className="px-4 py-2 font-medium">Order ID</th>
                                                 <th className="px-4 py-2 font-medium text-right">Selling</th>
-                                                <th className="px-4 py-2 font-medium text-right">Earning (1%)</th>
+                                                <th className="px-4 py-2 font-medium text-right">Earning (0.75%)</th>
                                                 <th className="px-4 py-2 font-medium">Status</th>
                                             </tr>
                                         </thead>
@@ -196,7 +196,7 @@ export const ReviewReferralDrawer: React.FC<ReviewReferralDrawerProps> = ({
                                                 referral.stats.orders.map((order) => {
                                                     const selling = parseFloat(order.sellingTotal);
                                                     const cost = parseFloat(order.total);
-                                                    const earning = (selling - cost) * 0.01;
+                                                    const earning = (selling - cost) * 0.0075;
                                                     return (
                                                         <tr key={order.id}>
                                                             <td className="px-4 py-2 font-mono text-xs">{order.OrderID}</td>
