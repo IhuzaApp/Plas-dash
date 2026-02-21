@@ -1974,3 +1974,42 @@ export const GET_REFERRAL_WINDOW = `
     }
   }
 `;
+export const GET_REFERRAL_ORDERS = `
+  query GetReferralOrders($referralCodes: [String!]!) {
+    Orders(where: {voucher_code: {_in: $referralCodes}}) {
+      OrderID
+      assigned_at
+      id
+      pin
+      total
+      updated_at
+      voucher_code
+      Order_Items {
+        created_at
+        order_id
+        id
+        price
+        product_id
+        quantity
+        Product {
+          final_price
+          created_at
+          category
+          measurement_unit
+          image
+          is_active
+          shop_id
+          sku
+          supplier
+          updated_at
+          price
+          quantity
+        }
+      }
+      status
+      shopper_id
+      delivery_fee
+      service_fee
+    }
+  }
+`;
