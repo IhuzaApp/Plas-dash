@@ -36,3 +36,48 @@ export async function GET(req: Request) {
         );
     }
 }
+
+export async function PATCH(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        let userIdauth = (session?.user as { id?: string } | undefined)?.id;
+
+        // Fallback to Bearer token if session is not available
+        if (!userIdauth) {
+            const authHeader = req.headers.get('authorization');
+            if (authHeader?.startsWith('Bearer ')) {
+                userIdauth = authHeader.substring(7);
+            }
+        }
+
+        if (!userIdauth) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { id, status, phoneVerified } = await req.json();
+
+        if (!id || status === undefined) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        if (!hasuraClient) {
+            return NextResponse.json({ error: 'Database client not available' }, { status: 500 });
+        }
+
+        const { UPDATE_REFERRAL_WINDOW_STATUS } = await import('@/lib/graphql/mutations');
+
+        const data = await hasuraClient.request(UPDATE_REFERRAL_WINDOW_STATUS, {
+            id,
+            status,
+            phoneVerified: !!phoneVerified
+        });
+
+        return NextResponse.json(data);
+    } catch (error: any) {
+        console.error('Error updating referral window status:', error);
+        return NextResponse.json(
+            { error: error.message || 'Failed to update referral status' },
+            { status: 500 }
+        );
+    }
+}

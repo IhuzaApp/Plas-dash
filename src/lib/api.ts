@@ -56,3 +56,21 @@ export async function apiPost<T = unknown>(path: string, body: unknown): Promise
   }
   return data as T;
 }
+
+export async function apiPatch<T = unknown>(path: string, body: unknown): Promise<T> {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}${path.startsWith('/') ? path : `/${path}`}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.error || `Request failed: ${res.status}`);
+  }
+  return data as T;
+}

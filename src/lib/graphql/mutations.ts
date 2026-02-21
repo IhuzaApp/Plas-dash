@@ -785,3 +785,16 @@ export const UPDATE_PERSONAL_WALLET = `
     }
   }
 `;
+
+export const UPDATE_REFERRAL_WINDOW_STATUS = `
+  mutation UpdateReferralWindowStatus($id: uuid!, $status: String!, $phoneVerified: Boolean!) {
+    update_Referral_window_by_pk(
+      pk_columns: { id: $id },
+      _set: { status: $status, phoneVerified: $phoneVerified }
+    ) {
+      id
+      status
+      phoneVerified
+    }
+  }
+`;

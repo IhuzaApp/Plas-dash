@@ -40,12 +40,49 @@ import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { apiPatch } from '@/lib/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
 
 export default function ReferralsPage() {
+    const queryClient = useQueryClient();
+    const [selectedReferral, setSelectedReferral] = React.useState<any>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+
     const { data, isLoading, error } = useQuery({
         queryKey: ['referral-window'],
         queryFn: () => apiGet<{ Referral_window: any[] }>('/api/referral'),
     });
+
+    const updateStatusMutation = useMutation({
+        mutationFn: (variables: { id: string, status: string, phoneVerified: boolean }) =>
+            apiPatch('/api/referral', variables),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['referral-window'] });
+            toast.success('Referral status updated successfully');
+            setIsDrawerOpen(false);
+        },
+        onError: (err: any) => {
+            toast.error(err.message || 'Failed to update referral status');
+        }
+    });
+
+    const handleApprove = () => {
+        if (!selectedReferral) return;
+        updateStatusMutation.mutate({
+            id: selectedReferral.id,
+            status: 'active',
+            phoneVerified: true
+        });
+    };
 
     const referralData = data?.Referral_window ?? [];
 
@@ -229,6 +266,7 @@ export default function ReferralsPage() {
                                             <TableHead>Phone / Verified</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Created At</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -270,6 +308,18 @@ export default function ReferralsPage() {
                                                 <TableCell className="text-sm text-muted-foreground">
                                                     {format(new Date(record.created_at), 'MMM dd, yyyy HH:mm')}
                                                 </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setSelectedReferral(record);
+                                                            setIsDrawerOpen(true);
+                                                        }}
+                                                    >
+                                                        Review
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -279,6 +329,113 @@ export default function ReferralsPage() {
                     </Card>
                 </div>
             </AdminLayout>
+
+            <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+                <SheetContent className="sm:max-w-md">
+                    <SheetHeader>
+                        <SheetTitle>Review Referral</SheetTitle>
+                        <SheetDescription>
+                            Review user information and manually approve the referral.
+                        </SheetDescription>
+                    </SheetHeader>
+
+                    {selectedReferral && (
+                        <div className="mt-6 space-y-6">
+                            <div className="space-y-4">
+                                <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">User Information</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Full Name</p>
+                                        <p className="text-sm font-medium">{selectedReferral.name || selectedReferral.User?.name || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Email Address</p>
+                                        <p className="text-sm font-medium">{selectedReferral.email || selectedReferral.User?.email || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Phone Number</p>
+                                        <p className="text-sm font-medium">{selectedReferral.phone || selectedReferral.User?.phone || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Gender</p>
+                                        <p className="text-sm font-medium uppercase">{selectedReferral.User?.gender || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-4">
+                                <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">System Metadata</h4>
+                                <div className="space-y-3">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Device Fingerprint</p>
+                                        <p className="text-xs font-mono bg-muted p-2 rounded mt-1 break-all">
+                                            {selectedReferral.deviceFingerprint || 'No fingerprint available'}
+                                        </p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Referral Code</p>
+                                            <Badge variant="outline" className="mt-1">{selectedReferral.referralCode}</Badge>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Signup Date</p>
+                                            <p className="text-sm mt-1">{format(new Date(selectedReferral.created_at), 'MMM dd, yyyy HH:mm')}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-4">
+                                <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Current Status</h4>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-1">
+                                        <p className="text-xs text-muted-foreground mb-1">Status</p>
+                                        <Badge
+                                            variant="outline"
+                                            className={selectedReferral.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700'}
+                                        >
+                                            {selectedReferral.status}
+                                        </Badge>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-xs text-muted-foreground mb-1">Verification</p>
+                                        {selectedReferral.phoneVerified ? (
+                                            <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                                <CheckCircle2 className="w-3 h-3" /> Verified
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs text-yellow-600 font-medium flex items-center gap-1">
+                                                <Clock className="w-3 h-3" /> Unverified
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-6 flex gap-3">
+                                <Button
+                                    className="flex-1"
+                                    onClick={handleApprove}
+                                    disabled={updateStatusMutation.isPending || selectedReferral.status === 'active'}
+                                >
+                                    {updateStatusMutation.isPending ? 'Processing...' : 'Approve Referral'}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => setIsDrawerOpen(false)}
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
         </ProtectedRoute>
     );
 }
