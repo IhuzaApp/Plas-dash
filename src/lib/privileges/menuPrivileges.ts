@@ -27,6 +27,9 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   Discounts: { module: 'discounts' },
   'Financial Overview': { module: 'financial_overview' },
   'Staff Management': { module: 'staff_management' },
+  'Wallet Operations': { module: 'wallet' },
+  'Wallets': { module: 'wallet' },
+  // Backward compatibility for existing roles/users
   'Company Wallet': { module: 'wallet' },
   'Plasa Wallets': { module: 'wallet' },
   'Refund Claims': { module: 'refunds' },

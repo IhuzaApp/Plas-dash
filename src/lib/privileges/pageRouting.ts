@@ -74,7 +74,7 @@ export const PAGE_ROUTES: PageRoute[] = [
     path: '/company-wallet',
     module: 'wallet',
     action: 'access',
-    title: 'Company Wallet',
+    title: 'Wallet Operations',
     priority: 35,
   },
   {

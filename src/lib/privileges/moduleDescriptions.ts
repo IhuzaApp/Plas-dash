@@ -375,7 +375,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     ],
   },
   wallet: {
-    title: 'Wallet',
+    title: 'Wallet Operations',
     description: 'Manage wallet transactions and balances',
     actions: [
       { key: 'access', label: 'Access Wallet', description: 'Can access wallet page' },
