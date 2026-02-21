@@ -85,9 +85,17 @@ const GET_ALL_REEL_ORDERS = gql`
   }
 `;
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string } | undefined)?.id;
+  let userId = (session?.user as { id?: string } | undefined)?.id;
+
+  if (!userId) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
+    }
+  }
+
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -201,11 +209,11 @@ export async function GET() {
       Shoppers: o.Shoppers,
       Shop: o.Reel?.Shops
         ? {
-            id: o.Reel.Shops.id,
-            name: o.Reel.Shops.name,
-            address: o.Reel.Shops.address ?? undefined,
-            image: o.Reel.Shops.image ?? undefined,
-          }
+          id: o.Reel.Shops.id,
+          name: o.Reel.Shops.name,
+          address: o.Reel.Shops.address ?? undefined,
+          image: o.Reel.Shops.image ?? undefined,
+        }
         : undefined,
     }));
 

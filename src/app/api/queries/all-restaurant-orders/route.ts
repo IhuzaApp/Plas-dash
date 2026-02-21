@@ -149,9 +149,17 @@ const GET_ALL_RESTAURANT_ORDERS = gql`
   }
 `;
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string } | undefined)?.id;
+  let userId = (session?.user as { id?: string } | undefined)?.id;
+
+  if (!userId) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
+    }
+  }
+
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -342,14 +350,14 @@ export async function GET() {
         shopper:
           o.shopper != null
             ? {
-                id: o.shopper.id,
-                name: o.shopper.name ?? o.shopper.shopper?.full_name ?? '',
-                phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? '',
-                email: '',
-                shopper: o.shopper.shopper,
-                vehicle: o.shopper.vehicle,
-                updated_at: o.shopper.updated_at,
-              }
+              id: o.shopper.id,
+              name: o.shopper.name ?? o.shopper.shopper?.full_name ?? '',
+              phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? '',
+              email: '',
+              shopper: o.shopper.shopper,
+              vehicle: o.shopper.vehicle,
+              updated_at: o.shopper.updated_at,
+            }
             : undefined,
       };
     });

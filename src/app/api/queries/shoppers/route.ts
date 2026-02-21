@@ -412,7 +412,15 @@ const GET_REVENUE_BY_SHOPPER = gql`
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string } | null)?.id;
+  let userId = (session?.user as { id?: string } | null)?.id;
+  
+  if (!userId) {
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
+    }
+  }
+
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

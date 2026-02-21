@@ -116,9 +116,17 @@ const GET_ALL_BUSINESS_ORDERS = gql`
   }
 `;
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string } | undefined)?.id;
+  let userId = (session?.user as { id?: string } | undefined)?.id;
+
+  if (!userId) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
+    }
+  }
+
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -235,11 +243,11 @@ export async function GET() {
         businessTransactions: o.businessTransactions ?? [],
         shopper: o.shopper
           ? {
-              id: o.shopper.id,
-              name: (o.shopper as any).name ?? nested?.full_name ?? '',
-              phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
-              email: (o.shopper as any).email ?? '',
-            }
+            id: o.shopper.id,
+            name: (o.shopper as any).name ?? nested?.full_name ?? '',
+            phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
+            email: (o.shopper as any).email ?? '',
+          }
           : undefined,
       };
     });

@@ -5,9 +5,26 @@
 const getBaseUrl = () =>
   typeof window !== 'undefined' ? '' : process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
+const getAuthHeaders = (): Record<string, string> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const sessionStr = localStorage.getItem('orgEmployeeSession');
+    if (sessionStr) {
+      const session = JSON.parse(sessionStr);
+      if (session?.id) {
+        return { Authorization: `Bearer ${session.id}` };
+      }
+    }
+  } catch (e) {
+    // Ignore parse errors
+  }
+  return {};
+};
+
 export async function apiGet<T = unknown>(path: string): Promise<T> {
   const base = getBaseUrl();
   const res = await fetch(`${base}${path.startsWith('/') ? path : `/${path}`}`, {
+    headers: { ...getAuthHeaders() },
     credentials: 'include',
   });
   const data = await res.json();
@@ -21,7 +38,10 @@ export async function apiPost<T = unknown>(path: string, body: unknown): Promise
   const base = getBaseUrl();
   const res = await fetch(`${base}${path.startsWith('/') ? path : `/${path}`}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
     credentials: 'include',
     body: JSON.stringify(body),
   });

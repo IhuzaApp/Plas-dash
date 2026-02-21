@@ -70,9 +70,17 @@ const GET_ORDERS = gql`
   }
 `;
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string } | undefined)?.id;
+  let userId = (session?.user as { id?: string } | undefined)?.id;
+
+  if (!userId) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
+    }
+  }
+
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -157,11 +165,11 @@ export async function GET() {
         shopper:
           o.Shoppers != null
             ? {
-                id: o.Shoppers.id ?? '',
-                name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
-                phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
-                email: '',
-              }
+              id: o.Shoppers.id ?? '',
+              name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
+              phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
+              email: '',
+            }
             : undefined,
         itemsCount,
         unitsCount,

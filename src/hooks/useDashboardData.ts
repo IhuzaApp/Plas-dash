@@ -3,23 +3,23 @@ import { apiGet } from '@/lib/api';
 
 export const useDashboardData = () => {
   const { data: shopsRes, isLoading: isLoadingShops } = useQuery({
-    queryKey: ['api', 'shops'],
+    queryKey: ['dashboard', 'shops'],
     queryFn: () => apiGet<{ shops: any[] }>('/api/queries/shops'),
   });
   const { data: usersRes, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['api', 'users'],
+    queryKey: ['dashboard', 'users'],
     queryFn: () => apiGet<{ users: any[] }>('/api/queries/users'),
   });
   const { data: productsRes, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['api', 'products'],
+    queryKey: ['dashboard', 'products'],
     queryFn: () => apiGet<{ products: any[] }>('/api/queries/products'),
   });
   const { data: ordersRes, isLoading: isLoadingOrders } = useQuery({
-    queryKey: ['api', 'orders'],
+    queryKey: ['dashboard', 'orders'],
     queryFn: () => apiGet<{ orders: any[] }>('/api/queries/orders'),
   });
   const { data: orderStatsRes, isLoading: isLoadingOrderStats } = useQuery({
-    queryKey: ['api', 'order-stats'],
+    queryKey: ['dashboard', 'order-stats'],
     queryFn: () =>
       apiGet<{
         totalOrders: number;
@@ -30,19 +30,19 @@ export const useDashboardData = () => {
       }>('/api/queries/order-stats'),
   });
   const { data: shoppersRes, isLoading: isLoadingShoppers } = useQuery({
-    queryKey: ['api', 'shoppers'],
+    queryKey: ['dashboard', 'shoppers'],
     queryFn: () => apiGet<{ shoppers: any[] }>('/api/queries/shoppers'),
   });
   const { data: revenueArray, isLoading: isLoadingRevenue } = useQuery({
-    queryKey: ['api', 'revenue'],
+    queryKey: ['dashboard', 'revenue'],
     queryFn: () => apiGet<any[]>('/api/revenue'),
   });
   const { data: refundsRes, isLoading: isLoadingRefunds } = useQuery({
-    queryKey: ['api', 'all-refunds'],
+    queryKey: ['dashboard', 'all-refunds'],
     queryFn: () => apiGet<{ refunds: any[] }>('/api/queries/all-refunds'),
   });
   const { data: ticketsRes, isLoading: isLoadingTickets } = useQuery({
-    queryKey: ['api', 'tickets'],
+    queryKey: ['dashboard', 'tickets'],
     queryFn: () => apiGet<{ tickets: any[] }>('/api/queries/tickets'),
   });
 
