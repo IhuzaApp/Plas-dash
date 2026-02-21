@@ -1945,3 +1945,32 @@ export const GET_REELS = `
     }
   }
 `;
+
+export const GET_REFERRAL_WINDOW = `
+  query GetReferralWindow {
+    Referral_window(order_by: {created_at: desc}) {
+      created_at
+      deviceFingerprint
+      email
+      user_id
+      status
+      referralCode
+      phoneVerified
+      phone
+      name
+      id
+      User {
+        email
+        gender
+        id
+        is_active
+        is_guest
+        name
+        password_hash
+        phone
+        profile_picture
+        updated_at
+      }
+    }
+  }
+`;

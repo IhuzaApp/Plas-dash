@@ -29,6 +29,7 @@ export interface UserPrivileges {
   promotions?: ModulePrivileges;
   delivery_settings?: ModulePrivileges;
   pages?: ModulePrivileges;
+  referrals?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -282,6 +283,11 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     access_shop_dashboard: false,
     access_financial_overview: false,
     access_pos_terminal: false,
+  },
+  referrals: {
+    access: false,
+    view_data: false,
+    export_data: false,
   },
 };
 

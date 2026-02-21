@@ -103,6 +103,7 @@ export const PAGE_ROUTES: PageRoute[] = [
     priority: 10,
   },
   { path: '/settings', module: 'settings', action: 'access', title: 'Settings', priority: 5 },
+  { path: '/referrals', module: 'referrals', action: 'access', title: 'Referrals', priority: 4 },
   { path: '/help', module: 'help', action: 'access', title: 'Help', priority: 1 },
 
   // Additional pages that might exist
@@ -212,6 +213,7 @@ export const getRecommendedLandingPage = (privileges: UserPrivileges | null): Pa
     'promotions',
     'delivery_settings',
     'settings',
+    'referrals',
     'help',
   ];
 

@@ -38,6 +38,7 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   'Delivery Settings': { module: 'delivery_settings' },
   Promotions: { module: 'promotions' },
   'System Settings': { module: 'settings' },
+  Referrals: { module: 'referrals' },
 };
 
 /**

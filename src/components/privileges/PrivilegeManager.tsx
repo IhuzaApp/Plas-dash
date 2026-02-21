@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ChevronRight, Shield, Lock, Unlock, Settings } from 'lucide-react';
-import { UserPrivileges, DEFAULT_PRIVILEGES, PrivilegeKey } from '@/types/privileges';
+import { UserPrivileges, DEFAULT_PRIVILEGES, PrivilegeKey, ModulePrivileges } from '@/types/privileges';
 
 
 interface PrivilegeManagerProps {
@@ -602,16 +602,34 @@ const MODULE_DESCRIPTIONS: Record<
         description: 'Can manage delivery zones',
       },
       {
-        key: 'set_delivery_fees',
-        label: 'Set Delivery Fees',
-        description: 'Can set delivery fees',
-      },
-      {
         key: 'configure_delivery_times',
         label: 'Configure Times',
         description: 'Can configure delivery times',
       },
     ],
+  },
+  referrals: {
+    title: 'Referrals',
+    description: 'Track and manage user referrals and statistics',
+    actions: [
+      { key: 'access', label: 'Access Referrals', description: 'Can access referrals page' },
+      { key: 'view_data', label: 'View Data', description: 'Can view referral window data' },
+    ],
+  },
+  project_users: {
+    title: 'Project Users',
+    description: 'Manage project-specific user roles',
+    actions: [{ key: 'access', label: 'Access', description: 'Can access project users' }],
+  },
+  restaurants: {
+    title: 'Restaurants',
+    description: 'Manage restaurant listings',
+    actions: [{ key: 'access', label: 'Access', description: 'Can access restaurants' }],
+  },
+  pages: {
+    title: 'Pages',
+    description: 'Manage custom pages',
+    actions: [{ key: 'access', label: 'Access', description: 'Can access pages' }],
   },
 };
 
@@ -701,7 +719,7 @@ export function PrivilegeManager({
       <div className="grid gap-4">
         {Object.entries(MODULE_DESCRIPTIONS).map(([moduleKey, moduleInfo]) => {
           const module = moduleKey as PrivilegeKey;
-          const modulePrivileges = privileges[module] || {};
+          const modulePrivileges = (privileges[module] || { access: false }) as ModulePrivileges;
           const accessCount = getModuleAccessCount(module);
           const totalActions = moduleInfo.actions.length;
           const isExpanded = expandedModules.has(module);

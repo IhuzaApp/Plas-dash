@@ -559,6 +559,36 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       },
     ],
   },
+  referrals: {
+    title: 'Referrals',
+    description: 'Track and manage user referrals and statistics',
+    actions: [
+      { key: 'access', label: 'Access Referrals', description: 'Can access referrals page' },
+      { key: 'view_data', label: 'View Data', description: 'Can view referral window data' },
+      { key: 'export_data', label: 'Export Data', description: 'Can export referral records' },
+    ],
+  },
+  project_users: {
+    title: 'Project Users',
+    description: 'Manage project-specific user roles and access',
+    actions: [
+      { key: 'access', label: 'Access Project Users', description: 'Can access project users page' },
+    ],
+  },
+  restaurants: {
+    title: 'Restaurants',
+    description: 'Manage restaurant listings and menus',
+    actions: [
+      { key: 'access', label: 'Access Restaurants', description: 'Can access restaurants page' },
+    ],
+  },
+  pages: {
+    title: 'Pages',
+    description: 'Manage custom pages and content',
+    actions: [
+      { key: 'access', label: 'Access Pages', description: 'Can access pages management' },
+    ],
+  },
 };
 
 /**

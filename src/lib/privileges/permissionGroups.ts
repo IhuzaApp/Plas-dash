@@ -190,4 +190,13 @@ export const permissionGroups: PermissionGroup[] = [
       { key: 'manage_backup', label: 'Manage Backup' },
     ],
   },
+  {
+    title: 'Referrals',
+    module: 'referrals' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Referrals' },
+      { key: 'view_data', label: 'View Referral Data' },
+      { key: 'export_data', label: 'Export Referral Data' },
+    ],
+  },
 ];

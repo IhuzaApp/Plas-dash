@@ -246,6 +246,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       items: [
         { title: 'Delivery Settings', icon: Clock, path: '/delivery-settings' },
         { title: 'Promotions', icon: Percent, path: '/promotions' },
+        { title: 'Referrals', icon: Users, path: '/referrals' },
         { title: 'System Settings', icon: Settings, path: '/settings' },
       ],
     },
