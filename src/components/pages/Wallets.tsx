@@ -386,7 +386,7 @@ function PersonalWalletsTab({ formatCurrency }: { formatCurrency: (amount: strin
             totalPages={totalPages}
             pageSize={perPage}
             onPageChange={setPage}
-            onPageSizeChange={() => {}}
+            onPageSizeChange={() => { }}
             totalItems={wallets.length}
           />
         )}
@@ -539,7 +539,7 @@ function BusinessWalletsTab({ formatCurrency }: { formatCurrency: (amount: strin
             totalPages={totalPages}
             pageSize={perPage}
             onPageChange={setPage}
-            onPageSizeChange={() => {}}
+            onPageSizeChange={() => { }}
             totalItems={wallets.length}
           />
         )}
@@ -700,8 +700,8 @@ const Wallets = () => {
   return (
     <AdminLayout>
       <PageHeader
-        title="Wallets"
-        description="Manage company and shopper wallets."
+        title="Wallet Operations"
+        description="Manage wallet operations and payouts."
         actions={
           <ProcessPayoutDrawer>
             <Button>Process Payouts</Button>
@@ -712,7 +712,7 @@ const Wallets = () => {
       <Tabs defaultValue="wallets">
         <TabsList className="mb-4">
           <TabsTrigger value="wallets">Wallets</TabsTrigger>
-          <TabsTrigger value="shoppers">Shopper Wallets</TabsTrigger>
+          <TabsTrigger value="shoppers">Wallets</TabsTrigger>
           <TabsTrigger value="personal">Personal Wallets</TabsTrigger>
           <TabsTrigger value="business">Business Wallets</TabsTrigger>
         </TabsList>
@@ -732,7 +732,7 @@ const Wallets = () => {
         <TabsContent value="shoppers">
           <div className="space-y-4">
             <div className="flex justify-between">
-              <h2 className="text-xl font-semibold">Shopper Wallets</h2>
+              <h2 className="text-xl font-semibold">Wallets</h2>
             </div>
 
             <Card>
@@ -826,8 +826,8 @@ const Wallets = () => {
                           <TableCell>
                             {wallet.last_updated
                               ? formatDistanceToNow(new Date(wallet.last_updated), {
-                                  addSuffix: true,
-                                })
+                                addSuffix: true,
+                              })
                               : 'Never'}
                           </TableCell>
                           <TableCell>

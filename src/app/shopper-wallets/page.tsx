@@ -162,8 +162,8 @@ export default function ShopperWalletsPage() {
     <ProtectedRoute requiredPrivilege="wallet" requiredAction="view_wallets">
       <AdminLayout>
         <PageHeader
-          title="Consolidated Wallets"
-          description="View all generic, shopper, and business wallets."
+          title="Wallets"
+          description="View and manage all wallets across the system."
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -221,7 +221,7 @@ export default function ShopperWalletsPage() {
         <Tabs defaultValue="personal" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="personal" className="text-base px-6 py-3">Personal Wallets</TabsTrigger>
-            <TabsTrigger value="shopper" className="text-base px-6 py-3">Shopper Wallets</TabsTrigger>
+            <TabsTrigger value="shopper" className="text-base px-6 py-3">Wallets</TabsTrigger>
             <TabsTrigger value="business" className="text-base px-6 py-3">Businesses</TabsTrigger>
           </TabsList>
 
@@ -297,7 +297,7 @@ export default function ShopperWalletsPage() {
                     <div className="flex flex-col h-full p-6 relative z-10">
                       <div className="flex justify-between items-start w-full mb-auto text-blue-100">
                         <span className="text-xs uppercase tracking-widest font-semibold flex items-center gap-1.5 opacity-90">
-                          <Wallet className="w-3.5 h-3.5" /> Shopper Wallet
+                          <Wallet className="w-3.5 h-3.5" /> Wallet
                         </span>
                       </div>
 
