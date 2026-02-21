@@ -446,18 +446,18 @@ export const GET_ALL_WALLET_TRANSACTIONS = `
 
 // All Wallets (shopper) with full transactions for overview tab
 export const GET_ALL_WALLETS_WITH_TRANSACTIONS = `
-  query GetAllWalletsWithTransactions {
+  query getshopperWallet {
     Wallets {
-      id
       available_balance
-      reserved_balance
+      id
       last_updated
+      reserved_balance
       shopper_id
       Wallet_Transactions {
-        id
         amount
         created_at
         description
+        id
         relate_business_order_id
         related_order_id
         related_reel_orderId
@@ -465,6 +465,93 @@ export const GET_ALL_WALLETS_WITH_TRANSACTIONS = `
         status
         type
         wallet_id
+        Order {
+          OrderID
+          assigned_at
+          combined_order_id
+          created_at
+          delivery_address_id
+          delivery_fee
+          delivery_notes
+          delivery_photo_url
+          delivery_time
+          discount
+          id
+          pin
+          service_fee
+          total
+          status
+        }
+        Reel_order {
+          OrderID
+          assigned_at
+          combined_order_id
+          created_at
+          delivery_address_id
+          delivery_fee
+          delivery_note
+          discount
+          delivery_time
+          delivery_photo_url
+          found
+          id
+          quantity
+          reel_id
+          pin
+          voucher_code
+          status
+          total
+        }
+        Restaurant_order {
+          combined_order_id
+          assigned_at
+          delivery_address_id
+          created_at
+          delivery_fee
+          delivery_notes
+          delivery_photo_url
+          pin
+          restaurant_id
+          found
+          id
+          shopper_id
+          status
+          total
+          updated_at
+          user_id
+        }
+      }
+      User {
+        shopper {
+          address
+          active
+          full_name
+          collection_comment
+          driving_license
+          drivingLicense_Image
+          id
+          guarantorPhone
+          guarantorRelationship
+          guarantor
+          phone
+          national_id_photo_front
+          needCollection
+          signature
+          updated_at
+          transport_mode
+          telegram_id
+          status
+          user_id
+          phone_number
+          profile_photo
+          created_at
+          background_check_completed
+          latitude
+          longitude
+          mutual_StatusCertificate
+          national_id
+          national_id_photo_back
+        }
       }
     }
   }
@@ -472,21 +559,60 @@ export const GET_ALL_WALLETS_WITH_TRANSACTIONS = `
 
 // Personal wallets (users) for overview tab
 export const GET_PERSONAL_WALLETS = `
-  query GetPersonalWallets {
+  query getPersonalwallet {
     personalWallet {
       id
-      balance
       created_at
+      balance
       updated_at
       user_id
       Users {
-        id
-        name
         email
+        created_at
         gender
-        is_guest
+        id
         is_active
+        is_guest
+        name
         phone
+        profile_picture
+        role
+        updated_at
+      }
+      RecieverPersonalWallet {
+        action
+        amount
+        created_at
+        doneBy
+        id
+        wallet_id
+        update_at
+        status
+        received_wallet
+        Users {
+          email
+          created_at
+          gender
+          id
+          is_active
+          is_guest
+          name
+          password_hash
+          phone
+          profile_picture
+          updated_at
+        }
+      }
+      personalWalletTransactions {
+        action
+        status
+        received_wallet
+        id
+        doneBy
+        created_at
+        amount
+        update_at
+        wallet_id
       }
     }
   }
@@ -494,23 +620,38 @@ export const GET_PERSONAL_WALLETS = `
 
 // Business wallets for overview tab
 export const GET_BUSINESS_WALLETS = `
-  query GetBusinessWallets {
+  query getBusinessWallet {
     business_wallet {
-      id
       amount
       business_id
       created_at
+      id
       query_id
       updated_at
       businessTransactions {
-        id
         action
         created_at
         description
+        id
         related_order
         status
         type
         wallet_id
+      }
+      business_account {
+        account_type
+        business_email
+        business_location
+        business_phone
+        business_name
+        created_at
+        face_image
+        id
+        id_image
+        status
+        updated_at
+        user_id
+        rdb_certificate
       }
     }
   }

@@ -547,7 +547,10 @@ export function useWalletTransactions() {
 export function useAllWalletsWithTransactions() {
   return useQuery<{ Wallets: any[] }, Error>({
     queryKey: ['wallets-with-transactions'],
-    queryFn: () => hasuraRequest(GET_ALL_WALLETS_WITH_TRANSACTIONS, {}),
+    queryFn: async () => {
+      const res = await apiGet<{ Wallets: any[] }>('/api/queries/all-shopper-wallets');
+      return { Wallets: res.Wallets || [] };
+    },
   });
 }
 
@@ -555,7 +558,10 @@ export function useAllWalletsWithTransactions() {
 export function usePersonalWallets() {
   return useQuery<{ personalWallet: any[] }, Error>({
     queryKey: ['personal-wallets'],
-    queryFn: () => hasuraRequest(GET_PERSONAL_WALLETS, {}),
+    queryFn: async () => {
+      const res = await apiGet<{ personalWallet: any[] }>('/api/queries/all-personal-wallets');
+      return { personalWallet: res.personalWallet || [] };
+    },
   });
 }
 
@@ -563,7 +569,10 @@ export function usePersonalWallets() {
 export function useBusinessWallets() {
   return useQuery<{ business_wallet: any[] }, Error>({
     queryKey: ['business-wallets'],
-    queryFn: () => hasuraRequest(GET_BUSINESS_WALLETS, {}),
+    queryFn: async () => {
+      const res = await apiGet<{ business_wallet: any[] }>('/api/queries/all-business-wallets');
+      return { business_wallet: res.business_wallet || [] };
+    },
   });
 }
 
