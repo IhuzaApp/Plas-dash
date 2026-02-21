@@ -365,7 +365,6 @@ export interface Refund {
   } | null;
 }
 
-
 export interface OrderItem {
   id: string;
   order_id: string;

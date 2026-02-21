@@ -110,10 +110,17 @@ const Refunds = () => {
       .filter(r => r.status.toLowerCase() === 'approved' && r.paid)
       .reduce((sum, r) => sum + parseFloat(r.amount), 0);
 
-    return { total, pending, inReview, approved, rejected, totalRefunded: totalRefunded.toFixed(2) };
+    return {
+      total,
+      pending,
+      inReview,
+      approved,
+      rejected,
+      totalRefunded: totalRefunded.toFixed(2),
+    };
   }, [refunds]);
 
-  const statValues: Record<typeof STAT_CONFIGS[number]['key'], string | number> = {
+  const statValues: Record<(typeof STAT_CONFIGS)[number]['key'], string | number> = {
     total: stats.total,
     pending: stats.pending,
     inReview: stats.inReview,
@@ -148,10 +155,14 @@ const Refunds = () => {
 
   const getStatusStyle = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved': return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
-      case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
-      case 'in_review': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300';
-      default: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300';
+      case 'approved':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
+      case 'rejected':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
+      case 'in_review':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300';
+      default:
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300';
     }
   };
 
@@ -191,7 +202,9 @@ const Refunds = () => {
             {STAT_CONFIGS.map(({ key, label, icon: Icon, color, bg }) => (
               <Card key={key} className="overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
-                  <CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle>
+                  <CardTitle className="text-xs font-medium text-muted-foreground">
+                    {label}
+                  </CardTitle>
                   <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${bg}`}>
                     <Icon className={`h-4 w-4 ${color}`} />
                   </div>
@@ -207,7 +220,9 @@ const Refunds = () => {
             {/* Total Refunded card */}
             <Card className="overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
-                <CardTitle className="text-xs font-medium text-muted-foreground">Total Refunded</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">
+                  Total Refunded
+                </CardTitle>
                 <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/40">
                   <Banknote className="h-4 w-4 text-emerald-500" />
                 </div>
@@ -295,7 +310,9 @@ const Refunds = () => {
                           <TableCell className="font-medium">{refund.id.slice(0, 8)}</TableCell>
                           <TableCell>{refund.order_id.slice(0, 8)}</TableCell>
                           <TableCell>{formatCurrency(refund.amount)}</TableCell>
-                          <TableCell>{format(new Date(refund.created_at), 'MMM dd, yyyy')}</TableCell>
+                          <TableCell>
+                            {format(new Date(refund.created_at), 'MMM dd, yyyy')}
+                          </TableCell>
                           <TableCell>
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(refund.status)}`}
@@ -305,10 +322,11 @@ const Refunds = () => {
                           </TableCell>
                           <TableCell>
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${refund.paid
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                refund.paid
                                   ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
                                   : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                                }`}
+                              }`}
                             >
                               {refund.paid ? 'Paid' : 'Pending'}
                             </span>

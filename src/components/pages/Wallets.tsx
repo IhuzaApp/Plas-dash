@@ -386,7 +386,7 @@ function PersonalWalletsTab({ formatCurrency }: { formatCurrency: (amount: strin
             totalPages={totalPages}
             pageSize={perPage}
             onPageChange={setPage}
-            onPageSizeChange={() => { }}
+            onPageSizeChange={() => {}}
             totalItems={wallets.length}
           />
         )}
@@ -539,7 +539,7 @@ function BusinessWalletsTab({ formatCurrency }: { formatCurrency: (amount: strin
             totalPages={totalPages}
             pageSize={perPage}
             onPageChange={setPage}
-            onPageSizeChange={() => { }}
+            onPageSizeChange={() => {}}
             totalItems={wallets.length}
           />
         )}
@@ -826,8 +826,8 @@ const Wallets = () => {
                           <TableCell>
                             {wallet.last_updated
                               ? formatDistanceToNow(new Date(wallet.last_updated), {
-                                addSuffix: true,
-                              })
+                                  addSuffix: true,
+                                })
                               : 'Never'}
                           </TableCell>
                           <TableCell>

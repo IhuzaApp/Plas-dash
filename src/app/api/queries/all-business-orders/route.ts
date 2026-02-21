@@ -243,11 +243,11 @@ export async function GET(req: Request) {
         businessTransactions: o.businessTransactions ?? [],
         shopper: o.shopper
           ? {
-            id: o.shopper.id,
-            name: (o.shopper as any).name ?? nested?.full_name ?? '',
-            phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
-            email: (o.shopper as any).email ?? '',
-          }
+              id: o.shopper.id,
+              name: (o.shopper as any).name ?? nested?.full_name ?? '',
+              phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
+              email: (o.shopper as any).email ?? '',
+            }
           : undefined,
       };
     });

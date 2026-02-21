@@ -12,7 +12,7 @@ const GET_REFUND_AND_WALLET = gql`
       user_id
       status
     }
-    personalWallet(where: {user_id: {_eq: $user_id}}) {
+    personalWallet(where: { user_id: { _eq: $user_id } }) {
       id
       balance
     }
@@ -21,42 +21,43 @@ const GET_REFUND_AND_WALLET = gql`
 
 const APPROVE_REFUND_AND_UPDATE_WALLET = gql`
   mutation ApproveRefundAndUpdateWallet(
-    $refund_id: uuid!,
-    $wallet_id: uuid!,
-    $new_balance: String!,
-    $transaction_amount: String!,
-    $transaction_action: String!,
-    $transaction_status: String!,
-    $updated_at: timestamptz!,
-    $update_on: timestamptz!,
-    $doneBy: uuid!,
+    $refund_id: uuid!
+    $wallet_id: uuid!
+    $new_balance: String!
+    $transaction_amount: String!
+    $transaction_action: String!
+    $transaction_status: String!
+    $updated_at: timestamptz!
+    $update_on: timestamptz!
+    $doneBy: uuid!
     $received_wallet: uuid!
   ) {
     update_Refunds_by_pk(
-      pk_columns: { id: $refund_id },
+      pk_columns: { id: $refund_id }
       _set: { status: "approved", paid: true, update_on: $update_on }
     ) {
       id
     }
     update_personalWallet(
-      where: {id: {_eq: $wallet_id}},
-      _set: {balance: $new_balance, updated_at: $updated_at}
+      where: { id: { _eq: $wallet_id } }
+      _set: { balance: $new_balance, updated_at: $updated_at }
     ) {
       affected_rows
     }
-    insert_personalWalletTransactions(objects: {
-      action: $transaction_action,
-      amount: $transaction_amount,
-      status: $transaction_status,
-      wallet_id: $wallet_id,
-      received_wallet: $received_wallet,
-      doneBy: $doneBy
-    }) {
+    insert_personalWalletTransactions(
+      objects: {
+        action: $transaction_action
+        amount: $transaction_amount
+        status: $transaction_status
+        wallet_id: $wallet_id
+        received_wallet: $received_wallet
+        doneBy: $doneBy
+      }
+    ) {
       affected_rows
     }
   }
 `;
-
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -72,7 +73,6 @@ export async function POST(req: Request) {
   if (!userIdFromAuth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-
 
   try {
     const { refund_id, user_id } = await req.json();
@@ -126,8 +126,6 @@ export async function POST(req: Request) {
       doneBy: refund.user_id,
       received_wallet: wallet.id,
     });
-
-
 
     return NextResponse.json({ success: true, newBalance });
   } catch (error) {

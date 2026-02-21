@@ -21,47 +21,44 @@ export async function notifySystemToSlack(payload: SystemNotificationPayload) {
     return;
   }
 
-  const title = payload.title?.trim() || "System";
-  const message = payload.message?.trim() || "—";
+  const title = payload.title?.trim() || 'System';
+  const message = payload.message?.trim() || '—';
   const context = payload.context ?? {};
 
   const blocks: any[] = [
     {
-      type: "header",
-      text: { type: "plain_text", text: title },
+      type: 'header',
+      text: { type: 'plain_text', text: title },
     },
     {
-      type: "section",
-      text: { type: "mrkdwn", text: message },
+      type: 'section',
+      text: { type: 'mrkdwn', text: message },
     },
   ];
 
   if (Object.keys(context).length > 0) {
     blocks.push({
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
-        text:
-          "*Context*\n```" +
-          JSON.stringify(context, null, 2).slice(0, 800) +
-          "```",
+        type: 'mrkdwn',
+        text: '*Context*\n```' + JSON.stringify(context, null, 2).slice(0, 800) + '```',
       },
     });
   }
 
   blocks.push({
-    type: "context",
-    elements: [{ type: "mrkdwn", text: `🕒 ${new Date().toISOString()}` }],
+    type: 'context',
+    elements: [{ type: 'mrkdwn', text: `🕒 ${new Date().toISOString()}` }],
   });
 
   try {
     await fetch(SLACK_GENERAL_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: `${title}: ${message}`, blocks }),
     });
   } catch (error) {
-    console.error("Failed to send system notification to Slack", error);
+    console.error('Failed to send system notification to Slack', error);
   }
 }
 
@@ -84,77 +81,72 @@ export interface NewReviewPayload {
  */
 export async function notifyNewReviewToSlack(payload: NewReviewPayload) {
   if (!SLACK_GENERAL_WEBHOOK) {
-    console.error("SLACK_GENERAL_WEBHOOK is not configured");
+    console.error('SLACK_GENERAL_WEBHOOK is not configured');
     return;
   }
 
-  const orderDisplay = payload.orderNumber ?? "—";
+  const orderDisplay = payload.orderNumber ?? '—';
   const ratingDisplay = String(payload.overallRating);
-  const shopperDisplay = payload.shopperName ?? "—";
-  const storeDisplay = payload.storeName ?? "—";
+  const shopperDisplay = payload.shopperName ?? '—';
+  const storeDisplay = payload.storeName ?? '—';
   const commentDisplay =
     payload.comment && payload.comment.trim()
       ? payload.comment.trim().slice(0, 1000)
-      : "_No comment_";
+      : '_No comment_';
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "⭐ New Review Added",
+        type: 'plain_text',
+        text: '⭐ New Review Added',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Order #*\n\`${orderDisplay}\`` },
-        { type: "mrkdwn", text: `*Overall rating*\n${ratingDisplay}/5` },
+        { type: 'mrkdwn', text: `*Order #*\n\`${orderDisplay}\`` },
+        { type: 'mrkdwn', text: `*Overall rating*\n${ratingDisplay}/5` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Shopper*\n${shopperDisplay}` },
-        { type: "mrkdwn", text: `*Supermarket*\n${storeDisplay}` },
+        { type: 'mrkdwn', text: `*Shopper*\n${shopperDisplay}` },
+        { type: 'mrkdwn', text: `*Supermarket*\n${storeDisplay}` },
       ],
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Comment*\n${commentDisplay}`,
       },
     },
     {
-      type: "context",
-      elements: [{ type: "mrkdwn", text: `🕒 ${new Date().toLocaleString()}` }],
+      type: 'context',
+      elements: [{ type: 'mrkdwn', text: `🕒 ${new Date().toLocaleString()}` }],
     },
   ];
 
   try {
     await fetch(SLACK_GENERAL_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `New review for order #${orderDisplay} — ${ratingDisplay}/5`,
         blocks,
       }),
     });
   } catch (error) {
-    console.error("Failed to send review notification to Slack", error);
+    console.error('Failed to send review notification to Slack', error);
   }
 }
 
 // --- Delayed order (system) notification ---
 
-export type DelayedOrderStatus =
-  | "PENDING"
-  | "accepted"
-  | "shopping"
-  | "on_the_way"
-  | string;
+export type DelayedOrderStatus = 'PENDING' | 'accepted' | 'shopping' | 'on_the_way' | string;
 
 export interface DelayedOrderPayload {
   /** Order number for display (e.g. OrderID) */
@@ -177,33 +169,33 @@ export interface DelayedOrderPayload {
  */
 export async function notifyDelayedOrderToSlack(payload: DelayedOrderPayload) {
   if (!SLACK_GENERAL_WEBHOOK) {
-    console.error("SLACK_GENERAL_WEBHOOK is not configured");
+    console.error('SLACK_GENERAL_WEBHOOK is not configured');
     return;
   }
 
-  const orderDisplay = payload.orderNumber ?? "—";
-  const storeDisplay = payload.storeName ?? "—";
-  const customerPhone = payload.customerPhone ?? "—";
-  const shopperPhone = payload.shopperPhone ?? "—";
-  const status = (payload.status || "").toLowerCase();
-  const isPending = status === "pending";
+  const orderDisplay = payload.orderNumber ?? '—';
+  const storeDisplay = payload.storeName ?? '—';
+  const customerPhone = payload.customerPhone ?? '—';
+  const shopperPhone = payload.shopperPhone ?? '—';
+  const status = (payload.status || '').toLowerCase();
+  const isPending = status === 'pending';
   const isAssigned =
-    status === "accepted" ||
-    status === "shopping" ||
-    status === "on_the_way" ||
-    status === "packing";
+    status === 'accepted' ||
+    status === 'shopping' ||
+    status === 'on_the_way' ||
+    status === 'packing';
 
   const minutes = payload.minutesRemaining;
   const expiryText =
     minutes < 0
-      ? "Already late"
+      ? 'Already late'
       : minutes <= 1
-      ? "Will expire in 1 minute"
-      : `Will expire in ${Math.round(minutes)} minutes`;
+        ? 'Will expire in 1 minute'
+        : `Will expire in ${Math.round(minutes)} minutes`;
 
   let statusLine: string;
   if (isPending) {
-    statusLine = "Has been delayed and not yet assigned.";
+    statusLine = 'Has been delayed and not yet assigned.';
   } else if (isAssigned) {
     statusLine = "Has been accepted and the shopper hasn't delivered it yet.";
   } else {
@@ -212,61 +204,61 @@ export async function notifyDelayedOrderToSlack(payload: DelayedOrderPayload) {
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "⚠️ Order Late / Needs Immediate Attention",
+        type: 'plain_text',
+        text: '⚠️ Order Late / Needs Immediate Attention',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Order #*\n\`${orderDisplay}\`` },
-        { type: "mrkdwn", text: `*Supermarket*\n${storeDisplay}` },
+        { type: 'mrkdwn', text: `*Order #*\n\`${orderDisplay}\`` },
+        { type: 'mrkdwn', text: `*Supermarket*\n${storeDisplay}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Status:* ${statusLine}`,
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*📞 Customer phone*\n${customerPhone}` },
+        { type: 'mrkdwn', text: `*📞 Customer phone*\n${customerPhone}` },
         {
-          type: "mrkdwn",
+          type: 'mrkdwn',
           text: `*📞 Shopper phone*\n${shopperPhone}`,
         },
       ],
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Needs immediate attention.* ${expiryText}.`,
       },
     },
     {
-      type: "context",
-      elements: [{ type: "mrkdwn", text: `🕒 ${new Date().toLocaleString()}` }],
+      type: 'context',
+      elements: [{ type: 'mrkdwn', text: `🕒 ${new Date().toLocaleString()}` }],
     },
   ];
 
   try {
     await fetch(SLACK_GENERAL_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `Order #${orderDisplay} is late or at risk — ${expiryText}`,
         blocks,
       }),
     });
   } catch (error) {
-    console.error("Failed to send delayed order notification to Slack", error);
+    console.error('Failed to send delayed order notification to Slack', error);
   }
 }
 
@@ -293,79 +285,73 @@ export interface NewStoreCreatedPayload {
  * Send a "new store created" notification to Slack with store info, description, and location.
  * Called after a business store is successfully created.
  */
-export async function notifyNewStoreCreatedToSlack(
-  payload: NewStoreCreatedPayload
-) {
+export async function notifyNewStoreCreatedToSlack(payload: NewStoreCreatedPayload) {
   if (!SLACK_GENERAL_WEBHOOK) {
-    console.error("SLACK_GENERAL_WEBHOOK is not configured");
+    console.error('SLACK_GENERAL_WEBHOOK is not configured');
     return;
   }
 
-  const nameDisplay = payload.storeName?.trim() ?? "—";
-  const descRaw = payload.description?.trim() || "";
+  const nameDisplay = payload.storeName?.trim() ?? '—';
+  const descRaw = payload.description?.trim() || '';
   const descDisplay = descRaw
-    ? descRaw.replace(/<[^>]*>/g, "").slice(0, 500) +
-      (descRaw.length > 500 ? "…" : "")
-    : "_No description_";
-  const lat = payload.latitude?.trim() ?? "";
-  const lng = payload.longitude?.trim() ?? "";
+    ? descRaw.replace(/<[^>]*>/g, '').slice(0, 500) + (descRaw.length > 500 ? '…' : '')
+    : '_No description_';
+  const lat = payload.latitude?.trim() ?? '';
+  const lng = payload.longitude?.trim() ?? '';
   const locationDisplay =
     lat && lng
       ? `Lat: ${lat}, Lng: ${lng}\n<https://www.google.com/maps?q=${encodeURIComponent(
-          lat + "," + lng
+          lat + ',' + lng
         )}|View on Google Maps>`
-      : "—";
-  const businessDisplay = payload.businessName?.trim() ?? "—";
+      : '—';
+  const businessDisplay = payload.businessName?.trim() ?? '—';
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "🏪 New Store Created",
+        type: 'plain_text',
+        text: '🏪 New Store Created',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Store name*\n${nameDisplay}` },
-        { type: "mrkdwn", text: `*Business / owner*\n${businessDisplay}` },
+        { type: 'mrkdwn', text: `*Store name*\n${nameDisplay}` },
+        { type: 'mrkdwn', text: `*Business / owner*\n${businessDisplay}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Description*\n${descDisplay}`,
       },
     },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Location*\n${locationDisplay}`,
       },
     },
   ];
 
   blocks.push({
-    type: "context",
-    elements: [{ type: "mrkdwn", text: `🕒 ${new Date().toLocaleString()}` }],
+    type: 'context',
+    elements: [{ type: 'mrkdwn', text: `🕒 ${new Date().toLocaleString()}` }],
   });
 
   try {
     await fetch(SLACK_GENERAL_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `New store created: ${nameDisplay}`,
         blocks,
       }),
     });
   } catch (error) {
-    console.error(
-      "Failed to send new store created notification to Slack",
-      error
-    );
+    console.error('Failed to send new store created notification to Slack', error);
   }
 }

@@ -306,11 +306,12 @@ export function hasPrivilege(
   // This ensures existing admins get access even if their stored JSON is outdated
   const isAdminRole = role === 'globalAdmin' || role === 'projectAdmin' || role === 'systemAdmin';
 
-  if (isAdminRole && (
-    module === 'referrals' ||
-    module === 'help' ||
-    (module === 'pages' && (action === 'access_referrals' || action === 'access_help'))
-  )) {
+  if (
+    isAdminRole &&
+    (module === 'referrals' ||
+      module === 'help' ||
+      (module === 'pages' && (action === 'access_referrals' || action === 'access_help')))
+  ) {
     return true;
   }
 

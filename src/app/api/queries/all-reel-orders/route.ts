@@ -209,11 +209,11 @@ export async function GET(req: Request) {
       Shoppers: o.Shoppers,
       Shop: o.Reel?.Shops
         ? {
-          id: o.Reel.Shops.id,
-          name: o.Reel.Shops.name,
-          address: o.Reel.Shops.address ?? undefined,
-          image: o.Reel.Shops.image ?? undefined,
-        }
+            id: o.Reel.Shops.id,
+            name: o.Reel.Shops.name,
+            address: o.Reel.Shops.address ?? undefined,
+            image: o.Reel.Shops.image ?? undefined,
+          }
         : undefined,
     }));
 

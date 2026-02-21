@@ -777,7 +777,6 @@ export const ADD_PERSONAL_WALLET_TRANSACTION = `
   }
 `;
 
-
 export const UPDATE_PERSONAL_WALLET = `
   mutation updatePersonalWallet($balance: String = "", $updated_at: timestamptz = "", $user_id: uuid = "") {
     update_personalWallet(where: {user_id: {_eq: $user_id}}, _set: {balance: $balance, updated_at: $updated_at}) {

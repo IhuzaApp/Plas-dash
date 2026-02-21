@@ -60,7 +60,6 @@ const GET_ALL_REFUNDS = gql`
   }
 `;
 
-
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   let userId = (session?.user as { id?: string } | undefined)?.id;

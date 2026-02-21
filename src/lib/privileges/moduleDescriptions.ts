@@ -572,7 +572,11 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     title: 'Project Users',
     description: 'Manage project-specific user roles and access',
     actions: [
-      { key: 'access', label: 'Access Project Users', description: 'Can access project users page' },
+      {
+        key: 'access',
+        label: 'Access Project Users',
+        description: 'Can access project users page',
+      },
     ],
   },
   restaurants: {
@@ -585,9 +589,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   pages: {
     title: 'Pages',
     description: 'Manage custom pages and content',
-    actions: [
-      { key: 'access', label: 'Access Pages', description: 'Can access pages management' },
-    ],
+    actions: [{ key: 'access', label: 'Access Pages', description: 'Can access pages management' }],
   },
 };
 

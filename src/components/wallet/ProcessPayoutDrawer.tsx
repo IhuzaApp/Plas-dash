@@ -101,7 +101,10 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                     const busy = actionId === req.id;
 
                     return (
-                      <div key={req.id} className="rounded-lg border p-4 space-y-3 bg-card shadow-sm hover:shadow-md transition-shadow">
+                      <div
+                        key={req.id}
+                        className="rounded-lg border p-4 space-y-3 bg-card shadow-sm hover:shadow-md transition-shadow"
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-3 min-w-0">
                             {user?.profile_picture ? (
@@ -116,9 +119,7 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                               </div>
                             )}
                             <div className="min-w-0">
-                              <div className="font-medium truncate">
-                                {user?.name ?? 'Unknown'}
-                              </div>
+                              <div className="font-medium truncate">{user?.name ?? 'Unknown'}</div>
                               <div className="text-xs text-muted-foreground truncate">
                                 {user?.email ?? '—'}
                                 {user?.phone ? ` · ${user.phone}` : ''}
@@ -132,28 +133,36 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
 
                         <div className="grid grid-cols-2 gap-4 text-sm bg-muted/30 p-3 rounded-md">
                           <div>
-                            <span className="text-muted-foreground block text-xs uppercase tracking-wider">Amount</span>
+                            <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                              Amount
+                            </span>
                             <div className="font-semibold text-lg">
                               {formatCurrency(String(req.amount))}
                             </div>
                           </div>
                           <div>
-                            <span className="text-muted-foreground block text-xs uppercase tracking-wider">Phone</span>
+                            <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                              Phone
+                            </span>
                             <div className="font-medium">{req.phoneNumber || '—'}</div>
                           </div>
                           <div>
-                            <span className="text-muted-foreground block text-xs uppercase tracking-wider">Wallet Balance</span>
+                            <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                              Wallet Balance
+                            </span>
                             <div className="font-medium">
                               {wallet ? formatCurrency(wallet.available_balance || '0') : '—'}
                             </div>
                           </div>
                           <div>
-                            <span className="text-muted-foreground block text-xs uppercase tracking-wider">Requested</span>
+                            <span className="text-muted-foreground block text-xs uppercase tracking-wider">
+                              Requested
+                            </span>
                             <div className="font-medium">
                               {req.created_at
                                 ? formatDistanceToNow(new Date(req.created_at), {
-                                  addSuffix: true,
-                                })
+                                    addSuffix: true,
+                                  })
                                 : '—'}
                             </div>
                           </div>
@@ -219,7 +228,6 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
           </SheetFooter>
         </SheetContent>
       </Sheet>
-
 
       <Dialog open={proofOpen} onOpenChange={setProofOpen}>
         <DialogContent className="sm:max-w-lg">

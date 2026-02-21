@@ -20,26 +20,29 @@ export default function HelpCenter() {
 
     const query = searchQuery.toLowerCase();
 
-    return helpContent.categories.map(category => {
-      // Check if category title matches
-      const categoryMatches = category.title.toLowerCase().includes(query);
+    return helpContent.categories
+      .map(category => {
+        // Check if category title matches
+        const categoryMatches = category.title.toLowerCase().includes(query);
 
-      // Filter articles that match
-      const matchingArticles = category.articles.filter(article =>
-        article.title.toLowerCase().includes(query) ||
-        article.content.toLowerCase().includes(query)
-      );
+        // Filter articles that match
+        const matchingArticles = category.articles.filter(
+          article =>
+            article.title.toLowerCase().includes(query) ||
+            article.content.toLowerCase().includes(query)
+        );
 
-      if (categoryMatches || matchingArticles.length > 0) {
-        return {
-          ...category,
-          articles: matchingArticles.length > 0 ? matchingArticles : category.articles,
-          isExplicitMatch: categoryMatches && matchingArticles.length === 0
-        };
-      }
+        if (categoryMatches || matchingArticles.length > 0) {
+          return {
+            ...category,
+            articles: matchingArticles.length > 0 ? matchingArticles : category.articles,
+            isExplicitMatch: categoryMatches && matchingArticles.length === 0,
+          };
+        }
 
-      return null;
-    }).filter(Boolean) as typeof helpContent.categories;
+        return null;
+      })
+      .filter(Boolean) as typeof helpContent.categories;
   }, [searchQuery]);
 
   return (
@@ -60,7 +63,7 @@ export default function HelpCenter() {
                 placeholder="Search help articles, features, or logic..."
                 className="w-full pl-8"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
             {searchQuery && (
@@ -76,14 +79,19 @@ export default function HelpCenter() {
               filteredContent.map(category => {
                 const Icon = Icons[category.icon as keyof typeof Icons];
                 return (
-                  <Card key={category.id} className="hover:shadow-lg transition-shadow border-primary/10">
+                  <Card
+                    key={category.id}
+                    className="hover:shadow-lg transition-shadow border-primary/10"
+                  >
                     <CardHeader>
                       <div className="flex items-center gap-2">
                         {Icon && <Icon className="h-6 w-6 text-primary" />}
                         <CardTitle>{category.title}</CardTitle>
                       </div>
                       <CardDescription>
-                        {searchQuery ? `${category.articles.length} match(es)` : `${category.articles.length} articles`}
+                        {searchQuery
+                          ? `${category.articles.length} match(es)`
+                          : `${category.articles.length} articles`}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -113,11 +121,7 @@ export default function HelpCenter() {
                 <p className="text-muted-foreground">
                   Try searching for different keywords or browse the categories below.
                 </p>
-                <Button
-                  variant="link"
-                  onClick={() => setSearchQuery('')}
-                  className="mt-2"
-                >
+                <Button variant="link" onClick={() => setSearchQuery('')} className="mt-2">
                   Clear search
                 </Button>
               </div>
@@ -129,22 +133,34 @@ export default function HelpCenter() {
             <div>
               <h2 className="text-2xl font-semibold mb-6">Popular Topics</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Button variant="outline" className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1"
+                >
                   <Icons.Package className="h-5 w-5 mb-1" />
                   <span className="font-semibold">Track an Order</span>
                   <span className="text-xs text-muted-foreground">Monitor real-time status</span>
                 </Button>
-                <Button variant="outline" className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1"
+                >
                   <Icons.Wallet className="h-5 w-5 mb-1" />
                   <span className="font-semibold">Manage Wallet</span>
                   <span className="text-xs text-muted-foreground">Check balances & history</span>
                 </Button>
-                <Button variant="outline" className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1"
+                >
                   <Icons.Users className="h-5 w-5 mb-1" />
                   <span className="font-semibold">Shopper Performance</span>
                   <span className="text-xs text-muted-foreground">View elite rankings</span>
                 </Button>
-                <Button variant="outline" className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1"
+                >
                   <Icons.Headphones className="h-5 w-5 mb-1" />
                   <span className="font-semibold">Contact Support</span>
                   <span className="text-xs text-muted-foreground">Get technical assistance</span>

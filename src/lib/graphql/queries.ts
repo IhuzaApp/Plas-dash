@@ -749,7 +749,6 @@ export const GET_ALL_REFUNDS = `
   }
 `;
 
-
 export const GET_USER_BY_ID = `
   query GetUserById($id: uuid!) {
     Users_by_pk(id: $id) {

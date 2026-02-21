@@ -9,8 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ChevronRight, Shield, Lock, Unlock, Settings } from 'lucide-react';
-import { UserPrivileges, DEFAULT_PRIVILEGES, PrivilegeKey, ModulePrivileges } from '@/types/privileges';
-
+import {
+  UserPrivileges,
+  DEFAULT_PRIVILEGES,
+  PrivilegeKey,
+  ModulePrivileges,
+} from '@/types/privileges';
 
 interface PrivilegeManagerProps {
   privileges: UserPrivileges;

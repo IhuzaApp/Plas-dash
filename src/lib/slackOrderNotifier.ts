@@ -1,11 +1,6 @@
 const SLACK_ORDERS_WEBHOOK = process.env.SLACK_ORDERS_WEBHOOK;
 
-export type SlackOrderType =
-  | "regular"
-  | "reel"
-  | "business"
-  | "restaurant"
-  | "combined";
+export type SlackOrderType = 'regular' | 'reel' | 'business' | 'restaurant' | 'combined';
 
 /** Line item for card-style Slack message (optional) */
 export interface SlackOrderItem {
@@ -38,11 +33,11 @@ export interface SlackOrderPayload {
 }
 
 const ORDER_TYPE_LABELS: Record<SlackOrderType, string> = {
-  regular: "🛒 Regular",
-  reel: "🎬 Reel",
-  business: "📦 Business",
-  restaurant: "🍽️ Restaurant",
-  combined: "📦 Combined",
+  regular: '🛒 Regular',
+  reel: '🎬 Reel',
+  business: '📦 Business',
+  restaurant: '🍽️ Restaurant',
+  combined: '📦 Combined',
 };
 
 /**
@@ -51,107 +46,97 @@ const ORDER_TYPE_LABELS: Record<SlackOrderType, string> = {
  */
 export async function notifyNewOrderToSlack(order: SlackOrderPayload) {
   if (!SLACK_ORDERS_WEBHOOK) {
-    console.error("SLACK_ORDERS_WEBHOOK is not configured");
+    console.error('SLACK_ORDERS_WEBHOOK is not configured');
     return;
   }
 
   const totalNumber =
-    typeof order.total === "string"
-      ? parseFloat(order.total || "0")
-      : order.total;
+    typeof order.total === 'string' ? parseFloat(order.total || '0') : order.total;
 
-  const formattedTotal = Number.isFinite(totalNumber)
-    ? totalNumber.toFixed(2)
-    : "0.00";
+  const formattedTotal = Number.isFinite(totalNumber) ? totalNumber.toFixed(2) : '0.00';
 
   const displayOrderId = order.orderID ?? order.id;
-  const orderTypeLabel = order.orderType
-    ? ORDER_TYPE_LABELS[order.orderType]
-    : "Order";
-  const customerDisplay = order.customerName ?? order.customerPhone ?? "—";
+  const orderTypeLabel = order.orderType ? ORDER_TYPE_LABELS[order.orderType] : 'Order';
+  const customerDisplay = order.customerName ?? order.customerPhone ?? '—';
   const placedAt = new Date().toLocaleTimeString();
-  const storeDisplay = order.storeName ?? "—";
-  const unitsDisplay = order.units != null ? String(order.units) : "—";
+  const storeDisplay = order.storeName ?? '—';
+  const unitsDisplay = order.units != null ? String(order.units) : '—';
 
   // Items section: use line items if provided, else one summary line
   const itemsText =
     order.items && order.items.length > 0
       ? order.items
-          .map(
-            (i) => `• ${i.name} ×${i.qty} — *$${(i.price * i.qty).toFixed(2)}*`
-          )
-          .join("\n")
+          .map(i => `• ${i.name} ×${i.qty} — *$${(i.price * i.qty).toFixed(2)}*`)
+          .join('\n')
       : `• Order — ×${unitsDisplay} — *$${formattedTotal}*`;
 
   const blocks = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
+        type: 'plain_text',
         text: `🛒 New Order · ${orderTypeLabel}`,
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Order ID*\n\`${displayOrderId}\`` },
-        { type: "mrkdwn", text: `*Status*\nPENDING` },
+        { type: 'mrkdwn', text: `*Order ID*\n\`${displayOrderId}\`` },
+        { type: 'mrkdwn', text: `*Status*\nPENDING` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Supermarket*\n${storeDisplay}` },
-        { type: "mrkdwn", text: `*Units*\n${unitsDisplay}` },
+        { type: 'mrkdwn', text: `*Supermarket*\n${storeDisplay}` },
+        { type: 'mrkdwn', text: `*Units*\n${unitsDisplay}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Customer*\n${customerDisplay}` },
-        { type: "mrkdwn", text: `*Placed at*\n${placedAt}` },
+        { type: 'mrkdwn', text: `*Customer*\n${customerDisplay}` },
+        { type: 'mrkdwn', text: `*Placed at*\n${placedAt}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
         {
-          type: "mrkdwn",
-          text: `*📞 Customer phone (call for urgency)*\n${
-            order.customerPhone ?? "—"
-          }`,
+          type: 'mrkdwn',
+          text: `*📞 Customer phone (call for urgency)*\n${order.customerPhone ?? '—'}`,
         },
       ],
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Items*\n${itemsText}`,
       },
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Total*\n💵 *$${formattedTotal}*`,
       },
     },
     {
-      type: "context",
-      elements: [{ type: "mrkdwn", text: `🕒 ${new Date().toLocaleString()}` }],
+      type: 'context',
+      elements: [{ type: 'mrkdwn', text: `🕒 ${new Date().toLocaleString()}` }],
     },
   ];
 
   try {
     await fetch(SLACK_ORDERS_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ blocks }),
     });
   } catch (error) {
-    console.error("Failed to send order notification to Slack", error);
+    console.error('Failed to send order notification to Slack', error);
   }
 }

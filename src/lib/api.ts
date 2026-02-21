@@ -45,7 +45,7 @@ export async function apiPost<T = unknown>(path: string, body: unknown): Promise
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders()
+      ...getAuthHeaders(),
     },
     credentials: 'include',
     body: JSON.stringify(body),
@@ -63,7 +63,7 @@ export async function apiPatch<T = unknown>(path: string, body: unknown): Promis
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders()
+      ...getAuthHeaders(),
     },
     credentials: 'include',
     body: JSON.stringify(body),

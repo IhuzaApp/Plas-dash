@@ -6,15 +6,11 @@ type ExtraContext = Record<string, unknown>;
  * Send a concise error notification to Slack using the SLACK_ERRORS_WEBHOOK.
  * Designed for server-side usage only (API routes, backend utilities).
  */
-export async function logErrorToSlack(
-  where: string,
-  error: unknown,
-  extra?: ExtraContext
-) {
+export async function logErrorToSlack(where: string, error: unknown, extra?: ExtraContext) {
   if (!SLACK_ERRORS_WEBHOOK) {
     // Avoid throwing if Slack isn't configured; just log locally
     // so we don't break the main request flow.
-    console.error("SLACK_ERRORS_WEBHOOK is not configured");
+    console.error('SLACK_ERRORS_WEBHOOK is not configured');
     return;
   }
 
@@ -28,49 +24,44 @@ export async function logErrorToSlack(
     extra && Object.keys(extra).length > 0
       ? JSON.parse(
           JSON.stringify(extra, (_, value) =>
-            typeof value === "string" && value.length > 500
-              ? value.slice(0, 500) + "…"
-              : value
+            typeof value === 'string' && value.length > 500 ? value.slice(0, 500) + '…' : value
           )
         )
       : undefined;
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "🚨 Server Error",
+        type: 'plain_text',
+        text: '🚨 Server Error',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Location*\n\`${where}\`` },
+        { type: 'mrkdwn', text: `*Location*\n\`${where}\`` },
         {
-          type: "mrkdwn",
-          text: `*Environment*\n\`${process.env.NODE_ENV || "unknown"}\``,
+          type: 'mrkdwn',
+          text: `*Environment*\n\`${process.env.NODE_ENV || 'unknown'}\``,
         },
       ],
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Message*\n\`${err.message}\``,
       },
     },
     ...(trimmedExtra
       ? [
           {
-            type: "section",
+            type: 'section',
             text: {
-              type: "mrkdwn",
-              text:
-                "*Context*\n```" +
-                JSON.stringify(trimmedExtra, null, 2).slice(0, 1200) +
-                "```",
+              type: 'mrkdwn',
+              text: '*Context*\n```' + JSON.stringify(trimmedExtra, null, 2).slice(0, 1200) + '```',
             },
           },
         ]
@@ -78,35 +69,31 @@ export async function logErrorToSlack(
     ...(err.stack
       ? [
           {
-            type: "section",
+            type: 'section',
             text: {
-              type: "mrkdwn",
+              type: 'mrkdwn',
               text:
-                "*Stack (top)*\n```" +
-                String(err.stack)
-                  .split("\n")
-                  .slice(0, 10)
-                  .join("\n")
-                  .slice(0, 1200) +
-                "```",
+                '*Stack (top)*\n```' +
+                String(err.stack).split('\n').slice(0, 10).join('\n').slice(0, 1200) +
+                '```',
             },
           },
         ]
       : []),
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "context",
+      type: 'context',
       elements: [
-        { type: "mrkdwn", text: `🕒 ${new Date().toISOString()}` },
-        { type: "mrkdwn", text: `🧩 Service: ${where}` },
+        { type: 'mrkdwn', text: `🕒 ${new Date().toISOString()}` },
+        { type: 'mrkdwn', text: `🧩 Service: ${where}` },
       ],
     },
   ];
 
   try {
     await fetch(SLACK_ERRORS_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `Error in ${where}: ${err.message}`,
         blocks,
@@ -114,6 +101,6 @@ export async function logErrorToSlack(
     });
   } catch (sendError) {
     // Last resort: log locally; don't throw
-    console.error("Failed to send error to Slack", sendError);
+    console.error('Failed to send error to Slack', sendError);
   }
 }

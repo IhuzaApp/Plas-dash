@@ -165,11 +165,11 @@ export async function GET(req: Request) {
         shopper:
           o.Shoppers != null
             ? {
-              id: o.Shoppers.id ?? '',
-              name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
-              phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
-              email: '',
-            }
+                id: o.Shoppers.id ?? '',
+                name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
+                phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
+                email: '',
+              }
             : undefined,
         itemsCount,
         unitsCount,

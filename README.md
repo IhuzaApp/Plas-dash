@@ -821,7 +821,7 @@ The Plas Dashboard includes a comprehensive system for tracking user referrals, 
 - **Selling Volume Calculation**: The total volume is calculated based on the `final_price` of products (actual amount paid by the customer).
 - **Earnings Formula**:
   `Earnings = 0.0075 * (SellingTotal - CostTotal)`
-  *Note: Fees (delivery and service) are excluded from the volume and earnings calculations to ensure accurate commission.*
+  _Note: Fees (delivery and service) are excluded from the volume and earnings calculations to ensure accurate commission._
 
 ### 🖥️ User Interface Features
 

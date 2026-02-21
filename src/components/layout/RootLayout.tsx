@@ -131,7 +131,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
     // Only auto-route if current page is not accessible
     if (pathname) {
-      const currentPageAccessible = isPageAccessible(sessionData.privileges, pathname, sessionData.role);
+      const currentPageAccessible = isPageAccessible(
+        sessionData.privileges,
+        pathname,
+        sessionData.role
+      );
       if (!currentPageAccessible) {
         const recommendedPage = getRecommendedLandingPage(sessionData.privileges, sessionData.role);
         if (recommendedPage && recommendedPage.path !== pathname) {

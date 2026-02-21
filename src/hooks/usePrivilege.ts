@@ -70,7 +70,9 @@ export function usePrivilege() {
       'shoppers',
     ];
 
-    return majorModules.every(module => hasPrivilege(session.privileges, module, undefined, session.role));
+    return majorModules.every(module =>
+      hasPrivilege(session.privileges, module, undefined, session.role)
+    );
   };
 
   return {

@@ -433,11 +433,12 @@ export function hasProjectPrivilege(
   // Hard-coded override for Referrals for admin roles
   const isAdminRole = role === 'projectAdmin' || role === 'systemAdmin';
 
-  if (isAdminRole && (
-    module === 'referrals' ||
-    module === 'help' ||
-    (module === 'pages' && (action === 'access_referrals' || action === 'access_help'))
-  )) {
+  if (
+    isAdminRole &&
+    (module === 'referrals' ||
+      module === 'help' ||
+      (module === 'pages' && (action === 'access_referrals' || action === 'access_help')))
+  ) {
     return true;
   }
 

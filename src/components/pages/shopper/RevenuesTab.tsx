@@ -25,9 +25,7 @@ interface RevenuesTabProps {
   ) => React.ReactNode;
 }
 
-function parseProducts(
-  products: any
-): Array<{
+function parseProducts(products: any): Array<{
   product?: string;
   name?: string;
   quantity?: number;

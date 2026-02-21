@@ -6,7 +6,7 @@ export interface SupportTicketPayload {
   /** Display order number (e.g. OrderID from DB) */
   orderDisplayId?: string;
   /** Order type: regular, reel, restaurant, business (store) */
-  orderType: "regular" | "reel" | "restaurant" | "business";
+  orderType: 'regular' | 'reel' | 'restaurant' | 'business';
   /** Store/shop/restaurant name */
   storeName?: string;
   /** Order status */
@@ -23,11 +23,11 @@ export interface SupportTicketPayload {
   ticketNum?: number;
 }
 
-const ORDER_TYPE_LABELS: Record<SupportTicketPayload["orderType"], string> = {
-  regular: "🛒 Regular",
-  reel: "🎬 Reel",
-  restaurant: "🍽️ Restaurant",
-  business: "🏪 Store",
+const ORDER_TYPE_LABELS: Record<SupportTicketPayload['orderType'], string> = {
+  regular: '🛒 Regular',
+  reel: '🎬 Reel',
+  restaurant: '🍽️ Restaurant',
+  business: '🏪 Store',
 };
 
 /**
@@ -36,77 +36,77 @@ const ORDER_TYPE_LABELS: Record<SupportTicketPayload["orderType"], string> = {
  */
 export async function sendSupportTicketToSlack(ticket: SupportTicketPayload) {
   if (!SLACK_SUPPORT_WEBHOOK) {
-    console.error("SLACK_SUPPORT_WEBHOOK is not configured");
+    console.error('SLACK_SUPPORT_WEBHOOK is not configured');
     return;
   }
 
   const orderTypeLabel = ORDER_TYPE_LABELS[ticket.orderType];
   const displayId = ticket.orderDisplayId ?? ticket.orderId;
-  const storeDisplay = ticket.storeName ?? "—";
-  const statusDisplay = ticket.status ?? "—";
+  const storeDisplay = ticket.storeName ?? '—';
+  const statusDisplay = ticket.status ?? '—';
   const userDisplay = ticket.userName
-    ? `${ticket.userName}${ticket.userEmail ? ` (${ticket.userEmail})` : ""}`
-    : ticket.userEmail ?? "—";
-  const phoneDisplay = ticket.userPhone ?? "—";
-  const ticketDisplay = ticket.ticketNum != null ? `#${ticket.ticketNum}` : "—";
+    ? `${ticket.userName}${ticket.userEmail ? ` (${ticket.userEmail})` : ''}`
+    : (ticket.userEmail ?? '—');
+  const phoneDisplay = ticket.userPhone ?? '—';
+  const ticketDisplay = ticket.ticketNum != null ? `#${ticket.ticketNum}` : '—';
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "🎫 Support Ticket",
+        type: 'plain_text',
+        text: '🎫 Support Ticket',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Ticket #*\n\`${ticketDisplay}\`` },
-        { type: "mrkdwn", text: `*Type*\n${orderTypeLabel}` },
+        { type: 'mrkdwn', text: `*Ticket #*\n\`${ticketDisplay}\`` },
+        { type: 'mrkdwn', text: `*Type*\n${orderTypeLabel}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Order ID*\n\`${displayId}\`` },
-        { type: "mrkdwn", text: `*Store / Shop*\n${storeDisplay}` },
+        { type: 'mrkdwn', text: `*Order ID*\n\`${displayId}\`` },
+        { type: 'mrkdwn', text: `*Store / Shop*\n${storeDisplay}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Order Status*\n${statusDisplay}` },
-        { type: "mrkdwn", text: `*From*\n${userDisplay}` },
+        { type: 'mrkdwn', text: `*Order Status*\n${statusDisplay}` },
+        { type: 'mrkdwn', text: `*From*\n${userDisplay}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
         {
-          type: "mrkdwn",
+          type: 'mrkdwn',
           text: `*📞 Customer phone (call for urgency)*\n${phoneDisplay}`,
         },
       ],
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
-        text: `*Message*\n${ticket.message || "_No message provided._"}`,
+        type: 'mrkdwn',
+        text: `*Message*\n${ticket.message || '_No message provided._'}`,
       },
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "context",
-      elements: [{ type: "mrkdwn", text: `🕒 ${new Date().toISOString()}` }],
+      type: 'context',
+      elements: [{ type: 'mrkdwn', text: `🕒 ${new Date().toISOString()}` }],
     },
   ];
 
   try {
     await fetch(SLACK_SUPPORT_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text:
           ticket.ticketNum != null
@@ -116,7 +116,7 @@ export async function sendSupportTicketToSlack(ticket: SupportTicketPayload) {
       }),
     });
   } catch (error) {
-    console.error("Failed to send support ticket to Slack", error);
+    console.error('Failed to send support ticket to Slack', error);
     throw error;
   }
 }
@@ -141,14 +141,14 @@ export interface NewShopperRegistrationPayload {
 }
 
 const TRANSPORT_LABELS: Record<string, string> = {
-  car: "Car",
-  motorcycle: "Motorcycle",
-  bicycle: "Bicycle",
-  on_foot: "On foot",
+  car: 'Car',
+  motorcycle: 'Motorcycle',
+  bicycle: 'Bicycle',
+  on_foot: 'On foot',
 };
 
-function formatProvided(p: NewShopperRegistrationPayload["provided"]): string {
-  const y = (v: boolean) => (v ? "✅" : "❌");
+function formatProvided(p: NewShopperRegistrationPayload['provided']): string {
+  const y = (v: boolean) => (v ? '✅' : '❌');
   return [
     `• Profile photo: ${y(p.profile_photo)}`,
     `• National ID photos: ${y(p.national_id_photos)}`,
@@ -157,73 +157,70 @@ function formatProvided(p: NewShopperRegistrationPayload["provided"]): string {
     `• Guarantor: ${y(p.guarantor)}`,
     `• Proof of residency: ${y(p.proof_of_residency)}`,
     `• Signature: ${y(p.signature)}`,
-  ].join("\n");
+  ].join('\n');
 }
 
 /**
  * Notify Slack that a new shopper has registered and is waiting for review.
  * Shows name, phone, address, transport, and whether they provided all optional docs.
  */
-export async function sendNewShopperRegistrationToSlack(
-  payload: NewShopperRegistrationPayload
-) {
+export async function sendNewShopperRegistrationToSlack(payload: NewShopperRegistrationPayload) {
   if (!SLACK_SUPPORT_WEBHOOK) {
-    console.error("SLACK_SUPPORT_WEBHOOK is not configured");
+    console.error('SLACK_SUPPORT_WEBHOOK is not configured');
     return;
   }
 
-  const transportDisplay =
-    TRANSPORT_LABELS[payload.transport_mode] ?? payload.transport_mode;
-  const addressDisplay = payload.address?.trim() || "—";
+  const transportDisplay = TRANSPORT_LABELS[payload.transport_mode] ?? payload.transport_mode;
+  const addressDisplay = payload.address?.trim() || '—';
   const providedText = formatProvided(payload.provided);
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "🛒 New shopper registered – waiting for review",
+        type: 'plain_text',
+        text: '🛒 New shopper registered – waiting for review',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Name*\n${payload.full_name}` },
-        { type: "mrkdwn", text: `*Phone*\n${payload.phone_number}` },
+        { type: 'mrkdwn', text: `*Name*\n${payload.full_name}` },
+        { type: 'mrkdwn', text: `*Phone*\n${payload.phone_number}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Address*\n${addressDisplay}` },
-        { type: "mrkdwn", text: `*Transportation*\n${transportDisplay}` },
+        { type: 'mrkdwn', text: `*Address*\n${addressDisplay}` },
+        { type: 'mrkdwn', text: `*Transportation*\n${transportDisplay}` },
       ],
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Provided everything*\n${providedText}`,
       },
     },
     {
-      type: "context",
-      elements: [{ type: "mrkdwn", text: `🕒 ${new Date().toISOString()}` }],
+      type: 'context',
+      elements: [{ type: 'mrkdwn', text: `🕒 ${new Date().toISOString()}` }],
     },
   ];
 
   try {
     await fetch(SLACK_SUPPORT_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `New shopper: ${payload.full_name} – waiting for review`,
         blocks,
       }),
     });
   } catch (error) {
-    console.error("Failed to send new shopper registration to Slack", error);
+    console.error('Failed to send new shopper registration to Slack', error);
     throw error;
   }
 }
@@ -231,7 +228,7 @@ export async function sendNewShopperRegistrationToSlack(
 // --- New business account registration (waiting for review) ---
 
 export interface NewBusinessAccountRegistrationPayload {
-  account_type: "personal" | "business";
+  account_type: 'personal' | 'business';
   /** Business or trading name */
   business_name: string;
   /** Contact person name (e.g. session user name) */
@@ -251,10 +248,8 @@ export interface NewBusinessAccountRegistrationPayload {
   };
 }
 
-function formatBusinessProvided(
-  p: NewBusinessAccountRegistrationPayload["provided"]
-): string {
-  const y = (v: boolean) => (v ? "✅" : "❌");
+function formatBusinessProvided(p: NewBusinessAccountRegistrationPayload['provided']): string {
+  const y = (v: boolean) => (v ? '✅' : '❌');
   return [
     `• Business name: ${y(p.business_name)}`,
     `• Email: ${y(p.business_email)}`,
@@ -263,7 +258,7 @@ function formatBusinessProvided(
     `• RDB certificate: ${y(p.rdb_certificate)}`,
     `• ID image: ${y(p.id_image)}`,
     `• Face photo: ${y(p.face_image)}`,
-  ].join("\n");
+  ].join('\n');
 }
 
 /**
@@ -274,79 +269,74 @@ export async function sendNewBusinessAccountRegistrationToSlack(
   payload: NewBusinessAccountRegistrationPayload
 ) {
   if (!SLACK_SUPPORT_WEBHOOK) {
-    console.error("SLACK_SUPPORT_WEBHOOK is not configured");
+    console.error('SLACK_SUPPORT_WEBHOOK is not configured');
     return;
   }
 
   const accountLabel =
-    payload.account_type === "personal"
-      ? "Personal account"
-      : "Business account";
+    payload.account_type === 'personal' ? 'Personal account' : 'Business account';
   const nameDisplay = payload.contact_name
     ? `${payload.business_name} (Contact: ${payload.contact_name})`
     : payload.business_name;
-  const locationDisplay = payload.business_location?.trim() || "—";
+  const locationDisplay = payload.business_location?.trim() || '—';
   const providedText = formatBusinessProvided(payload.provided);
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "🏢 New business account registered – waiting for review",
+        type: 'plain_text',
+        text: '🏢 New business account registered – waiting for review',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Account type*\n${accountLabel}` },
-        { type: "mrkdwn", text: `*Name*\n${nameDisplay}` },
+        { type: 'mrkdwn', text: `*Account type*\n${accountLabel}` },
+        { type: 'mrkdwn', text: `*Name*\n${nameDisplay}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Email*\n${payload.email || "—"}` },
-        { type: "mrkdwn", text: `*Phone*\n${payload.phone || "—"}` },
+        { type: 'mrkdwn', text: `*Email*\n${payload.email || '—'}` },
+        { type: 'mrkdwn', text: `*Phone*\n${payload.phone || '—'}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
         {
-          type: "mrkdwn",
+          type: 'mrkdwn',
           text: `*Business location*\n${locationDisplay}`,
         },
       ],
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
+        type: 'mrkdwn',
         text: `*Everything shared*\n${providedText}`,
       },
     },
     {
-      type: "context",
-      elements: [{ type: "mrkdwn", text: `🕒 ${new Date().toISOString()}` }],
+      type: 'context',
+      elements: [{ type: 'mrkdwn', text: `🕒 ${new Date().toISOString()}` }],
     },
   ];
 
   try {
     await fetch(SLACK_SUPPORT_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `New business account: ${payload.business_name} (${accountLabel}) – waiting for review`,
         blocks,
       }),
     });
   } catch (error) {
-    console.error(
-      "Failed to send new business account registration to Slack",
-      error
-    );
+    console.error('Failed to send new business account registration to Slack', error);
     throw error;
   }
 }
@@ -377,82 +367,80 @@ export async function sendNewStoreProductForReviewToSlack(
   payload: NewStoreProductForReviewPayload
 ) {
   if (!SLACK_SUPPORT_WEBHOOK) {
-    console.error("SLACK_SUPPORT_WEBHOOK is not configured");
+    console.error('SLACK_SUPPORT_WEBHOOK is not configured');
     return;
   }
 
   const userDisplay = payload.userName
-    ? `${payload.userName}${payload.userEmail ? ` (${payload.userEmail})` : ""}`
-    : payload.userEmail ?? "—";
-  const phoneDisplay = payload.userPhone ?? "—";
+    ? `${payload.userName}${payload.userEmail ? ` (${payload.userEmail})` : ''}`
+    : (payload.userEmail ?? '—');
+  const phoneDisplay = payload.userPhone ?? '—';
   const priceDisplay =
     payload.price != null && payload.unit
       ? `${payload.price} / ${payload.unit}`
-      : payload.price ?? "—";
-  const categoryDisplay = payload.category?.trim() || "—";
-  const queryDisplay = payload.queryId?.trim() || "—";
+      : (payload.price ?? '—');
+  const categoryDisplay = payload.category?.trim() || '—';
+  const queryDisplay = payload.queryId?.trim() || '—';
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "📦 New store product – pending review",
+        type: 'plain_text',
+        text: '📦 New store product – pending review',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Product*\n${payload.productName}` },
-        { type: "mrkdwn", text: `*Product ID*\n\`${payload.productId}\`` },
+        { type: 'mrkdwn', text: `*Product*\n${payload.productName}` },
+        { type: 'mrkdwn', text: `*Product ID*\n\`${payload.productId}\`` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Store*\n${payload.storeName}` },
-        { type: "mrkdwn", text: `*Store ID*\n\`${payload.storeId}\`` },
+        { type: 'mrkdwn', text: `*Store*\n${payload.storeName}` },
+        { type: 'mrkdwn', text: `*Store ID*\n\`${payload.storeId}\`` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Price*\n${priceDisplay}` },
-        { type: "mrkdwn", text: `*Category*\n${categoryDisplay}` },
+        { type: 'mrkdwn', text: `*Price*\n${priceDisplay}` },
+        { type: 'mrkdwn', text: `*Category*\n${categoryDisplay}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Added by*\n${userDisplay}` },
+        { type: 'mrkdwn', text: `*Added by*\n${userDisplay}` },
         {
-          type: "mrkdwn",
+          type: 'mrkdwn',
           text: `*📞 Phone*\n${phoneDisplay}`,
         },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
         {
-          type: "mrkdwn",
+          type: 'mrkdwn',
           text: `*Verification ID*\n\`${queryDisplay}\``,
         },
         {
-          type: "mrkdwn",
-          text: `*Business account ID*\n\`${
-            payload.businessAccountId ?? "—"
-          }\``,
+          type: 'mrkdwn',
+          text: `*Business account ID*\n\`${payload.businessAccountId ?? '—'}\``,
         },
       ],
     },
     {
-      type: "context",
+      type: 'context',
       elements: [
         {
-          type: "mrkdwn",
+          type: 'mrkdwn',
           text: `User ID: \`${
-            payload.userId ?? "—"
+            payload.userId ?? '—'
           }\` · 🕒 ${new Date().toISOString()} · _Review and enable this product for the store._`,
         },
       ],
@@ -461,18 +449,15 @@ export async function sendNewStoreProductForReviewToSlack(
 
   try {
     await fetch(SLACK_SUPPORT_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `New product pending review: ${payload.productName} @ ${payload.storeName}`,
         blocks,
       }),
     });
   } catch (error) {
-    console.error(
-      "Failed to send new store product for review to Slack",
-      error
-    );
+    console.error('Failed to send new store product for review to Slack', error);
     throw error;
   }
 }
@@ -494,73 +479,65 @@ export interface RequestEnableStorePayload {
 /**
  * Notify Slack when a store owner requests to re-enable their disabled store.
  */
-export async function sendRequestEnableStoreToSlack(
-  payload: RequestEnableStorePayload
-) {
+export async function sendRequestEnableStoreToSlack(payload: RequestEnableStorePayload) {
   if (!SLACK_SUPPORT_WEBHOOK) {
-    console.error("SLACK_SUPPORT_WEBHOOK is not configured");
+    console.error('SLACK_SUPPORT_WEBHOOK is not configured');
     return;
   }
 
   const userDisplay = payload.userName
-    ? `${payload.userName}${payload.userEmail ? ` (${payload.userEmail})` : ""}`
-    : payload.userEmail ?? "—";
-  const phoneDisplay = payload.userPhone ?? "—";
+    ? `${payload.userName}${payload.userEmail ? ` (${payload.userEmail})` : ''}`
+    : (payload.userEmail ?? '—');
+  const phoneDisplay = payload.userPhone ?? '—';
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "🏪 Request to enable store",
+        type: 'plain_text',
+        text: '🏪 Request to enable store',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Store*\n${payload.storeName}` },
-        { type: "mrkdwn", text: `*Store ID*\n\`${payload.storeId}\`` },
+        { type: 'mrkdwn', text: `*Store*\n${payload.storeName}` },
+        { type: 'mrkdwn', text: `*Store ID*\n\`${payload.storeId}\`` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Requested by*\n${userDisplay}` },
+        { type: 'mrkdwn', text: `*Requested by*\n${userDisplay}` },
         {
-          type: "mrkdwn",
+          type: 'mrkdwn',
           text: `*📞 Phone*\n${phoneDisplay}`,
         },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
         {
-          type: "mrkdwn",
-          text: `*Business account ID*\n\`${
-            payload.businessAccountId ?? "—"
-          }\``,
+          type: 'mrkdwn',
+          text: `*Business account ID*\n\`${payload.businessAccountId ?? '—'}\``,
         },
       ],
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
-        text: `*Message*\n${
-          payload.message?.trim() || "_No additional message._"
-        }`,
+        type: 'mrkdwn',
+        text: `*Message*\n${payload.message?.trim() || '_No additional message._'}`,
       },
     },
     {
-      type: "context",
+      type: 'context',
       elements: [
         {
-          type: "mrkdwn",
-          text: `User ID: \`${
-            payload.userId ?? "—"
-          }\` · 🕒 ${new Date().toISOString()}`,
+          type: 'mrkdwn',
+          text: `User ID: \`${payload.userId ?? '—'}\` · 🕒 ${new Date().toISOString()}`,
         },
       ],
     },
@@ -568,15 +545,15 @@ export async function sendRequestEnableStoreToSlack(
 
   try {
     await fetch(SLACK_SUPPORT_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `Request to enable store: ${payload.storeName}`,
         blocks,
       }),
     });
   } catch (error) {
-    console.error("Failed to send request enable store to Slack", error);
+    console.error('Failed to send request enable store to Slack', error);
     throw error;
   }
 }
@@ -587,7 +564,7 @@ export interface RejectedAccountSupportPayload {
   /** User's message (e.g. "I believe this is a mistake because...") */
   message: string;
   /** Priority: low, medium, high */
-  priority: "low" | "medium" | "high";
+  priority: 'low' | 'medium' | 'high';
   /** User email (from session or business account) */
   userEmail?: string;
   /** User / contact name */
@@ -598,13 +575,10 @@ export interface RejectedAccountSupportPayload {
   businessAccountId?: string;
 }
 
-const PRIORITY_LABELS: Record<
-  RejectedAccountSupportPayload["priority"],
-  string
-> = {
-  low: "🟢 Low",
-  medium: "🟡 Medium",
-  high: "🔴 High",
+const PRIORITY_LABELS: Record<RejectedAccountSupportPayload['priority'], string> = {
+  low: '🟢 Low',
+  medium: '🟡 Medium',
+  high: '🔴 High',
 };
 
 /**
@@ -614,58 +588,56 @@ export async function sendRejectedAccountSupportRequestToSlack(
   payload: RejectedAccountSupportPayload
 ) {
   if (!SLACK_SUPPORT_WEBHOOK) {
-    console.error("SLACK_SUPPORT_WEBHOOK is not configured");
+    console.error('SLACK_SUPPORT_WEBHOOK is not configured');
     return;
   }
 
   const priorityLabel = PRIORITY_LABELS[payload.priority];
   const userDisplay = payload.userName
-    ? `${payload.userName}${payload.userEmail ? ` (${payload.userEmail})` : ""}`
-    : payload.userEmail ?? "—";
-  const ownerNameDisplay = payload.userName ?? "—";
-  const businessIdDisplay = payload.businessAccountId ?? "—";
+    ? `${payload.userName}${payload.userEmail ? ` (${payload.userEmail})` : ''}`
+    : (payload.userEmail ?? '—');
+  const ownerNameDisplay = payload.userName ?? '—';
+  const businessIdDisplay = payload.businessAccountId ?? '—';
 
   const blocks: any[] = [
     {
-      type: "header",
+      type: 'header',
       text: {
-        type: "plain_text",
-        text: "🚫 Rejected account – contact support / re-evaluation request",
+        type: 'plain_text',
+        text: '🚫 Rejected account – contact support / re-evaluation request',
       },
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Priority*\n${priorityLabel}` },
-        { type: "mrkdwn", text: `*From*\n${userDisplay}` },
+        { type: 'mrkdwn', text: `*Priority*\n${priorityLabel}` },
+        { type: 'mrkdwn', text: `*From*\n${userDisplay}` },
       ],
     },
     {
-      type: "section",
+      type: 'section',
       fields: [
-        { type: "mrkdwn", text: `*Account owner*\n${ownerNameDisplay}` },
+        { type: 'mrkdwn', text: `*Account owner*\n${ownerNameDisplay}` },
         {
-          type: "mrkdwn",
+          type: 'mrkdwn',
           text: `*Business account ID*\n\`${businessIdDisplay}\``,
         },
       ],
     },
-    { type: "divider" },
+    { type: 'divider' },
     {
-      type: "section",
+      type: 'section',
       text: {
-        type: "mrkdwn",
-        text: `*Message*\n${payload.message || "_No message provided._"}`,
+        type: 'mrkdwn',
+        text: `*Message*\n${payload.message || '_No message provided._'}`,
       },
     },
     {
-      type: "context",
+      type: 'context',
       elements: [
         {
-          type: "mrkdwn",
-          text: `User ID: \`${
-            payload.userId ?? "—"
-          }\` · 🕒 ${new Date().toISOString()}`,
+          type: 'mrkdwn',
+          text: `User ID: \`${payload.userId ?? '—'}\` · 🕒 ${new Date().toISOString()}`,
         },
       ],
     },
@@ -673,18 +645,15 @@ export async function sendRejectedAccountSupportRequestToSlack(
 
   try {
     await fetch(SLACK_SUPPORT_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: `Rejected account support request (${priorityLabel}) from ${ownerNameDisplay}`,
         blocks,
       }),
     });
   } catch (error) {
-    console.error(
-      "Failed to send rejected account support request to Slack",
-      error
-    );
+    console.error('Failed to send rejected account support request to Slack', error);
     throw error;
   }
 }

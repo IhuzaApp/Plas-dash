@@ -161,10 +161,7 @@ export default function ShopperWalletsPage() {
   return (
     <ProtectedRoute requiredPrivilege="wallet" requiredAction="view_wallets">
       <AdminLayout>
-        <PageHeader
-          title="Wallets"
-          description="View and manage all wallets across the system."
-        />
+        <PageHeader title="Wallets" description="View and manage all wallets across the system." />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-slate-500/10 to-slate-600/5 border-slate-200">
@@ -172,12 +169,8 @@ export default function ShopperWalletsPage() {
               <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
                 <CreditCard className="h-4 w-4" /> Total Connected Wallets
               </div>
-              <div className="text-3xl font-bold mt-2 text-slate-900">
-                {totalWalletsCount}
-              </div>
-              <p className="text-xs text-slate-700/80 mt-1">
-                Across all categories
-              </p>
+              <div className="text-3xl font-bold mt-2 text-slate-900">{totalWalletsCount}</div>
+              <p className="text-xs text-slate-700/80 mt-1">Across all categories</p>
             </CardContent>
           </Card>
 
@@ -220,9 +213,15 @@ export default function ShopperWalletsPage() {
 
         <Tabs defaultValue="personal" className="w-full">
           <TabsList className="mb-6">
-            <TabsTrigger value="personal" className="text-base px-6 py-3">Personal Wallets</TabsTrigger>
-            <TabsTrigger value="shopper" className="text-base px-6 py-3">Wallets</TabsTrigger>
-            <TabsTrigger value="business" className="text-base px-6 py-3">Businesses</TabsTrigger>
+            <TabsTrigger value="personal" className="text-base px-6 py-3">
+              Personal Wallets
+            </TabsTrigger>
+            <TabsTrigger value="shopper" className="text-base px-6 py-3">
+              Wallets
+            </TabsTrigger>
+            <TabsTrigger value="business" className="text-base px-6 py-3">
+              Businesses
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal" className="space-y-6">
@@ -232,49 +231,67 @@ export default function ShopperWalletsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {usersData.filter(u => u.hasPersonalWallet).map((user) => (
-                  <div key={`personal-${user.userId}`} className="relative group w-full aspect-[1.58] rounded-xl text-white shadow-lg transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden bg-gradient-to-br from-teal-500 via-green-600 to-emerald-800">
-                    {/* Subtle background pattern */}
-                    <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
-                    <div className="absolute top-0 right-0 p-4 opacity-30">
-                      <Wifi className="w-6 h-6 rotate-90" />
-                    </div>
-
-                    <div className="flex flex-col h-full p-6 relative z-10">
-                      <div className="flex justify-between items-start w-full mb-auto text-green-100">
-                        <span className="text-xs uppercase tracking-widest font-semibold flex items-center gap-1.5 opacity-90">
-                          <UserIcon className="w-3.5 h-3.5" /> Personal Wallet
-                        </span>
+                {usersData
+                  .filter(u => u.hasPersonalWallet)
+                  .map(user => (
+                    <div
+                      key={`personal-${user.userId}`}
+                      className="relative group w-full aspect-[1.58] rounded-xl text-white shadow-lg transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden bg-gradient-to-br from-teal-500 via-green-600 to-emerald-800"
+                    >
+                      {/* Subtle background pattern */}
+                      <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
+                      <div className="absolute top-0 right-0 p-4 opacity-30">
+                        <Wifi className="w-6 h-6 rotate-90" />
                       </div>
 
-                      <div className="mb-6">
-                        <div className="text-[10px] text-green-100/70 uppercase tracking-widest mb-1">Available Balance</div>
-                        <div className="text-3xl font-bold tracking-tight drop-shadow-sm">{formatCurrency(user.personalBalance)}</div>
-                      </div>
-
-                      <div className="flex justify-between items-end mt-auto">
-                        <div className="flex items-center gap-2">
-                          {user.profilePicture ? (
-                            <img src={user.profilePicture} alt={user.name} className="w-8 h-8 rounded-full border border-white/40 shadow-sm" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm shadow-sm">
-                              {user.name ? user.name.charAt(0).toUpperCase() : '?'}
-                            </div>
-                          )}
-                          <div className="font-medium text-sm tracking-wide drop-shadow-sm truncate max-w-[120px]" title={user.name}>{user.name}</div>
+                      <div className="flex flex-col h-full p-6 relative z-10">
+                        <div className="flex justify-between items-start w-full mb-auto text-green-100">
+                          <span className="text-xs uppercase tracking-widest font-semibold flex items-center gap-1.5 opacity-90">
+                            <UserIcon className="w-3.5 h-3.5" /> Personal Wallet
+                          </span>
                         </div>
-                        <div className="flex items-center">
-                          {/* Fake chip */}
-                          <div className="w-8 h-6 rounded bg-yellow-400/80 border border-yellow-300 overflow-hidden relative shadow-inner">
-                            <div className="absolute top-1/2 left-0 w-full h-px bg-yellow-500/50"></div>
-                            <div className="absolute left-1/2 top-0 w-px h-full bg-yellow-500/50"></div>
-                            <div className="absolute top-0 right-0 w-2 h-2 border-l border-b border-yellow-500/50 rounded-bl"></div>
+
+                        <div className="mb-6">
+                          <div className="text-[10px] text-green-100/70 uppercase tracking-widest mb-1">
+                            Available Balance
+                          </div>
+                          <div className="text-3xl font-bold tracking-tight drop-shadow-sm">
+                            {formatCurrency(user.personalBalance)}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-end mt-auto">
+                          <div className="flex items-center gap-2">
+                            {user.profilePicture ? (
+                              <img
+                                src={user.profilePicture}
+                                alt={user.name}
+                                className="w-8 h-8 rounded-full border border-white/40 shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm shadow-sm">
+                                {user.name ? user.name.charAt(0).toUpperCase() : '?'}
+                              </div>
+                            )}
+                            <div
+                              className="font-medium text-sm tracking-wide drop-shadow-sm truncate max-w-[120px]"
+                              title={user.name}
+                            >
+                              {user.name}
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            {/* Fake chip */}
+                            <div className="w-8 h-6 rounded bg-yellow-400/80 border border-yellow-300 overflow-hidden relative shadow-inner">
+                              <div className="absolute top-1/2 left-0 w-full h-px bg-yellow-500/50"></div>
+                              <div className="absolute left-1/2 top-0 w-px h-full bg-yellow-500/50"></div>
+                              <div className="absolute top-0 right-0 w-2 h-2 border-l border-b border-yellow-500/50 rounded-bl"></div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </TabsContent>
@@ -286,59 +303,76 @@ export default function ShopperWalletsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {usersData.filter(u => u.hasShopperWallet).map((user) => (
-                  <div key={`shopper-${user.userId}`} className="relative group w-full aspect-[1.58] rounded-xl text-white shadow-lg transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-slate-900">
-                    {/* Subtle background pattern */}
-                    <div className="absolute -right-20 -top-20 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl pointer-events-none"></div>
-                    <div className="absolute top-0 right-0 p-4 opacity-30">
-                      <Wifi className="w-6 h-6 rotate-90" />
-                    </div>
-
-                    <div className="flex flex-col h-full p-6 relative z-10">
-                      <div className="flex justify-between items-start w-full mb-auto text-blue-100">
-                        <span className="text-xs uppercase tracking-widest font-semibold flex items-center gap-1.5 opacity-90">
-                          <Wallet className="w-3.5 h-3.5" /> Wallet
-                        </span>
+                {usersData
+                  .filter(u => u.hasShopperWallet)
+                  .map(user => (
+                    <div
+                      key={`shopper-${user.userId}`}
+                      className="relative group w-full aspect-[1.58] rounded-xl text-white shadow-lg transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-slate-900"
+                    >
+                      {/* Subtle background pattern */}
+                      <div className="absolute -right-20 -top-20 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl pointer-events-none"></div>
+                      <div className="absolute top-0 right-0 p-4 opacity-30">
+                        <Wifi className="w-6 h-6 rotate-90" />
                       </div>
 
-                      <div className="mb-1">
-                        <div className="text-[10px] text-blue-100/70 uppercase tracking-widest mb-1">Available Balance</div>
-                        <div className="text-3xl font-bold tracking-tight drop-shadow-sm flex items-end gap-2">
-                          {formatCurrency(user.shopperAvailable)}
+                      <div className="flex flex-col h-full p-6 relative z-10">
+                        <div className="flex justify-between items-start w-full mb-auto text-blue-100">
+                          <span className="text-xs uppercase tracking-widest font-semibold flex items-center gap-1.5 opacity-90">
+                            <Wallet className="w-3.5 h-3.5" /> Wallet
+                          </span>
                         </div>
-                      </div>
 
-                      {user.shopperReserved > 0 ? (
-                        <div className="text-xs text-amber-300 font-medium mb-4 flex items-center gap-1 drop-shadow-sm">
-                          <span className="opacity-80">Reserved:</span> {formatCurrency(user.shopperReserved)}
+                        <div className="mb-1">
+                          <div className="text-[10px] text-blue-100/70 uppercase tracking-widest mb-1">
+                            Available Balance
+                          </div>
+                          <div className="text-3xl font-bold tracking-tight drop-shadow-sm flex items-end gap-2">
+                            {formatCurrency(user.shopperAvailable)}
+                          </div>
                         </div>
-                      ) : (
-                        <div className="h-4 mb-4"></div>
-                      )}
 
-                      <div className="flex justify-between items-end mt-auto">
-                        <div className="flex items-center gap-2">
-                          {user.profilePicture ? (
-                            <img src={user.profilePicture} alt={user.name} className="w-8 h-8 rounded-full border border-white/40 shadow-sm" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm shadow-sm">
-                              {user.name ? user.name.charAt(0).toUpperCase() : '?'}
+                        {user.shopperReserved > 0 ? (
+                          <div className="text-xs text-amber-300 font-medium mb-4 flex items-center gap-1 drop-shadow-sm">
+                            <span className="opacity-80">Reserved:</span>{' '}
+                            {formatCurrency(user.shopperReserved)}
+                          </div>
+                        ) : (
+                          <div className="h-4 mb-4"></div>
+                        )}
+
+                        <div className="flex justify-between items-end mt-auto">
+                          <div className="flex items-center gap-2">
+                            {user.profilePicture ? (
+                              <img
+                                src={user.profilePicture}
+                                alt={user.name}
+                                className="w-8 h-8 rounded-full border border-white/40 shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm shadow-sm">
+                                {user.name ? user.name.charAt(0).toUpperCase() : '?'}
+                              </div>
+                            )}
+                            <div
+                              className="font-medium text-sm tracking-wide drop-shadow-sm truncate max-w-[120px]"
+                              title={user.name}
+                            >
+                              {user.name}
                             </div>
-                          )}
-                          <div className="font-medium text-sm tracking-wide drop-shadow-sm truncate max-w-[120px]" title={user.name}>{user.name}</div>
-                        </div>
-                        <div className="flex items-center">
-                          {/* Fake chip */}
-                          <div className="w-8 h-6 rounded bg-yellow-400/80 border border-yellow-300 overflow-hidden relative shadow-inner">
-                            <div className="absolute top-1/2 left-0 w-full h-px bg-yellow-500/50"></div>
-                            <div className="absolute left-1/2 top-0 w-px h-full bg-yellow-500/50"></div>
-                            <div className="absolute top-0 right-0 w-2 h-2 border-l border-b border-yellow-500/50 rounded-bl"></div>
+                          </div>
+                          <div className="flex items-center">
+                            {/* Fake chip */}
+                            <div className="w-8 h-6 rounded bg-yellow-400/80 border border-yellow-300 overflow-hidden relative shadow-inner">
+                              <div className="absolute top-1/2 left-0 w-full h-px bg-yellow-500/50"></div>
+                              <div className="absolute left-1/2 top-0 w-px h-full bg-yellow-500/50"></div>
+                              <div className="absolute top-0 right-0 w-2 h-2 border-l border-b border-yellow-500/50 rounded-bl"></div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </TabsContent>
@@ -350,13 +384,28 @@ export default function ShopperWalletsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {businesses.map((bus) => (
-                  <div key={bus.id} className="relative group w-full aspect-[1.58] rounded-xl text-white shadow-lg transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden bg-gradient-to-br from-violet-600 via-fuchsia-700 to-purple-900 border border-white/10">
+                {businesses.map(bus => (
+                  <div
+                    key={bus.id}
+                    className="relative group w-full aspect-[1.58] rounded-xl text-white shadow-lg transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden bg-gradient-to-br from-violet-600 via-fuchsia-700 to-purple-900 border border-white/10"
+                  >
                     {/* Subtle geometric pattern */}
-                    <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                    <svg
+                      className="absolute inset-0 w-full h-full opacity-10 pointer-events-none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
                       <defs>
-                        <pattern id="hexagons" width="50" height="43.4" patternUnits="userSpaceOnUse" patternTransform="scale(2)">
-                          <path fill="currentColor" d="M24.8 22.4v-8.8l-7.6-4.4-7.6 4.4v8.8l7.6 4.4z"></path>
+                        <pattern
+                          id="hexagons"
+                          width="50"
+                          height="43.4"
+                          patternUnits="userSpaceOnUse"
+                          patternTransform="scale(2)"
+                        >
+                          <path
+                            fill="currentColor"
+                            d="M24.8 22.4v-8.8l-7.6-4.4-7.6 4.4v8.8l7.6 4.4z"
+                          ></path>
                         </pattern>
                       </defs>
                       <rect width="100%" height="100%" fill="url(#hexagons)"></rect>
@@ -374,14 +423,30 @@ export default function ShopperWalletsPage() {
                       </div>
 
                       <div className="mb-6">
-                        <div className="text-[10px] text-purple-200/70 uppercase tracking-widest mb-1">Available Balance</div>
-                        <div className="text-3xl font-bold tracking-tight drop-shadow-sm">{formatCurrency(bus.amount)}</div>
+                        <div className="text-[10px] text-purple-200/70 uppercase tracking-widest mb-1">
+                          Available Balance
+                        </div>
+                        <div className="text-3xl font-bold tracking-tight drop-shadow-sm">
+                          {formatCurrency(bus.amount)}
+                        </div>
                       </div>
 
                       <div className="flex justify-between items-end mt-auto">
                         <div className="flex flex-col">
-                          <div className="font-medium text-sm tracking-wider drop-shadow-sm truncate max-w-[160px]" title={bus.name}>{bus.name}</div>
-                          {bus.location && <div className="text-[10px] text-purple-200/80 truncate max-w-[140px]" title={bus.location}>{bus.location}</div>}
+                          <div
+                            className="font-medium text-sm tracking-wider drop-shadow-sm truncate max-w-[160px]"
+                            title={bus.name}
+                          >
+                            {bus.name}
+                          </div>
+                          {bus.location && (
+                            <div
+                              className="text-[10px] text-purple-200/80 truncate max-w-[140px]"
+                              title={bus.location}
+                            >
+                              {bus.location}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center">
                           {/* Fake chip */}

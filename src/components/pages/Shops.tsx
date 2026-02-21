@@ -294,10 +294,11 @@ const Shops = () => {
                       <TableCell>{shop.Orders_aggregate?.aggregate?.count ?? 0}</TableCell>
                       <TableCell>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${shop.is_active
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                            }`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            shop.is_active
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
                         >
                           {shop.is_active ? 'Active' : 'Inactive'}
                         </span>

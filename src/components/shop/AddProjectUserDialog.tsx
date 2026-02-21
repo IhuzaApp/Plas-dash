@@ -37,9 +37,16 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { PROJECT_ROLE_TYPES, getDefaultProjectPrivilegesForRole } from '@/lib/privileges/projectRolePrivileges';
+import {
+  PROJECT_ROLE_TYPES,
+  getDefaultProjectPrivilegesForRole,
+} from '@/lib/privileges/projectRolePrivileges';
 import { useAddProjectUser } from '@/hooks/useHasuraApi';
-import { ProjectUserPrivileges, ProjectPrivilegeKey, ProjectModulePrivileges } from '@/types/projectPrivileges';
+import {
+  ProjectUserPrivileges,
+  ProjectPrivilegeKey,
+  ProjectModulePrivileges,
+} from '@/types/projectPrivileges';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -667,7 +674,9 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                           passwordMode === 'generated' ? 'Generated password' : 'Enter password'
                         }
                         {...form.register('password')}
-                        className={form.formState.errors.password ? 'border-red-500 pr-20' : 'pr-20'}
+                        className={
+                          form.formState.errors.password ? 'border-red-500 pr-20' : 'pr-20'
+                        }
                         readOnly={passwordMode === 'generated'}
                       />
                       <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
@@ -691,7 +700,11 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                           className="h-6 w-6 p-0"
                           title={showPassword ? 'Hide password' : 'Show password'}
                         >
-                          {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                          {showPassword ? (
+                            <EyeOff className="h-3 w-3" />
+                          ) : (
+                            <Eye className="h-3 w-3" />
+                          )}
                         </Button>
                         <Button
                           type="button"
@@ -706,7 +719,9 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                       </div>
                     </div>
                     {form.formState.errors.password && (
-                      <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
+                      <p className="text-sm text-red-500">
+                        {form.formState.errors.password.message}
+                      </p>
                     )}
                     {passwordMode === 'generated' && (
                       <p className="text-xs text-muted-foreground">
@@ -774,10 +789,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Role *</Label>
-                  <Select
-                    value={form.watch('role')}
-                    onValueChange={handleRoleChange}
-                  >
+                  <Select value={form.watch('role')} onValueChange={handleRoleChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
@@ -835,7 +847,9 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="is_active">Active Status</Label>
-                    <p className="text-sm text-muted-foreground">Enable or disable the user account</p>
+                    <p className="text-sm text-muted-foreground">
+                      Enable or disable the user account
+                    </p>
                   </div>
                   <Switch
                     id="is_active"
@@ -847,7 +861,9 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="TwoAuth_enabled">Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">Enable 2FA for enhanced security</p>
+                    <p className="text-sm text-muted-foreground">
+                      Enable 2FA for enhanced security
+                    </p>
                   </div>
                   <Switch
                     id="TwoAuth_enabled"
@@ -877,101 +893,102 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                 </div>
 
                 <div className="grid gap-4">
-                  {privileges && Object.entries(MODULE_DESCRIPTIONS).map(([moduleKey, moduleInfo]) => {
-                    const module = moduleKey as ProjectPrivilegeKey;
-                    if (!privileges[module]) return null;
+                  {privileges &&
+                    Object.entries(MODULE_DESCRIPTIONS).map(([moduleKey, moduleInfo]) => {
+                      const module = moduleKey as ProjectPrivilegeKey;
+                      if (!privileges[module]) return null;
 
-                    const modulePrivileges = privileges[module] as ProjectModulePrivileges;
-                    const accessCount = getModuleAccessCount(module);
-                    const totalActions = moduleInfo.actions.length;
-                    const isExpanded = expandedModules.has(module);
-                    const hasAccess = modulePrivileges.access || false;
+                      const modulePrivileges = privileges[module] as ProjectModulePrivileges;
+                      const accessCount = getModuleAccessCount(module);
+                      const totalActions = moduleInfo.actions.length;
+                      const isExpanded = expandedModules.has(module);
+                      const hasAccess = modulePrivileges.access || false;
 
-                    return (
-                      <Card key={module} className="overflow-hidden border shadow-sm">
-                        <Collapsible open={isExpanded} onOpenChange={() => toggleModule(module)}>
-                          <CollapsibleTrigger asChild>
-                            <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center gap-2">
-                                    {isExpanded ? (
-                                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                    ) : (
-                                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                    )}
+                      return (
+                        <Card key={module} className="overflow-hidden border shadow-sm">
+                          <Collapsible open={isExpanded} onOpenChange={() => toggleModule(module)}>
+                            <CollapsibleTrigger asChild>
+                              <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-2">
-                                      {hasAccess ? (
-                                        <Shield className="h-4 w-4 text-blue-600" />
+                                      {isExpanded ? (
+                                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                       ) : (
-                                        <Lock className="h-4 w-4 text-muted-foreground" />
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                       )}
-                                      <h4 className="font-medium">{moduleInfo.title}</h4>
-                                    </div>
-                                  </div>
-                                  <Badge variant={hasAccess ? 'default' : 'secondary'}>
-                                    {accessCount}/{totalActions}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    type="button"
-                                    onClick={e => {
-                                      e.stopPropagation();
-                                      toggleAllInModule(module, !hasAccess);
-                                    }}
-                                  >
-                                    {hasAccess ? 'Revoke All' : 'Grant All'}
-                                  </Button>
-                                </div>
-                              </div>
-                              <p className="text-sm text-muted-foreground mt-1 ml-6">
-                                {moduleInfo.description}
-                              </p>
-                            </div>
-                          </CollapsibleTrigger>
-
-                          <CollapsibleContent>
-                            <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-                              {moduleInfo.actions.map(action => {
-                                const isEnabled = modulePrivileges[action.key] || false;
-
-                                return (
-                                  <div
-                                    key={action.key}
-                                    className="flex items-center justify-between p-2 rounded-md border bg-muted/20"
-                                  >
-                                    <div className="flex-1">
                                       <div className="flex items-center gap-2">
-                                        <Label
-                                          htmlFor={`${module}-${action.key}`}
-                                          className="text-sm font-medium cursor-pointer"
-                                        >
-                                          {action.label}
-                                        </Label>
-                                        {isEnabled && (
-                                          <Check className="h-3 w-3 text-green-600" />
+                                        {hasAccess ? (
+                                          <Shield className="h-4 w-4 text-blue-600" />
+                                        ) : (
+                                          <Lock className="h-4 w-4 text-muted-foreground" />
                                         )}
+                                        <h4 className="font-medium">{moduleInfo.title}</h4>
                                       </div>
                                     </div>
-                                    <Switch
-                                      id={`${module}-${action.key}`}
-                                      checked={isEnabled}
-                                      onCheckedChange={checked =>
-                                        updatePrivilege(module, action.key, checked)
-                                      }
-                                    />
+                                    <Badge variant={hasAccess ? 'default' : 'secondary'}>
+                                      {accessCount}/{totalActions}
+                                    </Badge>
                                   </div>
-                                );
-                              })}
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </Card>
-                    );
-                  })}
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      type="button"
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        toggleAllInModule(module, !hasAccess);
+                                      }}
+                                    >
+                                      {hasAccess ? 'Revoke All' : 'Grant All'}
+                                    </Button>
+                                  </div>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1 ml-6">
+                                  {moduleInfo.description}
+                                </p>
+                              </div>
+                            </CollapsibleTrigger>
+
+                            <CollapsibleContent>
+                              <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {moduleInfo.actions.map(action => {
+                                  const isEnabled = modulePrivileges[action.key] || false;
+
+                                  return (
+                                    <div
+                                      key={action.key}
+                                      className="flex items-center justify-between p-2 rounded-md border bg-muted/20"
+                                    >
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <Label
+                                            htmlFor={`${module}-${action.key}`}
+                                            className="text-sm font-medium cursor-pointer"
+                                          >
+                                            {action.label}
+                                          </Label>
+                                          {isEnabled && (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          )}
+                                        </div>
+                                      </div>
+                                      <Switch
+                                        id={`${module}-${action.key}`}
+                                        checked={isEnabled}
+                                        onCheckedChange={checked =>
+                                          updatePrivilege(module, action.key, checked)
+                                        }
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        </Card>
+                      );
+                    })}
                 </div>
               </div>
             </div>
