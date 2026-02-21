@@ -299,8 +299,17 @@ export type ActionKey<T extends PrivilegeKey> = keyof NonNullable<UserPrivileges
 export function hasPrivilege(
   userPrivileges: UserPrivileges | null | undefined,
   module: PrivilegeKey,
-  action?: string
+  action?: string,
+  role?: string
 ): boolean {
+  // Hard-coded override for Referrals for admin roles
+  // This ensures existing admins get access even if their stored JSON is outdated
+  const isAdminRole = role === 'globalAdmin' || role === 'projectAdmin' || role === 'systemAdmin';
+
+  if (isAdminRole && (module === 'referrals' || (module === 'pages' && action === 'access_referrals'))) {
+    return true;
+  }
+
   if (!userPrivileges || !userPrivileges[module]) {
     return false;
   }

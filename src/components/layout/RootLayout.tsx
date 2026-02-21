@@ -19,6 +19,7 @@ interface SessionData {
   expiresAt?: number;
   /** True when the user is from ProjectUsers table (catalog view). False when from orgEmployees (shop/products view). */
   isProjectUser?: boolean;
+  role: string;
 }
 
 interface AuthContextType {

@@ -54,6 +54,7 @@ export interface ProjectUserPrivileges {
 
   // Page Access
   pages?: ProjectModulePrivileges;
+  referrals?: ProjectModulePrivileges;
 }
 
 // Default project privileges template
@@ -407,6 +408,12 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     access_shop_dashboard: false,
     access_financial_overview: false,
     access_pos_terminal: false,
+    access_referrals: false,
+  },
+  referrals: {
+    access: false,
+    view_data: false,
+    export_data: false,
   },
 };
 
@@ -420,8 +427,16 @@ export type ProjectActionKey<T extends ProjectPrivilegeKey> = keyof NonNullable<
 export function hasProjectPrivilege(
   projectPrivileges: ProjectUserPrivileges | null | undefined,
   module: ProjectPrivilegeKey,
-  action?: string
+  action?: string,
+  role?: string
 ): boolean {
+  // Hard-coded override for Referrals for admin roles
+  const isAdminRole = role === 'projectAdmin' || role === 'systemAdmin';
+
+  if (isAdminRole && (module === 'referrals' || (module === 'pages' && action === 'access_referrals'))) {
+    return true;
+  }
+
   if (!projectPrivileges || !projectPrivileges[module]) {
     return false;
   }

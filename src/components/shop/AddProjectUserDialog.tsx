@@ -37,9 +37,16 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { PROJECT_ROLE_TYPES } from '@/lib/privileges/projectRolePrivileges';
+import { PROJECT_ROLE_TYPES, getDefaultProjectPrivilegesForRole } from '@/lib/privileges/projectRolePrivileges';
 import { useAddProjectUser } from '@/hooks/useHasuraApi';
-import { getDefaultProjectPrivilegesForRole } from '@/lib/privileges/projectRolePrivileges';
+import { ProjectUserPrivileges, ProjectPrivilegeKey, ProjectModulePrivileges } from '@/types/projectPrivileges';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { MODULE_DESCRIPTIONS } from '@/lib/privileges/moduleDescriptions';
+import { Card } from '@/components/ui/card';
 
 // Password hashing function with salt and multiple iterations
 // Note: In production, consider using a dedicated password hashing library like bcrypt
@@ -190,6 +197,8 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
   } | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [privileges, setPrivileges] = useState<ProjectUserPrivileges | null>(null);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addProjectUserMutation = useAddProjectUser();
 
@@ -207,17 +216,24 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
     },
   });
 
-  // Generate initial password when dialog opens
+  // Generate initial password and privileges when dialog opens
   React.useEffect(() => {
-    if (open && passwordMode === 'generated') {
-      const newPassword = generateRandomPassword();
-      setGeneratedPassword(newPassword);
-      form.setValue('password', newPassword);
-      form.setValue('confirmPassword', newPassword);
-      // Clear validation errors
-      form.clearErrors(['password', 'confirmPassword']);
+    if (open) {
+      if (passwordMode === 'generated' && !form.getValues('password')) {
+        const newPassword = generateRandomPassword();
+        setGeneratedPassword(newPassword);
+        form.setValue('password', newPassword);
+        form.setValue('confirmPassword', newPassword);
+        // Clear validation errors
+        form.clearErrors(['password', 'confirmPassword']);
+      }
+
+      if (!privileges) {
+        const defaultPrivs = getDefaultProjectPrivilegesForRole(form.getValues('role'));
+        setPrivileges(defaultPrivs);
+      }
     }
-  }, [open, passwordMode, form]);
+  }, [open, passwordMode, form, privileges]);
 
   const handleGeneratePassword = () => {
     const newPassword = generateRandomPassword();
@@ -244,6 +260,64 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
       // Clear validation errors
       form.clearErrors(['password', 'confirmPassword']);
     }
+  };
+
+  const handleRoleChange = (role: string) => {
+    form.setValue('role', role as any);
+    const defaultPrivs = getDefaultProjectPrivilegesForRole(role);
+    setPrivileges(defaultPrivs);
+    form.clearErrors('role');
+  };
+
+  const toggleModule = (module: string) => {
+    const newExpanded = new Set(expandedModules);
+    if (newExpanded.has(module)) {
+      newExpanded.delete(module);
+    } else {
+      newExpanded.add(module);
+    }
+    setExpandedModules(newExpanded);
+  };
+
+  const updatePrivilege = (module: ProjectPrivilegeKey, action: string, value: boolean) => {
+    if (!privileges) return;
+
+    const newPrivileges = { ...privileges };
+    if (!newPrivileges[module]) {
+      newPrivileges[module] = { access: false };
+    }
+    newPrivileges[module]![action] = value;
+    setPrivileges(newPrivileges);
+  };
+
+  const toggleAllInModule = (module: ProjectPrivilegeKey, value: boolean) => {
+    if (!privileges) return;
+
+    const newPrivileges = { ...privileges };
+    if (!newPrivileges[module]) {
+      newPrivileges[module] = { access: false };
+    }
+
+    const currentModule = newPrivileges[module]!;
+    Object.keys(currentModule).forEach(action => {
+      currentModule[action] = value;
+    });
+
+    setPrivileges(newPrivileges);
+  };
+
+  const getModuleAccessCount = (module: ProjectPrivilegeKey) => {
+    const modulePrivileges = privileges?.[module];
+    if (!modulePrivileges) return 0;
+
+    return Object.values(modulePrivileges).filter(Boolean).length;
+  };
+
+  const getTotalAccessCount = () => {
+    if (!privileges) return 0;
+    return Object.keys(privileges).reduce((total, module) => {
+      return total + getModuleAccessCount(module as ProjectPrivilegeKey);
+    }, 0);
   };
 
   const handleCopyPassword = async () => {
@@ -299,7 +373,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
         gender: data.gender || '', // Use empty string for optional field
         device_details: '', // Use empty string for optional field
         profile: profileImage || '', // Include profile image
-        privileges: privileges,
+        privileges: privileges || getDefaultProjectPrivilegesForRole(data.role),
       };
 
       // Call the mutation
@@ -423,8 +497,8 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[900px] h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
             Add Project User
@@ -466,339 +540,463 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
             // If validation passes, call onSubmit
             onSubmit(formData);
           }}
-          className="space-y-4"
+          className="flex-1 flex flex-col overflow-hidden"
         >
-          {/* Profile Image Upload */}
-          <div className="space-y-4">
-            <Label>Profile Image (Optional)</Label>
-            <div className="flex items-center space-x-4">
-              {/* Current Profile Image */}
-              <div className="relative">
-                {profileImage ? (
+          <ScrollArea className="flex-1 p-6">
+            <div className="space-y-6">
+              {/* Profile Image Upload */}
+              <div className="space-y-4">
+                <Label>Profile Image (Optional)</Label>
+                <div className="flex items-center space-x-4">
+                  {/* Current Profile Image */}
                   <div className="relative">
-                    <img
-                      src={profileImage}
-                      alt="Profile"
-                      className="h-20 w-20 rounded-full object-cover border-2 border-gray-200"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleRemoveImage}
-                      className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="h-20 w-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
-                    <User className="h-8 w-8 text-gray-400" />
-                  </div>
-                )}
-              </div>
-
-              {/* Upload Button */}
-              <div className="space-y-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleImageClick}
-                  className="flex items-center gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  {profileImage ? 'Change Image' : 'Upload Image'}
-                </Button>
-                <p className="text-xs text-muted-foreground">JPG, PNG, GIF up to 5MB</p>
-              </div>
-
-              {/* Hidden File Input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username *</Label>
-              <Input
-                id="username"
-                placeholder="Enter username"
-                {...form.register('username')}
-                className={form.formState.errors.username ? 'border-red-500' : ''}
-              />
-              {form.formState.errors.username && (
-                <p className="text-sm text-red-500">{form.formState.errors.username.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter email"
-                {...form.register('email')}
-                className={form.formState.errors.email ? 'border-red-500' : ''}
-              />
-              {form.formState.errors.email && (
-                <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {/* Password Mode Selection */}
-            <div className="space-y-2">
-              <Label>Password Type</Label>
-              <div className="flex space-x-2">
-                <Button
-                  type="button"
-                  variant={passwordMode === 'generated' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handlePasswordModeChange('generated')}
-                  className="flex-1"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Generate Random
-                </Button>
-                <Button
-                  type="button"
-                  variant={passwordMode === 'custom' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handlePasswordModeChange('custom')}
-                  className="flex-1"
-                >
-                  <Lock className="h-4 w-4 mr-2" />
-                  Type Custom
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder={
-                      passwordMode === 'generated' ? 'Generated password' : 'Enter password'
-                    }
-                    {...form.register('password')}
-                    className={form.formState.errors.password ? 'border-red-500 pr-20' : 'pr-20'}
-                    readOnly={passwordMode === 'generated'}
-                  />
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
-                    {passwordMode === 'generated' && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleGeneratePassword}
-                        className="h-6 w-6 p-0"
-                        title="Generate new password"
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                      </Button>
+                    {profileImage ? (
+                      <div className="relative">
+                        <img
+                          src={profileImage}
+                          alt="Profile"
+                          className="h-20 w-20 rounded-full object-cover border-2 border-gray-200"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={handleRemoveImage}
+                          className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="h-20 w-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                        <User className="h-8 w-8 text-gray-400" />
+                      </div>
                     )}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="h-6 w-6 p-0"
-                      title={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCopyPassword}
-                      className="h-6 w-6 p-0"
-                      title="Copy password"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
                   </div>
-                </div>
-                {form.formState.errors.password && (
-                  <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
-                )}
-                {passwordMode === 'generated' && (
-                  <p className="text-xs text-muted-foreground">
-                    Password automatically generated with 12 characters including uppercase,
-                    lowercase, numbers, and special characters.
-                  </p>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm password"
-                    {...form.register('confirmPassword')}
-                    className={
-                      form.formState.errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'
-                    }
-                    readOnly={passwordMode === 'generated'}
+                  {/* Upload Button */}
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleImageClick}
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      {profileImage ? 'Change Image' : 'Upload Image'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">JPG, PNG, GIF up to 5MB</p>
+                  </div>
+
+                  {/* Hidden File Input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
                   />
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username *</Label>
+                  <Input
+                    id="username"
+                    placeholder="Enter username"
+                    {...form.register('username')}
+                    className={form.formState.errors.username ? 'border-red-500' : ''}
+                  />
+                  {form.formState.errors.username && (
+                    <p className="text-sm text-red-500">{form.formState.errors.username.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter email"
+                    {...form.register('email')}
+                    className={form.formState.errors.email ? 'border-red-500' : ''}
+                  />
+                  {form.formState.errors.email && (
+                    <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Password Mode Selection */}
+                <div className="space-y-2">
+                  <Label>Password Type</Label>
+                  <div className="flex space-x-2">
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant={passwordMode === 'generated' ? 'default' : 'outline'}
                       size="sm"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="h-6 w-6 p-0"
-                      title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      onClick={() => handlePasswordModeChange('generated')}
+                      className="flex-1"
                     >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-3 w-3" />
-                      ) : (
-                        <Eye className="h-3 w-3" />
-                      )}
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Generate Random
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={passwordMode === 'custom' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handlePasswordModeChange('custom')}
+                      className="flex-1"
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Type Custom
                     </Button>
                   </div>
                 </div>
-                {form.formState.errors.confirmPassword && (
-                  <p className="text-sm text-red-500">
-                    {form.formState.errors.confirmPassword.message}
-                  </p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password *</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder={
+                          passwordMode === 'generated' ? 'Generated password' : 'Enter password'
+                        }
+                        {...form.register('password')}
+                        className={form.formState.errors.password ? 'border-red-500 pr-20' : 'pr-20'}
+                        readOnly={passwordMode === 'generated'}
+                      />
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                        {passwordMode === 'generated' && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleGeneratePassword}
+                            className="h-6 w-6 p-0"
+                            title="Generate new password"
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="h-6 w-6 p-0"
+                          title={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCopyPassword}
+                          className="h-6 w-6 p-0"
+                          title="Copy password"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    {form.formState.errors.password && (
+                      <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
+                    )}
+                    {passwordMode === 'generated' && (
+                      <p className="text-xs text-muted-foreground">
+                        Password automatically generated with 12 characters including uppercase,
+                        lowercase, numbers, and special characters.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirm password"
+                        {...form.register('confirmPassword')}
+                        className={
+                          form.formState.errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'
+                        }
+                        readOnly={passwordMode === 'generated'}
+                      />
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="h-6 w-6 p-0"
+                          title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-3 w-3" />
+                          ) : (
+                            <Eye className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    {form.formState.errors.confirmPassword && (
+                      <p className="text-sm text-red-500">
+                        {form.formState.errors.confirmPassword.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Copy Login Info Button */}
+                {form.watch('username') && form.watch('email') && form.watch('password') && (
+                  <div className="flex justify-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyLoginInfo}
+                      className="flex items-center gap-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy Login Information
+                    </Button>
+                  </div>
                 )}
               </div>
-            </div>
 
-            {/* Copy Login Info Button */}
-            {form.watch('username') && form.watch('email') && form.watch('password') && (
-              <div className="flex justify-center">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyLoginInfo}
-                  className="flex items-center gap-2"
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy Login Information
-                </Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role *</Label>
+                  <Select
+                    value={form.watch('role')}
+                    onValueChange={handleRoleChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="customerSupport">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Customer Support
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="systemAdmin">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          System Admin
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="projectManager">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Project Manager
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="projectAdmin">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Global System Admin
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.role && (
+                    <p className="text-sm text-red-500">{form.formState.errors.role.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender</Label>
+                  <Select
+                    value={form.watch('gender')}
+                    onValueChange={value => form.setValue('gender', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            )}
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="role">Role *</Label>
-              <Select
-                value={form.watch('role')}
-                onValueChange={value => form.setValue('role', value as any)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="customerSupport">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Customer Support
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="systemAdmin">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      System Admin
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="projectManager">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Project Manager
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="projectAdmin">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Global System Admin
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              {form.formState.errors.role && (
-                <p className="text-sm text-red-500">{form.formState.errors.role.message}</p>
-              )}
-            </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="is_active">Active Status</Label>
+                    <p className="text-sm text-muted-foreground">Enable or disable the user account</p>
+                  </div>
+                  <Switch
+                    id="is_active"
+                    checked={form.watch('is_active')}
+                    onCheckedChange={checked => form.setValue('is_active', checked)}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
-              <Select
-                value={form.watch('gender')}
-                onValueChange={value => form.setValue('gender', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="is_active">Active Status</Label>
-                <p className="text-sm text-muted-foreground">Enable or disable the user account</p>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="TwoAuth_enabled">Two-Factor Authentication</Label>
+                    <p className="text-sm text-muted-foreground">Enable 2FA for enhanced security</p>
+                  </div>
+                  <Switch
+                    id="TwoAuth_enabled"
+                    checked={form.watch('TwoAuth_enabled')}
+                    onCheckedChange={checked => form.setValue('TwoAuth_enabled', checked)}
+                  />
+                </div>
               </div>
-              <Switch
-                id="is_active"
-                checked={form.watch('is_active')}
-                onCheckedChange={checked => form.setValue('is_active', checked)}
-              />
-            </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="TwoAuth_enabled">Two-Factor Authentication</Label>
-                <p className="text-sm text-muted-foreground">Enable 2FA for enhanced security</p>
+              <Separator />
+
+              {/* Privilege Management Section */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Privilege Management
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Configure fine-grained permissions for this project user
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{getTotalAccessCount()} permissions granted</Badge>
+                  </div>
+                </div>
+
+                <div className="grid gap-4">
+                  {privileges && Object.entries(MODULE_DESCRIPTIONS).map(([moduleKey, moduleInfo]) => {
+                    const module = moduleKey as ProjectPrivilegeKey;
+                    if (!privileges[module]) return null;
+
+                    const modulePrivileges = privileges[module] as ProjectModulePrivileges;
+                    const accessCount = getModuleAccessCount(module);
+                    const totalActions = moduleInfo.actions.length;
+                    const isExpanded = expandedModules.has(module);
+                    const hasAccess = modulePrivileges.access || false;
+
+                    return (
+                      <Card key={module} className="overflow-hidden border shadow-sm">
+                        <Collapsible open={isExpanded} onOpenChange={() => toggleModule(module)}>
+                          <CollapsibleTrigger asChild>
+                            <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2">
+                                    {isExpanded ? (
+                                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                    <div className="flex items-center gap-2">
+                                      {hasAccess ? (
+                                        <Shield className="h-4 w-4 text-blue-600" />
+                                      ) : (
+                                        <Lock className="h-4 w-4 text-muted-foreground" />
+                                      )}
+                                      <h4 className="font-medium">{moduleInfo.title}</h4>
+                                    </div>
+                                  </div>
+                                  <Badge variant={hasAccess ? 'default' : 'secondary'}>
+                                    {accessCount}/{totalActions}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type="button"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      toggleAllInModule(module, !hasAccess);
+                                    }}
+                                  >
+                                    {hasAccess ? 'Revoke All' : 'Grant All'}
+                                  </Button>
+                                </div>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1 ml-6">
+                                {moduleInfo.description}
+                              </p>
+                            </div>
+                          </CollapsibleTrigger>
+
+                          <CollapsibleContent>
+                            <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {moduleInfo.actions.map(action => {
+                                const isEnabled = modulePrivileges[action.key] || false;
+
+                                return (
+                                  <div
+                                    key={action.key}
+                                    className="flex items-center justify-between p-2 rounded-md border bg-muted/20"
+                                  >
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <Label
+                                          htmlFor={`${module}-${action.key}`}
+                                          className="text-sm font-medium cursor-pointer"
+                                        >
+                                          {action.label}
+                                        </Label>
+                                        {isEnabled && (
+                                          <Check className="h-3 w-3 text-green-600" />
+                                        )}
+                                      </div>
+                                    </div>
+                                    <Switch
+                                      id={`${module}-${action.key}`}
+                                      checked={isEnabled}
+                                      onCheckedChange={checked =>
+                                        updatePrivilege(module, action.key, checked)
+                                      }
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </Card>
+                    );
+                  })}
+                </div>
               </div>
-              <Switch
-                id="TwoAuth_enabled"
-                checked={form.watch('TwoAuth_enabled')}
-                onCheckedChange={checked => form.setValue('TwoAuth_enabled', checked)}
-              />
             </div>
-          </div>
+          </ScrollArea>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <User className="mr-2 h-4 w-4" />
-                  Create User
-                </>
-              )}
-            </Button>
-          </DialogFooter>
+          <div className="border-t p-6">
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <User className="mr-2 h-4 w-4" />
+                    Create User
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </div>
         </form>
       </DialogContent>
 

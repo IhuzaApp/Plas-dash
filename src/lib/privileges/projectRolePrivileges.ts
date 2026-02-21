@@ -79,6 +79,7 @@ export const getDefaultProjectPrivilegesForRole = (
 
         // Page Access
         'pages',
+        'referrals',
       ];
 
       globalAdminModules.forEach(module => {

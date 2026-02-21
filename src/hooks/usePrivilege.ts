@@ -18,13 +18,13 @@ export function usePrivilege() {
   // Check if user has access to a specific module
   const hasModuleAccess = (module: PrivilegeKey): boolean => {
     if (!session?.privileges) return false;
-    return hasPrivilege(session.privileges, module);
+    return hasPrivilege(session.privileges, module, undefined, session.role);
   };
 
   // Check if user has a specific action privilege within a module
   const hasAction = (module: PrivilegeKey, action: string): boolean => {
     if (!session?.privileges) return false;
-    return hasPrivilege(session.privileges, module, action);
+    return hasPrivilege(session.privileges, module, action, session.role);
   };
 
   // Get all privileges for a specific module
@@ -70,7 +70,7 @@ export function usePrivilege() {
       'shoppers',
     ];
 
-    return majorModules.every(module => hasPrivilege(session.privileges, module));
+    return majorModules.every(module => hasPrivilege(session.privileges, module, undefined, session.role));
   };
 
   return {

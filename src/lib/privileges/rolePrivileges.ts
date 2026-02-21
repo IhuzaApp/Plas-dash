@@ -48,6 +48,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'pos_terminal',
         'products',
         'settings',
+        'referrals',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -113,6 +114,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'refunds',
         'tickets',
         'settings',
+        'referrals',
       ];
       storeManagerModules.forEach(module => {
         if (privileges[module]) {
