@@ -141,7 +141,26 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
         profile: user.profile || '',
       });
       setProfileImage(user.profile || null);
-      setPrivileges(user.privileges || null);
+
+      // Merge user privileges with defaults to ensure all system modules are visible
+      // This ensures that new modules like "referrals" show up even for old user records
+      const userPrivs = user.privileges || {};
+      const defaultPrivs = getDefaultProjectPrivilegesForRole(user.role || 'customerSupport');
+
+      // Start with defaults, then override with user's specific settings
+      const mergedPrivs = { ...defaultPrivs };
+      Object.keys(userPrivs).forEach(key => {
+        const k = key as ProjectPrivilegeKey;
+        if (userPrivs[k]) {
+          // Deep merge for each module
+          mergedPrivs[k] = {
+            ...(mergedPrivs[k] || {}),
+            ...(userPrivs[k] as ProjectModulePrivileges)
+          };
+        }
+      });
+
+      setPrivileges(mergedPrivs);
     }
   }, [user, form]);
 

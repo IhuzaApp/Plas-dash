@@ -7,7 +7,17 @@ import { GET_REFERRAL_WINDOW } from '@/lib/graphql/queries';
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session) {
+        let userId = (session?.user as { id?: string } | undefined)?.id;
+
+        // Fallback to Bearer token if session is not available
+        if (!userId) {
+            const authHeader = req.headers.get('authorization');
+            if (authHeader?.startsWith('Bearer ')) {
+                userId = authHeader.substring(7);
+            }
+        }
+
+        if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

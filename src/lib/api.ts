@@ -8,7 +8,12 @@ const getBaseUrl = () =>
 const getAuthHeaders = (): Record<string, string> => {
   if (typeof window === 'undefined') return {};
   try {
-    const sessionStr = localStorage.getItem('orgEmployeeSession');
+    // Check both potential session keys
+    const orgSessionStr = localStorage.getItem('orgEmployeeSession');
+    const projectSessionStr = localStorage.getItem('projectUserSession');
+
+    const sessionStr = orgSessionStr || projectSessionStr;
+
     if (sessionStr) {
       const session = JSON.parse(sessionStr);
       if (session?.id) {

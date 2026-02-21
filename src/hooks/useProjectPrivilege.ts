@@ -32,10 +32,17 @@ export function useProjectPrivilege(): UseProjectPrivilegeReturn {
 
   const hasProjectModuleAccess = useCallback(
     (module: ProjectPrivilegeKey): boolean => {
-      const privileges = getProjectPrivileges();
-      return hasProjectPrivilege(privileges, module);
+      if (typeof window === 'undefined') return false;
+      const session = localStorage.getItem('projectUserSession');
+      if (!session) return false;
+      try {
+        const parsedSession = JSON.parse(session);
+        return hasProjectPrivilege(parsedSession.privileges, module, undefined, parsedSession.role);
+      } catch {
+        return false;
+      }
     },
-    [getProjectPrivileges]
+    []
   );
 
   const hasProjectAction = useCallback(
@@ -43,10 +50,17 @@ export function useProjectPrivilege(): UseProjectPrivilegeReturn {
       module: T,
       action: keyof NonNullable<ProjectUserPrivileges[T]>
     ): boolean => {
-      const privileges = getProjectPrivileges();
-      return hasProjectPrivilege(privileges, module, action as string);
+      if (typeof window === 'undefined') return false;
+      const session = localStorage.getItem('projectUserSession');
+      if (!session) return false;
+      try {
+        const parsedSession = JSON.parse(session);
+        return hasProjectPrivilege(parsedSession.privileges, module, action as string, parsedSession.role);
+      } catch {
+        return false;
+      }
     },
-    [getProjectPrivileges]
+    []
   );
 
   const isProjectUser = useCallback((): boolean => {

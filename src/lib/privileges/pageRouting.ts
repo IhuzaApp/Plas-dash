@@ -137,9 +137,13 @@ export const PAGE_ROUTES: PageRoute[] = [
 /**
  * Find the first accessible page for a user based on their privileges
  * @param privileges - User's privileges
+ * @param role - User's role
  * @returns The first accessible page route, or null if no access
  */
-export const findFirstAccessiblePage = (privileges: UserPrivileges | null): PageRoute | null => {
+export const findFirstAccessiblePage = (
+  privileges: UserPrivileges | null,
+  role?: string
+): PageRoute | null => {
   if (!privileges) return null;
 
   // Sort pages by priority (highest first)
@@ -147,7 +151,7 @@ export const findFirstAccessiblePage = (privileges: UserPrivileges | null): Page
 
   // Find the first page the user has access to
   for (const page of sortedPages) {
-    if (hasPrivilege(privileges, page.module, page.action)) {
+    if (hasPrivilege(privileges, page.module, page.action, role)) {
       return page;
     }
   }
@@ -158,21 +162,30 @@ export const findFirstAccessiblePage = (privileges: UserPrivileges | null): Page
 /**
  * Get all accessible pages for a user
  * @param privileges - User's privileges
+ * @param role - User's role
  * @returns Array of accessible page routes
  */
-export const getAccessiblePages = (privileges: UserPrivileges | null): PageRoute[] => {
+export const getAccessiblePages = (
+  privileges: UserPrivileges | null,
+  role?: string
+): PageRoute[] => {
   if (!privileges) return [];
 
-  return PAGE_ROUTES.filter(page => hasPrivilege(privileges, page.module, page.action));
+  return PAGE_ROUTES.filter(page => hasPrivilege(privileges, page.module, page.action, role));
 };
 
 /**
  * Check if a specific page is accessible to a user
  * @param privileges - User's privileges
  * @param path - Page path to check
+ * @param role - User's role
  * @returns boolean indicating if the page is accessible
  */
-export const isPageAccessible = (privileges: UserPrivileges | null, path: string): boolean => {
+export const isPageAccessible = (
+  privileges: UserPrivileges | null,
+  path: string,
+  role?: string
+): boolean => {
   if (!privileges) return false;
 
   const page = PAGE_ROUTES.find(route => route.path === path);
@@ -181,7 +194,7 @@ export const isPageAccessible = (privileges: UserPrivileges | null, path: string
     return true; // Allow access to pages not in our routing system
   }
 
-  const hasAccess = hasPrivilege(privileges, page.module, page.action);
+  const hasAccess = hasPrivilege(privileges, page.module, page.action, role);
 
   return hasAccess;
 };
@@ -190,9 +203,13 @@ export const isPageAccessible = (privileges: UserPrivileges | null, path: string
  * Get the recommended landing page for a user after login
  * This prioritizes dashboards and main operational pages
  * @param privileges - User's privileges
+ * @param role - User's role
  * @returns Recommended page route or null
  */
-export const getRecommendedLandingPage = (privileges: UserPrivileges | null): PageRoute | null => {
+export const getRecommendedLandingPage = (
+  privileges: UserPrivileges | null,
+  role?: string
+): PageRoute | null => {
   if (!privileges) return null;
 
   // Priority order for landing pages
@@ -219,7 +236,7 @@ export const getRecommendedLandingPage = (privileges: UserPrivileges | null): Pa
 
   // Find the first accessible module in priority order
   for (const module of landingPageModules) {
-    if (hasPrivilege(privileges, module, 'access')) {
+    if (hasPrivilege(privileges, module, 'access', role)) {
       const page = PAGE_ROUTES.find(route => route.module === module && route.action === 'access');
       if (page) return page;
     }

@@ -107,13 +107,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
     }
   }, []);
 
-  // Check if current page is accessible and redirect if not
   React.useEffect(() => {
     if (isAuthenticated && session && pathname) {
-      const currentPageAccessible = isPageAccessible(session.privileges, pathname);
+      const currentPageAccessible = isPageAccessible(session.privileges, pathname, session.role);
 
       if (!currentPageAccessible) {
-        const recommendedPage = getRecommendedLandingPage(session.privileges);
+        const recommendedPage = getRecommendedLandingPage(session.privileges, session.role);
 
         if (recommendedPage && recommendedPage.path !== pathname) {
           router.push(recommendedPage.path);
@@ -132,9 +131,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
     // Only auto-route if current page is not accessible
     if (pathname) {
-      const currentPageAccessible = isPageAccessible(sessionData.privileges, pathname);
+      const currentPageAccessible = isPageAccessible(sessionData.privileges, pathname, sessionData.role);
       if (!currentPageAccessible) {
-        const recommendedPage = getRecommendedLandingPage(sessionData.privileges);
+        const recommendedPage = getRecommendedLandingPage(sessionData.privileges, sessionData.role);
         if (recommendedPage && recommendedPage.path !== pathname) {
           router.push(recommendedPage.path);
         }
