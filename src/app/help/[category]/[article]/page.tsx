@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import Markdown from 'react-markdown';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
+import HelpMarkdown from '@/components/help/HelpMarkdown';
 
 interface ArticlePageProps {
   params: {
@@ -58,7 +58,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       <div className="max-w-3xl space-y-8">
         {/* Article Content */}
         <div className="prose prose-slate dark:prose-invert max-w-none">
-          <Markdown>{article.content}</Markdown>
+          <HelpMarkdown content={article.content} />
         </div>
 
         {/* Related Articles */}
