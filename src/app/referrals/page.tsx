@@ -342,7 +342,16 @@ export default function ReferralsPage() {
                     {selectedReferral && (
                         <div className="mt-6 space-y-6">
                             <div className="space-y-4">
-                                <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">User Information</h4>
+                                <div className="flex items-center gap-4">
+                                    {selectedReferral.User?.profile_picture && (
+                                        <img
+                                            src={selectedReferral.User.profile_picture}
+                                            alt="Profile"
+                                            className="w-12 h-12 rounded-full object-cover border"
+                                        />
+                                    )}
+                                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">User Information</h4>
+                                </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-xs text-muted-foreground">Full Name</p>
@@ -359,6 +368,18 @@ export default function ReferralsPage() {
                                     <div>
                                         <p className="text-xs text-muted-foreground">Gender</p>
                                         <p className="text-sm font-medium uppercase">{selectedReferral.User?.gender || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Account Status</p>
+                                        <Badge variant="outline" className={selectedReferral.User?.is_active ? 'text-green-600' : 'text-red-600'}>
+                                            {selectedReferral.User?.is_active ? 'Active' : 'Inactive'}
+                                        </Badge>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Role / Guest</p>
+                                        <p className="text-sm font-medium">
+                                            {selectedReferral.User?.is_guest ? 'Guest User' : 'Registered User'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
