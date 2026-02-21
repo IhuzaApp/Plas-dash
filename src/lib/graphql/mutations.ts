@@ -768,3 +768,20 @@ export const UPDATE_REEL = `
     }
   }
 `;
+// Personal Wallet mutations
+export const ADD_PERSONAL_WALLET_TRANSACTION = `
+  mutation addPersonalWalletTransactions($action: String = "", $amount: String = "", $received_wallet: uuid!, $status: String = "", $wallet_id: uuid!, $doneBy: uuid!) {
+    insert_personalWalletTransactions(objects: {action: $action, amount: $amount, received_wallet: $received_wallet, status: $status, wallet_id: $wallet_id, doneBy: $doneBy}) {
+      affected_rows
+    }
+  }
+`;
+
+
+export const UPDATE_PERSONAL_WALLET = `
+  mutation updatePersonalWallet($balance: String = "", $updated_at: timestamptz = "", $user_id: uuid = "") {
+    update_personalWallet(where: {user_id: {_eq: $user_id}}, _set: {balance: $balance, updated_at: $updated_at}) {
+      affected_rows
+    }
+  }
+`;

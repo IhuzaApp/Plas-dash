@@ -6,19 +6,60 @@ import { gql } from 'graphql-request';
 
 // Admin dashboard: fetches all refunds (no filter).
 const GET_ALL_REFUNDS = gql`
-  query GetAllRefunds {
+  query getAllREfunds {
     Refunds(order_by: { created_at: desc }) {
-      id
-      amount
-      order_id
-      user_id
-      reason
-      status
-      paid
       created_at
+      generated_by
+      id
+      order_id
+      paid
+      reason
+      amount
+      status
+      update_on
+      user_id
+      Order {
+        assigned_at
+        combined_order_id
+        delivery_photo_url
+        delivery_time
+        discount
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_notes
+        id
+        pin
+        service_fee
+        shop_id
+        shopper_id
+        status
+        total
+        updated_at
+        user_id
+        voucher_code
+        orderedBy {
+          gender
+          email
+          created_at
+          id
+          is_active
+          is_guest
+          name
+          phone
+          profile_picture
+        }
+      }
+      User {
+        gender
+        email
+        name
+        phone
+      }
     }
   }
 `;
+
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);

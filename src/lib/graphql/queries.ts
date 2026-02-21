@@ -707,9 +707,48 @@ export const GET_ALL_REFUNDS = `
       status
       update_on
       user_id
+      Order {
+        assigned_at
+        combined_order_id
+        delivery_photo_url
+        delivery_time
+        discount
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_notes
+        id
+        pin
+        service_fee
+        shop_id
+        shopper_id
+        status
+        total
+        updated_at
+        user_id
+        voucher_code
+        orderedBy {
+          gender
+          email
+          created_at
+          id
+          is_active
+          is_guest
+          name
+          phone
+          profile_picture
+        }
+      }
+      User {
+        gender
+        email
+        name
+        phone
+      }
     }
   }
 `;
+
 
 export const GET_USER_BY_ID = `
   query GetUserById($id: uuid!) {

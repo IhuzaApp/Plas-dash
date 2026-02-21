@@ -137,6 +137,13 @@ export default function ShopperWalletsPage() {
     return { businesses: bs, totalBusiness: bTotal };
   }, [businessData]);
 
+  const totalWalletsCount = useMemo(() => {
+    const personalCount = usersData.filter(u => u.hasPersonalWallet).length;
+    const shopperCount = usersData.filter(u => u.hasShopperWallet).length;
+    const businessCount = businesses.length;
+    return personalCount + shopperCount + businessCount;
+  }, [usersData, businesses]);
+
   const isLoading = loadingPersonal || loadingShopper || loadingBusiness;
 
   if (isLoading) {
@@ -159,7 +166,21 @@ export default function ShopperWalletsPage() {
           description="View all generic, shopper, and business wallets."
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-slate-500/10 to-slate-600/5 border-slate-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
+                <CreditCard className="h-4 w-4" /> Total Connected Wallets
+              </div>
+              <div className="text-3xl font-bold mt-2 text-slate-900">
+                {totalWalletsCount}
+              </div>
+              <p className="text-xs text-slate-700/80 mt-1">
+                Across all categories
+              </p>
+            </CardContent>
+          </Card>
+
           <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-200">
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 text-sm font-medium text-green-800">

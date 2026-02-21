@@ -325,7 +325,46 @@ export interface Refund {
   generated_by: string;
   created_at: string;
   update_on: string;
+  Order?: {
+    id: string;
+    status: string;
+    total: string;
+    delivery_fee: string;
+    service_fee: string;
+    discount: string;
+    delivery_time: string | null;
+    delivery_notes: string | null;
+    delivery_photo_url: string | null;
+    delivery_address_id: string;
+    assigned_at: string | null;
+    combined_order_id: string | null;
+    created_at: string;
+    updated_at: string;
+    shop_id: string;
+    shopper_id: string;
+    user_id: string;
+    voucher_code: string | null;
+    pin: string | null;
+    orderedBy?: {
+      id: string;
+      name: string;
+      email: string;
+      phone: string;
+      gender: string | null;
+      is_active: boolean;
+      is_guest: boolean;
+      profile_picture: string | null;
+      created_at: string;
+    } | null;
+  } | null;
+  User?: {
+    name: string;
+    email: string;
+    phone: string;
+    gender: string | null;
+  } | null;
 }
+
 
 export interface OrderItem {
   id: string;
