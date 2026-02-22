@@ -152,6 +152,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         delivery_time: o.delivery_time,
         pin: o.pin,
         total: grandTotal,
+        service_fee: o.service_fee,
+        delivery_fee: o.delivery_fee,
         shop_id: o.shop_id,
         shopper_id: o.shopper_id,
         shop: shopMap.get(o.shop_id) || null,

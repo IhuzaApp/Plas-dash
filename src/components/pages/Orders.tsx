@@ -283,6 +283,8 @@ const Orders = () => {
       businessTransactions: o.businessTransactions,
       shopper: o.shopper,
       delivery_time: o.delivery_time ?? o.delivered_time ?? null,
+      delivery_fee: o.transportation_fee,
+      service_fee: o.service_fee,
     }));
 
     const restaurantOrdersMapped: UnifiedOrder[] = restaurantOrderItems.map((o: any) => ({
@@ -685,6 +687,8 @@ const Orders = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Total</TableHead>
+                  <TableHead>Delivery Fee</TableHead>
+                  <TableHead>Service Fee</TableHead>
                   <TableHead>Expected delivery</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Last Updated</TableHead>
@@ -694,7 +698,7 @@ const Orders = () => {
               <TableBody>
                 {currentOrders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
                       No orders found.
                     </TableCell>
                   </TableRow>
@@ -793,6 +797,8 @@ const Orders = () => {
                             `${order.itemsCount ?? order.restaurant_order_items?.length ?? 0} item(s)`}
                         </TableCell>
                         <TableCell>{formatCurrency(order.total)}</TableCell>
+                        <TableCell>{formatCurrency(order.delivery_fee ?? '0')}</TableCell>
+                        <TableCell>{formatCurrency(order.service_fee ?? '0')}</TableCell>
                         <TableCell>
                           {(() => {
                             const { text, exact, isOverdue } = getDeliveryCountdown(
