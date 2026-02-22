@@ -313,8 +313,8 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       >
         <SidebarHeader className="h-14 flex items-center px-4 border-b">
           <div className="flex items-center justify-center w-full">
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold">
-              P
+            <div className="w-8 h-8 rounded-md bg-transparent flex items-center justify-center overflow-hidden">
+              <img src="/Assets/logo/Plas Icon.png" alt="Plas Logo" className="w-full h-full object-contain" />
             </div>
           </div>
         </SidebarHeader>
@@ -414,16 +414,11 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         >
           {isSidebarOpen ? (
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold mr-2">
-                P
-              </div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Plas Dashboard
-              </h1>
+              <img src="/Assets/logo/PlasLogoPNG.png" alt="Plas Dashboard" className="h-8 object-contain" />
             </div>
           ) : (
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold">
-              P
+            <div className="w-8 h-8 rounded-md bg-transparent flex items-center justify-center overflow-hidden">
+              <img src="/Assets/logo/Plas Icon.png" alt="Plas Logo" className="w-full h-full object-contain" />
             </div>
           )}
         </div>
