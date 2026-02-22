@@ -58,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('='.repeat(60));
     console.log('🔐 OTP VERIFICATION CODE');
     console.log('='.repeat(60));
-    console.log(`User ID: ${((session as any)?.user as any).id}`);
+    console.log(`User ID: ${((session as any)?.user as any)?.id}`);
     console.log(`Email: ${email}`);
     console.log(`OTP Code: ${otp}`);
     console.log(`Expires in: 10 minutes`);
