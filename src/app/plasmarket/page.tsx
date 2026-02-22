@@ -11,6 +11,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { apiGet } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface BusinessAccount {
     id: string;
@@ -170,6 +172,7 @@ export default function PlasMarketPage() {
                                             <TableHead className="text-center">Contracts</TableHead>
                                             <TableHead className="text-center">Orders</TableHead>
                                             <TableHead className="text-right">Joined</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -211,6 +214,13 @@ export default function PlasMarketPage() {
                                                     </TableCell>
                                                     <TableCell className="text-right text-sm text-muted-foreground">
                                                         {new Date(biz.created_at).toLocaleDateString()}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button variant="outline" size="sm" asChild>
+                                                            <Link href={`/plasmarket/${biz.id}`}>
+                                                                View Details
+                                                            </Link>
+                                                        </Button>
                                                     </TableCell>
                                                 </TableRow>
                                             ))

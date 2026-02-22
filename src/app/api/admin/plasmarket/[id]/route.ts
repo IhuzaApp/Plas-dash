@@ -6,11 +6,9 @@ import { gql } from 'graphql-request';
 
 export const dynamic = 'force-dynamic';
 
-const GET_PLASMARKET_BUSINESSES = gql`
-  query GetPlasMarketBusinesses {
-    business_accounts(
-      order_by: { created_at: desc }
-    ) {
+const GET_PLASMARKET_BUSINESS = gql`
+  query GetPlasMarketBusiness($id: uuid!) {
+    business_accounts(where: { id: { _eq: $id } }) {
       account_type
       business_email
       business_location
@@ -288,99 +286,114 @@ const GET_PLASMARKET_BUSINESSES = gql`
   }
 `;
 
-export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    let userId = (session?.user as { id?: string } | undefined)?.id;
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+    try {
+        const session = await getServerSession(authOptions);
+        let userId = (session?.user as { id?: string } | undefined)?.id;
 
-    if (!userId) {
-      const authHeader = req.headers.get('authorization');
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        userId = authHeader.substring(7);
-      }
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!hasuraClient) {
-      throw new Error('Hasura client is not initialized');
-    }
-
-    const result = await hasuraClient.request<any>(GET_PLASMARKET_BUSINESSES);
-
-    const formattedBusinesses = (result.business_accounts || []).map((biz: any) => {
-      // Aggregate properties
-      const stores = biz.business_stores || [];
-      const rfqs = biz.bussines_RFQs || [];
-      const wallets = biz.business_wallets || [];
-      const quotes = biz.BusinessQoutes || [];
-
-      // Calculate orders across stores
-      let totalOrders = 0;
-      stores.forEach((store: any) => {
-        totalOrders += (store.businessProductOrders?.length || 0);
-      });
-
-      // Calculate accepted contracts across RFQs
-      let totalContracts = 0;
-      rfqs.forEach((rfq: any) => {
-        totalContracts += (rfq.BusinessContract?.length || 0);
-      });
-
-      return {
-        id: biz.id,
-        business_name: biz.business_name || 'Unnamed Business',
-        business_email: biz.business_email,
-        business_phone: biz.business_phone,
-        business_location: biz.business_location,
-        status: biz.status || 'in_review',
-        created_at: biz.created_at,
-
-        // Counts
-        stores_count: stores.length,
-        rfqs_count: rfqs.length,
-        contracts_count: totalContracts,
-        orders_count: totalOrders,
-        wallet_count: wallets.length,
-        quotes_count: quotes.length,
-
-        // Owner Profile
-        owner: biz.Users ? {
-          id: biz.Users.id,
-          name: biz.Users.name || 'Unknown',
-          email: biz.Users.email,
-          phone: biz.Users.phone,
-          profile_picture: biz.Users.profile_picture,
-          is_active: biz.Users.is_active,
-        } : null,
-
-        // Raw Deep Nested Relationships
-        // These will be used in the detailed business profile view
-        raw_data: {
-          stores,
-          rfqs,
-          wallets,
-          quotes,
-          account_type: biz.account_type,
-          face_image: biz.face_image,
-          id_image: biz.id_image,
-          rdb_certificate: biz.rdb_certificate,
+        if (!userId) {
+            const authHeader = req.headers.get('authorization');
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                userId = authHeader.substring(7);
+            }
         }
-      };
-    });
 
-    return NextResponse.json({
-      success: true,
-      businesses: formattedBusinesses,
-    });
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
-  } catch (error: any) {
-    console.error('Error fetching PlasMarket businesses:', error);
-    return NextResponse.json({
-      error: 'Failed to fetch PlasMarket businesses',
-      message: error.message,
-    }, { status: 500 });
-  }
+        const { id } = params;
+
+        if (!id) {
+            return NextResponse.json({ error: 'Missing business id' }, { status: 400 });
+        }
+
+        if (!hasuraClient) {
+            throw new Error('Hasura client is not initialized');
+        }
+
+        const result = await hasuraClient.request<any>(GET_PLASMARKET_BUSINESS, { id });
+
+        const biz = result.business_accounts?.[0];
+
+        if (!biz) {
+            return NextResponse.json({ error: 'Business not found' }, { status: 404 });
+        }
+
+        // Aggregate properties
+        const stores = biz.business_stores || [];
+        const rfqs = biz.bussines_RFQs || [];
+        const wallets = biz.business_wallets || [];
+        const quotes = biz.BusinessQoutes || [];
+
+        // Calculate orders across stores
+        let totalOrders = 0;
+        let allOrders: any[] = [];
+        stores.forEach((store: any) => {
+            totalOrders += (store.businessProductOrders?.length || 0);
+            allOrders = [...allOrders, ...(store.businessProductOrders || [])];
+        });
+
+        // Calculate accepted contracts across RFQs
+        let totalContracts = 0;
+        let allContracts: any[] = [];
+        rfqs.forEach((rfq: any) => {
+            totalContracts += (rfq.BusinessContract?.length || 0);
+            allContracts = [...allContracts, ...(rfq.BusinessContract || [])];
+        });
+
+        const formattedBusiness = {
+            id: biz.id,
+            business_name: biz.business_name || 'Unnamed Business',
+            business_email: biz.business_email,
+            business_phone: biz.business_phone,
+            business_location: biz.business_location,
+            status: biz.status || 'in_review',
+            created_at: biz.created_at,
+
+            // Counts
+            stores_count: stores.length,
+            rfqs_count: rfqs.length,
+            contracts_count: totalContracts,
+            orders_count: totalOrders,
+            wallet_count: wallets.length,
+            quotes_count: quotes.length,
+
+            // Owner Profile
+            owner: biz.Users ? {
+                id: biz.Users.id,
+                name: biz.Users.name || 'Unknown',
+                email: biz.Users.email,
+                phone: biz.Users.phone,
+                profile_picture: biz.Users.profile_picture,
+                is_active: biz.Users.is_active,
+            } : null,
+
+            // Raw Deep Nested Relationships
+            raw_data: {
+                stores,
+                rfqs,
+                wallets,
+                quotes,
+                allOrders,
+                allContracts,
+                account_type: biz.account_type,
+                face_image: biz.face_image,
+                id_image: biz.id_image,
+                rdb_certificate: biz.rdb_certificate,
+            }
+        };
+
+        return NextResponse.json({
+            success: true,
+            business: formattedBusiness,
+        });
+
+    } catch (error: any) {
+        console.error('Error fetching PlasMarket business:', error);
+        return NextResponse.json({
+            error: 'Failed to fetch PlasMarket business',
+            message: error.message,
+        }, { status: 500 });
+    }
 }
