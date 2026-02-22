@@ -44,6 +44,8 @@ import {
   ADD_RESTAURANT,
   ADD_REEL,
   UPDATE_REEL,
+  DELETE_REEL,
+  DELETE_REEL_COMMENT,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -1412,5 +1414,18 @@ export function useUpdateProjectUser() {
 
       return hasuraRequest(mutation, { id, set: setObject });
     },
+  });
+}
+// Type-safe mutation hook for deleting a reel
+export function useDeleteReel() {
+  return useMutation<{ delete_Reels_by_pk: { id: string } }, Error, { id: string }>({
+    mutationFn: variables => hasuraRequest(DELETE_REEL, variables),
+  });
+}
+
+// Type-safe mutation hook for deleting a reel comment
+export function useDeleteReelsComment() {
+  return useMutation<{ delete_Reels_comments_by_pk: { id: string } }, Error, { id: string }>({
+    mutationFn: variables => hasuraRequest(DELETE_REEL_COMMENT, variables),
   });
 }

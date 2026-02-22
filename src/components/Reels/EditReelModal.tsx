@@ -155,7 +155,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[600px] sm:w-[800px] lg:w-[900px] overflow-y-auto">
+      <SheetContent side="right" className="w-full sm:w-[600px] md:w-[800px] lg:w-[1000px] xl:w-[1200px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Edit className="h-5 w-5" />
@@ -253,9 +253,16 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
                   </p>
                 </div>
               ) : (
-                <div className="border rounded-lg p-4 bg-gray-50 text-center">
-                  <Video className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">No video available</p>
+                <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                  <img
+                    src="/placeholder.svg"
+                    alt="No video"
+                    className="w-full h-full object-cover opacity-50"
+                  />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                    <Video className="h-12 w-12 mb-2 opacity-20" />
+                    <p className="text-sm font-medium">No video preview available</p>
+                  </div>
                 </div>
               )}
             </div>

@@ -797,3 +797,18 @@ export const UPDATE_REFERRAL_WINDOW_STATUS = `
     }
   }
 `;
+export const DELETE_REEL = `
+  mutation DeleteReel($id: uuid!) {
+    delete_Reels_by_pk(id: $id) {
+      id
+    }
+  }
+`;
+
+export const DELETE_REEL_COMMENT = `
+  mutation DeleteReelComment($id: uuid!) {
+    delete_Reels_comments_by_pk(id: $id) {
+      id
+    }
+  }
+`;

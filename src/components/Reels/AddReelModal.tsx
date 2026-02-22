@@ -414,7 +414,7 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                     )}
 
                     {/* Video Preview - TikTok-like experience */}
-                    {videoPreview && (
+                    {videoPreview ? (
                       <div className="relative">
                         <video
                           src={videoPreview}
@@ -432,6 +432,18 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                             </div>
                           </div>
                         )}
+                      </div>
+                    ) : (
+                      <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                        <img
+                          src="/placeholder.svg"
+                          alt="No video"
+                          className="w-full h-full object-cover opacity-50"
+                        />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                          <Video className="h-10 w-10 mb-2 opacity-20" />
+                          <p className="text-xs font-medium">Wait for video preview...</p>
+                        </div>
                       </div>
                     )}
                   </div>
