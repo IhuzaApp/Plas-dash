@@ -21,14 +21,25 @@ import {
   Video,
   ShoppingBag,
   UtensilsCrossed,
+  BarChart3,
+  ClipboardList,
 } from 'lucide-react';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import {
   useOrders,
   useReelOrders,
   useBusinessOrders,
   useRestaurantOrders,
   useSystemConfig,
+  useOrderOffers,
 } from '@/hooks/useHasuraApi';
+import OrderOffersTable from '@/components/Orders/OrderOffersTable';
+import OrderOffersAnalytics from '@/components/Orders/OrderOffersAnalytics';
 import { format, differenceInMinutes, formatDistanceToNow } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -195,6 +206,7 @@ const Orders = () => {
   const { data: businessOrdersData } = useBusinessOrders();
   const { data: restaurantOrdersData } = useRestaurantOrders();
   const { data: systemConfig } = useSystemConfig();
+  const { data: offersData, isLoading: isOffersLoading } = useOrderOffers();
   const orders = data?.Orders || [];
   const reelOrderItems: any[] = reelOrders?.reel_orders || [];
   const businessOrderItems: any[] = businessOrdersData?.orders || [];
@@ -601,245 +613,262 @@ const Orders = () => {
         </Card>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by Order ID, UUID, customer name or email..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={e => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
+      <Tabs defaultValue="all" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="all" className="flex items-center gap-2">
+            <ClipboardList className="h-4 w-4" />
+            All Orders
+          </TabsTrigger>
+          <TabsTrigger value="offers" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Order Offers & Analytics
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all" className="space-y-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Order ID, UUID, customer name or email..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={e => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Status filter tabs */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground mr-1">Filter:</span>
+              {[
+                { value: 'all' as const, label: 'All', count: undefined as number | undefined },
+                { value: 'delayed' as const, label: 'Delayed', count: delayedOrders.length },
+                { value: 'delivered' as const, label: 'Delivered', count: deliveredOrders.length },
+                { value: 'pending' as const, label: 'Pending', count: pendingOrders.length },
+                { value: 'shopping' as const, label: 'Shopping', count: shoppingOrders.length },
+                { value: 'on_the_way' as const, label: 'On the way', count: onTheWayOrders.length },
+              ].map(({ value, label, count }) => (
+                <Button
+                  key={value}
+                  variant={statusFilter === value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setStatusFilter(value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  {label}
+                  {count != null && count > 0 && (
+                    <Badge
+                      variant={statusFilter === value ? 'secondary' : 'outline'}
+                      className="ml-1.5 px-1.5 py-0 text-xs"
+                    >
+                      {count}
+                    </Badge>
+                  )}
+                </Button>
+              ))}
             </div>
           </div>
 
-          {/* Status filter tabs */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground mr-1">Filter:</span>
-            {[
-              { value: 'all' as const, label: 'All', count: undefined as number | undefined },
-              { value: 'delayed' as const, label: 'Delayed', count: delayedOrders.length },
-              { value: 'delivered' as const, label: 'Delivered', count: deliveredOrders.length },
-              { value: 'pending' as const, label: 'Pending', count: pendingOrders.length },
-              { value: 'shopping' as const, label: 'Shopping', count: shoppingOrders.length },
-              { value: 'on_the_way' as const, label: 'On the way', count: onTheWayOrders.length },
-            ].map(({ value, label, count }) => (
-              <Button
-                key={value}
-                variant={statusFilter === value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setStatusFilter(value);
-                  setCurrentPage(1);
-                }}
-              >
-                {label}
-                {count != null && count > 0 && (
-                  <Badge
-                    variant={statusFilter === value ? 'secondary' : 'outline'}
-                    className="ml-1.5 px-1.5 py-0 text-xs"
-                  >
-                    {count}
-                  </Badge>
-                )}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Expected delivery</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Last Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentOrders.length === 0 ? (
+          <Card>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                    No orders found.
-                  </TableCell>
+                  <TableHead>Order ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Expected delivery</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : (
-                currentOrders.map(order => {
-                  const warnings = getOrderWarnings(order);
-                  return (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger className="text-primary hover:underline">
-                                #{generateShortId(order.OrderID?.toString() || order.id)}
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Full ID: {order.OrderID || order.id}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          {warnings.length > 0 && (
+              </TableHeader>
+              <TableBody>
+                {currentOrders.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                      No orders found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  currentOrders.map(order => {
+                    const warnings = getOrderWarnings(order);
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
                             <TooltipProvider>
                               <Tooltip>
-                                <TooltipTrigger>
-                                  <AlertCircle className="h-4 w-4 text-red-500" />
+                                <TooltipTrigger className="text-primary hover:underline">
+                                  #{generateShortId(order.OrderID?.toString() || order.id)}
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <ul className="list-disc pl-4">
-                                    {warnings.map((warning, idx) => (
-                                      <li key={idx}>{warning.message}</li>
-                                    ))}
-                                  </ul>
+                                  <p>Full ID: {order.OrderID || order.id}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
-                          {order.type === 'regular' || order.type === 'reel'
-                            ? (order.User?.name ?? '—')
-                            : (order.orderedBy?.name ?? '—')}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {order.type === 'regular' || order.type === 'reel'
-                            ? (order.User?.email ?? '—')
-                            : (order.orderedBy?.email ?? '—')}
-                        </div>
-                        {(order.type === 'regular'
-                          ? order.User?.phone
-                          : order.orderedBy?.phone) && (
-                          <div className="text-xs text-muted-foreground">
-                            {order.type === 'regular' || order.type === 'reel'
-                              ? order.User?.phone
-                              : order.orderedBy?.phone}
-                          </div>
-                        )}
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {order.type === 'reel' && (
-                            <Badge variant="outline" className="gap-0.5">
-                              <Video className="h-3 w-3" />
-                              Reel
-                            </Badge>
-                          )}
-                          {order.type === 'business' && (
-                            <Badge variant="outline" className="gap-0.5">
-                              <ShoppingBag className="h-3 w-3" />
-                              Business
-                            </Badge>
-                          )}
-                          {order.type === 'restaurant' && (
-                            <Badge variant="outline" className="gap-0.5">
-                              <UtensilsCrossed className="h-3 w-3" />
-                              Restaurant
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order)}`}
-                        >
-                          {order.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {order.type === 'regular' && `${order.Order_Items?.length ?? 0} item(s)`}
-                        {order.type === 'reel' && `${order.quantity ?? 1} item(s)`}
-                        {order.type === 'business' &&
-                          (order.units
-                            ? `${order.units} unit(s)`
-                            : `${
-                                Array.isArray(order.allProducts) ? order.allProducts.length : 0
-                              } item(s)`)}
-                        {order.type === 'restaurant' &&
-                          `${order.itemsCount ?? order.restaurant_order_items?.length ?? 0} item(s)`}
-                      </TableCell>
-                      <TableCell>{formatCurrency(order.total)}</TableCell>
-                      <TableCell>
-                        {(() => {
-                          const { text, exact, isOverdue } = getDeliveryCountdown(
-                            order.delivery_time
-                          );
-                          if (exact) {
-                            return (
+                            {warnings.length > 0 && (
                               <TooltipProvider>
                                 <Tooltip>
-                                  <TooltipTrigger className="text-left">
-                                    <span className={isOverdue ? 'text-muted-foreground' : ''}>
-                                      {text}
-                                    </span>
+                                  <TooltipTrigger>
+                                    <AlertCircle className="h-4 w-4 text-red-500" />
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Expected: {exact}</p>
+                                    <ul className="list-disc pl-4">
+                                      {warnings.map((warning, idx) => (
+                                        <li key={idx}>{warning.message}</li>
+                                      ))}
+                                    </ul>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">
+                            {order.type === 'regular' || order.type === 'reel'
+                              ? (order.User?.name ?? '—')
+                              : (order.orderedBy?.name ?? '—')}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {order.type === 'regular' || order.type === 'reel'
+                              ? (order.User?.email ?? '—')
+                              : (order.orderedBy?.email ?? '—')}
+                          </div>
+                          {(order.type === 'regular'
+                            ? order.User?.phone
+                            : order.orderedBy?.phone) && (
+                              <div className="text-xs text-muted-foreground">
+                                {order.type === 'regular' || order.type === 'reel'
+                                  ? order.User?.phone
+                                  : order.orderedBy?.phone}
+                              </div>
+                            )}
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {order.type === 'reel' && (
+                              <Badge variant="outline" className="gap-0.5">
+                                <Video className="h-3 w-3" />
+                                Reel
+                              </Badge>
+                            )}
+                            {order.type === 'business' && (
+                              <Badge variant="outline" className="gap-0.5">
+                                <ShoppingBag className="h-3 w-3" />
+                                Business
+                              </Badge>
+                            )}
+                            {order.type === 'restaurant' && (
+                              <Badge variant="outline" className="gap-0.5">
+                                <UtensilsCrossed className="h-3 w-3" />
+                                Restaurant
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order)}`}
+                          >
+                            {order.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {order.type === 'regular' && `${order.Order_Items?.length ?? 0} item(s)`}
+                          {order.type === 'reel' && `${order.quantity ?? 1} item(s)`}
+                          {order.type === 'business' &&
+                            (order.units
+                              ? `${order.units} unit(s)`
+                              : `${Array.isArray(order.allProducts) ? order.allProducts.length : 0
+                              } item(s)`)}
+                          {order.type === 'restaurant' &&
+                            `${order.itemsCount ?? order.restaurant_order_items?.length ?? 0} item(s)`}
+                        </TableCell>
+                        <TableCell>{formatCurrency(order.total)}</TableCell>
+                        <TableCell>
+                          {(() => {
+                            const { text, exact, isOverdue } = getDeliveryCountdown(
+                              order.delivery_time
                             );
-                          }
-                          return <span className="text-muted-foreground">{text}</span>;
-                        })()}
-                      </TableCell>
-                      <TableCell>{formatDateTime(order.created_at)}</TableCell>
-                      <TableCell>{formatDateTime(order.updated_at)}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        {order.shopper_id &&
-                          warnings.some(w => w.type === 'shopping' || w.type === 'delivery') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                handleCallShopper(
-                                  order.type === 'regular' ||
-                                    order.type === 'business' ||
-                                    order.type === 'restaurant'
-                                    ? order.shopper?.phone
-                                    : order.Shoppers?.phone
-                                )
-                              }
-                              className="text-yellow-600 hover:text-yellow-700"
-                            >
-                              <Phone className="h-4 w-4 mr-1" />
-                              Call Shopper
-                            </Button>
-                          )}
-                        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(order)}>
-                          View Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={size => {
-              setPageSize(size);
-              setCurrentPage(1);
-            }}
-            totalItems={totalItems}
-          />
-        </Card>
-      </div>
+                            if (exact) {
+                              return (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger className="text-left">
+                                      <span className={isOverdue ? 'text-muted-foreground' : ''}>
+                                        {text}
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Expected: {exact}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              );
+                            }
+                            return <span className="text-muted-foreground">{text}</span>;
+                          })()}
+                        </TableCell>
+                        <TableCell>{formatDateTime(order.created_at)}</TableCell>
+                        <TableCell>{formatDateTime(order.updated_at)}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                          {order.shopper_id &&
+                            warnings.some(w => w.type === 'shopping' || w.type === 'delivery') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleCallShopper(
+                                    order.type === 'regular' ||
+                                      order.type === 'business' ||
+                                      order.type === 'restaurant'
+                                      ? order.shopper?.phone
+                                      : order.Shoppers?.phone
+                                  )
+                                }
+                                className="text-yellow-600 hover:text-yellow-700"
+                              >
+                                <Phone className="h-4 w-4 mr-1" />
+                                Call Shopper
+                              </Button>
+                            )}
+                          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(order)}>
+                            View Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={size => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+              totalItems={totalItems}
+            />
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="offers" className="space-y-8">
+          <OrderOffersAnalytics offers={offersData?.order_offers || []} />
+          <OrderOffersTable offers={offersData?.order_offers || []} isLoading={isOffersLoading} />
+        </TabsContent>
+      </Tabs>
 
       <OrderDetailsDrawer order={selectedOrder} open={isDrawerOpen} onClose={handleCloseDrawer} />
     </AdminLayout>

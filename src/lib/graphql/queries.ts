@@ -2012,3 +2012,104 @@ export const GET_REFERRAL_ORDERS = `
     }
   }
 `;
+
+export const GET_ORDER_OFFERS = `
+  query GetOrderOffers {
+    order_offers {
+      business_order_id
+      done_on
+      expires_at
+      id
+      offered_at
+      order_id
+      order_type
+      reel_order_id
+      restaurant_order_id
+      round_number
+      shopper_id
+      status
+      updated_at
+      reelOrders {
+        OrderID
+        delivery_note
+        delivery_photo_url
+        delivery_time
+        service_fee
+        status
+      }
+      ShopperUser {
+        email
+        shopper {
+          Employment_id
+          active
+          address
+          full_name
+          onboarding_step
+          phone
+          phone_number
+          status
+        }
+      }
+      Orders {
+        OrderID
+        assigned_at
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_notes
+        discount
+        delivery_time
+        pin
+        service_fee
+        shop_id
+        shopper_id
+        status
+        total
+        updated_at
+      }
+      businessProductOrders {
+        OrderID
+        allProducts
+        created_at
+        comment
+        combined_order_id
+        id
+        latitude
+        longitude
+        ordered_by
+        pin
+        service_fee
+        timeRange
+        status
+      }
+      restaurantOrder {
+        OrderID
+        assigned_at
+        Address {
+          city
+          is_default
+          id
+          latitude
+          longitude
+        }
+        created_at
+        combined_order_id
+        delivery_fee
+        delivery_photo_url
+        delivery_notes
+        discount
+        delivery_time
+        found
+        delivery_address_id
+        pin
+        restaurant_id
+        shopper_id
+        status
+        total
+        updated_at
+        user_id
+        voucher_code
+      }
+    }
+  }
+`;

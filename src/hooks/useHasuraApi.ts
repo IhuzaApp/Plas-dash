@@ -20,6 +20,7 @@ import {
   GET_POS_TRANSACTIONS,
   GET_PRODUCT_NAMES,
   SEARCH_PRODUCT_NAMES,
+  GET_ORDER_OFFERS,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -319,6 +320,39 @@ interface ReelOrder {
   };
 }
 
+export interface OrderOffer {
+  business_order_id?: string | null;
+  done_on?: string | null;
+  expires_at: string;
+  id: string;
+  offered_at: string;
+  order_id?: string | null;
+  order_type: string;
+  reel_order_id?: string | null;
+  restaurant_order_id?: string | null;
+  round_number: number;
+  shopper_id: string;
+  status: string;
+  updated_at: string;
+  reelOrders?: any;
+  ShopperUser?: {
+    email: string;
+    shopper?: {
+      Employment_id: string;
+      active: boolean;
+      address: string;
+      full_name: string;
+      onboarding_step: string;
+      phone: string;
+      phone_number: string;
+      status: string;
+    };
+  };
+  Orders?: any;
+  businessProductOrders?: any;
+  restaurantOrder?: any;
+}
+
 interface Restaurant {
   id: string;
   name: string;
@@ -491,6 +525,14 @@ export function useOrders() {
       const res = await apiGet<{ orders: OrderType[] }>('/api/queries/orders');
       return { Orders: res.orders || [] };
     },
+  });
+}
+
+// Type-safe hook for Order Offers
+export function useOrderOffers() {
+  return useQuery<{ order_offers: OrderOffer[] }, Error>({
+    queryKey: ['order-offers'],
+    queryFn: () => hasuraRequest(GET_ORDER_OFFERS, {}),
   });
 }
 
