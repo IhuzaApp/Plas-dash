@@ -1056,8 +1056,26 @@ const Orders = () => {
         </TabsContent>
 
         <TabsContent value="offers" className="space-y-4">
-          <OrderOffersAnalytics offers={offersData?.order_offers || []} />
-          <OrderOffersTable offers={offersData?.order_offers || []} isLoading={isOffersLoading} />
+          <Tabs defaultValue="analytics" className="w-full">
+            <TabsList className="grid w-64 grid-cols-2 mb-4">
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="table" className="flex items-center gap-2">
+                <ClipboardList className="h-4 w-4" />
+                Table
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="analytics" className="space-y-4 pt-4">
+              <OrderOffersAnalytics offers={offersData?.order_offers || []} />
+            </TabsContent>
+
+            <TabsContent value="table" className="space-y-4 pt-4">
+              <OrderOffersTable offers={offersData?.order_offers || []} isLoading={isOffersLoading} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="combined" className="space-y-4">

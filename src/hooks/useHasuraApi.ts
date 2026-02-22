@@ -47,6 +47,7 @@ import {
   UPDATE_REEL,
   DELETE_REEL,
   DELETE_REEL_COMMENT,
+  DELETE_ORDER_OFFERS,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -742,6 +743,12 @@ export function useRegisterShopper() {
     }
   >({
     mutationFn: variables => hasuraRequest(REGISTER_SHOPPER, variables),
+  });
+}
+
+export function useDeleteOrderOffers() {
+  return useMutation<{ delete_order_offers: { affected_rows: number } }, Error, { where: any }>({
+    mutationFn: variables => hasuraRequest(DELETE_ORDER_OFFERS, variables),
   });
 }
 

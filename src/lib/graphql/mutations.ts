@@ -812,3 +812,11 @@ export const DELETE_REEL_COMMENT = `
     }
   }
 `;
+
+export const DELETE_ORDER_OFFERS = `
+  mutation DeleteOrderOffers($where: order_offers_bool_exp!) {
+    delete_order_offers(where: $where) {
+      affected_rows
+    }
+  }
+`;

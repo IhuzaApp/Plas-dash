@@ -1,6 +1,4 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     Table,
     TableBody,
@@ -13,10 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { OrderOffer } from '@/hooks/useHasuraApi';
-import { format } from 'date-fns';
+import { OrderOffer, useDeleteOrderOffers } from '@/hooks/useHasuraApi';
+import { format, subMonths } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
-import { ShoppingBag, Video, UtensilsCrossed, ExternalLink } from 'lucide-react';
+import { ShoppingBag, Video, UtensilsCrossed, ExternalLink, Search, Trash2, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface OrderOffersTableProps {
     offers: OrderOffer[];
@@ -26,6 +27,11 @@ interface OrderOffersTableProps {
 const OrderOffersTable = ({ offers, isLoading }: OrderOffersTableProps) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const deleteMutation = useDeleteOrderOffers();
+    const queryClient = useQueryClient();
 
     const formatDateTime = (dateString: string | null | undefined) => {
         if (!dateString) return '—';
@@ -66,14 +72,75 @@ const OrderOffersTable = ({ offers, isLoading }: OrderOffersTableProps) => {
         }
     };
 
-    const totalItems = offers.length;
+    const handleClearOldOffers = async () => {
+        if (!confirm('Are you sure you want to clear all order offers older than 2 months?')) return;
+
+        setIsDeleting(true);
+        const twoMonthsAgo = subMonths(new Date(), 2).toISOString();
+
+        try {
+            await deleteMutation.mutateAsync({
+                where: {
+                    offered_at: { _lt: twoMonthsAgo }
+                }
+            });
+            toast.success('Old offers cleared successfully');
+            queryClient.invalidateQueries({ queryKey: ['order-offers'] });
+        } catch (error) {
+            console.error('Error clearing old offers:', error);
+            toast.error('Failed to clear old offers');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const filteredOffers = useMemo(() => {
+        if (!searchQuery) return offers;
+
+        const lowerQuery = searchQuery.toLowerCase();
+        return offers.filter(offer => {
+            const orderId = (offer.order_id || offer.reel_order_id || offer.restaurant_order_id || offer.business_order_id || '').toString().toLowerCase();
+            const shopperName = (offer.ShopperUser?.shopper?.full_name || '').toLowerCase();
+            return orderId.includes(lowerQuery) || shopperName.includes(lowerQuery);
+        });
+    }, [offers, searchQuery]);
+
+    const totalItems = filteredOffers.length;
     const totalPages = Math.ceil(totalItems / pageSize);
-    const currentOffers = offers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const currentOffers = filteredOffers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <CardTitle className="text-xl font-bold">Order Offers</CardTitle>
+                <div className="flex items-center gap-4">
+                    <div className="relative w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by ID or Shopper..."
+                            className="pl-9"
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                        />
+                    </div>
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleClearOldOffers}
+                        disabled={isDeleting}
+                        className="gap-2"
+                    >
+                        {isDeleting ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <Trash2 className="h-4 w-4" />
+                        )}
+                        Clear 2m+ Old
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -99,7 +166,7 @@ const OrderOffersTable = ({ offers, isLoading }: OrderOffersTableProps) => {
                         ) : currentOffers.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                                    No offers found.
+                                    {searchQuery ? 'No offers match your search.' : 'No offers found.'}
                                 </TableCell>
                             </TableRow>
                         ) : (
