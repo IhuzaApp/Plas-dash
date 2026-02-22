@@ -19,6 +19,47 @@ export const GET_ALL_REVENUE = `
   }
 `;
 
+// Total wallet balances across all wallet tables (fetch raw, sum client-side)
+// Note: amount fields are strings in Hasura, so aggregate sum returns null
+export const GET_WALLET_TOTALS = `
+  query GetWalletTotals {
+    Wallets {
+      available_balance
+    }
+    business_wallet {
+      amount
+    }
+    personalWallet {
+      balance
+    }
+  }
+`;
+
+// Pending orders: fetch totals across all order types (not delivered/on_the_way/cancelled)
+export const GET_PENDING_ORDER_TOTALS = `
+  query GetPendingOrderTotals {
+    Orders(where: { status: { _nin: ["delivered", "on_the_way", "cancelled"] } }) {
+      total
+      delivery_fee
+      service_fee
+    }
+    reel_orders(where: { status: { _nin: ["delivered", "on_the_way", "cancelled"] } }) {
+      total
+      delivery_fee
+      service_fee
+    }
+    restaurant_orders(where: { status: { _nin: ["delivered", "on_the_way", "cancelled"] } }) {
+      total
+      delivery_fee
+    }
+    businessProductOrders(where: { status: { _nin: ["delivered", "on_the_way", "cancelled"] } }) {
+      total
+      service_fee
+      transportation_fee
+    }
+  }
+`;
+
 // User queries
 export const GET_USERS = `
   query GetUsers {

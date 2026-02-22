@@ -24,6 +24,8 @@ import {
   Package2,
   ChevronDown,
   ChevronUp,
+  Wallet,
+  ShoppingBag,
 } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
@@ -43,6 +45,10 @@ const Index = () => {
     totalRevenue,
     monthlyRevenue,
     activeShoppers,
+    totalWalletBalance,
+    personalWalletBalance,
+    businessWalletBalance,
+    pendingOrdersValue,
     isLoading,
   } = useDashboardData();
 
@@ -139,6 +145,22 @@ const Index = () => {
       description: 'Platform status',
       icon: <Package />,
       trend: { value: 0, isPositive: true },
+    },
+    {
+      title: 'Total Wallet Balances',
+      value: isLoading
+        ? 'Loading...'
+        : formatCurrency(totalWalletBalance),
+      description: `Personal: ${formatCurrency(personalWalletBalance)} · Business: ${formatCurrency(businessWalletBalance)}`,
+      icon: <Wallet />,
+      trend: { value: 0, isPositive: true },
+    },
+    {
+      title: 'Pending Orders Value',
+      value: isLoading ? 'Loading...' : formatCurrency(pendingOrdersValue),
+      description: 'All types incl. fees (not delivered/cancelled)',
+      icon: <ShoppingBag />,
+      trend: { value: 0, isPositive: false },
     },
   ];
 

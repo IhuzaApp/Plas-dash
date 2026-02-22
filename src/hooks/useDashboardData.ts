@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
+import { hasuraRequest } from '@/lib/hasura';
+import { GET_WALLET_TOTALS, GET_PENDING_ORDER_TOTALS } from '@/lib/graphql/queries';
 
 export const useDashboardData = () => {
   const { data: shopsRes, isLoading: isLoadingShops } = useQuery({
@@ -44,6 +46,51 @@ export const useDashboardData = () => {
   const { data: ticketsRes, isLoading: isLoadingTickets } = useQuery({
     queryKey: ['dashboard', 'tickets'],
     queryFn: () => apiGet<{ tickets: any[] }>('/api/queries/tickets'),
+  });
+
+  // Wallet balances across all wallet tables
+  const { data: walletTotalsRes, isLoading: isLoadingWalletTotals } = useQuery({
+    queryKey: ['dashboard', 'wallet-totals'],
+    queryFn: async () => {
+      const res = (await hasuraRequest(GET_WALLET_TOTALS)) as unknown as {
+        Wallets: { available_balance: string }[];
+        business_wallet: { amount: string }[];
+        personalWallet: { balance: string }[];
+      };
+      const sumArr = (arr: { [k: string]: string }[], key: string) =>
+        (arr ?? []).reduce((acc, r) => acc + parseFloat(r[key] ?? '0'), 0);
+      const personal = sumArr(res.Wallets, 'available_balance');
+      const business = sumArr(res.business_wallet, 'amount');
+      const personalW = sumArr(res.personalWallet as any, 'balance');
+      return { personal: personal + personalW, business, total: personal + personalW + business };
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Pending orders total value across all order types
+  const { data: pendingOrderTotalsRes, isLoading: isLoadingPendingOrderTotals } = useQuery({
+    queryKey: ['dashboard', 'pending-order-totals'],
+    queryFn: async () => {
+      const res = (await hasuraRequest(GET_PENDING_ORDER_TOTALS)) as unknown as {
+        Orders: { total: string; delivery_fee: string; service_fee: string }[];
+        reel_orders: { total: string; delivery_fee: string; service_fee: string }[];
+        restaurant_orders: { total: string; delivery_fee: string }[];
+        businessProductOrders: { total: string; service_fee: string; transportation_fee: string }[];
+      };
+      const sumFields = (arr: Record<string, string>[], ...keys: string[]) =>
+        (arr ?? []).reduce(
+          (acc, row) => acc + keys.reduce((s, k) => s + parseFloat(row[k] ?? '0'), 0),
+          0
+        );
+      return {
+        total:
+          sumFields(res.Orders as any, 'total', 'delivery_fee', 'service_fee') +
+          sumFields(res.reel_orders as any, 'total', 'delivery_fee', 'service_fee') +
+          sumFields(res.restaurant_orders as any, 'total', 'delivery_fee') +
+          sumFields(res.businessProductOrders as any, 'total', 'service_fee', 'transportation_fee'),
+      };
+    },
+    staleTime: 2 * 60 * 1000,
   });
 
   const shopsData = shopsRes ? { Shops: shopsRes.shops } : undefined;
@@ -118,6 +165,14 @@ export const useDashboardData = () => {
     monthlyRevenue,
     pendingPayouts,
 
+    // Wallet totals
+    totalWalletBalance: walletTotalsRes?.total ?? 0,
+    personalWalletBalance: walletTotalsRes?.personal ?? 0,
+    businessWalletBalance: walletTotalsRes?.business ?? 0,
+
+    // Pending order value
+    pendingOrdersValue: pendingOrderTotalsRes?.total ?? 0,
+
     // Loading states
     isLoading:
       isLoadingShops ||
@@ -128,7 +183,9 @@ export const useDashboardData = () => {
       isLoadingShoppers ||
       isLoadingRevenue ||
       isLoadingRefunds ||
-      isLoadingTickets,
+      isLoadingTickets ||
+      isLoadingWalletTotals ||
+      isLoadingPendingOrderTotals,
     // Expose order breakdown for FinancialOverview / other consumers
     orderBreakdown: orderStats?.breakdown,
     monthlyOrderBreakdown: orderStats?.monthlyBreakdown,
