@@ -33,6 +33,7 @@ import Pagination from '@/components/ui/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import RestaurantDetailsSheet from '@/components/drawers/RestaurantDetailsSheet';
 
 const Restaurants = () => {
   const { data, isLoading, isError, error } = useRestaurants();
@@ -40,6 +41,8 @@ const Restaurants = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
   const { hasAction } = usePrivilege();
   const queryClient = useQueryClient();
   const updateRestaurantMutation = useUpdateRestaurant();
@@ -257,7 +260,14 @@ const Restaurants = () => {
                         {(!restaurant.is_active || !restaurant.verified) ? (
                           <>
                             {hasAction('restaurants', 'view_restaurant_details') && (
-                              <Button variant="ghost" size="sm">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedRestaurant(restaurant);
+                                  setIsDrawerOpen(true);
+                                }}
+                              >
                                 View Details
                               </Button>
                             )}
@@ -279,7 +289,14 @@ const Restaurants = () => {
                         ) : (
                           <>
                             {hasAction('restaurants', 'view_restaurant_details') && (
-                              <Button variant="ghost" size="sm">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedRestaurant(restaurant);
+                                  setIsDrawerOpen(true);
+                                }}
+                              >
                                 View Details
                               </Button>
                             )}
@@ -315,6 +332,13 @@ const Restaurants = () => {
           />
         </Card>
       </div>
+
+      <RestaurantDetailsSheet
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        restaurant={selectedRestaurant}
+        onApprove={handleApprove}
+      />
     </AdminLayout>
   );
 };
