@@ -23,6 +23,7 @@ import {
   UtensilsCrossed,
   BarChart3,
   ClipboardList,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   Tabs,
@@ -219,6 +220,7 @@ const Orders = () => {
   const [pageSize, setPageSize] = useState(10);
   const [selectedOrder, setSelectedOrder] = useState<UnifiedOrder | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isGroupedView, setIsGroupedView] = useState(false);
   const [tick, setTick] = useState(0);
   const { hasAction } = usePrivilege();
 
@@ -285,6 +287,7 @@ const Orders = () => {
       delivery_time: o.delivery_time ?? o.delivered_time ?? null,
       delivery_fee: o.transportation_fee,
       service_fee: o.service_fee,
+      combined_order_id: o.combined_order_id,
     }));
 
     const restaurantOrdersMapped: UnifiedOrder[] = restaurantOrderItems.map((o: any) => ({
@@ -325,6 +328,27 @@ const Orders = () => {
       ...restaurantOrdersMapped,
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [orders, reelOrderItems, businessOrderItems, restaurantOrderItems]);
+
+  const combinedOrdersGroups = useMemo(() => {
+    const groups: Record<string, UnifiedOrder[]> = {};
+    allOrders.forEach(order => {
+      if (order.combined_order_id) {
+        if (!groups[order.combined_order_id]) {
+          groups[order.combined_order_id] = [];
+        }
+        groups[order.combined_order_id].push(order);
+      }
+    });
+
+    // Filter out groups with only 1 order as per user request
+    const filteredGroups: Record<string, UnifiedOrder[]> = {};
+    Object.entries(groups).forEach(([id, groupOrders]) => {
+      if (groupOrders.length > 1) {
+        filteredGroups[id] = groupOrders;
+      }
+    });
+    return filteredGroups;
+  }, [allOrders]);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -522,12 +546,57 @@ const Orders = () => {
     return false;
   });
 
+  // Create root display items (singles or groups)
+  const rootDisplayItems = useMemo(() => {
+    if (!isGroupedView) return filteredOrders.map(o => ({ type: 'single' as const, order: o }));
+
+    const items: Array<{ type: 'single'; order: UnifiedOrder } | { type: 'group'; combinedId: string; orders: UnifiedOrder[]; shopper: any }> = [];
+    const seenCombinedIds = new Set<string>();
+
+    filteredOrders.forEach(o => {
+      if (!o.combined_order_id) {
+        items.push({ type: 'single', order: o });
+      } else if (!seenCombinedIds.has(o.combined_order_id)) {
+        // Find all orders in this group from ALL orders to ensure group completeness
+        const group = allOrders.filter(item => item.combined_order_id === o.combined_order_id);
+
+        if (group.length > 1) {
+          items.push({
+            type: 'group',
+            combinedId: o.combined_order_id,
+            orders: group,
+            shopper: group.find(item => item.shopper)?.shopper
+          });
+        } else {
+          // If only 1 order has this ID, treat as single order
+          items.push({ type: 'single', order: o });
+        }
+        seenCombinedIds.add(o.combined_order_id);
+      }
+    });
+    return items;
+  }, [filteredOrders, allOrders, isGroupedView]);
+
   // Calculate pagination
-  const totalItems = filteredOrders.length;
+  const totalItems = rootDisplayItems.length;
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const currentOrders = filteredOrders.slice(startIndex, endIndex);
+  const currentDisplayItems = rootDisplayItems.slice(startIndex, endIndex);
+
+  const currentOrders = useMemo(() => {
+    // This is just to satisfy existing logic that might use currentOrders
+    // In grouped view, this will be a flattened list of orders in the current items
+    const orders: UnifiedOrder[] = [];
+    currentDisplayItems.forEach(item => {
+      if (item.type === 'single') {
+        orders.push(item.order);
+      } else {
+        item.orders.forEach(o => orders.push(o));
+      }
+    });
+    return orders;
+  }, [currentDisplayItems]);
 
   const handleViewDetails = (order: UnifiedOrder) => {
     setSelectedOrder(order);
@@ -625,6 +694,10 @@ const Orders = () => {
             <BarChart3 className="h-4 w-4" />
             Order Offers & Analytics
           </TabsTrigger>
+          <TabsTrigger value="combined" className="flex items-center gap-2">
+            <ShoppingBag className="h-4 w-4" />
+            Combined Orders
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
@@ -676,6 +749,18 @@ const Orders = () => {
                 </Button>
               ))}
             </div>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                variant={isGroupedView ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setIsGroupedView(!isGroupedView)}
+                className="flex items-center gap-2"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                {isGroupedView ? 'Grouped by Combined ID' : 'Individual View'}
+              </Button>
+            </div>
           </div>
 
           <Card>
@@ -687,6 +772,7 @@ const Orders = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Total</TableHead>
+                  <TableHead>Combined ID</TableHead>
                   <TableHead>Delivery Fee</TableHead>
                   <TableHead>Service Fee</TableHead>
                   <TableHead>Expected delivery</TableHead>
@@ -696,162 +782,261 @@ const Orders = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentOrders.length === 0 ? (
+                {currentDisplayItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
                       No orders found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  currentOrders.map(order => {
-                    const warnings = getOrderWarnings(order);
-                    return (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="text-primary hover:underline">
-                                  #{generateShortId(order.OrderID?.toString() || order.id)}
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Full ID: {order.OrderID || order.id}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            {warnings.length > 0 && (
+                  currentDisplayItems.map(item => {
+                    if (item.type === 'single') {
+                      const order = item.order;
+                      const warnings = getOrderWarnings(order);
+                      return (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
                               <TooltipProvider>
                                 <Tooltip>
-                                  <TooltipTrigger>
-                                    <AlertCircle className="h-4 w-4 text-red-500" />
+                                  <TooltipTrigger className="text-primary hover:underline">
+                                    #{generateShortId(order.OrderID?.toString() || order.id)}
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <ul className="list-disc pl-4">
-                                      {warnings.map((warning, idx) => (
-                                        <li key={idx}>{warning.message}</li>
-                                      ))}
-                                    </ul>
+                                    <p>Full ID: {order.OrderID || order.id}</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium">
-                            {order.type === 'regular' || order.type === 'reel'
-                              ? (order.User?.name ?? '—')
-                              : (order.orderedBy?.name ?? '—')}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {order.type === 'regular' || order.type === 'reel'
-                              ? (order.User?.email ?? '—')
-                              : (order.orderedBy?.email ?? '—')}
-                          </div>
-                          {(order.type === 'regular'
-                            ? order.User?.phone
-                            : order.orderedBy?.phone) && (
-                              <div className="text-xs text-muted-foreground">
-                                {order.type === 'regular' || order.type === 'reel'
-                                  ? order.User?.phone
-                                  : order.orderedBy?.phone}
-                              </div>
-                            )}
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {order.type === 'reel' && (
-                              <Badge variant="outline" className="gap-0.5">
-                                <Video className="h-3 w-3" />
-                                Reel
-                              </Badge>
-                            )}
-                            {order.type === 'business' && (
-                              <Badge variant="outline" className="gap-0.5">
-                                <ShoppingBag className="h-3 w-3" />
-                                Business
-                              </Badge>
-                            )}
-                            {order.type === 'restaurant' && (
-                              <Badge variant="outline" className="gap-0.5">
-                                <UtensilsCrossed className="h-3 w-3" />
-                                Restaurant
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order)}`}
-                          >
-                            {order.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {order.type === 'regular' && `${order.Order_Items?.length ?? 0} item(s)`}
-                          {order.type === 'reel' && `${order.quantity ?? 1} item(s)`}
-                          {order.type === 'business' &&
-                            (order.units
-                              ? `${order.units} unit(s)`
-                              : `${Array.isArray(order.allProducts) ? order.allProducts.length : 0
-                              } item(s)`)}
-                          {order.type === 'restaurant' &&
-                            `${order.itemsCount ?? order.restaurant_order_items?.length ?? 0} item(s)`}
-                        </TableCell>
-                        <TableCell>{formatCurrency(order.total)}</TableCell>
-                        <TableCell>{formatCurrency(order.delivery_fee ?? '0')}</TableCell>
-                        <TableCell>{formatCurrency(order.service_fee ?? '0')}</TableCell>
-                        <TableCell>
-                          {(() => {
-                            const { text, exact, isOverdue } = getDeliveryCountdown(
-                              order.delivery_time
-                            );
-                            if (exact) {
-                              return (
+                              {warnings.length > 0 && (
                                 <TooltipProvider>
                                   <Tooltip>
-                                    <TooltipTrigger className="text-left">
-                                      <span className={isOverdue ? 'text-muted-foreground' : ''}>
-                                        {text}
-                                      </span>
+                                    <TooltipTrigger>
+                                      <AlertCircle className="h-4 w-4 text-red-500" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Expected: {exact}</p>
+                                      <ul className="list-disc pl-4">
+                                        {warnings.map((warning, idx) => (
+                                          <li key={idx}>{warning.message}</li>
+                                        ))}
+                                      </ul>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
-                              );
-                            }
-                            return <span className="text-muted-foreground">{text}</span>;
-                          })()}
-                        </TableCell>
-                        <TableCell>{formatDateTime(order.created_at)}</TableCell>
-                        <TableCell>{formatDateTime(order.updated_at)}</TableCell>
-                        <TableCell className="text-right space-x-2">
-                          {order.shopper_id &&
-                            warnings.some(w => w.type === 'shopping' || w.type === 'delivery') && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleCallShopper(
-                                    order.type === 'regular' ||
-                                      order.type === 'business' ||
-                                      order.type === 'restaurant'
-                                      ? order.shopper?.phone
-                                      : order.Shoppers?.phone
-                                  )
-                                }
-                                className="text-yellow-600 hover:text-yellow-700"
-                              >
-                                <Phone className="h-4 w-4 mr-1" />
-                                Call Shopper
-                              </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {order.User?.name ?? order.orderedBy?.name ?? 'Guest'}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {order.User?.email ?? order.orderedBy?.email ?? order.user_id}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order)}`}
+                            >
+                              {order.status}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {order.type === 'reel'
+                              ? order.Reel?.title || 'Reel Order'
+                              : order.type === 'business'
+                                ? `${order.allProducts?.length || 0} product(s)`
+                                : order.type === 'restaurant'
+                                  ? `${order.restaurant_order_items?.length || 0} dish(es)`
+                                  : `${order.itemsCount ?? order.Order_Items?.length ?? 0} item(s)`}
+                          </TableCell>
+                          <TableCell>{formatCurrency(order.total)}</TableCell>
+                          <TableCell>
+                            {order.combined_order_id ? (
+                              <Badge variant="secondary" className="font-mono text-[10px]">
+                                {generateShortId(order.combined_order_id)}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
                             )}
-                          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(order)}>
-                            View Details
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
+                          </TableCell>
+                          <TableCell>{formatCurrency(order.delivery_fee ?? '0')}</TableCell>
+                          <TableCell>{formatCurrency(order.service_fee ?? '0')}</TableCell>
+                          <TableCell>
+                            {(() => {
+                              const { text, exact, isOverdue } = getDeliveryCountdown(
+                                order.delivery_time
+                              );
+                              if (exact) {
+                                return (
+                                  <div className="flex flex-col">
+                                    <span
+                                      className={isOverdue ? 'text-red-600 font-medium' : 'text-blue-600'}
+                                    >
+                                      {text}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground">{exact}</span>
+                                  </div>
+                                );
+                              }
+                              return <span className="text-muted-foreground">{text}</span>;
+                            })()}
+                          </TableCell>
+                          <TableCell>{formatDateTime(order.created_at)}</TableCell>
+                          <TableCell>{formatDateTime(order.updated_at)}</TableCell>
+                          <TableCell className="text-right space-x-2">
+                            {order.shopper_id &&
+                              warnings.some(w => w.type === 'shopping' || w.type === 'delivery') && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleCallShopper(
+                                      order.type === 'regular' ||
+                                        order.type === 'business' ||
+                                        order.type === 'restaurant'
+                                        ? order.shopper?.phone
+                                        : (order as any).Shoppers?.phone
+                                    )
+                                  }
+                                  className="text-yellow-600 hover:text-yellow-700"
+                                >
+                                  <Phone className="h-4 w-4 mr-1" />
+                                  Call
+                                </Button>
+                              )}
+                            <Button variant="ghost" size="sm" onClick={() => handleViewDetails(order)}>
+                              Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    } else {
+                      // Group header and its orders
+                      return (
+                        <React.Fragment key={item.combinedId}>
+                          <TableRow className="bg-muted/40 border-t-2 border-t-primary/30 active:bg-muted/40 hover:bg-muted/40">
+                            <TableCell colSpan={12} className="py-3 px-4">
+                              <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none mb-1">Combined Group</span>
+                                    <span className="font-mono font-bold text-sm text-primary leading-none">#{item.combinedId.split('-')[0]}</span>
+                                  </div>
+                                  <div className="h-8 w-px bg-border mx-2" />
+                                  {item.shopper ? (
+                                    <div className="flex items-center gap-2">
+                                      <div className="bg-primary/10 p-1.5 rounded-full">
+                                        <ShoppingBag className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <div className="flex flex-col">
+                                        <span className="text-[10px] text-muted-foreground leading-none mb-1 uppercase font-bold tracking-tight">Assigned Shopper</span>
+                                        <span className="font-semibold text-sm leading-none">{item.shopper.name}</span>
+                                        <span className="text-[10px] text-muted-foreground">{item.shopper.phone}</span>
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 w-7 p-0 rounded-full ml-1"
+                                        onClick={() => handleCallShopper(item.shopper.phone)}
+                                      >
+                                        <Phone className="h-3 w-3 text-primary" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <AlertCircle className="h-4 w-4 text-yellow-500" />
+                                      <span className="text-sm text-muted-foreground italic">No shopper assigned to group</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="text-right flex flex-col items-end">
+                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Group Total</span>
+                                    <span className="font-bold text-sm">
+                                      {formatCurrency(item.orders.reduce((sum, o) => sum + parseFloat(o.total || '0'), 0).toString())}
+                                    </span>
+                                  </div>
+                                  <Badge variant="secondary" className="font-bold">{item.orders.length} Orders</Badge>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                          {item.orders.map(order => {
+                            const warnings = getOrderWarnings(order);
+                            return (
+                              <TableRow key={order.id} className="border-l-4 border-l-primary/40 bg-primary/[0.02] hover:bg-primary/[0.04]">
+                                <TableCell className="font-medium pl-6">
+                                  <div className="flex items-center gap-2">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger className="text-primary hover:underline">
+                                          #{generateShortId(order.OrderID?.toString() || order.id)}
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Full ID: {order.OrderID || order.id}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                    <Badge variant="outline" className="text-[10px] px-1 capitalize h-4">{order.type}</Badge>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium leading-tight">
+                                      {order.User?.name ?? order.orderedBy?.name ?? 'Guest'}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {order.User?.email ?? order.orderedBy?.email ?? order.user_id}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(order)}`}
+                                  >
+                                    {order.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {order.type === 'reel'
+                                    ? order.Reel?.title || 'Reel Order'
+                                    : order.type === 'business'
+                                      ? `${order.allProducts?.length || 0} product(s)`
+                                      : order.type === 'restaurant'
+                                        ? `${order.restaurant_order_items?.length || 0} dish(es)`
+                                        : `${order.itemsCount ?? order.Order_Items?.length ?? 0} item(s)`}
+                                </TableCell>
+                                <TableCell className="text-sm font-medium">{formatCurrency(order.total)}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground">—</TableCell>
+                                <TableCell className="text-xs">{formatCurrency(order.delivery_fee ?? '0')}</TableCell>
+                                <TableCell className="text-xs">{formatCurrency(order.service_fee ?? '0')}</TableCell>
+                                <TableCell>
+                                  {(() => {
+                                    const { text, exact, isOverdue } = getDeliveryCountdown(
+                                      order.delivery_time
+                                    );
+                                    return <span className={`text-xs ${isOverdue ? 'text-red-600 font-medium' : ''}`}>{text}</span>;
+                                  })()}
+                                </TableCell>
+                                <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                  {format(new Date(order.created_at), 'HH:mm')}
+                                </TableCell>
+                                <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                  {format(new Date(order.updated_at), 'HH:mm')}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => handleViewDetails(order)}>
+                                    Details
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </React.Fragment>
+                      );
+                    }
                   })
                 )}
               </TableBody>
@@ -870,14 +1055,176 @@ const Orders = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="offers" className="space-y-8">
+        <TabsContent value="offers" className="space-y-4">
           <OrderOffersAnalytics offers={offersData?.order_offers || []} />
           <OrderOffersTable offers={offersData?.order_offers || []} isLoading={isOffersLoading} />
+        </TabsContent>
+
+        <TabsContent value="combined" className="space-y-4">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Combined ID</TableHead>
+                  <TableHead>Shopper</TableHead>
+                  <TableHead>Orders</TableHead>
+                  <TableHead>Total Amount</TableHead>
+                  <TableHead>Latest Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.keys(combinedOrdersGroups).length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
+                      No combined orders found (groups must have more than one order).
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  Object.entries(combinedOrdersGroups).map(([combinedId, groupedOrders]) => {
+                    const firstOrder = groupedOrders[0];
+                    if (!firstOrder) return null;
+
+                    const shopper = groupedOrders.find(o => o.shopper)?.shopper;
+                    const groupTotal = groupedOrders.reduce(
+                      (sum, o) => sum + parseFloat(o.total || '0'),
+                      0
+                    );
+
+                    return (
+                      <React.Fragment key={combinedId}>
+                        {/* Group Header */}
+                        <TableRow className="bg-muted/40 border-t-2 border-t-primary/30 active:bg-muted/40 hover:bg-muted/40">
+                          <TableCell colSpan={12} className="py-3 px-4">
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center gap-4">
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none mb-1">Combined Group</span>
+                                  <span className="font-mono font-bold text-sm text-primary leading-none">#{combinedId.split('-')[0]}</span>
+                                </div>
+                                <div className="h-8 w-px bg-border mx-2" />
+                                {shopper ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="bg-primary/10 p-1.5 rounded-full">
+                                      <ShoppingBag className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-[10px] text-muted-foreground leading-none mb-1 uppercase font-bold tracking-tight">Assigned Shopper</span>
+                                      <span className="font-semibold text-sm leading-none">{shopper.name}</span>
+                                      <span className="text-[10px] text-muted-foreground">{shopper.phone}</span>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0 rounded-full ml-1"
+                                      onClick={() => handleCallShopper(shopper.phone)}
+                                    >
+                                      <Phone className="h-3 w-3 text-primary" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4 text-yellow-500" />
+                                    <span className="text-sm text-muted-foreground italic">No shopper assigned to group</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="text-right flex flex-col items-end">
+                                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Group Total</span>
+                                  <span className="font-bold text-sm">
+                                    {formatCurrency(groupTotal.toString())}
+                                  </span>
+                                </div>
+                                <Badge variant="secondary" className="font-bold">{groupedOrders.length} Orders</Badge>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        {/* Grouped Orders */}
+                        {groupedOrders.map(order => {
+                          const warnings = getOrderWarnings(order);
+                          return (
+                            <TableRow key={order.id} className="border-l-4 border-l-primary/40 bg-primary/[0.02] hover:bg-primary/[0.04]">
+                              <TableCell className="font-medium pl-6">
+                                <div className="flex items-center gap-2">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger className="text-primary hover:underline">
+                                        #{generateShortId(order.OrderID?.toString() || order.id)}
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Full ID: {order.OrderID || order.id}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <Badge variant="outline" className="text-[10px] px-1 capitalize h-4">{order.type}</Badge>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span className="font-medium leading-tight">
+                                    {order.User?.name ?? order.orderedBy?.name ?? 'Guest'}
+                                  </span>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {order.User?.email ?? order.orderedBy?.email ?? order.user_id}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(order)}`}
+                                >
+                                  {order.status}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {order.type === 'reel'
+                                  ? order.Reel?.title || 'Reel Order'
+                                  : order.type === 'business'
+                                    ? `${order.allProducts?.length || 0} product(s)`
+                                    : order.type === 'restaurant'
+                                      ? `${order.restaurant_order_items?.length || 0} dish(es)`
+                                      : `${order.itemsCount ?? order.Order_Items?.length ?? 0} item(s)`}
+                              </TableCell>
+                              <TableCell className="text-sm font-medium">{formatCurrency(order.total)}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">Grouped</TableCell>
+                              <TableCell className="text-xs">{formatCurrency(order.delivery_fee ?? '0')}</TableCell>
+                              <TableCell className="text-xs">{formatCurrency(order.service_fee ?? '0')}</TableCell>
+                              <TableCell>
+                                {(() => {
+                                  const { text, exact, isOverdue } = getDeliveryCountdown(
+                                    order.delivery_time
+                                  );
+                                  return <span className={`text-xs ${isOverdue ? 'text-red-600 font-medium' : ''}`}>{text}</span>;
+                                })()}
+                              </TableCell>
+                              <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                {format(new Date(order.created_at), 'HH:mm')}
+                              </TableCell>
+                              <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                {format(new Date(order.updated_at), 'HH:mm')}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => handleViewDetails(order)}>
+                                  Details
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </Card>
         </TabsContent>
       </Tabs>
 
       <OrderDetailsDrawer order={selectedOrder} open={isDrawerOpen} onClose={handleCloseDrawer} />
-    </AdminLayout>
+    </AdminLayout >
   );
 };
 
