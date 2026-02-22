@@ -362,7 +362,7 @@ const ProjectUsers = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              {profileImageModal.username}'s Profile
+              {profileImageModal.username}&apos;s Profile
             </DialogTitle>
           </DialogHeader>
           <div className="flex justify-center">

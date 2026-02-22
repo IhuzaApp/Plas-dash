@@ -8,7 +8,7 @@ export default function ShopperDetailsPage() {
   if (!params?.id) {
     return <div>Invalid shopper ID</div>;
   }
-  const shopperId = params.id as string;
+  const shopperId = params?.id as string;
 
   return <ShopperDetails shopperId={shopperId} />;
 }

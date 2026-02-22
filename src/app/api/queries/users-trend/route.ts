@@ -62,7 +62,7 @@ export interface UsersTrendBucket {
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  let userId = (session?.user as { id?: string } | undefined)?.id;
+  let userId = (session as any)?.user?.id;
 
   if (!userId) {
     const authHeader = req.headers.get('authorization');

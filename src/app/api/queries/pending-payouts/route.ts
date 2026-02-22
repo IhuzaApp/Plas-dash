@@ -51,16 +51,24 @@ const GET_ALL_PENDING_PAYOUTS = gql`
 `;
 
 export async function GET(req: Request) {
-    const session = await getServerSession(authOptions as any);
-    const userId = (session?.user as { id?: string } | null)?.id;
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!hasuraClient) return NextResponse.json({ error: 'DB not initialized' }, { status: 500 });
+  const session = await getServerSession(authOptions as any);
+  let userId = (session as any)?.user?.id;
 
-    try {
-        const data = await hasuraClient.request<{ payouts: unknown[] }>(GET_ALL_PENDING_PAYOUTS);
-        return NextResponse.json({ payouts: data.payouts ?? [] });
-    } catch (error) {
-        console.error('Error fetching pending payouts:', error);
-        return NextResponse.json({ error: 'Failed to fetch payouts' }, { status: 500 });
+  if (!userId) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
     }
+  }
+
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasuraClient) return NextResponse.json({ error: 'DB not initialized' }, { status: 500 });
+
+  try {
+    const data = await hasuraClient.request<{ payouts: unknown[] }>(GET_ALL_PENDING_PAYOUTS);
+    return NextResponse.json({ payouts: data.payouts ?? [] });
+  } catch (error) {
+    console.error('Error fetching pending payouts:', error);
+    return NextResponse.json({ error: 'Failed to fetch payouts' }, { status: 500 });
+  }
 }

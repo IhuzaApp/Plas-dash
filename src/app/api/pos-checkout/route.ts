@@ -38,7 +38,7 @@ const INSERT_SHOP_CHECKOUT = gql`
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -315,7 +315,7 @@ const Checkout = () => {
               onRemoveItem={removeItem}
               onCheckout={processFinalCheckout}
               onSaveToPending={saveToPending}
-              shopId={session?.shop_id}
+              shopId={session?.shop_id || undefined}
               currentUser={{
                 id: session?.id || '',
                 name: session?.fullName || 'Unknown User',
@@ -384,9 +384,7 @@ const Checkout = () => {
       <CheckoutBarcodeScanner
         open={isBarcodeScannerOpen}
         onOpenChange={setIsBarcodeScannerOpen}
-        onProductFound={handleProductFoundByScan}
-        products={products}
-        isLoading={productsLoading}
+        onScanSuccess={addProductByCode}
       />
     </AdminLayout>
   );

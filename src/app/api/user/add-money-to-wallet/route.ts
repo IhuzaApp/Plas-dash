@@ -45,10 +45,10 @@ const UPDATE_PERSONAL_WALLET_BALANCE = gql`
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const user_id = session.user.id;
+  const user_id = (session as any)?.user?.id;
   const body = await request.json();
   const { amount, description } = body;
   if (!amount || amount <= 0) {

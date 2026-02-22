@@ -13,13 +13,14 @@ export interface SystemConfig {
     discounts: any;
     deliveryCommissionPercentage: string;
     productCommissionPercentage: string;
+    withDrawCharges: string;
 }
 
 export function useSystemConfig() {
     return useQuery({
         queryKey: ['system-config'],
         queryFn: async () => {
-            const response = await apiGet('/api/system-config');
+            const response = (await apiGet('/api/system-config')) as any;
             if (!response.success) {
                 throw new Error(response.error || 'Failed to fetch system config');
             }

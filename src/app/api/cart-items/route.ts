@@ -100,7 +100,7 @@ const GET_PRODUCTS_BY_IDS = gql`
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
-  let userId = (session?.user as { id?: string } | undefined)?.id;
+  let userId = (session as any)?.user?.id;
 
   if (!userId) {
     const authHeader = request.headers.get('authorization');
@@ -112,7 +112,7 @@ export async function GET(request: Request) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const user_id = session.user.id;
+  const user_id = userId;
   const { searchParams } = new URL(request.url);
   const shop_id = searchParams.get('shop_id');
   if (!shop_id) {
@@ -194,10 +194,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const user_id = session.user.id;
+  const user_id = (session as any).user.id;
   const body = await request.json();
   const { shop_id, product_id, quantity } = body;
   if (!shop_id || !product_id || typeof quantity !== 'number') {
@@ -248,7 +248,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const body = await request.json();
@@ -275,7 +275,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const body = await request.json().catch(() => ({}));

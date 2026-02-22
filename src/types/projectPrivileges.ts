@@ -50,6 +50,7 @@ export interface ProjectUserPrivileges {
   access_control?: ProjectModulePrivileges;
   system_monitoring?: ProjectModulePrivileges;
   audit_logs?: ProjectModulePrivileges;
+  development_tools?: ProjectModulePrivileges;
   maintenance?: ProjectModulePrivileges;
 
   // Page Access

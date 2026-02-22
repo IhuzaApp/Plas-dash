@@ -55,7 +55,7 @@ type Body =
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   let body: Body | undefined;
@@ -73,10 +73,10 @@ export async function POST(request: Request) {
         storeId,
         storeName: storeName.trim(),
         message: typeof message === 'string' ? message.trim() : undefined,
-        userEmail: session.user?.email ?? undefined,
-        userName: session.user?.name ?? undefined,
-        userPhone: session.user?.phone ?? undefined,
-        userId: session.user?.id,
+        userEmail: (session as any)?.user?.email ?? undefined,
+        userName: (session as any)?.user?.name ?? undefined,
+        userPhone: (session as any)?.user?.phone ?? undefined,
+        userId: (session as any)?.user?.id,
         businessAccountId: businessAccountId || undefined,
       });
       return NextResponse.json({ success: true });
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
         priority: 'critical',
         status: 'open',
         subject,
-        user_id: session.user?.id ?? '',
+        user_id: (session as any)?.user?.id ?? '',
         category: 'Customer',
       });
       ticketNum = result?.insert_tickets?.returning?.[0]?.ticket_num;
@@ -119,9 +119,9 @@ export async function POST(request: Request) {
       storeName,
       status,
       message: message.trim().slice(0, 2000),
-      userEmail: session.user?.email ?? undefined,
-      userName: session.user?.name ?? undefined,
-      userPhone: session.user?.phone ?? undefined,
+      userEmail: (session as any)?.user?.email ?? undefined,
+      userName: (session as any)?.user?.name ?? undefined,
+      userPhone: (session as any)?.user?.phone ?? undefined,
       ticketNum,
     };
     await sendSupportTicketToSlack(slackPayload);
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     await logErrorToSlack('api/support-ticket', err as Error, {
       orderId: body && 'orderId' in body ? body.orderId : undefined,
       orderDisplayId: body && 'orderDisplayId' in body ? body.orderDisplayId : undefined,
-      userId: session?.user?.id,
+      userId: (session as any)?.user?.id,
     });
     return NextResponse.json({ error: 'Failed to submit support ticket' }, { status: 500 });
   }

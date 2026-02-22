@@ -22,10 +22,10 @@ const UPDATE_USER = gql`
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const user_id = (session.user as { id?: string }).id as string;
+  const user_id = ((session as any)?.user as { id?: string }).id as string;
   const body = await request.json();
   const { name, phone, gender } = body;
   if (!name) {

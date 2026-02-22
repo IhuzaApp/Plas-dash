@@ -1190,6 +1190,7 @@ export const GET_SYSTEM_CONFIG = `
       rushHours
       productCommissionPercentage
       deliveryCommissionPercentage
+      withDrawCharges
       enableRush
       allowScheduledDeliveries
     }

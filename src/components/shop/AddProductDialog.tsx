@@ -40,6 +40,27 @@ import {
 import { Switch } from '@/components/ui/switch';
 import BarcodeScanner from './BarcodeScanner';
 
+// Define the type for the data that will be sent to the API
+export type ProductSubmitData = {
+  price: string;
+  quantity: number;
+  measurement_unit: string;
+  shop_id: string | undefined;
+  category: string;
+  reorder_point: number | undefined;
+  supplier: string | undefined;
+  is_active: boolean;
+  final_price: string | undefined;
+  productName_id: string | undefined;
+  productNameData?: {
+    name: string;
+    description?: string;
+    barcode?: string;
+    sku?: string;
+    image?: string;
+  };
+};
+
 interface AddProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -98,9 +119,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       ...(hideCommission
         ? {}
         : {
-            has_commission: z.boolean().default(true),
-            commission_percentage: z.number().min(0).max(100).optional(),
-          }),
+          has_commission: z.boolean().default(true),
+          commission_percentage: z.number().min(0).max(100).optional(),
+        }),
       final_price: z.string().optional(), // Make final_price optional since it's calculated
       productName_id: z.string().optional(), // Add this for tracking selected product name ID
     })
@@ -117,26 +138,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   type FormData = z.infer<typeof formSchema>;
 
-  // Define the type for the data that will be sent to the API
-  type ProductSubmitData = {
-    price: string;
-    quantity: number;
-    measurement_unit: string;
-    shop_id: string | undefined;
-    category: string;
-    reorder_point: number | undefined;
-    supplier: string | undefined;
-    is_active: boolean;
-    final_price: string | undefined;
-    productName_id: string | undefined;
-    productNameData?: {
-      name: string;
-      description?: string;
-      barcode?: string;
-      sku?: string;
-      image?: string;
-    };
-  };
+
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -157,9 +159,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       ...(hideCommission
         ? {}
         : {
-            has_commission: true,
-            commission_percentage: Number(defaultCommission) || 0,
-          }),
+          has_commission: true,
+          commission_percentage: Number(defaultCommission) || 0,
+        }),
       final_price: '',
     },
   });
@@ -250,12 +252,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       productNameData:
         values.name && !values.productName_id
           ? {
-              name: values.name,
-              description: values.description,
-              barcode: values.barcode,
-              sku: values.sku,
-              image: values.image,
-            }
+            name: values.name,
+            description: values.description,
+            barcode: values.barcode,
+            sku: values.sku,
+            image: values.image,
+          }
           : undefined,
     };
 
@@ -367,7 +369,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Add New Product</DialogTitle>
           <DialogDescription>
-            Enter the details of the new inventory item. Click save when you're done.
+            Enter the details of the new inventory item. Click save when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -843,7 +845,6 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         onScanSuccess={handleBarcodeScanResult}
         scanType="barcode"
         title="Scan Barcode"
-        description="Point your camera at the barcode to scan it."
       />
     </Dialog>
   );

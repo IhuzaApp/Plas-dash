@@ -19,7 +19,7 @@ const UPDATE_WITHDRAW_STATUS = gql`
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string } | null)?.id;
+  const userId = (session as any)?.user?.id;
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

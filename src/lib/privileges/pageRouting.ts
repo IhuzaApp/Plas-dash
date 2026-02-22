@@ -243,9 +243,9 @@ export const getRecommendedLandingPage = (
   ];
 
   // Find the first accessible module in priority order
-  for (const module of landingPageModules) {
-    if (hasPrivilege(privileges, module, 'access', role)) {
-      const page = PAGE_ROUTES.find(route => route.module === module && route.action === 'access');
+  for (const mod of landingPageModules) {
+    if (hasPrivilege(privileges, mod, 'access', role)) {
+      const page = PAGE_ROUTES.find(route => route.module === mod && route.action === 'access');
       if (page) return page;
     }
   }

@@ -129,7 +129,7 @@ export function PrivilegeExample() {
                 <Alert>
                   <Lock className="h-4 w-4" />
                   <AlertDescription>
-                    You don't have permission to apply discounts. Contact an administrator.
+                    You don&apos;t have permission to apply discounts. Contact an administrator.
                   </AlertDescription>
                 </Alert>
               )}
@@ -243,7 +243,7 @@ export function PrivilegeExample() {
                 <Alert>
                   <Lock className="h-4 w-4" />
                   <AlertDescription>
-                    You don't have permission to add new staff members.
+                    You don&apos;t have permission to add new staff members.
                   </AlertDescription>
                 </Alert>
               )}

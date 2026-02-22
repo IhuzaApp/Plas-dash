@@ -25,7 +25,7 @@ const UPDATE_USER_ROLE = gql`
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
   const body = await request.json();
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     if (role === 'shopper') {
       const { shoppers } = await hasuraClient.request<{
         shoppers: Array<{ id: string; status: string; active: boolean }>;
-      }>(CHECK_SHOPPER_STATUS, { user_id: session.user.id });
+      }>(CHECK_SHOPPER_STATUS, { user_id: (session as any)?.user?.id });
       if (!shoppers?.length || !shoppers[0].active) {
         return NextResponse.json(
           {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const response = await hasuraClient.request<{
       update_Users_by_pk: { id: string; role: string } | null;
     }>(UPDATE_USER_ROLE, {
-      id: session.user.id,
+      id: (session as any)?.user?.id,
       role,
     });
     if (!response.update_Users_by_pk) {

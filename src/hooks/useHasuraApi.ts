@@ -442,6 +442,7 @@ export interface SystemConfig {
   productCommissionPercentage: number;
   deliveryCommissionPercentage: number;
   enableRush: boolean;
+  withDrawCharges: number;
   allowScheduledDeliveries: boolean;
 }
 

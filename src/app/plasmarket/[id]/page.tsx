@@ -40,7 +40,7 @@ export default function BusinessProfilePage() {
     const { data, isLoading, error } = useQuery({
         queryKey: ['plasmarket-business', id],
         queryFn: async () => {
-            const response = await apiGet(`/api/admin/plasmarket/${id}`);
+            const response = (await apiGet(`/api/admin/plasmarket/${id}`)) as any;
             if (!response.success) {
                 throw new Error(response.error || 'Failed to fetch business');
             }
@@ -66,7 +66,7 @@ export default function BusinessProfilePage() {
             return await apiPost('/api/admin/plasmarket/status', {
                 businessId: id,
                 status: newStatus
-            });
+            }) as any;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['plasmarket-business', id] });
@@ -90,7 +90,7 @@ export default function BusinessProfilePage() {
         mutationFn: async () => {
             return await apiPost('/api/admin/plasmarket/delete', {
                 businessId: id
-            });
+            }) as any;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['adminPlasMarketBusinesses'] });
@@ -218,7 +218,7 @@ export default function BusinessProfilePage() {
     const rfqVsQuotesData = getRfqVsQuotesData();
 
     return (
-        <ProtectedRoute requiredModules={['plasmarket']}>
+        <ProtectedRoute requiredPrivilege="plasmarket">
             <AdminLayout>
                 <div className="flex flex-col gap-6 p-6">
                     <div className="flex items-center justify-between">

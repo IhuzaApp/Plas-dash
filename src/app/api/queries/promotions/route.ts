@@ -29,7 +29,7 @@ const GET_PROMOTIONS = gql`
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions as any);
-    const userId = (session?.user as { id?: string } | null)?.id;
+    const userId = (session as any)?.user?.id;
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (!hasuraClient) return NextResponse.json({ error: 'DB not initialized' }, { status: 500 });
 

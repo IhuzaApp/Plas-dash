@@ -651,7 +651,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
 }`}
               </div>
               <p className="text-xs">
-                You can edit the times or use "Closed" for days when the branch is not open.
+                You can edit the times or use &quot;Closed&quot; for days when the branch is not open.
               </p>
             </div>
           </div>

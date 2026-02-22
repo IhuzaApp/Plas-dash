@@ -194,7 +194,7 @@ const ProductNameAutocomplete: React.FC<ProductNameAutocompleteProps> = ({
                   ) : (
                     <>
                       <Plus className="mr-2 h-4 w-4" />
-                      Add "{newProductName}"
+                      Add &quot;{newProductName}&quot;
                     </>
                   )}
                 </Button>

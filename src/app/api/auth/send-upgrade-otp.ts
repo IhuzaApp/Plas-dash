@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './[...nextauth]';
-import { otpStore } from '../../../lib/otpStore';
+import { otpStore } from '@/lib/otpStore';
 
 // Generate a 6-digit OTP
 function generateOTP(): string {
@@ -17,12 +17,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get the session
     const session = await getServerSession(req, res, authOptions);
 
-    if (!session || !session.user) {
+    if (!session || !(session as any)?.user) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
     // Check if user is actually a guest
-    if (!(session.user as any).is_guest) {
+    if (!((session as any)?.user as any).is_guest) {
       return res.status(400).json({ error: 'User is already a full member' });
     }
 
@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     // Store OTP
-    otpStore.set(session.user.id, {
+    otpStore.set(((session as any)?.user as any).id, {
       otp,
       email: email.toLowerCase(),
       fullName,
@@ -58,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('='.repeat(60));
     console.log('🔐 OTP VERIFICATION CODE');
     console.log('='.repeat(60));
-    console.log(`User ID: ${session.user.id}`);
+    console.log(`User ID: ${((session as any)?.user as any).id}`);
     console.log(`Email: ${email}`);
     console.log(`OTP Code: ${otp}`);
     console.log(`Expires in: 10 minutes`);

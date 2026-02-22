@@ -24,7 +24,7 @@ import {
 export default function StoreProfilePage() {
     const params = useParams();
     const router = useRouter();
-    const storeId = params.storeId as string;
+    const storeId = (params?.storeId as string) || '';
 
     const { data: configData } = useSystemConfig();
     const currency = configData?.currency || '$';
@@ -32,7 +32,7 @@ export default function StoreProfilePage() {
     const { data, isLoading, error } = useQuery({
         queryKey: ['plasmarket-store', storeId],
         queryFn: async () => {
-            const response = await apiGet(`/api/admin/plasmarket/store/${storeId}`);
+            const response = (await apiGet(`/api/admin/plasmarket/store/${storeId}`)) as any;
             if (!response.success) {
                 throw new Error(response.error || 'Failed to fetch store');
             }
@@ -71,7 +71,7 @@ export default function StoreProfilePage() {
 
     if (isLoading) {
         return (
-            <ProtectedRoute requiredModules={['plasmarket']}>
+            <ProtectedRoute requiredPrivilege="plasmarket">
                 <AdminLayout>
                     <div className="flex h-[50vh] items-center justify-center">
                         <div className="flex flex-col items-center gap-2">
@@ -86,7 +86,7 @@ export default function StoreProfilePage() {
 
     if (error || !data) {
         return (
-            <ProtectedRoute requiredModules={['plasmarket']}>
+            <ProtectedRoute requiredPrivilege="plasmarket">
                 <AdminLayout>
                     <div className="p-6">
                         <Button variant="ghost" onClick={() => router.back()} className="mb-4">
@@ -106,7 +106,7 @@ export default function StoreProfilePage() {
     const productChartData = getProductChartData();
 
     return (
-        <ProtectedRoute requiredModules={['plasmarket']}>
+        <ProtectedRoute requiredPrivilege="plasmarket">
             <AdminLayout>
                 <div className="flex flex-col gap-6 p-6">
                     <div className="flex items-center justify-between">

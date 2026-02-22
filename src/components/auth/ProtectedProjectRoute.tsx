@@ -61,7 +61,7 @@ export function ProtectedProjectRoute({
             <Alert className="max-w-md">
               <Shield className="h-4 w-4" />
               <AlertDescription>
-                You don't have permission to access this page.
+                You don&apos;t have permission to access this page.
                 {requiredAction && (
                   <span className="block mt-1 text-sm text-muted-foreground">
                     Required: {requiredPrivilege}.{requiredAction}

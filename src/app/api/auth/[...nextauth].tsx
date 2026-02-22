@@ -217,12 +217,12 @@ export const authOptions: NextAuthOptions = {
         return null as any;
       }
 
-      if (token && session.user) {
-        (session.user as any).id = token.id as string;
-        (session.user as any).phone = (token as any).phone;
-        (session.user as any).gender = (token as any).gender;
-        (session.user as any).role = (token as any).role;
-        (session.user as any).is_guest = (token as any).is_guest || false;
+      if (token && (session as any)?.user) {
+        ((session as any)?.user as any).id = token.id as string;
+        ((session as any)?.user as any).phone = (token as any).phone;
+        ((session as any)?.user as any).gender = (token as any).gender;
+        ((session as any)?.user as any).role = (token as any).role;
+        ((session as any)?.user as any).is_guest = (token as any).is_guest || false;
       }
       return session;
     },

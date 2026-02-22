@@ -62,12 +62,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get the session
     const session = await getServerSession(req, res, authOptions);
 
-    if (!session || !session.user) {
+    if (!session || !(session as any)?.user) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
     // Check if user is actually a guest
-    if (!(session.user as any).is_guest) {
+    if (!((session as any)?.user as any).is_guest) {
       return res.status(400).json({ error: 'User is already a full member' });
     }
 
@@ -91,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (emailCheck.Users && emailCheck.Users.length > 0) {
       // Check if the existing email belongs to a different user
-      if (emailCheck.Users[0].id !== session.user.id) {
+      if (emailCheck.Users[0].id !== ((session as any)?.user as any).id) {
         return res.status(400).json({
           error: 'Email already in use by another account',
         });
@@ -104,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('='.repeat(60));
     console.log('🔄 UPDATING USER IN DATABASE');
     console.log('='.repeat(60));
-    console.log(`User ID: ${session.user.id}`);
+    console.log(`User ID: ${((session as any)?.user as any).id}`);
     console.log(`Name: ${fullName}`);
     console.log(`Email: ${email.toLowerCase()}`);
     console.log(`Gender: ${gender || 'male'}`);
@@ -112,7 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Update the user
     const result: any = await hasuraClient.request(UPDATE_USER_MUTATION, {
-      userId: session.user.id,
+      userId: ((session as any)?.user as any).id,
       name: fullName,
       email: email.toLowerCase(),
       passwordHash,

@@ -169,7 +169,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
         </Head>
         <LoadingProvider>
           <div className="min-h-screen bg-background relative">
-            {children}
+            <React.Suspense fallback={null}>
+              {children}
+            </React.Suspense>
             {!isAuthenticated && (
               <div className="fixed inset-0 z-40 bg-white/30 backdrop-blur-md pointer-events-none" />
             )}

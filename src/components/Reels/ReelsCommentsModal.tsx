@@ -34,7 +34,7 @@ const ReelsCommentsModal: React.FC<ReelsCommentsModalProps> = ({
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle>Comments</DialogTitle>
                     <DialogDescription>
-                        Viewing all comments for "{reel?.title}"
+                        {reel?.title ? `Viewing all comments for "${reel.title}"` : "Viewing all comments"}
                     </DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="flex-1 px-6">

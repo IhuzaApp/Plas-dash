@@ -61,7 +61,7 @@ const APPROVE_REFUND_AND_UPDATE_WALLET = gql`
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  let userIdFromAuth = (session?.user as { id?: string } | undefined)?.id;
+  let userIdFromAuth = (session as any)?.user?.id;
 
   if (!userIdFromAuth) {
     const authHeader = req.headers.get('authorization');

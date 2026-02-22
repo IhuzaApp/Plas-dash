@@ -57,7 +57,7 @@ const CREATE_SHOPPER_WALLET = gql`
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  let userId = (session?.user as { id?: string } | undefined)?.id;
+  let userId = (session as any)?.user?.id;
 
   if (!userId) {
     const authHeader = req.headers.get('authorization');
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const user_id = (session.user as { id?: string }).id as string;
+  const user_id = ((session as any)?.user as { id?: string }).id as string;
   try {
     if (!hasuraClient) {
       throw new Error('Hasura client is not initialized');

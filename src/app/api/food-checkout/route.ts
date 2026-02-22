@@ -108,7 +108,7 @@ interface FoodCheckoutRequest {
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
     }
     const orderPin = generateOrderPin();
     const orderResponse = (await hasuraClient.request(CREATE_FOOD_ORDER, {
-      user_id: session.user.id,
+      user_id: (session as any)?.user?.id,
       restaurant_id,
       delivery_address_id,
       total: totalAmount.toString(),
@@ -202,7 +202,7 @@ export async function POST(request: Request) {
       }>(GET_RESTAURANT_ADDRESS_USER, {
         restaurant_id,
         address_id: delivery_address_id,
-        user_id: session.user.id,
+        user_id: (session as any)?.user?.id,
       });
       storeName = aux.Restaurants_by_pk?.name;
       if (aux.Addresses_by_pk) {

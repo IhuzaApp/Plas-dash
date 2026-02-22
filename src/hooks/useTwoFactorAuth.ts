@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { authenticator } from 'otplib';
-import { useUpdateTwoFactorSecrets } from './useUpdateTwoFactorSecrets';
+
 
 interface TwoFactorAuthData {
   secretKey: string;

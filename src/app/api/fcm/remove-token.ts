@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { removeFCMToken } from '../../../src/services/fcmService';
+import { removeFCMToken } from '@/services/fcmService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

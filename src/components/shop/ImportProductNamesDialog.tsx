@@ -225,7 +225,7 @@ export function ImportProductNamesDialog({
             : undefined,
           sku: mapping.sku ? String(row[mapping.sku] ?? '').trim() || undefined : undefined,
           image: mapping.image ? String(row[mapping.image] ?? '').trim() || undefined : undefined,
-        };
+        } as ProductNameImportRow;
       })
       .filter((r): r is ProductNameImportRow => r !== null);
   };
@@ -311,10 +311,10 @@ export function ImportProductNamesDialog({
                     onValueChange={v => setMapping(m => ({ ...m, [key]: v === SKIP ? '' : v }))}
                   >
                     <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Don't map" />
+                      <SelectValue placeholder="Don&apos;t map" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={SKIP}>— Don't map</SelectItem>
+                      <SelectItem value={SKIP}>— Don&apos;t map</SelectItem>
                       {headers.map(h => (
                         <SelectItem key={h} value={h}>
                           {h}
@@ -326,7 +326,7 @@ export function ImportProductNamesDialog({
               ))}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              {nameMapped ? `${validCount} row(s) will be imported.` : 'Map "Name" to import.'}
+              {nameMapped ? `${validCount} row(s) will be imported.` : 'Map &quot;Name&quot; to import.'}
             </p>
             <DialogFooter>
               <Button variant="outline" onClick={handleBack} disabled={isLoading}>

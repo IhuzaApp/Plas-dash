@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
-// import { notifyNewOrderToSlack } from '@/lib/slackOrderNotifier';
+import { notifyNewOrderToSlack } from '@/lib/slackOrderNotifier';
 
 interface CartItem {
   product_id: string;
@@ -136,10 +136,10 @@ const DELETE_CART = gql`
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!(session as any)?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const user_id = session.user.id;
+  const user_id = (session as any)?.user?.id;
   const body = await request.json();
   const {
     shop_id,

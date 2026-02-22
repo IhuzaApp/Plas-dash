@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './[...nextauth]';
-import { otpStore } from '../../../lib/otpStore';
+import { otpStore } from '@/lib/otpStore';
 
 const WITHDRAW_OTP_KEY_PREFIX = 'withdraw-';
 
@@ -17,12 +17,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const session = await getServerSession(req, res, authOptions as any);
 
-    if (!session?.user?.id) {
+    if (!(session as any)?.user?.id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const userId = session.user.id;
-    const email = (session.user as { email?: string }).email ?? '';
+    const userId = (session as any).user.id;
+    const email = (session as any).user.email ?? '';
 
     const otp = generateOTP();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes

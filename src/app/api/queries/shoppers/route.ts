@@ -412,7 +412,7 @@ const GET_REVENUE_BY_SHOPPER = gql`
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
-  let userId = (session?.user as { id?: string } | null)?.id;
+  let userId = (session as any)?.user?.id;
 
   if (!userId) {
     const authHeader = request.headers.get('authorization');

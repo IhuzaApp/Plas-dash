@@ -655,6 +655,16 @@ const MODULE_DESCRIPTIONS: Record<
       { key: 'delete_business', label: 'Delete Business', description: 'Can permanently delete business accounts' }
     ]
   },
+  withdraw_requests: {
+    title: 'Withdraw Requests',
+    description: 'Manage shopper/user withdrawal requests',
+    actions: [
+      { key: 'access', label: 'Access Requests', description: 'Can view withdrawal requests' },
+      { key: 'view', label: 'View Requests', description: 'Can view list of requests' },
+      { key: 'approve', label: 'Approve', description: 'Can approve withdrawal requests' },
+      { key: 'reject', label: 'Reject', description: 'Can reject withdrawal requests' },
+    ],
+  },
 };
 
 export function PrivilegeManager({
@@ -742,16 +752,16 @@ export function PrivilegeManager({
 
       <div className="grid gap-4">
         {Object.entries(MODULE_DESCRIPTIONS).map(([moduleKey, moduleInfo]) => {
-          const module = moduleKey as PrivilegeKey;
-          const modulePrivileges = (privileges[module] || { access: false }) as ModulePrivileges;
-          const accessCount = getModuleAccessCount(module);
+          const mod = moduleKey as PrivilegeKey;
+          const modulePrivileges = (privileges[mod] || { access: false }) as ModulePrivileges;
+          const accessCount = getModuleAccessCount(mod);
           const totalActions = moduleInfo.actions.length;
-          const isExpanded = expandedModules.has(module);
+          const isExpanded = expandedModules.has(mod);
           const hasAccess = modulePrivileges.access || false;
 
           return (
-            <Card key={module} className="overflow-hidden">
-              <Collapsible open={isExpanded} onOpenChange={() => toggleModule(module)}>
+            <Card key={mod} className="overflow-hidden">
+              <Collapsible open={isExpanded} onOpenChange={() => toggleModule(mod)}>
                 <CollapsibleTrigger asChild>
                   <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
                     <div className="flex items-center justify-between">
@@ -782,7 +792,7 @@ export function PrivilegeManager({
                             size="sm"
                             onClick={e => {
                               e.stopPropagation();
-                              toggleAllInModule(module, !hasAccess);
+                              toggleAllInModule(mod, !hasAccess);
                             }}
                           >
                             {hasAccess ? 'Revoke All' : 'Grant All'}
@@ -808,7 +818,7 @@ export function PrivilegeManager({
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <Label htmlFor={`${module}-${action.key}`} className="font-medium">
+                              <Label htmlFor={`${mod}-${action.key}`} className="font-medium">
                                 {action.label}
                               </Label>
                               {isEnabled && (
@@ -822,10 +832,10 @@ export function PrivilegeManager({
                             </p>
                           </div>
                           <Switch
-                            id={`${module}-${action.key}`}
+                            id={`${mod}-${action.key}`}
                             checked={isEnabled}
                             onCheckedChange={checked =>
-                              updatePrivilege(module, action.key, checked)
+                              updatePrivilege(mod, action.key, checked)
                             }
                             disabled={readOnly}
                           />

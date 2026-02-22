@@ -621,19 +621,19 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                 <div className="grid gap-4">
                   {privileges &&
                     Object.entries(MODULE_DESCRIPTIONS).map(([moduleKey, moduleInfo]) => {
-                      const module = moduleKey as ProjectPrivilegeKey;
+                      const mod = moduleKey as ProjectPrivilegeKey;
                       // Only show modules that are relevant to project users as defined in the state or default
-                      if (!privileges[module]) return null;
+                      if (!privileges[mod]) return null;
 
-                      const modulePrivileges = privileges[module] as ProjectModulePrivileges;
-                      const accessCount = getModuleAccessCount(module);
+                      const modulePrivileges = privileges[mod] as ProjectModulePrivileges;
+                      const accessCount = getModuleAccessCount(mod);
                       const totalActions = moduleInfo.actions.length;
-                      const isExpanded = expandedModules.has(module);
+                      const isExpanded = expandedModules.has(mod);
                       const hasAccess = modulePrivileges.access || false;
 
                       return (
-                        <Card key={module} className="overflow-hidden border shadow-sm">
-                          <Collapsible open={isExpanded} onOpenChange={() => toggleModule(module)}>
+                        <Card key={mod} className="overflow-hidden border shadow-sm">
+                          <Collapsible open={isExpanded} onOpenChange={() => toggleModule(mod)}>
                             <CollapsibleTrigger asChild>
                               <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors">
                                 <div className="flex items-center justify-between">
@@ -664,7 +664,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                                       type="button"
                                       onClick={e => {
                                         e.stopPropagation();
-                                        toggleAllInModule(module, !hasAccess);
+                                        toggleAllInModule(mod, !hasAccess);
                                       }}
                                     >
                                       {hasAccess ? 'Revoke All' : 'Grant All'}
@@ -690,7 +690,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                                       <div className="flex-1">
                                         <div className="flex items-center gap-2">
                                           <Label
-                                            htmlFor={`${module}-${action.key}`}
+                                            htmlFor={`${mod}-${action.key}`}
                                             className="text-sm font-medium cursor-pointer"
                                           >
                                             {action.label}
@@ -701,10 +701,10 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                                         </div>
                                       </div>
                                       <Switch
-                                        id={`${module}-${action.key}`}
+                                        id={`${mod}-${action.key}`}
                                         checked={isEnabled}
                                         onCheckedChange={checked =>
-                                          updatePrivilege(module, action.key, checked)
+                                          updatePrivilege(mod, action.key, checked)
                                         }
                                       />
                                     </div>

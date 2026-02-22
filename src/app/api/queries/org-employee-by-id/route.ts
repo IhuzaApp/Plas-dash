@@ -19,7 +19,7 @@ const GET_EMPLOYEE_BY_ID = gql`
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
-  let userId = (session?.user as { id?: string } | undefined)?.id;
+  let userId = (session as any)?.user?.id;
 
   if (!userId) {
     const authHeader = request.headers.get('authorization');

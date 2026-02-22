@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { sendNotificationToUser } from '../../../src/services/fcmService';
+import { sendNotificationToUser } from '@/services/fcmService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

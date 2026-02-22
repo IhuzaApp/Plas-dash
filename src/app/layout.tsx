@@ -1,4 +1,5 @@
 'use client';
+import { Suspense } from 'react';
 
 import { Inter } from 'next/font/google';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -37,7 +38,9 @@ export default function AppRootLayout({ children }: { children: React.ReactNode 
             disableTransitionOnChange
           >
             <TooltipProvider>
-              <RootLayout>{children}</RootLayout>
+              <Suspense fallback={null}>
+                <RootLayout>{children}</RootLayout>
+              </Suspense>
               <Toaster />
               <Sonner />
             </TooltipProvider>

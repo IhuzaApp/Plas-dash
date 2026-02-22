@@ -56,18 +56,26 @@ const GET_ALL_PENDING_WITHDRAW_REQUESTS = gql`
 `;
 
 export async function GET(req: Request) {
-    const session = await getServerSession(authOptions as any);
-    const userId = (session?.user as { id?: string } | null)?.id;
-    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!hasuraClient) return NextResponse.json({ error: 'DB not initialized' }, { status: 500 });
+  const session = await getServerSession(authOptions as any);
+  let userId = (session as any)?.user?.id;
 
-    try {
-        const data = await hasuraClient.request<{ withDraweRequest: unknown[] }>(
-            GET_ALL_PENDING_WITHDRAW_REQUESTS
-        );
-        return NextResponse.json({ requests: data.withDraweRequest ?? [] });
-    } catch (error) {
-        console.error('Error fetching withdraw requests:', error);
-        return NextResponse.json({ error: 'Failed to fetch withdraw requests' }, { status: 500 });
+  if (!userId) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
     }
+  }
+
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!hasuraClient) return NextResponse.json({ error: 'DB not initialized' }, { status: 500 });
+
+  try {
+    const data = await hasuraClient.request<{ withDraweRequest: unknown[] }>(
+      GET_ALL_PENDING_WITHDRAW_REQUESTS
+    );
+    return NextResponse.json({ requests: data.withDraweRequest ?? [] });
+  } catch (error) {
+    console.error('Error fetching withdraw requests:', error);
+    return NextResponse.json({ error: 'Failed to fetch withdraw requests' }, { status: 500 });
+  }
 }

@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './[...nextauth]';
-import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
 /**
@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get the current session
     const session = await getServerSession(req, res, authOptions);
 
-    if (!session || !session.user) {
+    if (!session || !(session as any)?.user) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
@@ -49,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         gender: string;
         profile_picture: string;
       };
-    }>(query, { id: (session.user as any).id });
+    }>(query, { id: ((session as any)?.user as any).id });
 
     const user = userData.Users_by_pk;
 

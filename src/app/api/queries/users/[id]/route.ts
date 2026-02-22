@@ -105,7 +105,7 @@ const GET_USER_BY_ID = gql`
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
-  let userId = (session?.user as { id?: string } | undefined)?.id;
+  let userId = (session as any)?.user?.id;
 
   if (!userId) {
     const authHeader = _request.headers.get('authorization');

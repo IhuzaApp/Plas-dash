@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './[...nextauth]';
-import { otpStore } from '../../../lib/otpStore';
+import { otpStore } from '@/lib/otpStore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -12,12 +12,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get the session
     const session = await getServerSession(req, res, authOptions);
 
-    if (!session || !session.user) {
+    if (!session || !(session as any)?.user) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
     // Check if user is actually a guest
-    if (!(session.user as any).is_guest) {
+    if (!((session as any)?.user as any).is_guest) {
       return res.status(400).json({ error: 'User is already a full member' });
     }
 
@@ -35,7 +35,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Get stored OTP data
-    const storedData = otpStore.get(session.user.id);
+    const userId = ((session as any)?.user as any).id;
+    const storedData = otpStore.get(userId);
 
     if (!storedData) {
       return res.status(400).json({
@@ -45,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Check if OTP is expired
     if (Date.now() > storedData.expiresAt) {
-      otpStore.delete(session.user.id);
+      otpStore.delete(userId);
       return res.status(400).json({
         error: 'OTP has expired. Please request a new one.',
       });
@@ -60,12 +61,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // OTP is valid!
     // Clear OTP from store
-    otpStore.delete(session.user.id);
+    otpStore.delete(userId);
 
     console.log('='.repeat(60));
     console.log('✅ OTP VERIFIED SUCCESSFULLY');
     console.log('='.repeat(60));
-    console.log(`User ID: ${session.user.id}`);
+    console.log(`User ID: ${userId}`);
     console.log(`Email: ${storedData.email}`);
     console.log(`Name: ${storedData.fullName}`);
     console.log(`Gender: ${storedData.gender}`);
@@ -77,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       success: true,
       user: {
-        id: session.user.id,
+        id: userId,
         name: storedData.fullName,
         email: storedData.email,
         gender: storedData.gender,

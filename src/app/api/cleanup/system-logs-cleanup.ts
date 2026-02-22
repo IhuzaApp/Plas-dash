@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { hasuraClient } from '../../../src/lib/hasuraClient';
+import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
 interface DeleteSystemLogsResponse {
