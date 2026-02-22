@@ -171,6 +171,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'promotions',
         'plasmarket',
         'restaurants',
+        'withdraw_requests',
       ];
       projectManagerModules.forEach(module => {
         if (privileges[module]) {
@@ -225,6 +226,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'tickets',
         'help',
         'restaurants',
+        'withdraw_requests',
       ];
       customerSupportModules.forEach(module => {
         if (privileges[module]) {

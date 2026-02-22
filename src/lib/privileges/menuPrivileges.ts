@@ -40,6 +40,7 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   'System Settings': { module: 'settings' },
   Referrals: { module: 'referrals' },
   PlasMarket: { module: 'plasmarket' },
+  'Withdraw Requests': { module: 'withdraw_requests' },
 };
 
 /**

@@ -18,6 +18,24 @@ export const ADD_CART = `
   }
 `;
 
+export const UPDATE_WITHDRAW_REQUEST_STATUS = `
+  mutation UpdateWithdrawRequestStatus($id: uuid = "", $status: String = "") {
+    update_withDraweRequest_by_pk(pk_columns: {id: $id}, _set: {status: $status}) {
+      amount
+      businessWallet_id
+      business_id
+      created_at
+      id
+      phoneNumber
+      shopperWallet_id
+      shopper_id
+      status
+      update_at
+      verification_image
+    }
+  }
+`;
+
 export const ADD_ITEMS_TO_CART = `
   mutation AddItemsToCart(
     $total: String = ""

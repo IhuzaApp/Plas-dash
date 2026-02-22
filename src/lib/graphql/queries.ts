@@ -1,3 +1,24 @@
+// Revenue queries
+export const GET_ALL_REVENUE = `
+  query GetAllRevenue {
+    Revenue(order_by: { created_at: asc }) {
+      id
+      amount
+      type
+      created_at
+      Plasbusiness_id
+      businessOrder_Id
+      commission_percentage
+      order_id
+      reel_order_id
+      restaurant_id
+      restaurant_order_id
+      shop_id
+      shopper_id
+    }
+  }
+`;
+
 // User queries
 export const GET_USERS = `
   query GetUsers {
@@ -664,27 +685,98 @@ export const GET_ALL_PENDING_WITHDRAW_REQUESTS = `
       where: { status: { _eq: "pending" } }
       order_by: { created_at: desc }
     ) {
-      id
       amount
-      status
-      created_at
-      update_at
-      phoneNumber
-      shopper_id
-      shopperWallet_id
-      business_id
       businessWallet_id
+      business_id
+      created_at
+      id
+      phoneNumber
+      shopperWallet_id
+      shopper_id
+      status
+      update_at
       verification_image
+      shoppers {
+        Employment_id
+        active
+        Police_Clearance_Cert
+        address
+        full_name
+        phone
+        phone_number
+        updated_at
+        status
+        profile_photo
+        User {
+          Wallets {
+            available_balance
+            id
+            last_updated
+            reserved_balance
+          }
+        }
+      }
+      business_wallets {
+        amount
+        business_id
+        created_at
+        id
+        query_id
+        updated_at
+      }
+      business_accounts {
+        account_type
+        business_email
+        business_location
+        business_name
+        business_phone
+        face_image
+        id
+        status
+      }
+    }
+  }
+`;
+
+// All pending payouts (combined view with withdraw requests)
+export const GET_ALL_PENDING_PAYOUTS = `
+  query GetAllPendingPayouts {
+    payouts(
+      where: { status: { _eq: "pending" } }
+      order_by: { created_at: desc }
+    ) {
+      amount
+      created_at
+      id
+      status
+      updated_on
+      user_id
+      wallet_id
       Wallets {
         id
         available_balance
-        reserved_balance
         last_updated
+        reserved_balance
         shopper_id
-        User {
+        Wallet_Transactions {
+          amount
+          created_at
+          description
           id
-          name
+          status
+          type
+          wallet_id
+          related_reel_orderId
+          related_order_id
+          relate_business_order_id
+        }
+        User {
           email
+          gender
+          id
+          is_guest
+          is_active
+          name
           phone
           profile_picture
         }
@@ -1490,8 +1582,8 @@ export const GET_TICKETS = `
   }
 `;
 
-// Revenue queries
-export const GET_ALL_REVENUE = `
+// Revenue queries (detailed, with shopper relation)
+export const GET_ALL_REVENUE_DETAILED = `
   query getAllRevenue {
     Revenue {
       amount

@@ -84,6 +84,13 @@ export const PAGE_ROUTES: PageRoute[] = [
     title: 'Shopper Wallets',
     priority: 30,
   },
+  {
+    path: '/withdraw-requests',
+    module: 'withdraw_requests',
+    action: 'access',
+    title: 'Withdraw Requests',
+    priority: 28,
+  },
   { path: '/refunds', module: 'refunds', action: 'access', title: 'Refunds', priority: 25 },
   { path: '/tickets', module: 'tickets', action: 'access', title: 'Tickets', priority: 20 },
 
@@ -225,6 +232,7 @@ export const getRecommendedLandingPage = (
     'shops',
     'shoppers',
     'wallet',
+    'withdraw_requests',
     'refunds',
     'tickets',
     'promotions',

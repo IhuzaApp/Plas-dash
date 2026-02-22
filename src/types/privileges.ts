@@ -31,6 +31,7 @@ export interface UserPrivileges {
   pages?: ModulePrivileges;
   referrals?: ModulePrivileges;
   plasmarket?: ModulePrivileges;
+  withdraw_requests?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -297,6 +298,12 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     delete_business: false,
     export_data: false,
   },
+  withdraw_requests: {
+    access: false,
+    view: false,
+    approve: false,
+    reject: false,
+  },
 };
 
 // Privilege check helper types
@@ -320,7 +327,8 @@ export function hasPrivilege(
       module === 'help' ||
       module === 'plasmarket' ||
       module === 'restaurants' ||
-      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket' || action === 'access_restaurants')))
+      module === 'withdraw_requests' ||
+      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket' || action === 'access_restaurants' || action === 'access_withdraw_requests')))
   ) {
     return true;
   }

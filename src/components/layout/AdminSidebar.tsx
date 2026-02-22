@@ -229,6 +229,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       items: [
         { title: 'Wallet Operations', icon: Wallet, path: '/company-wallet' },
         { title: 'Wallets', icon: Wallet, path: '/shopper-wallets' },
+        { title: 'Withdraw Requests', icon: Receipt, path: '/withdraw-requests' },
         { title: 'Refund Claims', icon: Wallet, path: '/refunds', badge: '3' },
       ],
     },
@@ -292,6 +293,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     hasModuleAccess('staff_management') ||
     hasModuleAccess('wallet') ||
     hasModuleAccess('refunds') ||
+    hasModuleAccess('withdraw_requests') ||
     hasModuleAccess('tickets') ||
     hasModuleAccess('help') ||
     hasModuleAccess('settings') ||

@@ -50,13 +50,13 @@ export interface ProjectUserPrivileges {
   access_control?: ProjectModulePrivileges;
   system_monitoring?: ProjectModulePrivileges;
   audit_logs?: ProjectModulePrivileges;
-  development_tools?: ProjectModulePrivileges;
   maintenance?: ProjectModulePrivileges;
 
   // Page Access
   pages?: ProjectModulePrivileges;
   referrals?: ProjectModulePrivileges;
   plasmarket?: ProjectModulePrivileges;
+  withdraw_requests?: ProjectModulePrivileges;
 }
 
 // Default project privileges template
@@ -430,9 +430,14 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
   plasmarket: {
     access: false,
     view_businesses: false,
-    manage_status: false,
     delete_business: false,
     export_data: false,
+  },
+  withdraw_requests: {
+    access: false,
+    view: false,
+    approve: false,
+    reject: false,
   },
 };
 
@@ -458,7 +463,8 @@ export function hasProjectPrivilege(
       module === 'help' ||
       module === 'plasmarket' ||
       module === 'restaurants' ||
-      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket' || action === 'access_restaurants')))
+      module === 'withdraw_requests' ||
+      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket' || action === 'access_restaurants' || action === 'access_withdraw_requests')))
   ) {
     return true;
   }

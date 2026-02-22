@@ -13,6 +13,7 @@ import OrdersOnTimeTrendChart from '@/components/dashboard/OrdersOnTimeTrendChar
 import TicketsComparisonChart from '@/components/dashboard/TicketsComparisonChart';
 import PlatformJoinersChart from '@/components/dashboard/PlatformJoinersChart';
 import GuestVsRegisteredChart from '@/components/dashboard/GuestVsRegisteredChart';
+import RevenueTrendChart from '@/components/dashboard/RevenueTrendChart';
 import {
   ShoppingCart,
   User,
@@ -185,6 +186,8 @@ const Index = () => {
             </Button>
           </div>
         )}
+
+        <RevenueTrendChart />
 
         <OrdersChart />
 

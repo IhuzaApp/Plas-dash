@@ -609,6 +609,16 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       { key: 'delete_business', label: 'Delete Business', description: 'Can permanently delete business accounts' }
     ]
   },
+  withdraw_requests: {
+    title: 'Withdraw Requests',
+    description: 'Manage shopper and business wallet withdraw requests',
+    actions: [
+      { key: 'access', label: 'Access Withdraw Requests', description: 'Can view the withdraw requests dashboard' },
+      { key: 'view', label: 'View Request Details', description: 'Can view individual withdraw request details' },
+      { key: 'approve', label: 'Approve Requests', description: 'Can approve withdraw requests' },
+      { key: 'reject', label: 'Reject Requests', description: 'Can reject withdraw requests' },
+    ]
+  }
 };
 
 /**

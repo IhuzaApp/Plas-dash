@@ -40,6 +40,9 @@ export const convertCustomPermissionsToPrivileges = (
     'staff:create': { module: 'staff_management', action: 'add_new_staff' },
     'staff:edit': { module: 'staff_management', action: 'edit_accounts' },
     'staff:delete': { module: 'staff_management', action: 'delete_staff' },
+    'withdrawRequests:view': { module: 'withdraw_requests', action: 'view' },
+    'withdrawRequests:approve': { module: 'withdraw_requests', action: 'approve' },
+    'withdrawRequests:reject': { module: 'withdraw_requests', action: 'reject' },
   };
 
   customPermissions.forEach(permission => {
@@ -87,7 +90,7 @@ export const mergePrivileges = (
   Object.keys(additionalPrivileges).forEach(module => {
     const moduleKey = module as PrivilegeKey;
     if (!merged[moduleKey]) {
-      merged[moduleKey] = {};
+      merged[moduleKey] = { access: false };
     }
 
     const modulePrivileges = additionalPrivileges[moduleKey];

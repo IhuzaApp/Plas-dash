@@ -321,6 +321,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'wallet',
         'refunds',
         'settings',
+        'withdraw_requests',
       ];
 
       financeManagerModules.forEach(module => {
@@ -357,6 +358,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'company_dashboard',
         'shop_dashboard',
         'wallet',
+        'withdraw_requests',
       ];
 
       accountantModules.forEach(module => {
