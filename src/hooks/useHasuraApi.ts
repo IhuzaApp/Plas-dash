@@ -43,6 +43,7 @@ import {
   UPDATE_ORG_EMPLOYEE,
   DELETE_ORG_EMPLOYEE,
   ADD_RESTAURANT,
+  UPDATE_RESTAURANT,
   ADD_REEL,
   UPDATE_REEL,
   DELETE_REEL,
@@ -1023,6 +1024,21 @@ export function useAddRestaurant() {
     }
   >({
     mutationFn: variables => hasuraRequest(ADD_RESTAURANT, variables),
+  });
+}
+
+// Type-safe hook for updating a restaurant
+export function useUpdateRestaurant() {
+  return useMutation<
+    { update_Restaurants_by_pk: any },
+    Error,
+    {
+      id: string;
+      is_active?: boolean;
+      verified?: boolean;
+    }
+  >({
+    mutationFn: variables => hasuraRequest(UPDATE_RESTAURANT, variables),
   });
 }
 

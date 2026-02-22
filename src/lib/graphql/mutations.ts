@@ -689,6 +689,26 @@ export const ADD_RESTAURANT = `
   }
 `;
 
+export const UPDATE_RESTAURANT = `
+  mutation UpdateRestaurant(
+    $id: uuid!
+    $is_active: Boolean
+    $verified: Boolean
+  ) {
+    update_Restaurants_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        is_active: $is_active
+        verified: $verified
+      }
+    ) {
+      id
+      is_active
+      verified
+    }
+  }
+`;
+
 // Reels mutations
 export const ADD_REEL = `
   mutation addReels(

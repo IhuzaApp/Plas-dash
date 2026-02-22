@@ -81,6 +81,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'pages',
         'referrals',
         'plasmarket',
+        'restaurants',
       ];
 
       globalAdminModules.forEach(module => {
@@ -110,6 +111,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'promotions',
         'settings',
         'plasmarket',
+        'restaurants',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -168,6 +170,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'dashboard',
         'promotions',
         'plasmarket',
+        'restaurants',
       ];
       projectManagerModules.forEach(module => {
         if (privileges[module]) {
@@ -221,6 +224,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'refunds',
         'tickets',
         'help',
+        'restaurants',
       ];
       customerSupportModules.forEach(module => {
         if (privileges[module]) {

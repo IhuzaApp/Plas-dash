@@ -23,6 +23,7 @@ export interface ProjectUserPrivileges {
   delivery_settings?: ProjectModulePrivileges;
   promotions?: ProjectModulePrivileges;
   settings?: ProjectModulePrivileges;
+  restaurants?: ProjectModulePrivileges;
 
   // POS Operations (Only for Global System Admin)
   checkout?: ProjectModulePrivileges;
@@ -180,6 +181,16 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     manage_system_config: false,
     view_audit_logs: false,
     manage_notifications: false,
+  },
+  restaurants: {
+    access: false,
+    view_restaurants: false,
+    add_restaurants: false,
+    edit_restaurants: false,
+    delete_restaurants: false,
+    view_restaurant_details: false,
+    manage_restaurant_settings: false,
+    view_restaurant_performance: false,
   },
   // POS Operations (Only for Global System Admin)
   checkout: {
@@ -446,7 +457,8 @@ export function hasProjectPrivilege(
     (module === 'referrals' ||
       module === 'help' ||
       module === 'plasmarket' ||
-      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket')))
+      module === 'restaurants' ||
+      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket' || action === 'access_restaurants')))
   ) {
     return true;
   }

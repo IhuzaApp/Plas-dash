@@ -319,7 +319,8 @@ export function hasPrivilege(
     (module === 'referrals' ||
       module === 'help' ||
       module === 'plasmarket' ||
-      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket')))
+      module === 'restaurants' ||
+      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket' || action === 'access_restaurants')))
   ) {
     return true;
   }

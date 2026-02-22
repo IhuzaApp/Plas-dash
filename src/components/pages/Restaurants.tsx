@@ -25,8 +25,10 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import { useRestaurants } from '@/hooks/useHasuraApi';
+import { useRestaurants, useUpdateRestaurant } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import Pagination from '@/components/ui/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -39,6 +41,23 @@ const Restaurants = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const { hasAction } = usePrivilege();
+  const queryClient = useQueryClient();
+  const updateRestaurantMutation = useUpdateRestaurant();
+
+  const handleApprove = async (id: string) => {
+    try {
+      await updateRestaurantMutation.mutateAsync({
+        id,
+        is_active: true,
+        verified: true,
+      });
+      toast.success('Restaurant approved successfully');
+      queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+    } catch (err: any) {
+      toast.error('Failed to approve restaurant');
+      console.error(err);
+    }
+  };
 
   const formatDateTime = (dateString: string) => {
     return format(new Date(dateString), 'MMM d, yyyy HH:mm');
@@ -235,15 +254,46 @@ const Restaurants = () => {
                     <TableCell>{formatDateTime(restaurant.created_at)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        {hasAction('restaurants', 'view_restaurant_details') && (
-                          <Button variant="ghost" size="sm">
-                            View Details
-                          </Button>
-                        )}
-                        {hasAction('restaurants', 'edit_restaurants') && (
-                          <Button variant="ghost" size="sm">
-                            Edit
-                          </Button>
+                        {(!restaurant.is_active || !restaurant.verified) ? (
+                          <>
+                            {hasAction('restaurants', 'view_restaurant_details') && (
+                              <Button variant="ghost" size="sm">
+                                View Details
+                              </Button>
+                            )}
+                            {hasAction('restaurants', 'edit_restaurants') && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => handleApprove(restaurant.id)}
+                                disabled={updateRestaurantMutation.isPending}
+                              >
+                                {updateRestaurantMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                ) : null}
+                                Approve
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {hasAction('restaurants', 'view_restaurant_details') && (
+                              <Button variant="ghost" size="sm">
+                                View Details
+                              </Button>
+                            )}
+                            {hasAction('restaurants', 'edit_restaurants') && (
+                              <Button variant="outline" size="sm">
+                                Edit
+                              </Button>
+                            )}
+                            {hasAction('restaurants', 'edit_restaurants') && (
+                              <Button variant="destructive" size="sm">
+                                Disable
+                              </Button>
+                            )}
+                          </>
                         )}
                       </div>
                     </TableCell>

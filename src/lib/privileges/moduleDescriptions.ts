@@ -584,6 +584,13 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     description: 'Manage restaurant listings and menus',
     actions: [
       { key: 'access', label: 'Access Restaurants', description: 'Can access restaurants page' },
+      { key: 'view_restaurants', label: 'View Restaurants', description: 'Can view restaurant listings' },
+      { key: 'add_restaurants', label: 'Add Restaurants', description: 'Can add new restaurants' },
+      { key: 'edit_restaurants', label: 'Edit Restaurants', description: 'Can edit restaurant details' },
+      { key: 'delete_restaurants', label: 'Delete Restaurants', description: 'Can delete restaurants' },
+      { key: 'view_restaurant_details', label: 'View Details', description: 'Can view detailed restaurant info' },
+      { key: 'manage_restaurant_settings', label: 'Manage Settings', description: 'Can manage restaurant settings' },
+      { key: 'view_restaurant_performance', label: 'View Performance', description: 'Can view restaurant performance' },
     ],
   },
   pages: {

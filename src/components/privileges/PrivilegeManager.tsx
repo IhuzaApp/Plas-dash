@@ -628,12 +628,32 @@ const MODULE_DESCRIPTIONS: Record<
   restaurants: {
     title: 'Restaurants',
     description: 'Manage restaurant listings',
-    actions: [{ key: 'access', label: 'Access', description: 'Can access restaurants' }],
+    actions: [
+      { key: 'access', label: 'Access', description: 'Can access restaurants' },
+      { key: 'view_restaurants', label: 'View Restaurants', description: 'Can view restaurant listings' },
+      { key: 'add_restaurants', label: 'Add Restaurants', description: 'Can add new restaurants' },
+      { key: 'edit_restaurants', label: 'Edit Restaurants', description: 'Can edit restaurant details' },
+      { key: 'delete_restaurants', label: 'Delete Restaurants', description: 'Can delete restaurants' },
+      { key: 'view_restaurant_details', label: 'View Details', description: 'Can view detailed restaurant info' },
+      { key: 'manage_restaurant_settings', label: 'Manage Settings', description: 'Can manage restaurant settings' },
+      { key: 'view_restaurant_performance', label: 'View Performance', description: 'Can view restaurant performance' },
+    ],
   },
   pages: {
     title: 'Pages',
     description: 'Manage custom pages',
     actions: [{ key: 'access', label: 'Access', description: 'Can access pages' }],
+  },
+  plasmarket: {
+    title: 'PlasMarket',
+    description: 'Manage the business directory and global marketplace',
+    actions: [
+      { key: 'access', label: 'Access PlasMarket', description: 'Can view the PlasMarket dashboard' },
+      { key: 'view_businesses', label: 'View Businesses', description: 'Can view individual business accounts' },
+      { key: 'manage_status', label: 'Manage Account Status', description: 'Can put business accounts on hold or re-activate them' },
+      { key: 'export_data', label: 'Export Data', description: 'Can export business directories to CSV' },
+      { key: 'delete_business', label: 'Delete Business', description: 'Can permanently delete business accounts' }
+    ]
   },
 };
 
