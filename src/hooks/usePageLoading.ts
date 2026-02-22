@@ -79,15 +79,14 @@ export const usePageLoading = () => {
     const originalReplaceState = window.history.replaceState;
 
     window.history.pushState = function (...args) {
-      handleStart();
+      setTimeout(() => handleStart(), 0);
       return originalPushState.apply(this, args);
     };
 
     window.history.replaceState = function (...args) {
-      const url = args[2];
       // Only trigger if the path or search actually changes (ignore state-only updates if possible)
       // For simplicity, we trigger it, and handleComplete will hide it quickly if fast.
-      handleStart();
+      setTimeout(() => handleStart(), 0);
       return originalReplaceState.apply(this, args);
     };
 

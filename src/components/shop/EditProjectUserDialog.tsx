@@ -529,6 +529,24 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                           Global System Admin
                         </div>
                       </SelectItem>
+                      <SelectItem value="support">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Support (Shops, Tickets, Shoppers, PlasMarket)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="sales">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Sales (Finance Modules)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="manager">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Manager (Users & Staff Mgmt)
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

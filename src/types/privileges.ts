@@ -30,6 +30,7 @@ export interface UserPrivileges {
   delivery_settings?: ModulePrivileges;
   pages?: ModulePrivileges;
   referrals?: ModulePrivileges;
+  plasmarket?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -289,6 +290,10 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     view_data: false,
     export_data: false,
   },
+  plasmarket: {
+    access: false,
+    view_businesses: false,
+  },
 };
 
 // Privilege check helper types
@@ -310,7 +315,8 @@ export function hasPrivilege(
     isAdminRole &&
     (module === 'referrals' ||
       module === 'help' ||
-      (module === 'pages' && (action === 'access_referrals' || action === 'access_help')))
+      module === 'plasmarket' ||
+      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket')))
   ) {
     return true;
   }

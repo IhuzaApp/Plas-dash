@@ -55,6 +55,7 @@ export interface ProjectUserPrivileges {
   // Page Access
   pages?: ProjectModulePrivileges;
   referrals?: ProjectModulePrivileges;
+  plasmarket?: ProjectModulePrivileges;
 }
 
 // Default project privileges template
@@ -415,6 +416,10 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     view_data: false,
     export_data: false,
   },
+  plasmarket: {
+    access: false,
+    view_businesses: false,
+  },
 };
 
 // Project privilege check helper types
@@ -437,7 +442,8 @@ export function hasProjectPrivilege(
     isAdminRole &&
     (module === 'referrals' ||
       module === 'help' ||
-      (module === 'pages' && (action === 'access_referrals' || action === 'access_help')))
+      module === 'plasmarket' ||
+      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket')))
   ) {
     return true;
   }

@@ -39,6 +39,7 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   Promotions: { module: 'promotions' },
   'System Settings': { module: 'settings' },
   Referrals: { module: 'referrals' },
+  PlasMarket: { module: 'plasmarket' },
 };
 
 /**

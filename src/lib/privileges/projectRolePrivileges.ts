@@ -80,6 +80,7 @@ export const getDefaultProjectPrivilegesForRole = (
         // Page Access
         'pages',
         'referrals',
+        'plasmarket',
       ];
 
       globalAdminModules.forEach(module => {
@@ -108,6 +109,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'delivery_settings',
         'promotions',
         'settings',
+        'plasmarket',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -161,6 +163,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'help',
         'dashboard',
         'promotions',
+        'plasmarket',
       ];
       projectManagerModules.forEach(module => {
         if (privileges[module]) {
@@ -250,6 +253,89 @@ export const getDefaultProjectPrivilegesForRole = (
       break;
     }
 
+    case 'support': {
+      const supportModules: ProjectPrivilegeKey[] = [
+        'shops',
+        'tickets',
+        'shoppers',
+        'plasmarket',
+      ];
+      supportModules.forEach(module => {
+        if (privileges[module]) {
+          privileges[module]!.access = true;
+          Object.keys(privileges[module]!).forEach(action => {
+            if (
+              action === 'access' ||
+              action.includes('view') ||
+              action.includes('manage') ||
+              action.includes('create') ||
+              action.includes('edit') ||
+              action.includes('resolve') ||
+              action.includes('process')
+            ) {
+              privileges[module]![action] = true;
+            }
+          });
+        }
+      });
+      break;
+    }
+
+    case 'sales': {
+      const salesModules: ProjectPrivilegeKey[] = [
+        'financial_overview',
+        'transactions',
+        'wallet',
+        'refunds',
+        'company_dashboard',
+      ];
+      salesModules.forEach(module => {
+        if (privileges[module]) {
+          privileges[module]!.access = true;
+          Object.keys(privileges[module]!).forEach(action => {
+            if (
+              action === 'access' ||
+              action.includes('view') ||
+              action.includes('manage') ||
+              action.includes('export') ||
+              action.includes('process') ||
+              action.includes('generate')
+            ) {
+              privileges[module]![action] = true;
+            }
+          });
+        }
+      });
+      break;
+    }
+
+    case 'manager': {
+      const managerModules: ProjectPrivilegeKey[] = [
+        'project_users',
+        'users',
+        'staff_management',
+      ];
+      managerModules.forEach(module => {
+        if (privileges[module]) {
+          privileges[module]!.access = true;
+          Object.keys(privileges[module]!).forEach(action => {
+            if (
+              action === 'access' ||
+              action.includes('view') ||
+              action.includes('manage') ||
+              action.includes('create') ||
+              action.includes('edit') ||
+              action.includes('assign') ||
+              action.includes('add')
+            ) {
+              privileges[module]![action] = true;
+            }
+          });
+        }
+      });
+      break;
+    }
+
     default:
       // No privileges for unknown roles
       break;
@@ -264,6 +350,9 @@ export const PROJECT_ROLE_TYPES = [
   'systemAdmin',
   'projectManager',
   'customerSupport',
+  'support',
+  'sales',
+  'manager',
 ] as const;
 
 export type ProjectRoleType = (typeof PROJECT_ROLE_TYPES)[number];
