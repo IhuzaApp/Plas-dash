@@ -18,8 +18,7 @@ import { Loader2, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { hasuraRequest } from '@/lib/hasura';
-import { GET_ALL_PENDING_WITHDRAW_REQUESTS, GET_ALL_PENDING_PAYOUTS } from '@/lib/graphql/queries';
+import { apiGet } from '@/lib/api';
 import WithdrawRequestApprovalDialog, {
     type RequestItem,
     type WithdrawRequestData,
@@ -124,18 +123,15 @@ const WithdrawRequests = () => {
     // ── Data fetching ─────────────────────────────────────────────────────────
     const withdrawQuery = useQuery({
         queryKey: ['pendingWithdrawRequests'],
-        queryFn: async () => {
-            const res = await hasuraRequest(GET_ALL_PENDING_WITHDRAW_REQUESTS);
-            return res.withDraweRequest as WithdrawRequest[];
-        },
+        queryFn: () =>
+            apiGet<{ requests: WithdrawRequest[] }>('/api/queries/pending-withdraw-requests')
+                .then(r => r.requests),
     });
 
     const payoutsQuery = useQuery({
         queryKey: ['pendingPayouts'],
-        queryFn: async () => {
-            const res = await hasuraRequest(GET_ALL_PENDING_PAYOUTS);
-            return res.payouts as Payout[];
-        },
+        queryFn: () =>
+            apiGet<{ payouts: Payout[] }>('/api/queries/pending-payouts').then(r => r.payouts),
     });
 
     // ── Handlers ─────────────────────────────────────────────────────────────

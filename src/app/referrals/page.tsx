@@ -17,8 +17,6 @@ import {
 import { format } from 'date-fns';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPatch } from '@/lib/api';
-import { hasuraRequest } from '@/lib/hasura';
-import { GET_WALLET_TOTALS, GET_PENDING_ORDER_TOTALS } from '@/lib/graphql/queries';
 import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
@@ -56,45 +54,20 @@ export default function ReferralsPage() {
     // Wallet totals
     const { data: walletData, isLoading: walletLoading } = useQuery({
         queryKey: ['wallet-totals'],
-        queryFn: async () => {
-            const res = (await hasuraRequest(GET_WALLET_TOTALS)) as unknown as {
-                Wallets: { available_balance: string }[];
-                business_wallet: { amount: string }[];
-                personalWallet: { balance: string }[];
-            };
-            const sumArr = (arr: { [k: string]: string }[], key: string) =>
-                (arr ?? []).reduce((acc, r) => acc + parseFloat(r[key] ?? '0'), 0);
-            const personal = sumArr(res.Wallets, 'available_balance');
-            const personalW = sumArr(res.personalWallet as any, 'balance');
-            const business = sumArr(res.business_wallet, 'amount');
-            return { walletBalance: personal + personalW, businessBalance: business };
-        },
+        queryFn: () =>
+            apiGet<{ walletBalance: number; businessBalance: number; total: number }>(
+                '/api/queries/wallet-totals'
+            ),
         staleTime: 2 * 60 * 1000,
     });
 
     // Pending order totals
     const { data: pendingData, isLoading: pendingLoading } = useQuery({
         queryKey: ['pending-order-totals'],
-        queryFn: async () => {
-            const res = (await hasuraRequest(GET_PENDING_ORDER_TOTALS)) as unknown as {
-                Orders: { total: string; delivery_fee: string; service_fee: string }[];
-                reel_orders: { total: string; delivery_fee: string; service_fee: string }[];
-                restaurant_orders: { total: string; delivery_fee: string }[];
-                businessProductOrders: { total: string; service_fee: string; transportation_fee: string }[];
-            };
-            const sumFields = (arr: Record<string, string>[], ...keys: string[]) =>
-                (arr ?? []).reduce(
-                    (acc, row) => acc + keys.reduce((s, k) => s + parseFloat(row[k] ?? '0'), 0),
-                    0
-                );
-            return {
-                total:
-                    sumFields(res.Orders as any, 'total', 'delivery_fee', 'service_fee') +
-                    sumFields(res.reel_orders as any, 'total', 'delivery_fee', 'service_fee') +
-                    sumFields(res.restaurant_orders as any, 'total', 'delivery_fee') +
-                    sumFields(res.businessProductOrders as any, 'total', 'service_fee', 'transportation_fee'),
-            };
-        },
+        queryFn: () =>
+            apiGet<{ total: number; breakdown: Record<string, number> }>(
+                '/api/queries/pending-order-totals'
+            ),
         staleTime: 2 * 60 * 1000,
     });
 
@@ -122,8 +95,7 @@ export default function ReferralsPage() {
 
     const referralData = data?.Referral_window ?? [];
 
-    const totalWalletBalance =
-        (walletData?.walletBalance ?? 0) + (walletData?.businessBalance ?? 0);
+    const totalWalletBalance = walletData?.total ?? 0;
     const pendingOrdersTotal = pendingData?.total ?? 0;
 
     const stats = useMemo(() => {

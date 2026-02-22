@@ -17,8 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
-import { hasuraRequest } from '@/lib/hasura';
-import { GET_ALL_REVENUE } from '@/lib/graphql/queries';
+import { apiGet } from '@/lib/api';
 import { format, parseISO, startOfMonth, startOfYear, getYear } from 'date-fns';
 import { Loader2, TrendingUp } from 'lucide-react';
 
@@ -96,10 +95,8 @@ const RevenueTrendChart = () => {
 
     const { data, isLoading } = useQuery({
         queryKey: ['revenue-all'],
-        queryFn: async () => {
-            const res = (await hasuraRequest(GET_ALL_REVENUE)) as unknown as { Revenue: RevenueRecord[] };
-            return res.Revenue;
-        },
+        queryFn: () =>
+            apiGet<{ Revenue: RevenueRecord[] }>('/api/queries/revenue').then(r => r.Revenue),
         staleTime: 5 * 60 * 1000,
     });
 

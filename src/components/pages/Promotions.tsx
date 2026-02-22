@@ -15,7 +15,8 @@ import { Card } from '@/components/ui/card';
 import { Search, Filter, Plus, Loader2, RefreshCw, CalendarIcon, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
-import { GET_PROMOTIONS, CREATE_PROMOTION, UPDATE_PROMOTION } from '@/lib/graphql/queries';
+import { CREATE_PROMOTION, UPDATE_PROMOTION } from '@/lib/graphql/queries';
+import { apiGet } from '@/lib/api';
 import {
   Sheet,
   SheetContent,
@@ -132,10 +133,8 @@ const Promotions = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['promotions'],
-    queryFn: async () => {
-      const response = await hasuraRequest<PromotionsResponse>(GET_PROMOTIONS);
-      return response.promotions;
-    },
+    queryFn: () =>
+      apiGet<{ promotions: Promotion[] }>('/api/queries/promotions').then(r => r.promotions),
   });
 
   const filteredPromotions = useMemo(() => {
@@ -377,13 +376,12 @@ const Promotions = () => {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          promotion.status === 'active'
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${promotion.status === 'active'
                             ? 'bg-green-100 text-green-800'
                             : promotion.status === 'scheduled'
                               ? 'bg-blue-100 text-blue-800'
                               : 'bg-gray-100 text-gray-800'
-                        }`}
+                          }`}
                       >
                         {promotion.status}
                       </span>
