@@ -111,6 +111,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           parseFloat(o.total || '0') +
           parseFloat(o.service_fee || '0') +
           parseFloat(o.delivery_fee || '0'),
+        service_fee: o.service_fee,
+        delivery_fee: o.delivery_fee,
         shop_id: o.shop_id,
         shopper_id: o.shopper_id,
         shop: null,

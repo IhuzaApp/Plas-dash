@@ -133,14 +133,21 @@ export async function GET(req: Request) {
       return NextResponse.json({ orders: [] });
     }
 
+    let enriched_count = 0;
     const enriched = orders.map(o => {
       const agg = o.Order_Items_aggregate?.aggregate;
       const itemsCount = agg?.count ?? o.Order_Items?.length ?? 0;
       const unitsCount =
-        agg?.sum?.quantity ?? o.Order_Items?.reduce((s, i) => s + i.quantity, 0) ?? 0;
+        agg?.sum?.quantity ?? o.Order_Items?.reduce((s: number, i: any) => s + i.quantity, 0) ?? 0;
       const baseTotal = parseFloat(o.total || '0');
       const serviceFee = parseFloat(o.service_fee || '0');
       const deliveryFee = parseFloat(o.delivery_fee || '0');
+
+      if (enriched_count < 3) {
+        console.log(`Order ${o.OrderID}: base=${baseTotal}, service=${serviceFee}, delivery=${deliveryFee}, raw_service=${o.service_fee}, raw_delivery=${o.delivery_fee}`);
+        enriched_count++;
+      }
+
       const grandTotal = baseTotal + serviceFee + deliveryFee;
       return {
         id: o.id,
@@ -155,7 +162,9 @@ export async function GET(req: Request) {
         combined_order_id: o.combined_order_id,
         discount: o.discount,
         voucher_code: o.voucher_code,
-        total: grandTotal,
+        total: grandTotal.toString(),
+        service_fee: o.service_fee?.toString() || '0',
+        delivery_fee: o.delivery_fee?.toString() || '0',
         shop_id: o.shop_id,
         shopper_id: o.shopper_id,
         shop: o.Shop ?? null,
@@ -165,11 +174,11 @@ export async function GET(req: Request) {
         shopper:
           o.Shoppers != null
             ? {
-                id: o.Shoppers.id ?? '',
-                name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
-                phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
-                email: '',
-              }
+              id: o.Shoppers.id ?? '',
+              name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
+              phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
+              email: '',
+            }
             : undefined,
         itemsCount,
         unitsCount,
