@@ -74,32 +74,14 @@ export const usePageLoading = () => {
       handleStart();
     };
 
-    // Patch history API for programmatic navigation (router.push/replace)
-    const originalPushState = window.history.pushState;
-    const originalReplaceState = window.history.replaceState;
-
-    window.history.pushState = function (...args) {
-      setTimeout(() => handleStart(), 0);
-      return originalPushState.apply(this, args);
-    };
-
-    window.history.replaceState = function (...args) {
-      // Only trigger if the path or search actually changes (ignore state-only updates if possible)
-      // For simplicity, we trigger it, and handleComplete will hide it quickly if fast.
-      setTimeout(() => handleStart(), 0);
-      return originalReplaceState.apply(this, args);
-    };
-
     window.addEventListener('click', handleAnchorClick);
     window.addEventListener('popstate', handlePopState);
 
     // This effect runs on route changes (pathname/searchParams change)
-    // We stop the progress bar here if it was started by a click or pushState
+    // We stop the progress bar here if it was started by a click
     handleComplete();
 
     return () => {
-      window.history.pushState = originalPushState;
-      window.history.replaceState = originalReplaceState;
       window.removeEventListener('click', handleAnchorClick);
       window.removeEventListener('popstate', handlePopState);
       handleComplete();

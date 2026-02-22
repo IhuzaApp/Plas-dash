@@ -17,15 +17,19 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { apiGet } from '@/lib/api';
+import { useSystemConfig } from '@/hooks/useSystemConfig';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
-    PieChart, Pie, Cell, LineChart, Line
+    PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
 } from 'recharts';
 
 export default function BusinessProfilePage() {
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
+
+    const { data: configData } = useSystemConfig();
+    const currency = configData?.currency || '$';
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['plasmarket-business', id],
@@ -63,7 +67,57 @@ export default function BusinessProfilePage() {
         return Object.keys(orderCounts).map(date => ({
             name: date,
             orders: orderCounts[date]
-        })).slice(-10); // Last 10 days
+        })).sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime()).slice(-10); // Last 10 days
+    };
+
+    const getProductChartData = () => {
+        if (!data || !data.raw_data || !data.raw_data.stores) return [];
+        const categoryCounts: Record<string, number> = {};
+        data.raw_data.stores.forEach((store: any) => {
+            const products = store.PlasBusinessProductsOrSerives || [];
+            products.forEach((p: any) => {
+                const cat = p.category || 'Uncategorized';
+                categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+            });
+        });
+        return Object.keys(categoryCounts).map(cat => ({
+            name: cat,
+            value: categoryCounts[cat]
+        }));
+    };
+
+    const getContractChartData = () => {
+        if (!data || !data.raw_data || !data.raw_data.allContracts) return [];
+        const statusCounts: Record<string, number> = {};
+        data.raw_data.allContracts.forEach((c: any) => {
+            // Usually capitalize status
+            const status = c.status ? c.status.charAt(0).toUpperCase() + c.status.slice(1) : 'Unknown';
+            statusCounts[status] = (statusCounts[status] || 0) + 1;
+        });
+        return Object.keys(statusCounts).map(s => ({
+            name: s,
+            value: statusCounts[s]
+        }));
+    };
+
+    const getRfqVsQuotesData = () => {
+        if (!data || !data.raw_data || !data.raw_data.rfqs) return [];
+
+        let pendingContracts = 0;
+        let ongoingContracts = 0;
+
+        data.raw_data.allContracts?.forEach((c: any) => {
+            const lowerStatus = (c.status || '').toLowerCase();
+            if (lowerStatus.includes('pend')) pendingContracts++;
+            if (lowerStatus.includes('ongoing') || lowerStatus.includes('active') || lowerStatus.includes('sign')) ongoingContracts++;
+        });
+
+        return [
+            { name: 'RFQs Issued', value: data.rfqs_count || 0 },
+            { name: 'Quotes Submitted', value: data.quotes_count || 0 },
+            { name: 'Pending Contracts', value: pendingContracts },
+            { name: 'Ongoing/Signed Contracts', value: ongoingContracts },
+        ];
     };
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -103,6 +157,9 @@ export default function BusinessProfilePage() {
 
     const { stores, rfqs, wallets, allOrders } = data.raw_data;
     const orderChartData = getOrderChartData();
+    const productChartData = getProductChartData();
+    const contractChartData = getContractChartData();
+    const rfqVsQuotesData = getRfqVsQuotesData();
 
     return (
         <ProtectedRoute requiredModules={['plasmarket']}>
@@ -228,38 +285,99 @@ export default function BusinessProfilePage() {
                                 <CardContent className="pt-6">
 
                                     {/* OVERVIEW TAB */}
+                                    {/* OVERVIEW TAB */}
                                     <TabsContent value="overview" className="space-y-6">
                                         <div className="grid gap-6 md:grid-cols-2">
+                                            {/* Order Trends */}
                                             <div className="space-y-2">
                                                 <h4 className="text-sm font-medium">Order Trends (Last 10 Days)</h4>
                                                 <div className="h-[250px] w-full border rounded-md p-4 bg-muted/20">
                                                     {orderChartData.length > 0 ? (
                                                         <ResponsiveContainer width="100%" height="100%">
-                                                            <BarChart data={orderChartData}>
+                                                            <AreaChart data={orderChartData}>
+                                                                <defs>
+                                                                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                                                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                                                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                                    </linearGradient>
+                                                                </defs>
                                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                                                                 <XAxis dataKey="name" fontSize={12} tickMargin={8} />
                                                                 <YAxis fontSize={12} allowDecimals={false} />
-                                                                <RechartsTooltip
-                                                                    contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                                                />
-                                                                <Bar dataKey="orders" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                                            </BarChart>
+                                                                <RechartsTooltip contentStyle={{ borderRadius: '8px' }} />
+                                                                <Area type="monotone" dataKey="orders" stroke="#3b82f6" fillOpacity={1} fill="url(#colorOrders)" />
+                                                            </AreaChart>
                                                         </ResponsiveContainer>
                                                     ) : (
-                                                        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                                                            No recent order data available
-                                                        </div>
+                                                        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No recent order data</div>
                                                     )}
                                                 </div>
                                             </div>
 
+                                            {/* Top Products/Services Chart */}
                                             <div className="space-y-2">
-                                                <h4 className="text-sm font-medium">Status Distribution</h4>
-                                                <div className="h-[250px] w-full border rounded-md p-4 bg-muted/20 flex flex-col items-center justify-center">
-                                                    <Activity className="h-8 w-8 text-primary/40 mb-2" />
-                                                    <p className="text-sm text-muted-foreground text-center px-4">
-                                                        This business is currently <strong>{data.status}</strong>. Advanced analytics will appear here as the business becomes more active.
-                                                    </p>
+                                                <h4 className="text-sm font-medium">Provided Products/Services by Category</h4>
+                                                <div className="h-[250px] w-full border rounded-md p-4 bg-muted/20">
+                                                    {productChartData.length > 0 ? (
+                                                        <ResponsiveContainer width="100%" height="100%">
+                                                            <PieChart>
+                                                                <Pie data={productChartData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                                                                    {productChartData.map((entry, index) => (
+                                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                    ))}
+                                                                </Pie>
+                                                                <RechartsTooltip contentStyle={{ borderRadius: '8px' }} />
+                                                                <Legend verticalAlign="bottom" height={36} />
+                                                            </PieChart>
+                                                        </ResponsiveContainer>
+                                                    ) : (
+                                                        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No product data</div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Contract Status Chart */}
+                                            <div className="space-y-2">
+                                                <h4 className="text-sm font-medium">Contracts Overview</h4>
+                                                <div className="h-[250px] w-full border rounded-md p-4 bg-muted/20">
+                                                    {contractChartData.length > 0 ? (
+                                                        <ResponsiveContainer width="100%" height="100%">
+                                                            <PieChart>
+                                                                <Pie data={contractChartData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                                                    {contractChartData.map((entry, index) => (
+                                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                    ))}
+                                                                </Pie>
+                                                                <RechartsTooltip contentStyle={{ borderRadius: '8px' }} />
+                                                            </PieChart>
+                                                        </ResponsiveContainer>
+                                                    ) : (
+                                                        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No contract data</div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* RFQ vs Quotes */}
+                                            <div className="space-y-2">
+                                                <h4 className="text-sm font-medium">RFQs & Quotes Pipeline</h4>
+                                                <div className="h-[250px] w-full border rounded-md p-4 bg-muted/20">
+                                                    {rfqVsQuotesData.length > 0 ? (
+                                                        <ResponsiveContainer width="100%" height="100%">
+                                                            <BarChart data={rfqVsQuotesData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} opacity={0.3} />
+                                                                <XAxis type="number" fontSize={12} allowDecimals={false} />
+                                                                <YAxis dataKey="name" type="category" width={100} fontSize={11} />
+                                                                <RechartsTooltip contentStyle={{ borderRadius: '8px' }} />
+                                                                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                                                                    {rfqVsQuotesData.map((entry, index) => (
+                                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                    ))}
+                                                                </Bar>
+                                                            </BarChart>
+                                                        </ResponsiveContainer>
+                                                    ) : (
+                                                        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No RFQ data</div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -279,7 +397,11 @@ export default function BusinessProfilePage() {
                                             </TableHeader>
                                             <TableBody>
                                                 {stores?.length > 0 ? stores.map((store: any) => (
-                                                    <TableRow key={store.id}>
+                                                    <TableRow
+                                                        key={store.id}
+                                                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                                        onClick={() => router.push(`/plasmarket/store/${store.id}`)}
+                                                    >
                                                         <TableCell className="font-medium">
                                                             {store.name}
                                                             <div className="text-xs text-muted-foreground truncate max-w-[200px]">{store.description}</div>
@@ -322,7 +444,7 @@ export default function BusinessProfilePage() {
                                                             <div className="text-xs text-muted-foreground">{new Date(rfq.created_at).toLocaleDateString()}</div>
                                                         </TableCell>
                                                         <TableCell>{rfq.category || 'N/A'}</TableCell>
-                                                        <TableCell>{rfq.min_budget ? `$${rfq.min_budget} - $${rfq.max_budget}` : 'Not specified'}</TableCell>
+                                                        <TableCell>{rfq.min_budget ? `${currency}${rfq.min_budget} - ${currency}${rfq.max_budget}` : 'Not specified'}</TableCell>
                                                         <TableCell>{rfq.BusinessQoutes?.length || 0}</TableCell>
                                                         <TableCell>
                                                             <Badge variant={rfq.open ? 'default' : 'secondary'}>
@@ -351,7 +473,7 @@ export default function BusinessProfilePage() {
                                                             </div>
                                                             <div>
                                                                 <p className="text-sm font-medium text-muted-foreground">Wallet Balance</p>
-                                                                <p className="text-2xl font-bold">${wallet.amount ? Number(wallet.amount).toFixed(2) : '0.00'}</p>
+                                                                <p className="text-2xl font-bold">{currency}{wallet.amount ? Number(wallet.amount).toFixed(2) : '0.00'}</p>
                                                             </div>
                                                         </div>
                                                         <div className="text-right">

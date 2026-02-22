@@ -12,6 +12,11 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { apiGet } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+    PieChart, Pie, Cell, Legend, BarChart, Bar
+} from 'recharts';
 import Link from 'next/link';
 
 interface BusinessAccount {
@@ -31,10 +36,16 @@ interface BusinessAccount {
         email: string;
         phone: string;
     } | null;
+    raw_data: {
+        stores: any[];
+        rfqs: any[];
+        account_type: string;
+    };
 }
 
 export default function PlasMarketPage() {
     const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['adminPlasMarketBusinesses'],
@@ -66,16 +77,84 @@ export default function PlasMarketPage() {
 
     const businesses = data || [];
 
-    const filteredBusinesses = businesses.filter(biz =>
-        biz.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        biz.business_email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredBusinesses = businesses.filter(biz => {
+        const matchesSearch = biz.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            biz.business_email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        if (statusFilter === 'all') return true;
+        if (statusFilter === 'pending') return ['in_review', 'pending'].includes(biz.status?.toLowerCase());
+        if (statusFilter === 'accepted') return ['processed', 'approved', 'active', 'accepted'].includes(biz.status?.toLowerCase());
+        if (statusFilter === 'rejected') return ['rejected', 'on_hold', 'suspended'].includes(biz.status?.toLowerCase());
+
+        return true;
+    });
+
+    // Chart Data Parsing
+    const getTrendData = () => {
+        const counts: Record<string, number> = {};
+        businesses.forEach(biz => {
+            const date = new Date(biz.created_at).toLocaleDateString();
+            counts[date] = (counts[date] || 0) + 1;
+        });
+        return Object.keys(counts).map(date => ({
+            name: date,
+            registrations: counts[date]
+        })).sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime()).slice(-15);
+    };
+
+    const getCategoryData = () => {
+        const counts: Record<string, number> = {};
+        businesses.forEach(biz => {
+            biz.raw_data?.stores?.forEach(store => {
+                const cat = store.Category?.name || 'Uncategorized';
+                counts[cat] = (counts[cat] || 0) + 1;
+            });
+        });
+        return Object.keys(counts).map(cat => ({
+            name: cat,
+            value: counts[cat]
+        }));
+    };
+
+    const getAccountTypeData = () => {
+        const counts: Record<string, number> = {};
+        businesses.forEach(biz => {
+            const type = biz.raw_data?.account_type || 'Retail';
+            // capitalize
+            const displayType = type.charAt(0).toUpperCase() + type.slice(1);
+            counts[displayType] = (counts[displayType] || 0) + 1;
+        });
+        return Object.keys(counts).map(type => ({
+            name: type,
+            value: counts[type]
+        }));
+    };
+
+    const getTopSellersData = () => {
+        return [...businesses]
+            .sort((a, b) => Number(b.orders_count) - Number(a.orders_count))
+            .slice(0, 5)
+            .map(biz => ({
+                name: biz.business_name.length > 15 ? biz.business_name.substring(0, 15) + '...' : biz.business_name,
+                orders: Number(biz.orders_count)
+            }));
+    };
+
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+    const trendData = getTrendData();
+    const categoryData = getCategoryData();
+    const accountTypeData = getAccountTypeData();
+    const topSellersData = getTopSellersData();
 
     const getStatusBadge = (status: string) => {
         switch (status?.toLowerCase()) {
             case 'processed':
             case 'approved':
             case 'active':
+            case 'accepted':
                 return <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">{status}</Badge>;
             case 'in_review':
             case 'pending':
@@ -96,7 +175,7 @@ export default function PlasMarketPage() {
                 <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight">PlasMarket</h1>
+                            <h1 className="text-3xl font-bold tracking-tight">Plas Market Place</h1>
                             <p className="text-muted-foreground">Manage and monitor all business accounts across the platform.</p>
                         </div>
                     </div>
@@ -129,7 +208,7 @@ export default function PlasMarketPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
-                                    {businesses.filter(b => b.status === 'processed' || b.status === 'approved' || b.status === 'active').length}
+                                    {businesses.filter(b => b.status === 'processed' || b.status === 'approved' || b.status === 'active' || b.status === 'accepted').length}
                                 </div>
                             </CardContent>
                         </Card>
@@ -146,16 +225,134 @@ export default function PlasMarketPage() {
                         </Card>
                     </div>
 
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
+                        {/* Registration Trend */}
+                        <Card className="lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle className="text-sm font-medium">Business Registrations</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-[250px] w-full mt-2">
+                                    {trendData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={trendData}>
+                                                <defs>
+                                                    <linearGradient id="colorReg" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                                                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                                                <XAxis dataKey="name" fontSize={12} tickMargin={8} />
+                                                <YAxis fontSize={12} allowDecimals={false} />
+                                                <RechartsTooltip contentStyle={{ borderRadius: '8px' }} />
+                                                <Area type="monotone" dataKey="registrations" stroke="#8884d8" fillOpacity={1} fill="url(#colorReg)" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No registration data</div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Top Sellers */}
+                        <Card className="lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle className="text-sm font-medium">Top Sellers (by Orders)</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-[250px] w-full mt-2">
+                                    {topSellersData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={topSellersData} layout="vertical" margin={{ left: 20 }}>
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
+                                                <XAxis type="number" fontSize={12} allowDecimals={false} />
+                                                <YAxis dataKey="name" type="category" width={100} fontSize={10} tickMargin={5} />
+                                                <RechartsTooltip contentStyle={{ borderRadius: '8px' }} />
+                                                <Bar dataKey="orders" fill="#00C49F" radius={[0, 4, 4, 0]} barSize={20} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No order data yet</div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Category Distribution */}
+                        <Card className="lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle className="text-sm font-medium">Category Distribution</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-[250px] w-full mt-2">
+                                    {categoryData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                                                    {categoryData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <RechartsTooltip contentStyle={{ borderRadius: '8px' }} />
+                                                <Legend verticalAlign="bottom" height={36} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No category data</div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Account Types */}
+                        <Card className="lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle className="text-sm font-medium">Account Types</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-[250px] w-full mt-2">
+                                    {accountTypeData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie data={accountTypeData} cx="50%" cy="50%" innerRadius={0} outerRadius={80} paddingAngle={2} dataKey="value">
+                                                    {accountTypeData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <RechartsTooltip contentStyle={{ borderRadius: '8px' }} />
+                                                <Legend verticalAlign="bottom" height={36} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No account type data</div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
                     <Card>
-                        <CardHeader>
-                            <div className="flex justify-between items-center">
+                        <CardHeader className="pb-4">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <CardTitle>Business Directories</CardTitle>
-                                <div className="w-[300px]">
-                                    <Input
-                                        placeholder="Search businesses..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <Tabs defaultValue="all" value={statusFilter} onValueChange={setStatusFilter}>
+                                        <TabsList>
+                                            <TabsTrigger value="all">All</TabsTrigger>
+                                            <TabsTrigger value="pending">Review</TabsTrigger>
+                                            <TabsTrigger value="active">Active</TabsTrigger>
+                                            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                                        </TabsList>
+                                    </Tabs>
+                                    <div className="w-[300px]">
+                                        <Input
+                                            placeholder="Search businesses..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </CardHeader>
