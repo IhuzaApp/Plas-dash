@@ -144,6 +144,10 @@ export const getDefaultProjectPrivilegesForRole = (
             ) {
               privileges[module]![action] = false;
             }
+            // Allow System Admin to delete users, but NOT shops/businesses for safety
+            if (action === 'delete_business') {
+              privileges[module]![action] = false;
+            }
           });
         }
       });
@@ -194,7 +198,9 @@ export const getDefaultProjectPrivilegesForRole = (
               action.includes('debug') ||
               action.includes('maintenance') ||
               action.includes('configure') ||
-              action.includes('set')
+              action.includes('set') ||
+              action === 'manage_status' ||
+              action === 'delete_business'
             ) {
               privileges[module]![action] = false;
             }
@@ -243,7 +249,8 @@ export const getDefaultProjectPrivilegesForRole = (
               action.includes('configure') ||
               action.includes('set') ||
               action.includes('activate') ||
-              action.includes('deactivate')
+              action.includes('deactivate') ||
+              action === 'manage_status'
             ) {
               privileges[module]![action] = false;
             }

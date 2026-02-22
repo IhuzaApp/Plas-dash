@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { usePrivilege } from '@/hooks/usePrivilege';
 import {
     Store, User, FileText, Briefcase, ShoppingBag,
     Wallet, PieChart as PieChartIcon, Activity,
-    MapPin, Phone, Mail, Clock, ArrowLeft, Loader2
+    MapPin, Phone, Mail, Clock, ArrowLeft, Loader2, Trash2
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
@@ -26,7 +27,12 @@ import {
 export default function BusinessProfilePage() {
     const params = useParams();
     const router = useRouter();
-    const id = params.id as string;
+    const id = (params?.id as string) || '';
+
+    const queryClient = useQueryClient();
+    const { hasAction } = usePrivilege();
+    const canManageStatus = hasAction('plasmarket', 'manage_status');
+    const canDeleteBusiness = hasAction('plasmarket', 'delete_business');
 
     const { data: configData } = useSystemConfig();
     const currency = configData?.currency || '$';
@@ -46,10 +52,60 @@ export default function BusinessProfilePage() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'in_review': return <Badge variant="outline" className="text-yellow-600 border-yellow-600 bg-yellow-50">In Review</Badge>;
-            case 'processed': return <Badge variant="outline" className="text-green-600 border-green-600 bg-green-50">Processed</Badge>;
+            case 'processed':
+            case 'accepted':
+            case 'active': return <Badge variant="outline" className="text-green-600 border-green-600 bg-green-50 capitalize">{status}</Badge>;
             case 'reject': return <Badge variant="outline" className="text-red-600 border-red-600 bg-red-50">Rejected</Badge>;
             case 'on_hold': return <Badge variant="outline" className="text-orange-600 border-orange-600 bg-orange-50">On Hold</Badge>;
-            default: return <Badge variant="secondary">{status}</Badge>;
+            default: return <Badge variant="secondary" className="capitalize">{status}</Badge>;
+        }
+    };
+
+    const statusMutation = useMutation({
+        mutationFn: async (newStatus: string) => {
+            return await apiPost('/api/admin/plasmarket/status', {
+                businessId: id,
+                status: newStatus
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['plasmarket-business', id] });
+            queryClient.invalidateQueries({ queryKey: ['adminPlasMarketBusinesses'] });
+        },
+        onError: (err: any) => {
+            console.error('Failed to update status', err);
+            alert('Failed to update status: ' + err.message);
+        }
+    });
+
+    const toggleStatus = () => {
+        if (!data) return;
+        const newStatus = data.status === 'on_hold' ? 'active' : 'on_hold';
+        if (confirm(`Are you sure you want to change the status to ${newStatus}?`)) {
+            statusMutation.mutate(newStatus);
+        }
+    };
+
+    const deleteMutation = useMutation({
+        mutationFn: async () => {
+            return await apiPost('/api/admin/plasmarket/delete', {
+                businessId: id
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['adminPlasMarketBusinesses'] });
+            router.push('/plasmarket');
+        },
+        onError: (err: any) => {
+            console.error('Failed to delete business', err);
+            alert('Failed to delete business: ' + err.message);
+        }
+    });
+
+    const handleDelete = () => {
+        if (!data) return;
+        if (confirm(`CRITICAL WARNING: Are you absolutely sure you want to permanently delete the business account "${data.business_name}"? This action cannot be undone.`)) {
+            deleteMutation.mutate();
         }
     };
 
@@ -124,7 +180,7 @@ export default function BusinessProfilePage() {
 
     if (isLoading) {
         return (
-            <ProtectedRoute requiredModules={['plasmarket']}>
+            <ProtectedRoute requiredPrivilege="plasmarket">
                 <AdminLayout>
                     <div className="flex h-[50vh] items-center justify-center">
                         <div className="flex flex-col items-center gap-2">
@@ -139,7 +195,7 @@ export default function BusinessProfilePage() {
 
     if (error || !data) {
         return (
-            <ProtectedRoute requiredModules={['plasmarket']}>
+            <ProtectedRoute requiredPrivilege="plasmarket">
                 <AdminLayout>
                     <div className="p-6">
                         <Button variant="ghost" onClick={() => router.push('/plasmarket')} className="mb-4">
@@ -177,8 +233,32 @@ export default function BusinessProfilePage() {
                                 </p>
                             </div>
                         </div>
-                        <div>
+                        <div className="flex items-center gap-3">
                             {getStatusBadge(data.status)}
+                            {canManageStatus && (
+                                <Button
+                                    variant={data.status === 'on_hold' ? 'default' : 'secondary'}
+                                    size="sm"
+                                    onClick={toggleStatus}
+                                    disabled={statusMutation.isPending || deleteMutation.isPending}
+                                    className="ml-2"
+                                >
+                                    {statusMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {data.status === 'on_hold' ? 'Re-Activate Account' : 'Put On Hold'}
+                                </Button>
+                            )}
+                            {canDeleteBusiness && (
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={handleDelete}
+                                    disabled={deleteMutation.isPending || statusMutation.isPending}
+                                    className="ml-2"
+                                    title="Permanently Delete Business"
+                                >
+                                    {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                </Button>
+                            )}
                         </div>
                     </div>
 

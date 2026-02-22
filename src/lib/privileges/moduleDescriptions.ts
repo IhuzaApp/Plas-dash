@@ -591,6 +591,17 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     description: 'Manage custom pages and content',
     actions: [{ key: 'access', label: 'Access Pages', description: 'Can access pages management' }],
   },
+  plasmarket: {
+    title: 'PlasMarket',
+    description: 'Manage the business directory and global marketplace',
+    actions: [
+      { key: 'access', label: 'Access PlasMarket', description: 'Can view the PlasMarket dashboard' },
+      { key: 'view_businesses', label: 'View Businesses', description: 'Can view individual business accounts' },
+      { key: 'manage_status', label: 'Manage Account Status', description: 'Can put business accounts on hold or re-activate them' },
+      { key: 'export_data', label: 'Export Data', description: 'Can export business directories to CSV' },
+      { key: 'delete_business', label: 'Delete Business', description: 'Can permanently delete business accounts' }
+    ]
+  },
 };
 
 /**

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Store, User, FileText, Briefcase, ShoppingBag, Loader2 } from 'lucide-react';
+import { Store, User, FileText, Briefcase, ShoppingBag, Loader2, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,9 @@ import {
     PieChart, Pie, Cell, Legend, BarChart, Bar
 } from 'recharts';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 interface BusinessAccount {
     id: string;
@@ -46,6 +49,12 @@ interface BusinessAccount {
 export default function PlasMarketPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+
+    const router = useRouter();
+    const { data: configData } = useSystemConfig();
+    const currency = configData?.currency || '$';
+    const { hasAction } = usePrivilege();
+    const canExportData = hasAction('plasmarket', 'export_data');
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['adminPlasMarketBusinesses'],
@@ -169,6 +178,38 @@ export default function PlasMarketPage() {
         }
     };
 
+    const handleExport = () => {
+        if (!businesses.length) return;
+
+        const headers = ['ID', 'Business Name', 'Status', 'Owner Name', 'Owner Email', 'Created At', 'Stores Count', 'Orders Count', 'RFQs Count', 'Contracts Count'];
+
+        const csvRows = businesses.map(b => [
+            b.id,
+            `"${b.business_name || ''}"`,
+            b.status,
+            `"${b.owner?.name || ''}"`,
+            b.owner?.email || '',
+            new Date(b.created_at).toISOString(),
+            b.stores_count,
+            b.orders_count,
+            b.rfqs_count,
+            b.contracts_count
+        ]);
+
+        const csvContent = [headers.join(','), ...csvRows.map(row => row.join(','))].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `plasmarket_businesses_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <ProtectedRoute requiredPrivilege="plasmarket" requiredAction="access">
             <AdminLayout>
@@ -203,7 +244,7 @@ export default function PlasMarketPage() {
                         </Card>
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                                <CardTitle className="text-sm font-medium">Processed / Active</CardTitle>
+                                <CardTitle className="text-sm font-medium">Processed /Active</CardTitle>
                                 <Briefcase className="w-4 h-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
@@ -214,7 +255,7 @@ export default function PlasMarketPage() {
                         </Card>
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                                <CardTitle className="text-sm font-medium">Rejected / On Hold</CardTitle>
+                                <CardTitle className="text-sm font-medium">Rejected /On Hold</CardTitle>
                                 <ShoppingBag className="w-4 h-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
@@ -346,6 +387,11 @@ export default function PlasMarketPage() {
                                             <TabsTrigger value="rejected">Rejected</TabsTrigger>
                                         </TabsList>
                                     </Tabs>
+                                    {canExportData && (
+                                        <Button variant="outline" size="sm" onClick={handleExport}>
+                                            <Download className="w-4 h-4 mr-2" /> Export CSV
+                                        </Button>
+                                    )}
                                     <div className="w-[300px]">
                                         <Input
                                             placeholder="Search businesses..."

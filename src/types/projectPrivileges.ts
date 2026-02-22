@@ -419,6 +419,9 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
   plasmarket: {
     access: false,
     view_businesses: false,
+    manage_status: false,
+    delete_business: false,
+    export_data: false,
   },
 };
 
