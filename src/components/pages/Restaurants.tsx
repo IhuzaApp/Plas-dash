@@ -34,6 +34,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import RestaurantDetailsSheet from '@/components/drawers/RestaurantDetailsSheet';
+import AddRestaurantModal from '@/components/Restaurants/AddRestaurantModal';
 
 const Restaurants = () => {
   const { data, isLoading, isError, error } = useRestaurants();
@@ -42,6 +43,7 @@ const Restaurants = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
   const { hasAction } = usePrivilege();
   const queryClient = useQueryClient();
@@ -118,7 +120,7 @@ const Restaurants = () => {
         actions={
           <div className="flex gap-2">
             {hasAction('restaurants', 'add_restaurants') && (
-              <Button>
+              <Button onClick={() => setIsAddModalOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Restaurant
               </Button>
@@ -338,6 +340,14 @@ const Restaurants = () => {
         onClose={() => setIsDrawerOpen(false)}
         restaurant={selectedRestaurant}
         onApprove={handleApprove}
+      />
+
+      <AddRestaurantModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+        }}
       />
     </AdminLayout>
   );
