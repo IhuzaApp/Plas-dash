@@ -110,9 +110,6 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
                 throw new Error('Please fill in all required fields.');
             }
 
-            const token = localStorage.getItem('hasura_token');
-            if (!token) throw new Error('No authentication token found');
-
             let profilePayload = formData.profile;
             let logoPayload = formData.logo;
 
@@ -123,41 +120,29 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
                 logoPayload = await convertToBase64(uploadedLogo);
             }
 
-            // TODO: Replace with the actual API endpoint or Hasura mutation for your backend schema
-            // This is a placeholder payload for what creating a restaurant might look like.
-            const response = await fetch('/api/graphql', {
+            const variables = {
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                location: formData.location,
+                ussd: formData.ussd,
+                tin: formData.tin,
+                profile: profilePayload,
+                lat: formData.lat,
+                long: formData.long,
+                logo: logoPayload,
+                is_active: false,
+            };
+
+            const response = await fetch('/api/mutations/add-restaurant', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    query: `
-            mutation MyMutation($ussd: String = "", $tin: String = "", $profile: String = "", $phone: String = "", $name: String = "", $long: String = "", $logo: String = "", $location: String = "", $lat: String = "", $email: String = "") {
-              insert_Restaurants(objects: {verified: false, ussd: $ussd, tin: $tin, profile: $profile, phone: $phone, name: $name, long: $long, logo: $logo, location: $location, lat: $lat, email: $email, is_active: true}) {
-                affected_rows
-              }
-            }
-          `,
-                    variables: {
-                        name: formData.name,
-                        email: formData.email,
-                        phone: formData.phone,
-                        location: formData.location,
-                        ussd: formData.ussd,
-                        tin: formData.tin,
-                        profile: profilePayload,
-                        lat: formData.lat,
-                        long: formData.long,
-                        logo: logoPayload,
-                    },
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ variables }),
             });
 
-            const result = await response.json();
-
-            if (result.errors) {
-                throw new Error(result.errors[0].message || 'Failed to create restaurant');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create restaurant');
             }
 
             toast.success('Restaurant created successfully!', {
