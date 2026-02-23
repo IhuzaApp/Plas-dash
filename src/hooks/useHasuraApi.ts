@@ -1130,7 +1130,7 @@ export interface OrgEmployee {
 export interface OrgEmployeeRole {
   id: string;
   orgEmployeeID: string;
-  privillages: string[]; // Array of permission strings
+  privillages: any; // jsonb - can be an object (UserPrivileges) or array of strings (legacy)
   created_on: string;
   update_on: string;
 }
@@ -1286,7 +1286,7 @@ export function useAddEmployeeRole() {
     Error,
     {
       orgEmployeeID: string;
-      privillages: string[];
+      privillages: any;
     }
   >({
     mutationFn: variables => hasuraRequest(ADD_ORG_EMPLOYEE_ROLES, variables),
@@ -1300,7 +1300,7 @@ export function useUpdateEmployeeRole() {
     Error,
     {
       id: string;
-      privillages: string[];
+      privillages: any;
     }
   >({
     mutationFn: variables => hasuraRequest(UPDATE_ORG_EMPLOYEE_ROLE, variables),

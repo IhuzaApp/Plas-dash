@@ -38,7 +38,7 @@ import { format } from 'date-fns';
 import AddStaffDialog from '@/components/shop/AddStaffDialog';
 import StaffDetailDrawer from '@/components/shop/StaffDetailDrawer';
 import ResetPasswordModal from '@/components/shop/ResetPasswordModal';
-import StaffPrivilegeEditor from '@/components/shop/StaffPrivilegeEditor';
+import EditStaffDialog from '@/components/shop/EditStaffDialog';
 import { apiGet, apiPost } from '@/lib/api';
 import { hasuraRequest } from '@/lib/hasura';
 import { UPDATE_ORG_EMPLOYEE_ROLE, UPDATE_ORG_EMPLOYEE_PASSWORD, UPDATE_ORG_EMPLOYEE } from '@/lib/graphql/mutations';
@@ -78,7 +78,8 @@ const StaffLogin = () => {
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [isPrivilegeEditorOpen, setIsPrivilegeEditorOpen] = useState(false);
+
+  const [isEditStaffOpen, setIsEditStaffOpen] = useState(false);
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -179,7 +180,34 @@ const StaffLogin = () => {
 
   const openPrivilegeEditor = (member: StaffMember) => {
     setSelectedStaff(member);
-    setIsPrivilegeEditorOpen(true);
+    setIsEditStaffOpen(true);
+  };
+
+  const handleUpdateStaff = async (data: { id: string; employee: any; privileges: any }) => {
+    if (!selectedStaff) return;
+    try {
+      await apiPost('/api/mutations/update-employee', {
+        id: data.id,
+        roleType: data.employee.roleType || selectedStaff.roleType,
+        privileges: data.privileges,
+      });
+
+      // Update local state
+      setStaff(prev =>
+        prev.map(s =>
+          s.id === data.id
+            ? { ...s, ...data.employee, privileges: data.privileges }
+            : s
+        )
+      );
+
+      toast.success(`Staff member updated for ${selectedStaff.name}`);
+      setIsEditStaffOpen(false);
+    } catch (err: any) {
+      console.error('Error updating staff:', err);
+      toast.error(err.message || 'Failed to update staff');
+      throw err;
+    }
   };
 
   // Placeholder onSubmit handler
@@ -375,11 +403,30 @@ const StaffLogin = () => {
         onReset={handleResetPassword}
       />
 
-      <StaffPrivilegeEditor
-        open={isPrivilegeEditorOpen}
-        onOpenChange={setIsPrivilegeEditorOpen}
-        staff={selectedStaff}
-        onSave={handleSavePrivileges}
+      <EditStaffDialog
+        open={isEditStaffOpen}
+        onOpenChange={setIsEditStaffOpen}
+        onSubmit={handleUpdateStaff}
+        employee={selectedStaff ? ({
+          id: selectedStaff.id,
+          employeeID: (selectedStaff as any).employeeID || '',
+          fullnames: selectedStaff.fullnames || selectedStaff.name,
+          email: selectedStaff.email,
+          phone: selectedStaff.phone || '',
+          Address: selectedStaff.Address || selectedStaff.address || '',
+          Position: selectedStaff.Position || selectedStaff.position || '',
+          roleType: selectedStaff.roleType || 'cashier',
+          active: selectedStaff.active,
+          shop_id: '',
+          restaurant_id: null,
+          created_on: (selectedStaff as any).created_at || '',
+          updated_on: '',
+          dob: '',
+          gender: '',
+          multAuthEnabled: false,
+          orgEmployeeRoles: [{ id: '', orgEmployeeID: selectedStaff.id, privillages: selectedStaff.privileges || {}, created_on: '', update_on: '' }],
+          Shops: { id: '', name: selectedStaff.store || '' },
+        }) : null}
       />
     </AdminLayout>
   );
