@@ -294,6 +294,26 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
       newPrivileges[module] = { access: false };
     }
     newPrivileges[module]![action] = value;
+
+    // If we enabled an action, ensure module access is also true
+    if (value && action !== 'access') {
+      newPrivileges[module]!.access = true;
+    }
+
+    // Sync with pages module
+    if (!newPrivileges.pages) {
+      newPrivileges.pages = { access: false };
+    }
+
+    const pages = newPrivileges.pages as any;
+    const updatedAccess = newPrivileges[module]!.access;
+    pages[`access_${module}`] = updatedAccess;
+
+    // Re-evaluate overall pages.access
+    pages.access = Object.keys(newPrivileges).some(m =>
+      m !== 'pages' && (newPrivileges[m as ProjectPrivilegeKey] as any)?.access === true
+    );
+
     setPrivileges(newPrivileges);
   };
 
@@ -309,6 +329,19 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
     Object.keys(currentModule).forEach(action => {
       currentModule[action] = value;
     });
+
+    // Sync with pages module
+    if (!newPrivileges.pages) {
+      newPrivileges.pages = { access: false };
+    }
+
+    const pages = newPrivileges.pages as any;
+    pages[`access_${module}`] = value;
+
+    // Re-evaluate overall pages.access
+    pages.access = Object.keys(newPrivileges).some(m =>
+      m !== 'pages' && (newPrivileges[m as ProjectPrivilegeKey] as any)?.access === true
+    );
 
     setPrivileges(newPrivileges);
   };

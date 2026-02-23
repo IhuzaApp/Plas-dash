@@ -88,13 +88,40 @@ const StaffPrivilegeEditor: React.FC<StaffPrivilegeEditorProps> = ({
         setRoleType('custom');
         setPrivileges(prev => {
             const modulePrivs = prev[moduleKey as keyof UserPrivileges] || { access: false };
-            return {
-                ...prev,
-                [moduleKey]: {
-                    ...modulePrivs,
-                    [permissionKey]: !modulePrivs[permissionKey as keyof typeof modulePrivs],
-                },
+            const newValue = !modulePrivs[permissionKey as keyof typeof modulePrivs];
+
+            const updatedModule = {
+                ...modulePrivs,
+                [permissionKey]: newValue,
             };
+
+            // Automatically enable/disable module access if a sub-permission is toggled
+            // AND Sync with pages module for sidebar visibility
+            const newPrivs = {
+                ...prev,
+                [moduleKey]: updatedModule,
+            };
+
+            // If we enabled an action, ensure module access is also true
+            if (newValue && permissionKey !== 'access') {
+                (newPrivs[moduleKey as keyof UserPrivileges] as any).access = true;
+            }
+
+            // Sync with pages module
+            if (!newPrivs.pages) {
+                newPrivs.pages = { access: false };
+            }
+
+            const pages = newPrivs.pages as any;
+            const updatedAccess = (newPrivs[moduleKey as keyof UserPrivileges] as any).access;
+            pages[`access_${moduleKey}`] = updatedAccess;
+
+            // Re-evaluate overall pages.access
+            pages.access = Object.keys(newPrivs).some(m =>
+                m !== 'pages' && (newPrivs[m as keyof UserPrivileges] as any)?.access === true
+            );
+
+            return newPrivs;
         });
     };
 

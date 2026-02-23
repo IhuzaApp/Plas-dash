@@ -345,6 +345,19 @@ export const getDefaultProjectPrivilegesForRole = (
       break;
   }
 
+  // Sync with pages module for sidebar visibility
+  if (!privileges.pages) {
+    privileges.pages = { access: false };
+  }
+  const pages = privileges.pages as any;
+  Object.keys(privileges).forEach(module => {
+    if (module !== 'pages' && (privileges[module as ProjectPrivilegeKey] as any)?.access) {
+      const pageKey = `access_${module}`;
+      pages[pageKey] = true;
+      pages.access = true;
+    }
+  });
+
   return privileges;
 };
 

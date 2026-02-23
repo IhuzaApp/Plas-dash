@@ -186,13 +186,39 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
   }, [roleType]);
 
   function handlePrivilegeToggle(module: PrivilegeKey, action: string) {
-    setCustomPrivileges(prev => ({
-      ...prev,
-      [module]: {
+    setCustomPrivileges(prev => {
+      const newValue = !prev[module]?.[action];
+      const updatedModule = {
         ...prev[module],
-        [action]: !prev[module]?.[action],
-      },
-    }));
+        [action]: newValue,
+      };
+
+      // If we enabled an action, ensure module access is also true
+      if (newValue && action !== 'access') {
+        (updatedModule as any).access = true;
+      }
+
+      const newPrivs = {
+        ...prev,
+        [module]: updatedModule,
+      };
+
+      // Sync with pages module
+      if (!newPrivs.pages) {
+        newPrivs.pages = { access: false };
+      }
+
+      const pages = newPrivs.pages as any;
+      const updatedAccess = (newPrivs[module] as any).access;
+      pages[`access_${module}`] = updatedAccess;
+
+      // Re-evaluate overall pages.access
+      pages.access = Object.keys(newPrivs).some(m =>
+        m !== 'pages' && (newPrivs[m as PrivilegeKey] as any)?.access === true
+      );
+
+      return newPrivs;
+    });
   }
 
   function handleSubmit(values: FormData) {

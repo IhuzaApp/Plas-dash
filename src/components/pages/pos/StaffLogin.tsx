@@ -39,7 +39,7 @@ import AddStaffDialog from '@/components/shop/AddStaffDialog';
 import StaffDetailDrawer from '@/components/shop/StaffDetailDrawer';
 import ResetPasswordModal from '@/components/shop/ResetPasswordModal';
 import StaffPrivilegeEditor from '@/components/shop/StaffPrivilegeEditor';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 import { hasuraRequest } from '@/lib/hasura';
 import { UPDATE_ORG_EMPLOYEE_ROLE, UPDATE_ORG_EMPLOYEE_PASSWORD, UPDATE_ORG_EMPLOYEE } from '@/lib/graphql/mutations';
 import { toast } from 'sonner';
@@ -148,17 +148,11 @@ const StaffLogin = () => {
   const handleSavePrivileges = async (newPrivileges: UserPrivileges, newRoleType: string) => {
     if (!selectedStaff) return;
     try {
-      // Update both privileges and roleType
-      await Promise.all([
-        hasuraRequest(UPDATE_ORG_EMPLOYEE_ROLE, {
-          id: selectedStaff.id,
-          privillages: newPrivileges
-        }),
-        hasuraRequest(UPDATE_ORG_EMPLOYEE, {
-          id: selectedStaff.id,
-          roleType: newRoleType
-        })
-      ]);
+      await apiPost('/api/mutations/update-employee', {
+        id: selectedStaff.id,
+        roleType: newRoleType,
+        privileges: newPrivileges
+      });
 
       // Update local state
       setStaff(prev => prev.map(s =>
@@ -168,7 +162,7 @@ const StaffLogin = () => {
       toast.success(`Role and privileges updated for ${selectedStaff.name}`);
     } catch (err: any) {
       console.error('Error updating role/privileges:', err);
-      toast.error('Failed to update role/privileges');
+      toast.error(err.message || 'Failed to update role/privileges');
       throw err;
     }
   };

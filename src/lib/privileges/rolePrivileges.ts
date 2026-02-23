@@ -567,5 +567,18 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
     privileges.help.view_help = true;
   }
 
+  // Sync with pages module for sidebar visibility
+  if (!privileges.pages) {
+    privileges.pages = { access: false };
+  }
+  const pages = privileges.pages;
+  Object.keys(privileges).forEach(module => {
+    if (module !== 'pages' && (privileges[module as PrivilegeKey] as any)?.access) {
+      const pageKey = `access_${module}`;
+      (pages as any)[pageKey] = true;
+      pages.access = true;
+    }
+  });
+
   return privileges;
 };

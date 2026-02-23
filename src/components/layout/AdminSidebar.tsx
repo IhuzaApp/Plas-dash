@@ -257,57 +257,69 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   // Note: menuPrivileges is now imported from @/lib/privileges
 
   // Filter menu items by privileges using new system
-  const filteredMenuItems = isSuperUser()
-    ? menuItems
-    : menuItems
-      .map(section => ({
-        ...section,
-        items: section.items.filter(item => {
-          const privilege = menuPrivileges[item.title];
-          if (!privilege) return true; // If no privilege defined, allow access
+  const filteredMenuItems = menuItems
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => {
+        const privilege = menuPrivileges[item.title];
+        if (!privilege) return true; // If no privilege defined, allow access
 
-          // Check if user has access to the module
-          const hasModule = hasModuleAccess(privilege.module);
-          if (!hasModule) return false;
+        const pages = session?.privileges?.pages as any;
+        const pageAllowed = pages ? pages[`access_${privilege.module}`] === true : false;
+        const moduleAllowed = hasModuleAccess(privilege.module);
 
-          // Check if project user requirement is met
-          if (privilege.isProjectUser && !session?.isProjectUser) {
-            return false;
-          }
+        // Resilient Logic: Allow if either page access OR module access is granted
+        // This handles cases where 'pages' exists but is out of sync/uninitialized
+        if (!pageAllowed && !moduleAllowed && !isSuperUser()) {
+          return false;
+        }
 
-          return true;
-        }),
-      }))
-      .filter(section => section.items.length > 0);
+        // Check if project user requirement is met
+        if (privilege.isProjectUser && !session?.isProjectUser) {
+          return false;
+        }
+
+        return true;
+      }),
+    }))
+    .filter(section => section.items.length > 0);
 
   // Check if user has access to any module (for sidebar visibility)
   const hasAnyModuleAccess =
-    isSuperUser() ||
-    hasModuleAccess('checkout') ||
-    hasModuleAccess('orders') ||
-    hasModuleAccess('products') ||
-    hasModuleAccess('users') ||
-    hasModuleAccess('project_users') ||
-    hasModuleAccess('shops') ||
-    hasModuleAccess('restaurants') ||
-    hasModuleAccess('shoppers') ||
-    hasModuleAccess('company_dashboard') ||
-    hasModuleAccess('shop_dashboard') ||
-    hasModuleAccess('inventory') ||
-    hasModuleAccess('transactions') ||
-    hasModuleAccess('discounts') ||
-    hasModuleAccess('financial_overview') ||
-    hasModuleAccess('pos_terminal') ||
-    hasModuleAccess('staff_management') ||
-    hasModuleAccess('wallet') ||
-    hasModuleAccess('refunds') ||
-    hasModuleAccess('withdraw_requests') ||
-    hasModuleAccess('tickets') ||
-    hasModuleAccess('help') ||
-    hasModuleAccess('settings') ||
-    hasModuleAccess('promotions') ||
-    hasModuleAccess('delivery_settings') ||
-    hasModuleAccess('plasmarket');
+    (() => {
+      const pages = session?.privileges?.pages as any;
+      const pagesHasAccess = pages?.access === true;
+
+      const moduleHasAccess =
+        isSuperUser() ||
+        hasModuleAccess('checkout') ||
+        hasModuleAccess('orders') ||
+        hasModuleAccess('products') ||
+        hasModuleAccess('users') ||
+        hasModuleAccess('project_users') ||
+        hasModuleAccess('shops') ||
+        hasModuleAccess('restaurants') ||
+        hasModuleAccess('shoppers') ||
+        hasModuleAccess('company_dashboard') ||
+        hasModuleAccess('shop_dashboard') ||
+        hasModuleAccess('inventory') ||
+        hasModuleAccess('transactions') ||
+        hasModuleAccess('discounts') ||
+        hasModuleAccess('financial_overview') ||
+        hasModuleAccess('pos_terminal') ||
+        hasModuleAccess('staff_management') ||
+        hasModuleAccess('wallet') ||
+        hasModuleAccess('refunds') ||
+        hasModuleAccess('withdraw_requests') ||
+        hasModuleAccess('tickets') ||
+        hasModuleAccess('help') ||
+        hasModuleAccess('settings') ||
+        hasModuleAccess('promotions') ||
+        hasModuleAccess('delivery_settings') ||
+        hasModuleAccess('plasmarket');
+
+      return pagesHasAccess || moduleHasAccess;
+    })();
 
   // If no module access, return empty sidebar
   if (!hasAnyModuleAccess) {
