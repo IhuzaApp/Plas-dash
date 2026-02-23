@@ -8,9 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const GET_PLASMARKET_BUSINESSES = gql`
   query GetPlasMarketBusinesses {
-    business_accounts(
-      order_by: { created_at: desc }
-    ) {
+    business_accounts(order_by: { created_at: desc }) {
       account_type
       business_email
       business_location
@@ -320,13 +318,13 @@ export async function GET(req: Request) {
       // Calculate orders across stores
       let totalOrders = 0;
       stores.forEach((store: any) => {
-        totalOrders += (store.businessProductOrders?.length || 0);
+        totalOrders += store.businessProductOrders?.length || 0;
       });
 
       // Calculate accepted contracts across RFQs
       let totalContracts = 0;
       rfqs.forEach((rfq: any) => {
-        totalContracts += (rfq.BusinessContract?.length || 0);
+        totalContracts += rfq.BusinessContract?.length || 0;
       });
 
       return {
@@ -347,14 +345,16 @@ export async function GET(req: Request) {
         quotes_count: quotes.length,
 
         // Owner Profile
-        owner: biz.Users ? {
-          id: biz.Users.id,
-          name: biz.Users.name || 'Unknown',
-          email: biz.Users.email,
-          phone: biz.Users.phone,
-          profile_picture: biz.Users.profile_picture,
-          is_active: biz.Users.is_active,
-        } : null,
+        owner: biz.Users
+          ? {
+              id: biz.Users.id,
+              name: biz.Users.name || 'Unknown',
+              email: biz.Users.email,
+              phone: biz.Users.phone,
+              profile_picture: biz.Users.profile_picture,
+              is_active: biz.Users.is_active,
+            }
+          : null,
 
         // Raw Deep Nested Relationships
         // These will be used in the detailed business profile view
@@ -367,7 +367,7 @@ export async function GET(req: Request) {
           face_image: biz.face_image,
           id_image: biz.id_image,
           rdb_certificate: biz.rdb_certificate,
-        }
+        },
       };
     });
 
@@ -375,12 +375,14 @@ export async function GET(req: Request) {
       success: true,
       businesses: formattedBusinesses,
     });
-
   } catch (error: any) {
     console.error('Error fetching PlasMarket businesses:', error);
-    return NextResponse.json({
-      error: 'Failed to fetch PlasMarket businesses',
-      message: error.message,
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch PlasMarket businesses',
+        message: error.message,
+      },
+      { status: 500 }
+    );
   }
 }

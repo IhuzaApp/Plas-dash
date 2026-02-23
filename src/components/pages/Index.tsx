@@ -148,9 +148,7 @@ const Index = () => {
     },
     {
       title: 'Total Wallet Balances',
-      value: isLoading
-        ? 'Loading...'
-        : formatCurrency(totalWalletBalance),
+      value: isLoading ? 'Loading...' : formatCurrency(totalWalletBalance),
       description: `Personal: ${formatCurrency(personalWalletBalance)} · Business: ${formatCurrency(businessWalletBalance)}`,
       icon: <Wallet />,
       trend: { value: 0, isPositive: true },

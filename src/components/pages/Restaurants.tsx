@@ -259,7 +259,7 @@ const Restaurants = () => {
                     <TableCell>{formatDateTime(restaurant.created_at)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        {(!restaurant.is_active || !restaurant.verified) ? (
+                        {!restaurant.is_active || !restaurant.verified ? (
                           <>
                             {hasAction('restaurants', 'view_restaurant_details') && (
                               <Button

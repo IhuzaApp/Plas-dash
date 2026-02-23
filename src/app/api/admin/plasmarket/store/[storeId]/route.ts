@@ -103,74 +103,78 @@ const GET_STORE_DETAILS = gql`
 `;
 
 export async function GET(req: Request, { params }: { params: { storeId: string } }) {
-    try {
-        const session = await getServerSession(authOptions);
-        let userId = (session as any)?.user?.id;
+  try {
+    const session = await getServerSession(authOptions);
+    let userId = (session as any)?.user?.id;
 
-        if (!userId) {
-            const authHeader = req.headers.get('authorization');
-            if (authHeader && authHeader.startsWith('Bearer ')) {
-                userId = authHeader.substring(7);
-            }
-        }
-
-        if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { storeId } = params;
-
-        if (!storeId) {
-            return NextResponse.json({ error: 'Missing store id' }, { status: 400 });
-        }
-
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
-
-        const result = await hasuraClient.request<any>(GET_STORE_DETAILS, { id: storeId });
-
-        const store = result.business_stores?.[0];
-
-        if (!store) {
-            return NextResponse.json({ error: 'Store not found' }, { status: 404 });
-        }
-
-        const formattedStore = {
-            id: store.id,
-            name: store.name || 'Unnamed Store',
-            address: store.address,
-            description: store.description,
-            image: store.image,
-            is_active: store.is_active,
-            operating_hours: store.operating_hours,
-            created_at: store.created_at,
-            category: store.Category ? {
-                id: store.Category.id,
-                name: store.Category.name,
-                image: store.Category.image
-            } : null,
-            business_id: store.business_id,
-
-            // Raw nested arrays
-            products: store.PlasBusinessProductsOrSerives || [],
-            orders: store.businessProductOrders || [],
-
-            // Convenient counts
-            products_count: store.PlasBusinessProductsOrSerives?.length || 0,
-            orders_count: store.businessProductOrders?.length || 0,
-        };
-
-        return NextResponse.json({
-            success: true,
-            store: formattedStore,
-        });
-
-    } catch (error: any) {
-        console.error('Error fetching PlasMarket store:', error);
-        return NextResponse.json({
-            error: 'Failed to fetch PlasMarket store',
-            message: error.message,
-        }, { status: 500 });
+    if (!userId) {
+      const authHeader = req.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        userId = authHeader.substring(7);
+      }
     }
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { storeId } = params;
+
+    if (!storeId) {
+      return NextResponse.json({ error: 'Missing store id' }, { status: 400 });
+    }
+
+    if (!hasuraClient) {
+      throw new Error('Hasura client is not initialized');
+    }
+
+    const result = await hasuraClient.request<any>(GET_STORE_DETAILS, { id: storeId });
+
+    const store = result.business_stores?.[0];
+
+    if (!store) {
+      return NextResponse.json({ error: 'Store not found' }, { status: 404 });
+    }
+
+    const formattedStore = {
+      id: store.id,
+      name: store.name || 'Unnamed Store',
+      address: store.address,
+      description: store.description,
+      image: store.image,
+      is_active: store.is_active,
+      operating_hours: store.operating_hours,
+      created_at: store.created_at,
+      category: store.Category
+        ? {
+            id: store.Category.id,
+            name: store.Category.name,
+            image: store.Category.image,
+          }
+        : null,
+      business_id: store.business_id,
+
+      // Raw nested arrays
+      products: store.PlasBusinessProductsOrSerives || [],
+      orders: store.businessProductOrders || [],
+
+      // Convenient counts
+      products_count: store.PlasBusinessProductsOrSerives?.length || 0,
+      orders_count: store.businessProductOrders?.length || 0,
+    };
+
+    return NextResponse.json({
+      success: true,
+      store: formattedStore,
+    });
+  } catch (error: any) {
+    console.error('Error fetching PlasMarket store:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch PlasMarket store',
+        message: error.message,
+      },
+      { status: 500 }
+    );
+  }
 }

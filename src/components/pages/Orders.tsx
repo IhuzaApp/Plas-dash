@@ -25,12 +25,7 @@ import {
   ClipboardList,
   LayoutGrid,
 } from 'lucide-react';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useOrders,
   useReelOrders,
@@ -553,7 +548,10 @@ const Orders = () => {
   const rootDisplayItems = useMemo(() => {
     if (!isGroupedView) return filteredOrders.map(o => ({ type: 'single' as const, order: o }));
 
-    const items: Array<{ type: 'single'; order: UnifiedOrder } | { type: 'group'; combinedId: string; orders: UnifiedOrder[]; shopper: any }> = [];
+    const items: Array<
+      | { type: 'single'; order: UnifiedOrder }
+      | { type: 'group'; combinedId: string; orders: UnifiedOrder[]; shopper: any }
+    > = [];
     const seenCombinedIds = new Set<string>();
 
     filteredOrders.forEach(o => {
@@ -568,7 +566,7 @@ const Orders = () => {
             type: 'group',
             combinedId: o.combined_order_id,
             orders: group,
-            shopper: group.find(item => item.shopper)?.shopper
+            shopper: group.find(item => item.shopper)?.shopper,
           });
         } else {
           // If only 1 order has this ID, treat as single order
@@ -859,7 +857,10 @@ const Orders = () => {
             </TabsContent>
 
             <TabsContent value="table" className="space-y-4 pt-4">
-              <OrderOffersTable offers={offersData?.order_offers || []} isLoading={isOffersLoading} />
+              <OrderOffersTable
+                offers={offersData?.order_offers || []}
+                isLoading={isOffersLoading}
+              />
             </TabsContent>
           </Tabs>
         </TabsContent>
@@ -879,7 +880,7 @@ const Orders = () => {
       </Tabs>
 
       <OrderDetailsDrawer order={selectedOrder} open={isDrawerOpen} onClose={handleCloseDrawer} />
-    </AdminLayout >
+    </AdminLayout>
   );
 };
 

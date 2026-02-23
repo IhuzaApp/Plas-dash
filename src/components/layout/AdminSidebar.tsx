@@ -211,15 +211,15 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
         ...(isLoggedIntoShop
           ? [
-            // Shop-specific POS items when logged into a shop
-            { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
-            { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
-            { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
-            { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
-            { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
-            { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
-            { title: 'Staff Management', icon: Users, path: '/pos/staff' },
-          ]
+              // Shop-specific POS items when logged into a shop
+              { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
+              { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
+              { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
+              { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
+              { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
+              { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
+              { title: 'Staff Management', icon: Users, path: '/pos/staff' },
+            ]
           : []),
       ],
     },
@@ -260,17 +260,17 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const filteredMenuItems = isSuperUser()
     ? menuItems
     : menuItems
-      .map(section => ({
-        ...section,
-        items: section.items.filter(item => {
-          const privilege = menuPrivileges[item.title];
-          if (!privilege) return true; // If no privilege defined, allow access
+        .map(section => ({
+          ...section,
+          items: section.items.filter(item => {
+            const privilege = menuPrivileges[item.title];
+            if (!privilege) return true; // If no privilege defined, allow access
 
-          // Check if user has access to the module
-          return hasModuleAccess(privilege.module);
-        }),
-      }))
-      .filter(section => section.items.length > 0);
+            // Check if user has access to the module
+            return hasModuleAccess(privilege.module);
+          }),
+        }))
+        .filter(section => section.items.length > 0);
 
   // Check if user has access to any module (for sidebar visibility)
   const hasAnyModuleAccess =
@@ -314,7 +314,11 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         <SidebarHeader className="h-14 flex items-center px-4 border-b">
           <div className="flex items-center justify-center w-full">
             <div className="w-8 h-8 rounded-md bg-transparent flex items-center justify-center overflow-hidden">
-              <img src="/Assets/logo/Plas Icon.png" alt="Plas Logo" className="w-full h-full object-contain" />
+              <img
+                src="/Assets/logo/Plas Icon.png"
+                alt="Plas Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
         </SidebarHeader>
@@ -414,11 +418,19 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         >
           {isSidebarOpen ? (
             <div className="flex items-center">
-              <img src="/Assets/logo/PlasLogoPNG.png" alt="Plas Dashboard" className="h-8 object-contain" />
+              <img
+                src="/Assets/logo/PlasLogoPNG.png"
+                alt="Plas Dashboard"
+                className="h-8 object-contain"
+              />
             </div>
           ) : (
             <div className="w-8 h-8 rounded-md bg-transparent flex items-center justify-center overflow-hidden">
-              <img src="/Assets/logo/Plas Icon.png" alt="Plas Logo" className="w-full h-full object-contain" />
+              <img
+                src="/Assets/logo/Plas Icon.png"
+                alt="Plas Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
           )}
         </div>

@@ -177,7 +177,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
   const refunds = (paymentData?.Refunds || []) as Refund[];
   const isLoadingPaymentsResolved =
     (order.type === 'restaurant' && order.Wallet_Transactions) ||
-      (order.type === 'business' && order.businessTransactions)
+    (order.type === 'business' && order.businessTransactions)
       ? false
       : isLoadingPayments;
 
@@ -318,9 +318,9 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
 
           {/* Shop / Restaurant / Business (merchant info with logo) */}
           {(order.type === 'regular' && order.Shop) ||
-            (order.type === 'reel' && order.Shop) ||
-            (order.type === 'restaurant' && order.Restaurant) ||
-            (order.type === 'business' && order.business_store) ? (
+          (order.type === 'reel' && order.Shop) ||
+          (order.type === 'restaurant' && order.Restaurant) ||
+          (order.type === 'business' && order.business_store) ? (
             <div>
               <h3 className="text-lg font-semibold mb-3">
                 {order.type === 'regular' || order.type === 'reel'
@@ -332,9 +332,9 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
               <Card className="p-4">
                 <div className="flex items-center gap-4">
                   {(order.type === 'regular' && order.Shop?.image) ||
-                    (order.type === 'reel' && order.Shop?.image) ||
-                    (order.type === 'restaurant' && order.Restaurant?.logo) ||
-                    (order.type === 'business' && order.business_store?.image) ? (
+                  (order.type === 'reel' && order.Shop?.image) ||
+                  (order.type === 'restaurant' && order.Restaurant?.logo) ||
+                  (order.type === 'business' && order.business_store?.image) ? (
                     <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-muted border">
                       <img
                         src={

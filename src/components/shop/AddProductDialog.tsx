@@ -119,9 +119,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       ...(hideCommission
         ? {}
         : {
-          has_commission: z.boolean().default(true),
-          commission_percentage: z.number().min(0).max(100).optional(),
-        }),
+            has_commission: z.boolean().default(true),
+            commission_percentage: z.number().min(0).max(100).optional(),
+          }),
       final_price: z.string().optional(), // Make final_price optional since it's calculated
       productName_id: z.string().optional(), // Add this for tracking selected product name ID
     })
@@ -137,8 +137,6 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     );
 
   type FormData = z.infer<typeof formSchema>;
-
-
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -159,9 +157,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       ...(hideCommission
         ? {}
         : {
-          has_commission: true,
-          commission_percentage: Number(defaultCommission) || 0,
-        }),
+            has_commission: true,
+            commission_percentage: Number(defaultCommission) || 0,
+          }),
       final_price: '',
     },
   });
@@ -252,12 +250,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       productNameData:
         values.name && !values.productName_id
           ? {
-            name: values.name,
-            description: values.description,
-            barcode: values.barcode,
-            sku: values.sku,
-            image: values.image,
-          }
+              name: values.name,
+              description: values.description,
+              barcode: values.barcode,
+              sku: values.sku,
+              image: values.image,
+            }
           : undefined,
     };
 

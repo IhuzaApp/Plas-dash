@@ -69,7 +69,12 @@ export async function GET(req: Request) {
     const regular = sumFields(data.Orders, 'total', 'delivery_fee', 'service_fee');
     const reel = sumFields(data.reel_orders, 'total', 'delivery_fee', 'service_fee');
     const restaurant = sumFields(data.restaurant_orders, 'total', 'delivery_fee');
-    const business = sumFields(data.businessProductOrders, 'total', 'service_fee', 'transportation_fee');
+    const business = sumFields(
+      data.businessProductOrders,
+      'total',
+      'service_fee',
+      'transportation_fee'
+    );
 
     const total = regular + reel + restaurant + business;
 

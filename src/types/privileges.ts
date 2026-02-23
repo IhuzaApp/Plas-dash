@@ -328,7 +328,12 @@ export function hasPrivilege(
       module === 'plasmarket' ||
       module === 'restaurants' ||
       module === 'withdraw_requests' ||
-      (module === 'pages' && (action === 'access_referrals' || action === 'access_help' || action === 'access_plasmarket' || action === 'access_restaurants' || action === 'access_withdraw_requests')))
+      (module === 'pages' &&
+        (action === 'access_referrals' ||
+          action === 'access_help' ||
+          action === 'access_plasmarket' ||
+          action === 'access_restaurants' ||
+          action === 'access_withdraw_requests')))
   ) {
     return true;
   }

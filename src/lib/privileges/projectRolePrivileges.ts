@@ -267,12 +267,7 @@ export const getDefaultProjectPrivilegesForRole = (
     }
 
     case 'support': {
-      const supportModules: ProjectPrivilegeKey[] = [
-        'shops',
-        'tickets',
-        'shoppers',
-        'plasmarket',
-      ];
+      const supportModules: ProjectPrivilegeKey[] = ['shops', 'tickets', 'shoppers', 'plasmarket'];
       supportModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;
@@ -323,11 +318,7 @@ export const getDefaultProjectPrivilegesForRole = (
     }
 
     case 'manager': {
-      const managerModules: ProjectPrivilegeKey[] = [
-        'project_users',
-        'users',
-        'staff_management',
-      ];
+      const managerModules: ProjectPrivilegeKey[] = ['project_users', 'users', 'staff_management'];
       managerModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;

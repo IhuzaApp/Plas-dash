@@ -311,7 +311,7 @@ export function ImportProductNamesDialog({
                     onValueChange={v => setMapping(m => ({ ...m, [key]: v === SKIP ? '' : v }))}
                   >
                     <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Don&apos;t map" />
+                      <SelectValue placeholder="Don't map" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={SKIP}>— Don&apos;t map</SelectItem>
@@ -326,7 +326,9 @@ export function ImportProductNamesDialog({
               ))}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              {nameMapped ? `${validCount} row(s) will be imported.` : 'Map &quot;Name&quot; to import.'}
+              {nameMapped
+                ? `${validCount} row(s) will be imported.`
+                : 'Map &quot;Name&quot; to import.'}
             </p>
             <DialogFooter>
               <Button variant="outline" onClick={handleBack} disabled={isLoading}>

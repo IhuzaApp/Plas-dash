@@ -144,7 +144,9 @@ export async function GET(req: Request) {
       const deliveryFee = parseFloat(o.delivery_fee || '0');
 
       if (enriched_count < 3) {
-        console.log(`Order ${o.OrderID}: base=${baseTotal}, service=${serviceFee}, delivery=${deliveryFee}, raw_service=${o.service_fee}, raw_delivery=${o.delivery_fee}`);
+        console.log(
+          `Order ${o.OrderID}: base=${baseTotal}, service=${serviceFee}, delivery=${deliveryFee}, raw_service=${o.service_fee}, raw_delivery=${o.delivery_fee}`
+        );
         enriched_count++;
       }
 
@@ -174,11 +176,11 @@ export async function GET(req: Request) {
         shopper:
           o.Shoppers != null
             ? {
-              id: o.Shoppers.id ?? '',
-              name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
-              phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
-              email: '',
-            }
+                id: o.Shoppers.id ?? '',
+                name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
+                phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
+                email: '',
+              }
             : undefined,
         itemsCount,
         unitsCount,

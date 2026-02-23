@@ -6,10 +6,7 @@ import { gql } from 'graphql-request';
 
 const GET_ALL_PENDING_PAYOUTS = gql`
   query GetAllPendingPayouts {
-    payouts(
-      where: { status: { _eq: "pending" } }
-      order_by: { created_at: desc }
-    ) {
+    payouts(where: { status: { _eq: "pending" } }, order_by: { created_at: desc }) {
       amount
       created_at
       id

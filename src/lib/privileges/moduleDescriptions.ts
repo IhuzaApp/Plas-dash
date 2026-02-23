@@ -584,13 +584,37 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     description: 'Manage restaurant listings and menus',
     actions: [
       { key: 'access', label: 'Access Restaurants', description: 'Can access restaurants page' },
-      { key: 'view_restaurants', label: 'View Restaurants', description: 'Can view restaurant listings' },
+      {
+        key: 'view_restaurants',
+        label: 'View Restaurants',
+        description: 'Can view restaurant listings',
+      },
       { key: 'add_restaurants', label: 'Add Restaurants', description: 'Can add new restaurants' },
-      { key: 'edit_restaurants', label: 'Edit Restaurants', description: 'Can edit restaurant details' },
-      { key: 'delete_restaurants', label: 'Delete Restaurants', description: 'Can delete restaurants' },
-      { key: 'view_restaurant_details', label: 'View Details', description: 'Can view detailed restaurant info' },
-      { key: 'manage_restaurant_settings', label: 'Manage Settings', description: 'Can manage restaurant settings' },
-      { key: 'view_restaurant_performance', label: 'View Performance', description: 'Can view restaurant performance' },
+      {
+        key: 'edit_restaurants',
+        label: 'Edit Restaurants',
+        description: 'Can edit restaurant details',
+      },
+      {
+        key: 'delete_restaurants',
+        label: 'Delete Restaurants',
+        description: 'Can delete restaurants',
+      },
+      {
+        key: 'view_restaurant_details',
+        label: 'View Details',
+        description: 'Can view detailed restaurant info',
+      },
+      {
+        key: 'manage_restaurant_settings',
+        label: 'Manage Settings',
+        description: 'Can manage restaurant settings',
+      },
+      {
+        key: 'view_restaurant_performance',
+        label: 'View Performance',
+        description: 'Can view restaurant performance',
+      },
     ],
   },
   pages: {
@@ -602,23 +626,51 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     title: 'PlasMarket',
     description: 'Manage the business directory and global marketplace',
     actions: [
-      { key: 'access', label: 'Access PlasMarket', description: 'Can view the PlasMarket dashboard' },
-      { key: 'view_businesses', label: 'View Businesses', description: 'Can view individual business accounts' },
-      { key: 'manage_status', label: 'Manage Account Status', description: 'Can put business accounts on hold or re-activate them' },
-      { key: 'export_data', label: 'Export Data', description: 'Can export business directories to CSV' },
-      { key: 'delete_business', label: 'Delete Business', description: 'Can permanently delete business accounts' }
-    ]
+      {
+        key: 'access',
+        label: 'Access PlasMarket',
+        description: 'Can view the PlasMarket dashboard',
+      },
+      {
+        key: 'view_businesses',
+        label: 'View Businesses',
+        description: 'Can view individual business accounts',
+      },
+      {
+        key: 'manage_status',
+        label: 'Manage Account Status',
+        description: 'Can put business accounts on hold or re-activate them',
+      },
+      {
+        key: 'export_data',
+        label: 'Export Data',
+        description: 'Can export business directories to CSV',
+      },
+      {
+        key: 'delete_business',
+        label: 'Delete Business',
+        description: 'Can permanently delete business accounts',
+      },
+    ],
   },
   withdraw_requests: {
     title: 'Withdraw Requests',
     description: 'Manage shopper and business wallet withdraw requests',
     actions: [
-      { key: 'access', label: 'Access Withdraw Requests', description: 'Can view the withdraw requests dashboard' },
-      { key: 'view', label: 'View Request Details', description: 'Can view individual withdraw request details' },
+      {
+        key: 'access',
+        label: 'Access Withdraw Requests',
+        description: 'Can view the withdraw requests dashboard',
+      },
+      {
+        key: 'view',
+        label: 'View Request Details',
+        description: 'Can view individual withdraw request details',
+      },
       { key: 'approve', label: 'Approve Requests', description: 'Can approve withdraw requests' },
       { key: 'reject', label: 'Reject Requests', description: 'Can reject withdraw requests' },
-    ]
-  }
+    ],
+  },
 };
 
 /**

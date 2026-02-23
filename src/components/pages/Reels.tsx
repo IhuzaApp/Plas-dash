@@ -159,7 +159,9 @@ const Reels = () => {
   };
 
   const handleDeleteReel = async (reelId: string) => {
-    if (!window.confirm('Are you sure you want to delete this reel? This action cannot be undone.')) {
+    if (
+      !window.confirm('Are you sure you want to delete this reel? This action cannot be undone.')
+    ) {
       return;
     }
 
@@ -252,8 +254,7 @@ const Reels = () => {
   }, []);
 
   const ownerData = reels.reduce((acc: any[], reel) => {
-    const ownerName =
-      reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Unknown';
+    const ownerName = reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Unknown';
     const existing = acc.find(item => item.name === ownerName);
     if (existing) {
       existing.value += reel.reel_orders.length;
@@ -317,11 +318,7 @@ const Reels = () => {
         totalSalesFormatted={formatCurrency(totalSales)}
       />
 
-      <ReelsAnalytics
-        topReels={topReels}
-        categoryData={categoryData}
-        ownerData={ownerData}
-      />
+      <ReelsAnalytics topReels={topReels} categoryData={categoryData} ownerData={ownerData} />
 
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -343,31 +340,29 @@ const Reels = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredReels
-            .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-            .map(reel => (
-              <ReelCard
-                key={reel.id}
-                reel={reel}
-                playingVideo={playingVideo}
-                mutedVideos={mutedVideos}
-                failedVideos={failedVideos}
-                formatCurrency={formatCurrency}
-                formatDateTime={formatDateTime}
-                getCategoryColor={getCategoryColor}
-                onVideoPlay={setPlayingVideo}
-                onVideoPause={() => setPlayingVideo(null)}
-                onToggleMute={toggleMute}
-                onFailedVideo={videoUrl => {
-                  console.warn(`Failed to load video: ${videoUrl}`);
-                  setFailedVideos(prev => new Set(prev).add(videoUrl));
-                }}
-                onEdit={handleEditReel}
-                onToggleStatus={handleToggleReelStatus}
-                onDelete={handleDeleteReel}
-                onViewComments={openCommentsModal}
-              />
-            ))}
+          {filteredReels.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(reel => (
+            <ReelCard
+              key={reel.id}
+              reel={reel}
+              playingVideo={playingVideo}
+              mutedVideos={mutedVideos}
+              failedVideos={failedVideos}
+              formatCurrency={formatCurrency}
+              formatDateTime={formatDateTime}
+              getCategoryColor={getCategoryColor}
+              onVideoPlay={setPlayingVideo}
+              onVideoPause={() => setPlayingVideo(null)}
+              onToggleMute={toggleMute}
+              onFailedVideo={videoUrl => {
+                console.warn(`Failed to load video: ${videoUrl}`);
+                setFailedVideos(prev => new Set(prev).add(videoUrl));
+              }}
+              onEdit={handleEditReel}
+              onToggleStatus={handleToggleReelStatus}
+              onDelete={handleDeleteReel}
+              onViewComments={openCommentsModal}
+            />
+          ))}
         </div>
 
         {filteredReels.length === 0 && (
@@ -407,7 +402,6 @@ const Reels = () => {
         onDeleteComment={handleDeleteComment}
       />
     </AdminLayout>
-
   );
 };
 

@@ -376,12 +376,13 @@ const Promotions = () => {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${promotion.status === 'active'
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          promotion.status === 'active'
                             ? 'bg-green-100 text-green-800'
                             : promotion.status === 'scheduled'
                               ? 'bg-blue-100 text-blue-800'
                               : 'bg-gray-100 text-gray-800'
-                          }`}
+                        }`}
                       >
                         {promotion.status}
                       </span>

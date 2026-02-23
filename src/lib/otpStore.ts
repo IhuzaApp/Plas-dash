@@ -1,9 +1,9 @@
 export type OTPData = {
-    otp: string;
-    email?: string;
-    fullName?: string;
-    gender?: string;
-    expiresAt: number;
+  otp: string;
+  email?: string;
+  fullName?: string;
+  gender?: string;
+  expiresAt: number;
 };
 
 // Simple in-memory store for OTPs

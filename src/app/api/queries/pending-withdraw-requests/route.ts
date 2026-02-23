@@ -6,10 +6,7 @@ import { gql } from 'graphql-request';
 
 const GET_ALL_PENDING_WITHDRAW_REQUESTS = gql`
   query GetAllPendingWithdrawRequests {
-    withDraweRequest(
-      where: { status: { _eq: "pending" } }
-      order_by: { created_at: desc }
-    ) {
+    withDraweRequest(where: { status: { _eq: "pending" } }, order_by: { created_at: desc }) {
       amount
       businessWallet_id
       business_id

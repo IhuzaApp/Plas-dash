@@ -630,13 +630,37 @@ const MODULE_DESCRIPTIONS: Record<
     description: 'Manage restaurant listings',
     actions: [
       { key: 'access', label: 'Access', description: 'Can access restaurants' },
-      { key: 'view_restaurants', label: 'View Restaurants', description: 'Can view restaurant listings' },
+      {
+        key: 'view_restaurants',
+        label: 'View Restaurants',
+        description: 'Can view restaurant listings',
+      },
       { key: 'add_restaurants', label: 'Add Restaurants', description: 'Can add new restaurants' },
-      { key: 'edit_restaurants', label: 'Edit Restaurants', description: 'Can edit restaurant details' },
-      { key: 'delete_restaurants', label: 'Delete Restaurants', description: 'Can delete restaurants' },
-      { key: 'view_restaurant_details', label: 'View Details', description: 'Can view detailed restaurant info' },
-      { key: 'manage_restaurant_settings', label: 'Manage Settings', description: 'Can manage restaurant settings' },
-      { key: 'view_restaurant_performance', label: 'View Performance', description: 'Can view restaurant performance' },
+      {
+        key: 'edit_restaurants',
+        label: 'Edit Restaurants',
+        description: 'Can edit restaurant details',
+      },
+      {
+        key: 'delete_restaurants',
+        label: 'Delete Restaurants',
+        description: 'Can delete restaurants',
+      },
+      {
+        key: 'view_restaurant_details',
+        label: 'View Details',
+        description: 'Can view detailed restaurant info',
+      },
+      {
+        key: 'manage_restaurant_settings',
+        label: 'Manage Settings',
+        description: 'Can manage restaurant settings',
+      },
+      {
+        key: 'view_restaurant_performance',
+        label: 'View Performance',
+        description: 'Can view restaurant performance',
+      },
     ],
   },
   pages: {
@@ -648,12 +672,32 @@ const MODULE_DESCRIPTIONS: Record<
     title: 'PlasMarket',
     description: 'Manage the business directory and global marketplace',
     actions: [
-      { key: 'access', label: 'Access PlasMarket', description: 'Can view the PlasMarket dashboard' },
-      { key: 'view_businesses', label: 'View Businesses', description: 'Can view individual business accounts' },
-      { key: 'manage_status', label: 'Manage Account Status', description: 'Can put business accounts on hold or re-activate them' },
-      { key: 'export_data', label: 'Export Data', description: 'Can export business directories to CSV' },
-      { key: 'delete_business', label: 'Delete Business', description: 'Can permanently delete business accounts' }
-    ]
+      {
+        key: 'access',
+        label: 'Access PlasMarket',
+        description: 'Can view the PlasMarket dashboard',
+      },
+      {
+        key: 'view_businesses',
+        label: 'View Businesses',
+        description: 'Can view individual business accounts',
+      },
+      {
+        key: 'manage_status',
+        label: 'Manage Account Status',
+        description: 'Can put business accounts on hold or re-activate them',
+      },
+      {
+        key: 'export_data',
+        label: 'Export Data',
+        description: 'Can export business directories to CSV',
+      },
+      {
+        key: 'delete_business',
+        label: 'Delete Business',
+        description: 'Can permanently delete business accounts',
+      },
+    ],
   },
   withdraw_requests: {
     title: 'Withdraw Requests',
@@ -834,9 +878,7 @@ export function PrivilegeManager({
                           <Switch
                             id={`${mod}-${action.key}`}
                             checked={isEnabled}
-                            onCheckedChange={checked =>
-                              updatePrivilege(mod, action.key, checked)
-                            }
+                            onCheckedChange={checked => updatePrivilege(mod, action.key, checked)}
                             disabled={readOnly}
                           />
                         </div>
