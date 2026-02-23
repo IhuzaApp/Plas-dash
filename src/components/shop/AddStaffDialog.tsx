@@ -506,18 +506,6 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="globalAdmin">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="destructive">Global Admin</Badge>
-                              <span>Full system access</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="systemAdmin">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="default">System Admin</Badge>
-                              <span>Limited system access</span>
-                            </div>
-                          </SelectItem>
                           <SelectItem value="storeManager">
                             <div className="flex items-center gap-2">
                               <Badge variant="default">Store Manager</Badge>
@@ -594,12 +582,6 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                             <div className="flex items-center gap-2">
                               <Badge variant="outline">Security Guard</Badge>
                               <span>Basic monitoring access</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="maintenanceStaff">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline">Maintenance Staff</Badge>
-                              <span>System maintenance access</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="custom">
