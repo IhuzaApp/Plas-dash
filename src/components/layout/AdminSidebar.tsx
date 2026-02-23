@@ -64,7 +64,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
 
-  const { hasModuleAccess, hasAnyPrivilege, isSuperUser } = usePrivilege();
+  const { hasModuleAccess, hasAnyPrivilege, isSuperUser, session } = usePrivilege();
   const { logout } = useAuth();
   const { navigateToPage } = usePageAccess();
   const { isLoggedIntoShop, shopSession } = useShopSession();
@@ -211,15 +211,15 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
         ...(isLoggedIntoShop
           ? [
-              // Shop-specific POS items when logged into a shop
-              { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
-              { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
-              { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
-              { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
-              { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
-              { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
-              { title: 'Staff Management', icon: Users, path: '/pos/staff' },
-            ]
+            // Shop-specific POS items when logged into a shop
+            { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
+            { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
+            { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
+            { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
+            { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
+            { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
+            { title: 'Staff Management', icon: Users, path: '/pos/staff' },
+          ]
           : []),
       ],
     },
@@ -260,17 +260,25 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   const filteredMenuItems = isSuperUser()
     ? menuItems
     : menuItems
-        .map(section => ({
-          ...section,
-          items: section.items.filter(item => {
-            const privilege = menuPrivileges[item.title];
-            if (!privilege) return true; // If no privilege defined, allow access
+      .map(section => ({
+        ...section,
+        items: section.items.filter(item => {
+          const privilege = menuPrivileges[item.title];
+          if (!privilege) return true; // If no privilege defined, allow access
 
-            // Check if user has access to the module
-            return hasModuleAccess(privilege.module);
-          }),
-        }))
-        .filter(section => section.items.length > 0);
+          // Check if user has access to the module
+          const hasModule = hasModuleAccess(privilege.module);
+          if (!hasModule) return false;
+
+          // Check if project user requirement is met
+          if (privilege.isProjectUser && !session?.isProjectUser) {
+            return false;
+          }
+
+          return true;
+        }),
+      }))
+      .filter(section => section.items.length > 0);
 
   // Check if user has access to any module (for sidebar visibility)
   const hasAnyModuleAccess =
