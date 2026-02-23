@@ -14,9 +14,10 @@ import { cn } from '@/lib/utils';
 
 interface ShopSelectorProps {
   isSidebarOpen: boolean;
+  variant?: 'sidebar' | 'inline';
 }
 
-const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
+const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 'sidebar' }) => {
   const { session } = useAuth();
   const { orgEmployee, isLoading } = useCurrentOrgEmployee();
   const { shopSession, isLoggedIntoShop, logoutFromShop } = useShopSession();
@@ -155,10 +156,10 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
 
       return (
         <div className="p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Store className="h-4 w-4" />
-            <h3 className={cn('font-medium', isSidebarOpen ? 'text-sm' : 'sr-only')}>
-              Select Shop for POS
+          <div className={cn(variant === 'sidebar' ? 'flex items-center gap-2' : 'flex flex-col items-center gap-2 mb-4')}>
+            <Store className={cn(variant === 'sidebar' ? 'h-4 w-4' : 'h-8 w-8 text-primary')} />
+            <h3 className={cn('font-medium', isSidebarOpen || variant === 'inline' ? 'text-sm' : 'sr-only')}>
+              {variant === 'sidebar' ? 'Select Shop for POS' : 'Available Shops'}
             </h3>
           </div>
 
@@ -240,12 +241,12 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen }) => {
   }
 
   return (
-    <div className="p-4 space-y-3">
+    <div className={cn(variant === 'sidebar' ? 'p-4 space-y-3' : 'space-y-4')}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Store className="h-4 w-4" />
-          <h3 className={cn('font-medium', isSidebarOpen ? 'text-sm' : 'sr-only')}>
-            Select Shop for POS
+          <Store className={cn(variant === 'sidebar' ? 'h-4 w-4' : 'h-6 w-6 text-primary')} />
+          <h3 className={cn('font-medium', isSidebarOpen || variant === 'inline' ? 'text-sm' : 'sr-only')}>
+            {variant === 'sidebar' ? 'Select Shop for POS' : 'Choose a shop to associate with your session'}
           </h3>
         </div>
         <Button variant="ghost" size="sm" onClick={handleManualRefresh} className="h-6 w-6 p-0">

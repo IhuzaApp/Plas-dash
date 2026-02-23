@@ -457,12 +457,18 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        {/* Shop Selector for POS users */}
-        {hasModuleAccess('pos_terminal') && (
-          <SidebarGroup>
-            <ShopSelector isSidebarOpen={isSidebarOpen} />
-          </SidebarGroup>
-        )}
+        {/* Shop Selector for POS and shop-related users */}
+        {(hasModuleAccess('pos_terminal') ||
+          hasModuleAccess('checkout') ||
+          hasModuleAccess('inventory') ||
+          hasModuleAccess('transactions') ||
+          hasModuleAccess('orders') ||
+          hasModuleAccess('discounts') ||
+          hasModuleAccess('shop_dashboard')) && (
+            <SidebarGroup>
+              <ShopSelector isSidebarOpen={isSidebarOpen} />
+            </SidebarGroup>
+          )}
 
         {filteredMenuItems.map(section => (
           <SidebarGroup key={section.section}>

@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
+import ShopSelector from '@/components/layout/ShopSelector';
 import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useAuth } from '@/components/layout/RootLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Store, Shield, AlertTriangle } from 'lucide-react';
+import { Store, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface ProtectedShopRouteProps {
@@ -31,29 +32,33 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
     }
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-              <Store className="h-6 w-6 text-orange-600" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <Store className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle>Shop Authentication Required</CardTitle>
+            <CardTitle className="text-2xl">Shop Authentication Required</CardTitle>
             <CardDescription>
-              You need to be logged into a shop to access this POS feature.
+              Select an assigned shop and authenticate with your 2FA code to proceed.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="h-4 w-4" />
-              <span>2FA authentication required for shop access</span>
+          <CardContent>
+            <ShopSelector isSidebarOpen={true} variant="inline" />
+
+            <div className="mt-8 pt-6 border-t space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
+                <Shield className="h-4 w-4 text-green-500" />
+                <span>Secure 2FA authentication required</span>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/')}
+                className="w-full"
+              >
+                Return to Dashboard
+              </Button>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <AlertTriangle className="h-4 w-4" />
-              <span>Session valid for 24 hours</span>
-            </div>
-            <Button onClick={() => router.push('/pos/company-dashboard')} className="w-full">
-              Go to Company Dashboard
-            </Button>
           </CardContent>
         </Card>
       </div>
