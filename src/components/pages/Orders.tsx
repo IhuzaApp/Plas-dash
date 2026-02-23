@@ -220,7 +220,8 @@ const Orders = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupedView, setIsGroupedView] = useState(false);
   const [tick, setTick] = useState(0);
-  const { hasAction } = usePrivilege();
+  const { hasAction, session } = usePrivilege();
+  const isProjectUser = session?.isProjectUser;
 
   // Refresh countdown every minute
   useEffect(() => {
@@ -691,14 +692,18 @@ const Orders = () => {
             <ClipboardList className="h-4 w-4" />
             All Orders
           </TabsTrigger>
-          <TabsTrigger value="offers" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Order Offers & Analytics
-          </TabsTrigger>
-          <TabsTrigger value="combined" className="flex items-center gap-2">
-            <ShoppingBag className="h-4 w-4" />
-            Combined Orders
-          </TabsTrigger>
+          {isProjectUser && (
+            <>
+              <TabsTrigger value="offers" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Order Offers & Analytics
+              </TabsTrigger>
+              <TabsTrigger value="combined" className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4" />
+                Combined Orders
+              </TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
@@ -839,44 +844,48 @@ const Orders = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="offers" className="space-y-4">
-          <Tabs defaultValue="analytics" className="w-full">
-            <TabsList className="grid w-64 grid-cols-2 mb-4">
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="table" className="flex items-center gap-2">
-                <ClipboardList className="h-4 w-4" />
-                Table
-              </TabsTrigger>
-            </TabsList>
+        {isProjectUser && (
+          <>
+            <TabsContent value="offers" className="space-y-4">
+              <Tabs defaultValue="analytics" className="w-full">
+                <TabsList className="grid w-64 grid-cols-2 mb-4">
+                  <TabsTrigger value="analytics" className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Analytics
+                  </TabsTrigger>
+                  <TabsTrigger value="table" className="flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4" />
+                    Table
+                  </TabsTrigger>
+                </TabsList>
 
-            <TabsContent value="analytics" className="space-y-4 pt-4">
-              <OrderOffersAnalytics offers={offersData?.order_offers || []} />
+                <TabsContent value="analytics" className="space-y-4 pt-4">
+                  <OrderOffersAnalytics offers={offersData?.order_offers || []} />
+                </TabsContent>
+
+                <TabsContent value="table" className="space-y-4 pt-4">
+                  <OrderOffersTable
+                    offers={offersData?.order_offers || []}
+                    isLoading={isOffersLoading}
+                  />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
-            <TabsContent value="table" className="space-y-4 pt-4">
-              <OrderOffersTable
-                offers={offersData?.order_offers || []}
-                isLoading={isOffersLoading}
+            <TabsContent value="combined" className="space-y-4">
+              <CombinedOrdersTable
+                combinedOrdersGroups={combinedOrdersGroups}
+                getOrderWarnings={getOrderWarnings}
+                getStatusColor={getStatusColor}
+                generateShortId={generateShortId}
+                formatCurrency={formatCurrency}
+                getDeliveryCountdown={getDeliveryCountdown}
+                handleCallShopper={handleCallShopper}
+                handleViewDetails={handleViewDetails}
               />
             </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        <TabsContent value="combined" className="space-y-4">
-          <CombinedOrdersTable
-            combinedOrdersGroups={combinedOrdersGroups}
-            getOrderWarnings={getOrderWarnings}
-            getStatusColor={getStatusColor}
-            generateShortId={generateShortId}
-            formatCurrency={formatCurrency}
-            getDeliveryCountdown={getDeliveryCountdown}
-            handleCallShopper={handleCallShopper}
-            handleViewDetails={handleViewDetails}
-          />
-        </TabsContent>
+          </>
+        )}
       </Tabs>
 
       <OrderDetailsDrawer order={selectedOrder} open={isDrawerOpen} onClose={handleCloseDrawer} />
