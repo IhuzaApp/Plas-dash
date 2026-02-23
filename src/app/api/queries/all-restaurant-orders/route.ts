@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { getUserContext } from '@/lib/auth-server';
 
 const GET_ALL_RESTAURANT_ORDERS = gql`
-  query GetAllRestaurantOrders {
-    restaurant_orders(order_by: { created_at: desc }) {
+  query GetAllRestaurantOrders($where: restaurant_orders_bool_exp = {}) {
+    restaurant_orders(where: $where, order_by: { created_at: desc }) {
       id
       OrderID
       user_id
@@ -150,23 +149,20 @@ const GET_ALL_RESTAURANT_ORDERS = gql`
 `;
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  let userId = (session as any)?.user?.id;
+  const context = await getUserContext(req);
 
-  if (!userId) {
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      userId = authHeader.substring(7);
-    }
-  }
-
-  if (!userId) {
+  if (!context) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
       throw new Error('Hasura client is not initialized');
+    }
+
+    let where: any = {};
+    if (!context.isProjectUser && context.restaurant_id) {
+      where = { restaurant_id: { _eq: context.restaurant_id } };
     }
 
     type RestaurantOrderItem = {
@@ -310,7 +306,7 @@ export async function GET(req: Request) {
           } | null;
         } | null;
       }>;
-    }>(GET_ALL_RESTAURANT_ORDERS);
+    }>(GET_ALL_RESTAURANT_ORDERS, { where });
 
     const orders = (data.restaurant_orders || []).map(o => {
       const itemsCount =
@@ -350,14 +346,14 @@ export async function GET(req: Request) {
         shopper:
           o.shopper != null
             ? {
-                id: o.shopper.id,
-                name: o.shopper.name ?? o.shopper.shopper?.full_name ?? '',
-                phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? '',
-                email: '',
-                shopper: o.shopper.shopper,
-                vehicle: o.shopper.vehicle,
-                updated_at: o.shopper.updated_at,
-              }
+              id: o.shopper.id,
+              name: o.shopper.name ?? o.shopper.shopper?.full_name ?? '',
+              phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? '',
+              email: '',
+              shopper: o.shopper.shopper,
+              vehicle: o.shopper.vehicle,
+              updated_at: o.shopper.updated_at,
+            }
             : undefined,
       };
     });

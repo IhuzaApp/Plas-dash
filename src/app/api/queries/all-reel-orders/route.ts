@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { getUserContext } from '@/lib/auth-server';
 
 const GET_ALL_REEL_ORDERS = gql`
-  query GetAllReelOrders {
-    reel_orders(order_by: { created_at: desc }) {
+  query GetAllReelOrders($where: reel_orders_bool_exp = {}) {
+    reel_orders(where: $where, order_by: { created_at: desc }) {
       id
       OrderID
       user_id
@@ -86,23 +85,33 @@ const GET_ALL_REEL_ORDERS = gql`
 `;
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  let userId = (session as any)?.user?.id;
+  const context = await getUserContext(req);
 
-  if (!userId) {
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      userId = authHeader.substring(7);
-    }
-  }
-
-  if (!userId) {
+  if (!context) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
       throw new Error('Hasura client is not initialized');
+    }
+
+    let where: any = {};
+    if (!context.isProjectUser) {
+      const conditions: any[] = [];
+      if (context.shop_id) {
+        conditions.push({ Reel: { shop_id: { _eq: context.shop_id } } });
+      }
+      if (context.restaurant_id) {
+        conditions.push({ Reel: { restaurant_id: { _eq: context.restaurant_id } } });
+      }
+
+      if (conditions.length > 0) {
+        where = conditions.length === 1 ? conditions[0] : { _or: conditions };
+      } else {
+        // Non-admin with no associations sees nothing
+        where = { id: { _eq: '00000000-0000-0000-0000-000000000000' } };
+      }
     }
 
     const data = await hasuraClient.request<{
@@ -179,7 +188,7 @@ export async function GET(req: Request) {
           shopper?: { full_name?: string; phone_number?: string } | null;
         } | null;
       }>;
-    }>(GET_ALL_REEL_ORDERS);
+    }>(GET_ALL_REEL_ORDERS, { where });
 
     const orders = (data.reel_orders || []).map(o => ({
       id: o.id,
@@ -209,11 +218,11 @@ export async function GET(req: Request) {
       Shoppers: o.Shoppers,
       Shop: o.Reel?.Shops
         ? {
-            id: o.Reel.Shops.id,
-            name: o.Reel.Shops.name,
-            address: o.Reel.Shops.address ?? undefined,
-            image: o.Reel.Shops.image ?? undefined,
-          }
+          id: o.Reel.Shops.id,
+          name: o.Reel.Shops.name,
+          address: o.Reel.Shops.address ?? undefined,
+          image: o.Reel.Shops.image ?? undefined,
+        }
         : undefined,
     }));
 

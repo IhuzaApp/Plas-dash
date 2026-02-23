@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { getUserContext } from '@/lib/auth-server';
 
 const GET_ALL_BUSINESS_ORDERS = gql`
-  query GetAllBusinessProductOrders {
-    businessProductOrders(order_by: { created_at: desc }) {
+  query GetAllBusinessProductOrders($where: businessProductOrders_bool_exp = {}) {
+    businessProductOrders(where: $where, order_by: { created_at: desc }) {
       id
       OrderID
       allProducts
@@ -117,23 +116,20 @@ const GET_ALL_BUSINESS_ORDERS = gql`
 `;
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  let userId = (session as any)?.user?.id;
+  const context = await getUserContext(req);
 
-  if (!userId) {
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      userId = authHeader.substring(7);
-    }
-  }
-
-  if (!userId) {
+  if (!context) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
       throw new Error('Hasura client is not initialized');
+    }
+
+    let where: any = {};
+    if (!context.isProjectUser && context.shop_id) {
+      where = { store_id: { _eq: context.shop_id } };
     }
 
     const data = await hasuraClient.request<{
@@ -213,7 +209,7 @@ export async function GET(req: Request) {
           vehicle?: any;
         } | null;
       }>;
-    }>(GET_ALL_BUSINESS_ORDERS);
+    }>(GET_ALL_BUSINESS_ORDERS, { where });
 
     const orders = (data.businessProductOrders || []).map(o => {
       const nested = o.shopper?.shopper;
@@ -243,11 +239,11 @@ export async function GET(req: Request) {
         businessTransactions: o.businessTransactions ?? [],
         shopper: o.shopper
           ? {
-              id: o.shopper.id,
-              name: (o.shopper as any).name ?? nested?.full_name ?? '',
-              phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
-              email: (o.shopper as any).email ?? '',
-            }
+            id: o.shopper.id,
+            name: (o.shopper as any).name ?? nested?.full_name ?? '',
+            phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
+            email: (o.shopper as any).email ?? '',
+          }
           : undefined,
       };
     });

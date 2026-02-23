@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { getUserContext } from '@/lib/auth-server';
 
 // Admin dashboard: fetches all orders with customer (orderedBy), address, items, and shopper (Shoppers).
 const GET_ORDERS = gql`
-  query GetOrders {
-    Orders(order_by: { created_at: desc }) {
+  query GetOrders($where: Orders_bool_exp = {}) {
+    Orders(where: $where, order_by: { created_at: desc }) {
       id
       OrderID
       user_id
@@ -71,23 +70,20 @@ const GET_ORDERS = gql`
 `;
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  let userId = (session as any)?.user?.id;
+  const context = await getUserContext(req);
 
-  if (!userId) {
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      userId = authHeader.substring(7);
-    }
-  }
-
-  if (!userId) {
+  if (!context) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     if (!hasuraClient) {
       throw new Error('Hasura client is not initialized');
+    }
+
+    let where: any = {};
+    if (!context.isProjectUser && context.shop_id) {
+      where = { shop_id: { _eq: context.shop_id } };
     }
 
     const data = await hasuraClient.request<{
@@ -126,7 +122,7 @@ export async function GET(req: Request) {
         } | null;
         Shop?: { id?: string; name?: string; address?: string; image?: string } | null;
       }>;
-    }>(GET_ORDERS);
+    }>(GET_ORDERS, { where });
     const orders = data.Orders || [];
 
     if (orders.length === 0) {
@@ -176,11 +172,11 @@ export async function GET(req: Request) {
         shopper:
           o.Shoppers != null
             ? {
-                id: o.Shoppers.id ?? '',
-                name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
-                phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
-                email: '',
-              }
+              id: o.Shoppers.id ?? '',
+              name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
+              phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
+              email: '',
+            }
             : undefined,
         itemsCount,
         unitsCount,
