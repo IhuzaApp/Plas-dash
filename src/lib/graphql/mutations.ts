@@ -482,6 +482,14 @@ export const UPDATE_ORG_EMPLOYEE = `
   }
 `;
 
+export const UPDATE_ORG_EMPLOYEE_PASSWORD = `
+  mutation UpdateOrgEmployeePassword($id: uuid!, $password: String!) {
+    update_orgEmployees(where: {id: {_eq: $id}}, _set: {password: $password}) {
+      affected_rows
+    }
+  }
+`;
+
 export const DELETE_ORG_EMPLOYEE = `
   mutation DeleteOrgEmployee($id: uuid!) {
     delete_orgEmployees(where: {id: {_eq: $id}}) {

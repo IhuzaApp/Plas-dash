@@ -2,7 +2,19 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, Search, Plus, Eye, Key, Clock } from 'lucide-react';
+import {
+  Users,
+  Search,
+  Plus,
+  Eye,
+  Key,
+  Clock,
+  Loader2,
+  MoreHorizontal,
+  ShieldCheck,
+  Trash2,
+  UserPlus
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,19 +26,45 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import AddStaffDialog from '@/components/shop/AddStaffDialog';
+import StaffDetailDrawer from '@/components/shop/StaffDetailDrawer';
+import ResetPasswordModal from '@/components/shop/ResetPasswordModal';
+import StaffPrivilegeEditor from '@/components/shop/StaffPrivilegeEditor';
 import { apiGet } from '@/lib/api';
-import { Loader2 } from 'lucide-react';
+import { hasuraRequest } from '@/lib/hasura';
+import { UPDATE_ORG_EMPLOYEE_ROLE, UPDATE_ORG_EMPLOYEE_PASSWORD, UPDATE_ORG_EMPLOYEE } from '@/lib/graphql/mutations';
+import { toast } from 'sonner';
+import { UserPrivileges } from '@/types/privileges';
+import { convertCustomPermissionsToPrivileges } from '@/lib/privileges/privilegeConverters';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface StaffMember {
   id: string;
   name: string;
   position: string;
   email: string;
+  phone?: string;
+  address?: string;
   store: string;
   status: 'active' | 'inactive';
   lastLogin: Date | null;
+  roleType?: string;
+  privileges?: any;
+  created_at?: string;
+  active: boolean;
+  Address?: string;
+  Position?: string;
+  fullnames?: string;
+  Shops?: { name: string };
 }
 
 const StaffLogin = () => {
@@ -36,21 +74,49 @@ const StaffLogin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Dialog & Drawer States
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isPrivilegeEditorOpen, setIsPrivilegeEditorOpen] = useState(false);
+
   useEffect(() => {
     const fetchStaff = async () => {
       try {
         setIsLoading(true);
         const data = await apiGet<{ orgEmployees: any[] }>('/api/queries/org-employees');
 
-        const mappedStaff: StaffMember[] = data.orgEmployees.map(emp => ({
-          id: emp.id,
-          name: emp.fullnames || 'N/A',
-          position: emp.Position || emp.roleType || 'Staff',
-          email: emp.email,
-          store: emp.Shops?.name || 'Central Store',
-          status: emp.active ? 'active' : 'inactive',
-          lastLogin: emp.last_login ? new Date(emp.last_login) : null,
-        }));
+        const mappedStaff: StaffMember[] = data.orgEmployees.map(emp => {
+          const rawPrivs = emp.orgEmployeeRoles?.[0]?.privillages;
+          let mappedPrivs = rawPrivs;
+
+          if (Array.isArray(rawPrivs)) {
+            mappedPrivs = convertCustomPermissionsToPrivileges(rawPrivs);
+          } else if (typeof rawPrivs === 'string') {
+            try {
+              const parsed = JSON.parse(rawPrivs);
+              if (Array.isArray(parsed)) {
+                mappedPrivs = convertCustomPermissionsToPrivileges(parsed);
+              } else {
+                mappedPrivs = parsed;
+              }
+            } catch (e) {
+              mappedPrivs = {};
+            }
+          }
+
+          return {
+            ...emp,
+            id: emp.id,
+            name: emp.fullnames || 'N/A',
+            position: emp.Position || emp.roleType || 'Staff',
+            email: emp.email,
+            store: emp.Shops?.name || 'Central Store',
+            status: emp.active ? 'active' : 'inactive',
+            lastLogin: emp.last_login ? new Date(emp.last_login) : null,
+            privileges: mappedPrivs,
+          };
+        });
 
         setStaff(mappedStaff);
       } catch (err: any) {
@@ -63,6 +129,64 @@ const StaffLogin = () => {
 
     fetchStaff();
   }, []);
+
+  const handleResetPassword = async (newPassword: string) => {
+    if (!selectedStaff) return;
+    try {
+      await hasuraRequest(UPDATE_ORG_EMPLOYEE_PASSWORD, {
+        id: selectedStaff.id,
+        password: newPassword
+      });
+      toast.success(`Password reset for ${selectedStaff.name}`);
+    } catch (err: any) {
+      console.error('Error resetting password:', err);
+      toast.error('Failed to reset password');
+      throw err;
+    }
+  };
+
+  const handleSavePrivileges = async (newPrivileges: UserPrivileges, newRoleType: string) => {
+    if (!selectedStaff) return;
+    try {
+      // Update both privileges and roleType
+      await Promise.all([
+        hasuraRequest(UPDATE_ORG_EMPLOYEE_ROLE, {
+          id: selectedStaff.id,
+          privillages: newPrivileges
+        }),
+        hasuraRequest(UPDATE_ORG_EMPLOYEE, {
+          id: selectedStaff.id,
+          roleType: newRoleType
+        })
+      ]);
+
+      // Update local state
+      setStaff(prev => prev.map(s =>
+        s.id === selectedStaff.id ? { ...s, privileges: newPrivileges, roleType: newRoleType } : s
+      ));
+
+      toast.success(`Role and privileges updated for ${selectedStaff.name}`);
+    } catch (err: any) {
+      console.error('Error updating role/privileges:', err);
+      toast.error('Failed to update role/privileges');
+      throw err;
+    }
+  };
+
+  const openDetails = (member: StaffMember) => {
+    setSelectedStaff(member);
+    setIsDetailOpen(true);
+  };
+
+  const openPasswordReset = (member: StaffMember) => {
+    setSelectedStaff(member);
+    setIsPasswordModalOpen(true);
+  };
+
+  const openPrivilegeEditor = (member: StaffMember) => {
+    setSelectedStaff(member);
+    setIsPrivilegeEditorOpen(true);
+  };
 
   // Placeholder onSubmit handler
   const handleAddStaff = (data: any) => {
@@ -149,7 +273,7 @@ const StaffLogin = () => {
                     </TableRow>
                   ) : (
                     filteredStaff.map(member => (
-                      <TableRow key={member.id}>
+                      <TableRow key={member.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetails(member)}>
                         <TableCell>
                           <div>
                             <div className="font-medium">{member.name}</div>
@@ -159,26 +283,39 @@ const StaffLogin = () => {
                         <TableCell>{member.position}</TableCell>
                         <TableCell>{member.store}</TableCell>
                         <TableCell>
-                          {member.status === 'active' ? (
-                            <Badge className="bg-green-500">Active</Badge>
-                          ) : (
-                            <Badge variant="outline">Inactive</Badge>
-                          )}
+                          <Badge variant={member.status === 'active' ? 'outline' : 'secondary'} className={member.status === 'active' ? "bg-green-500 text-white hover:bg-green-600 border-none" : ""}>
+                            {member.status}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           {member.lastLogin
                             ? format(member.lastLogin, 'MMM dd, yyyy HH:mm')
                             : 'Never'}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end space-x-2">
-                            <Button variant="ghost" size="icon">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                              <Key className="h-4 w-4" />
-                            </Button>
-                          </div>
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => openDetails(member)}>
+                                <Eye className="mr-2 h-4 w-4" /> View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openPrivilegeEditor(member)}>
+                                <ShieldCheck className="mr-2 h-4 w-4" /> Edit Privileges
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openPasswordReset(member)}>
+                                <Key className="mr-2 h-4 w-4" /> Reset Password
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete Account
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
@@ -229,6 +366,26 @@ const StaffLogin = () => {
         onOpenChange={setIsAddStaffOpen}
         onSubmit={handleAddStaff}
         shopId={''} // TODO: Pass correct shopId if needed
+      />
+
+      <StaffDetailDrawer
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        staff={selectedStaff}
+      />
+
+      <ResetPasswordModal
+        open={isPasswordModalOpen}
+        onOpenChange={setIsPasswordModalOpen}
+        staff={selectedStaff}
+        onReset={handleResetPassword}
+      />
+
+      <StaffPrivilegeEditor
+        open={isPrivilegeEditorOpen}
+        onOpenChange={setIsPrivilegeEditorOpen}
+        staff={selectedStaff}
+        onSave={handleSavePrivileges}
       />
     </AdminLayout>
   );
