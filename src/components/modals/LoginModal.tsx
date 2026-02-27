@@ -4,18 +4,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { useForm } from 'react-hook-form';
-import { hasuraRequest } from '@/lib/hasura';
-import bcrypt from 'bcryptjs';
 import { Lock, User } from 'lucide-react';
-import {
-  GET_ORG_EMPLOYEE_BY_IDENTITY,
-  GET_PROJECT_USER_BY_IDENTITY,
-  GET_PROJECT_USER_BY_MEMBERSHIP_ID,
-} from '@/lib/graphql/queries';
-import {
-  UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE,
-  UPDATE_PROJECT_USER_LAST_LOGIN,
-} from '@/lib/graphql/mutations';
 import { UserPrivileges, DEFAULT_PRIVILEGES } from '@/types/privileges';
 import { convertCustomPermissionsToPrivileges } from '@/lib/privileges/privilegeConverters';
 
@@ -50,129 +39,6 @@ const convertPrivilegesToNewFormat = (orgEmployeeRoles: any): UserPrivileges => 
   return { ...DEFAULT_PRIVILEGES, ...convertCustomPermissionsToPrivileges(oldPrivileges as string[]) };
 };
 
-const loginOrgEmployee = async (identity: string, password: string) => {
-  const data = (await hasuraRequest(GET_ORG_EMPLOYEE_BY_IDENTITY, { identity })) as {
-    orgEmployees: any[];
-  };
-  const employees = data.orgEmployees;
-  if (employees && employees.length > 0) {
-    for (const emp of employees) {
-      if (emp.password && bcrypt.compareSync(password, emp.password)) {
-        return emp;
-      }
-    }
-  }
-  throw new Error('Invalid credentials');
-};
-
-// ProjectUser authentication function
-const loginProjectUser = async (identity: string, password: string) => {
-  let projectUsers: any[] = [];
-
-  // First, try to find user by username or email
-  try {
-    const data = (await hasuraRequest(GET_PROJECT_USER_BY_IDENTITY, { identity })) as {
-      ProjectUsers: any[];
-    };
-    projectUsers = data.ProjectUsers || [];
-  } catch (error) {
-    // String-based query failed, continue to integer-based query
-  }
-
-  // If no users found, try to find by MembershipId (if identity is a number)
-  if (projectUsers.length === 0) {
-    const membershipId = parseInt(identity);
-    if (!isNaN(membershipId)) {
-      try {
-        const data = (await hasuraRequest(GET_PROJECT_USER_BY_MEMBERSHIP_ID, { membershipId })) as {
-          ProjectUsers: any[];
-        };
-        projectUsers = data.ProjectUsers || [];
-      } catch (error) {
-        // Integer-based query failed
-      }
-    }
-  }
-
-  if (projectUsers && projectUsers.length > 0) {
-    for (const user of projectUsers) {
-      // Check if user is active
-      if (!user.is_active) {
-        throw new Error('Account is deactivated');
-      }
-
-      // Verify password using the proper hashing method
-      if (user.password) {
-        const isValidPassword = await verifyProjectUserPassword(password, user.password);
-
-        if (isValidPassword) {
-          return user;
-        }
-      }
-    }
-  }
-
-  throw new Error('Invalid credentials');
-};
-
-const updateLastLoginAndOnline = async (id: string) => {
-  const last_login = new Date().toISOString();
-  await hasuraRequest(UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE, { id, last_login, online: true });
-};
-
-// Update ProjectUser last login
-const updateProjectUserLastLogin = async (id: string) => {
-  try {
-    const lastLogin = new Date().toISOString();
-    await hasuraRequest(UPDATE_PROJECT_USER_LAST_LOGIN, { id, lastLogin });
-  } catch (error) {
-    // Don't throw error here, as login should still succeed even if last login update fails
-  }
-};
-
-// Verify ProjectUser password (handles both bcrypt and custom SHA-256 formats)
-const verifyProjectUserPassword = async (
-  inputPassword: string,
-  hashedPassword: string
-): Promise<boolean> => {
-  try {
-    // Check if it's a bcrypt hash (starts with $2b$)
-    if (hashedPassword.startsWith('$2b$')) {
-      return bcrypt.compareSync(inputPassword, hashedPassword);
-    }
-
-    // Check if it's our custom SHA-256 format (contains ':')
-    if (hashedPassword.includes(':')) {
-      // Parse the hashed password format: salt:hash
-      const [saltHex, hash] = hashedPassword.split(':');
-
-      if (!saltHex || !hash) {
-        return false;
-      }
-
-      // Recreate the hashing process
-      const passwordWithSalt = inputPassword + saltHex;
-      let computedHash = passwordWithSalt;
-
-      // Apply the same hashing iterations (10,000)
-      for (let i = 0; i < 10000; i++) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(computedHash);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        computedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-
-      return computedHash === hash;
-    }
-
-    // If it's neither format, try direct comparison (for legacy passwords)
-    return inputPassword === hashedPassword;
-  } catch (error) {
-    return false;
-  }
-};
-
 const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
   const form = useForm<LoginFormInputs>({ defaultValues: { identifier: '', password: '' } });
   const [loading, setLoading] = useState(false);
@@ -182,28 +48,24 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setError(null);
     try {
-      let session: any;
-      let isProjectUser = false;
+      console.log('DEBUG: Sending login request to API');
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-      // Try to authenticate as OrgEmployee first
-      try {
-        session = await loginOrgEmployee(data.identifier, data.password);
-        isProjectUser = false;
-      } catch (orgError: any) {
-        // If OrgEmployee login fails, try ProjectUser
-        try {
-          session = await loginProjectUser(data.identifier, data.password);
-          isProjectUser = true;
-        } catch (projectError: any) {
-          // Both authentication methods failed
-          throw new Error('Invalid credentials');
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log('DEBUG: Login API failed:', errorData.error);
+        throw new Error(errorData.error || 'Login failed');
       }
 
-      // Update last login based on user type
-      if (isProjectUser) {
-        await updateProjectUserLastLogin(session.id);
+      const { user: session, isProjectUser } = await response.json();
+      console.log('DEBUG: Login API success, type:', isProjectUser ? 'ProjectUser' : 'OrgEmployee');
 
+      // Update session data based on user type
+      if (isProjectUser) {
         // Create session data for ProjectUser
         const sessionData = {
           id: session.id,
@@ -225,23 +87,22 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
         onLoginSuccess(sessionData);
       } else {
         // OrgEmployee authentication
-        await updateLastLoginAndOnline(session.id);
-
         // Convert old privilege format to new fine-grained format
         const privileges = convertPrivilegesToNewFormat(session.orgEmployeeRoles);
 
         // Create session data with new privilege format
         const sessionData = {
           id: session.id,
-          username: session.username,
-          fullName: session.fullName,
+          username: session.fullnames || session.username,
+          fullName: session.fullnames || session.fullName,
           email: session.email,
-          phoneNumber: session.phoneNumber,
+          phoneNumber: session.phone || session.phoneNumber,
           shop_id: session.shop_id,
           privileges: privileges,
           // Keep old format for backward compatibility
           orgEmployeeRoles: session.orgEmployeeRoles,
           isProjectUser: false,
+          role: session.roleType,
         };
 
         onLoginSuccess(sessionData);

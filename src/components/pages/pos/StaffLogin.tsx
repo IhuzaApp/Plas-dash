@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
+import bcrypt from 'bcryptjs';
 import AddStaffDialog from '@/components/shop/AddStaffDialog';
 import StaffDetailDrawer from '@/components/shop/StaffDetailDrawer';
 import ResetPasswordModal from '@/components/shop/ResetPasswordModal';
@@ -134,9 +135,10 @@ const StaffLogin = () => {
   const handleResetPassword = async (newPassword: string) => {
     if (!selectedStaff) return;
     try {
+      const hashedPassword = bcrypt.hashSync(newPassword, 10);
       await hasuraRequest(UPDATE_ORG_EMPLOYEE_PASSWORD, {
         id: selectedStaff.id,
-        password: newPassword
+        password: hashedPassword
       });
       toast.success(`Password reset for ${selectedStaff.name}`);
     } catch (err: any) {

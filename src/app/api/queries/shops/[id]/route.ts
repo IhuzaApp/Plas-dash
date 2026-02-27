@@ -113,76 +113,84 @@ const GET_SHOP_BY_ID = gql`
           order_id
           product_id
         }
-        Address {
-          street
-          city
-          postal_code
-          type
-          created_at
-          latitude
-          longitude
-          placeDetails
-          is_default
-          updated_at
-          user_id
-        }
-        Ratings {
-          id
-          order_id
-          rating
-          review
-          reviewed_at
-          businessProduct_id
-          created_at
-          customer_id
-          delivery_experience
-          packaging_quality
-          professionalism
-          reel_order_id
-          shopper_id
-          updated_at
-        }
-        pin
-        shop_id
-        shopper_id
+      orgEmployees {
+        id
+        fullnames
+        Position
+        active
+        roleType
+        email
+        phone
+      }
+      Address {
+        street
+        city
+        postal_code
+        type
+        created_at
+        latitude
+        longitude
+        placeDetails
+        is_default
+        updated_at
         user_id
-        voucher_code
-        delivery_notes
-        delivery_photo_url
-        delivery_time
+      }
+      Ratings {
+        id
+        order_id
+        rating
+        review
+        reviewed_at
+        businessProduct_id
+        created_at
+        customer_id
+        delivery_experience
+        packaging_quality
+        professionalism
+        reel_order_id
+        shopper_id
+        updated_at
+      }
+      pin
+      shop_id
+      shopper_id
+      user_id
+      voucher_code
+      delivery_notes
+      delivery_photo_url
+      delivery_time
+      discount
+      delivery_address_id
+      combined_order_id
+      assigned_at
+      Invoice {
+        Proof
+        created_at
+        customer_id
+        delivery_fee
         discount
-        delivery_address_id
-        combined_order_id
-        assigned_at
-        Invoice {
-          Proof
-          created_at
-          customer_id
-          delivery_fee
-          discount
-          id
-          invoice_items
-          invoice_number
-          order_id
-          reel_order_id
-          restarurant_order_id
-          service_fee
-          status
-          subtotal
-          tax
-          total_amount
-        }
-        Delivery_Issues {
-          created_at
-          description
-          id
-          issue_type
-          order_id
-          priority
-          shopper_id
-          status
-          updated_at
-        }
+        id
+        invoice_items
+        invoice_number
+        order_id
+        reel_order_id
+        restarurant_order_id
+        service_fee
+        status
+        subtotal
+        tax
+        total_amount
+      }
+      Delivery_Issues {
+        created_at
+        description
+        id
+        issue_type
+        order_id
+        priority
+        shopper_id
+        status
+        updated_at
       }
     }
   }

@@ -5,6 +5,8 @@ import { Toaster } from '@/components/ui/toaster';
 import LoadingProvider from './LoadingProvider';
 import LoginModal from '../modals/LoginModal';
 import { UserPrivileges } from '@/types/privileges';
+import { hasPrivilege } from '@/types/privileges';
+
 import { getRecommendedLandingPage, isPageAccessible } from '@/lib/privileges';
 import { ShopSessionProvider } from '@/contexts/ShopSessionContext';
 
@@ -109,13 +111,32 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
   React.useEffect(() => {
     if (isAuthenticated && session && pathname) {
-      const currentPageAccessible = isPageAccessible(session.privileges, pathname, session.role);
+      // 1. Determine if current page is accessible
+      let currentPageAccessible = isPageAccessible(session.privileges, pathname, session.role);
+
+      // 2. Main dashboard / dashboard pages strictly require a Project User
+      if (!session.isProjectUser && (pathname === '/' || pathname === '/dashboard')) {
+        currentPageAccessible = false;
+      }
 
       if (!currentPageAccessible) {
-        const recommendedPage = getRecommendedLandingPage(session.privileges, session.role);
+        let redirectPath = '/';
 
-        if (recommendedPage && recommendedPage.path !== pathname) {
-          router.push(recommendedPage.path);
+        if (!session.isProjectUser) {
+          // Standard flow for Org Employees
+          if (hasPrivilege(session.privileges, 'company_dashboard', 'access', session.role)) {
+            redirectPath = '/pos/company-dashboard';
+          } else {
+            redirectPath = '/pos/checkout';
+          }
+        } else {
+          // Flow for Project Users
+          const recommendedPage = getRecommendedLandingPage(session.privileges, session.role);
+          redirectPath = recommendedPage?.path || '/';
+        }
+
+        if (redirectPath !== pathname) {
+          router.push(redirectPath);
         }
       }
     }
@@ -131,15 +152,35 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
     // Only auto-route if current page is not accessible
     if (pathname) {
-      const currentPageAccessible = isPageAccessible(
+      let currentPageAccessible = isPageAccessible(
         sessionData.privileges,
         pathname,
         sessionData.role
       );
+
+      // Main dashboard / dashboard strictly requires a Project User
+      if (!sessionData.isProjectUser && (pathname === '/' || pathname === '/dashboard')) {
+        currentPageAccessible = false;
+      }
+
       if (!currentPageAccessible) {
-        const recommendedPage = getRecommendedLandingPage(sessionData.privileges, sessionData.role);
-        if (recommendedPage && recommendedPage.path !== pathname) {
-          router.push(recommendedPage.path);
+        let redirectPath = '/';
+
+        if (!sessionData.isProjectUser) {
+          // Standard flow for Org Employees
+          if (hasPrivilege(sessionData.privileges, 'company_dashboard', 'access', sessionData.role)) {
+            redirectPath = '/pos/company-dashboard';
+          } else {
+            redirectPath = '/pos/checkout';
+          }
+        } else {
+          // Flow for Project Users
+          const recommendedPage = getRecommendedLandingPage(sessionData.privileges, sessionData.role);
+          redirectPath = recommendedPage?.path || '/';
+        }
+
+        if (redirectPath !== pathname) {
+          router.push(redirectPath);
         }
       }
     }
