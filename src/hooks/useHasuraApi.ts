@@ -64,6 +64,56 @@ import type {
   Refund,
 } from './useGraphql';
 
+export interface Rating {
+  businessProduct_id: string | null;
+  created_at: string;
+  customer_id: string;
+  delivery_experience: number | null;
+  id: string;
+  order_id: string | null;
+  packaging_quality: number | null;
+  professionalism: number | null;
+  rating: number;
+  reel_order_id: string | null;
+  review: string | null;
+  reviewed_at: string;
+  shopper_id: string | null;
+  updated_at: string;
+  User?: {
+    gender: string | null;
+    email: string | null;
+    phone: string | null;
+    name: string | null;
+  } | null;
+  Order?: {
+    OrderID: string;
+    Shop?: {
+      address: string | null;
+      description: string | null;
+      image: string | null;
+      logo: string | null;
+      name: string;
+      longitude: number | null;
+    } | null;
+    delivery_notes: string | null;
+    delivery_fee: number;
+    delivery_time: string | null;
+    delivery_photo_url: string | null;
+    discount: number;
+    pin: string | null;
+    orderedBy?: {
+      created_at: string;
+      email: string | null;
+      gender: string | null;
+      name: string | null;
+      id: string;
+      is_active: boolean;
+      phone: string | null;
+      profile_picture: string | null;
+    } | null;
+  } | null;
+}
+
 interface Category {
   id: string;
   name: string;
@@ -628,6 +678,17 @@ export function usePendingWithdrawRequests() {
   return useQuery<{ withDraweRequest: any[] }, Error>({
     queryKey: ['pending-withdraw-requests'],
     queryFn: () => hasuraRequest(GET_ALL_PENDING_WITHDRAW_REQUESTS, {}),
+  });
+}
+
+// Type-safe hook for Ratings (data from API)
+export function useRatings() {
+  return useQuery<{ Ratings: Rating[] }, Error>({
+    queryKey: ['api', 'ratings'],
+    queryFn: async () => {
+      const res = await apiGet<{ ratings: Rating[] }>('/api/queries/ratings');
+      return { Ratings: res.ratings || [] };
+    },
   });
 }
 

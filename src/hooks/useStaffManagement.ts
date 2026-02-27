@@ -48,6 +48,7 @@ interface UseStaffManagementReturn {
   recentActivity: RecentActivity[];
   totalStaff: number;
   activeStaff: number;
+  activeInLast30Days: number;
   isLoading: boolean;
   error: string | null;
 }
@@ -204,12 +205,22 @@ export function useStaffManagement(): UseStaffManagementReturn {
   const totalStaff = staffMembers.length;
   const activeStaff = staffMembers.filter(member => member.active).length;
 
+  // Calculate active in last 30 days
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const activeInLast30Days = staffMembers.filter(member => {
+    if (!member.last_login) return false;
+    const lastLogin = new Date(member.last_login);
+    return lastLogin >= thirtyDaysAgo;
+  }).length;
+
   return {
     staffMembers,
     staffDistribution,
     recentActivity,
     totalStaff,
     activeStaff,
+    activeInLast30Days,
     isLoading,
     error,
   };
