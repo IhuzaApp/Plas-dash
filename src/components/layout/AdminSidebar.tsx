@@ -208,10 +208,10 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       section: 'Point of Sale',
       icon: CreditCard,
       items: [
-        { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
         ...(isLoggedIntoShop
           ? [
             // Shop-specific POS items when logged into a shop
+            { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
             { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
             { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
             { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
