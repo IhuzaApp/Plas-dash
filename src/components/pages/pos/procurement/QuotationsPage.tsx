@@ -18,10 +18,12 @@ import { Search, Plus, FileText, Eye, MoreHorizontal, Calendar, ArrowRight, Buil
 import { format } from 'date-fns';
 import { DUMMY_QUOTATIONS, DUMMY_SUPPLIERS } from '@/lib/data/dummy-procurement';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { usePrivilege } from '@/hooks/usePrivilege';
 import { CreateRfqDialog } from './CreateRfqDialog';
 
 export default function QuotationsPage() {
     const { data: systemConfig } = useSystemConfig();
+    const { hasAction } = usePrivilege();
     const currency = systemConfig?.currency || '$';
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -44,12 +46,14 @@ export default function QuotationsPage() {
                         Manage your Requests for Quotation and supplier bids.
                     </p>
                 </div>
-                <CreateRfqDialog>
-                    <Button className="sm:w-auto h-11 px-8 rounded-full shadow-md bg-primary hover:bg-primary/90 transition-all hover:-translate-y-0.5" size="lg">
-                        <Plus className="w-5 h-5 mr-2" />
-                        Create RFQ
-                    </Button>
-                </CreateRfqDialog>
+                {hasAction('procurement', 'manage_quotations') && (
+                    <CreateRfqDialog>
+                        <Button className="sm:w-auto h-11 px-8 rounded-full shadow-md bg-primary hover:bg-primary/90 transition-all hover:-translate-y-0.5" size="lg">
+                            <Plus className="w-5 h-5 mr-2" />
+                            Create RFQ
+                        </Button>
+                    </CreateRfqDialog>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -196,7 +200,7 @@ export default function QuotationsPage() {
                                                             View
                                                         </Button>
                                                     </Link>
-                                                    {quote.status !== 'Accepted' && quote.status !== 'Rejected' && (
+                                                    {quote.status !== 'Accepted' && quote.status !== 'Rejected' && hasAction('procurement', 'manage_quotations') && (
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
@@ -205,7 +209,7 @@ export default function QuotationsPage() {
                                                             Approve
                                                         </Button>
                                                     )}
-                                                    {quote.status === 'Accepted' && (
+                                                    {quote.status === 'Accepted' && hasAction('procurement', 'manage_purchase_orders') && (
                                                         <Button
                                                             variant="default"
                                                             size="sm"

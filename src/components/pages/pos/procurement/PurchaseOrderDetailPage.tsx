@@ -6,6 +6,7 @@ import { ArrowLeft, Printer, Download, Mail, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { DUMMY_PURCHASE_ORDERS, DUMMY_SUPPLIERS, DUMMY_PRODUCTS } from '@/lib/data/dummy-procurement';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { usePrivilege } from '@/hooks/usePrivilege';
 import { OrderDetailsSummary } from './OrderDetailsSummary';
 import { SupplierDetailsCard } from './SupplierDetailsCard';
 import { OrderItemsTable } from './OrderItemsTable';
@@ -22,6 +23,7 @@ const MOCK_MONTHLY_SPENDING = [
 
 export default function PurchaseOrderDetailPage({ id }: { id: string }) {
     const { data: systemConfig } = useSystemConfig();
+    const { hasAction } = usePrivilege();
     const currency = systemConfig?.currency || '$';
 
     const order = DUMMY_PURCHASE_ORDERS.find(po => po.id === id);
@@ -82,10 +84,12 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                         <Download className="w-4 h-4 mr-2" />
                         Download
                     </Button>
-                    <Button className="bg-primary text-white hover:bg-primary/90" size="sm">
-                        <Mail className="w-4 h-4 mr-2" />
-                        Send to Supplier
-                    </Button>
+                    {hasAction('procurement', 'manage_purchase_orders') && (
+                        <Button className="bg-primary text-white hover:bg-primary/90" size="sm">
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send to Supplier
+                        </Button>
+                    )}
                 </div>
             </div>
 

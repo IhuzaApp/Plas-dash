@@ -17,11 +17,13 @@ import { Search, Plus, Eye, MoreHorizontal, Calendar, Building2, Truck, CheckCir
 import { format } from 'date-fns';
 import { DUMMY_PURCHASE_ORDERS, DUMMY_SUPPLIERS } from '@/lib/data/dummy-procurement';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { usePrivilege } from '@/hooks/usePrivilege';
 import { CreatePoDialog } from './CreatePoDialog';
 import Link from 'next/link';
 
 export default function PurchaseOrdersPage() {
     const { data: systemConfig } = useSystemConfig();
+    const { hasAction } = usePrivilege();
     const currency = systemConfig?.currency || '$';
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -44,12 +46,14 @@ export default function PurchaseOrdersPage() {
                         Manage your outgoing purchase orders and track deliveries.
                     </p>
                 </div>
-                <CreatePoDialog>
-                    <Button className="sm:w-auto text-white bg-primary hover:bg-primary/90">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create PO
-                    </Button>
-                </CreatePoDialog>
+                {hasAction('procurement', 'manage_purchase_orders') && (
+                    <CreatePoDialog>
+                        <Button className="sm:w-auto text-white bg-primary hover:bg-primary/90">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create PO
+                        </Button>
+                    </CreatePoDialog>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -211,7 +215,7 @@ export default function PurchaseOrdersPage() {
                                                             View
                                                         </Button>
                                                     </Link>
-                                                    {order.deliveryStatus !== 'Received' && order.status !== 'Cancelled' && (
+                                                    {order.deliveryStatus !== 'Received' && order.status !== 'Cancelled' && hasAction('procurement', 'manage_purchase_orders') && (
                                                         <Button
                                                             variant="default"
                                                             size="sm"

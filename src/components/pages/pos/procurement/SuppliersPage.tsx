@@ -33,11 +33,13 @@ import { Building2, Search, Plus, Edit, Trash2, Mail, Phone, Eye, DollarSign, Us
 import { DUMMY_SUPPLIERS, Supplier } from '@/lib/data/dummy-procurement';
 import { useRouter } from 'next/navigation';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { usePrivilege } from '@/hooks/usePrivilege';
 import { formatCurrency } from '@/lib/utils';
 
 export default function SuppliersPage() {
     const router = useRouter();
     const { data: config } = useSystemConfig();
+    const { hasAction } = usePrivilege();
     const currency = config?.currency || 'RWF';
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -108,10 +110,12 @@ export default function SuppliersPage() {
                         Manage your supplier network and account balances.
                     </p>
                 </div>
-                <Button onClick={handleAddNew} className="sm:w-auto h-11 px-8 rounded-full shadow-md bg-primary hover:bg-primary/90 transition-all hover:-translate-y-0.5" size="lg">
-                    <Plus className="w-5 h-5 mr-2" />
-                    Add Supplier
-                </Button>
+                {hasAction('procurement', 'manage_suppliers') && (
+                    <Button onClick={handleAddNew} className="sm:w-auto h-11 px-8 rounded-full shadow-md bg-primary hover:bg-primary/90 transition-all hover:-translate-y-0.5" size="lg">
+                        <Plus className="w-5 h-5 mr-2" />
+                        Add Supplier
+                    </Button>
+                )}
             </div>
 
             {/* Summary Cards */}
@@ -297,21 +301,25 @@ export default function SuppliersPage() {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-slate-500 hover:text-slate-900"
-                                                        onClick={() => handleEditClick(supplier)}
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-slate-500 hover:text-destructive hover:bg-rose-50"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                    {hasAction('procurement', 'manage_suppliers') && (
+                                                        <>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-slate-500 hover:text-slate-900"
+                                                                onClick={() => handleEditClick(supplier)}
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-slate-500 hover:text-destructive hover:bg-rose-50"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </>
+                                                    )}
                                                 </div>
                                                 {/* Fallback for touch devices where hover isn't present */}
                                                 <div className="flex items-center justify-end gap-1 md:hidden">

@@ -5,7 +5,7 @@ import PurchaseOrderDetailPage from '../../../../../components/pages/pos/procure
 
 export default function Page({ params }: { params: { id: string } }) {
     return (
-        <ProtectedRoute>
+        <ProtectedRoute requiredPrivilege="procurement">
             <AdminLayout>
                 <div className="p-6">
                     <PurchaseOrderDetailPage id={params.id} />

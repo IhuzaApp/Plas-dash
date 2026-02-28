@@ -15,9 +15,11 @@ import {
 } from '@/components/ui/table';
 import { Search, Eye, Calendar, Building2, Truck, PackageCheck, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { usePrivilege } from '@/hooks/usePrivilege';
 import { DUMMY_PURCHASE_ORDERS, DUMMY_SUPPLIERS, PurchaseOrder } from '@/lib/data/dummy-procurement';
 
 export default function GoodsReceivedPage() {
+    const { hasAction } = usePrivilege();
     const [searchQuery, setSearchQuery] = useState('');
 
     const getSupplierName = (supplierId: string) => {
@@ -165,9 +167,15 @@ export default function GoodsReceivedPage() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 {order.status === 'Shipped' ? (
-                                                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                                                        Receive Goods
-                                                    </Button>
+                                                    hasAction('procurement', 'manage_goods_received') ? (
+                                                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                                                            Receive Goods
+                                                        </Button>
+                                                    ) : (
+                                                        <Button variant="outline" size="sm" disabled>
+                                                            Transit
+                                                        </Button>
+                                                    )
                                                 ) : (
                                                     <Button variant="outline" size="sm">
                                                         <Eye className="w-4 h-4 mr-2" />

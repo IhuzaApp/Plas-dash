@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { DUMMY_QUOTATIONS, DUMMY_SUPPLIERS, DUMMY_PRODUCTS } from '@/lib/data/dummy-procurement';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { usePrivilege } from '@/hooks/usePrivilege';
 
 interface QuotationDetailPageProps {
     quotationId: string;
@@ -26,6 +27,7 @@ interface QuotationDetailPageProps {
 export default function QuotationDetailPage({ quotationId }: QuotationDetailPageProps) {
     const router = useRouter();
     const { data: systemConfig } = useSystemConfig();
+    const { hasAction } = usePrivilege();
     const currency = systemConfig?.currency || '$';
 
     const quotation = useMemo(() => DUMMY_QUOTATIONS.find(q => q.id === quotationId), [quotationId]);
@@ -110,7 +112,7 @@ export default function QuotationDetailPage({ quotationId }: QuotationDetailPage
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                    {quotation.status !== 'Accepted' && quotation.status !== 'Rejected' && (
+                    {quotation.status !== 'Accepted' && quotation.status !== 'Rejected' && hasAction('procurement', 'manage_quotations') && (
                         <>
                             <Button variant="outline" className="w-full sm:w-auto text-destructive hover:bg-destructive/10">
                                 Reject
@@ -121,7 +123,7 @@ export default function QuotationDetailPage({ quotationId }: QuotationDetailPage
                             </Button>
                         </>
                     )}
-                    {quotation.status === 'Accepted' && (
+                    {quotation.status === 'Accepted' && hasAction('procurement', 'manage_purchase_orders') && (
                         <Button className="w-full sm:w-auto">
                             <ShoppingCart className="w-4 h-4 mr-2" />
                             Convert to PO
