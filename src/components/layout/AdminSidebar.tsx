@@ -42,6 +42,7 @@ import {
   Truck,
   ClipboardList,
   Building2,
+  TrendingUp,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -249,6 +250,18 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         { title: 'Refund Claims', icon: Wallet, path: '/refunds', badge: '3' },
       ],
     },
+    {
+      section: 'Tax & Compliance',
+      icon: FileText,
+      items: [
+        { title: 'Tax Dashboard', icon: LayoutDashboard, path: '/tax' },
+        { title: 'Tax Declaration', icon: FileText, path: '/tax/declaration' },
+        { title: 'Forecasting', icon: TrendingUp, path: '/tax/forecasting' },
+        { title: 'Optimization', icon: Tag, path: '/tax/optimization' },
+        { title: 'Reports', icon: BarChart, path: '/tax/reports' },
+        { title: 'Settings', icon: Settings, path: '/tax/settings' },
+      ],
+    },
 
     {
       section: 'Support & Help',
@@ -335,7 +348,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         hasModuleAccess('plasmarket') ||
         hasModuleAccess('procurement');
 
-      return pagesHasAccess || moduleHasAccess;
+      return pagesHasAccess || moduleHasAccess || pathname?.startsWith('/tax');
     })();
 
   // If no module access, return empty sidebar

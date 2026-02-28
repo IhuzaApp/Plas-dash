@@ -211,10 +211,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <LoadingProvider>
           <div className="min-h-screen bg-background relative">
             <React.Suspense fallback={null}>{children}</React.Suspense>
-            {!isAuthenticated && (
+            {!isAuthenticated && !pathname?.startsWith('/tax') && (
               <div className="fixed inset-0 z-40 bg-white/30 backdrop-blur-md pointer-events-none" />
             )}
-            {!isAuthenticated && <LoginModal onLoginSuccess={handleLoginSuccess} />}
+            {!isAuthenticated && !pathname?.startsWith('/tax') && <LoginModal onLoginSuccess={handleLoginSuccess} />}
             <Toaster />
           </div>
         </LoadingProvider>
