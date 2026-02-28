@@ -61,11 +61,11 @@ export default function TaxDashboardPage() {
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Tax Dashboard & Forecasting</h1>
-                    <p className="text-slate-500 mt-1">Monitor your tax liabilities and forecast future payments.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Tax Dashboard & Forecasting</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Monitor your tax liabilities and forecast future payments.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" className="gap-2 bg-white text-slate-700 hover:bg-slate-50 border-slate-200">
+                    <Button variant="outline" className="gap-2 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 transition-colors">
                         <Filter className="h-4 w-4" />
                         <span className="hidden sm:inline">Filters</span>
                     </Button>
@@ -78,69 +78,48 @@ export default function TaxDashboardPage() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="border-none shadow-sm shadow-slate-200/50 rounded-2xl bg-white overflow-hidden relative group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
+                <Card className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 dark:bg-red-900/20 rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
                     <CardHeader className="flex flex-row items-center justify-between pb-2 z-10">
-                        <CardTitle className="text-sm font-medium text-slate-500">Estimated Tax Owed</CardTitle>
-                        <div className="p-2 bg-red-100 rounded-lg">
-                            <DollarSign className="h-4 w-4 text-red-600" />
-                        </div>
+                        <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400">Estimated Tax Owed</CardTitle>
+                        <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg"><DollarSign className="h-4 w-4 text-red-600 dark:text-red-400" /></div>
                     </CardHeader>
                     <CardContent className="z-10">
-                        <div className="text-3xl font-bold text-slate-900">$159,000</div>
-                        <div className="flex items-center mt-2 text-sm text-red-600 font-medium">
-                            <ArrowUpRight className="h-4 w-4 mr-1" />
-                            <span>+12.5% vs last year</span>
-                        </div>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-slate-50">$159,000</div>
+                        <div className="flex items-center mt-2 text-sm text-red-600 dark:text-red-400 font-medium"><ArrowUpRight className="h-4 w-4 mr-1" /><span>+12.5% vs last year</span></div>
                     </CardContent>
                 </Card>
-
-                <Card className="border-none shadow-sm shadow-slate-200/50 rounded-2xl bg-white overflow-hidden relative group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
+                <Card className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 dark:bg-green-900/20 rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
                     <CardHeader className="flex flex-row items-center justify-between pb-2 z-10">
-                        <CardTitle className="text-sm font-medium text-slate-500">Potential Savings</CardTitle>
-                        <div className="p-2 bg-green-100 rounded-lg">
-                            <TrendingDown className="h-4 w-4 text-green-600" />
-                        </div>
+                        <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400">Potential Savings</CardTitle>
+                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg"><TrendingDown className="h-4 w-4 text-green-600 dark:text-green-400" /></div>
                     </CardHeader>
                     <CardContent className="z-10">
-                        <div className="text-3xl font-bold text-slate-900">$24,500</div>
-                        <div className="flex items-center mt-2 text-sm text-green-600 font-medium">
-                            <ArrowDownRight className="h-4 w-4 mr-1" />
-                            <span>Through R&D credits</span>
-                        </div>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-slate-50">$24,500</div>
+                        <div className="flex items-center mt-2 text-sm text-green-600 dark:text-green-400 font-medium"><ArrowDownRight className="h-4 w-4 mr-1" /><span>Through R&D credits</span></div>
                     </CardContent>
                 </Card>
-
-                <Card className="border-none shadow-sm shadow-slate-200/50 rounded-2xl bg-white overflow-hidden relative group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
+                <Card className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 dark:bg-blue-900/20 rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
                     <CardHeader className="flex flex-row items-center justify-between pb-2 z-10">
-                        <CardTitle className="text-sm font-medium text-slate-500">Effective Tax Rate</CardTitle>
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                            <PieChart className="h-4 w-4 text-blue-600" />
-                        </div>
+                        <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400">Effective Tax Rate</CardTitle>
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><PieChart className="h-4 w-4 text-blue-600 dark:text-blue-400" /></div>
                     </CardHeader>
                     <CardContent className="z-10">
-                        <div className="text-3xl font-bold text-slate-900">21.8%</div>
-                        <div className="flex items-center mt-2 text-sm text-slate-500">
-                            Target rate: 21.0%
-                        </div>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-slate-50">21.8%</div>
+                        <div className="flex items-center mt-2 text-sm text-slate-500 dark:text-slate-400">Target rate: 21.0%</div>
                     </CardContent>
                 </Card>
-
-                <Card className="border-none shadow-sm shadow-slate-200/50 rounded-2xl bg-white overflow-hidden relative group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-orange-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
+                <Card className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-orange-50 dark:bg-orange-900/20 rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
                     <CardHeader className="flex flex-row items-center justify-between pb-2 z-10">
-                        <CardTitle className="text-sm font-medium text-slate-500">Upcoming Deadline</CardTitle>
-                        <div className="p-2 bg-orange-100 rounded-lg">
-                            <AlertCircle className="h-4 w-4 text-orange-600" />
-                        </div>
+                        <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400">Upcoming Deadline</CardTitle>
+                        <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg"><AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" /></div>
                     </CardHeader>
                     <CardContent className="z-10">
-                        <div className="text-2xl font-bold text-slate-900">Oct 15, 2024</div>
-                        <div className="flex items-center mt-2 text-sm text-orange-600 font-medium">
-                            12 days remaining
-                        </div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-50">Oct 15, 2024</div>
+                        <div className="flex items-center mt-2 text-sm text-orange-600 dark:text-orange-400 font-medium">12 days remaining</div>
                     </CardContent>
                 </Card>
             </div>
@@ -149,14 +128,14 @@ export default function TaxDashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Charts Section */}
                 <div className="lg:col-span-2 space-y-8">
-                    <Card className="border-none shadow-sm shadow-slate-200/50 rounded-2xl overflow-hidden bg-white">
-                        <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+                    <Card className="rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                             <div>
-                                <CardTitle className="text-lg text-slate-800">Tax Liability Forecast</CardTitle>
-                                <CardDescription>Projected monthly tax based on revenue & expenses</CardDescription>
+                                <CardTitle className="text-lg text-slate-800 dark:text-slate-100">Tax Liability Forecast</CardTitle>
+                                <CardDescription className="dark:text-slate-400">Projected monthly tax based on revenue & expenses</CardDescription>
                             </div>
                             <Select defaultValue="2024">
-                                <SelectTrigger className="w-[120px] rounded-lg">
+                                <SelectTrigger className="w-[120px] rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
                                     <SelectValue placeholder="Year" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -170,25 +149,10 @@ export default function TaxDashboardPage() {
                             <div className="h-[350px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={forecastData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis
-                                            dataKey="month"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: "#64748b", fontSize: 13 }}
-                                            dy={10}
-                                        />
-                                        <YAxis
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: "#64748b", fontSize: 13 }}
-                                            tickFormatter={(value) => `$${value / 1000}k`}
-                                        />
-                                        <Tooltip
-                                            cursor={{ fill: "#f1f5f9" }}
-                                            contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                                            formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]}
-                                        />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 13 }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 13 }} tickFormatter={(value) => `$${value / 1000}k`} />
+                                        <Tooltip cursor={{ fill: "rgba(51,65,85,0.08)" }} contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]} />
                                         <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
                                         <Bar dataKey="projectedTax" name="Projected Tax" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
                                         <Bar dataKey="revenue" name="Revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
@@ -198,35 +162,21 @@ export default function TaxDashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-none shadow-sm shadow-slate-200/50 rounded-2xl overflow-hidden bg-white">
-                        <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+                    <Card className="rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                             <div>
-                                <CardTitle className="text-lg text-slate-800">Revenue to Tax Over Time</CardTitle>
-                                <CardDescription>Historical trend comparison</CardDescription>
+                                <CardTitle className="text-lg text-slate-800 dark:text-slate-100">Revenue to Tax Over Time</CardTitle>
+                                <CardDescription className="dark:text-slate-400">Historical trend comparison</CardDescription>
                             </div>
                         </CardHeader>
                         <CardContent className="pt-6">
                             <div className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={forecastData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis
-                                            dataKey="month"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: "#64748b", fontSize: 13 }}
-                                            dy={10}
-                                        />
-                                        <YAxis
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: "#64748b", fontSize: 13 }}
-                                            tickFormatter={(value) => `$${value / 1000}k`}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                                            formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]}
-                                        />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 13 }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 13 }} tickFormatter={(value) => `$${value / 1000}k`} />
+                                        <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]} />
                                         <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
                                         <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
                                         <Line type="monotone" dataKey="projectedTax" name="Tax" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
@@ -239,62 +189,54 @@ export default function TaxDashboardPage() {
 
                 {/* Sidebar Widgets Section */}
                 <div className="space-y-8">
-                    <Card className="border-none shadow-sm shadow-slate-200/50 rounded-2xl overflow-hidden bg-white">
-                        <CardHeader className="border-b pb-4 bg-slate-50/50">
-                            <CardTitle className="text-lg text-slate-800">Liability Breakdown</CardTitle>
-                            <CardDescription>Current unfiled obligations</CardDescription>
+                    <Card className="rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4 bg-slate-50/50 dark:bg-slate-800/50">
+                            <CardTitle className="text-lg text-slate-800 dark:text-slate-100">Liability Breakdown</CardTitle>
+                            <CardDescription className="dark:text-slate-400">Current unfiled obligations</CardDescription>
                         </CardHeader>
                         <CardContent className="pt-0 px-0">
-                            <ul className="divide-y divide-slate-100">
+                            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {taxCategories.map((category, idx) => (
-                                    <li key={idx} className="p-4 sm:px-6 hover:bg-slate-50 transition-colors">
+                                    <li key={idx} className="p-4 sm:px-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                         <div className="flex items-center justify-between">
                                             <div className="flex flex-col gap-1">
-                                                <span className="font-medium text-slate-800">{category.name}</span>
-                                                <div className="flex items-center text-xs text-slate-500">
+                                                <span className="font-medium text-slate-800 dark:text-slate-200">{category.name}</span>
+                                                <div className="flex items-center text-xs text-slate-500 dark:text-slate-400">
                                                     <CalendarIcon className="h-3 w-3 mr-1" />
                                                     {category.date}
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end gap-1">
-                                                <span className="font-bold text-slate-900">${category.amount.toLocaleString()}</span>
-                                                <Badge
-                                                    variant="secondary"
-                                                    className={cn(
-                                                        "text-[10px] px-1.5 py-0 h-5 font-semibold",
-                                                        category.status === 'Paid' ? "bg-green-100 text-green-700 hover:bg-green-200" :
-                                                            category.status === 'Due soon' ? "bg-red-100 text-red-700 hover:bg-red-200" :
-                                                                "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                                                    )}
-                                                >
-                                                    {category.status}
-                                                </Badge>
+                                                <span className="font-bold text-slate-900 dark:text-slate-100">${category.amount.toLocaleString()}</span>
+                                                <Badge variant="secondary" className={cn(
+                                                    "text-[10px] px-1.5 py-0 h-5 font-semibold",
+                                                    category.status === 'Paid' ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 hover:bg-green-200" :
+                                                        category.status === 'Due soon' ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 hover:bg-red-200" :
+                                                            "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 hover:bg-orange-200"
+                                                )}>{category.status}</Badge>
                                             </div>
                                         </div>
                                     </li>
                                 ))}
                             </ul>
-                            <div className="p-4 border-t border-slate-100 bg-slate-50">
-                                <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-sm">View All Liabilities</Button>
+                            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                                <Button className="w-full bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white rounded-xl shadow-sm">View All Liabilities</Button>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-none shadow-sm shadow-slate-200/50 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800 text-white relative">
+                    <Card className="rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800 text-white relative border-none shadow-sm">
                         <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
                         <CardHeader>
                             <CardTitle className="text-white text-lg flex items-center gap-2">
-                                <Target className="h-5 w-5 text-blue-200" />
-                                Optimization Tip
+                                <Target className="h-5 w-5 text-blue-200" /> Optimization Tip
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <p className="text-blue-100 text-sm leading-relaxed mb-4">
                                 You have <strong className="text-white">$45,000</strong> in eligible R&D expenses that haven't been claimed for the current quarter. Claiming these could reduce your estimated tax by <strong className="text-white">~18%</strong>.
                             </p>
-                            <Button className="w-full bg-white text-blue-700 hover:bg-blue-50 border-none font-semibold rounded-xl">
-                                Review Deductions
-                            </Button>
+                            <Button className="w-full bg-white text-blue-700 hover:bg-blue-50 border-none font-semibold rounded-xl">Review Deductions</Button>
                         </CardContent>
                     </Card>
                 </div>

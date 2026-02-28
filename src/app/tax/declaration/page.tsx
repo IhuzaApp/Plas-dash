@@ -93,21 +93,20 @@ export default function TaxDeclarationPage() {
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
-
             {/* Page Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Tax Declaration</h1>
-                <p className="text-slate-500 mt-1">Review your financials and file your corporate tax returns.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Tax Declaration</h1>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Review your financials and file your corporate tax returns.</p>
             </div>
 
             {/* Configuration Selectors */}
-            <Card className="border-none shadow-sm shadow-slate-200/50 rounded-2xl bg-white overflow-hidden">
+            <Card className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 <CardContent className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div className="space-y-2">
-                            <Label className="text-slate-600 flex items-center gap-2"><Building2 className="h-4 w-4 text-blue-500" /> Business Entity</Label>
+                            <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2"><Building2 className="h-4 w-4 text-blue-500" /> Business Entity</Label>
                             <Select defaultValue="acme">
-                                <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-11">
+                                <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-11 dark:text-slate-100">
                                     <SelectValue placeholder="Select Business" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -117,9 +116,9 @@ export default function TaxDeclarationPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-slate-600 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-500" /> Tax Year</Label>
+                            <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-500" /> Tax Year</Label>
                             <Select defaultValue="2024">
-                                <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-11">
+                                <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-11 dark:text-slate-100">
                                     <SelectValue placeholder="Select Year" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -129,9 +128,9 @@ export default function TaxDeclarationPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-slate-600 flex items-center gap-2"><MapPin className="h-4 w-4 text-blue-500" /> Jurisdiction</Label>
+                            <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2"><MapPin className="h-4 w-4 text-blue-500" /> Jurisdiction</Label>
                             <Select defaultValue="us_ca">
-                                <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-11">
+                                <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-11 dark:text-slate-100">
                                     <SelectValue placeholder="Select Region" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -142,9 +141,9 @@ export default function TaxDeclarationPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-slate-600 flex items-center gap-2"><Briefcase className="h-4 w-4 text-blue-500" /> Business Type</Label>
+                            <Label className="text-slate-600 dark:text-slate-300 flex items-center gap-2"><Briefcase className="h-4 w-4 text-blue-500" /> Business Type</Label>
                             <Select defaultValue="corp">
-                                <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-11">
+                                <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-11 dark:text-slate-100">
                                     <SelectValue placeholder="Select Type" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -159,54 +158,35 @@ export default function TaxDeclarationPage() {
             </Card>
 
             {/* Section 1: Financial Summary Cards */}
-            <h3 className="text-lg font-bold text-slate-800 border-b pb-2">Financial Summary</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2">Financial Summary</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="border border-slate-100 shadow-sm rounded-xl bg-white relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent pointer-events-none" />
+                <Card className="border border-slate-100 dark:border-slate-800 shadow-sm rounded-xl bg-white dark:bg-slate-900 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 dark:from-blue-900/10 to-transparent pointer-events-none" />
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-blue-600" /> Total Revenue YTD
-                        </CardTitle>
+                        <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2"><DollarSign className="h-4 w-4 text-blue-600" /> Total Revenue YTD</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-slate-900">${totalRevenue.toLocaleString()}</div>
-                    </CardContent>
+                    <CardContent><div className="text-2xl font-bold text-slate-900 dark:text-slate-50">${totalRevenue.toLocaleString()}</div></CardContent>
                 </Card>
-
-                <Card className="border border-slate-100 shadow-sm rounded-xl bg-white relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 to-transparent pointer-events-none" />
+                <Card className="border border-slate-100 dark:border-slate-800 shadow-sm rounded-xl bg-white dark:bg-slate-900 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 dark:from-red-900/10 to-transparent pointer-events-none" />
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
-                            <Receipt className="h-4 w-4 text-red-600" /> Total Expenses YTD
-                        </CardTitle>
+                        <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2"><Receipt className="h-4 w-4 text-red-600" /> Total Expenses YTD</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-slate-900">${totalExpenses.toLocaleString()}</div>
-                    </CardContent>
+                    <CardContent><div className="text-2xl font-bold text-slate-900 dark:text-slate-50">${totalExpenses.toLocaleString()}</div></CardContent>
                 </Card>
-
-                <Card className="border border-slate-100 shadow-sm rounded-xl bg-white relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 to-transparent pointer-events-none" />
+                <Card className="border border-slate-100 dark:border-slate-800 shadow-sm rounded-xl bg-white dark:bg-slate-900 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 dark:from-green-900/10 to-transparent pointer-events-none" />
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-500 flex items-center gap-2">
-                            <TrendingDown className="h-4 w-4 text-green-600" /> Taxable Income
-                        </CardTitle>
+                        <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2"><TrendingDown className="h-4 w-4 text-green-600" /> Taxable Income</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-slate-900">${taxableIncome.toLocaleString()}</div>
-                    </CardContent>
+                    <CardContent><div className="text-2xl font-bold text-slate-900 dark:text-slate-50">${taxableIncome.toLocaleString()}</div></CardContent>
                 </Card>
-
-                <Card className="border border-slate-100 shadow-sm rounded-xl bg-slate-900 text-white relative overflow-hidden group">
+                <Card className="border border-slate-100 dark:border-slate-700 shadow-sm rounded-xl bg-slate-900 dark:bg-slate-800 text-white relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent pointer-events-none" />
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                            <Calculator className="h-4 w-4 text-blue-400" /> Estimated Tax Owed
-                        </CardTitle>
+                        <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2"><Calculator className="h-4 w-4 text-blue-400" /> Estimated Tax Owed</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold text-white">${estimatedTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                    </CardContent>
+                    <CardContent><div className="text-3xl font-bold text-white">${estimatedTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></CardContent>
                 </Card>
             </div>
 
@@ -215,27 +195,27 @@ export default function TaxDeclarationPage() {
                 {/* Section 2: Input Forms */}
                 <div className="lg:col-span-2 space-y-6">
                     <Tabs defaultValue="revenue" className="w-full">
-                        <TabsList className="w-full justify-start h-12 bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
-                            <TabsTrigger value="revenue" className="rounded-lg data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-none px-6">Revenue</TabsTrigger>
-                            <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-red-50 data-[state=active]:text-red-700 data-[state=active]:shadow-none px-6">Expenses</TabsTrigger>
-                            <TabsTrigger value="deductions" className="rounded-lg data-[state=active]:bg-green-50 data-[state=active]:text-green-700 data-[state=active]:shadow-none px-6">Deductions</TabsTrigger>
+                        <TabsList className="w-full justify-start h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-1 rounded-xl shadow-sm">
+                            <TabsTrigger value="revenue" className="rounded-lg data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-300 data-[state=active]:shadow-none px-6">Revenue</TabsTrigger>
+                            <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-red-50 dark:data-[state=active]:bg-red-900/30 data-[state=active]:text-red-700 dark:data-[state=active]:text-red-300 data-[state=active]:shadow-none px-6">Expenses</TabsTrigger>
+                            <TabsTrigger value="deductions" className="rounded-lg data-[state=active]:bg-green-50 dark:data-[state=active]:bg-green-900/30 data-[state=active]:text-green-700 dark:data-[state=active]:text-green-300 data-[state=active]:shadow-none px-6">Deductions</TabsTrigger>
                         </TabsList>
 
-                        <div className="mt-6 bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+                        <div className="mt-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm rounded-2xl overflow-hidden">
                             <TabsContent value="revenue" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-800">Monthly Revenue</h3>
-                                        <p className="text-sm text-slate-500">Enter your gross receipts per month.</p>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Monthly Revenue</h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Enter your gross receipts per month.</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-medium text-slate-500">Auto-calculated Total</p>
-                                        <p className="text-xl font-bold text-blue-600">${totalRevenue.toLocaleString()}</p>
+                                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Auto-calculated Total</p>
+                                        <p className="text-xl font-bold text-blue-600 dark:text-blue-400">${totalRevenue.toLocaleString()}</p>
                                     </div>
                                 </div>
                                 <div className="p-0 overflow-x-auto">
                                     <Table>
-                                        <TableHeader className="bg-slate-50">
+                                        <TableHeader className="bg-slate-50 dark:bg-slate-800">
                                             <TableRow>
                                                 <TableHead className="w-[120px]">Month</TableHead>
                                                 <TableHead>Amount (USD)</TableHead>
@@ -244,16 +224,11 @@ export default function TaxDeclarationPage() {
                                         <TableBody>
                                             {months.map((month) => (
                                                 <TableRow key={month}>
-                                                    <TableCell className="font-medium text-slate-700">{month}</TableCell>
+                                                    <TableCell className="font-medium text-slate-700 dark:text-slate-300">{month}</TableCell>
                                                     <TableCell>
                                                         <div className="relative w-full max-w-sm">
                                                             <span className="absolute left-3 top-2.5 text-slate-400">$</span>
-                                                            <Input
-                                                                type="number"
-                                                                className="pl-8"
-                                                                value={revenueInputs[month] || ""}
-                                                                onChange={(e) => handleRevenueChange(month, e.target.value)}
-                                                            />
+                                                            <Input type="number" className="pl-8 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100" value={revenueInputs[month] || ""} onChange={(e) => handleRevenueChange(month, e.target.value)} />
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -264,36 +239,31 @@ export default function TaxDeclarationPage() {
                             </TabsContent>
 
                             <TabsContent value="expenses" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-800">Operating Expenses</h3>
-                                        <p className="text-sm text-slate-500">Categorized monthly expense breakdown.</p>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Operating Expenses</h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Categorized monthly expense breakdown.</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-medium text-slate-500">Auto-calculated Total</p>
-                                        <p className="text-xl font-bold text-red-600">${totalExpenses.toLocaleString()}</p>
+                                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Auto-calculated Total</p>
+                                        <p className="text-xl font-bold text-red-600 dark:text-red-400">${totalExpenses.toLocaleString()}</p>
                                     </div>
                                 </div>
                                 <div className="p-0 overflow-x-auto">
                                     <Table className="min-w-[800px]">
-                                        <TableHeader className="bg-slate-50">
+                                        <TableHeader className="bg-slate-50 dark:bg-slate-800">
                                             <TableRow>
-                                                <TableHead className="sticky left-0 bg-slate-50 z-10 shadow-[1px_0_0_0_#f1f5f9]">Category</TableHead>
+                                                <TableHead className="sticky left-0 bg-slate-50 dark:bg-slate-800 z-10">Category</TableHead>
                                                 {months.map(m => <TableHead key={m} className="w-[120px]">{m}</TableHead>)}
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {expenseCategories.map(category => (
                                                 <TableRow key={category}>
-                                                    <TableCell className="font-medium text-slate-700 sticky left-0 bg-white shadow-[1px_0_0_0_#f8fafc] z-10">{category}</TableCell>
+                                                    <TableCell className="font-medium text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-900 z-10">{category}</TableCell>
                                                     {months.map(month => (
                                                         <TableCell key={`${category}-${month}`} className="p-2">
-                                                            <Input
-                                                                type="number"
-                                                                className="h-9 px-2 text-sm"
-                                                                value={expenseInputs[category]?.[month] || ""}
-                                                                onChange={(e) => handleExpenseChange(category, month, e.target.value)}
-                                                            />
+                                                            <Input type="number" className="h-9 px-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100" value={expenseInputs[category]?.[month] || ""} onChange={(e) => handleExpenseChange(category, month, e.target.value)} />
                                                         </TableCell>
                                                     ))}
                                                 </TableRow>
@@ -304,42 +274,25 @@ export default function TaxDeclarationPage() {
                             </TabsContent>
 
                             <TabsContent value="deductions" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-                                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                                    <h3 className="text-lg font-semibold text-slate-800">Available Deductions & Credits</h3>
-                                    <p className="text-sm text-slate-500">Select applicable deductions to reduce taxable income.</p>
+                                <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Available Deductions & Credits</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Select applicable deductions to reduce taxable income.</p>
                                 </div>
                                 <div className="p-6 space-y-6">
-                                    <div className="flex items-start space-x-3">
-                                        <Checkbox id="rd" checked={deductions.rdCredits} onCheckedChange={(c) => setDeductions(prev => ({ ...prev, rdCredits: !!c }))} className="mt-1" />
-                                        <div className="grid gap-1.5 leading-none">
-                                            <Label htmlFor="rd" className="text-base font-semibold text-slate-800">Research & Development (R&D) Credits</Label>
-                                            <p className="text-sm text-slate-500">Eligible software development and research costs. Estimated value: <strong className="text-green-600">$45,000</strong></p>
+                                    {[
+                                        { id: "rd", label: "Research & Development (R&D) Credits", desc: "Eligible software development and research costs. Estimated value:", amount: "$45,000", checked: deductions.rdCredits, key: "rdCredits" as const },
+                                        { id: "dep", label: "Asset Depreciation", desc: "MACRS depreciation on acquired capital assets. Estimated value:", amount: "$125,000", checked: deductions.depreciation, key: "depreciation" as const },
+                                        { id: "loss", label: "Net Operating Loss (NOL) Carryforward", desc: "Losses from previous financial years. Estimated value:", amount: "$80,000", checked: deductions.lossCarryforward, key: "lossCarryforward" as const },
+                                        { id: "other", label: "Other Standard Deductions", desc: "Charitable contributions, standard state allowances. Estimated value:", amount: "$15,000", checked: deductions.other, key: "other" as const },
+                                    ].map(d => (
+                                        <div key={d.id} className="flex items-start space-x-3">
+                                            <Checkbox id={d.id} checked={d.checked} onCheckedChange={(c) => setDeductions(prev => ({ ...prev, [d.key]: !!c }))} className="mt-1" />
+                                            <div className="grid gap-1.5 leading-none">
+                                                <Label htmlFor={d.id} className="text-base font-semibold text-slate-800 dark:text-slate-100">{d.label}</Label>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">{d.desc} <strong className="text-green-600 dark:text-green-400">{d.amount}</strong></p>
+                                            </div>
                                         </div>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3">
-                                        <Checkbox id="dep" checked={deductions.depreciation} onCheckedChange={(c) => setDeductions(prev => ({ ...prev, depreciation: !!c }))} className="mt-1" />
-                                        <div className="grid gap-1.5 leading-none">
-                                            <Label htmlFor="dep" className="text-base font-semibold text-slate-800">Asset Depreciation</Label>
-                                            <p className="text-sm text-slate-500">MACRS depreciation on acquired capital assets. Estimated value: <strong className="text-green-600">$125,000</strong></p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3">
-                                        <Checkbox id="loss" checked={deductions.lossCarryforward} onCheckedChange={(c) => setDeductions(prev => ({ ...prev, lossCarryforward: !!c }))} className="mt-1" />
-                                        <div className="grid gap-1.5 leading-none">
-                                            <Label htmlFor="loss" className="text-base font-semibold text-slate-800">Net Operating Loss (NOL) Carryforward</Label>
-                                            <p className="text-sm text-slate-500">Losses from previous financial years. Estimated value: <strong className="text-green-600">$80,000</strong></p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3">
-                                        <Checkbox id="other" checked={deductions.other} onCheckedChange={(c) => setDeductions(prev => ({ ...prev, other: !!c }))} className="mt-1" />
-                                        <div className="grid gap-1.5 leading-none">
-                                            <Label htmlFor="other" className="text-base font-semibold text-slate-800">Other Standard Deductions</Label>
-                                            <p className="text-sm text-slate-500">Charitable contributions, standard state allowances. Estimated value: <strong className="text-green-600">$15,000</strong></p>
-                                        </div>
-                                    </div>
+                                    ))}
                                 </div>
                             </TabsContent>
                         </div>
@@ -348,8 +301,8 @@ export default function TaxDeclarationPage() {
 
                 {/* Section 3: Result Card */}
                 <div className="lg:col-span-1">
-                    <Card className="sticky top-24 border-none shadow-lg shadow-blue-900/5 rounded-2xl bg-white overflow-hidden">
-                        <CardHeader className="bg-slate-900 text-white pb-6 pt-8 px-6 text-center">
+                    <Card className="sticky top-24 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
+                        <CardHeader className="bg-slate-900 dark:bg-slate-950 text-white pb-6 pt-8 px-6 text-center">
                             <div className="mx-auto bg-blue-500/20 w-12 h-12 flex items-center justify-center rounded-full mb-4">
                                 <Calculator className="h-6 w-6 text-blue-400" />
                             </div>
@@ -359,51 +312,44 @@ export default function TaxDeclarationPage() {
                         <CardContent className="p-0">
                             <div className="px-6 py-4 space-y-4">
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500">Gross Income:</span>
-                                    <span className="font-semibold text-slate-900">${totalRevenue.toLocaleString()}</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Gross Income:</span>
+                                    <span className="font-semibold text-slate-900 dark:text-slate-100">${totalRevenue.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500">Total Expenses:</span>
-                                    <span className="font-semibold text-red-600">-${totalExpenses.toLocaleString()}</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Total Expenses:</span>
+                                    <span className="font-semibold text-red-600 dark:text-red-400">-${totalExpenses.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500">Total Deductions:</span>
-                                    <span className="font-semibold text-green-600">-${totalDeductionsCalc.toLocaleString()}</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Total Deductions:</span>
+                                    <span className="font-semibold text-green-600 dark:text-green-400">-${totalDeductionsCalc.toLocaleString()}</span>
                                 </div>
-                                <div className="my-4 border-t border-slate-100" />
+                                <div className="my-4 border-t border-slate-100 dark:border-slate-800" />
                                 <div className="flex justify-between items-center text-base">
-                                    <span className="font-medium text-slate-700">Taxable Income:</span>
-                                    <span className="font-bold text-slate-900">${taxableIncome.toLocaleString()}</span>
+                                    <span className="font-medium text-slate-700 dark:text-slate-300">Taxable Income:</span>
+                                    <span className="font-bold text-slate-900 dark:text-slate-100">${taxableIncome.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500">Applied Tax Rate:</span>
-                                    <span className="font-semibold text-blue-600">21.0%</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Applied Tax Rate:</span>
+                                    <span className="font-semibold text-blue-600 dark:text-blue-400">21.0%</span>
                                 </div>
-                                <div className="flex justify-between items-center text-sm pb-2 border-b border-slate-100">
-                                    <span className="text-slate-500">Effective Tax Rate:</span>
-                                    <span className="font-semibold text-slate-700">{effectiveRate.toFixed(1)}%</span>
+                                <div className="flex justify-between items-center text-sm pb-2 border-b border-slate-100 dark:border-slate-800">
+                                    <span className="text-slate-500 dark:text-slate-400">Effective Tax Rate:</span>
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300">{effectiveRate.toFixed(1)}%</span>
                                 </div>
-                                <div className="flex justify-between items-center bg-blue-50 -mx-6 px-6 py-4 mt-2">
-                                    <span className="font-bold text-slate-800">Estimated Tax Due</span>
-                                    <span className="text-2xl font-black text-blue-700">${estimatedTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/30 -mx-6 px-6 py-4 mt-2">
+                                    <span className="font-bold text-slate-800 dark:text-slate-100">Estimated Tax Due</span>
+                                    <span className="text-2xl font-black text-blue-700 dark:text-blue-400">${estimatedTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                 </div>
                             </div>
                         </CardContent>
                         <CardFooter className="flex-col gap-3 px-6 pb-8 pt-4">
-                            <Button
-                                variant="outline"
-                                className="w-full gap-2 border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold h-11"
-                                onClick={handleRecalculate}
-                            >
+                            <Button variant="outline" className="w-full gap-2 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold h-11 transition-colors" onClick={handleRecalculate}>
                                 <RefreshCw className="h-4 w-4" /> Recalculate
                             </Button>
-                            <Button
-                                className="w-full gap-2 bg-slate-200 text-slate-400 hover:bg-slate-200 cursor-not-allowed h-11 font-semibold"
-                                disabled
-                            >
+                            <Button className="w-full gap-2 bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 cursor-not-allowed h-11 font-semibold" disabled>
                                 <Send className="h-4 w-4" /> Submit Declaration
                             </Button>
-                            <div className="mt-2 flex items-start gap-2 text-xs text-slate-500">
+                            <div className="mt-2 flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400">
                                 <Info className="h-4 w-4 text-slate-400 shrink-0" />
                                 <p>Submission is disabled in preview mode. Please verify all data before attempting to file.</p>
                             </div>

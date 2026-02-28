@@ -43,6 +43,7 @@ import {
   ClipboardList,
   Building2,
   TrendingUp,
+  Upload,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -257,6 +258,8 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         { title: 'Tax Dashboard', icon: LayoutDashboard, path: '/tax' },
         { title: 'Tax Declaration', icon: FileText, path: '/tax/declaration' },
         { title: 'Forecasting', icon: TrendingUp, path: '/tax/forecasting' },
+        { title: 'Smart Import', icon: Upload, path: '/tax/import' },
+        { title: 'Tax Summary', icon: LayoutDashboard, path: '/tax/summary' },
         { title: 'Optimization', icon: Tag, path: '/tax/optimization' },
         { title: 'Reports', icon: BarChart, path: '/tax/reports' },
         { title: 'Settings', icon: Settings, path: '/tax/settings' },
