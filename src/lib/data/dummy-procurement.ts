@@ -37,6 +37,7 @@ export interface Quotation {
     status: 'Draft' | 'Sent' | 'Received' | 'Rejected' | 'Accepted';
     totalAmount: number | null;
     items: { productId: string; quantity: number; unitPrice?: number }[];
+    notes?: string;
 }
 
 export interface PurchaseOrder {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import { Search, Plus, FileText, Eye, MoreHorizontal, Calendar, ArrowRight, Buil
 import { format } from 'date-fns';
 import { DUMMY_QUOTATIONS, DUMMY_SUPPLIERS } from '@/lib/data/dummy-procurement';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { CreateRfqDialog } from './CreateRfqDialog';
 
 export default function QuotationsPage() {
     const { data: systemConfig } = useSystemConfig();
@@ -42,10 +44,12 @@ export default function QuotationsPage() {
                         Manage your Requests for Quotation and supplier bids.
                     </p>
                 </div>
-                <Button className="sm:w-auto">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create RFQ
-                </Button>
+                <CreateRfqDialog>
+                    <Button className="sm:w-auto h-11 px-8 rounded-full shadow-md bg-primary hover:bg-primary/90 transition-all hover:-translate-y-0.5" size="lg">
+                        <Plus className="w-5 h-5 mr-2" />
+                        Create RFQ
+                    </Button>
+                </CreateRfqDialog>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -68,24 +72,9 @@ export default function QuotationsPage() {
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-muted-foreground">Responses Received</p>
+                                <p className="text-sm font-medium text-muted-foreground">Pending Approval</p>
                                 <h3 className="text-2xl font-bold mt-1 truncate">
-                                    {DUMMY_QUOTATIONS.filter(q => q.status === 'Received' || q.status === 'Accepted').length}
-                                </h3>
-                            </div>
-                            <div className="p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/30 ml-2 shrink-0">
-                                <ArrowRight className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-muted-foreground">Pending Review</p>
-                                <h3 className="text-2xl font-bold mt-1 truncate">
-                                    {DUMMY_QUOTATIONS.filter(q => q.status === 'Received').length}
+                                    {DUMMY_QUOTATIONS.filter(q => q.status === 'Sent' || q.status === 'Received').length}
                                 </h3>
                             </div>
                             <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-900/30 ml-2 shrink-0">
@@ -98,13 +87,28 @@ export default function QuotationsPage() {
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-muted-foreground">Acceptance Rate</p>
+                                <p className="text-sm font-medium text-muted-foreground">Approved</p>
                                 <h3 className="text-2xl font-bold mt-1 truncate">
-                                    {Math.round((DUMMY_QUOTATIONS.filter(q => q.status === 'Accepted').length / DUMMY_QUOTATIONS.length) * 100)}%
+                                    {DUMMY_QUOTATIONS.filter(q => q.status === 'Accepted').length}
                                 </h3>
                             </div>
-                            <div className="p-3 rounded-full bg-zinc-100 dark:bg-zinc-800 ml-2 shrink-0">
-                                <FileText className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+                            <div className="p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/30 ml-2 shrink-0">
+                                <ArrowRight className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-muted-foreground">Rejected</p>
+                                <h3 className="text-2xl font-bold mt-1 truncate">
+                                    {DUMMY_QUOTATIONS.filter(q => q.status === 'Rejected').length}
+                                </h3>
+                            </div>
+                            <div className="p-3 rounded-full bg-rose-100 dark:bg-rose-900/30 ml-2 shrink-0">
+                                <FileText className="w-5 h-5 text-rose-600 dark:text-rose-400" />
                             </div>
                         </div>
                     </CardContent>
@@ -132,9 +136,8 @@ export default function QuotationsPage() {
                                 <TableRow>
                                     <TableHead className="w-[180px]">RFQ Number</TableHead>
                                     <TableHead>Supplier</TableHead>
-                                    <TableHead>Date Requested</TableHead>
-                                    <TableHead>Valid Until</TableHead>
-                                    <TableHead>Items</TableHead>
+                                    <TableHead>Date Created</TableHead>
+                                    <TableHead className="text-center">Total Items</TableHead>
                                     <TableHead className="text-right">Estimated Total</TableHead>
                                     <TableHead className="text-center">Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
@@ -165,13 +168,8 @@ export default function QuotationsPage() {
                                                     {format(new Date(quote.dateRequested), 'MMM dd, yyyy')}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="text-sm text-foreground">
-                                                    {format(new Date(quote.dateValidUntil), 'MMM dd, yyyy')}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="secondary">{quote.items.length} items</Badge>
+                                            <TableCell className="text-center">
+                                                <Badge variant="secondary">{quote.items.length}</Badge>
                                             </TableCell>
                                             <TableCell className="text-right font-medium">
                                                 {quote.totalAmount ? `${currency}${quote.totalAmount.toFixed(2)}` : 'Pending'}
@@ -189,21 +187,32 @@ export default function QuotationsPage() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-slate-500 hover:text-primary"
-                                                        title="View Details"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-slate-500"
-                                                    >
-                                                        <MoreHorizontal className="w-4 h-4" />
-                                                    </Button>
+                                                    <Link href={`/pos/procurement/quotations/${quote.id}`}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        >
+                                                            View
+                                                        </Button>
+                                                    </Link>
+                                                    {quote.status !== 'Accepted' && quote.status !== 'Rejected' && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                        >
+                                                            Approve
+                                                        </Button>
+                                                    )}
+                                                    {quote.status === 'Accepted' && (
+                                                        <Button
+                                                            variant="default"
+                                                            size="sm"
+                                                        >
+                                                            Create PO
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
