@@ -17,6 +17,8 @@ import { Search, Plus, Eye, MoreHorizontal, Calendar, Building2, Truck, CheckCir
 import { format } from 'date-fns';
 import { DUMMY_PURCHASE_ORDERS, DUMMY_SUPPLIERS } from '@/lib/data/dummy-procurement';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { CreatePoDialog } from './CreatePoDialog';
+import Link from 'next/link';
 
 export default function PurchaseOrdersPage() {
     const { data: systemConfig } = useSystemConfig();
@@ -42,10 +44,12 @@ export default function PurchaseOrdersPage() {
                         Manage your outgoing purchase orders and track deliveries.
                     </p>
                 </div>
-                <Button className="sm:w-auto text-white bg-primary hover:bg-primary/90">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create PO
-                </Button>
+                <CreatePoDialog>
+                    <Button className="sm:w-auto text-white bg-primary hover:bg-primary/90">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create PO
+                    </Button>
+                </CreatePoDialog>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -68,24 +72,9 @@ export default function PurchaseOrdersPage() {
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-muted-foreground">Pending Approval</p>
+                                <p className="text-sm font-medium text-muted-foreground">Pending Delivery</p>
                                 <h3 className="text-2xl font-bold mt-1 truncate">
-                                    {DUMMY_PURCHASE_ORDERS.filter(po => po.status === 'Pending').length}
-                                </h3>
-                            </div>
-                            <div className="p-3 rounded-full bg-slate-100 dark:bg-slate-800 ml-2 shrink-0">
-                                <Calendar className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-muted-foreground">In Transit</p>
-                                <h3 className="text-2xl font-bold mt-1 truncate text-amber-600 dark:text-amber-500">
-                                    {DUMMY_PURCHASE_ORDERS.filter(po => po.status === 'Shipped').length}
+                                    {DUMMY_PURCHASE_ORDERS.filter(po => po.deliveryStatus === 'Pending' || po.deliveryStatus === 'Partial').length}
                                 </h3>
                             </div>
                             <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-900/30 ml-2 shrink-0">
@@ -100,11 +89,30 @@ export default function PurchaseOrdersPage() {
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-muted-foreground">Completed</p>
                                 <h3 className="text-2xl font-bold mt-1 truncate text-emerald-600 dark:text-emerald-500">
-                                    {DUMMY_PURCHASE_ORDERS.filter(po => po.status === 'Delivered').length}
+                                    {DUMMY_PURCHASE_ORDERS.filter(po => po.deliveryStatus === 'Received').length}
                                 </h3>
                             </div>
                             <div className="p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/30 ml-2 shrink-0">
                                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-muted-foreground">Overdue Deliveries</p>
+                                <h3 className="text-2xl font-bold mt-1 truncate text-rose-600 dark:text-rose-500">
+                                    {DUMMY_PURCHASE_ORDERS.filter(po =>
+                                        new Date(po.expectedDeliveryDate) < new Date('2026-02-28') &&
+                                        po.deliveryStatus !== 'Received' &&
+                                        po.status !== 'Cancelled'
+                                    ).length}
+                                </h3>
+                            </div>
+                            <div className="p-3 rounded-full bg-rose-100 dark:bg-rose-900/30 ml-2 shrink-0">
+                                <Calendar className="w-5 h-5 text-rose-600 dark:text-rose-400" />
                             </div>
                         </div>
                     </CardContent>
@@ -132,11 +140,11 @@ export default function PurchaseOrdersPage() {
                                 <TableRow>
                                     <TableHead className="w-[180px]">PO Number</TableHead>
                                     <TableHead>Supplier</TableHead>
-                                    <TableHead>Created Date</TableHead>
+                                    <TableHead>Order Date</TableHead>
                                     <TableHead>Expected Delivery</TableHead>
-                                    <TableHead>Items</TableHead>
                                     <TableHead className="text-right">Total Amount</TableHead>
-                                    <TableHead className="text-center">Status</TableHead>
+                                    <TableHead className="text-center">Payment</TableHead>
+                                    <TableHead className="text-center">Delivery</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -171,40 +179,46 @@ export default function PurchaseOrdersPage() {
                                                     {format(new Date(order.expectedDeliveryDate), 'MMM dd, yyyy')}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <Badge variant="secondary">{order.items.length} items</Badge>
-                                            </TableCell>
                                             <TableCell className="text-right font-medium">
                                                 {currency}{order.totalAmount.toFixed(2)}
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <Badge variant={
-                                                    order.status === 'Delivered' ? 'default' :
-                                                        order.status === 'Shipped' ? 'secondary' :
-                                                            order.status === 'Approved' ? 'outline' :
-                                                                order.status === 'Cancelled' ? 'destructive' :
-                                                                    'secondary'
-                                                } className={order.status === 'Pending' ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200' : ''}>
-                                                    {order.status}
+                                                    order.paymentStatus === 'Paid' ? 'default' :
+                                                        order.paymentStatus === 'Partial' ? 'secondary' :
+                                                            'outline'
+                                                } className={order.paymentStatus === 'Unpaid' ? 'text-rose-600 border-rose-200 bg-rose-50' : ''}>
+                                                    {order.paymentStatus}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge variant={
+                                                    order.deliveryStatus === 'Received' ? 'default' :
+                                                        order.deliveryStatus === 'Partial' ? 'secondary' :
+                                                            'outline'
+                                                } className={order.deliveryStatus === 'Pending' ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200' : ''}>
+                                                    {order.deliveryStatus}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-slate-500 hover:text-primary"
-                                                        title="View Details"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-slate-500"
-                                                    >
-                                                        <MoreHorizontal className="w-4 h-4" />
-                                                    </Button>
+                                                    <Link href={`/pos/procurement/purchase-orders/${order.id}`}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        >
+                                                            View
+                                                        </Button>
+                                                    </Link>
+                                                    {order.deliveryStatus !== 'Received' && order.status !== 'Cancelled' && (
+                                                        <Button
+                                                            variant="default"
+                                                            size="sm"
+                                                        >
+                                                            Receive
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
