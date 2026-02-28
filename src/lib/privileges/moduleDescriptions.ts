@@ -671,6 +671,22 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       { key: 'reject', label: 'Reject Requests', description: 'Can reject withdraw requests' },
     ],
   },
+  procurement: {
+    title: 'Procurement',
+    description: 'Manage back-office procurement operations',
+    actions: [
+      { key: 'access', label: 'Access', description: 'Can access procurement module' },
+      { key: 'view_suppliers', label: 'View Suppliers', description: 'Can view suppliers' },
+      { key: 'manage_suppliers', label: 'Manage Suppliers', description: 'Can manage suppliers' },
+      { key: 'view_quotations', label: 'View Quotations', description: 'Can view quotations' },
+      { key: 'manage_quotations', label: 'Manage Quotations', description: 'Can manage quotations' },
+      { key: 'view_purchase_orders', label: 'View Purchase Orders', description: 'Can view purchase orders' },
+      { key: 'manage_purchase_orders', label: 'Manage Purchase Orders', description: 'Can manage purchase orders' },
+      { key: 'view_goods_received', label: 'View Goods Received', description: 'Can view goods received' },
+      { key: 'manage_goods_received', label: 'Manage Goods Received', description: 'Can manage goods received' },
+      { key: 'view_reports', label: 'View Reports', description: 'Can view procurement reports' },
+    ],
+  },
 };
 
 /**

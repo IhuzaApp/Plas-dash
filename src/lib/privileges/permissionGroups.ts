@@ -199,4 +199,20 @@ export const permissionGroups: PermissionGroup[] = [
       { key: 'export_data', label: 'Export Referral Data' },
     ],
   },
+  {
+    title: 'Procurement',
+    module: 'procurement' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Procurement' },
+      { key: 'view_suppliers', label: 'View Suppliers' },
+      { key: 'manage_suppliers', label: 'Manage Suppliers' },
+      { key: 'view_quotations', label: 'View Quotations' },
+      { key: 'manage_quotations', label: 'Manage Quotations' },
+      { key: 'view_purchase_orders', label: 'View Purchase Orders' },
+      { key: 'manage_purchase_orders', label: 'Manage Purchase Orders' },
+      { key: 'view_goods_received', label: 'View Goods Received' },
+      { key: 'manage_goods_received', label: 'Manage Goods Received' },
+      { key: 'view_reports', label: 'View Reports' },
+    ],
+  },
 ];

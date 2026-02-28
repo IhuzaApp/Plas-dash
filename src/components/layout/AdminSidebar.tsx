@@ -38,6 +38,10 @@ import {
   LogOut,
   Loader2,
   Video,
+  FileText,
+  Truck,
+  ClipboardList,
+  Building2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -224,6 +228,18 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       ],
     },
     {
+      section: 'Procurement',
+      icon: Truck,
+      items: [
+        { title: 'Procurement Dashboard', icon: LayoutDashboard, path: '/pos/procurement' },
+        { title: 'Suppliers', icon: Building2, path: '/pos/procurement/suppliers' },
+        { title: 'Quotations', icon: FileText, path: '/pos/procurement/quotations' },
+        { title: 'Purchase Orders', icon: ClipboardList, path: '/pos/procurement/purchase-orders' },
+        { title: 'Goods Received', icon: Truck, path: '/pos/procurement/goods-received' },
+        { title: 'Procurement Reports', icon: BarChart, path: '/pos/procurement/reports' },
+      ],
+    },
+    {
       section: 'Finance',
       icon: Wallet,
       items: [
@@ -316,7 +332,8 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         hasModuleAccess('settings') ||
         hasModuleAccess('promotions') ||
         hasModuleAccess('delivery_settings') ||
-        hasModuleAccess('plasmarket');
+        hasModuleAccess('plasmarket') ||
+        hasModuleAccess('procurement');
 
       return pagesHasAccess || moduleHasAccess;
     })();

@@ -49,6 +49,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'products',
         'settings',
         'referrals',
+        'procurement',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -68,7 +69,8 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('configure') ||
               action.includes('park') ||
               action.includes('hold') ||
-              action.includes('resume')
+              action.includes('resume') ||
+              action.includes('add')
             ) {
               privileges[module]![action] = true;
             }
@@ -95,6 +97,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       break;
     }
 
+    case 'storeAdministrator':
     case 'storeManager': {
       const storeManagerModules: PrivilegeKey[] = [
         'checkout',
@@ -115,6 +118,8 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'tickets',
         'settings',
         'referrals',
+        'procurement',
+        'help',
       ];
       storeManagerModules.forEach(module => {
         if (privileges[module]) {
@@ -134,7 +139,9 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
               action.includes('configure') ||
               action.includes('park') ||
               action.includes('hold') ||
-              action.includes('resume')
+              action.includes('resume') ||
+              action.includes('delete') ||
+              action.includes('add')
             ) {
               privileges[module]![action] = true;
             }

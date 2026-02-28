@@ -32,6 +32,7 @@ export interface UserPrivileges {
   referrals?: ModulePrivileges;
   plasmarket?: ModulePrivileges;
   withdraw_requests?: ModulePrivileges;
+  procurement?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -285,6 +286,7 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     access_shop_dashboard: false,
     access_financial_overview: false,
     access_pos_terminal: false,
+    access_procurement: false,
   },
   referrals: {
     access: false,
@@ -303,6 +305,18 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     view: false,
     approve: false,
     reject: false,
+  },
+  procurement: {
+    access: false,
+    view_suppliers: false,
+    manage_suppliers: false,
+    view_quotations: false,
+    manage_quotations: false,
+    view_purchase_orders: false,
+    manage_purchase_orders: false,
+    view_goods_received: false,
+    manage_goods_received: false,
+    view_reports: false,
   },
 };
 

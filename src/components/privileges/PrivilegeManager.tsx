@@ -709,6 +709,22 @@ const MODULE_DESCRIPTIONS: Record<
       { key: 'reject', label: 'Reject', description: 'Can reject withdrawal requests' },
     ],
   },
+  procurement: {
+    title: 'Procurement',
+    description: 'Manage suppliers, quotations, purchase orders, and goods received',
+    actions: [
+      { key: 'access', label: 'Access Procurement', description: 'Can access procurement module' },
+      { key: 'view_suppliers', label: 'View Suppliers', description: 'Can view supplier listings' },
+      { key: 'manage_suppliers', label: 'Manage Suppliers', description: 'Can add, edit, or delete suppliers' },
+      { key: 'view_quotations', label: 'View Quotations', description: 'Can view request for quotations (RFQs)' },
+      { key: 'manage_quotations', label: 'Manage Quotations', description: 'Can create and manage RFQs' },
+      { key: 'view_purchase_orders', label: 'View POs', description: 'Can view purchase orders' },
+      { key: 'manage_purchase_orders', label: 'Manage POs', description: 'Can create and manage purchase orders' },
+      { key: 'view_goods_received', label: 'View Goods Received', description: 'Can view goods received notes' },
+      { key: 'manage_goods_received', label: 'Manage Goods Received', description: 'Can process received goods' },
+      { key: 'view_reports', label: 'View Reports', description: 'Can view procurement reports' },
+    ],
+  },
 };
 
 export function PrivilegeManager({

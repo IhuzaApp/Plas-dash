@@ -41,6 +41,14 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   Referrals: { module: 'referrals', isProjectUser: true },
   PlasMarket: { module: 'plasmarket', isProjectUser: true },
   'Withdraw Requests': { module: 'withdraw_requests', isProjectUser: true },
+
+  // Procurement
+  'Procurement Dashboard': { module: 'procurement' },
+  Suppliers: { module: 'procurement' },
+  Quotations: { module: 'procurement' },
+  'Purchase Orders': { module: 'procurement' },
+  'Goods Received': { module: 'procurement' },
+  'Procurement Reports': { module: 'procurement' },
 };
 
 /**

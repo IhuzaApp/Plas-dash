@@ -56,6 +56,7 @@ const formSchema = z.object({
   roleType: z.enum([
     'globalAdmin',
     'systemAdmin',
+    'storeAdministrator',
     'storeManager',
     'assistantManager',
     'cashier',
@@ -506,6 +507,12 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="storeAdministrator">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="default" className="bg-purple-600 hover:bg-purple-700">Store Administrator</Badge>
+                              <span>Full store oversight and administration</span>
+                            </div>
+                          </SelectItem>
                           <SelectItem value="storeManager">
                             <div className="flex items-center gap-2">
                               <Badge variant="default">Store Manager</Badge>
