@@ -34,6 +34,7 @@ export interface UserPrivileges {
   withdraw_requests?: ModulePrivileges;
   procurement?: ModulePrivileges;
   production?: ModulePrivileges;
+  tax?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -288,6 +289,8 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     access_financial_overview: false,
     access_pos_terminal: false,
     access_procurement: false,
+    access_production: false,
+    access_tax: false,
   },
   referrals: {
     access: false,
@@ -328,6 +331,12 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     view_dashboard: false,
     simulate_stock: false,
     view_cost_profit: false,
+  },
+  tax: {
+    access: false,
+    view_dashboard: false,
+    manage_declarations: false,
+    export_reports: false,
   },
 };
 

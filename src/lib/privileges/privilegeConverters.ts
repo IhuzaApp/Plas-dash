@@ -278,6 +278,37 @@ export const convertCustomPermissionsToPrivileges = (
     'pages:access_shop_dashboard': { module: 'pages', action: 'access_shop_dashboard' },
     'pages:access_financial_overview': { module: 'pages', action: 'access_financial_overview' },
     'pages:access_pos_terminal': { module: 'pages', action: 'access_pos_terminal' },
+    'pages:access_procurement': { module: 'pages', action: 'access_procurement' },
+    'pages:access_production': { module: 'pages', action: 'access_production' },
+    'pages:access_tax': { module: 'pages', action: 'access_tax' },
+
+    // Procurement Module
+    'procurement:access': { module: 'procurement', action: 'access' },
+    'procurement:view_suppliers': { module: 'procurement', action: 'view_suppliers' },
+    'procurement:manage_suppliers': { module: 'procurement', action: 'manage_suppliers' },
+    'procurement:view_quotations': { module: 'procurement', action: 'view_quotations' },
+    'procurement:manage_quotations': { module: 'procurement', action: 'manage_quotations' },
+    'procurement:view_purchase_orders': { module: 'procurement', action: 'view_purchase_orders' },
+    'procurement:manage_purchase_orders': { module: 'procurement', action: 'manage_purchase_orders' },
+    'procurement:view_goods_received': { module: 'procurement', action: 'view_goods_received' },
+    'procurement:manage_goods_received': { module: 'procurement', action: 'manage_goods_received' },
+    'procurement:view_reports': { module: 'procurement', action: 'view_reports' },
+
+    // Production Module
+    'production:access': { module: 'production', action: 'access' },
+    'production:view_recipes': { module: 'production', action: 'view_recipes' },
+    'production:manage_recipes': { module: 'production', action: 'manage_recipes' },
+    'production:view_orders': { module: 'production', action: 'view_orders' },
+    'production:manage_orders': { module: 'production', action: 'manage_orders' },
+    'production:view_dashboard': { module: 'production', action: 'view_dashboard' },
+    'production:simulate_stock': { module: 'production', action: 'simulate_stock' },
+    'production:view_cost_profit': { module: 'production', action: 'view_cost_profit' },
+
+    // Tax Module
+    'tax:access': { module: 'tax', action: 'access' },
+    'tax:view_dashboard': { module: 'tax', action: 'view_dashboard' },
+    'tax:manage_declarations': { module: 'tax', action: 'manage_declarations' },
+    'tax:export_reports': { module: 'tax', action: 'export_reports' },
 
     // Legacy mappings for backward compatibility
     'customers:create': { module: 'users', action: 'add_users' },

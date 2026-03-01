@@ -50,6 +50,8 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'settings',
         'referrals',
         'procurement',
+        'production',
+        'tax',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -119,6 +121,8 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'settings',
         'referrals',
         'procurement',
+        'production',
+        'tax',
         'help',
       ];
       storeManagerModules.forEach(module => {
@@ -291,6 +295,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'products',
         'transactions',
         'shop_dashboard',
+        'production',
       ];
 
       inventorySpecialistModules.forEach(module => {
@@ -329,6 +334,8 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'refunds',
         'settings',
         'withdraw_requests',
+        'tax',
+        'procurement',
       ];
 
       financeManagerModules.forEach(module => {

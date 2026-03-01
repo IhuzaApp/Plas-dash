@@ -61,6 +61,27 @@ export const PAGE_ROUTES: PageRoute[] = [
     title: 'Financial Overview',
     priority: 65,
   },
+  {
+    path: '/pos/procurement',
+    module: 'procurement',
+    action: 'access',
+    title: 'Procurement',
+    priority: 64,
+  },
+  {
+    path: '/pos/inventory/production',
+    module: 'production',
+    action: 'access',
+    title: 'Production',
+    priority: 63,
+  },
+  {
+    path: '/tax',
+    module: 'tax',
+    action: 'access',
+    title: 'Tax & Forecasting',
+    priority: 62,
+  },
 
   // Management Pages
   { path: '/orders', module: 'orders', action: 'access', title: 'Orders', priority: 60 },
@@ -232,6 +253,9 @@ export const getRecommendedLandingPage = (
     'shops',
     'shoppers',
     'wallet',
+    'tax',
+    'procurement',
+    'production',
     'withdraw_requests',
     'refunds',
     'tickets',

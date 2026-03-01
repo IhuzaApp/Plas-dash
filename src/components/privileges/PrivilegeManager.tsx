@@ -739,6 +739,16 @@ const MODULE_DESCRIPTIONS: Record<
       { key: 'view_cost_profit', label: 'View Cost & Profit', description: 'Can view cost and profit analysis' },
     ],
   },
+  tax: {
+    title: 'Tax & Forecasting',
+    description: 'Manage tax declarations and forecast tax liabilities',
+    actions: [
+      { key: 'access', label: 'Access Tax', description: 'Can access tax module' },
+      { key: 'view_dashboard', label: 'View Dashboard', description: 'Can view tax dashboards' },
+      { key: 'manage_declarations', label: 'Manage Declarations', description: 'Can manage tax declarations' },
+      { key: 'export_reports', label: 'Export Reports', description: 'Can export tax reports' },
+    ],
+  },
 };
 
 export function PrivilegeManager({
