@@ -2832,3 +2832,38 @@ const filteredReels = reels
 - **toast**: User notifications
 
 This comprehensive documentation covers all aspects of the Reels component, from its architecture and functionality to its integration points and future enhancements.
+
+### 🧾 Tax Management & Forecasting
+
+- **Tax Dashboard**
+  - Real-time metrics including Estimated Tax Owed, Potential Savings, Effective Tax Rate, and Upcoming Deadlines.
+- **Forecasting**
+  - Charts visualizing Tax Liability Forecast and Revenue vs Tax Over Time.
+- **Liability Breakdown**
+  - Tracking of unmet tax obligations and optimization tips (e.g., R&D credits).
+- **Sub-modules**
+  - Declarations, Forecasting, Imports, Optimizations, Reports, and Summaries.
+
+### 📦 Procurement Management
+
+- **Lifecycle Tracking**
+  - Covering Quotations, Purchase Orders, and Goods Received Notes.
+- **Supplier Directory**
+  - Managing vendor/supplier details and history.
+- **Procurement Reports**
+  - Detailed analytics and dashboards monitoring purchasing activities.
+- **Role-Based Protection**
+  - Protected routes requiring specific 'procurement' privileges.
+
+### 🏭 Inventory Production
+
+- **Production Orders**
+  - Tracking the manufacturing/assembly process of goods.
+- **Recipe Management**
+  - Formulating the required raw materials and items needed for specific products.
+- **Simulation**
+  - Ability to simulate production runs and monitor expected stock levels vs usage.
+- **Cost & Profit Analysis**
+  - Tracking the cost of production and margin realization.
+- **Role-Based Protection**
+  - Protected routes requiring 'inventory' privilege on a specific shop.
