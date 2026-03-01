@@ -1,6 +1,5 @@
 # Logs
 logs
-.env
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -16,6 +15,7 @@ dist-ssr
 # Next.js build output
 .next
 out
+.env
 
 # Editor directories and files
 .vscode/*
