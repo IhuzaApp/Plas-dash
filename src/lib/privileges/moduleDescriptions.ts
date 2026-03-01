@@ -687,6 +687,20 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       { key: 'view_reports', label: 'View Reports', description: 'Can view procurement reports' },
     ],
   },
+  production: {
+    title: 'Production & Recipes',
+    description: 'Manage recipes, production orders, and stock simulations',
+    actions: [
+      { key: 'access', label: 'Access Production', description: 'Can access production module' },
+      { key: 'view_recipes', label: 'View Recipes', description: 'Can view recipe listings' },
+      { key: 'manage_recipes', label: 'Manage Recipes', description: 'Can create, edit, and delete recipes' },
+      { key: 'view_orders', label: 'View Production Orders', description: 'Can view production orders' },
+      { key: 'manage_orders', label: 'Manage Production Orders', description: 'Can create and manage production orders' },
+      { key: 'view_dashboard', label: 'View Dashboard', description: 'Can view production dashboard' },
+      { key: 'simulate_stock', label: 'Simulate Stock', description: 'Can run stock deduction simulations' },
+      { key: 'view_cost_profit', label: 'View Cost & Profit', description: 'Can view cost and profit analysis' },
+    ],
+  },
 };
 
 /**

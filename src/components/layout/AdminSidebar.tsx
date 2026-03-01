@@ -44,6 +44,10 @@ import {
   Building2,
   TrendingUp,
   Upload,
+  ChefHat,
+  FlaskConical,
+  Activity,
+  DollarSign,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -221,6 +225,11 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
             { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
             { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
             { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
+            { title: 'Recipes', icon: ChefHat, path: '/pos/inventory/production/recipes' },
+            { title: 'Production Orders', icon: ClipboardList, path: '/pos/inventory/production/orders' },
+            { title: 'Production Dashboard', icon: Activity, path: '/pos/inventory/production' },
+            { title: 'Cost & Profit', icon: DollarSign, path: '/pos/inventory/production/cost-profit' },
+            { title: 'Simulate Stock', icon: FlaskConical, path: '/pos/inventory/production/simulate' },
             { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
             { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
             { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },

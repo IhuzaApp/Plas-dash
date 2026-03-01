@@ -33,6 +33,7 @@ export interface UserPrivileges {
   plasmarket?: ModulePrivileges;
   withdraw_requests?: ModulePrivileges;
   procurement?: ModulePrivileges;
+  production?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -317,6 +318,16 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     view_goods_received: false,
     manage_goods_received: false,
     view_reports: false,
+  },
+  production: {
+    access: false,
+    view_recipes: false,
+    manage_recipes: false,
+    view_orders: false,
+    manage_orders: false,
+    view_dashboard: false,
+    simulate_stock: false,
+    view_cost_profit: false,
   },
 };
 

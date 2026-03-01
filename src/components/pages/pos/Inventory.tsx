@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,12 @@ import {
   Download,
   Check,
   X,
+  ChefHat,
+  ClipboardList,
+  Activity,
+  DollarSign,
+  FlaskConical,
+  ArrowRight,
 } from 'lucide-react';
 import {
   Select,
@@ -82,6 +89,7 @@ interface InventoryItem {
 }
 
 const Inventory = () => {
+  const router = useRouter();
   const { data: systemConfig } = useSystemConfig();
   const { shopSession, debugSession } = useShopSession();
   const updateProduct = useUpdateProduct();
@@ -507,6 +515,84 @@ const Inventory = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Production Section */}
+      <Card className="border-violet-200 dark:border-violet-900/50 bg-gradient-to-br from-violet-50/50 to-background dark:from-violet-950/20">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/40">
+              <ChefHat className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Production &amp; Recipe Management</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Manage recipes, production runs, costs, and stock simulations for your bakery or kitchen.
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {[
+              {
+                title: 'Production Dashboard',
+                description: 'Overview of batches, KPIs & trends',
+                icon: Activity,
+                path: '/pos/inventory/production',
+                color: 'text-violet-600',
+                bg: 'bg-violet-100 dark:bg-violet-900/40',
+              },
+              {
+                title: 'Recipes',
+                description: 'Create & manage recipes with costing',
+                icon: ChefHat,
+                path: '/pos/inventory/production/recipes',
+                color: 'text-amber-600',
+                bg: 'bg-amber-100 dark:bg-amber-900/40',
+              },
+              {
+                title: 'Production Orders',
+                description: 'Schedule & track production runs',
+                icon: ClipboardList,
+                path: '/pos/inventory/production/orders',
+                color: 'text-blue-600',
+                bg: 'bg-blue-100 dark:bg-blue-900/40',
+              },
+              {
+                title: 'Cost & Profit',
+                description: 'Ingredient cost & margin analysis',
+                icon: DollarSign,
+                path: '/pos/inventory/production/cost-profit',
+                color: 'text-green-600',
+                bg: 'bg-green-100 dark:bg-green-900/40',
+              },
+              {
+                title: 'Simulate Stock',
+                description: 'Preview deductions before producing',
+                icon: FlaskConical,
+                path: '/pos/inventory/production/simulate',
+                color: 'text-rose-600',
+                bg: 'bg-rose-100 dark:bg-rose-900/40',
+              },
+            ].map(tile => (
+              <button
+                key={tile.path}
+                onClick={() => router.push(tile.path)}
+                className="flex flex-col gap-2 p-3 rounded-xl border bg-background hover:shadow-md hover:border-primary/30 transition-all text-left group"
+              >
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${tile.bg} shrink-0`}>
+                  <tile.icon className={`h-5 w-5 ${tile.color}`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold leading-tight">{tile.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{tile.description}</p>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+              </button>
+            ))}
           </div>
         </CardContent>
       </Card>
