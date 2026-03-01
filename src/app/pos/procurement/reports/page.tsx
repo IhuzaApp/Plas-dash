@@ -5,11 +5,11 @@ import ProcurementReportsPage from '@/components/pages/pos/procurement/Procureme
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function ProcurementReportsPageRoute() {
-    return (
-        <AdminLayout>
-            <ProtectedRoute requiredPrivilege="procurement">
-                <ProcurementReportsPage />
-            </ProtectedRoute>
-        </AdminLayout>
-    );
+  return (
+    <AdminLayout>
+      <ProtectedRoute requiredPrivilege="procurement">
+        <ProcurementReportsPage />
+      </ProtectedRoute>
+    </AdminLayout>
+  );
 }

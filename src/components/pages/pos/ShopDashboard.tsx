@@ -52,11 +52,15 @@ const ShopDashboard = () => {
 
     // For more accurate items sold today, sum up quantities in Order_Items
     const totalItemsSoldToday = todayOrders.reduce((sum: number, order: any) => {
-      return sum + (order.Order_Items?.reduce((iSum: number, item: any) => iSum + (item.quantity || 0), 0) || 0);
+      return (
+        sum +
+        (order.Order_Items?.reduce((iSum: number, item: any) => iSum + (item.quantity || 0), 0) ||
+          0)
+      );
     }, 0);
 
-    const lowStockItems = (shopData.Products || []).filter((product: any) =>
-      product.quantity <= (product.reorder_point || 0)
+    const lowStockItems = (shopData.Products || []).filter(
+      (product: any) => product.quantity <= (product.reorder_point || 0)
     );
 
     return {
@@ -72,7 +76,7 @@ const ShopDashboard = () => {
     if (!shopData?.Products) return [];
 
     // Group products by category and calculate average stock %
-    const categories: Record<string, { total: number, count: number }> = {};
+    const categories: Record<string, { total: number; count: number }> = {};
 
     shopData.Products.forEach((p: any) => {
       const catName = p.category || 'Uncategorized';
@@ -81,7 +85,7 @@ const ShopDashboard = () => {
       }
 
       // Calculate capacity percentage (assuming 100 is target if no max capacity specified)
-      // Since we don't have 'max_capacity', lets use reorder_point * 5 as a pseudo-target 
+      // Since we don't have 'max_capacity', lets use reorder_point * 5 as a pseudo-target
       // or just quantity compared to some arbitrary high value or simple ratio.
       // For now, let's use quantity relative to 100 or reorder point.
       const target = (p.reorder_point || 10) * 4;
@@ -91,10 +95,12 @@ const ShopDashboard = () => {
       categories[catName].count += 1;
     });
 
-    return Object.entries(categories).map(([name, data]) => ({
-      name,
-      percentage: Math.round(data.total / data.count)
-    })).sort((a, b) => a.percentage - b.percentage); // Sort by lowest stock first
+    return Object.entries(categories)
+      .map(([name, data]) => ({
+        name,
+        percentage: Math.round(data.total / data.count),
+      }))
+      .sort((a, b) => a.percentage - b.percentage); // Sort by lowest stock first
   }, [shopData]);
 
   if (loading) {
@@ -185,13 +191,22 @@ const ShopDashboard = () => {
           <CardContent>
             <div className="space-y-4">
               {inventorySummary.length > 0 ? (
-                inventorySummary.map((item) => (
+                inventorySummary.map(item => (
                   <div key={item.name} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span>{item.name}</span>
                       </div>
-                      <Badge variant="outline" className={item.percentage < 30 ? 'bg-red-50' : item.percentage < 60 ? 'bg-yellow-50' : ''}>
+                      <Badge
+                        variant="outline"
+                        className={
+                          item.percentage < 30
+                            ? 'bg-red-50'
+                            : item.percentage < 60
+                              ? 'bg-yellow-50'
+                              : ''
+                        }
+                      >
                         {item.percentage}%
                       </Badge>
                     </div>
@@ -218,19 +233,24 @@ const ShopDashboard = () => {
           <CardContent>
             <div className="space-y-4">
               {staffData.length > 0 ? (
-                staffData.map((staff) => (
-                  <div key={staff.id} className="flex items-center justify-between p-2 border rounded-md">
+                staffData.map(staff => (
+                  <div
+                    key={staff.id}
+                    className="flex items-center justify-between p-2 border rounded-md"
+                  >
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                         <Users className="h-6 w-6 text-primary" />
                       </div>
                       <div>
                         <div className="font-medium">{staff.fullnames}</div>
-                        <div className="text-sm text-muted-foreground">{staff.Position || staff.roleType}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {staff.Position || staff.roleType}
+                        </div>
                       </div>
                     </div>
-                    <Badge variant={staff.active ? "default" : "secondary"}>
-                      {staff.active ? "Active" : "Inactive"}
+                    <Badge variant={staff.active ? 'default' : 'secondary'}>
+                      {staff.active ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
                 ))
@@ -254,10 +274,20 @@ const ShopDashboard = () => {
             <div className="space-y-2">
               {metrics?.lowStockItems && metrics.lowStockItems.length > 0 ? (
                 metrics.lowStockItems.map((product: any) => (
-                  <div key={product.id} className={`flex items-center justify-between p-2 rounded-md ${product.quantity === 0 ? 'bg-red-50' : 'bg-yellow-50'}`}>
+                  <div
+                    key={product.id}
+                    className={`flex items-center justify-between p-2 rounded-md ${product.quantity === 0 ? 'bg-red-50' : 'bg-yellow-50'}`}
+                  >
                     <div className="flex items-center space-x-2">
-                      <AlertTriangle className={`h-5 w-5 ${product.quantity === 0 ? 'text-red-500' : 'text-yellow-500'}`} />
-                      <span>{product.ProductName?.name} - {product.quantity === 0 ? 'Out of Stock' : `Low Stock (${product.quantity} ${product.measurement_unit || 'left'})`}</span>
+                      <AlertTriangle
+                        className={`h-5 w-5 ${product.quantity === 0 ? 'text-red-500' : 'text-yellow-500'}`}
+                      />
+                      <span>
+                        {product.ProductName?.name} -{' '}
+                        {product.quantity === 0
+                          ? 'Out of Stock'
+                          : `Low Stock (${product.quantity} ${product.measurement_unit || 'left'})`}
+                      </span>
                     </div>
                   </div>
                 ))
@@ -282,7 +312,9 @@ const ShopDashboard = () => {
                 <Store className="text-primary h-5 w-5 mr-3 mt-0.5" />
                 <div>
                   <div className="font-medium">Operating Hours</div>
-                  <div className="text-sm text-muted-foreground">{shopData?.operating_hours || 'Not set'}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {shopData?.operating_hours || 'Not set'}
+                  </div>
                 </div>
               </div>
 
@@ -290,12 +322,16 @@ const ShopDashboard = () => {
                 <Users className="text-primary h-5 w-5 mr-3 mt-0.5" />
                 <div>
                   <div className="font-medium">Contact Information</div>
-                  <div className="text-sm text-muted-foreground">{shopData?.phone || 'No phone'} | {shopData?.email || 'No email'}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {shopData?.phone || 'No phone'} | {shopData?.email || 'No email'}
+                  </div>
                 </div>
               </div>
 
               <div className="pt-2">
-                <div className="text-xs font-semibold text-muted-foreground uppercase mb-2">Internal Notes</div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase mb-2">
+                  Internal Notes
+                </div>
                 <p className="text-sm italic text-muted-foreground">
                   {shopData?.description || 'No description provided for this shop.'}
                 </p>

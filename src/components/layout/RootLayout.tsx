@@ -168,14 +168,19 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
         if (!sessionData.isProjectUser) {
           // Standard flow for Org Employees
-          if (hasPrivilege(sessionData.privileges, 'company_dashboard', 'access', sessionData.role)) {
+          if (
+            hasPrivilege(sessionData.privileges, 'company_dashboard', 'access', sessionData.role)
+          ) {
             redirectPath = '/pos/company-dashboard';
           } else {
             redirectPath = '/pos/checkout';
           }
         } else {
           // Flow for Project Users
-          const recommendedPage = getRecommendedLandingPage(sessionData.privileges, sessionData.role);
+          const recommendedPage = getRecommendedLandingPage(
+            sessionData.privileges,
+            sessionData.role
+          );
           redirectPath = recommendedPage?.path || '/';
         }
 
@@ -214,7 +219,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
             {!isAuthenticated && !pathname?.startsWith('/tax') && (
               <div className="fixed inset-0 z-40 bg-white/30 backdrop-blur-md pointer-events-none" />
             )}
-            {!isAuthenticated && !pathname?.startsWith('/tax') && <LoginModal onLoginSuccess={handleLoginSuccess} />}
+            {!isAuthenticated && !pathname?.startsWith('/tax') && (
+              <LoginModal onLoginSuccess={handleLoginSuccess} />
+            )}
             <Toaster />
           </div>
         </LoadingProvider>

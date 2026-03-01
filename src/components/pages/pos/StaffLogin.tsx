@@ -13,7 +13,7 @@ import {
   MoreHorizontal,
   ShieldCheck,
   Trash2,
-  UserPlus
+  UserPlus,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,11 @@ import ResetPasswordModal from '@/components/shop/ResetPasswordModal';
 import EditStaffDialog from '@/components/shop/EditStaffDialog';
 import { apiGet, apiPost } from '@/lib/api';
 import { hasuraRequest } from '@/lib/hasura';
-import { UPDATE_ORG_EMPLOYEE_ROLE, UPDATE_ORG_EMPLOYEE_PASSWORD, UPDATE_ORG_EMPLOYEE } from '@/lib/graphql/mutations';
+import {
+  UPDATE_ORG_EMPLOYEE_ROLE,
+  UPDATE_ORG_EMPLOYEE_PASSWORD,
+  UPDATE_ORG_EMPLOYEE,
+} from '@/lib/graphql/mutations';
 import { toast } from 'sonner';
 import { UserPrivileges } from '@/types/privileges';
 import { convertCustomPermissionsToPrivileges } from '@/lib/privileges/privilegeConverters';
@@ -138,7 +142,7 @@ const StaffLogin = () => {
       const hashedPassword = bcrypt.hashSync(newPassword, 10);
       await hasuraRequest(UPDATE_ORG_EMPLOYEE_PASSWORD, {
         id: selectedStaff.id,
-        password: hashedPassword
+        password: hashedPassword,
       });
       toast.success(`Password reset for ${selectedStaff.name}`);
     } catch (err: any) {
@@ -154,13 +158,15 @@ const StaffLogin = () => {
       await apiPost('/api/mutations/update-employee', {
         id: selectedStaff.id,
         roleType: newRoleType,
-        privileges: newPrivileges
+        privileges: newPrivileges,
       });
 
       // Update local state
-      setStaff(prev => prev.map(s =>
-        s.id === selectedStaff.id ? { ...s, privileges: newPrivileges, roleType: newRoleType } : s
-      ));
+      setStaff(prev =>
+        prev.map(s =>
+          s.id === selectedStaff.id ? { ...s, privileges: newPrivileges, roleType: newRoleType } : s
+        )
+      );
 
       toast.success(`Role and privileges updated for ${selectedStaff.name}`);
     } catch (err: any) {
@@ -197,9 +203,7 @@ const StaffLogin = () => {
       // Update local state
       setStaff(prev =>
         prev.map(s =>
-          s.id === data.id
-            ? { ...s, ...data.employee, privileges: data.privileges }
-            : s
+          s.id === data.id ? { ...s, ...data.employee, privileges: data.privileges } : s
         )
       );
 
@@ -297,7 +301,11 @@ const StaffLogin = () => {
                     </TableRow>
                   ) : (
                     filteredStaff.map(member => (
-                      <TableRow key={member.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetails(member)}>
+                      <TableRow
+                        key={member.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => openDetails(member)}
+                      >
                         <TableCell>
                           <div>
                             <div className="font-medium">{member.name}</div>
@@ -307,7 +315,14 @@ const StaffLogin = () => {
                         <TableCell>{member.position}</TableCell>
                         <TableCell>{member.store}</TableCell>
                         <TableCell>
-                          <Badge variant={member.status === 'active' ? 'outline' : 'secondary'} className={member.status === 'active' ? "bg-green-500 text-white hover:bg-green-600 border-none" : ""}>
+                          <Badge
+                            variant={member.status === 'active' ? 'outline' : 'secondary'}
+                            className={
+                              member.status === 'active'
+                                ? 'bg-green-500 text-white hover:bg-green-600 border-none'
+                                : ''
+                            }
+                          >
                             {member.status}
                           </Badge>
                         </TableCell>
@@ -316,7 +331,7 @@ const StaffLogin = () => {
                             ? format(member.lastLogin, 'MMM dd, yyyy HH:mm')
                             : 'Never'}
                         </TableCell>
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0">
@@ -392,11 +407,7 @@ const StaffLogin = () => {
         shopId={''} // TODO: Pass correct shopId if needed
       />
 
-      <StaffDetailDrawer
-        open={isDetailOpen}
-        onOpenChange={setIsDetailOpen}
-        staff={selectedStaff}
-      />
+      <StaffDetailDrawer open={isDetailOpen} onOpenChange={setIsDetailOpen} staff={selectedStaff} />
 
       <ResetPasswordModal
         open={isPasswordModalOpen}
@@ -409,26 +420,38 @@ const StaffLogin = () => {
         open={isEditStaffOpen}
         onOpenChange={setIsEditStaffOpen}
         onSubmit={handleUpdateStaff}
-        employee={selectedStaff ? ({
-          id: selectedStaff.id,
-          employeeID: (selectedStaff as any).employeeID || '',
-          fullnames: selectedStaff.fullnames || selectedStaff.name,
-          email: selectedStaff.email,
-          phone: selectedStaff.phone || '',
-          Address: selectedStaff.Address || selectedStaff.address || '',
-          Position: selectedStaff.Position || selectedStaff.position || '',
-          roleType: selectedStaff.roleType || 'cashier',
-          active: selectedStaff.active,
-          shop_id: '',
-          restaurant_id: null,
-          created_on: (selectedStaff as any).created_at || '',
-          updated_on: '',
-          dob: '',
-          gender: '',
-          multAuthEnabled: false,
-          orgEmployeeRoles: [{ id: '', orgEmployeeID: selectedStaff.id, privillages: selectedStaff.privileges || {}, created_on: '', update_on: '' }],
-          Shops: { id: '', name: selectedStaff.store || '' },
-        }) : null}
+        employee={
+          selectedStaff
+            ? {
+                id: selectedStaff.id,
+                employeeID: (selectedStaff as any).employeeID || '',
+                fullnames: selectedStaff.fullnames || selectedStaff.name,
+                email: selectedStaff.email,
+                phone: selectedStaff.phone || '',
+                Address: selectedStaff.Address || selectedStaff.address || '',
+                Position: selectedStaff.Position || selectedStaff.position || '',
+                roleType: selectedStaff.roleType || 'cashier',
+                active: selectedStaff.active,
+                shop_id: '',
+                restaurant_id: null,
+                created_on: (selectedStaff as any).created_at || '',
+                updated_on: '',
+                dob: '',
+                gender: '',
+                multAuthEnabled: false,
+                orgEmployeeRoles: [
+                  {
+                    id: '',
+                    orgEmployeeID: selectedStaff.id,
+                    privillages: selectedStaff.privileges || {},
+                    created_on: '',
+                    update_on: '',
+                  },
+                ],
+                Shops: { id: '', name: selectedStaff.store || '' },
+              }
+            : null
+        }
       />
     </AdminLayout>
   );

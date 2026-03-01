@@ -237,7 +237,9 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
 
     // Use custom privileges (already synced with pages group)
     const privileges =
-      values.roleType === 'custom' ? customPrivileges : getDefaultPrivilegesForRole(values.roleType);
+      values.roleType === 'custom'
+        ? customPrivileges
+        : getDefaultPrivilegesForRole(values.roleType);
 
     onSubmit({
       id: employee.id,
@@ -280,7 +282,6 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-
             {/* Basic Information */}
             <Card>
               <CardHeader>
@@ -411,7 +412,12 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                         <SelectContent>
                           <SelectItem value="storeAdministrator">
                             <div className="flex items-center gap-2">
-                              <Badge variant="default" className="bg-purple-600 hover:bg-purple-700">Store Administrator</Badge>
+                              <Badge
+                                variant="default"
+                                className="bg-purple-600 hover:bg-purple-700"
+                              >
+                                Store Administrator
+                              </Badge>
                               <span>Full store oversight and administration</span>
                             </div>
                           </SelectItem>

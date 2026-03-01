@@ -5,11 +5,11 @@ import SupplierDetailPage from '@/components/pages/pos/procurement/SupplierDetai
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function SupplierDetailRoute({ params }: { params: { id: string } }) {
-    return (
-        <AdminLayout>
-            <ProtectedRoute requiredPrivilege="procurement">
-                <SupplierDetailPage supplierId={params.id} />
-            </ProtectedRoute>
-        </AdminLayout>
-    );
+  return (
+    <AdminLayout>
+      <ProtectedRoute requiredPrivilege="procurement">
+        <SupplierDetailPage supplierId={params.id} />
+      </ProtectedRoute>
+    </AdminLayout>
+  );
 }

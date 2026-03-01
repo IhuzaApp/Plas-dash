@@ -529,7 +529,8 @@ const Inventory = () => {
             <div>
               <CardTitle className="text-base">Production &amp; Recipe Management</CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Manage recipes, production runs, costs, and stock simulations for your bakery or kitchen.
+                Manage recipes, production runs, costs, and stock simulations for your bakery or
+                kitchen.
               </p>
             </div>
           </div>
@@ -583,12 +584,16 @@ const Inventory = () => {
                 onClick={() => router.push(tile.path)}
                 className="flex flex-col gap-2 p-3 rounded-xl border bg-background hover:shadow-md hover:border-primary/30 transition-all text-left group"
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${tile.bg} shrink-0`}>
+                <div
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center ${tile.bg} shrink-0`}
+                >
                   <tile.icon className={`h-5 w-5 ${tile.color}`} />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-semibold leading-tight">{tile.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{tile.description}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                    {tile.description}
+                  </p>
                 </div>
                 <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
               </button>

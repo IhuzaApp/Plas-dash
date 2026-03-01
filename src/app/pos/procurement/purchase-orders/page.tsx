@@ -5,11 +5,11 @@ import PurchaseOrdersPage from '@/components/pages/pos/procurement/PurchaseOrder
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function PurchaseOrdersPageRoute() {
-    return (
-        <AdminLayout>
-            <ProtectedRoute requiredPrivilege="procurement">
-                <PurchaseOrdersPage />
-            </ProtectedRoute>
-        </AdminLayout>
-    );
+  return (
+    <AdminLayout>
+      <ProtectedRoute requiredPrivilege="procurement">
+        <PurchaseOrdersPage />
+      </ProtectedRoute>
+    </AdminLayout>
+  );
 }

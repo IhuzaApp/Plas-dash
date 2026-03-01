@@ -220,21 +220,33 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       items: [
         ...(isLoggedIntoShop
           ? [
-            // Shop-specific POS items when logged into a shop
-            { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
-            { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
-            { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
-            { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
-            { title: 'Recipes', icon: ChefHat, path: '/pos/inventory/production/recipes' },
-            { title: 'Production Orders', icon: ClipboardList, path: '/pos/inventory/production/orders' },
-            { title: 'Production Dashboard', icon: Activity, path: '/pos/inventory/production' },
-            { title: 'Cost & Profit', icon: DollarSign, path: '/pos/inventory/production/cost-profit' },
-            { title: 'Simulate Stock', icon: FlaskConical, path: '/pos/inventory/production/simulate' },
-            { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
-            { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
-            { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
-            { title: 'Staff Management', icon: Users, path: '/pos/staff' },
-          ]
+              // Shop-specific POS items when logged into a shop
+              { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
+              { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
+              { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
+              { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
+              { title: 'Recipes', icon: ChefHat, path: '/pos/inventory/production/recipes' },
+              {
+                title: 'Production Orders',
+                icon: ClipboardList,
+                path: '/pos/inventory/production/orders',
+              },
+              { title: 'Production Dashboard', icon: Activity, path: '/pos/inventory/production' },
+              {
+                title: 'Cost & Profit',
+                icon: DollarSign,
+                path: '/pos/inventory/production/cost-profit',
+              },
+              {
+                title: 'Simulate Stock',
+                icon: FlaskConical,
+                path: '/pos/inventory/production/simulate',
+              },
+              { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
+              { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
+              { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
+              { title: 'Staff Management', icon: Users, path: '/pos/staff' },
+            ]
           : []),
       ],
     },
@@ -326,42 +338,41 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     .filter(section => section.items.length > 0);
 
   // Check if user has access to any module (for sidebar visibility)
-  const hasAnyModuleAccess =
-    (() => {
-      const pages = session?.privileges?.pages as any;
-      const pagesHasAccess = pages?.access === true;
+  const hasAnyModuleAccess = (() => {
+    const pages = session?.privileges?.pages as any;
+    const pagesHasAccess = pages?.access === true;
 
-      const moduleHasAccess =
-        isSuperUser() ||
-        hasModuleAccess('checkout') ||
-        hasModuleAccess('orders') ||
-        hasModuleAccess('products') ||
-        hasModuleAccess('users') ||
-        hasModuleAccess('project_users') ||
-        hasModuleAccess('shops') ||
-        hasModuleAccess('restaurants') ||
-        hasModuleAccess('shoppers') ||
-        hasModuleAccess('company_dashboard') ||
-        hasModuleAccess('shop_dashboard') ||
-        hasModuleAccess('inventory') ||
-        hasModuleAccess('transactions') ||
-        hasModuleAccess('discounts') ||
-        hasModuleAccess('financial_overview') ||
-        hasModuleAccess('pos_terminal') ||
-        hasModuleAccess('staff_management') ||
-        hasModuleAccess('wallet') ||
-        hasModuleAccess('refunds') ||
-        hasModuleAccess('withdraw_requests') ||
-        hasModuleAccess('tickets') ||
-        hasModuleAccess('help') ||
-        hasModuleAccess('settings') ||
-        hasModuleAccess('promotions') ||
-        hasModuleAccess('delivery_settings') ||
-        hasModuleAccess('plasmarket') ||
-        hasModuleAccess('procurement');
+    const moduleHasAccess =
+      isSuperUser() ||
+      hasModuleAccess('checkout') ||
+      hasModuleAccess('orders') ||
+      hasModuleAccess('products') ||
+      hasModuleAccess('users') ||
+      hasModuleAccess('project_users') ||
+      hasModuleAccess('shops') ||
+      hasModuleAccess('restaurants') ||
+      hasModuleAccess('shoppers') ||
+      hasModuleAccess('company_dashboard') ||
+      hasModuleAccess('shop_dashboard') ||
+      hasModuleAccess('inventory') ||
+      hasModuleAccess('transactions') ||
+      hasModuleAccess('discounts') ||
+      hasModuleAccess('financial_overview') ||
+      hasModuleAccess('pos_terminal') ||
+      hasModuleAccess('staff_management') ||
+      hasModuleAccess('wallet') ||
+      hasModuleAccess('refunds') ||
+      hasModuleAccess('withdraw_requests') ||
+      hasModuleAccess('tickets') ||
+      hasModuleAccess('help') ||
+      hasModuleAccess('settings') ||
+      hasModuleAccess('promotions') ||
+      hasModuleAccess('delivery_settings') ||
+      hasModuleAccess('plasmarket') ||
+      hasModuleAccess('procurement');
 
-      return pagesHasAccess || moduleHasAccess || pathname?.startsWith('/tax');
-    })();
+    return pagesHasAccess || moduleHasAccess || pathname?.startsWith('/tax');
+  })();
 
   // If no module access, return empty sidebar
   if (!hasAnyModuleAccess) {
@@ -507,10 +518,10 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
           hasModuleAccess('orders') ||
           hasModuleAccess('discounts') ||
           hasModuleAccess('shop_dashboard')) && (
-            <SidebarGroup>
-              <ShopSelector isSidebarOpen={isSidebarOpen} />
-            </SidebarGroup>
-          )}
+          <SidebarGroup>
+            <ShopSelector isSidebarOpen={isSidebarOpen} />
+          </SidebarGroup>
+        )}
 
         {filteredMenuItems.map(section => (
           <SidebarGroup key={section.section}>

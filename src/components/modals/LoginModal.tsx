@@ -36,7 +36,10 @@ const convertPrivilegesToNewFormat = (orgEmployeeRoles: any): UserPrivileges => 
   }
 
   // Use the shared converter for legacy array format
-  return { ...DEFAULT_PRIVILEGES, ...convertCustomPermissionsToPrivileges(oldPrivileges as string[]) };
+  return {
+    ...DEFAULT_PRIVILEGES,
+    ...convertCustomPermissionsToPrivileges(oldPrivileges as string[]),
+  };
 };
 
 const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {

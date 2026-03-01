@@ -59,28 +59,28 @@ const GET_RATINGS = gql`
 `;
 
 export async function GET(req: Request) {
-    const session = await getServerSession(authOptions);
-    let userId = (session as any)?.user?.id;
+  const session = await getServerSession(authOptions);
+  let userId = (session as any)?.user?.id;
 
-    if (!userId) {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            userId = authHeader.substring(7);
-        }
+  if (!userId) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
     }
+  }
 
-    if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    try {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
-        const data = await hasuraClient.request<{ Ratings: any[] }>(GET_RATINGS);
-        return NextResponse.json({ ratings: data.Ratings || [] });
-    } catch (error) {
-        console.error('Error fetching ratings:', error);
-        return NextResponse.json({ error: 'Failed to fetch ratings' }, { status: 500 });
+  try {
+    if (!hasuraClient) {
+      throw new Error('Hasura client is not initialized');
     }
+    const data = await hasuraClient.request<{ Ratings: any[] }>(GET_RATINGS);
+    return NextResponse.json({ ratings: data.Ratings || [] });
+  } catch (error) {
+    console.error('Error fetching ratings:', error);
+    return NextResponse.json({ error: 'Failed to fetch ratings' }, { status: 500 });
+  }
 }

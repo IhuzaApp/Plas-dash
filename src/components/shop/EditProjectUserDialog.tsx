@@ -267,8 +267,8 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
     pages[`access_${module}`] = updatedAccess;
 
     // Re-evaluate overall pages.access
-    pages.access = Object.keys(newPrivileges).some(m =>
-      m !== 'pages' && (newPrivileges[m as ProjectPrivilegeKey] as any)?.access === true
+    pages.access = Object.keys(newPrivileges).some(
+      m => m !== 'pages' && (newPrivileges[m as ProjectPrivilegeKey] as any)?.access === true
     );
 
     setPrivileges(newPrivileges);
@@ -297,8 +297,8 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
     pages[`access_${module}`] = value;
 
     // Re-evaluate overall pages.access
-    pages.access = Object.keys(newPrivileges).some(m =>
-      m !== 'pages' && (newPrivileges[m as ProjectPrivilegeKey] as any)?.access === true
+    pages.access = Object.keys(newPrivileges).some(
+      m => m !== 'pages' && (newPrivileges[m as ProjectPrivilegeKey] as any)?.access === true
     );
 
     setPrivileges(newPrivileges);

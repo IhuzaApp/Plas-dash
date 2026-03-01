@@ -346,14 +346,14 @@ export async function GET(req: Request) {
         shopper:
           o.shopper != null
             ? {
-              id: o.shopper.id,
-              name: o.shopper.name ?? o.shopper.shopper?.full_name ?? '',
-              phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? '',
-              email: '',
-              shopper: o.shopper.shopper,
-              vehicle: o.shopper.vehicle,
-              updated_at: o.shopper.updated_at,
-            }
+                id: o.shopper.id,
+                name: o.shopper.name ?? o.shopper.shopper?.full_name ?? '',
+                phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? '',
+                email: '',
+                shopper: o.shopper.shopper,
+                vehicle: o.shopper.vehicle,
+                updated_at: o.shopper.updated_at,
+              }
             : undefined,
       };
     });

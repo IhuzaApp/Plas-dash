@@ -67,8 +67,14 @@ const CompanyDashboard = () => {
   const { orgEmployee } = useCurrentOrgEmployee();
   const { hasAction } = usePrivilege();
   const { session } = useAuth();
-  const { branchShops, isLoading: branchLoading, error: branchError, totalRevenue, totalOrders, averagePerformance } =
-    useBranchShops();
+  const {
+    branchShops,
+    isLoading: branchLoading,
+    error: branchError,
+    totalRevenue,
+    totalOrders,
+    averagePerformance,
+  } = useBranchShops();
 
   const {
     staffDistribution,
@@ -115,7 +121,7 @@ const CompanyDashboard = () => {
       totalInStock = productsData.Products.filter(p => (p.quantity || 0) > 0).length;
 
       // Mock "sales" based on data available (could use past orders, but here we just show an example derived from sorting)
-      // Since actual sales isn't directly on Product type in the query, we will use quantity as a proxy for "popular" items 
+      // Since actual sales isn't directly on Product type in the query, we will use quantity as a proxy for "popular" items
       // or mock it if needed for the chart. Let's create a sorted list for the chart.
       const sortedProducts = [...productsData.Products]
         .sort((a, b) => (b.quantity || 0) - (a.quantity || 0))
@@ -130,7 +136,6 @@ const CompanyDashboard = () => {
 
     return { topProducts, totalInStock };
   }, [productsData]);
-
 
   const isLoading = branchLoading || staffLoading || ratingsLoading || productsLoading;
   const error = branchError || staffError || (ratingsError as Error)?.message;
@@ -251,7 +256,9 @@ const CompanyDashboard = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Staff Logins (30 Days)</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Staff Logins (30 Days)
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeInLast30Days || 0}</div>
@@ -269,9 +276,7 @@ const CompanyDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalInStock}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Items with quantity &gt; 0
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Items with quantity &gt; 0</p>
           </CardContent>
         </Card>
       </div>
@@ -293,7 +298,10 @@ const CompanyDashboard = () => {
               </CardHeader>
               <CardContent className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={storePerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart
+                    data={storePerformance}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" />
                     <YAxis />
@@ -312,12 +320,21 @@ const CompanyDashboard = () => {
               </CardHeader>
               <CardContent className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={storePerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <LineChart
+                    data={storePerformance}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Line type="monotone" dataKey="performance" stroke="#10b981" strokeWidth={2} name="Performance %" />
+                    <Line
+                      type="monotone"
+                      dataKey="performance"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      name="Performance %"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -426,12 +443,22 @@ const CompanyDashboard = () => {
               <CardContent>
                 <div className="h-80 mb-4">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={topProducts} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
+                    <BarChart
+                      data={topProducts}
+                      layout="vertical"
+                      margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                       <XAxis type="number" />
                       <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
                       <Tooltip cursor={{ fill: 'transparent' }} />
-                      <Bar dataKey="sales" fill="#8b5cf6" radius={[0, 4, 4, 0]} name="Sales" barSize={20} />
+                      <Bar
+                        dataKey="sales"
+                        fill="#8b5cf6"
+                        radius={[0, 4, 4, 0]}
+                        name="Sales"
+                        barSize={20}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -446,7 +473,9 @@ const CompanyDashboard = () => {
                     </div>
                   ))}
                   {topProducts.length === 0 && (
-                    <div className="text-center py-4 text-muted-foreground">No product data available</div>
+                    <div className="text-center py-4 text-muted-foreground">
+                      No product data available
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -587,7 +616,8 @@ const CompanyDashboard = () => {
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-medium">Recent Staff Logins (Last 24 Hours)</h3>
                       <div className="text-sm text-muted-foreground">
-                        {totalStaff} total staff • {activeStaff} active • {activeInLast30Days} active in last 30 days
+                        {totalStaff} total staff • {activeStaff} active • {activeInLast30Days}{' '}
+                        active in last 30 days
                       </div>
                     </div>
                     <div className="space-y-3">
@@ -603,7 +633,8 @@ const CompanyDashboard = () => {
                               </div>
                               <div>
                                 <div>
-                                  <span className="font-medium">{activity.employeeName}</span> {activity.action} at {activity.storeName}
+                                  <span className="font-medium">{activity.employeeName}</span>{' '}
+                                  {activity.action} at {activity.storeName}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                   {activity.timeAgo}

@@ -5,11 +5,11 @@ import ProcurementDashboard from '@/components/pages/pos/procurement/Procurement
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function ProcurementDashboardPage() {
-    return (
-        <AdminLayout>
-            <ProtectedRoute requiredPrivilege="procurement">
-                <ProcurementDashboard />
-            </ProtectedRoute>
-        </AdminLayout>
-    );
+  return (
+    <AdminLayout>
+      <ProtectedRoute requiredPrivilege="procurement">
+        <ProcurementDashboard />
+      </ProtectedRoute>
+    </AdminLayout>
+  );
 }

@@ -33,7 +33,10 @@ export const convertCustomPermissionsToPrivileges = (
     'staff:add_new_staff': { module: 'staff_management', action: 'add_new_staff' },
     'staff_management:view_accounts': { module: 'staff_management', action: 'view_accounts' },
     'staff_management:edit_accounts': { module: 'staff_management', action: 'edit_accounts' },
-    'staff_management:view_activity_logs': { module: 'staff_management', action: 'view_activity_logs' },
+    'staff_management:view_activity_logs': {
+      module: 'staff_management',
+      action: 'view_activity_logs',
+    },
     'staff_management:add_new_staff': { module: 'staff_management', action: 'add_new_staff' },
     'staff_management:delete_staff': { module: 'staff_management', action: 'delete_staff' },
     'staff_management:assign_roles': { module: 'staff_management', action: 'assign_roles' },
@@ -79,27 +82,57 @@ export const convertCustomPermissionsToPrivileges = (
     'company_dashboard:view_reports': { module: 'company_dashboard', action: 'view_reports' },
     'company_dashboard:export_reports': { module: 'company_dashboard', action: 'export_reports' },
     'company_dashboard:view_analytics': { module: 'company_dashboard', action: 'view_analytics' },
-    'company_dashboard:view_revenue_data': { module: 'company_dashboard', action: 'view_revenue_data' },
-    'company_dashboard:view_performance_metrics': { module: 'company_dashboard', action: 'view_performance_metrics' },
+    'company_dashboard:view_revenue_data': {
+      module: 'company_dashboard',
+      action: 'view_revenue_data',
+    },
+    'company_dashboard:view_performance_metrics': {
+      module: 'company_dashboard',
+      action: 'view_performance_metrics',
+    },
 
     // Shop Dashboard Module
     'shop_dashboard:access': { module: 'shop_dashboard', action: 'access' },
     'shopDashboard:view': { module: 'shop_dashboard', action: 'access' },
     'shop_dashboard:view_sales_data': { module: 'shop_dashboard', action: 'view_sales_data' },
-    'shop_dashboard:manage_daily_targets': { module: 'shop_dashboard', action: 'manage_daily_targets' },
-    'shop_dashboard:view_shop_performance': { module: 'shop_dashboard', action: 'view_shop_performance' },
-    'shop_dashboard:view_staff_performance': { module: 'shop_dashboard', action: 'view_staff_performance' },
-    'shop_dashboard:view_customer_metrics': { module: 'shop_dashboard', action: 'view_customer_metrics' },
+    'shop_dashboard:manage_daily_targets': {
+      module: 'shop_dashboard',
+      action: 'manage_daily_targets',
+    },
+    'shop_dashboard:view_shop_performance': {
+      module: 'shop_dashboard',
+      action: 'view_shop_performance',
+    },
+    'shop_dashboard:view_staff_performance': {
+      module: 'shop_dashboard',
+      action: 'view_staff_performance',
+    },
+    'shop_dashboard:view_customer_metrics': {
+      module: 'shop_dashboard',
+      action: 'view_customer_metrics',
+    },
 
     // Financial Overview Module
     'financial_overview:access': { module: 'financial_overview', action: 'access' },
     'financial:view': { module: 'financial_overview', action: 'access' },
     'financial:view_profits': { module: 'financial_overview', action: 'view_profits' },
     'financial_overview:view_profits': { module: 'financial_overview', action: 'view_profits' },
-    'financial_overview:export_financial_data': { module: 'financial_overview', action: 'export_financial_data' },
-    'financial_overview:view_revenue_reports': { module: 'financial_overview', action: 'view_revenue_reports' },
-    'financial_overview:view_expense_reports': { module: 'financial_overview', action: 'view_expense_reports' },
-    'financial_overview:view_profit_margins': { module: 'financial_overview', action: 'view_profit_margins' },
+    'financial_overview:export_financial_data': {
+      module: 'financial_overview',
+      action: 'export_financial_data',
+    },
+    'financial_overview:view_revenue_reports': {
+      module: 'financial_overview',
+      action: 'view_revenue_reports',
+    },
+    'financial_overview:view_expense_reports': {
+      module: 'financial_overview',
+      action: 'view_expense_reports',
+    },
+    'financial_overview:view_profit_margins': {
+      module: 'financial_overview',
+      action: 'view_profit_margins',
+    },
 
     // POS Terminal Module
     'pos_terminal:access': { module: 'pos_terminal', action: 'access' },
@@ -155,10 +188,22 @@ export const convertCustomPermissionsToPrivileges = (
     'project_users:view_project_users': { module: 'project_users', action: 'view_project_users' },
     'project_users:add_project_users': { module: 'project_users', action: 'add_project_users' },
     'project_users:edit_project_users': { module: 'project_users', action: 'edit_project_users' },
-    'project_users:delete_project_users': { module: 'project_users', action: 'delete_project_users' },
-    'project_users:view_project_user_details': { module: 'project_users', action: 'view_project_user_details' },
-    'project_users:manage_project_user_roles': { module: 'project_users', action: 'manage_project_user_roles' },
-    'project_users:view_project_user_activity': { module: 'project_users', action: 'view_project_user_activity' },
+    'project_users:delete_project_users': {
+      module: 'project_users',
+      action: 'delete_project_users',
+    },
+    'project_users:view_project_user_details': {
+      module: 'project_users',
+      action: 'view_project_user_details',
+    },
+    'project_users:manage_project_user_roles': {
+      module: 'project_users',
+      action: 'manage_project_user_roles',
+    },
+    'project_users:view_project_user_activity': {
+      module: 'project_users',
+      action: 'view_project_user_activity',
+    },
 
     // Shops Module
     'shops:access': { module: 'shops', action: 'access' },
@@ -240,16 +285,34 @@ export const convertCustomPermissionsToPrivileges = (
     'promotions:delete_promotions': { module: 'promotions', action: 'delete_promotions' },
     'promotions:activate_promotions': { module: 'promotions', action: 'activate_promotions' },
     'promotions:deactivate_promotions': { module: 'promotions', action: 'deactivate_promotions' },
-    'promotions:view_promotion_analytics': { module: 'promotions', action: 'view_promotion_analytics' },
+    'promotions:view_promotion_analytics': {
+      module: 'promotions',
+      action: 'view_promotion_analytics',
+    },
 
     // Delivery Settings Module
     'delivery_settings:access': { module: 'delivery_settings', action: 'access' },
     'delivery_settings:view': { module: 'delivery_settings', action: 'access' },
-    'delivery_settings:view_delivery_settings': { module: 'delivery_settings', action: 'view_delivery_settings' },
-    'delivery_settings:edit_delivery_settings': { module: 'delivery_settings', action: 'edit_delivery_settings' },
-    'delivery_settings:manage_delivery_zones': { module: 'delivery_settings', action: 'manage_delivery_zones' },
-    'delivery_settings:set_delivery_fees': { module: 'delivery_settings', action: 'set_delivery_fees' },
-    'delivery_settings:configure_delivery_times': { module: 'delivery_settings', action: 'configure_delivery_times' },
+    'delivery_settings:view_delivery_settings': {
+      module: 'delivery_settings',
+      action: 'view_delivery_settings',
+    },
+    'delivery_settings:edit_delivery_settings': {
+      module: 'delivery_settings',
+      action: 'edit_delivery_settings',
+    },
+    'delivery_settings:manage_delivery_zones': {
+      module: 'delivery_settings',
+      action: 'manage_delivery_zones',
+    },
+    'delivery_settings:set_delivery_fees': {
+      module: 'delivery_settings',
+      action: 'set_delivery_fees',
+    },
+    'delivery_settings:configure_delivery_times': {
+      module: 'delivery_settings',
+      action: 'configure_delivery_times',
+    },
 
     // Pages Module
     'pages:access': { module: 'pages', action: 'access' },
@@ -289,7 +352,10 @@ export const convertCustomPermissionsToPrivileges = (
     'procurement:view_quotations': { module: 'procurement', action: 'view_quotations' },
     'procurement:manage_quotations': { module: 'procurement', action: 'manage_quotations' },
     'procurement:view_purchase_orders': { module: 'procurement', action: 'view_purchase_orders' },
-    'procurement:manage_purchase_orders': { module: 'procurement', action: 'manage_purchase_orders' },
+    'procurement:manage_purchase_orders': {
+      module: 'procurement',
+      action: 'manage_purchase_orders',
+    },
     'procurement:view_goods_received': { module: 'procurement', action: 'view_goods_received' },
     'procurement:manage_goods_received': { module: 'procurement', action: 'manage_goods_received' },
     'procurement:view_reports': { module: 'procurement', action: 'view_reports' },

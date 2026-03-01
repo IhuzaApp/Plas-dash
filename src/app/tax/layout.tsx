@@ -1,11 +1,7 @@
-"use client";
+'use client';
 
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function TaxLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <AdminLayout>
-            {children}
-        </AdminLayout>
-    );
+  return <AdminLayout>{children}</AdminLayout>;
 }

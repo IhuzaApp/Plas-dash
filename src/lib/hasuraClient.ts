@@ -9,6 +9,6 @@ console.log('HASURA_SECRET:', HASURA_SECRET ? 'PRESENT' : 'MISSING');
 export const hasuraClient =
   HASURA_URL && HASURA_SECRET
     ? new GraphQLClient(HASURA_URL, {
-      headers: { 'x-hasura-admin-secret': HASURA_SECRET },
-    })
+        headers: { 'x-hasura-admin-secret': HASURA_SECRET },
+      })
     : null;

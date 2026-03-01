@@ -214,8 +214,8 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
       pages[`access_${module}`] = updatedAccess;
 
       // Re-evaluate overall pages.access
-      pages.access = Object.keys(newPrivs).some(m =>
-        m !== 'pages' && (newPrivs[m as PrivilegeKey] as any)?.access === true
+      pages.access = Object.keys(newPrivs).some(
+        m => m !== 'pages' && (newPrivs[m as PrivilegeKey] as any)?.access === true
       );
 
       return newPrivs;
@@ -509,7 +509,12 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                         <SelectContent>
                           <SelectItem value="storeAdministrator">
                             <div className="flex items-center gap-2">
-                              <Badge variant="default" className="bg-purple-600 hover:bg-purple-700">Store Administrator</Badge>
+                              <Badge
+                                variant="default"
+                                className="bg-purple-600 hover:bg-purple-700"
+                              >
+                                Store Administrator
+                              </Badge>
                               <span>Full store oversight and administration</span>
                             </div>
                           </SelectItem>

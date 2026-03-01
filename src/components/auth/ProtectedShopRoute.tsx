@@ -51,11 +51,7 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
                 <Shield className="h-4 w-4 text-green-500" />
                 <span>Secure 2FA authentication required</span>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => router.push('/')}
-                className="w-full"
-              >
+              <Button variant="outline" onClick={() => router.push('/')} className="w-full">
                 Return to Dashboard
               </Button>
             </div>

@@ -156,9 +156,20 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
 
       return (
         <div className="p-4 space-y-3">
-          <div className={cn(variant === 'sidebar' ? 'flex items-center gap-2' : 'flex flex-col items-center gap-2 mb-4')}>
+          <div
+            className={cn(
+              variant === 'sidebar'
+                ? 'flex items-center gap-2'
+                : 'flex flex-col items-center gap-2 mb-4'
+            )}
+          >
             <Store className={cn(variant === 'sidebar' ? 'h-4 w-4' : 'h-8 w-8 text-primary')} />
-            <h3 className={cn('font-medium', isSidebarOpen || variant === 'inline' ? 'text-sm' : 'sr-only')}>
+            <h3
+              className={cn(
+                'font-medium',
+                isSidebarOpen || variant === 'inline' ? 'text-sm' : 'sr-only'
+              )}
+            >
               {variant === 'sidebar' ? 'Select Shop for POS' : 'Available Shops'}
             </h3>
           </div>
@@ -245,8 +256,15 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Store className={cn(variant === 'sidebar' ? 'h-4 w-4' : 'h-6 w-6 text-primary')} />
-          <h3 className={cn('font-medium', isSidebarOpen || variant === 'inline' ? 'text-sm' : 'sr-only')}>
-            {variant === 'sidebar' ? 'Select Shop for POS' : 'Choose a shop to associate with your session'}
+          <h3
+            className={cn(
+              'font-medium',
+              isSidebarOpen || variant === 'inline' ? 'text-sm' : 'sr-only'
+            )}
+          >
+            {variant === 'sidebar'
+              ? 'Select Shop for POS'
+              : 'Choose a shop to associate with your session'}
           </h3>
         </div>
         <Button variant="ghost" size="sm" onClick={handleManualRefresh} className="h-6 w-6 p-0">

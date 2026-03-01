@@ -5,11 +5,11 @@ import GoodsReceivedPage from '@/components/pages/pos/procurement/GoodsReceivedP
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function GoodsReceivedPageRoute() {
-    return (
-        <AdminLayout>
-            <ProtectedRoute requiredPrivilege="procurement">
-                <GoodsReceivedPage />
-            </ProtectedRoute>
-        </AdminLayout>
-    );
+  return (
+    <AdminLayout>
+      <ProtectedRoute requiredPrivilege="procurement">
+        <GoodsReceivedPage />
+      </ProtectedRoute>
+    </AdminLayout>
+  );
 }
