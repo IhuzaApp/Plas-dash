@@ -1960,8 +1960,8 @@ export const GET_RESTAURANTS = `
 
 // Reels query
 export const GET_REELS = `
-  query getAllReels {
-    Reels {
+  query getAllReels($where: Reels_bool_exp) {
+    Reels(where: $where, order_by: {created_on: desc}) {
       Reels_comments {
         created_on
         id

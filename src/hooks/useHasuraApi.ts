@@ -1060,10 +1060,10 @@ export function useRestaurants() {
 }
 
 // Type-safe hook for Reels
-export function useReels() {
+export function useReels(where?: any) {
   return useQuery<{ Reels: Reel[] }, Error>({
-    queryKey: ['reels'],
-    queryFn: () => hasuraRequest(GET_REELS, {}),
+    queryKey: ['reels', where],
+    queryFn: () => hasuraRequest(GET_REELS, where ? { where } : {}),
   });
 }
 

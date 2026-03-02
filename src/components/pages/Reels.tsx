@@ -67,10 +67,30 @@ const YOUTUBE_CATEGORIES = ['tutorial', 'recipe', 'cooking'];
 const UPLOAD_CATEGORIES = ['shopping', 'organic', 'food', 'delivery'];
 
 const Reels = () => {
-  const { data, isLoading, isError, error, refetch } = useReels();
-  const { data: systemConfig } = useSystemConfig();
   const { session } = useAuth();
   const { orgEmployee } = useCurrentOrgEmployee();
+
+  const whereClause = React.useMemo(() => {
+    if (!session || session.isProjectUser) return {};
+
+    const conditions = [];
+    if (session.shop_id) {
+      conditions.push({ shop_id: { _eq: session.shop_id } });
+    }
+    if (orgEmployee?.restaurant_id) {
+      conditions.push({ restaurant_id: { _eq: orgEmployee.restaurant_id } });
+    }
+
+    if (conditions.length === 0) {
+      // If the user has no shop or restaurant assigned, return a condition that matches nothing
+      return { id: { _is_null: true } };
+    }
+
+    return { _or: conditions };
+  }, [session, orgEmployee]);
+
+  const { data, isLoading, isError, error, refetch } = useReels(whereClause);
+  const { data: systemConfig } = useSystemConfig();
   const reels = data?.Reels || [];
 
   const [searchTerm, setSearchTerm] = useState('');
