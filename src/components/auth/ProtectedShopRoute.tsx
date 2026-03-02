@@ -15,7 +15,7 @@ interface ProtectedShopRouteProps {
 }
 
 const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallback }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, session } = useAuth();
   const { isLoggedIntoShop, shopSession } = useShopSession();
   const router = useRouter();
 
@@ -25,8 +25,12 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
     return null;
   }
 
-  // If not logged into a shop, show shop selection
-  if (!isLoggedIntoShop) {
+  // Determine if user has a shop assigned at all
+  const hasAssignedShop = !!session?.shop_id;
+
+  // If not logged into a shop, show shop selection ONLY IF they have an assigned shop.
+  // Unassigned users (like global admins) bypass this check.
+  if (!isLoggedIntoShop && hasAssignedShop) {
     if (fallback) {
       return <>{fallback}</>;
     }
@@ -61,24 +65,26 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
     );
   }
 
-  // Show shop session info
+  // Show shop session info if they have one (unassigned users won't see this banner)
   return (
     <div className="space-y-4">
       {/* Shop Session Banner */}
-      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Store className="h-4 w-4 text-primary" />
-            <div>
-              <p className="text-sm font-medium">{shopSession?.shopName}</p>
-              <p className="text-xs text-muted-foreground">
-                {shopSession?.employeeName} - {shopSession?.position}
-              </p>
+      {isLoggedIntoShop && shopSession && (
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Store className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-sm font-medium">{shopSession.shopName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {shopSession.employeeName} - {shopSession.position}
+                </p>
+              </div>
             </div>
+            <div className="text-xs text-muted-foreground">POS Session Active</div>
           </div>
-          <div className="text-xs text-muted-foreground">POS Session Active</div>
         </div>
-      </div>
+      )}
 
       {/* Page Content */}
       {children}
