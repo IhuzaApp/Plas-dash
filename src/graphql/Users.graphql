@@ -1,0 +1,14 @@
+query GetUsers {
+  Users {
+    id
+    name
+    email
+    phone
+    role
+    password_hash
+    created_at
+    updated_at
+    profile_picture
+    is_active
+  }
+}

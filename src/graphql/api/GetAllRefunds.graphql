@@ -1,0 +1,12 @@
+query GetAllRefunds {
+  Refunds(order_by: { created_at: desc }) {
+    id
+    amount
+    order_id
+    user_id
+    reason
+    status
+    paid
+    created_at
+  }
+}

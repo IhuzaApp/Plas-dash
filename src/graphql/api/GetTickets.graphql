@@ -1,0 +1,12 @@
+query GetTickets {
+  tickets {
+    id
+    ticket_num
+    subject
+    status
+    priority
+    user_id
+    created_on
+    update_on
+  }
+}

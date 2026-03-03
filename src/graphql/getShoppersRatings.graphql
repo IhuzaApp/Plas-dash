@@ -1,0 +1,16 @@
+query getShopperRating {
+  Ratings {
+    created_at
+    customer_id
+    delivery_experience
+    id
+    order_id
+    packaging_quality
+    professionalism
+    rating
+    review
+    reviewed_at
+    shopper_id
+    updated_at
+  }
+}

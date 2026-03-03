@@ -1,0 +1,11 @@
+query GetShoppers {
+  shoppers {
+    id
+    user_id
+    active
+    full_name
+    phone_number
+    created_at
+    updated_at
+  }
+}

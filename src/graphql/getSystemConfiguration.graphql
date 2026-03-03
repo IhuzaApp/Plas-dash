@@ -1,0 +1,22 @@
+query getSystemConfiguration {
+  System_configuratioins {
+    baseDeliveryFee
+    currency
+    discounts
+    id
+    serviceFee
+    shoppingTime
+    unitsSurcharge
+    extraUnits
+    cappedDistanceFee
+    allowScheduledDeliveries
+    deliveryCommissionPercentage
+    distanceSurcharge
+    enableRush
+    rushHourSurcharge
+    productCommissionPercentage
+    rushHours
+    suggestedMinimumTip
+    tax
+  }
+}

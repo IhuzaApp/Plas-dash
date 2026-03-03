@@ -1,0 +1,34 @@
+query GetCartItems {
+  Cart_Items {
+    id
+    cart_id
+    product_id
+    quantity
+    price
+    created_at
+    updated_at
+    Cart {
+      created_at
+      id
+      is_active
+      shop_id
+      total
+      updated_at
+      user_id
+    }
+    Product {
+      category
+      created_at
+      description
+      id
+      image
+      is_active
+      measurement_unit
+      name
+      price
+      quantity
+      shop_id
+      updated_at
+    }
+  }
+}

@@ -1,0 +1,171 @@
+yarn run v1.22.22
+$ next lint
+
+./src/app/customer-display/page.tsx
+147:6  Warning: React Hook useEffect has a missing dependency: 'fetchDisplayData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/plasmarket/[id]/page.tsx
+339:53  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/plasmarket/store/[storeId]/page.tsx
+119:37  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+233:61  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/referrals/_components/ReviewReferralDrawer.tsx
+84:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/referrals/page.tsx
+96:11  Warning: The 'referralData' logical expression could make the dependencies of useMemo Hook (at line 156) change on every render. To fix this, wrap the initialization of 'referralData' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+96:11  Warning: The 'referralData' logical expression could make the dependencies of useMemo Hook (at line 167) change on every render. To fix this, wrap the initialization of 'referralData' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./src/app/shopper-wallets/page.tsx
+266:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+347:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/Reels/AddReelModal.tsx
+438:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/Reels/EditReelModal.tsx
+257:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/Reels/ReelCard.tsx
+63:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/Reels/ReelsCommentsModal.tsx
+37:50  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+37:64  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./src/components/Restaurants/AddRestaurantModal.tsx
+308:37  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+357:37  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/auth/ProtectedProjectRoute.tsx
+64:24  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/auth/ProtectedRoute.tsx
+77:24  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/customer-display/MomoPaymentDialog.tsx
+99:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/dashboard/RevenueTrendChart.tsx
+103:11  Warning: The 'records' logical expression could make the dependencies of useMemo Hook (at line 110) change on every render. To fix this, wrap the initialization of 'records' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+103:11  Warning: The 'records' logical expression could make the dependencies of useMemo Hook (at line 117) change on every render. To fix this, wrap the initialization of 'records' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+103:11  Warning: The 'records' logical expression could make the dependencies of useMemo Hook (at line 123) change on every render. To fix this, wrap the initialization of 'records' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./src/components/dashboard/TransactionDetailsDialog.tsx
+95:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/drawers/OrderDetailsDrawer.tsx
+168:63  Error: React Hook "useOrderPayments" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+169:34  Error: React Hook "useSystemConfig" is called conditionally. React Hooks must be called in the exact same order in every component render.  react-hooks/rules-of-hooks
+339:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/drawers/RefundDetailsSheet.tsx
+295:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/examples/PrivilegeExample.tsx
+132:28  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+246:28  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/layout/AdminSidebar.tsx
+142:6  Warning: React Hook useEffect has missing dependencies: 'isLoggedIntoShop', 'shopSession?.shopId', and 'shopSession.shopName'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+317:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+417:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+421:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/modals/ShopAuthModal.tsx
+89:6  Warning: React Hook React.useEffect has a missing dependency: 'generateQRCode'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+270:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/NotFound.tsx
+19:23  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+19:44  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/pages/Orders.tsx
+214:9  Warning: The 'orders' logical expression could make the dependencies of useMemo Hook (at line 333) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'orders' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+215:9  Warning: The 'reelOrderItems' logical expression could make the dependencies of useMemo Hook (at line 333) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'reelOrderItems' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+216:9  Warning: The 'businessOrderItems' logical expression could make the dependencies of useMemo Hook (at line 333) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'businessOrderItems' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+217:9  Warning: The 'restaurantOrderItems' logical expression could make the dependencies of useMemo Hook (at line 333) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'restaurantOrderItems' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./src/components/pages/Products.tsx
+52:5  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/ProjectUsers.tsx
+216:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+365:43  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+369:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/Refunds.tsx
+83:9  Warning: The 'refunds' logical expression could make the dependencies of useMemo Hook (at line 121) change on every render. To fix this, wrap the initialization of 'refunds' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./src/components/pages/ShopDetail.tsx
+530:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+742:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/Shops.tsx
+281:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/SupermarketSettings.tsx
+325:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/Wallets.tsx
+609:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+800:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/pos/Inventory.tsx
+133:6  Warning: React Hook React.useEffect has a missing dependency: 'transformProductsToInventoryItems'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/pages/pos/checkout/CheckoutBarcodeScanner.tsx
+72:6  Warning: React Hook useEffect has a missing dependency: 'initializeScanner'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+98:6  Warning: React Hook useCallback has a missing dependency: 'startScanning'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+208:5  Warning: React Hook useCallback has missing dependencies: 'isScanning' and 'playScanSound'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/pages/pos/checkout/ProductSelectionCard.tsx
+74:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/shopper/InvoicesTab.tsx
+356:35  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+430:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/shopper/ShopperActions.tsx
+122:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pages/shopper/ShopperWalletTab.tsx
+240:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+246:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/shop/AddBranchShopDialog.tsx
+451:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/shop/AddProductDialog.tsx
+213:6  Warning: React Hook useEffect has a missing dependency: 'resetForm'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+514:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/shop/AddProjectUserDialog.tsx
+562:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/shop/AddShopDialog.tsx
+425:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/shop/BarcodeScanner.tsx
+77:6  Warning: React Hook useEffect has a missing dependency: 'initializeScanner'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+103:6  Warning: React Hook useCallback has a missing dependency: 'startScanning'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+213:5  Warning: React Hook useCallback has missing dependencies: 'isScanning' and 'playScanSound'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/shop/EditProductDialog.tsx
+377:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/shop/EditProjectUserDialog.tsx
+406:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/shop/ProductNameFormDialog.tsx
+195:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/wallet/ProcessPayoutDrawer.tsx
+111:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+238:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

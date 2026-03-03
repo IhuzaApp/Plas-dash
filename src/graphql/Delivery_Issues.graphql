@@ -1,0 +1,39 @@
+query GetDeliveryIssues {
+  Delivery_Issues {
+    id
+    order_id
+    shopper_id
+    issue_type
+    description
+    status
+    created_at
+    updated_at
+    Order {
+      combined_order_id
+      created_at
+      delivery_address_id
+      delivery_notes
+      delivery_photo_url
+      delivery_time
+      id
+      shopper_id
+      status
+      total
+      updated_at
+      user_id
+    }
+    User {
+      created_at
+      email
+      gender
+      id
+      is_active
+      name
+      password_hash
+      phone
+      profile_picture
+      role
+      updated_at
+    }
+  }
+}

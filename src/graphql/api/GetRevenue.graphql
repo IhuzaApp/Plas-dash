@@ -1,0 +1,25 @@
+query GetRevenue {
+  Revenue {
+    type
+    shopper_id
+    shop_id
+    products
+    order_id
+    id
+    created_at
+    commission_percentage
+    amount
+    Order {
+      total
+    }
+    businessProductOrders {
+      total
+    }
+    reel_orders {
+      total
+    }
+    restaurant_orders {
+      total
+    }
+  }
+}

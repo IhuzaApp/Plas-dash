@@ -1,0 +1,219 @@
+mutation AddOrgEmployee(
+  $Address: String = ""
+  $dob: String = ""
+  $email: String = ""
+  $fullnames: String = ""
+  $gender: String = ""
+  $password: String = ""
+  $phone: String = ""
+  $restaurant_id: uuid
+  $shop_id: uuid!
+  $Position: String = ""
+  $roleType: String = ""
+) {
+  insert_orgEmployees(
+    objects: {
+      Address: $Address
+      active: true
+      dob: $dob
+      email: $email
+      fullnames: $fullnames
+      gender: $gender
+      multAuthEnabled: false
+      password: $password
+      phone: $phone
+      restaurant_id: $restaurant_id
+      shop_id: $shop_id
+      Position: $Position
+      generatePassword: false
+      roleType: $roleType
+    }
+  ) {
+    affected_rows
+    returning {
+      id
+      employeeID
+      fullnames
+      email
+      phone
+      Address
+      active
+      shop_id
+      restaurant_id
+      Position
+      roleType
+    }
+  }
+}
+
+mutation addOrgEmployeeRoles($orgEmployeeID: uuid = "", $privillages: jsonb = "") {
+  insert_orgEmployeeRoles(objects: { orgEmployeeID: $orgEmployeeID, privillages: $privillages }) {
+    affected_rows
+  }
+}
+
+mutation UpdateOrgEmployeeRole($id: uuid!, $privillages: jsonb!) {
+  update_orgEmployeeRoles(
+    where: { orgEmployeeID: { _eq: $id } }
+    _set: { privillages: $privillages }
+  ) {
+    affected_rows
+  }
+}
+
+mutation UpdateOrgEmployee(
+  $id: uuid!
+  $fullnames: String
+  $email: String
+  $phone: String
+  $Address: String
+  $Position: String
+  $active: Boolean
+  $roleType: String
+) {
+  update_orgEmployees(
+    where: { id: { _eq: $id } }
+    _set: {
+      fullnames: $fullnames
+      email: $email
+      phone: $phone
+      Address: $Address
+      Position: $Position
+      active: $active
+      roleType: $roleType
+    }
+  ) {
+    affected_rows
+  }
+}
+
+mutation DeleteOrgEmployee($id: uuid!) {
+  delete_orgEmployees(where: { id: { _eq: $id } }) {
+    affected_rows
+  }
+}
+
+query getOrgEmployeeDetails {
+  orgEmployees {
+    Address
+    active
+    created_on
+    dob
+    email
+    employeeID
+    fullnames
+    gender
+    id
+    multAuthEnabled
+    password
+    phone
+    restaurant_id
+    shop_id
+    updated_on
+    Position
+    roleType
+    orgEmployeeRoles {
+      created_on
+      id
+      orgEmployeeID
+      privillages
+      update_on
+    }
+    Restaurants {
+      created_at
+      email
+      id
+      lat
+      location
+      long
+      name
+      phone
+      profile
+      verified
+    }
+    Shops {
+      address
+      category_id
+      created_at
+      description
+      id
+      image
+      is_active
+      latitude
+      logo
+      longitude
+      name
+      operating_hours
+      phone
+      updated_at
+    }
+  }
+}
+
+query getOrgEmployeesByShop($shop_id: uuid!) {
+  orgEmployees(where: { shop_id: { _eq: $shop_id } }) {
+    Address
+    active
+    created_on
+    dob
+    email
+    employeeID
+    fullnames
+    gender
+    id
+    multAuthEnabled
+    password
+    phone
+    restaurant_id
+    shop_id
+    updated_on
+    Position
+    roleType
+    orgEmployeeRoles {
+      created_on
+      id
+      orgEmployeeID
+      privillages
+      update_on
+    }
+    Shops {
+      id
+      name
+    }
+  }
+}
+
+# Login query for orgEmployee authentication
+query loginOrgEmployee($identifier: String!, $password: String!) {
+  orgEmployees(
+    where: {
+      _and: [
+        { password: { _eq: $password } }
+        {
+          _or: [
+            { email: { _eq: $identifier } }
+            { phone: { _eq: $identifier } }
+            { fullnames: { _eq: $identifier } }
+            { employeeID: { _eq: $identifier } }
+          ]
+        }
+      ]
+    }
+  ) {
+    id
+    employeeID
+    fullnames
+    email
+    phone
+    Address
+    active
+    shop_id
+    restaurant_id
+    Position
+    roleType
+    orgEmployeeRoles {
+      id
+      privillages
+    }
+  }
+}

@@ -1,0 +1,68 @@
+query GetOrderStats($month_start: timestamptz!) {
+  Orders_aggregate {
+    aggregate {
+      count
+    }
+  }
+  Orders_monthly: Orders_aggregate(where: { created_at: { _gte: $month_start } }) {
+    aggregate {
+      count
+    }
+  }
+  Orders_pending: Orders_aggregate(where: { status: { _neq: "delivered" } }) {
+    aggregate {
+      count
+    }
+  }
+  reel_orders_aggregate {
+    aggregate {
+      count
+    }
+  }
+  reel_orders_monthly: reel_orders_aggregate(where: { created_at: { _gte: $month_start } }) {
+    aggregate {
+      count
+    }
+  }
+  reel_orders_pending: reel_orders_aggregate(where: { status: { _neq: "delivered" } }) {
+    aggregate {
+      count
+    }
+  }
+  restaurant_orders_aggregate {
+    aggregate {
+      count
+    }
+  }
+  restaurant_orders_monthly: restaurant_orders_aggregate(
+    where: { created_at: { _gte: $month_start } }
+  ) {
+    aggregate {
+      count
+    }
+  }
+  restaurant_orders_pending: restaurant_orders_aggregate(where: { status: { _neq: "delivered" } }) {
+    aggregate {
+      count
+    }
+  }
+  businessProductOrders_aggregate {
+    aggregate {
+      count
+    }
+  }
+  businessProductOrders_monthly: businessProductOrders_aggregate(
+    where: { created_at: { _gte: $month_start } }
+  ) {
+    aggregate {
+      count
+    }
+  }
+  businessProductOrders_pending: businessProductOrders_aggregate(
+    where: { status: { _neq: "delivered" } }
+  ) {
+    aggregate {
+      count
+    }
+  }
+}
