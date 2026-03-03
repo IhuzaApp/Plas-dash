@@ -383,7 +383,7 @@ export default function TaxDashboardPage() {
             <CardContent>
               <p className="text-blue-100 text-sm leading-relaxed mb-4">
                 You have <strong className="text-white">$45,000</strong> in eligible R&D expenses
-                that haven't been claimed for the current quarter. Claiming these could reduce your
+                that haven&apos;t been claimed for the current quarter. Claiming these could reduce your
                 estimated tax by <strong className="text-white">~18%</strong>.
               </p>
               <Button className="w-full bg-white text-blue-700 hover:bg-blue-50 border-none font-semibold rounded-xl">

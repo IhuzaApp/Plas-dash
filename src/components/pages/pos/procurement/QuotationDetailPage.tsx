@@ -221,7 +221,7 @@ export default function QuotationDetailPage({ quotationId }: QuotationDetailPage
               <div className="pt-4 mt-4 border-t">
                 <h4 className="text-sm font-medium mb-2">Quote Notes</h4>
                 <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md italic">
-                  "{quotation.notes}"
+                  &quot;{quotation.notes}&quot;
                 </p>
               </div>
             )}

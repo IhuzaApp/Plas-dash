@@ -141,7 +141,7 @@ const ShopDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics?.dailySales || 0)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Today's total revenue</p>
+            <p className="text-xs text-muted-foreground mt-1">Today&apos;s total revenue</p>
           </CardContent>
         </Card>
 
