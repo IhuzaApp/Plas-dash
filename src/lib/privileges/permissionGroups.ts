@@ -247,4 +247,16 @@ export const permissionGroups: PermissionGroup[] = [
       { key: 'use_chat', label: 'Use Chat' },
     ],
   },
+  {
+    title: 'Subscriptions',
+    module: 'subscriptions' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Subscriptions' },
+      { key: 'manage_plans', label: 'Manage Plans' },
+      { key: 'manage_modules', label: 'Manage Modules' },
+      { key: 'assign_plan_modules', label: 'Assign Plan Modules' },
+      { key: 'manage_shop_subscriptions', label: 'Manage Shop Subscriptions' },
+    ],
+  },
 ];
+

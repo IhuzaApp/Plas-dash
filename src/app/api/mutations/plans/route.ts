@@ -6,7 +6,13 @@ import { gql } from 'graphql-request';
 
 const INSERT_PLAN = gql`
   mutation InsertPlan($object: plans_insert_input!) {
-    insert_plans_one(object: $object) {
+    insert_plans_one(
+      object: $object,
+      on_conflict: {
+        constraint: plans_pkey,
+        update_columns: [name, description, price_monthly, price_yearly, ai_request_limit, reel_limit]
+      }
+    ) {
       id
     }
   }

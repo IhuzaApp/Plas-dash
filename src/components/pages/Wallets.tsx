@@ -386,7 +386,7 @@ function PersonalWalletsTab({ formatCurrency }: { formatCurrency: (amount: strin
             totalPages={totalPages}
             pageSize={perPage}
             onPageChange={setPage}
-            onPageSizeChange={() => {}}
+            onPageSizeChange={() => { }}
             totalItems={wallets.length}
           />
         )}
@@ -539,7 +539,7 @@ function BusinessWalletsTab({ formatCurrency }: { formatCurrency: (amount: strin
             totalPages={totalPages}
             pageSize={perPage}
             onPageChange={setPage}
-            onPageSizeChange={() => {}}
+            onPageSizeChange={() => { }}
             totalItems={wallets.length}
           />
         )}
@@ -679,14 +679,6 @@ const Wallets = () => {
       if (status === 'completed' || status === 'delivered') {
         const deliveryFee = parseFloat(order.delivery_fee || '0');
         const serviceFee = parseFloat(order.service_fee || '0');
-        console.log('Order fees:', {
-          orderId: order.id,
-          shopperId: order.shopper_id,
-          deliveryFee,
-          serviceFee,
-          status: order.status,
-          total: deliveryFee + serviceFee,
-        });
         return total + deliveryFee + serviceFee;
       }
       return total;
@@ -771,12 +763,6 @@ const Wallets = () => {
 
                       const allOrders = (walletsData as any)?.Orders || [];
 
-                      console.log('Processing wallet:', {
-                        userId: user.id,
-                        shopperId: wallet.shopper_id,
-                        orders: allOrders,
-                      });
-
                       const totalEarnings = calculateTotalEarnings(allOrders, wallet.shopper_id);
                       const pendingPayment = calculatePendingPayment(
                         wallet.available_balance || '0'
@@ -826,8 +812,8 @@ const Wallets = () => {
                           <TableCell>
                             {wallet.last_updated
                               ? formatDistanceToNow(new Date(wallet.last_updated), {
-                                  addSuffix: true,
-                                })
+                                addSuffix: true,
+                              })
                               : 'Never'}
                           </TableCell>
                           <TableCell>

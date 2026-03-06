@@ -18,6 +18,9 @@ const GET_SHOP_SUBSCRIPTIONS = gql`
       start_date
       status
       updated_at
+      plan {
+        name
+      }
     }
   }
 `;

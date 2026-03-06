@@ -68,6 +68,12 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   Reports: { module: 'tax' },
   Settings: { module: 'tax' },
   'AI Chat': { module: 'ai_chat' },
+
+  // Subscriptions (Project Users only)
+  'Manage Plans': { module: 'subscriptions', isProjectUser: true },
+  'Modules': { module: 'subscriptions', isProjectUser: true },
+  'Plan Assignments': { module: 'subscriptions', isProjectUser: true },
+  'Shop Subscriptions': { module: 'subscriptions', isProjectUser: true },
 };
 
 /**

@@ -767,6 +767,17 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       { key: 'use_chat', label: 'Use Chat', description: 'Can send messages to the AI assistant' },
     ],
   },
+  subscriptions: {
+    title: 'Subscriptions',
+    description: 'Manage SaaS subscriptions, plans, and feature limits',
+    actions: [
+      { key: 'access', label: 'Access Subscriptions', description: 'Can access the subscriptions module' },
+      { key: 'manage_plans', label: 'Manage Plans', description: 'Can view, create, edit, and delete subscription plans' },
+      { key: 'manage_modules', label: 'Manage Modules', description: 'Can view, create, edit, and delete software modules' },
+      { key: 'assign_plan_modules', label: 'Assign Plan Modules', description: 'Can link modules to subscription plans' },
+      { key: 'manage_shop_subscriptions', label: 'Manage Shop Subscriptions', description: 'Can view and modify active shop subscriptions' },
+    ]
+  }
 };
 
 /**
