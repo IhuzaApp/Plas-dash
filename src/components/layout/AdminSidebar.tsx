@@ -135,7 +135,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     }
   }, [queryClient, shopSession?.shopId, shopSession?.shopName, isLoggedIntoShop]);
 
-  // Listen for shop session changes and refetch data
   useEffect(() => {
     const handleShopSessionChange = (event: CustomEvent) => {
       refetchShopData();
