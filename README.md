@@ -2,6 +2,19 @@
 
 A modern, feature-rich dashboard for managing delivery operations, point of sale, and financial transactions.
 
+### 💳 Subscription & Billing System
+
+- **Unified Management**
+  - Independent subscription assignment for **Shops**, **Restaurants**, and **Business Accounts**.
+  - Automated `end_date` calculation based on billing cycles (Monthly/Yearly).
+- **Billing Dashboard**
+  - **Real-time Statistics**: Summary metrics for Active, Due (14d), Overdue, and Inactive accounts.
+  - **Tabbed Interface**: Separate views for general management and focused renewal monitoring.
+  - **Real-time Search**: Instant filtering by entity name, ID, or plan type.
+- **Background Automation**
+  - Secure API endpoint (`/api/subscriptions/automate-status`) for scheduled status updates.
+  - Automated transitions: `active` → `due_soon` (14 days before) → `on_hold` (3 days after) → `expired` (30 days after).
+
 ## Features
 
 ### 📊 Real-time Analytics Dashboard

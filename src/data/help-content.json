@@ -175,6 +175,28 @@
           "content": "Monitor support ticket status:\n\n- View ticket history\n- Check resolution progress\n- Communicate with support team\n- Rate support experience"
         }
       ]
+    },
+    {
+      "id": "subscriptions",
+      "title": "Subscription Management",
+      "icon": "CreditCard",
+      "articles": [
+        {
+          "id": "subscription-dashboards",
+          "title": "Monitoring Subscriptions",
+          "content": "The **Subscriptions & Billing** section provides a unified view for all business plans:\n\n- **Live Stats Dashboard**: Instantly see total subscriptions, active (paid) accounts, upcoming renewals in 14 days, overdue payments, and expired plans.\n- **Search & Filter**: Quickly find any Shop, Restaurant, or Business by name or ID using the real-time search bar.\n- **Status Tracking**: Monitor account health through color-coded badges (Active, Due Soon, On Hold, Expired)."
+        },
+        {
+          "id": "billing-renewals",
+          "title": "Billing & Renewal Logic",
+          "content": "Our system automates the lifecycle of a subscription to ensure continuous service:\n\n- **Tabbed Management**: Toggle between the full subscription list and the 'Billing & Renewals' view to focus on upcoming deadlines.\n- **Auto-Calculation**: When assigning a plan, the system automatically calculates the `Next Billing` date based on the Start Date and your chosen cycle (Monthly/Yearly).\n- **Grace Periods**: We provide clear visibility into accounts that have entered grace periods or require immediate manual renewal."
+        },
+        {
+          "id": "status-automation",
+          "title": "Automated Status Transitions",
+          "content": "The system runs background operations to keep billing data accurate:\n\n1. **Due Soon (T-14 Days)**: Subscriptions are flagged 14 days before expiration to allow for proactive outreach.\n2. **On Hold (T+3 Days)**: Accounts that remain unpaid for 3 days after their end date are automatically put 'On Hold'.\n3. **Expiration (T+30 Days)**: Subscriptions that remain unpaid for 30 days are fully expired and require reactivation."
+        }
+      ]
     }
   ]
 }

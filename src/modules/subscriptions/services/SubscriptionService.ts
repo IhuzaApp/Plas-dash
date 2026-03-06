@@ -83,7 +83,26 @@ const INSERT_REEL_USAGE = gql`
   mutation InsertReelUsage($shop_id: uuid!, $month: Int!, $year: Int!) {
     insert_reel_usage_one(object: {shop_id: $shop_id, month: $month, year: $year, upload_count: 1}) {
       id
-      upload_count
+      request_count
+    }
+  }
+`;
+
+const GET_SUBSCRIPTIONS_FOR_AUTOMATION = gql`
+  query GetSubscriptionsForAutomation {
+    shop_subscriptions(where: { status: { _nin: ["expired", "canceled"] } }) {
+      id
+      status
+      end_date
+    }
+  }
+`;
+
+const UPDATE_SUBSCRIPTION_STATUS = gql`
+  mutation UpdateSubscriptionStatus($id: uuid!, $status: String!) {
+    update_shop_subscriptions_by_pk(pk_columns: { id: $id }, _set: { status: $status }) {
+      id
+      status
     }
   }
 `;
@@ -315,6 +334,73 @@ export class SubscriptionService {
         } catch (error) {
             console.error('Error assigning basic plan to new shop:', error);
             throw new Error(`Failed to assign basic plan to shop ${shopId}`);
+        }
+    }
+
+    /**
+     * Automated Status Updates:
+     * Background process to update subscription statuses based on billing dates.
+     * - due_soon: 14 days before end_date
+     * - on_hold: 3 days after end_date (unpaid)
+     * - expired: 30 days after end_date (unpaid)
+     */
+    async processAutomatedStatusUpdates() {
+        if (!hasuraClient) {
+            throw new Error('Hasura client is not initialized');
+        }
+
+        try {
+            const data = await hasuraClient.request<{ shop_subscriptions: any[] }>(GET_SUBSCRIPTIONS_FOR_AUTOMATION);
+            const subscriptions = data.shop_subscriptions;
+            const now = new Date();
+            const results = {
+                total: subscriptions.length,
+                updated: 0,
+                errors: 0,
+                log: [] as string[]
+            };
+
+            for (const sub of subscriptions) {
+                if (!sub.end_date) continue;
+
+                const endDate = new Date(sub.end_date);
+                let newStatus: string | null = null;
+
+                const diffDays = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+
+                // Logic:
+                // 1. If active and within 14 days of ending -> due_soon
+                if (sub.status === 'active' && diffDays <= 14 && diffDays > 0) {
+                    newStatus = 'due_soon';
+                }
+                // 2. If (active or due_soon) and more than 3 days past due -> on_hold
+                else if ((sub.status === 'active' || sub.status === 'due_soon') && diffDays <= -3) {
+                    newStatus = 'on_hold';
+                }
+                // 3. If on_hold and more than 30 days past due -> expired
+                else if (sub.status === 'on_hold' && diffDays <= -30) {
+                    newStatus = 'expired';
+                }
+
+                if (newStatus && newStatus !== sub.status) {
+                    try {
+                        await hasuraClient.request(UPDATE_SUBSCRIPTION_STATUS, {
+                            id: sub.id,
+                            status: newStatus
+                        });
+                        results.updated++;
+                        results.log.push(`Updated ${sub.id}: ${sub.status} -> ${newStatus}`);
+                    } catch (err) {
+                        results.errors++;
+                        console.error(`Failed to update subscription ${sub.id}:`, err);
+                    }
+                }
+            }
+
+            return results;
+        } catch (error) {
+            console.error('Error in automated status updates:', error);
+            throw new Error('Failed to process automated status updates');
         }
     }
 }

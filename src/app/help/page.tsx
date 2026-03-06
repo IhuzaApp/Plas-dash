@@ -161,9 +161,9 @@ export default function HelpCenter() {
                   variant="outline"
                   className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1"
                 >
-                  <Icons.Headphones className="h-5 w-5 mb-1" />
-                  <span className="font-semibold">Contact Support</span>
-                  <span className="text-xs text-muted-foreground">Get technical assistance</span>
+                  <Icons.CreditCard className="h-5 w-5 mb-1" />
+                  <span className="font-semibold">Manage Subscriptions</span>
+                  <span className="text-xs text-muted-foreground">Track billing & renewals</span>
                 </Button>
               </div>
             </div>
