@@ -73,7 +73,7 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   'Manage Plans': { module: 'subscriptions', isProjectUser: true },
   'Modules': { module: 'subscriptions', isProjectUser: true },
   'Plan Assignments': { module: 'subscriptions', isProjectUser: true },
-  'Shop Subscriptions': { module: 'subscriptions', isProjectUser: true },
+  'Subscriptions & Billing': { module: 'subscriptions', isProjectUser: true },
 };
 
 /**

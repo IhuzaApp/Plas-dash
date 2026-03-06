@@ -289,7 +289,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         { title: 'Manage Plans', icon: FileText, path: '/admin/subscriptions/plans' },
         { title: 'Modules', icon: Package, path: '/admin/subscriptions/modules' },
         { title: 'Plan Assignments', icon: Settings, path: '/admin/subscriptions/plan-modules' },
-        { title: 'Shop Subscriptions', icon: Store, path: '/admin/subscriptions/shops' },
+        { title: 'Subscriptions & Billing', icon: Store, path: '/admin/subscriptions/shops' },
       ],
     },
     {
