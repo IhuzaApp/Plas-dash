@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/layout/RootLayout';
 import { hasPrivilege } from '@/types/privileges';
+import { apiGet } from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -53,11 +54,7 @@ export default function PlansPage() {
     }
     const { data, isLoading, refetch } = useQuery<{ plans: Plan[] }>({
         queryKey: ['plans'],
-        queryFn: async () => {
-            const res = await fetch('/api/queries/plans');
-            if (!res.ok) throw new Error('Failed to fetch plans');
-            return res.json();
-        },
+        queryFn: () => apiGet<{ plans: Plan[] }>('/api/queries/plans'),
     });
 
     const handleOpenDialog = (plan?: Plan) => {

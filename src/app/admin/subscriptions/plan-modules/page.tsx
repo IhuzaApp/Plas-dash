@@ -5,6 +5,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/layout/RootLayout';
 import { hasPrivilege } from '@/types/privileges';
+import { apiGet, apiPost, apiDelete } from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -46,29 +47,17 @@ export default function PlanModulesPage() {
 
     const { data: plansData, isLoading: isLoadingPlans } = useQuery<{ plans: Plan[] }>({
         queryKey: ['plans'],
-        queryFn: async () => {
-            const res = await fetch('/api/queries/plans');
-            if (!res.ok) throw new Error('Failed to fetch plans');
-            return res.json();
-        },
+        queryFn: () => apiGet<{ plans: Plan[] }>('/api/queries/plans'),
     });
 
     const { data: modulesData, isLoading: isLoadingModules } = useQuery<{ modules: ModuleData[] }>({
         queryKey: ['modules'],
-        queryFn: async () => {
-            const res = await fetch('/api/queries/modules');
-            if (!res.ok) throw new Error('Failed to fetch modules');
-            return res.json();
-        },
+        queryFn: () => apiGet<{ modules: ModuleData[] }>('/api/queries/modules'),
     });
 
     const { data: planModulesData, isLoading: isLoadingPlanModules, refetch: refetchPlanModules } = useQuery<{ plan_modules: PlanModule[] }>({
         queryKey: ['plan-modules', selectedPlanId],
-        queryFn: async () => {
-            const res = await fetch(`/api/queries/plan-modules?plan_id=${selectedPlanId}`);
-            if (!res.ok) throw new Error('Failed to fetch plan modules');
-            return res.json();
-        },
+        queryFn: () => apiGet<{ plan_modules: PlanModule[] }>(`/api/queries/plan-modules?plan_id=${selectedPlanId}`),
         enabled: !!selectedPlanId,
     });
 
@@ -77,15 +66,13 @@ export default function PlanModulesPage() {
     const toggleMutation = useMutation({
         mutationFn: async ({ moduleId, attach }: { moduleId: string; attach: boolean }) => {
             if (!selectedPlanId) throw new Error('No plan selected');
-
-            const res = await fetch('/api/mutations/plan-modules', {
-                method: attach ? 'POST' : 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ plan_id: selectedPlanId, module_id: moduleId }),
-            });
-
-            if (!res.ok) throw new Error(`Failed to ${attach ? 'assign' : 'unassign'} module`);
-            return res.json();
+            const body = { plan_id: selectedPlanId, module_id: moduleId };
+            if (attach) {
+                return apiPost('/api/mutations/plan-modules', body);
+            } else {
+                // apiDelete is not in lib/api yet — use fetch with auth headers via apiPost workaround:
+                return apiDelete('/api/mutations/plan-modules', body);
+            }
         },
         onSuccess: () => {
             refetchPlanModules();

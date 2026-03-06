@@ -83,6 +83,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'referrals',
         'plasmarket',
         'restaurants',
+        'subscriptions',
       ];
 
       globalAdminModules.forEach(module => {
@@ -114,6 +115,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'plasmarket',
         'restaurants',
         'ai_chat',
+        'subscriptions',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {

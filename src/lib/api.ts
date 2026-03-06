@@ -74,3 +74,21 @@ export async function apiPatch<T = unknown>(path: string, body: unknown): Promis
   }
   return data as T;
 }
+
+export async function apiDelete<T = unknown>(path: string, body?: unknown): Promise<T> {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}${path.startsWith('/') ? path : `/${path}`}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    credentials: 'include',
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.error || `Request failed: ${res.status}`);
+  }
+  return data as T;
+}

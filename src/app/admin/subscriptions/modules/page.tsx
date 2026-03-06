@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/layout/RootLayout';
 import { hasPrivilege } from '@/types/privileges';
+import { apiGet } from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -50,11 +51,7 @@ export default function ModulesPage() {
 
     const { data, isLoading, refetch } = useQuery<{ modules: ModuleData[] }>({
         queryKey: ['modules'],
-        queryFn: async () => {
-            const res = await fetch('/api/queries/modules');
-            if (!res.ok) throw new Error('Failed to fetch modules');
-            return res.json();
-        },
+        queryFn: () => apiGet<{ modules: ModuleData[] }>('/api/queries/modules'),
     });
 
     const handleOpenDialog = (mod?: ModuleData) => {

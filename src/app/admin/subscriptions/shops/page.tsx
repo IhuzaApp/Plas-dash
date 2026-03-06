@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/layout/RootLayout';
 import { hasPrivilege } from '@/types/privileges';
+import { apiGet } from '@/lib/api';
 
 import {
     Table,
@@ -16,6 +17,9 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import { AssignSubscriptionDialog } from './_components/AssignSubscriptionDialog';
 
 export interface ShopSubscription {
     id: string;
@@ -25,15 +29,27 @@ export interface ShopSubscription {
     billing_cycle: string;
     start_date: string;
     end_date: string | null;
+    restaurant_id: string | null;
+    business_id: string | null;
     created_at: string;
     plan?: {
         name: string;
+    };
+    Shop?: {
+        name: string;
+    };
+    Restaurant?: {
+        name: string;
+    };
+    business_account?: {
+        business_name: string;
     };
 }
 
 export default function ShopSubscriptionsPage() {
     const { session } = useAuth();
     const router = useRouter();
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Security Check: any user with the 'subscriptions.access' privilege can view this page.
     if (session && !hasPrivilege(session.privileges, 'subscriptions', 'access', session.role)) {
@@ -48,32 +64,34 @@ export default function ShopSubscriptionsPage() {
 
     const { data, isLoading } = useQuery<{ shop_subscriptions: ShopSubscription[] }>({
         queryKey: ['shop-subscriptions'],
-        queryFn: async () => {
-            const res = await fetch('/api/queries/shop-subscriptions');
-            if (!res.ok) throw new Error('Failed to fetch shop subscriptions');
-            return res.json();
-        },
+        queryFn: () => apiGet<{ shop_subscriptions: ShopSubscription[] }>('/api/queries/shop-subscriptions'),
     });
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Shop Subscriptions</h1>
-                <p className="text-muted-foreground mt-1 text-sm">
-                    View and manage active subscription plans for registered shops.
-                </p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Shop Subscriptions</h1>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                        View and manage active subscription plans for registered shops.
+                    </p>
+                </div>
+                <Button onClick={() => setIsDialogOpen(true)} className="gap-2 w-fit">
+                    <Plus className="h-4 w-4" />
+                    Assign Subscription
+                </Button>
             </div>
 
             <div className="rounded-md border bg-card">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Shop ID</TableHead>
+                            <TableHead>Target Entity</TableHead>
                             <TableHead>Plan</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Billing</TableHead>
                             <TableHead>Start Date</TableHead>
-                            <TableHead>End Date</TableHead>
+                            <TableHead>Next Billing</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -94,8 +112,17 @@ export default function ShopSubscriptionsPage() {
                         ) : (
                             data.shop_subscriptions.map((sub) => (
                                 <TableRow key={sub.id}>
-                                    <TableCell className="font-mono text-sm">{sub.shop_id}</TableCell>
-                                    <TableCell className="font-medium">{sub.plan?.name || sub.plan_id}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">
+                                                {sub.Shop?.name || sub.Restaurant?.name || sub.business_account?.business_name || 'Organization Subscription'}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground font-mono">
+                                                {sub.shop_id || sub.restaurant_id || sub.business_id}
+                                            </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="font-medium">{sub.plan?.name || 'Unknown Plan'}</TableCell>
                                     <TableCell>
                                         <Badge variant={sub.status === 'active' ? 'default' : 'secondary'}>
                                             {sub.status}
@@ -109,7 +136,7 @@ export default function ShopSubscriptionsPage() {
                                         {sub.end_date ? (
                                             format(new Date(sub.end_date), 'MMM d, yyyy')
                                         ) : (
-                                            <span className="text-muted-foreground italic">None</span>
+                                            <span className="text-muted-foreground italic">Manual Renewal</span>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -118,6 +145,11 @@ export default function ShopSubscriptionsPage() {
                     </TableBody>
                 </Table>
             </div>
+
+            <AssignSubscriptionDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+            />
         </div>
     );
 }

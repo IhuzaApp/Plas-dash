@@ -1,81 +1,70 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { getUserContext } from '@/lib/auth-server';
 
-const INSERT_PLAN_MODULES = gql`
-  mutation InsertPlanModules($object: plan_modules_insert_input!) {
-    insert_plan_modules_one(object: $object) {
+const INSERT_PLAN_MODULE = gql`
+  mutation InsertPlanModule($plan_id: uuid!, $module_id: uuid!) {
+    insert_plan_modules_one(
+      object: { plan_id: $plan_id, module_id: $module_id },
+      on_conflict: {
+        constraint: plan_modules_plan_id_module_id_key,
+        update_columns: []
+      }
+    ) {
       id
+      plan_id
+      module_id
     }
   }
 `;
 
-export async function POST(req: Request) {
-    const session = await getServerSession(authOptions as any);
-    let userId = (session as any)?.user?.id;
-
-    if (!userId) {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            userId = authHeader.substring(7);
-        }
-    }
-
-    if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    try {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
-        const body = await req.json();
-        const data = await hasuraClient.request(INSERT_PLAN_MODULES, { object: body });
-        return NextResponse.json({ data });
-    } catch (error) {
-        console.error('Error mutating plan_modules:', error);
-        return NextResponse.json({ error: 'Failed to mutate plan_modules' }, { status: 500 });
-    }
-}
-
-const DELETE_PLAN_MODULES = gql`
-  mutation DeletePlanModules($plan_id: uuid!, $module_id: uuid!) {
-    delete_plan_modules(where: { plan_id: { _eq: $plan_id }, module_id: { _eq: $module_id } }) {
+const DELETE_PLAN_MODULE = gql`
+  mutation DeletePlanModule($plan_id: uuid!, $module_id: uuid!) {
+    delete_plan_modules(
+      where: { plan_id: { _eq: $plan_id }, module_id: { _eq: $module_id } }
+    ) {
       affected_rows
     }
   }
 `;
 
-export async function DELETE(req: Request) {
-    const session = await getServerSession(authOptions as any);
-    let userId = (session as any)?.user?.id;
-
-    if (!userId) {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            userId = authHeader.substring(7);
-        }
-    }
-
-    if (!userId) {
+export async function POST(req: Request) {
+    const context = await getUserContext(req);
+    if (!context) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
+        if (!hasuraClient) throw new Error('Hasura client is not initialized');
         const body = await req.json();
-        const data = await hasuraClient.request(DELETE_PLAN_MODULES, {
+        const data = await hasuraClient.request(INSERT_PLAN_MODULE, {
             plan_id: body.plan_id,
-            module_id: body.module_id
+            module_id: body.module_id,
         });
         return NextResponse.json({ data });
     } catch (error) {
-        console.error('Error deleting plan_modules:', error);
-        return NextResponse.json({ error: 'Failed to delete plan_modules' }, { status: 500 });
+        console.error('Error assigning plan module:', error);
+        return NextResponse.json({ error: 'Failed to assign module to plan' }, { status: 500 });
     }
 }
 
+export async function DELETE(req: Request) {
+    const context = await getUserContext(req);
+    if (!context) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+        if (!hasuraClient) throw new Error('Hasura client is not initialized');
+        const body = await req.json();
+        const data = await hasuraClient.request(DELETE_PLAN_MODULE, {
+            plan_id: body.plan_id,
+            module_id: body.module_id,
+        });
+        return NextResponse.json({ data });
+    } catch (error) {
+        console.error('Error removing plan module:', error);
+        return NextResponse.json({ error: 'Failed to remove module from plan' }, { status: 500 });
+    }
+}

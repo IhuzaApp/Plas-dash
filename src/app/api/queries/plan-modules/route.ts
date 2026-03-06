@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { getUserContext } from '@/lib/auth-server';
 
-const GET_PLAN_MODULES = gql`
-  query GetPlanModules($plan_id: uuid) {
+const GET_PLAN_MODULES_BY_PLAN = gql`
+  query GetPlanModulesByPlan($plan_id: uuid!) {
     plan_modules(where: { plan_id: { _eq: $plan_id } }) {
       id
       module_id
@@ -25,30 +24,19 @@ const GET_ALL_PLAN_MODULES = gql`
 `;
 
 export async function GET(req: Request) {
-    const session = await getServerSession(authOptions as any);
-    let userId = (session as any)?.user?.id;
-
-    if (!userId) {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            userId = authHeader.substring(7);
-        }
-    }
-
-    if (!userId) {
+    const context = await getUserContext(req);
+    if (!context) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
+        if (!hasuraClient) throw new Error('Hasura client is not initialized');
         const { searchParams } = new URL(req.url);
         const planId = searchParams.get('plan_id');
 
         let data;
         if (planId) {
-            data = await hasuraClient.request<{ plan_modules: any[] }>(GET_PLAN_MODULES, { plan_id: planId });
+            data = await hasuraClient.request<{ plan_modules: any[] }>(GET_PLAN_MODULES_BY_PLAN, { plan_id: planId });
         } else {
             data = await hasuraClient.request<{ plan_modules: any[] }>(GET_ALL_PLAN_MODULES);
         }

@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { getUserContext } from '@/lib/auth-server';
 
 const GET_PLANS = gql`
   query GetPlans {
@@ -20,24 +19,13 @@ const GET_PLANS = gql`
 `;
 
 export async function GET(req: Request) {
-    const session = await getServerSession(authOptions as any);
-    let userId = (session as any)?.user?.id;
-
-    if (!userId) {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            userId = authHeader.substring(7);
-        }
-    }
-
-    if (!userId) {
+    const context = await getUserContext(req);
+    if (!context) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
+        if (!hasuraClient) throw new Error('Hasura client is not initialized');
         const data = await hasuraClient.request<{ plans: any[] }>(GET_PLANS);
         return NextResponse.json({ plans: data.plans || [] });
     } catch (error) {

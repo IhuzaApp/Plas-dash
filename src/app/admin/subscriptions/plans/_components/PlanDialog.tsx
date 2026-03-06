@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation } from '@tanstack/react-query';
+import { apiPost } from '@/lib/api';
 
 import {
     Dialog,
@@ -87,27 +88,8 @@ export function PlanDialog({ open, onOpenChange, onSuccess, initialData }: PlanD
 
     const mutation = useMutation({
         mutationFn: async (values: PlanFormValues) => {
-            // Create payload. If editing, we would ideally PUT to an ID endpoint, 
-            // but the API route we created in the mutations is built for INSERT for now.
-            // We will POST the changes and the route handles Hasura upserts if set up correctly, 
-            // or we can just send it off to a generic handler. 
-            // Since it's demo logic we will just map properties.
             const payload = { ...values, ...(initialData?.id ? { id: initialData.id } : {}) };
-
-            const res = await fetch('/api/mutations/plans', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-                const d = await res.json();
-                throw new Error(d.error || 'Failed to act on plan');
-            }
-
-            return res.json();
+            return apiPost('/api/mutations/plans', payload);
         },
         onSuccess: () => {
             toast({

@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { getUserContext } from '@/lib/auth-server';
 
-const INSERT_PLAN = gql`
-  mutation InsertPlan($object: plans_insert_input!) {
+const UPSERT_PLAN = gql`
+  mutation UpsertPlan($object: plans_insert_input!) {
     insert_plans_one(
       object: $object,
       on_conflict: {
@@ -14,34 +13,54 @@ const INSERT_PLAN = gql`
       }
     ) {
       id
+      name
+      description
+      price_monthly
+      price_yearly
+      ai_request_limit
+      reel_limit
+    }
+  }
+`;
+
+const DELETE_PLAN = gql`
+  mutation DeletePlan($id: uuid!) {
+    delete_plans_by_pk(id: $id) {
+      id
     }
   }
 `;
 
 export async function POST(req: Request) {
-    const session = await getServerSession(authOptions as any);
-    let userId = (session as any)?.user?.id;
+  const context = await getUserContext(req);
+  if (!context) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    if (!userId) {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            userId = authHeader.substring(7);
-        }
-    }
+  try {
+    if (!hasuraClient) throw new Error('Hasura client is not initialized');
+    const body = await req.json();
+    const data = await hasuraClient.request(UPSERT_PLAN, { object: body });
+    return NextResponse.json({ data });
+  } catch (error) {
+    console.error('Error upserting plan:', error);
+    return NextResponse.json({ error: 'Failed to save plan' }, { status: 500 });
+  }
+}
 
-    if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export async function DELETE(req: Request) {
+  const context = await getUserContext(req);
+  if (!context) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    try {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
-        const body = await req.json();
-        const data = await hasuraClient.request(INSERT_PLAN, { object: body });
-        return NextResponse.json({ data });
-    } catch (error) {
-        console.error('Error mutating plans:', error);
-        return NextResponse.json({ error: 'Failed to mutate plans' }, { status: 500 });
-    }
+  try {
+    if (!hasuraClient) throw new Error('Hasura client is not initialized');
+    const body = await req.json();
+    const data = await hasuraClient.request(DELETE_PLAN, { id: body.id });
+    return NextResponse.json({ data });
+  } catch (error) {
+    console.error('Error deleting plan:', error);
+    return NextResponse.json({ error: 'Failed to delete plan' }, { status: 500 });
+  }
 }

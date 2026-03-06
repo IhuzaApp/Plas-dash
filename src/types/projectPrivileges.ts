@@ -59,6 +59,9 @@ export interface ProjectUserPrivileges {
   plasmarket?: ProjectModulePrivileges;
   withdraw_requests?: ProjectModulePrivileges;
   ai_chat?: ProjectModulePrivileges;
+
+  // Subscription Management (Platform Admin only)
+  subscriptions?: ProjectModulePrivileges;
 }
 
 // Default project privileges template
@@ -424,6 +427,7 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     access_pos_terminal: false,
     access_referrals: false,
     access_ai_chat: false,
+    access_subscriptions: false,
   },
   referrals: {
     access: false,
@@ -445,6 +449,13 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
   ai_chat: {
     access: false,
     use_chat: false,
+  },
+  subscriptions: {
+    access: false,
+    manage_plans: false,
+    manage_modules: false,
+    assign_plan_modules: false,
+    manage_shop_subscriptions: false,
   },
 };
 

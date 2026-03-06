@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation } from '@tanstack/react-query';
+import { apiPost } from '@/lib/api';
 
 import {
     Dialog,
@@ -86,21 +87,7 @@ export function ModuleDialog({ open, onOpenChange, onSuccess, initialData }: Mod
     const mutation = useMutation({
         mutationFn: async (values: ModuleFormValues) => {
             const payload = { ...values, ...(initialData?.id ? { id: initialData.id } : {}) };
-
-            const res = await fetch('/api/mutations/modules', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-                const d = await res.json();
-                throw new Error(d.error || 'Failed to act on module');
-            }
-
-            return res.json();
+            return apiPost('/api/mutations/modules', payload);
         },
         onSuccess: () => {
             toast({
