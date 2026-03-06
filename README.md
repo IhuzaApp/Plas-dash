@@ -60,6 +60,14 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Performance-based earnings (0.75% commission)
   - Detailed analytics for referrers
 
+### 🤖 AI Chat & Assistant
+
+- **AI Chat**
+  - Real-time AI chat interface for data querying and reporting
+  - Role-based Access Control (RBAC) integration for secure access
+  - Custom module privileges (`ai_chat`) configurable per user role
+  - Context-aware global floating chat button access
+
 ### 🏪 Point of Sale (POS)
 
 - **Company Dashboard**
