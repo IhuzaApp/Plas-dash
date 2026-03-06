@@ -52,6 +52,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'procurement',
         'production',
         'tax',
+        'ai_chat',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -124,6 +125,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'production',
         'tax',
         'help',
+        'ai_chat',
       ];
       storeManagerModules.forEach(module => {
         if (privileges[module]) {

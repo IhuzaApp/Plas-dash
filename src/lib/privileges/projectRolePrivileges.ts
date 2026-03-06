@@ -59,6 +59,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'shop_dashboard',
         'financial_overview',
         'pos_terminal',
+        'ai_chat',
 
         // Project Management
         'system_management',
@@ -112,6 +113,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'settings',
         'plasmarket',
         'restaurants',
+        'ai_chat',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -172,6 +174,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'plasmarket',
         'restaurants',
         'withdraw_requests',
+        'ai_chat',
       ];
       projectManagerModules.forEach(module => {
         if (privileges[module]) {

@@ -9,6 +9,7 @@ import { hasPrivilege } from '@/types/privileges';
 
 import { getRecommendedLandingPage, isPageAccessible } from '@/lib/privileges';
 import { ShopSessionProvider } from '@/contexts/ShopSessionContext';
+import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 
 interface SessionData {
   id: string;
@@ -222,6 +223,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
             {!isAuthenticated && !pathname?.startsWith('/tax') && (
               <LoginModal onLoginSuccess={handleLoginSuccess} />
             )}
+            {isAuthenticated &&
+              pathname !== '/pos/ai-chat' &&
+              session?.privileges?.ai_chat?.access && (
+                <FloatingChatButton />
+              )}
             <Toaster />
           </div>
         </LoadingProvider>

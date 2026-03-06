@@ -58,6 +58,7 @@ export interface ProjectUserPrivileges {
   referrals?: ProjectModulePrivileges;
   plasmarket?: ProjectModulePrivileges;
   withdraw_requests?: ProjectModulePrivileges;
+  ai_chat?: ProjectModulePrivileges;
 }
 
 // Default project privileges template
@@ -422,6 +423,7 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     access_financial_overview: false,
     access_pos_terminal: false,
     access_referrals: false,
+    access_ai_chat: false,
   },
   referrals: {
     access: false,
@@ -439,6 +441,10 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     view: false,
     approve: false,
     reject: false,
+  },
+  ai_chat: {
+    access: false,
+    use_chat: false,
   },
 };
 

@@ -759,6 +759,14 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       { key: 'export_reports', label: 'Export Reports', description: 'Can export tax reports' },
     ],
   },
+  ai_chat: {
+    title: 'AI Chat',
+    description: 'Access and utilize the AI assistant for reporting and queries',
+    actions: [
+      { key: 'access', label: 'Access AI Chat', description: 'Can access the AI chat page' },
+      { key: 'use_chat', label: 'Use Chat', description: 'Can send messages to the AI assistant' },
+    ],
+  },
 };
 
 /**

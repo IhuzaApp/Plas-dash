@@ -1,7 +1,6 @@
 'use client';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import ProtectedShopRoute from '@/components/auth/ProtectedShopRoute';
 import AiChat from '@/components/pages/pos/AiChat';
 import { useAuth } from '@/components/layout/RootLayout';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -10,14 +9,14 @@ import { Shield } from 'lucide-react';
 export default function AiChatPage() {
     const { session } = useAuth();
 
-    // Prevent project users from accessing pos-specific tools if necessary, similar to dashboard.
-    if (session?.isProjectUser) {
+    // Deny access if they explicitly lack the ai_chat privilege
+    if (!session?.privileges?.ai_chat?.access) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <Alert className="max-w-md">
                     <Shield className="h-4 w-4" />
                     <AlertDescription>
-                        This page is for Organization Employees only. Project Users should use the main dashboard.
+                        You do not have permission to access the AI Chat.
                     </AlertDescription>
                 </Alert>
             </div>
@@ -25,10 +24,8 @@ export default function AiChatPage() {
     }
 
     return (
-        <ProtectedRoute requiredPrivilege="company_dashboard">
-            <ProtectedShopRoute>
-                <AiChat />
-            </ProtectedShopRoute>
+        <ProtectedRoute requiredPrivilege="ai_chat">
+            <AiChat />
         </ProtectedRoute>
     );
 }

@@ -37,7 +37,6 @@ import AddBranchShopDialog from '@/components/shop/AddBranchShopDialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { RatingCard } from './RatingCard';
-import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 import {
   BarChart,
   Bar,
@@ -694,8 +693,6 @@ const CompanyDashboard = () => {
         onClose={() => setIsAddBranchDialogOpen(false)}
         parentShopName=""
       />
-
-      <FloatingChatButton />
     </AdminLayout>
   );
 };

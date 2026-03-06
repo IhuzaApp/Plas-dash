@@ -215,4 +215,36 @@ export const permissionGroups: PermissionGroup[] = [
       { key: 'view_reports', label: 'View Reports' },
     ],
   },
+  {
+    title: 'Production',
+    module: 'production' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Production' },
+      { key: 'view_recipes', label: 'View Recipes' },
+      { key: 'manage_recipes', label: 'Manage Recipes' },
+      { key: 'view_orders', label: 'View Orders' },
+      { key: 'manage_orders', label: 'Manage Orders' },
+      { key: 'view_dashboard', label: 'View Dashboard' },
+      { key: 'simulate_stock', label: 'Simulate Stock' },
+      { key: 'view_cost_profit', label: 'View Cost & Profit' },
+    ],
+  },
+  {
+    title: 'Tax',
+    module: 'tax' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Tax' },
+      { key: 'view_dashboard', label: 'View Dashboard' },
+      { key: 'manage_declarations', label: 'Manage Declarations' },
+      { key: 'export_reports', label: 'Export Reports' },
+    ],
+  },
+  {
+    title: 'AI Chat',
+    module: 'ai_chat' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access AI Chat' },
+      { key: 'use_chat', label: 'Use Chat' },
+    ],
+  },
 ];

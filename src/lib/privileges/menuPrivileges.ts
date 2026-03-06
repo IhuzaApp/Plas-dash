@@ -67,6 +67,7 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   Optimization: { module: 'tax' },
   Reports: { module: 'tax' },
   Settings: { module: 'tax' },
+  'AI Chat': { module: 'ai_chat' },
 };
 
 /**
