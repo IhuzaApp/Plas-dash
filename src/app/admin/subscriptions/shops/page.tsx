@@ -17,14 +17,15 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, Search } from 'lucide-react';
 import {
     Tabs,
     TabsContent,
     TabsList,
     TabsTrigger,
 } from '@/components/ui/tabs';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AssignSubscriptionDialog } from './_components/AssignSubscriptionDialog';
 import { UpcomingRenewals } from './_components/UpcomingRenewals';
 import { SubscriptionStats } from './_components/SubscriptionStats';
@@ -58,6 +59,7 @@ export default function ShopSubscriptionsPage() {
     const { session } = useAuth();
     const router = useRouter();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Security Check: any user with the 'subscriptions.access' privilege can view this page.
     if (session && !hasPrivilege(session.privileges, 'subscriptions', 'access', session.role)) {
@@ -74,6 +76,28 @@ export default function ShopSubscriptionsPage() {
         queryKey: ['shop-subscriptions'],
         queryFn: () => apiGet<{ shop_subscriptions: ShopSubscription[] }>('/api/queries/shop-subscriptions'),
     });
+
+    const filteredSubscriptions = useMemo(() => {
+        if (!data?.shop_subscriptions) return [];
+        if (!searchTerm.trim()) return data.shop_subscriptions;
+
+        const term = searchTerm.toLowerCase().trim();
+        return data.shop_subscriptions.filter(sub => {
+            const shopName = sub.Shop?.name?.toLowerCase() || '';
+            const restaurantName = sub.Restaurant?.name?.toLowerCase() || '';
+            const businessName = sub.business_account?.business_name?.toLowerCase() || '';
+            const planName = sub.plan?.name?.toLowerCase() || '';
+            const id = (sub.shop_id || sub.restaurant_id || sub.business_id || '').toLowerCase();
+
+            return (
+                shopName.includes(term) ||
+                restaurantName.includes(term) ||
+                businessName.includes(term) ||
+                planName.includes(term) ||
+                id.includes(term)
+            );
+        });
+    }, [data?.shop_subscriptions, searchTerm]);
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
@@ -94,6 +118,18 @@ export default function ShopSubscriptionsPage() {
                 subscriptions={data?.shop_subscriptions || []}
                 isLoading={isLoading}
             />
+
+            <div className="flex items-center gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by entity name, ID, or plan..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9"
+                    />
+                </div>
+            </div>
 
             <Tabs defaultValue="all" className="space-y-4">
                 <TabsList>
@@ -123,14 +159,14 @@ export default function ShopSubscriptionsPage() {
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ) : !data?.shop_subscriptions?.length ? (
+                                ) : filteredSubscriptions.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                                            No active shop subscriptions found.
+                                            {searchTerm ? 'No matching subscriptions found.' : 'No active subscriptions found.'}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    data.shop_subscriptions.map((sub) => (
+                                    filteredSubscriptions.map((sub) => (
                                         <TableRow key={sub.id}>
                                             <TableCell>
                                                 <div className="flex flex-col">
@@ -169,7 +205,7 @@ export default function ShopSubscriptionsPage() {
 
                 <TabsContent value="billing">
                     <UpcomingRenewals
-                        subscriptions={data?.shop_subscriptions || []}
+                        subscriptions={filteredSubscriptions}
                         isLoading={isLoading}
                     />
                 </TabsContent>
