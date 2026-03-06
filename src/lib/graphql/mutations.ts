@@ -521,7 +521,7 @@ export const UPDATE_ORG_EMPLOYEE_TWO_FACTOR_SECRETS = `
 
 // Update ProjectUser last login
 export const UPDATE_PROJECT_USER_LAST_LOGIN = `
-  mutation UpdateProjectUserLastLogin($id: uuid!, $lastLogin: timestamptz!) {
+  mutation UpdateProjectUserLastLogin($id: uuid!, $lastLogin: String!) {
     update_ProjectUsers(
       where: { id: { _eq: $id } },
       _set: { last_Login: $lastLogin }

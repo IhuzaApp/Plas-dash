@@ -19,7 +19,7 @@ export function useProjectPrivilege(): UseProjectPrivilegeReturn {
   const getProjectPrivileges = useCallback((): ProjectUserPrivileges | null => {
     if (typeof window === 'undefined') return null;
 
-    const session = localStorage.getItem('projectUserSession');
+    const session = localStorage.getItem('orgEmployeeSession');
     if (!session) return null;
 
     try {
@@ -32,7 +32,7 @@ export function useProjectPrivilege(): UseProjectPrivilegeReturn {
 
   const hasProjectModuleAccess = useCallback((module: ProjectPrivilegeKey): boolean => {
     if (typeof window === 'undefined') return false;
-    const session = localStorage.getItem('projectUserSession');
+    const session = localStorage.getItem('orgEmployeeSession');
     if (!session) return false;
     try {
       const parsedSession = JSON.parse(session);
@@ -48,7 +48,7 @@ export function useProjectPrivilege(): UseProjectPrivilegeReturn {
       action: keyof NonNullable<ProjectUserPrivileges[T]>
     ): boolean => {
       if (typeof window === 'undefined') return false;
-      const session = localStorage.getItem('projectUserSession');
+      const session = localStorage.getItem('orgEmployeeSession');
       if (!session) return false;
       try {
         const parsedSession = JSON.parse(session);
@@ -68,7 +68,7 @@ export function useProjectPrivilege(): UseProjectPrivilegeReturn {
   const isProjectUser = useCallback((): boolean => {
     if (typeof window === 'undefined') return false;
 
-    const session = localStorage.getItem('projectUserSession');
+    const session = localStorage.getItem('orgEmployeeSession');
     if (!session) return false;
 
     try {

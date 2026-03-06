@@ -4,6 +4,7 @@ export interface MenuPrivilege {
   module: PrivilegeKey;
   action?: string;
   isProjectUser?: boolean;
+  isOrgEmployeeOnly?: boolean;
 }
 
 /**
@@ -19,7 +20,7 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   Shops: { module: 'shops', isProjectUser: true },
   Restaurants: { module: 'restaurants', isProjectUser: true },
   Products: { module: 'products', isProjectUser: true },
-  'Company Dashboard': { module: 'company_dashboard' },
+  'Company Dashboard': { module: 'company_dashboard', isOrgEmployeeOnly: true },
   'Shop Dashboard': { module: 'shop_dashboard' },
   Checkout: { module: 'checkout' },
   Inventory: { module: 'inventory' },
@@ -49,6 +50,23 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   'Purchase Orders': { module: 'procurement' },
   'Goods Received': { module: 'procurement' },
   'Procurement Reports': { module: 'procurement' },
+
+  // Production
+  Recipes: { module: 'production' },
+  'Production Orders': { module: 'production' },
+  'Production Dashboard': { module: 'production' },
+  'Cost & Profit': { module: 'production' },
+  'Simulate Stock': { module: 'production' },
+
+  // Tax
+  'Tax Dashboard': { module: 'tax' },
+  'Tax Declaration': { module: 'tax' },
+  Forecasting: { module: 'tax' },
+  'Smart Import': { module: 'tax' },
+  'Tax Summary': { module: 'tax' },
+  Optimization: { module: 'tax' },
+  Reports: { module: 'tax' },
+  Settings: { module: 'tax' },
 };
 
 /**

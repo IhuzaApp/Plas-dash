@@ -22,6 +22,15 @@ export function ProtectedProjectRoute({
   showAccessDenied = true,
 }: ProtectedProjectRouteProps) {
   const { hasProjectModuleAccess, hasProjectAction, isProjectUser } = useProjectPrivilege();
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   // Check if user is a project user
   if (!isProjectUser()) {

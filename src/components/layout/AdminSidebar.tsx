@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Sidebar,
@@ -53,10 +52,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useAuth } from '@/components/layout/RootLayout';
-import { PrivilegeKey } from '@/types/privileges';
 import { menuPrivileges } from '@/lib/privileges';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import { useShopSession } from '@/contexts/ShopSessionContext';
@@ -98,73 +96,8 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     setNavigatingTo(null);
   }, [pathname]);
 
-  // Listen for shop session changes and refetch data
-  useEffect(() => {
-    const handleShopSessionChange = (event: CustomEvent) => {
-      // Refetch relevant queries when shop session changes
-      const queriesToRefetch = [
-        'branchShops',
-        'allStaff',
-        'productsByShop',
-        'shopTransactions',
-        'shopOrders',
-        'shopInventory',
-        'shopDashboard',
-        'shopFinancial',
-        'shopDiscounts',
-        'shopStaff',
-      ];
-
-      // Invalidate all queries that might be affected by shop session changes
-      queriesToRefetch.forEach(queryKey => {
-        queryClient.invalidateQueries({ queryKey: [queryKey] });
-      });
-
-      // Also invalidate queries with shop-specific parameters
-      if (shopSession?.shopId) {
-        queryClient.invalidateQueries({
-          queryKey: ['branchShops', shopSession.shopName],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['allStaff', shopSession.shopName],
-        });
-      }
-
-      // If logged out of shop, also clear any shop-specific data
-      if (!isLoggedIntoShop) {
-        // Clear any cached shop-specific data
-        queryClient.removeQueries({ queryKey: ['branchShops'] });
-        queryClient.removeQueries({ queryKey: ['allStaff'] });
-        queryClient.removeQueries({ queryKey: ['productsByShop'] });
-      }
-
-      // Force re-render
-      setForceUpdate(prev => prev + 1);
-    };
-
-    // Add event listener
-    window.addEventListener('shopSessionChanged', handleShopSessionChange as EventListener);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('shopSessionChanged', handleShopSessionChange as EventListener);
-    };
-  }, [queryClient]);
-
-  const handleNavigation = (path: string) => {
-    if (path === pathname) return;
-    setIsNavigating(true);
-    setNavigatingTo(path);
-    navigateToPage(path);
-  };
-
-  const handleLogout = () => {
-    logout();
-    window.location.reload();
-  };
-
   // Utility function to refetch shop-related data
-  const refetchShopData = () => {
+  const refetchShopData = useCallback(() => {
     const queriesToRefetch = [
       'branchShops',
       'allStaff',
@@ -178,12 +111,13 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       'shopStaff',
     ];
 
+    // Invalidate all queries that might be affected by shop session changes
     queriesToRefetch.forEach(queryKey => {
       queryClient.invalidateQueries({ queryKey: [queryKey] });
     });
 
-    // Also refetch shop-specific queries if we have a shop session
-    if (shopSession?.shopName) {
+    // Also invalidate queries with shop-specific parameters
+    if (shopSession?.shopId && shopSession.shopName) {
       queryClient.invalidateQueries({
         queryKey: ['branchShops', shopSession.shopName],
       });
@@ -191,7 +125,47 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
         queryKey: ['allStaff', shopSession.shopName],
       });
     }
+
+    // If logged out of shop, also clear any shop-specific data
+    if (!isLoggedIntoShop) {
+      // Clear any cached shop-specific data
+      queryClient.removeQueries({ queryKey: ['branchShops'] });
+      queryClient.removeQueries({ queryKey: ['allStaff'] });
+      queryClient.removeQueries({ queryKey: ['productsByShop'] });
+    }
+  }, [queryClient, shopSession?.shopId, shopSession?.shopName, isLoggedIntoShop]);
+
+  // Listen for shop session changes and refetch data
+  useEffect(() => {
+    const handleShopSessionChange = (event: CustomEvent) => {
+      refetchShopData();
+
+      // Force re-render
+      setForceUpdate(prev => prev + 1);
+    };
+
+    // Add event listener
+    window.addEventListener('shopSessionChanged', handleShopSessionChange as EventListener);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('shopSessionChanged', handleShopSessionChange as EventListener);
+    };
+  }, [refetchShopData]);
+
+  const handleNavigation = (path: string) => {
+    if (path === pathname) return;
+    setIsNavigating(true);
+    setNavigatingTo(path);
+    navigateToPage(path);
   };
+
+  const handleLogout = () => {
+    logout();
+    window.location.reload();
+  };
+
+
 
   const showShopGuardedItems = isLoggedIntoShop || !session?.shop_id;
 
@@ -321,9 +295,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     },
   ];
 
-  // Note: menuPrivileges is now imported from @/lib/privileges
-
-  // Filter menu items by privileges using new system
   const filteredMenuItems = menuItems
     .map(section => ({
       ...section,
@@ -337,7 +308,7 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
 
         // Resilient Logic: Allow if either page access OR module access is granted
         // This handles cases where 'pages' exists but is out of sync/uninitialized
-        if (!pageAllowed && !moduleAllowed && !isSuperUser()) {
+        if (!pageAllowed && !moduleAllowed) {
           return false;
         }
 
@@ -346,12 +317,16 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
           return false;
         }
 
+        // Check if org employee requirement is met
+        if (privilege.isOrgEmployeeOnly && session?.isProjectUser) {
+          return false;
+        }
+
         return true;
       }),
     }))
     .filter(section => section.items.length > 0);
 
-  // Check if user has access to any module (for sidebar visibility)
   const hasAnyModuleAccess = (() => {
     const pages = session?.privileges?.pages as any;
     const pagesHasAccess = pages?.access === true;
@@ -388,7 +363,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     return pagesHasAccess || moduleHasAccess || pathname?.startsWith('/tax');
   })();
 
-  // If no module access, return empty sidebar
   if (!hasAnyModuleAccess) {
     return (
       <Sidebar

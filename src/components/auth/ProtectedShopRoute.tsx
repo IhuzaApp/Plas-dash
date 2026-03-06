@@ -18,6 +18,15 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
   const { isAuthenticated, session } = useAuth();
   const { isLoggedIntoShop, shopSession } = useShopSession();
   const router = useRouter();
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
