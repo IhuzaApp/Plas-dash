@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { apiGet } from '@/lib/api';
@@ -15,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InvoiceGenerator } from '@/modules/subscriptions/utils/invoiceGenerator';
+import Pagination from '@/components/ui/pagination';
 
 export interface SubscriptionInvoice {
     id: string;
@@ -50,8 +52,18 @@ export function SubscriptionInvoices({ invoices: initialInvoices, isLoading: par
         enabled: !initialInvoices,
     });
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+
     const isLoading = parentLoading || queryLoading;
     const invoices = initialInvoices || data?.subscription_invoices || [];
+
+    const paginatedInvoices = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return invoices.slice(start, start + pageSize);
+    }, [invoices, currentPage, pageSize]);
+
+    const totalPages = Math.ceil(invoices.length / pageSize);
 
     const formatCurrency = (amount: string | number, currency: string) => {
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -105,7 +117,7 @@ export function SubscriptionInvoices({ invoices: initialInvoices, isLoading: par
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            invoices.map((invoice) => {
+                            paginatedInvoices.map((invoice) => {
                                 const subtotal = parseFloat(invoice.subtotal_amount || '0');
                                 const tax = parseFloat(invoice.tax_amount || '0');
                                 const discount = parseFloat(invoice.discount_amount || '0');
@@ -219,6 +231,16 @@ export function SubscriptionInvoices({ invoices: initialInvoices, isLoading: par
                         )}
                     </TableBody>
                 </Table>
+                {invoices.length > pageSize && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        pageSize={pageSize}
+                        totalItems={invoices.length}
+                        onPageChange={setCurrentPage}
+                        onPageSizeChange={setPageSize}
+                    />
+                )}
             </div>
         </div>
     );

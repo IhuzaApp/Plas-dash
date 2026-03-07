@@ -32,6 +32,7 @@ import { SubscriptionStats } from './_components/SubscriptionStats';
 import { BillingTrendChart } from './_components/BillingTrendChart';
 
 import { SubscriptionInvoices } from './_components/SubscriptionInvoices';
+import Pagination from '@/components/ui/pagination';
 
 export interface ShopSubscription {
     id: string;
@@ -65,6 +66,8 @@ export default function ShopSubscriptionsPage() {
     const router = useRouter();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
 
     // Security Check: any user with the 'subscriptions.access' privilege can view this page.
     if (session && !hasPrivilege(session.privileges, 'subscriptions', 'access', session.role)) {
@@ -110,6 +113,13 @@ export default function ShopSubscriptionsPage() {
             );
         });
     }, [data?.shop_subscriptions, searchTerm]);
+
+    const paginatedSubscriptions = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredSubscriptions.slice(start, start + pageSize);
+    }, [filteredSubscriptions, currentPage, pageSize]);
+
+    const totalPages = Math.ceil(filteredSubscriptions.length / pageSize);
 
     const formatPrice = (sub: ShopSubscription) => {
         const price = sub.billing_cycle === 'yearly' ? sub.plan?.price_yearly : sub.plan?.price_monthly;
@@ -195,7 +205,7 @@ export default function ShopSubscriptionsPage() {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredSubscriptions.map((sub) => (
+                                    paginatedSubscriptions.map((sub) => (
                                         <TableRow key={sub.id}>
                                             <TableCell>
                                                 <div className="flex flex-col">
@@ -232,6 +242,16 @@ export default function ShopSubscriptionsPage() {
                                 )}
                             </TableBody>
                         </Table>
+                        {filteredSubscriptions.length > pageSize && (
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                pageSize={pageSize}
+                                totalItems={filteredSubscriptions.length}
+                                onPageChange={setCurrentPage}
+                                onPageSizeChange={setPageSize}
+                            />
+                        )}
                     </div>
                 </TabsContent>
 

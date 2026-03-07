@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -21,6 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { ModuleDialog } from './_components/ModuleDialog';
+import Pagination from '@/components/ui/pagination';
 
 export interface ModuleData {
     id: string;
@@ -37,6 +38,8 @@ export default function ModulesPage() {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedModule, setSelectedModule] = useState<Partial<ModuleData> | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
 
     // Security Check: any user with the 'subscriptions.access' privilege can view this page.
     if (session && !hasPrivilege(session.privileges, 'subscriptions', 'access', session.role)) {
@@ -53,6 +56,14 @@ export default function ModulesPage() {
         queryKey: ['modules'],
         queryFn: () => apiGet<{ modules: ModuleData[] }>('/api/queries/modules'),
     });
+
+    const paginatedModules = useMemo(() => {
+        if (!data?.modules) return [];
+        const start = (currentPage - 1) * pageSize;
+        return data.modules.slice(start, start + pageSize);
+    }, [data?.modules, currentPage, pageSize]);
+
+    const totalPages = Math.ceil((data?.modules?.length || 0) / pageSize);
 
     const handleOpenDialog = (mod?: ModuleData) => {
         setSelectedModule(mod || null);
@@ -107,7 +118,7 @@ export default function ModulesPage() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            data.modules.map((mod) => (
+                            paginatedModules.map((mod) => (
                                 <TableRow key={mod.id}>
                                     <TableCell className="font-medium">{mod.name}</TableCell>
                                     <TableCell>
@@ -146,6 +157,16 @@ export default function ModulesPage() {
                         )}
                     </TableBody>
                 </Table>
+                {data?.modules && data.modules.length > pageSize && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        pageSize={pageSize}
+                        totalItems={data.modules.length}
+                        onPageChange={setCurrentPage}
+                        onPageSizeChange={setPageSize}
+                    />
+                )}
             </div>
 
             <ModuleDialog

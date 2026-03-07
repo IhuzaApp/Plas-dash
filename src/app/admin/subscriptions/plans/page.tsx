@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -21,6 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { PlanDialog } from './_components/PlanDialog';
+import Pagination from '@/components/ui/pagination';
 
 export interface Plan {
     id: string;
@@ -40,6 +41,8 @@ export default function PlansPage() {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<Partial<Plan> | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
 
     // Security Check: any user with the 'subscriptions.access' privilege can view this page.
     // The sidebar already hides this section from non-project users via menuPrivileges.
@@ -56,6 +59,14 @@ export default function PlansPage() {
         queryKey: ['plans'],
         queryFn: () => apiGet<{ plans: Plan[] }>('/api/queries/plans'),
     });
+
+    const paginatedPlans = useMemo(() => {
+        if (!data?.plans) return [];
+        const start = (currentPage - 1) * pageSize;
+        return data.plans.slice(start, start + pageSize);
+    }, [data?.plans, currentPage, pageSize]);
+
+    const totalPages = Math.ceil((data?.plans?.length || 0) / pageSize);
 
     const handleOpenDialog = (plan?: Plan) => {
         setSelectedPlan(plan || null);
@@ -110,7 +121,7 @@ export default function PlansPage() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            data.plans.map((plan) => (
+                            paginatedPlans.map((plan) => (
                                 <TableRow key={plan.id}>
                                     <TableCell>
                                         <div className="font-medium">{plan.name}</div>
@@ -159,6 +170,16 @@ export default function PlansPage() {
                         )}
                     </TableBody>
                 </Table>
+                {data?.plans && data.plans.length > pageSize && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        pageSize={pageSize}
+                        totalItems={data.plans.length}
+                        onPageChange={setCurrentPage}
+                        onPageSizeChange={setPageSize}
+                    />
+                )}
             </div>
 
             <PlanDialog

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import {
     Table,
@@ -13,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import type { ShopSubscription } from '../page';
 import type { SubscriptionInvoice } from './SubscriptionInvoices';
 
+import Pagination from '@/components/ui/pagination';
 
 interface UpcomingRenewalsProps {
     subscriptions: ShopSubscription[];
@@ -21,10 +23,22 @@ interface UpcomingRenewalsProps {
 }
 
 export function UpcomingRenewals({ subscriptions, invoices, isLoading }: UpcomingRenewalsProps) {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+
     // Sort by end_date (next billing)
-    const sortedSub = [...subscriptions]
-        .filter(s => s.status === 'active' && s.end_date)
-        .sort((a, b) => new Date(a.end_date!).getTime() - new Date(b.end_date!).getTime());
+    const sortedSub = useMemo(() => {
+        return [...subscriptions]
+            .filter(s => s.status === 'active' && s.end_date)
+            .sort((a, b) => new Date(a.end_date!).getTime() - new Date(b.end_date!).getTime());
+    }, [subscriptions]);
+
+    const paginatedSub = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return sortedSub.slice(start, start + pageSize);
+    }, [sortedSub, currentPage, pageSize]);
+
+    const totalPages = Math.ceil(sortedSub.length / pageSize);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
@@ -64,7 +78,7 @@ export function UpcomingRenewals({ subscriptions, invoices, isLoading }: Upcomin
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            sortedSub.map((sub) => {
+                            paginatedSub.map((sub) => {
                                 const amount = sub.billing_cycle === 'yearly' ? sub.plan?.price_yearly : sub.plan?.price_monthly;
                                 return (
                                     <TableRow key={sub.id}>
@@ -97,6 +111,16 @@ export function UpcomingRenewals({ subscriptions, invoices, isLoading }: Upcomin
                         )}
                     </TableBody>
                 </Table>
+                {sortedSub.length > pageSize && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        pageSize={pageSize}
+                        totalItems={sortedSub.length}
+                        onPageChange={setCurrentPage}
+                        onPageSizeChange={setPageSize}
+                    />
+                )}
             </div>
         </div>
     );
