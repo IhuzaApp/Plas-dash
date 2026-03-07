@@ -12,11 +12,10 @@ import {
     DragOverlay,
     DragStartEvent,
     DragEndEvent,
-    DragOverEvent,
     PointerSensor,
     useSensor,
     useSensors,
-    closestCorners,
+    pointerWithin,
     useDroppable,
 } from '@dnd-kit/core';
 import {
@@ -70,8 +69,6 @@ const GROUP_COLORS: Record<string, string> = {
     System: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
 };
 
-type ContainerId = 'available' | 'assigned';
-
 function groupColor(g: string) {
     return GROUP_COLORS[g] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200';
 }
@@ -106,21 +103,12 @@ function ModuleCard({ mod, overlay = false }: { mod: ModuleData; overlay?: boole
     );
 }
 
-// ── Group header with one-click Assign All / Remove All ──────────────────────
+// ── Group header (Assign All / Remove All) ───────────────────────────────────
 function GroupHeader({
-    group,
-    count,
-    collapsed,
-    onToggle,
-    onBulkAction,
-    bulkLabel,
+    group, count, collapsed, onToggle, onBulkAction, bulkLabel,
 }: {
-    group: string;
-    count: number;
-    collapsed: boolean;
-    onToggle: () => void;
-    onBulkAction: () => void;
-    bulkLabel: string;
+    group: string; count: number; collapsed: boolean;
+    onToggle: () => void; onBulkAction: () => void; bulkLabel: string;
 }) {
     const isAdd = bulkLabel.startsWith('+');
     return (
@@ -146,13 +134,9 @@ function GroupHeader({
 
 // ── Available column ─────────────────────────────────────────────────────────
 function AvailableColumn({
-    modules,
-    isOver,
-    setNodeRef,
-    onAssignGroup,
+    modules, isOver, setNodeRef, onAssignGroup,
 }: {
-    modules: ModuleData[];
-    isOver: boolean;
+    modules: ModuleData[]; isOver: boolean;
     setNodeRef: (el: HTMLElement | null) => void;
     onAssignGroup: (group: string) => void;
 }) {
@@ -163,8 +147,7 @@ function AvailableColumn({
         const q = search.toLowerCase().trim();
         if (!q) return modules;
         return modules.filter(
-            (m) =>
-                m.name.toLowerCase().includes(q) ||
+            (m) => m.name.toLowerCase().includes(q) ||
                 m.slug.toLowerCase().includes(q) ||
                 (m.group_name ?? '').toLowerCase().includes(q)
         );
@@ -180,15 +163,15 @@ function AvailableColumn({
         return map;
     }, [filtered]);
 
-    const toggle = (g: string) =>
-        setCollapsed((prev) => {
-            const next = new Set(prev);
-            next.has(g) ? next.delete(g) : next.add(g);
-            return next;
-        });
+    const toggle = (g: string) => setCollapsed((prev) => {
+        const next = new Set(prev);
+        next.has(g) ? next.delete(g) : next.add(g);
+        return next;
+    });
 
     return (
-        <div className={`flex flex-col rounded-xl border-2 border-muted bg-card min-h-[420px] overflow-hidden transition-colors ${isOver ? 'bg-accent/40' : ''}`}>
+        <div className={`flex flex-col rounded-xl border-2 border-muted bg-card min-h-[420px] overflow-hidden transition-colors
+      ${isOver ? 'bg-blue-50/40 dark:bg-blue-900/20 border-blue-300' : ''}`}>
             <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
                 <div className="flex items-center gap-2">
                     <Circle className="h-4 w-4 text-muted-foreground" />
@@ -214,10 +197,11 @@ function AvailableColumn({
                 )}
             </div>
 
+            {/* The ref makes the entire scrollable area a droppable target for id='available' */}
             <div ref={setNodeRef} className="flex-1 px-3 pb-3 space-y-1 overflow-y-auto max-h-[580px]">
-                <SortableContext items={filtered.map((m) => m.id)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={modules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                     {filtered.length === 0 ? (
-                        <div className={`flex items-center justify-center h-32 text-xs text-muted-foreground border-2 border-dashed rounded-md ${isOver ? 'border-primary/60 bg-primary/5' : ''}`}>
+                        <div className="flex items-center justify-center h-32 text-xs text-muted-foreground border-2 border-dashed rounded-md">
                             {search ? 'No modules match your search.' : 'All modules are assigned ✓'}
                         </div>
                     ) : (
@@ -226,9 +210,7 @@ function AvailableColumn({
                             return (
                                 <div key={group}>
                                     <GroupHeader
-                                        group={group}
-                                        count={mods.length}
-                                        collapsed={isCollapsed}
+                                        group={group} count={mods.length} collapsed={isCollapsed}
                                         onToggle={() => toggle(group)}
                                         onBulkAction={() => onAssignGroup(group)}
                                         bulkLabel="+ Assign All"
@@ -250,13 +232,9 @@ function AvailableColumn({
 
 // ── Assigned column ──────────────────────────────────────────────────────────
 function AssignedColumn({
-    modules,
-    isOver,
-    setNodeRef,
-    onRemoveGroup,
+    modules, isOver, setNodeRef, onRemoveGroup,
 }: {
-    modules: ModuleData[];
-    isOver: boolean;
+    modules: ModuleData[]; isOver: boolean;
     setNodeRef: (el: HTMLElement | null) => void;
     onRemoveGroup: (group: string) => void;
 }) {
@@ -272,15 +250,15 @@ function AssignedColumn({
         return map;
     }, [modules]);
 
-    const toggle = (g: string) =>
-        setCollapsed((prev) => {
-            const next = new Set(prev);
-            next.has(g) ? next.delete(g) : next.add(g);
-            return next;
-        });
+    const toggle = (g: string) => setCollapsed((prev) => {
+        const next = new Set(prev);
+        next.has(g) ? next.delete(g) : next.add(g);
+        return next;
+    });
 
     return (
-        <div className={`flex flex-col rounded-xl border-2 border-emerald-400 dark:border-emerald-700 bg-card min-h-[420px] overflow-hidden transition-colors ${isOver ? 'bg-emerald-50/60 dark:bg-emerald-900/20' : ''}`}>
+        <div className={`flex flex-col rounded-xl border-2 border-emerald-400 dark:border-emerald-700 bg-card min-h-[420px] overflow-hidden transition-colors
+      ${isOver ? 'bg-emerald-50/60 dark:bg-emerald-900/20' : ''}`}>
             <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
                 <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -289,10 +267,12 @@ function AssignedColumn({
                 <Badge variant="secondary" className="text-xs">{modules.length}</Badge>
             </div>
 
+            {/* The ref makes the entire scrollable area a droppable target for id='assigned' */}
             <div ref={setNodeRef} className="flex-1 p-3 space-y-1 overflow-y-auto max-h-[600px]">
                 <SortableContext items={modules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                     {modules.length === 0 ? (
-                        <div className={`flex items-center justify-center h-32 text-xs text-muted-foreground border-2 border-dashed rounded-md transition-colors ${isOver ? 'border-emerald-400/60 bg-emerald-50/30' : ''}`}>
+                        <div className={`flex items-center justify-center h-32 text-xs text-muted-foreground border-2 border-dashed rounded-md transition-colors
+              ${isOver ? 'border-emerald-400 bg-emerald-50/40' : ''}`}>
                             Drag modules here to assign them →
                         </div>
                     ) : (
@@ -301,9 +281,7 @@ function AssignedColumn({
                             return (
                                 <div key={group}>
                                     <GroupHeader
-                                        group={group}
-                                        count={mods.length}
-                                        collapsed={isCollapsed}
+                                        group={group} count={mods.length} collapsed={isCollapsed}
                                         onToggle={() => toggle(group)}
                                         onBulkAction={() => onRemoveGroup(group)}
                                         bulkLabel="− Remove All"
@@ -390,79 +368,64 @@ export default function PlanModulesPage() {
         [allModules, localAssigned]
     );
 
-    // Resolve id → container
-    const resolveContainer = useCallback(
-        (id: string): ContainerId | null => {
-            if (id === 'available' || id === 'assigned') return id;
-            if (localAssigned.includes(id)) return 'assigned';
-            if (allModules.some((m) => m.id === id)) return 'available';
-            return null;
-        },
-        [localAssigned, allModules]
-    );
+    // ── Group bulk actions ─────────────────────────────────────────────────────
+    const handleAssignGroup = useCallback((group: string) => {
+        const ids = availableModules
+            .filter((m) => (m.group_name || 'Ungrouped') === group)
+            .map((m) => m.id);
+        setLocalAssigned((prev) => {
+            const adding = ids.filter((id) => !prev.includes(id));
+            return [...prev, ...adding];
+        });
+        setIsDirty(true);
+    }, [availableModules]);
 
-    // ── Group-level bulk actions (click, not drag) ───────────────────────────
-    const handleAssignGroup = useCallback(
-        (group: string) => {
-            const ids = availableModules
-                .filter((m) => (m.group_name || 'Ungrouped') === group)
-                .map((m) => m.id);
-            setLocalAssigned((prev) => {
-                const adding = ids.filter((id) => !prev.includes(id));
-                return [...prev, ...adding];
-            });
-            setIsDirty(true);
-        },
-        [availableModules]
-    );
+    const handleRemoveGroup = useCallback((group: string) => {
+        const ids = assignedModules
+            .filter((m) => (m.group_name || 'Ungrouped') === group)
+            .map((m) => m.id);
+        setLocalAssigned((prev) => prev.filter((id) => !ids.includes(id)));
+        setIsDirty(true);
+    }, [assignedModules]);
 
-    const handleRemoveGroup = useCallback(
-        (group: string) => {
-            const ids = assignedModules
-                .filter((m) => (m.group_name || 'Ungrouped') === group)
-                .map((m) => m.id);
-            setLocalAssigned((prev) => prev.filter((id) => !ids.includes(id)));
-            setIsDirty(true);
-        },
-        [assignedModules]
-    );
-
-    // ── DnD ─────────────────────────────────────────────────────────────────
+    // ── DnD ────────────────────────────────────────────────────────────────────
+    // Using pointerWithin: fires based on where the pointer physically is,
+    // which is reliable for column-to-column transfers.
+    // All state changes happen ONLY in handleDragEnd to avoid race conditions.
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
     function handleDragStart({ active }: DragStartEvent) {
-        const mod = allModules.find((m) => m.id === active.id);
-        setActiveModule(mod ?? null);
-    }
-
-    function applyMove(activeId: string, overContainer: ContainerId) {
-        setLocalAssigned((prev) => {
-            if (overContainer === 'assigned') {
-                return prev.includes(activeId) ? prev : [...prev, activeId];
-            } else {
-                return prev.filter((id) => id !== activeId);
-            }
-        });
-        setIsDirty(true);
-    }
-
-    function handleDragOver({ active, over }: DragOverEvent) {
-        if (!over) return;
-        const ac = resolveContainer(active.id as string);
-        const oc = resolveContainer(over.id as string);
-        if (!ac || !oc || ac === oc) return;
-        applyMove(active.id as string, oc);
+        setActiveModule(allModules.find((m) => m.id === active.id) ?? null);
     }
 
     function handleDragEnd({ active, over }: DragEndEvent) {
         setActiveModule(null);
         if (!over) return;
-        const ac = resolveContainer(active.id as string);
-        const oc = resolveContainer(over.id as string);
-        if (!ac || !oc || ac === oc) return;
-        applyMove(active.id as string, oc);
+
+        const activeId = active.id as string;
+        const overId = over.id as string;
+
+        // The pointer was over `over.id`, which is either:
+        //   - 'available' or 'assigned' (the useDroppable container id)
+        //   - a module id (a sortable item inside a container)
+        const droppedOnAssigned =
+            overId === 'assigned' ||
+            (overId !== 'available' && localAssigned.includes(overId));
+
+        const wasAssigned = localAssigned.includes(activeId);
+
+        if (!wasAssigned && droppedOnAssigned) {
+            // available → assigned
+            setLocalAssigned((prev) => (prev.includes(activeId) ? prev : [...prev, activeId]));
+            setIsDirty(true);
+        } else if (wasAssigned && !droppedOnAssigned) {
+            // assigned → available
+            setLocalAssigned((prev) => prev.filter((id) => id !== activeId));
+            setIsDirty(true);
+        }
     }
 
+    // Make each column scrollable div a droppable zone for its own id
     const { setNodeRef: setAvailableRef, isOver: isOverAvailable } = useDroppable({ id: 'available' });
     const { setNodeRef: setAssignedRef, isOver: isOverAssigned } = useDroppable({ id: 'assigned' });
 
@@ -494,7 +457,6 @@ export default function PlanModulesPage() {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
-            {/* Header */}
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Plan Module Assignments</h1>
@@ -524,7 +486,9 @@ export default function PlanModulesPage() {
                                 <span className="flex items-center gap-1.5">
                                     <Save className="h-4 w-4" />
                                     Save Changes
-                                    {isDirty && <span className="bg-primary-foreground text-primary rounded-full w-4 h-4 text-[0.6rem] font-bold flex items-center justify-center">!</span>}
+                                    {isDirty && (
+                                        <span className="bg-primary-foreground text-primary rounded-full w-4 h-4 text-[0.6rem] font-bold flex items-center justify-center">!</span>
+                                    )}
                                 </span>
                             )}
                         </Button>
@@ -573,9 +537,8 @@ export default function PlanModulesPage() {
 
                     <DndContext
                         sensors={sensors}
-                        collisionDetection={closestCorners}
+                        collisionDetection={pointerWithin}
                         onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
