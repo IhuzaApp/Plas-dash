@@ -14,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { FileText, Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { InvoiceGenerator } from '@/modules/subscriptions/utils/invoiceGenerator';
 
 export interface SubscriptionInvoice {
     id: string;
@@ -31,9 +32,9 @@ export interface SubscriptionInvoice {
     payment_method: string | null;
     is_overdue: boolean;
     shop_subscription?: {
-        Shop?: { name: string };
-        Restaurant?: { name: string };
-        business_account?: { business_name: string };
+        Shop?: { id: string, name: string };
+        Restaurant?: { id: string, name: string };
+        business_account?: { id: string, business_name: string };
     };
 }
 
@@ -156,10 +157,58 @@ export function SubscriptionInvoices({ invoices: initialInvoices, isLoading: par
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    title="View PDF"
+                                                    onClick={() => InvoiceGenerator.generate({
+                                                        invoice_number: invoice.invoice_number,
+                                                        issued_at: invoice.issued_at,
+                                                        due_date: invoice.due_date,
+                                                        plan_name: invoice.plan_name,
+                                                        subtotal_amount: invoice.subtotal_amount,
+                                                        tax_amount: invoice.tax_amount,
+                                                        discount_amount: invoice.discount_amount,
+                                                        currency: invoice.currency,
+                                                        status: invoice.status,
+                                                        entity_name: invoice.shop_subscription?.Shop?.name ||
+                                                            invoice.shop_subscription?.Restaurant?.name ||
+                                                            invoice.shop_subscription?.business_account?.business_name ||
+                                                            'Unknown Entity',
+                                                        entity_id: invoice.shop_subscription?.Shop?.id ||
+                                                            invoice.shop_subscription?.Restaurant?.id ||
+                                                            invoice.shop_subscription?.business_account?.id ||
+                                                            'N/A'
+                                                    }, 'view')}
+                                                >
                                                     <FileText className="h-4 w-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    title="Download PDF"
+                                                    onClick={() => InvoiceGenerator.generate({
+                                                        invoice_number: invoice.invoice_number,
+                                                        issued_at: invoice.issued_at,
+                                                        due_date: invoice.due_date,
+                                                        plan_name: invoice.plan_name,
+                                                        subtotal_amount: invoice.subtotal_amount,
+                                                        tax_amount: invoice.tax_amount,
+                                                        discount_amount: invoice.discount_amount,
+                                                        currency: invoice.currency,
+                                                        status: invoice.status,
+                                                        entity_name: invoice.shop_subscription?.Shop?.name ||
+                                                            invoice.shop_subscription?.Restaurant?.name ||
+                                                            invoice.shop_subscription?.business_account?.business_name ||
+                                                            'Unknown Entity',
+                                                        entity_id: invoice.shop_subscription?.Shop?.id ||
+                                                            invoice.shop_subscription?.Restaurant?.id ||
+                                                            invoice.shop_subscription?.business_account?.id ||
+                                                            'N/A'
+                                                    }, 'download')}
+                                                >
                                                     <Download className="h-4 w-4" />
                                                 </Button>
                                             </div>

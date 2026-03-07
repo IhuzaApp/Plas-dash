@@ -233,6 +233,7 @@ export default function ShopSubscriptionsPage() {
                 <TabsContent value="billing">
                     <UpcomingRenewals
                         subscriptions={filteredSubscriptions}
+                        invoices={invoiceData?.subscription_invoices || []}
                         isLoading={isLoading}
                     />
                 </TabsContent>
