@@ -40,8 +40,14 @@ export function useShopSubscriptionModules(shopId?: string, restaurantId?: strin
         enabled: !!(shopId || restaurantId),
     });
 
-    const activeSubscription = data?.shop_subscriptions?.find(sub => sub.status === 'active');
-    const availableModules = activeSubscription?.plan?.plan_modules
+    const subscriptions = data?.shop_subscriptions ?? [];
+
+    // Prefer the active subscription; fall back to most recent if none tagged 'active'
+    const activeSubscription =
+        subscriptions.find(sub => sub.status?.toLowerCase() === 'active') ??
+        subscriptions[0] ?? null;
+
+    const availableModules: PrivilegeKey[] = activeSubscription?.plan?.plan_modules
         ? activeSubscription.plan.plan_modules
             .map(pm => pm.module?.slug?.toLowerCase() as PrivilegeKey)
             .filter(Boolean)
@@ -52,6 +58,6 @@ export function useShopSubscriptionModules(shopId?: string, restaurantId?: strin
         isLoading,
         error,
         hasSubscription: !!activeSubscription,
-        planName: activeSubscription?.plan?.name
+        planName: activeSubscription?.plan?.name,
     };
 }

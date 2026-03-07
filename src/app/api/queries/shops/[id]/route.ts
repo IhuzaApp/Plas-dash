@@ -25,6 +25,19 @@ const GET_SHOP_BY_ID = gql`
       created_at
       updated_at
       category_id
+      shop_subscription {
+        id
+        status
+        plan {
+          id
+          name
+          plan_modules {
+            module {
+              slug
+            }
+          }
+        }
+      }
       Category {
         id
         name

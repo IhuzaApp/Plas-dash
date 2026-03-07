@@ -145,7 +145,7 @@ export async function GET(req: Request) {
         }
       `;
 
-      const where: any = { status: { _eq: "active" } };
+      const where: any = {};
       if (shopId) where.shop_id = { _eq: shopId };
       if (restaurantId) where.restaurant_id = { _eq: restaurantId };
 

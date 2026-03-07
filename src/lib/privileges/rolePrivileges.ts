@@ -573,6 +573,25 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
       break;
     }
 
+    case 'customer': {
+      // Customers: read-only access to their orders, wallet and basic shop info
+      const customerModules: PrivilegeKey[] = ['orders', 'wallet', 'checkout', 'shoppers', 'shop_dashboard'];
+      customerModules.forEach(module => {
+        if (privileges[module]) {
+          privileges[module]!.access = true;
+          Object.keys(privileges[module]!).forEach(action => {
+            // Only allow view-level actions
+            if (action === 'access' || action.includes('view') || action.includes('view_balance')) {
+              privileges[module]![action] = true;
+            } else {
+              privileges[module]![action] = false;
+            }
+          });
+        }
+      });
+      break;
+    }
+
     default:
       // Custom role - start with all privileges false, user will toggle as needed
       break;

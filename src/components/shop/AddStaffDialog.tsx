@@ -44,6 +44,7 @@ import {
 } from '@/lib/privileges';
 import { DEFAULT_PRIVILEGES } from '@/types/privileges';
 import { useShopSubscriptionModules } from '@/hooks/useShopSubscriptionModules';
+import { RoleModulePreview } from '@/components/shop/RoleModulePreview';
 
 // Generate random password
 // ... (omitted for brevity in replace_file_content, but I will include it in the actual call)
@@ -75,6 +76,7 @@ const formSchema = z.object({
     'deliveryDriver',
     'securityGuard',
     'maintenanceStaff',
+    'customer',
     'custom',
   ]),
 });
@@ -98,6 +100,8 @@ interface AddStaffDialogProps {
     privileges: UserPrivileges;
   }) => void;
   shopId: string;
+  /** Module slugs from the shop's active subscription plan — passed directly to avoid extra API calls */
+  planModuleSlugs?: string[];
 }
 
 // Generate random password
@@ -156,23 +160,31 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
   onOpenChange,
   onSubmit,
   shopId,
+  planModuleSlugs,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const { availableModules, isLoading: isLoadingModules } = useShopSubscriptionModules(shopId);
+  // Only use hook when planModuleSlugs isn't provided directly
+  const { availableModules: hookModules, isLoading: isLoadingModules } = useShopSubscriptionModules(
+    planModuleSlugs !== undefined ? undefined : shopId
+  );
+
+  // undefined planModuleSlugs = subscription data not available yet; [] = no modules in plan
+  const resolvedModules: string[] | undefined =
+    planModuleSlugs !== undefined ? planModuleSlugs
+      : hookModules.length > 0 ? hookModules
+        : undefined;
+
+  const isLoading = planModuleSlugs !== undefined ? false : isLoadingModules;
 
   const filteredPermissionGroups = React.useMemo(() => {
-    // If we're loading, keep an empty list to avoid showing unauthorized permissions
-    if (isLoadingModules) return [];
-
-    // If we have shopId, we MUST filter by available modules.
-    // We treat empty string as "not yet loaded" for safety.
-    if (shopId && shopId !== "") {
-      return allPermissionGroups.filter(group => availableModules.includes(group.module));
+    if (isLoading) return [];
+    // Subscription data available — strict filter to subscribed modules only
+    if (resolvedModules !== undefined) {
+      return allPermissionGroups.filter(group => resolvedModules.includes(group.module));
     }
-
-    // Default to empty if we expect a shop context but don't have it yet
-    return [];
-  }, [availableModules, isLoadingModules, shopId]);
+    // No subscription data at all — show everything so user isn't blocked
+    return allPermissionGroups;
+  }, [resolvedModules, isLoading]);
 
   const [customPrivileges, setCustomPrivileges] = useState<UserPrivileges>({
     ...DEFAULT_PRIVILEGES,
@@ -262,8 +274,8 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
       strictlyFilteredPrivileges.pages = privileges.pages;
     }
 
-    // Only copy over modules that are in the availableModules list
-    availableModules.forEach(modSlug => {
+    // Only copy over modules that are in the subscription. If no subscription data, save all.
+    (resolvedModules ?? Object.keys(privileges)).forEach((modSlug: string) => {
       const slug = modSlug as PrivilegeKey;
       if (privileges[slug]) {
         strictlyFilteredPrivileges[slug] = privileges[slug];
@@ -627,6 +639,12 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                               <span>Basic monitoring access</span>
                             </div>
                           </SelectItem>
+                          <SelectItem value="customer">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="border-sky-400 text-sky-600">Customer</Badge>
+                              <span>Read-only access to orders & wallet</span>
+                            </div>
+                          </SelectItem>
                           <SelectItem value="custom">
                             <div className="flex items-center gap-2">
                               <Badge variant="outline">Custom</Badge>
@@ -643,6 +661,34 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                     </FormItem>
                   )}
                 />
+
+                {/* Role Module Preview — shows module coverage for preset roles */}
+                {roleType !== 'custom' && !isLoadingModules && filteredPermissionGroups.length > 0 && (
+                  <RoleModulePreview
+                    privileges={customPrivileges}
+                    filteredPermissionGroups={filteredPermissionGroups}
+                    roleLabel={{
+                      globalAdmin: 'Global Admin',
+                      systemAdmin: 'System Admin',
+                      storeAdministrator: 'Store Administrator',
+                      storeManager: 'Store Manager',
+                      assistantManager: 'Assistant Manager',
+                      cashier: 'Cashier',
+                      salesAssociate: 'Sales Associate',
+                      inventorySpecialist: 'Inventory Specialist',
+                      financeManager: 'Finance Manager',
+                      accountant: 'Accountant',
+                      kitchenManager: 'Kitchen Manager',
+                      chef: 'Chef',
+                      waiter: 'Waiter',
+                      bartender: 'Bartender',
+                      deliveryDriver: 'Delivery Driver',
+                      securityGuard: 'Security Guard',
+                      maintenanceStaff: 'Maintenance Staff',
+                      customer: 'Customer',
+                    }[roleType] ?? roleType}
+                  />
+                )}
 
                 {/* Unified Permissions Section */}
                 <div className="space-y-4">
