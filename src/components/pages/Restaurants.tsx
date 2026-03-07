@@ -64,6 +64,20 @@ const Restaurants = () => {
     }
   };
 
+  const handleDisable = async (id: string) => {
+    try {
+      await updateRestaurantMutation.mutateAsync({
+        id,
+        is_active: false,
+      });
+      toast.success('Restaurant disabled successfully');
+      queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+    } catch (err: any) {
+      toast.error('Failed to disable restaurant');
+      console.error(err);
+    }
+  };
+
   const formatDateTime = (dateString: string) => {
     return format(new Date(dateString), 'MMM d, yyyy HH:mm');
   };
@@ -308,7 +322,15 @@ const Restaurants = () => {
                               </Button>
                             )}
                             {hasAction('restaurants', 'edit_restaurants') && (
-                              <Button variant="destructive" size="sm">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDisable(restaurant.id)}
+                                disabled={updateRestaurantMutation.isPending}
+                              >
+                                {updateRestaurantMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                ) : null}
                                 Disable
                               </Button>
                             )}

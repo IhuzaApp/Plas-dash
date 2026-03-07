@@ -1119,7 +1119,39 @@ export function useUpdateRestaurant() {
       verified?: boolean;
     }
   >({
-    mutationFn: variables => hasuraRequest(UPDATE_RESTAURANT, variables),
+    mutationFn: variables => {
+      const { id, ...updateData } = variables;
+
+      const setFields = [];
+      const varDefinitions = [`$id: uuid!`];
+      const hasuraVariables: any = { id };
+
+      if (updateData.is_active !== undefined) {
+        setFields.push(`is_active: $is_active`);
+        varDefinitions.push(`$is_active: Boolean`);
+        hasuraVariables.is_active = updateData.is_active;
+      }
+      if (updateData.verified !== undefined) {
+        setFields.push(`verified: $verified`);
+        varDefinitions.push(`$verified: Boolean`);
+        hasuraVariables.verified = updateData.verified;
+      }
+
+      const mutation = `
+        mutation UpdateRestaurant(${varDefinitions.join(', ')}) {
+          update_Restaurants_by_pk(
+            pk_columns: { id: $id },
+            _set: { ${setFields.join(', ')} }
+          ) {
+            id
+            is_active
+            verified
+          }
+        }
+      `;
+
+      return hasuraRequest(mutation, hasuraVariables);
+    },
   });
 }
 
