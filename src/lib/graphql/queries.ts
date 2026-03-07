@@ -2082,6 +2082,7 @@ export const GET_REELS = `
         business_name
         business_email
         business_phone
+        face_image
       }
     }
   }

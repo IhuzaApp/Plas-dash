@@ -253,7 +253,8 @@ const Reels = () => {
         reel.category?.toLowerCase().includes(searchLower) ||
         reel.User?.name?.toLowerCase().includes(searchLower) ||
         reel.Restaurant?.name?.toLowerCase().includes(searchLower) ||
-        reel.Shops?.name?.toLowerCase().includes(searchLower)
+        reel.Shops?.name?.toLowerCase().includes(searchLower) ||
+        reel.BusinessAccount?.business_name?.toLowerCase().includes(searchLower)
       );
 
       if (!matchesSearch) return false;
@@ -267,7 +268,7 @@ const Reels = () => {
         case 'shop':
           return !!reel.shop_id;
         case 'business':
-          return !!reel.shop_id || !!reel.restaurant_id;
+          return !!reel.business_id;
         default:
           return true;
       }

@@ -447,6 +447,7 @@ interface Reel {
     business_name: string;
     business_email: string;
     business_phone: string;
+    face_image?: string;
   } | null;
   Shops: {
     id: string;

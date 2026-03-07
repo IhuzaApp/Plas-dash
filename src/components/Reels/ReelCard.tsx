@@ -294,22 +294,29 @@ const ReelCard: React.FC<ReelCardProps> = ({
                     {reel.Restaurant?.name?.charAt(0)}
                   </AvatarFallback>
                 </>
+              ) : reel.BusinessAccount ? (
+                <>
+                  <AvatarImage src={reel.BusinessAccount?.face_image} />
+                  <AvatarFallback className="text-xs">
+                    {reel.BusinessAccount?.business_name?.charAt(0)}
+                  </AvatarFallback>
+                </>
               ) : (
                 <AvatarFallback className="text-xs">PA</AvatarFallback>
               )}
             </Avatar>
             <span className="font-medium">
-              {reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Plas Agent'}
+              {reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || reel.BusinessAccount?.business_name || 'Plas Agent'}
             </span>
           </div>
           <span className="text-muted-foreground text-xs">{formatDateTime(reel.created_on)}</span>
         </div>
 
         <div className="space-y-2">
-          {(reel.Restaurant || reel.Shops) && (
+          {(reel.Restaurant || reel.Shops || reel.BusinessAccount) && (
             <div className="text-sm text-muted-foreground">
               <span className="font-medium">Location:</span>{' '}
-              {reel.Restaurant?.name || reel.Shops?.name}
+              {reel.Restaurant?.name || reel.Shops?.name || reel.BusinessAccount?.business_name}
             </div>
           )}
 
