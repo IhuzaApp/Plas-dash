@@ -17,6 +17,7 @@ import {
     useSensor,
     useSensors,
     closestCorners,
+    useDroppable,
 } from '@dnd-kit/core';
 import {
     SortableContext,
@@ -46,37 +47,44 @@ interface PlanModule {
     module_id: string;
 }
 
-// Colours for group badges
+// ── Group badge colours ─────────────────────────────────────────────────────
 const GROUP_COLORS: Record<string, string> = {
-    'Operations': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    'Finance': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+    Operations: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    Finance: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
     'Inventory & Catalog': 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
     'Staff & Access': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
     'Engagement & CRM': 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-    'Dashboards': 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
+    Dashboards: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
     'Logistics & Suppliers': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    'System': 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
+    System: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
 };
+
+const CONTAINER_IDS = ['available', 'assigned'] as const;
+type ContainerId = (typeof CONTAINER_IDS)[number];
 
 function groupColor(group: string) {
     return GROUP_COLORS[group] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200';
 }
 
-// ── Draggable Module Card ────────────────────────────────────────────────────
-function ModuleCard({ mod, isDragging = false }: { mod: ModuleData; isDragging?: boolean }) {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: mod.id });
+// ── Draggable module card ───────────────────────────────────────────────────
+function ModuleCard({ mod, overlay = false }: { mod: ModuleData; overlay?: boolean }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: mod.id,
+    });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.4 : 1,
     };
 
     return (
         <div
             ref={setNodeRef}
             style={style}
-            className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing select-none"
+            className={`flex items-center gap-2 rounded-md border bg-card px-3 py-2 shadow-sm
+        hover:shadow-md transition-all select-none
+        ${overlay ? 'rotate-2 scale-105 shadow-xl cursor-grabbing' : 'cursor-grab active:cursor-grabbing'}
+        ${isDragging && !overlay ? 'opacity-30' : 'opacity-100'}`}
             {...attributes}
             {...listeners}
         >
@@ -85,30 +93,18 @@ function ModuleCard({ mod, isDragging = false }: { mod: ModuleData; isDragging?:
                 <p className="text-sm font-medium leading-none truncate">{mod.name}</p>
                 <p className="text-[0.72rem] text-muted-foreground font-mono mt-0.5 truncate">{mod.slug}</p>
             </div>
-            <span className={`text-[0.65rem] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${groupColor(mod.group_name || '')}`}>
+            <span
+                className={`text-[0.65rem] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${groupColor(
+                    mod.group_name || ''
+                )}`}
+            >
                 {mod.group_name || '—'}
             </span>
         </div>
     );
 }
 
-// ── Overlay Card (shown while dragging) ─────────────────────────────────────
-function OverlayCard({ mod }: { mod: ModuleData }) {
-    return (
-        <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 shadow-xl rotate-2 scale-105 cursor-grabbing select-none">
-            <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium leading-none truncate">{mod.name}</p>
-                <p className="text-[0.72rem] text-muted-foreground font-mono mt-0.5 truncate">{mod.slug}</p>
-            </div>
-            <span className={`text-[0.65rem] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${groupColor(mod.group_name || '')}`}>
-                {mod.group_name || '—'}
-            </span>
-        </div>
-    );
-}
-
-// ── Drop Zone Column ─────────────────────────────────────────────────────────
+// ── Droppable column ────────────────────────────────────────────────────────
 function DropColumn({
     id,
     title,
@@ -117,33 +113,43 @@ function DropColumn({
     emptyLabel,
     accent,
 }: {
-    id: string;
+    id: ContainerId;
     title: string;
     icon: React.ReactNode;
     modules: ModuleData[];
     emptyLabel: string;
     accent: string;
 }) {
+    const { setNodeRef, isOver } = useDroppable({ id });
+
     return (
-        <div id={id} className={`flex flex-col rounded-xl border-2 ${accent} bg-card min-h-[420px] overflow-hidden`}>
+        <div
+            className={`flex flex-col rounded-xl border-2 ${accent} bg-card min-h-[420px] overflow-hidden
+        transition-colors ${isOver ? 'bg-accent/40' : ''}`}
+        >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
                 <div className="flex items-center gap-2">
                     {icon}
                     <h3 className="text-sm font-semibold">{title}</h3>
                 </div>
-                <Badge variant="secondary" className="text-xs">{modules.length}</Badge>
+                <Badge variant="secondary" className="text-xs">
+                    {modules.length}
+                </Badge>
             </div>
 
-            {/* Module list */}
-            <div className="flex-1 p-3 space-y-2 overflow-y-auto max-h-[600px]">
-                <SortableContext items={modules.map(m => m.id)} strategy={verticalListSortingStrategy}>
+            {/* List */}
+            <div ref={setNodeRef} className="flex-1 p-3 space-y-2 overflow-y-auto max-h-[600px]">
+                <SortableContext items={modules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                     {modules.length === 0 ? (
-                        <div className="flex items-center justify-center h-32 text-xs text-muted-foreground border-2 border-dashed rounded-md">
+                        <div
+                            className={`flex items-center justify-center h-32 text-xs text-muted-foreground
+                border-2 border-dashed rounded-md transition-colors ${isOver ? 'border-primary/60 bg-primary/5' : ''}`}
+                        >
                             {emptyLabel}
                         </div>
                     ) : (
-                        modules.map(mod => <ModuleCard key={mod.id} mod={mod} />)
+                        modules.map((mod) => <ModuleCard key={mod.id} mod={mod} />)
                     )}
                 </SortableContext>
             </div>
@@ -151,18 +157,23 @@ function DropColumn({
     );
 }
 
-// ── Main Page ────────────────────────────────────────────────────────────────
+// The column-level droppable is on the inner div (setNodeRef). Its id is 'available'/'assigned'.
+// When we drag a module, over.id can be: a module id, or the column id itself.
+// We resolve to a container by checking which list the over.id belongs to.
+
+// ── Main Page ───────────────────────────────────────────────────────────────
 export default function PlanModulesPage() {
     const { session } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
 
     const [selectedPlanId, setSelectedPlanId] = useState<string>('');
-    const [assignedIds, setAssignedIds] = useState<Set<string>>(new Set());
+    // Local copy of which module ids are assigned
+    const [localAssigned, setLocalAssigned] = useState<string[]>([]);
     const [isDirty, setIsDirty] = useState(false);
     const [activeModule, setActiveModule] = useState<ModuleData | null>(null);
 
-    // Security Check
+    // ── Auth ──────────────────────────────────────────────────────────────────
     if (session && !hasPrivilege(session.privileges, 'subscriptions', 'access', session.role)) {
         return (
             <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
@@ -173,123 +184,121 @@ export default function PlanModulesPage() {
         );
     }
 
-    // ── Queries ────────────────────────────────────────────────────────────────
+    // ── Queries ───────────────────────────────────────────────────────────────
     const { data: plansData, isLoading: isLoadingPlans } = useQuery<{ plans: Plan[] }>({
         queryKey: ['plans'],
         queryFn: () => apiGet<{ plans: Plan[] }>('/api/queries/plans'),
     });
 
-    const { data: modulesData, isLoading: isLoadingModules } = useQuery<{ modules: ModuleData[] }>({
+    const { data: modulesData, isLoading: isLoadingModules } = useQuery<{
+        modules: ModuleData[];
+    }>({
         queryKey: ['modules'],
         queryFn: () => apiGet<{ modules: ModuleData[] }>('/api/queries/modules'),
     });
 
-    const { data: planModulesData, isLoading: isLoadingPlanModules, refetch: refetchPlanModules } =
-        useQuery<{ plan_modules: PlanModule[] }>({
-            queryKey: ['plan-modules', selectedPlanId],
-            queryFn: () =>
-                apiGet<{ plan_modules: PlanModule[] }>(
-                    `/api/queries/plan-modules?plan_id=${selectedPlanId}`
-                ),
-            enabled: !!selectedPlanId,
-        });
+    const {
+        data: planModulesData,
+        isLoading: isLoadingPlanModules,
+        refetch: refetchPlanModules,
+    } = useQuery<{ plan_modules: PlanModule[] }>({
+        queryKey: ['plan-modules', selectedPlanId],
+        queryFn: () =>
+            apiGet<{ plan_modules: PlanModule[] }>(
+                `/api/queries/plan-modules?plan_id=${selectedPlanId}`
+            ),
+        enabled: !!selectedPlanId,
+    });
 
-    // Initialise local state when data loads
+    // Sync remote data into local list
     useEffect(() => {
         if (planModulesData) {
-            setAssignedIds(new Set(planModulesData.plan_modules.map(pm => pm.module_id)));
+            setLocalAssigned(planModulesData.plan_modules.map((pm) => pm.module_id));
             setIsDirty(false);
         }
     }, [planModulesData]);
 
-    // Reset when plan changes
     const handlePlanChange = useCallback((pid: string) => {
         setSelectedPlanId(pid);
-        setAssignedIds(new Set());
+        setLocalAssigned([]);
         setIsDirty(false);
     }, []);
 
-    // ── Derived lists ──────────────────────────────────────────────────────────
+    // ── Derived lists ─────────────────────────────────────────────────────────
     const allModules = useMemo(() => modulesData?.modules ?? [], [modulesData]);
 
     const assignedModules = useMemo(
-        () => allModules.filter(m => assignedIds.has(m.id)),
-        [allModules, assignedIds]
+        () =>
+            localAssigned
+                .map((id) => allModules.find((m) => m.id === id))
+                .filter(Boolean) as ModuleData[],
+        [allModules, localAssigned]
     );
 
     const availableModules = useMemo(
-        () => allModules.filter(m => !assignedIds.has(m.id)),
-        [allModules, assignedIds]
+        () => allModules.filter((m) => !localAssigned.includes(m.id)),
+        [allModules, localAssigned]
     );
 
-    // ── DnD setup ─────────────────────────────────────────────────────────────
+    // Resolve: given any id (module or column), return 'available' | 'assigned' | null
+    const resolveContainer = useCallback(
+        (id: string): ContainerId | null => {
+            if (id === 'available' || id === 'assigned') return id as ContainerId;
+            if (localAssigned.includes(id)) return 'assigned';
+            if (allModules.some((m) => m.id === id)) return 'available';
+            return null;
+        },
+        [localAssigned, allModules]
+    );
+
+    // ── DnD sensors ───────────────────────────────────────────────────────────
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
     );
 
-    function findContainer(id: string): 'available' | 'assigned' | null {
-        if (availableModules.some(m => m.id === id)) return 'available';
-        if (assignedModules.some(m => m.id === id)) return 'assigned';
-        return null;
+    function handleDragStart({ active }: DragStartEvent) {
+        setActiveModule(allModules.find((m) => m.id === active.id) ?? null);
     }
 
-    function handleDragStart(event: DragStartEvent) {
-        const mod = allModules.find(m => m.id === event.active.id);
-        setActiveModule(mod ?? null);
-    }
-
-    function handleDragOver(event: DragOverEvent) {
-        const { active, over } = event;
+    function handleDragOver({ active, over }: DragOverEvent) {
         if (!over) return;
+        const activeContainer = resolveContainer(active.id as string);
+        const overContainer = resolveContainer(over.id as string);
+        if (!activeContainer || !overContainer || activeContainer === overContainer) return;
 
-        const activeContainer = findContainer(active.id as string);
-        const overContainer = findContainer(over.id as string) ?? (over.id as string) as 'available' | 'assigned';
-
-        if (!activeContainer || activeContainer === overContainer) return;
-
-        setAssignedIds(prev => {
-            const next = new Set(prev);
+        setLocalAssigned((prev) => {
             if (overContainer === 'assigned') {
-                next.add(active.id as string);
+                return prev.includes(active.id as string) ? prev : [...prev, active.id as string];
             } else {
-                next.delete(active.id as string);
+                return prev.filter((id) => id !== (active.id as string));
             }
-            return next;
         });
         setIsDirty(true);
     }
 
-    function handleDragEnd(event: DragEndEvent) {
-        const { active, over } = event;
+    function handleDragEnd({ active, over }: DragEndEvent) {
         setActiveModule(null);
-
         if (!over) return;
+        const activeContainer = resolveContainer(active.id as string);
+        const overContainer = resolveContainer(over.id as string);
+        if (!activeContainer || !overContainer || activeContainer === overContainer) return;
 
-        const activeContainer = findContainer(active.id as string);
-        const overContainer = findContainer(over.id as string) ?? over.id as 'available' | 'assigned';
-
-        if (!activeContainer) return;
-
-        if (activeContainer !== overContainer) {
-            setAssignedIds(prev => {
-                const next = new Set(prev);
-                if (overContainer === 'assigned') {
-                    next.add(active.id as string);
-                } else {
-                    next.delete(active.id as string);
-                }
-                return next;
-            });
-            setIsDirty(true);
-        }
+        setLocalAssigned((prev) => {
+            if (overContainer === 'assigned') {
+                return prev.includes(active.id as string) ? prev : [...prev, active.id as string];
+            } else {
+                return prev.filter((id) => id !== (active.id as string));
+            }
+        });
+        setIsDirty(true);
     }
 
-    // ── Save mutation ──────────────────────────────────────────────────────────
+    // ── Save ──────────────────────────────────────────────────────────────────
     const saveMutation = useMutation({
         mutationFn: () =>
             apiPatch('/api/mutations/plan-modules', {
                 plan_id: selectedPlanId,
-                module_ids: [...assignedIds],
+                module_ids: localAssigned,
             }),
         onSuccess: () => {
             toast({ title: 'Saved!', description: 'Module assignments updated successfully.' });
@@ -303,14 +312,15 @@ export default function PlanModulesPage() {
 
     const handleReset = () => {
         if (planModulesData) {
-            setAssignedIds(new Set(planModulesData.plan_modules.map(pm => pm.module_id)));
+            setLocalAssigned(planModulesData.plan_modules.map((pm) => pm.module_id));
             setIsDirty(false);
         }
     };
 
     const isLoading = isLoadingModules || isLoadingPlanModules;
-    const selectedPlanName = plansData?.plans?.find(p => p.id === selectedPlanId)?.name;
+    const selectedPlanName = plansData?.plans?.find((p) => p.id === selectedPlanId)?.name;
 
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
             {/* Header */}
@@ -318,12 +328,13 @@ export default function PlanModulesPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Plan Module Assignments</h1>
                     <p className="text-muted-foreground mt-1 text-sm">
-                        Drag modules between columns then click <strong>Save Changes</strong>.
+                        Drag modules between columns then click{' '}
+                        <strong>Save Changes</strong>.
                     </p>
                 </div>
 
                 {selectedPlanId && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <Button
                             variant="outline"
                             size="sm"
@@ -368,7 +379,7 @@ export default function PlanModulesPage() {
                         <SelectValue placeholder="Select a plan to manage…" />
                     </SelectTrigger>
                     <SelectContent>
-                        {plansData?.plans?.map(plan => (
+                        {plansData?.plans?.map((plan) => (
                             <SelectItem key={plan.id} value={plan.id}>
                                 {plan.name}
                             </SelectItem>
@@ -391,19 +402,20 @@ export default function PlanModulesPage() {
                 </div>
             )}
 
-            {/* DnD columns */}
+            {/* DnD board */}
             {selectedPlanId && !isLoading && (
                 <>
                     {/* Stats bar */}
                     <div className="flex items-center gap-6 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                            <strong className="text-foreground">{assignedModules.length}</strong> assigned to&nbsp;
-                            <em>{selectedPlanName}</em>
+                            <strong className="text-foreground">{assignedModules.length}</strong>
+                            &nbsp;assigned to&nbsp;<em>{selectedPlanName}</em>
                         </span>
                         <span className="flex items-center gap-1.5">
                             <Circle className="h-4 w-4 text-muted-foreground" />
-                            <strong className="text-foreground">{availableModules.length}</strong> available
+                            <strong className="text-foreground">{availableModules.length}</strong>
+                            &nbsp;available
                         </span>
                     </div>
 
@@ -415,7 +427,6 @@ export default function PlanModulesPage() {
                         onDragEnd={handleDragEnd}
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {/* Available */}
                             <DropColumn
                                 id="available"
                                 title="Available Modules"
@@ -424,21 +435,18 @@ export default function PlanModulesPage() {
                                 emptyLabel="All modules are assigned ✓"
                                 accent="border-muted"
                             />
-
-                            {/* Assigned */}
                             <DropColumn
                                 id="assigned"
                                 title="Assigned to Plan"
                                 icon={<CheckCircle2 className="h-4 w-4 text-emerald-500" />}
                                 modules={assignedModules}
-                                emptyLabel="Drag modules here to assign them"
+                                emptyLabel="Drag modules here to assign them →"
                                 accent="border-emerald-400 dark:border-emerald-700"
                             />
                         </div>
 
-                        {/* Drag overlay */}
                         <DragOverlay dropAnimation={null}>
-                            {activeModule ? <OverlayCard mod={activeModule} /> : null}
+                            {activeModule ? <ModuleCard mod={activeModule} overlay /> : null}
                         </DragOverlay>
                     </DndContext>
                 </>
