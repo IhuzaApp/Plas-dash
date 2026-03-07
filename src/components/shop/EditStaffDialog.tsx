@@ -633,7 +633,7 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                     ) : filteredPermissionGroups.length === 0 ? (
                       <div className="p-8 text-center border rounded-lg bg-muted/20">
                         <p className="text-sm text-muted-foreground">
-                          No modules available for this shop's subscription plan.
+                          No modules available for this shop&apos;s subscription plan.
                         </p>
                       </div>
                     ) : roleType === 'custom' ? (
@@ -658,7 +658,7 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                                         <Switch
                                           checked={
                                             customPrivileges[group.module as PrivilegeKey]?.[
-                                              permission.key
+                                            permission.key
                                             ] || false
                                           }
                                           onCheckedChange={() =>

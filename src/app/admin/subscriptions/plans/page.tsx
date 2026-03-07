@@ -46,15 +46,7 @@ export default function PlansPage() {
 
   // Security Check: any user with the 'subscriptions.access' privilege can view this page.
   // The sidebar already hides this section from non-project users via menuPrivileges.
-  if (session && !hasPrivilege(session.privileges, 'subscriptions', 'access', session.role)) {
-    return (
-      <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
-        <h2 className="text-2xl font-bold">Access Denied</h2>
-        <p className="text-muted-foreground">You do not have permission to view this page.</p>
-        <Button onClick={() => router.push('/')}>Return to Dashboard</Button>
-      </div>
-    );
-  }
+
   const { data, isLoading, refetch } = useQuery<{ plans: Plan[] }>({
     queryKey: ['plans'],
     queryFn: () => apiGet<{ plans: Plan[] }>('/api/queries/plans'),
@@ -78,6 +70,16 @@ export default function PlansPage() {
     setIsDialogOpen(false);
     refetch();
   };
+
+  if (session && !hasPrivilege(session.privileges, 'subscriptions', 'access', session.role)) {
+    return (
+      <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
+        <h2 className="text-2xl font-bold">Access Denied</h2>
+        <p className="text-muted-foreground">You do not have permission to view this page.</p>
+        <Button onClick={() => router.push('/')}>Return to Dashboard</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
