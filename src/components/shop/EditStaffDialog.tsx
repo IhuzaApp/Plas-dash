@@ -33,6 +33,13 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { toast } from 'sonner';
 import { OrgEmployee } from '@/hooks/useHasuraApi';
 import {
   UserPrivileges,
@@ -97,7 +104,6 @@ export interface EditStaffDialogProps {
   planModuleSlugs?: string[];
 }
 
-// Permission display component — identical to AddStaffDialog
 const PermissionDisplay = ({
   privileges,
   permissionGroups,
@@ -108,24 +114,30 @@ const PermissionDisplay = ({
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
-        {permissionGroups.map(group => (
-          <div key={group.title} className="space-y-2">
-            <h4 className="font-medium text-sm">{group.title}</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {group.permissions.map((permission: any) => {
-                const hasAccess = privileges[group.module as PrivilegeKey]?.[permission.key] || false;
-                return (
-                  <div key={permission.key} className="flex items-center gap-2">
-                    <div
-                      className={`w-2 h-2 rounded-full ${hasAccess ? 'bg-green-500' : 'bg-gray-300'}`}
-                    />
-                    <span className="text-xs text-muted-foreground">{permission.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        <Accordion type="multiple" className="w-full">
+          {permissionGroups.map(group => (
+            <AccordionItem key={group.title} value={group.title}>
+              <AccordionTrigger className="text-sm font-medium hover:no-underline py-2">
+                {group.title}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {group.permissions.map((permission: any) => {
+                    const hasAccess = privileges[group.module as PrivilegeKey]?.[permission.key] || false;
+                    return (
+                      <div key={permission.key} className="flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${hasAccess ? 'bg-green-500' : 'bg-gray-300'}`}
+                        />
+                        <span className="text-xs text-muted-foreground">{permission.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </div>
     </div>
   );
@@ -618,36 +630,42 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                     ) : roleType === 'custom' ? (
                       <div className="space-y-4">
                         <div className="grid gap-4">
-                          {filteredPermissionGroups.map(group => (
-                            <div key={group.title} className="space-y-2">
-                              <h4 className="font-medium text-sm">{group.title}</h4>
-                              <div className="grid grid-cols-1 gap-2">
-                                {group.permissions.map((permission: any) => (
-                                  <div
-                                    key={permission.key}
-                                    className="flex items-center justify-between p-2 rounded-lg border"
-                                  >
-                                    <span className="text-sm text-muted-foreground">
-                                      {permission.label}
-                                    </span>
-                                    <Switch
-                                      checked={
-                                        customPrivileges[group.module as PrivilegeKey]?.[
-                                        permission.key
-                                        ] || false
-                                      }
-                                      onCheckedChange={() =>
-                                        handlePrivilegeToggle(
-                                          group.module as PrivilegeKey,
-                                          permission.key
-                                        )
-                                      }
-                                    />
+                          <Accordion type="multiple" className="w-full">
+                            {filteredPermissionGroups.map(group => (
+                              <AccordionItem key={group.title} value={group.title}>
+                                <AccordionTrigger className="text-sm font-medium hover:no-underline py-2">
+                                  {group.title}
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                  <div className="grid grid-cols-1 gap-2 pt-1">
+                                    {group.permissions.map((permission: any) => (
+                                      <div
+                                        key={permission.key}
+                                        className="flex items-center justify-between p-2 rounded-lg border bg-card"
+                                      >
+                                        <span className="text-sm text-muted-foreground">
+                                          {permission.label}
+                                        </span>
+                                        <Switch
+                                          checked={
+                                            customPrivileges[group.module as PrivilegeKey]?.[
+                                            permission.key
+                                            ] || false
+                                          }
+                                          onCheckedChange={() =>
+                                            handlePrivilegeToggle(
+                                              group.module as PrivilegeKey,
+                                              permission.key
+                                            )
+                                          }
+                                        />
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
+                                </AccordionContent>
+                              </AccordionItem>
+                            ))}
+                          </Accordion>
                         </div>
                       </div>
                     ) : (
