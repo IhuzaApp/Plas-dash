@@ -29,6 +29,7 @@ import { useState, useMemo } from 'react';
 import { AssignSubscriptionDialog } from './_components/AssignSubscriptionDialog';
 import { UpcomingRenewals } from './_components/UpcomingRenewals';
 import { SubscriptionStats } from './_components/SubscriptionStats';
+import { BillingTrendChart } from './_components/BillingTrendChart';
 
 import { SubscriptionInvoices } from './_components/SubscriptionInvoices';
 
@@ -161,6 +162,10 @@ export default function ShopSubscriptionsPage() {
                 </TabsList>
 
                 <TabsContent value="all" className="space-y-4">
+                    <BillingTrendChart
+                        subscriptions={data?.shop_subscriptions || []}
+                        invoices={invoiceData?.subscription_invoices || []}
+                    />
                     <div className="rounded-md border bg-card">
                         <Table>
                             <TableHeader>

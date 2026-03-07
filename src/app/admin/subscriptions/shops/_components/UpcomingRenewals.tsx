@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import type { ShopSubscription } from '../page';
 import type { SubscriptionInvoice } from './SubscriptionInvoices';
 
-import { BillingTrendChart } from './BillingTrendChart';
 
 interface UpcomingRenewalsProps {
     subscriptions: ShopSubscription[];
@@ -37,8 +36,6 @@ export function UpcomingRenewals({ subscriptions, invoices, isLoading }: Upcomin
 
     return (
         <div className="space-y-6">
-            <BillingTrendChart subscriptions={subscriptions} invoices={invoices} />
-
             <div className="rounded-md border bg-card">
                 <Table>
                     <TableHeader>
