@@ -10,14 +10,16 @@ import {
     Wallet
 } from 'lucide-react';
 import type { ShopSubscription } from '../page';
-import { addDays, isBefore, isAfter, startOfDay, isSameMonth, startOfMonth, endOfMonth } from 'date-fns';
+import type { SubscriptionInvoice } from './SubscriptionInvoices';
+import { addDays, isBefore, isAfter, startOfDay, isSameMonth } from 'date-fns';
 
 interface SubscriptionStatsProps {
     subscriptions: ShopSubscription[];
+    invoices: SubscriptionInvoice[];
     isLoading: boolean;
 }
 
-export function SubscriptionStats({ subscriptions, isLoading }: SubscriptionStatsProps) {
+export function SubscriptionStats({ subscriptions, invoices, isLoading }: SubscriptionStatsProps) {
     if (isLoading) {
         return (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -37,8 +39,6 @@ export function SubscriptionStats({ subscriptions, isLoading }: SubscriptionStat
 
     const today = startOfDay(new Date());
     const in14Days = addDays(today, 14);
-    const monthStart = startOfMonth(today);
-    const monthEnd = endOfMonth(today);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
@@ -56,37 +56,27 @@ export function SubscriptionStats({ subscriptions, isLoading }: SubscriptionStat
             const endDate = new Date(s.end_date);
             return isAfter(endDate, today) && isBefore(endDate, in14Days);
         }).length,
-        overdueCount: subscriptions.filter(s => {
-            if (s.status === 'inactive' || s.status === 'expired' || !s.end_date) return false;
-            const endDate = new Date(s.end_date);
-            return isBefore(endDate, today);
-        }).length,
+        overdueCount: invoices.filter(inv => inv.status?.toLowerCase() === 'overdue').length,
 
-        // Financials
-        projectedAnnualRevenue: subscriptions.reduce((sum, sub) => {
-            if (sub.status !== 'active') return sum;
-            const annualPrice = sub.billing_cycle === 'yearly'
-                ? sub.plan?.price_yearly
-                : (sub.plan?.price_monthly || 0) * 12;
-            return sum + (annualPrice || 0);
+        // Financials based on Invoices
+        totalRevenue: invoices.reduce((sum, inv) => {
+            if (inv.status?.toLowerCase() !== 'paid') return sum;
+            return sum + parseFloat(inv.subtotal_amount || '0') + parseFloat(inv.tax_amount || '0') - parseFloat(inv.discount_amount || '0');
         }, 0),
 
-        dueThisMonthAmount: subscriptions.reduce((sum, sub) => {
-            if (sub.status !== 'active' || !sub.end_date) return sum;
-            const endDate = new Date(sub.end_date);
-            if (isSameMonth(endDate, today)) {
-                const price = sub.billing_cycle === 'yearly' ? sub.plan?.price_yearly : sub.plan?.price_monthly;
-                return sum + (price || 0);
+        dueThisMonthAmount: invoices.reduce((sum, inv) => {
+            if (inv.status?.toLowerCase() === 'paid') return sum;
+            const issuedDate = new Date(inv.issued_at);
+            if (isSameMonth(issuedDate, today)) {
+                return sum + parseFloat(inv.subtotal_amount || '0') + parseFloat(inv.tax_amount || '0') - parseFloat(inv.discount_amount || '0');
             }
             return sum;
         }, 0),
 
-        overdueAmount: subscriptions.reduce((sum, sub) => {
-            if (sub.status === 'inactive' || sub.status === 'expired' || !sub.end_date) return sum;
-            const endDate = new Date(sub.end_date);
-            if (isBefore(endDate, today)) {
-                const price = sub.billing_cycle === 'yearly' ? sub.plan?.price_yearly : sub.plan?.price_monthly;
-                return sum + (price || 0);
+        overdueAmount: invoices.reduce((sum, inv) => {
+            const status = inv.status?.toLowerCase();
+            if (status === 'overdue' || (status === 'pending' && isBefore(new Date(inv.due_date), today))) {
+                return sum + parseFloat(inv.subtotal_amount || '0') + parseFloat(inv.tax_amount || '0') - parseFloat(inv.discount_amount || '0');
             }
             return sum;
         }, 0),
@@ -94,24 +84,24 @@ export function SubscriptionStats({ subscriptions, isLoading }: SubscriptionStat
 
     const metrics = [
         {
-            title: 'Revenue (Year)',
-            value: formatCurrency(stats.projectedAnnualRevenue),
+            title: 'Revenue (Paid)',
+            value: formatCurrency(stats.totalRevenue),
             icon: Wallet,
-            description: 'Projected annual income',
+            description: 'Total from all paid invoices',
             color: 'text-primary',
         },
         {
             title: 'Due (Month)',
             value: formatCurrency(stats.dueThisMonthAmount),
             icon: Clock,
-            description: 'Total for current month',
+            description: 'Unpaid invoices this month',
             color: 'text-orange-500',
         },
         {
             title: 'Pending / Overdue',
             value: formatCurrency(stats.overdueAmount),
             icon: AlertCircle,
-            description: `${stats.overdueCount} expired subscriptions`,
+            description: `${stats.overdueCount} overdue invoices`,
             color: 'text-red-500',
         },
         {

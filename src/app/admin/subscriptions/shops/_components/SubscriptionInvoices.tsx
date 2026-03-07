@@ -37,11 +37,20 @@ export interface SubscriptionInvoice {
     };
 }
 
-export function SubscriptionInvoices() {
-    const { data, isLoading } = useQuery<{ subscription_invoices: SubscriptionInvoice[] }>({
+interface SubscriptionInvoicesProps {
+    invoices?: SubscriptionInvoice[];
+    isLoading?: boolean;
+}
+
+export function SubscriptionInvoices({ invoices: initialInvoices, isLoading: parentLoading }: SubscriptionInvoicesProps) {
+    const { data, isLoading: queryLoading } = useQuery<{ subscription_invoices: SubscriptionInvoice[] }>({
         queryKey: ['subscription-invoices'],
         queryFn: () => apiGet<{ subscription_invoices: SubscriptionInvoice[] }>('/api/queries/subscription-invoices'),
+        enabled: !initialInvoices,
     });
+
+    const isLoading = parentLoading || queryLoading;
+    const invoices = initialInvoices || data?.subscription_invoices || [];
 
     const formatCurrency = (amount: string | number, currency: string) => {
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -70,7 +79,6 @@ export function SubscriptionInvoices() {
         );
     }
 
-    const invoices = data?.subscription_invoices || [];
 
     return (
         <div className="space-y-4">

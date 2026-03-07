@@ -76,10 +76,17 @@ export default function ShopSubscriptionsPage() {
         );
     }
 
-    const { data, isLoading } = useQuery<{ shop_subscriptions: ShopSubscription[] }>({
+    const { data, isLoading: isSubsLoading } = useQuery<{ shop_subscriptions: ShopSubscription[] }>({
         queryKey: ['shop-subscriptions'],
         queryFn: () => apiGet<{ shop_subscriptions: ShopSubscription[] }>('/api/queries/shop-subscriptions'),
     });
+
+    const { data: invoiceData, isLoading: isInvoicesLoading } = useQuery<{ subscription_invoices: any[] }>({
+        queryKey: ['subscription-invoices'],
+        queryFn: () => apiGet<{ subscription_invoices: any[] }>('/api/queries/subscription-invoices'),
+    });
+
+    const isLoading = isSubsLoading || isInvoicesLoading;
 
     const filteredSubscriptions = useMemo(() => {
         if (!data?.shop_subscriptions) return [];
@@ -130,6 +137,7 @@ export default function ShopSubscriptionsPage() {
 
             <SubscriptionStats
                 subscriptions={data?.shop_subscriptions || []}
+                invoices={invoiceData?.subscription_invoices || []}
                 isLoading={isLoading}
             />
 
@@ -230,7 +238,10 @@ export default function ShopSubscriptionsPage() {
                 </TabsContent>
 
                 <TabsContent value="invoices">
-                    <SubscriptionInvoices />
+                    <SubscriptionInvoices
+                        invoices={invoiceData?.subscription_invoices}
+                        isLoading={isLoading}
+                    />
                 </TabsContent>
             </Tabs>
 
