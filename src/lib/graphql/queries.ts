@@ -1999,6 +1999,7 @@ export const GET_REELS = `
       likes
       restaurant_id
       shop_id
+      business_id
       title
       type
       user_id
@@ -2075,6 +2076,12 @@ export const GET_REELS = `
         profile_picture
         role
         updated_at
+      }
+      BusinessAccount: business_account {
+        id
+        business_name
+        business_email
+        business_phone
       }
     }
   }

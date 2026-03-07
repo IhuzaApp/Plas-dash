@@ -751,6 +751,7 @@ export const ADD_REEL = `
     $user_id: uuid = null
     $video_url: String = ""
     $is_active: Boolean = true
+    $business_id: uuid = null
   ) {
     insert_Reels(
       objects: {
@@ -768,6 +769,7 @@ export const ADD_REEL = `
         user_id: $user_id
         video_url: $video_url
         is_active: $is_active
+        business_id: $business_id
       }
     ) {
       affected_rows
@@ -789,6 +791,7 @@ export const UPDATE_REEL = `
     $is_active: Boolean = true
     $shop_id: uuid = null
     $restaurant_id: uuid = null
+    $business_id: uuid = null
   ) {
     update_Reels_by_pk(
       pk_columns: { id: $id }
@@ -804,6 +807,7 @@ export const UPDATE_REEL = `
         is_active: $is_active
         shop_id: $shop_id
         restaurant_id: $restaurant_id
+        business_id: $business_id
       }
     ) {
       id

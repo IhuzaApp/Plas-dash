@@ -438,9 +438,16 @@ interface Reel {
   is_active: boolean;
   restaurant_id: string | null;
   shop_id: string | null;
+  business_id: string | null;
   user_id: string | null;
   created_on: string;
   Restaurant: Restaurant | null;
+  BusinessAccount: {
+    id: string;
+    business_name: string;
+    business_email: string;
+    business_phone: string;
+  } | null;
   Shops: {
     id: string;
     name: string;
@@ -1067,6 +1074,17 @@ export function useReels(where?: any) {
   });
 }
 
+// Type-safe hook for Business Accounts (data from API)
+export function useBusinessAccounts() {
+  return useQuery<{ business_accounts: any[] }, Error>({
+    queryKey: ['api', 'business-accounts'],
+    queryFn: async () => {
+      const res = await apiGet<{ business_accounts: any[] }>('/api/queries/business-accounts');
+      return { business_accounts: res.business_accounts || [] };
+    },
+  });
+}
+
 // Type-safe hook for adding a restaurant
 export function useAddRestaurant() {
   return useMutation<
@@ -1121,6 +1139,7 @@ export function useAddReel() {
       likes?: string;
       restaurant_id?: string | null;
       shop_id?: string | null;
+      business_id?: string | null;
       user_id: string | null;
       is_active?: boolean;
     }
@@ -1159,6 +1178,7 @@ export function useUpdateReel() {
       is_active: boolean;
       shop_id?: string | null;
       restaurant_id?: string | null;
+      business_id?: string | null;
     }
   >({
     mutationFn: variables => hasuraRequest(UPDATE_REEL, variables),

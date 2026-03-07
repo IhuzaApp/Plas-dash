@@ -131,8 +131,8 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - **Dual Mode**: Support for both direct file uploads and YouTube URL integration.
   - **Multimedia**: Seamless support for both short-form video and high-quality image reels.
 - **Entity-Based Association**
-  - **Granular Ownership**: Reels can be specifically assigned to **Shops**, **Restaurants**, or **Individual Users**.
-  - **Mutual Exclusion**: Strict enforcement of ownership logic to ensure content is correctly attributed.
+  - **Granular Ownership**: Reels can be specifically assigned to **Shops**, **Restaurants**, or **Business Accounts**.
+  - **Entity Association**: Attach content to Shops, Restaurants, or **Business Accounts** with intelligent ownership resolution.
 - **Advanced Content Controls**
   - **Filtering**: Tabbed navigation to filter content by source (User, Restaurant, Shop, Business).
   - **Upload Management**: Real-time progress tracking with the ability to cancel ongoing uploads.
@@ -2063,16 +2063,6 @@ const { hasProjectAction } = useProjectPrivilege();
 
 ---
 
-**For more details, see:**
-
-- `src/types/projectPrivileges.ts`
-- `src/lib/privileges/projectRolePrivileges.ts`
-- `src/components/pages/ProjectUsers.tsx`
-- `src/app/project-users/page.tsx`
-- `src/graphql/ProjectUsers.graphql`
-
----
-
 ## 📊 Complete Privilege & Role System Summary
 
 ### **🎯 System Overview**
@@ -2136,7 +2126,7 @@ The Plas Dashboard implements a **dual privilege system** with complete separati
 | **products**             | ✅     | access, view_products, add_products, edit_products, delete_products, import_products, export_products, manage_categories, view_analytics                                                                                                                                                                                                                                                                                                                                          |
 | **wallet**               | ✅     | access, view_wallets, process_payouts, view_transactions, manage_wallet_settings, view_balance, export_wallet_data                                                                                                                                                                                                                                                                                                                                                                |
 | **refunds**              | ✅     | access, view_refunds, process_refunds, approve_refunds, reject_refunds, view_refund_details, export_refund_data                                                                                                                                                                                                                                                                                                                                                                   |
-| **tickets**              | ✅     | access, view_tickets, create_tickets, edit_tickets, delete_tickets, assign_tickets, resolve_tickets, view_ticket_details                                                                                                                                                                                                                                                                                                                                                          |
+| **tickets**            | ✅     | access, view_tickets, create_tickets, edit_tickets, delete_tickets, assign_tickets, resolve_tickets, view_ticket_details                                                                                                                                                                                                                                                                                                                                                          |
 | **help**                 | ✅     | access, view_help, search_help, view_categories, view_articles                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | **dashboard**            | ✅     | access, view_dashboard, view_analytics, view_reports, export_data                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | **delivery_settings**    | ✅     | access, view_delivery_settings, edit_delivery_settings, manage_delivery_zones, set_delivery_fees, configure_delivery_times                                                                                                                                                                                                                                                                                                                                                        |
@@ -2203,8 +2193,8 @@ The Plas Dashboard implements a **dual privilege system** with complete separati
 1. **Login**: User authenticates with credentials
 2. **Role Detection**: System determines user type (store staff vs project user)
 3. **Privilege Loading**: Loads appropriate privilege system
-4. **Session Creation**: Creates user session with privileges
-5. **Access Control**: Enforces privileges throughout the application
+4.- **Entity Association**: Attach content to Shops, Restaurants, or **Business Accounts** with intelligent ownership resolution.
+- **Advanced Controls**: Fine-grained is_active toggles and content-type specific behaviors (Shopping vs. Recipe).
 
 ---
 

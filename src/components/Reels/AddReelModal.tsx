@@ -26,7 +26,7 @@ import {
   Edit,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAddReel, useShops, useRestaurants } from '@/hooks/useHasuraApi';
+import { useAddReel, useShops, useRestaurants, useBusinessAccounts } from '@/hooks/useHasuraApi';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { uploadFileToFirebase } from '@/lib/firebaseStorage';
@@ -49,6 +49,7 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
   const addReelMutation = useAddReel();
   const { data: shopsData, isLoading: isLoadingShops } = useShops();
   const { data: restaurantsData, isLoading: isLoadingRestaurants } = useRestaurants();
+  const { data: businessesData, isLoading: isLoadingBusinesses } = useBusinessAccounts();
   const { session } = useAuth();
   const { orgEmployee } = useCurrentOrgEmployee();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,6 +76,7 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
     delivery_time: '',
     shop_id: '',
     restaurant_id: '',
+    business_id: '',
     is_active: true,
   });
 
@@ -226,6 +228,7 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
         Price: formData.Price || '0',
         delivery_time: formData.delivery_time || '',
         user_id: null, // Set to null by default for shop/restaurant users
+        business_id: null,
         likes: '0',
         is_active: formData.is_active,
       };
@@ -234,16 +237,17 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
       if (isAgent) {
         mutationVariables.shop_id = formData.shop_id || null;
         mutationVariables.restaurant_id = formData.restaurant_id || null;
+        mutationVariables.business_id = formData.business_id || null;
       } else {
         mutationVariables.shop_id = currentUser.shop_id || null;
         mutationVariables.restaurant_id = currentUser.restaurant_id || null;
+        mutationVariables.business_id = null;
       }
 
       // Only set user_id if we have a valid UUID and no shop/resturarant context and the user is NOT a project user
       if (currentUser.user_id && !mutationVariables.shop_id && !mutationVariables.restaurant_id && !session?.isProjectUser) {
         mutationVariables.user_id = currentUser.user_id;
       }
-
       // Validate required fields
       if (!mutationVariables.title || !mutationVariables.video_url || !mutationVariables.category) {
         toast.error('Please fill in all required fields (title, video, category)');
@@ -273,6 +277,7 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
       delivery_time: '',
       shop_id: '',
       restaurant_id: '',
+      business_id: '',
       is_active: true,
     });
     setUploadedFile(null);
@@ -365,7 +370,7 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                 <Label htmlFor="shop_id">Assign to Shop</Label>
                 <Select
                   value={formData.shop_id}
-                  onValueChange={value => setFormData({ ...formData, shop_id: value, restaurant_id: '' })}
+                  onValueChange={value => setFormData({ ...formData, shop_id: value, restaurant_id: '', business_id: '' })}
                 >
                   <SelectTrigger id="shop_id">
                     <SelectValue placeholder={isLoadingShops ? "Loading..." : "Select Shop"} />
@@ -384,16 +389,43 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                 <Label htmlFor="restaurant_id">Assign to Restaurant</Label>
                 <Select
                   value={formData.restaurant_id}
-                  onValueChange={value => setFormData({ ...formData, restaurant_id: value, shop_id: '' })}
+                  onValueChange={value => setFormData({ ...formData, restaurant_id: value, shop_id: '', business_id: '' })}
                 >
                   <SelectTrigger id="restaurant_id">
                     <SelectValue placeholder={isLoadingRestaurants ? "Loading..." : "Select Restaurant"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {restaurantsData?.Restaurants?.map((res: any) => (
-                      <SelectItem key={res.id} value={res.id}>
-                        {res.name}
+                    {restaurantsData?.Restaurants.map(r => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="business_id">Assign to Business Account (Optional)</Label>
+                <Select
+                  value={formData.business_id || 'none'}
+                  onValueChange={value =>
+                    setFormData(prev => ({
+                      ...prev,
+                      business_id: value === 'none' ? '' : value,
+                      shop_id: '', // Mutual exclusion
+                      restaurant_id: '', // Mutual exclusion
+                    }))
+                  }
+                >
+                  <SelectTrigger id="business_id">
+                    <SelectValue placeholder="Select a business..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {businessesData?.business_accounts.map(b => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.business_name}
                       </SelectItem>
                     ))}
                   </SelectContent>

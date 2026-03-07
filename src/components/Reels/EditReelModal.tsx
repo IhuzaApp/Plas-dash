@@ -26,7 +26,7 @@ import {
   FileVideo,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUpdateReel, useShops, useRestaurants } from '@/hooks/useHasuraApi';
+import { useUpdateReel, useShops, useRestaurants, useBusinessAccounts } from '@/hooks/useHasuraApi';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { uploadFileToFirebase, deleteVideoFromFirebase } from '@/lib/firebaseStorage';
@@ -65,6 +65,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
   const updateReelMutation = useUpdateReel();
   const { data: shopsData, isLoading: isLoadingShops } = useShops();
   const { data: restaurantsData, isLoading: isLoadingRestaurants } = useRestaurants();
+  const { data: businessesData, isLoading: isLoadingBusinesses } = useBusinessAccounts();
   const { session } = useAuth();
   const { orgEmployee } = useCurrentOrgEmployee();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -81,7 +82,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
   }, []);
 
   // Form state for editing reels
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     title: '',
     description: '',
     video_url: '',
@@ -91,6 +92,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
     delivery_time: '',
     shop_id: '',
     restaurant_id: '',
+    business_id: '',
     is_active: true,
   });
 
@@ -120,6 +122,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         delivery_time: reel.delivery_time || '',
         shop_id: reel.shop_id || '',
         restaurant_id: reel.restaurant_id || '',
+        business_id: reel.business_id || '',
         is_active: reel.is_active,
       });
       setOldFileUrl(reel.video_url || null);
@@ -195,6 +198,9 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
   };
 
   const removeUploadedFile = () => {
+    if (uploadTaskRef.current) {
+      handleCancelUpload(); // Cancel any ongoing upload
+    }
     setUploadedFile(null);
     setFilePreview(null);
     setUploadProgress(0);
@@ -231,6 +237,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         delivery_time: formData.delivery_time || '',
         shop_id: formData.shop_id || null,
         restaurant_id: formData.restaurant_id || null,
+        business_id: formData.business_id || null,
         is_active: formData.is_active,
       };
 
@@ -267,6 +274,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         delivery_time: reel.delivery_time || '',
         shop_id: reel.shop_id || '',
         restaurant_id: reel.restaurant_id || '',
+        business_id: reel.business_id || '',
         is_active: reel.is_active,
       });
     }
@@ -359,7 +367,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
                 <Label htmlFor="shop_id">Assign to Shop</Label>
                 <Select
                   value={formData.shop_id || 'none'}
-                  onValueChange={value => setFormData({ ...formData, shop_id: value === 'none' ? '' : value, restaurant_id: '' })}
+                  onValueChange={value => setFormData({ ...formData, shop_id: value === 'none' ? '' : value, restaurant_id: '', business_id: '' })}
                 >
                   <SelectTrigger id="shop_id">
                     <SelectValue placeholder={isLoadingShops ? "Loading..." : "Select Shop"} />
@@ -378,16 +386,43 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
                 <Label htmlFor="restaurant_id">Assign to Restaurant</Label>
                 <Select
                   value={formData.restaurant_id || 'none'}
-                  onValueChange={value => setFormData({ ...formData, restaurant_id: value === 'none' ? '' : value, shop_id: '' })}
+                  onValueChange={value => setFormData({ ...formData, restaurant_id: value === 'none' ? '' : value, shop_id: '', business_id: '' })}
                 >
                   <SelectTrigger id="restaurant_id">
                     <SelectValue placeholder={isLoadingRestaurants ? "Loading..." : "Select Restaurant"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {restaurantsData?.Restaurants?.map((res: any) => (
-                      <SelectItem key={res.id} value={res.id}>
-                        {res.name}
+                    {restaurantsData?.Restaurants.map(r => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="business_id">Assign to Business Account (Optional)</Label>
+                <Select
+                  value={formData.business_id || 'none'}
+                  onValueChange={value =>
+                    setFormData(prev => ({
+                      ...prev,
+                      business_id: value === 'none' ? '' : value,
+                      shop_id: '', // Mutual exclusion
+                      restaurant_id: '', // Mutual exclusion
+                    }))
+                  }
+                >
+                  <SelectTrigger id="business_id">
+                    <SelectValue placeholder={isLoadingBusinesses ? "Loading..." : "Select a business..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {businessesData?.business_accounts.map(b => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.business_name}
                       </SelectItem>
                     ))}
                   </SelectContent>

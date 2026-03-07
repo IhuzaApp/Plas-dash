@@ -340,7 +340,7 @@ const Reels = () => {
   categoryData.sort((a, b) => b.value - a.value);
 
   const ownerData = reels.reduce((acc: any[], reel) => {
-    const ownerName = reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'System';
+    const ownerName = reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || reel.BusinessAccount?.business_name || 'System';
     const existing = acc.find(item => item.name === ownerName);
     if (existing) {
       existing.value += reel.reel_orders.length;
