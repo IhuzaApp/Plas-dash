@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       const payload = {
         name: desc.title,
         slug: lowerSlug,
-        group_name: 'Core System'
+        group_name: desc.group
       };
 
       if (existingModuleMap.has(lowerSlug)) {
