@@ -1,4 +1,4 @@
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject, UploadTask } from "firebase/storage";
 import { storage } from "./firebase";
 
 /**
@@ -28,11 +28,13 @@ export const deleteVideoFromFirebase = async (downloadURL: string): Promise<void
  * @param file The file to upload.
  * @param onProgress Callback function to track upload progress (0-100).
  * @param folder The folder to upload to (e.g., 'videos' or 'images'). Defaults to 'videos'.
+ * @param onTask Callback function to receive the Firebase UploadTask (for cancellation).
  */
 export const uploadFileToFirebase = async (
     file: File,
     onProgress?: (progress: number) => void,
-    folder: 'videos' | 'images' = 'videos'
+    folder: 'videos' | 'images' = 'videos',
+    onTask?: (task: UploadTask) => void
 ): Promise<string> => {
     return new Promise((resolve, reject) => {
         // Create a unique filename and ensure it is placed in the designated path.
@@ -40,6 +42,10 @@ export const uploadFileToFirebase = async (
         const storageRef = ref(storage, `reels/${folder}/${filename}`);
 
         const uploadTask = uploadBytesResumable(storageRef, file);
+
+        if (onTask) {
+            onTask(uploadTask);
+        }
 
         uploadTask.on(
             "state_changed",

@@ -105,9 +105,11 @@ const Reels = () => {
   const [failedVideos, setFailedVideos] = useState<Set<string>>(new Set());
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [selectedCommentsReel, setSelectedCommentsReel] = useState<any>(null);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'user' | 'restaurant' | 'shop' | 'business'>('all');
 
   const deleteReelMutation = useDeleteReel();
   const deleteCommentMutation = useDeleteReelsComment();
+  const updateReelMutation = useUpdateReel();
 
   // Helper function to format currency
   const formatCurrency = (amount: number) => {
@@ -159,17 +161,31 @@ const Reels = () => {
 
   const handleToggleReelStatus = async (reelId: string, currentStatus: boolean) => {
     try {
+      const reel = reels.find((r: any) => r.id === reelId);
+      if (!reel) {
+        toast.error('Reel not found');
+        return;
+      }
+
       toast.promise(
-        // Use existing update hook if available, otherwise simulate
-        // In this codebase, it seems we use the existing useReels's refetch to update UI after mock success
-        // But the user specifically asked for delete/disable logic.
-        // I will implement the delete action separately.
-        new Promise(resolve => setTimeout(resolve, 1000)),
+        updateReelMutation.mutateAsync({
+          id: reelId,
+          title: reel.title,
+          description: reel.description,
+          video_url: reel.video_url,
+          category: reel.category,
+          type: reel.type,
+          Price: reel.Price,
+          delivery_time: reel.delivery_time,
+          is_active: !currentStatus,
+          shop_id: reel.shop_id,
+          restaurant_id: reel.restaurant_id,
+        }),
         {
           loading: 'Updating reel status...',
           success: () => {
             refetch();
-            return `Reel ${currentStatus ? 'disabled' : 'enabled'}`;
+            return `Reel ${!currentStatus ? 'enabled' : 'disabled'} successfully`;
           },
           error: 'Failed to update reel status',
         }
@@ -231,7 +247,7 @@ const Reels = () => {
   const filteredReels = reels
     .filter(reel => {
       const searchLower = searchTerm.toLowerCase();
-      return (
+      const matchesSearch = (
         reel.title?.toLowerCase().includes(searchLower) ||
         reel.description?.toLowerCase().includes(searchLower) ||
         reel.category?.toLowerCase().includes(searchLower) ||
@@ -239,6 +255,22 @@ const Reels = () => {
         reel.Restaurant?.name?.toLowerCase().includes(searchLower) ||
         reel.Shops?.name?.toLowerCase().includes(searchLower)
       );
+
+      if (!matchesSearch) return false;
+
+      // Apply filter type logic
+      switch (activeFilter) {
+        case 'user':
+          return !!reel.user_id;
+        case 'restaurant':
+          return !!reel.restaurant_id;
+        case 'shop':
+          return !!reel.shop_id;
+        case 'business':
+          return !!reel.shop_id || !!reel.restaurant_id;
+        default:
+          return true;
+      }
     })
     .sort((a, b) => {
       // Sort by most recent first (newest to oldest)
@@ -363,9 +395,48 @@ const Reels = () => {
               }}
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" /> Filter
-          </Button>
+          <div className="flex gap-2 bg-muted p-1 rounded-lg">
+            <Button
+              variant={activeFilter === 'all' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('all')}
+              className="px-3 h-8"
+            >
+              All
+            </Button>
+            <Button
+              variant={activeFilter === 'user' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('user')}
+              className="px-3 h-8"
+            >
+              Users
+            </Button>
+            <Button
+              variant={activeFilter === 'restaurant' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('restaurant')}
+              className="px-3 h-8"
+            >
+              Restaurants
+            </Button>
+            <Button
+              variant={activeFilter === 'shop' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('shop')}
+              className="px-3 h-8"
+            >
+              Shops
+            </Button>
+            <Button
+              variant={activeFilter === 'business' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('business')}
+              className="px-3 h-8"
+            >
+              Business
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

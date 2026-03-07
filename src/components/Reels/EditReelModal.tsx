@@ -31,6 +31,7 @@ import { useAuth } from '@/components/layout/RootLayout';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { uploadFileToFirebase, deleteVideoFromFirebase } from '@/lib/firebaseStorage';
 import { compressVideo } from '@/lib/videoCompression';
+import { UploadTask } from 'firebase/storage';
 
 type PostType = 'restaurant' | 'supermarket' | 'chef';
 
@@ -67,6 +68,17 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
   const { session } = useAuth();
   const { orgEmployee } = useCurrentOrgEmployee();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTaskRef = useRef<UploadTask | null>(null);
+
+  const handleCancelUpload = React.useCallback(() => {
+    if (uploadTaskRef.current) {
+      uploadTaskRef.current.cancel();
+      uploadTaskRef.current = null;
+      setIsUploading(false);
+      setUploadProgress(0);
+      toast.info('Upload cancelled');
+    }
+  }, []);
 
   // Form state for editing reels
   const [formData, setFormData] = useState({
@@ -128,6 +140,12 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         return;
       }
 
+      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum limit is 100MB.`);
+        return;
+      }
+
       setUploadedFile(file);
       setFilePreview(URL.createObjectURL(file));
 
@@ -139,7 +157,9 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
 
         uploadFileToFirebase(fileToUpload as File, progress => {
           setUploadProgress(progress);
-        }, folder)
+        }, folder, (task) => {
+          uploadTaskRef.current = task;
+        })
           .then(url => {
             setFormData(prev => ({ ...prev, video_url: url }));
             setIsUploading(false);
@@ -152,7 +172,9 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
           });
       };
 
-      if (file.type.startsWith('video/') && file.size > 10 * 1024 * 1024) {
+      console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+
+      if (file.type.startsWith('video/') && file.size > 30 * 1024 * 1024) {
         setIsCompressing(true);
         toast.info('Compressing video to reduce size...', { duration: 5000 });
 
@@ -183,6 +205,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
     // Restore original file if we remove the new one
     setFormData(prev => ({ ...prev, video_url: oldFileUrl || '' }));
   };
+
 
   const handleUpdateReel = async () => {
     if (!reel) {
@@ -514,11 +537,25 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
 
                     {/* Upload Progress */}
                     {uploadProgress > 0 && (
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
+                      <div className="space-y-2 mb-3">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        {isUploading && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelUpload}
+                            className="w-full text-xs h-7"
+                          >
+                            <X className="mr-1 h-3 w-3" />
+                            Cancel Upload
+                          </Button>
+                        )}
                       </div>
                     )}
 

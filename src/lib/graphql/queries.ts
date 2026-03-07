@@ -2003,6 +2003,7 @@ export const GET_REELS = `
       type
       user_id
       video_url
+      is_active
       reel_likes {
         created_at
         id
