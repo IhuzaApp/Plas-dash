@@ -26,7 +26,7 @@ import {
   FileVideo,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUpdateReel } from '@/hooks/useHasuraApi';
+import { useUpdateReel, useShops, useRestaurants } from '@/hooks/useHasuraApi';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { uploadFileToFirebase, deleteVideoFromFirebase } from '@/lib/firebaseStorage';
@@ -62,6 +62,8 @@ interface EditReelModalProps {
 
 const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuccess, reel }) => {
   const updateReelMutation = useUpdateReel();
+  const { data: shopsData, isLoading: isLoadingShops } = useShops();
+  const { data: restaurantsData, isLoading: isLoadingRestaurants } = useRestaurants();
   const { session } = useAuth();
   const { orgEmployee } = useCurrentOrgEmployee();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,8 +77,13 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
     type: 'restaurant' as PostType,
     Price: '',
     delivery_time: '',
+    shop_id: '',
+    restaurant_id: '',
     is_active: true,
   });
+
+  // Determine if user can manually assign shops/restaurants
+  const isAgent = !session?.shop_id && !orgEmployee?.restaurant_id;
 
   // Upload state
   const [videoSource, setVideoSource] = useState<'upload' | 'youtube'>('upload');
@@ -99,6 +106,8 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         type: reel.type || 'restaurant',
         Price: reel.Price || '',
         delivery_time: reel.delivery_time || '',
+        shop_id: reel.shop_id || '',
+        restaurant_id: reel.restaurant_id || '',
         is_active: reel.is_active,
       });
       setOldFileUrl(reel.video_url || null);
@@ -197,6 +206,8 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         type: formData.type || 'restaurant',
         Price: formData.Price || '0',
         delivery_time: formData.delivery_time || '',
+        shop_id: formData.shop_id || null,
+        restaurant_id: formData.restaurant_id || null,
         is_active: formData.is_active,
       };
 
@@ -231,6 +242,8 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         type: reel.type || 'restaurant',
         Price: reel.Price || '',
         delivery_time: reel.delivery_time || '',
+        shop_id: reel.shop_id || '',
+        restaurant_id: reel.restaurant_id || '',
         is_active: reel.is_active,
       });
     }
@@ -314,6 +327,49 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
               </SelectContent>
             </Select>
           </div>
+
+          {isAgent && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="shop_id">Assign to Shop</Label>
+                <Select
+                  value={formData.shop_id || 'none'}
+                  onValueChange={value => setFormData({ ...formData, shop_id: value === 'none' ? '' : value, restaurant_id: '' })}
+                >
+                  <SelectTrigger id="shop_id">
+                    <SelectValue placeholder={isLoadingShops ? "Loading..." : "Select Shop"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {shopsData?.Shops?.map((shop: any) => (
+                      <SelectItem key={shop.id} value={shop.id}>
+                        {shop.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="restaurant_id">Assign to Restaurant</Label>
+                <Select
+                  value={formData.restaurant_id || 'none'}
+                  onValueChange={value => setFormData({ ...formData, restaurant_id: value === 'none' ? '' : value, shop_id: '' })}
+                >
+                  <SelectTrigger id="restaurant_id">
+                    <SelectValue placeholder={isLoadingRestaurants ? "Loading..." : "Select Restaurant"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {restaurantsData?.Restaurants?.map((res: any) => (
+                      <SelectItem key={res.id} value={res.id}>
+                        {res.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           {/* Video Display - Show current video as read-only */}
           {/* Video Source Selection */}

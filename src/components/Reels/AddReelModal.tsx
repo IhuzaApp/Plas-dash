@@ -26,7 +26,7 @@ import {
   Edit,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAddReel } from '@/hooks/useHasuraApi';
+import { useAddReel, useShops, useRestaurants } from '@/hooks/useHasuraApi';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { uploadFileToFirebase } from '@/lib/firebaseStorage';
@@ -46,6 +46,8 @@ interface AddReelModalProps {
 
 const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSuccess }) => {
   const addReelMutation = useAddReel();
+  const { data: shopsData, isLoading: isLoadingShops } = useShops();
+  const { data: restaurantsData, isLoading: isLoadingRestaurants } = useRestaurants();
   const { session } = useAuth();
   const { orgEmployee } = useCurrentOrgEmployee();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +74,9 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+
+  // Determine if user can manually assign shops/restaurants (e.g. they are an admin/agent)
+  const isAgent = !session?.shop_id && !orgEmployee?.restaurant_id;
 
   // Helper function to check category types
   const isYouTubeCategory = (category: string) => {
@@ -202,17 +207,17 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
         is_active: formData.is_active,
       };
 
-      // Set shop_id or restaurant_id based on the current user's context
-      if (currentUser.shop_id) {
-        mutationVariables.shop_id = currentUser.shop_id;
+      // Set shop_id or restaurant_id based on manual selection (if agent) or current user's context
+      if (isAgent) {
+        mutationVariables.shop_id = formData.shop_id || null;
+        mutationVariables.restaurant_id = formData.restaurant_id || null;
+      } else {
+        mutationVariables.shop_id = currentUser.shop_id || null;
+        mutationVariables.restaurant_id = currentUser.restaurant_id || null;
       }
 
-      if (currentUser.restaurant_id) {
-        mutationVariables.restaurant_id = currentUser.restaurant_id;
-      }
-
-      // Only set user_id if we have a valid UUID and no shop/restaurant context and the user is NOT a project user
-      if (currentUser.user_id && !currentUser.shop_id && !currentUser.restaurant_id && !session?.isProjectUser) {
+      // Only set user_id if we have a valid UUID and no shop/resturarant context and the user is NOT a project user
+      if (currentUser.user_id && !mutationVariables.shop_id && !mutationVariables.restaurant_id && !session?.isProjectUser) {
         mutationVariables.user_id = currentUser.user_id;
       }
 
@@ -328,6 +333,49 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
               </SelectContent>
             </Select>
           </div>
+
+          {isAgent && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="shop_id">Assign to Shop</Label>
+                <Select
+                  value={formData.shop_id}
+                  onValueChange={value => setFormData({ ...formData, shop_id: value, restaurant_id: '' })}
+                >
+                  <SelectTrigger id="shop_id">
+                    <SelectValue placeholder={isLoadingShops ? "Loading..." : "Select Shop"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {shopsData?.Shops?.map((shop: any) => (
+                      <SelectItem key={shop.id} value={shop.id}>
+                        {shop.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="restaurant_id">Assign to Restaurant</Label>
+                <Select
+                  value={formData.restaurant_id}
+                  onValueChange={value => setFormData({ ...formData, restaurant_id: value, shop_id: '' })}
+                >
+                  <SelectTrigger id="restaurant_id">
+                    <SelectValue placeholder={isLoadingRestaurants ? "Loading..." : "Select Restaurant"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {restaurantsData?.Restaurants?.map((res: any) => (
+                      <SelectItem key={res.id} value={res.id}>
+                        {res.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           {/* Video Source Selection */}
           <div>

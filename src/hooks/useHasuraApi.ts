@@ -1157,6 +1157,8 @@ export function useUpdateReel() {
       Product?: any;
       delivery_time: string;
       is_active: boolean;
+      shop_id?: string | null;
+      restaurant_id?: string | null;
     }
   >({
     mutationFn: variables => hasuraRequest(UPDATE_REEL, variables),

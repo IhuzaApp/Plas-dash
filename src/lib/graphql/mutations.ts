@@ -787,6 +787,8 @@ export const UPDATE_REEL = `
     $type: String = ""
     $video_url: String = ""
     $is_active: Boolean = true
+    $shop_id: uuid = null
+    $restaurant_id: uuid = null
   ) {
     update_Reels_by_pk(
       pk_columns: { id: $id }
@@ -800,6 +802,8 @@ export const UPDATE_REEL = `
         type: $type
         video_url: $video_url
         is_active: $is_active
+        shop_id: $shop_id
+        restaurant_id: $restaurant_id
       }
     ) {
       id
