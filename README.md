@@ -42,6 +42,16 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - **Purchase Orders (PO)**: Standardized document generation and tracking.
   - **Goods Received (GRN)**: Integrated receiving flow that auto-updates inventory stock.
 
+### 🛡️ Access Control & Subscriptions
+
+- **Subscription-Gated Privileges**
+  - **Plan Modules**: A shop's capabilities are strictly governed by its active subscription `plan`. The `plan_modules` relationship dictates which system features (e.g., POS, Inventory, AI Chat) the shop can access.
+  - **Staff Assignment Safeguard**: When creating or editing staff roles, the system visually maps available privileges against the shop's subscription plan. Users are prevented from being granted rights to modules not included in the shop's current plan.
+  - **Strict Filtering**: Regardless of whether a preset role (e.g., `storeManager`, `cashier`) or a `custom` role is selected, the final privileges saved to the database are strictly filtered against the overlapping module list. Non-subscribed modules are purged at the API submission layer to guarantee compliance.
+- **Module Descriptions & UX**
+  - **Centralized Dictionary**: The `@/lib/privileges/moduleDescriptions.ts` file acts as the single source of truth for all human-readable module definitions, grouping (e.g., 'Operations', 'Dashboards'), and granular actions (e.g., 'Delete Orders', 'Apply Discount').
+  - **Visual Feedback**: The interface renders actionable toggles and read-only badge previews (the `RoleModulePreview` component) natively mapped to these descriptions, grouping privileges organically by their functional domain.
+
 ## Features
 
 ### 📊 Real-time Analytics Dashboard
