@@ -14,6 +14,7 @@ export interface MenuPrivilege {
 export const menuPrivileges: Record<string, MenuPrivilege> = {
   Dashboard: { module: 'company_dashboard', isProjectUser: true },
   Orders: { module: 'orders' },
+  Reels: { module: 'reels' },
   Plasas: { module: 'shoppers', isProjectUser: true },
   Customers: { module: 'users', isProjectUser: true },
   'Project Users': { module: 'project_users', isProjectUser: true },
@@ -44,19 +45,19 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   'Withdraw Requests': { module: 'withdraw_requests', isProjectUser: true },
 
   // Procurement
-  'Procurement Dashboard': { module: 'procurement' },
-  Suppliers: { module: 'procurement' },
-  Quotations: { module: 'procurement' },
-  'Purchase Orders': { module: 'procurement' },
+  'Procurement Dashboard': { module: 'procurement_dashboard' },
+  Suppliers: { module: 'suppliers' },
+  Quotations: { module: 'quotations' },
+  'Purchase Orders': { module: 'purchase_orders' },
   'Goods Received': { module: 'procurement' },
-  'Procurement Reports': { module: 'procurement' },
+  'Procurement Reports': { module: 'procurement_dashboard' },
 
   // Production
-  Recipes: { module: 'production' },
-  'Production Orders': { module: 'production' },
-  'Production Dashboard': { module: 'production' },
-  'Cost & Profit': { module: 'production' },
-  'Simulate Stock': { module: 'production' },
+  Recipes: { module: 'recipes' },
+  'Production Orders': { module: 'production_orders' },
+  'Production Dashboard': { module: 'production_dashboard' },
+  'Cost & Profit': { module: 'cost_profit' },
+  'Simulate Stock': { module: 'simulate_stock' },
 
   // Tax
   'Tax Dashboard': { module: 'tax' },

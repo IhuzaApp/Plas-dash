@@ -96,7 +96,63 @@ export async function GET(req: Request) {
 
   try {
     if (!hasuraClient) throw new Error('Hasura client is not initialized');
-    const data = await hasuraClient.request<{ shop_subscriptions: any[] }>(GET_SHOP_SUBSCRIPTIONS);
+
+    const { searchParams } = new URL(req.url);
+    const shopId = searchParams.get('shop_id');
+    const restaurantId = searchParams.get('restaurant_id');
+
+    let query = GET_SHOP_SUBSCRIPTIONS;
+    let variables = {};
+
+    if (shopId || restaurantId) {
+      query = gql`
+        query GetFilteredShopSubscriptions($where: shop_subscriptions_bool_exp!) {
+          shop_subscriptions(where: $where, order_by: { created_at: desc }) {
+            billing_cycle
+            business_id
+            created_at
+            end_date
+            id
+            plan_id
+            restaurant_id
+            shop_id
+            start_date
+            status
+            updated_at
+            plan {
+              ai_request_limit
+              created_at
+              description
+              id
+              name
+              price_yearly
+              price_monthly
+              reel_limit
+              plan_modules {
+                id
+                module_id
+                plan_id
+                module {
+                  created_at
+                  group_name
+                  id
+                  name
+                  slug
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const where: any = { status: { _eq: "active" } };
+      if (shopId) where.shop_id = { _eq: shopId };
+      if (restaurantId) where.restaurant_id = { _eq: restaurantId };
+
+      variables = { where };
+    }
+
+    const data = await hasuraClient.request<{ shop_subscriptions: any[] }>(query, variables);
     return NextResponse.json({ shop_subscriptions: data.shop_subscriptions || [] });
   } catch (error) {
     console.error('Error fetching shop_subscriptions:', error);

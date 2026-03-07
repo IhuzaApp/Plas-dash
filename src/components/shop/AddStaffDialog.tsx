@@ -34,15 +34,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { RefreshCw, Eye, EyeOff, Loader2 } from 'lucide-react';
 import {
   UserPrivileges,
   PrivilegeKey,
   getDefaultPrivilegesForRole,
-  permissionGroups,
+  permissionGroups as allPermissionGroups,
   convertCustomPermissionsToPrivileges,
 } from '@/lib/privileges';
 import { DEFAULT_PRIVILEGES } from '@/types/privileges';
+import { useShopSubscriptionModules } from '@/hooks/useShopSubscriptionModules';
+
+// Generate random password
+// ... (omitted for brevity in replace_file_content, but I will include it in the actual call)
 
 const formSchema = z.object({
   fullnames: z.string().min(1, 'Full name is required'),
@@ -114,7 +118,13 @@ const generateRandomPassword = () => {
 // Note: permissionGroups is now imported from @/lib/privileges
 
 // Permission display component for the new privilege system
-const PermissionDisplay = ({ privileges }: { privileges: UserPrivileges }) => {
+const PermissionDisplay = ({
+  privileges,
+  permissionGroups,
+}: {
+  privileges: UserPrivileges;
+  permissionGroups: any[];
+}) => {
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
@@ -122,8 +132,8 @@ const PermissionDisplay = ({ privileges }: { privileges: UserPrivileges }) => {
           <div key={group.title} className="space-y-2">
             <h4 className="font-medium text-sm">{group.title}</h4>
             <div className="grid grid-cols-2 gap-2">
-              {group.permissions.map(permission => {
-                const hasAccess = privileges[group.module]?.[permission.key] || false;
+              {group.permissions.map((permission: any) => {
+                const hasAccess = privileges[group.module as PrivilegeKey]?.[permission.key] || false;
                 return (
                   <div key={permission.key} className="flex items-center gap-2">
                     <div
@@ -148,6 +158,22 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
   shopId,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const { availableModules, isLoading: isLoadingModules } = useShopSubscriptionModules(shopId);
+
+  const filteredPermissionGroups = React.useMemo(() => {
+    // If we're loading, keep an empty list to avoid showing unauthorized permissions
+    if (isLoadingModules) return [];
+
+    // If we have shopId, we MUST filter by available modules.
+    // We treat empty string as "not yet loaded" for safety.
+    if (shopId && shopId !== "") {
+      return allPermissionGroups.filter(group => availableModules.includes(group.module));
+    }
+
+    // Default to empty if we expect a shop context but don't have it yet
+    return [];
+  }, [availableModules, isLoadingModules, shopId]);
+
   const [customPrivileges, setCustomPrivileges] = useState<UserPrivileges>({
     ...DEFAULT_PRIVILEGES,
   });
@@ -225,30 +251,35 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
   function handleSubmit(values: FormData) {
     const { position, generatePassword, ...employeeData } = values;
     // Use custom privileges if custom role, otherwise use default
-    const privileges =
+    let privileges =
       roleType === 'custom' ? customPrivileges : getDefaultPrivilegesForRole(roleType);
+
+    // STRICT FILTERING: Only include modules that are in the subscription
+    const strictlyFilteredPrivileges: UserPrivileges = { ...DEFAULT_PRIVILEGES };
+
+    // Always preserve 'pages' group as it's required for routing
+    if (privileges.pages) {
+      strictlyFilteredPrivileges.pages = privileges.pages;
+    }
+
+    // Only copy over modules that are in the availableModules list
+    availableModules.forEach(modSlug => {
+      const slug = modSlug as PrivilegeKey;
+      if (privileges[slug]) {
+        strictlyFilteredPrivileges[slug] = privileges[slug];
+      }
+    });
+
     // Hash the password before submitting
     const hashedPassword = bcrypt.hashSync(employeeData.password, 10);
-    // Debug: Log privileges and converted array
-    if (process.env.NODE_ENV !== 'production') {
-      // Only log in dev
-      const { convertPrivilegesToOldFormat } = require('@/lib/privileges');
-      // Print the privileges object
-      console.log('DEBUG: Privileges object for role', roleType, privileges);
-      // Print the converted array
-      console.log(
-        'DEBUG: Old format array for role',
-        roleType,
-        convertPrivilegesToOldFormat(privileges)
-      );
-    }
+
     onSubmit({
       employee: {
         ...employeeData,
         password: hashedPassword,
         Position: position,
       },
-      privileges,
+      privileges: strictlyFilteredPrivileges,
     });
   }
 
@@ -613,20 +644,77 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                   )}
                 />
 
-                {/* Show permissions for selected role or custom selection */}
-                {roleType === 'custom' ? (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div>
-                      <h4 className="font-medium mb-3">Select Custom Permissions</h4>
-                      {/* Custom permission selection UI */}
+                {/* Unified Permissions Section */}
+                <div className="space-y-4">
+                  <Separator />
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium">
+                        {roleType === 'custom' ? (
+                          'Select Custom Permissions'
+                        ) : (
+                          <>
+                            Permissions for{' '}
+                            {roleType === 'globalAdmin'
+                              ? 'Global Admin'
+                              : roleType === 'systemAdmin'
+                                ? 'System Admin'
+                                : roleType === 'storeManager'
+                                  ? 'Store Manager'
+                                  : roleType === 'assistantManager'
+                                    ? 'Assistant Manager'
+                                    : roleType === 'cashier'
+                                      ? 'Cashier'
+                                      : roleType === 'salesAssociate'
+                                        ? 'Sales Associate'
+                                        : roleType === 'inventorySpecialist'
+                                          ? 'Inventory Specialist'
+                                          : roleType === 'financeManager'
+                                            ? 'Finance Manager'
+                                            : roleType === 'accountant'
+                                              ? 'Accountant'
+                                              : roleType === 'kitchenManager'
+                                                ? 'Kitchen Manager'
+                                                : roleType === 'chef'
+                                                  ? 'Chef'
+                                                  : roleType === 'waiter'
+                                                    ? 'Waiter'
+                                                    : roleType === 'bartender'
+                                                      ? 'Bartender'
+                                                      : roleType === 'deliveryDriver'
+                                                        ? 'Delivery Driver'
+                                                        : roleType === 'securityGuard'
+                                                          ? 'Security Guard'
+                                                          : roleType === 'maintenanceStaff'
+                                                            ? 'Maintenance Staff'
+                                                            : 'Custom Role'}
+                          </>
+                        )}
+                      </h4>
+                      {isLoadingModules && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+
+                    {isLoadingModules ? (
+                      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-sm text-muted-foreground">Checking subscription modules...</p>
+                      </div>
+                    ) : filteredPermissionGroups.length === 0 ? (
+                      <div className="p-8 text-center border rounded-lg bg-muted/20">
+                        <p className="text-sm text-muted-foreground">
+                          No modules available for this shop's subscription plan.
+                        </p>
+                      </div>
+                    ) : roleType === 'custom' ? (
                       <div className="space-y-4">
                         <div className="grid gap-4">
-                          {permissionGroups.map(group => (
+                          {filteredPermissionGroups.map(group => (
                             <div key={group.title} className="space-y-2">
                               <h4 className="font-medium text-sm">{group.title}</h4>
                               <div className="grid grid-cols-1 gap-2">
-                                {group.permissions.map(permission => (
+                                {group.permissions.map((permission: any) => (
                                   <div
                                     key={permission.key}
                                     className="flex items-center justify-between p-2 rounded-lg border"
@@ -636,10 +724,15 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                                     </span>
                                     <Switch
                                       checked={
-                                        customPrivileges[group.module]?.[permission.key] || false
+                                        customPrivileges[group.module as PrivilegeKey]?.[
+                                        permission.key
+                                        ] || false
                                       }
                                       onCheckedChange={() =>
-                                        handlePrivilegeToggle(group.module, permission.key)
+                                        handlePrivilegeToggle(
+                                          group.module as PrivilegeKey,
+                                          permission.key
+                                        )
                                       }
                                     />
                                   </div>
@@ -649,52 +742,14 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                           ))}
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <PermissionDisplay
+                        privileges={customPrivileges}
+                        permissionGroups={filteredPermissionGroups}
+                      />
+                    )}
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div>
-                      <h4 className="font-medium mb-3">
-                        Permissions for{' '}
-                        {roleType === 'globalAdmin'
-                          ? 'Global Admin'
-                          : roleType === 'systemAdmin'
-                            ? 'System Admin'
-                            : roleType === 'storeManager'
-                              ? 'Store Manager'
-                              : roleType === 'assistantManager'
-                                ? 'Assistant Manager'
-                                : roleType === 'cashier'
-                                  ? 'Cashier'
-                                  : roleType === 'salesAssociate'
-                                    ? 'Sales Associate'
-                                    : roleType === 'inventorySpecialist'
-                                      ? 'Inventory Specialist'
-                                      : roleType === 'financeManager'
-                                        ? 'Finance Manager'
-                                        : roleType === 'accountant'
-                                          ? 'Accountant'
-                                          : roleType === 'kitchenManager'
-                                            ? 'Kitchen Manager'
-                                            : roleType === 'chef'
-                                              ? 'Chef'
-                                              : roleType === 'waiter'
-                                                ? 'Waiter'
-                                                : roleType === 'bartender'
-                                                  ? 'Bartender'
-                                                  : roleType === 'deliveryDriver'
-                                                    ? 'Delivery Driver'
-                                                    : roleType === 'securityGuard'
-                                                      ? 'Security Guard'
-                                                      : roleType === 'maintenanceStaff'
-                                                        ? 'Maintenance Staff'
-                                                        : 'Custom Role'}
-                      </h4>
-                      <PermissionDisplay privileges={customPrivileges} />
-                    </div>
-                  </div>
-                )}
+                </div>
               </CardContent>
             </Card>
 

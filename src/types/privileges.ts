@@ -34,6 +34,20 @@ export interface UserPrivileges {
   withdraw_requests?: ModulePrivileges;
   procurement?: ModulePrivileges;
   production?: ModulePrivileges;
+  // Granular Production Modules
+  recipes?: ModulePrivileges;
+  production_orders?: ModulePrivileges;
+  production_dashboard?: ModulePrivileges;
+  cost_profit?: ModulePrivileges;
+  simulate_stock?: ModulePrivileges;
+  // Granular Procurement Modules
+  procurement_dashboard?: ModulePrivileges;
+  suppliers?: ModulePrivileges;
+  quotations?: ModulePrivileges;
+  purchase_orders?: ModulePrivileges;
+  // Others from DB
+  reels?: ModulePrivileges;
+  point_of_sale?: ModulePrivileges;
   tax?: ModulePrivileges;
   ai_chat?: ModulePrivileges;
   subscriptions?: ModulePrivileges;
@@ -336,6 +350,20 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     simulate_stock: false,
     view_cost_profit: false,
   },
+  // Granular Production
+  recipes: { access: false, view: false, manage: false },
+  production_orders: { access: false, view: false, manage: false },
+  production_dashboard: { access: false, view: false },
+  cost_profit: { access: false, view: false },
+  simulate_stock: { access: false, view: false, run: false },
+  // Granular Procurement
+  procurement_dashboard: { access: false, view: false },
+  suppliers: { access: false, view: false, manage: false },
+  quotations: { access: false, view: false, manage: false },
+  purchase_orders: { access: false, view: false, manage: false },
+  // Others
+  reels: { access: false, view: false, manage: false },
+  point_of_sale: { access: false, park_sale: false, process_sale: false },
   tax: {
     access: false,
     view_dashboard: false,

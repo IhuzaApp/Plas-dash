@@ -617,6 +617,105 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       },
     ],
   },
+  // Granular Production Modules
+  recipes: {
+    title: 'Recipes',
+    description: 'Manage food and product recipes',
+    actions: [
+      { key: 'access', label: 'Access Recipes', description: 'Can access recipes page' },
+      { key: 'view', label: 'View Recipes', description: 'Can view recipe details' },
+      { key: 'manage', label: 'Manage Recipes', description: 'Can create, edit and delete recipes' },
+    ],
+  },
+  production_orders: {
+    title: 'Production Orders',
+    description: 'Manage manufacturing and kitchen orders',
+    actions: [
+      { key: 'access', label: 'Access Orders', description: 'Can access production orders' },
+      { key: 'view', label: 'View Orders', description: 'Can view production order status' },
+      { key: 'manage', label: 'Manage Orders', description: 'Can create and fulfill orders' },
+    ],
+  },
+  production_dashboard: {
+    title: 'Production Dashboard',
+    description: 'Overview of kitchen and production activity',
+    actions: [
+      { key: 'access', label: 'Access Dashboard', description: 'Can access production dashboard' },
+      { key: 'view', label: 'View Analytics', description: 'Can view production metrics' },
+    ],
+  },
+  cost_profit: {
+    title: 'Cost & Profit',
+    description: 'Analyze production costs and margins',
+    actions: [
+      { key: 'access', label: 'Access Analytics', description: 'Can access cost & profit data' },
+      { key: 'view', label: 'View Reports', description: 'Can view financial production reports' },
+    ],
+  },
+  simulate_stock: {
+    title: 'Simulate Stock',
+    description: 'Run stock deduction and requirement simulations',
+    actions: [
+      { key: 'access', label: 'Access Simulator', description: 'Can access stock simulator' },
+      { key: 'view', label: 'View Results', description: 'Can view simulation outcomes' },
+      { key: 'run', label: 'Run Simulation', description: 'Can execute new simulations' },
+    ],
+  },
+  // Granular Procurement Modules
+  procurement_dashboard: {
+    title: 'Procurement Dashboard',
+    description: 'Overview of supply chain and purchasing',
+    actions: [
+      { key: 'access', label: 'Access Dashboard', description: 'Can access procurement dashboard' },
+      { key: 'view', label: 'View Metrics', description: 'Can view purchasing analytics' },
+    ],
+  },
+  suppliers: {
+    title: 'Suppliers',
+    description: 'Manage vendors and supplier directories',
+    actions: [
+      { key: 'access', label: 'Access Suppliers', description: 'Can access suppliers page' },
+      { key: 'view', label: 'View Suppliers', description: 'Can view vendor details' },
+      { key: 'manage', label: 'Manage Suppliers', description: 'Can create and edit vendor profiles' },
+    ],
+  },
+  quotations: {
+    title: 'Quotations',
+    description: 'Manage supplier price quotes and bids',
+    actions: [
+      { key: 'access', label: 'Access Quotations', description: 'Can access quotations page' },
+      { key: 'view', label: 'View Quotations', description: 'Can view price quotes' },
+      { key: 'manage', label: 'Manage Quotations', description: 'Can create and compare quotes' },
+    ],
+  },
+  purchase_orders: {
+    title: 'Purchase Orders',
+    description: 'Manage procurement orders and fulfillment',
+    actions: [
+      { key: 'access', label: 'Access POs', description: 'Can access purchase orders' },
+      { key: 'view', label: 'View POs', description: 'Can view order status' },
+      { key: 'manage', label: 'Manage POs', description: 'Can create and approve purchase orders' },
+    ],
+  },
+  // Others
+  reels: {
+    title: 'Reels',
+    description: 'Manage short video content and engagement',
+    actions: [
+      { key: 'access', label: 'Access Reels', description: 'Can access reels management' },
+      { key: 'view', label: 'View Reels', description: 'Can view video content' },
+      { key: 'manage', label: 'Manage Content', description: 'Can upload and edit reels' },
+    ],
+  },
+  point_of_sale: {
+    title: 'Point of Sale',
+    description: 'Unified point of sale operations',
+    actions: [
+      { key: 'access', label: 'Access POS', description: 'Can access the POS system' },
+      { key: 'park_sale', label: 'Park Sale', description: 'Can put sales on hold' },
+      { key: 'process_sale', label: 'Process Sale', description: 'Can complete transactions' },
+    ],
+  },
   pages: {
     title: 'Pages',
     description: 'Manage custom pages and content',

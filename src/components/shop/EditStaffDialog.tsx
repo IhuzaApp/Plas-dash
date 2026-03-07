@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -37,9 +38,10 @@ import {
   UserPrivileges,
   PrivilegeKey,
   getDefaultPrivilegesForRole,
-  permissionGroups,
+  permissionGroups as allPermissionGroups,
 } from '@/lib/privileges';
 import { DEFAULT_PRIVILEGES } from '@/types/privileges';
+import { useShopSubscriptionModules } from '@/hooks/useShopSubscriptionModules';
 
 const formSchema = z.object({
   fullnames: z.string().min(1, 'Full name is required'),
@@ -92,7 +94,13 @@ export interface EditStaffDialogProps {
 }
 
 // Permission display component — identical to AddStaffDialog
-const PermissionDisplay = ({ privileges }: { privileges: UserPrivileges }) => {
+const PermissionDisplay = ({
+  privileges,
+  permissionGroups,
+}: {
+  privileges: UserPrivileges;
+  permissionGroups: any[];
+}) => {
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
@@ -100,8 +108,8 @@ const PermissionDisplay = ({ privileges }: { privileges: UserPrivileges }) => {
           <div key={group.title} className="space-y-2">
             <h4 className="font-medium text-sm">{group.title}</h4>
             <div className="grid grid-cols-2 gap-2">
-              {group.permissions.map(permission => {
-                const hasAccess = privileges[group.module]?.[permission.key] || false;
+              {group.permissions.map((permission: any) => {
+                const hasAccess = privileges[group.module as PrivilegeKey]?.[permission.key] || false;
                 return (
                   <div key={permission.key} className="flex items-center gap-2">
                     <div
@@ -175,6 +183,23 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
     }
   }, [roleType, open]);
 
+  const shopId = employee?.shop_id as string;
+  const restaurantId = employee?.restaurant_id as string;
+  const { availableModules, isLoading: isLoadingModules } = useShopSubscriptionModules(shopId, restaurantId);
+
+  const filteredPermissionGroups = React.useMemo(() => {
+    // If we're loading, keep an empty list to avoid showing unauthorized permissions
+    if (isLoadingModules) return [];
+
+    // If we have either ID, we MUST filter by available modules.
+    if ((shopId && shopId !== "") || (restaurantId && restaurantId !== "")) {
+      return allPermissionGroups.filter(group => availableModules.includes(group.module));
+    }
+
+    // Default to empty for shop/restaurant staff if context is missing or loading
+    return [];
+  }, [availableModules, isLoadingModules, shopId, restaurantId]);
+
   function handlePrivilegeToggle(module: PrivilegeKey, action: string) {
     setCustomPrivileges(prev => {
       const newValue = !prev[module]?.[action];
@@ -241,10 +266,26 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         ? customPrivileges
         : getDefaultPrivilegesForRole(values.roleType);
 
+    // STRICT FILTERING: Only include modules that are in the subscription
+    const strictlyFilteredPrivileges: UserPrivileges = { ...DEFAULT_PRIVILEGES };
+
+    // Always preserve 'pages' group as it's required for routing
+    if (privileges.pages) {
+      strictlyFilteredPrivileges.pages = privileges.pages;
+    }
+
+    // Only copy over modules that are in the availableModules list
+    availableModules.forEach(modSlug => {
+      const slug = modSlug as PrivilegeKey;
+      if (privileges[slug]) {
+        strictlyFilteredPrivileges[slug] = privileges[slug];
+      }
+    });
+
     onSubmit({
       id: employee.id,
       employee: finalChanges,
-      privileges,
+      privileges: strictlyFilteredPrivileges,
     });
   }
 
@@ -516,19 +557,42 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                   )}
                 />
 
-                {/* Permissions section — identical to AddStaffDialog */}
-                {roleType === 'custom' ? (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div>
-                      <h4 className="font-medium mb-3">Select Custom Permissions</h4>
+                {/* Unified Permissions Section */}
+                <div className="space-y-4">
+                  <Separator />
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium">
+                        {roleType === 'custom' ? (
+                          'Select Custom Permissions'
+                        ) : (
+                          <>Permissions for {roleLabel[roleType] ?? roleType}</>
+                        )}
+                      </h4>
+                      {isLoadingModules && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+
+                    {isLoadingModules ? (
+                      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-sm text-muted-foreground">Checking subscription modules...</p>
+                      </div>
+                    ) : filteredPermissionGroups.length === 0 ? (
+                      <div className="p-8 text-center border rounded-lg bg-muted/20">
+                        <p className="text-sm text-muted-foreground">
+                          No modules available for this shop's subscription plan.
+                        </p>
+                      </div>
+                    ) : roleType === 'custom' ? (
                       <div className="space-y-4">
                         <div className="grid gap-4">
-                          {permissionGroups.map(group => (
+                          {filteredPermissionGroups.map(group => (
                             <div key={group.title} className="space-y-2">
                               <h4 className="font-medium text-sm">{group.title}</h4>
                               <div className="grid grid-cols-1 gap-2">
-                                {group.permissions.map(permission => (
+                                {group.permissions.map((permission: any) => (
                                   <div
                                     key={permission.key}
                                     className="flex items-center justify-between p-2 rounded-lg border"
@@ -538,10 +602,15 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                                     </span>
                                     <Switch
                                       checked={
-                                        customPrivileges[group.module]?.[permission.key] || false
+                                        customPrivileges[group.module as PrivilegeKey]?.[
+                                        permission.key
+                                        ] || false
                                       }
                                       onCheckedChange={() =>
-                                        handlePrivilegeToggle(group.module, permission.key)
+                                        handlePrivilegeToggle(
+                                          group.module as PrivilegeKey,
+                                          permission.key
+                                        )
                                       }
                                     />
                                   </div>
@@ -551,19 +620,14 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                           ))}
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <PermissionDisplay
+                        privileges={customPrivileges}
+                        permissionGroups={filteredPermissionGroups}
+                      />
+                    )}
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div>
-                      <h4 className="font-medium mb-3">
-                        Permissions for {roleLabel[roleType] ?? roleType}
-                      </h4>
-                      <PermissionDisplay privileges={customPrivileges} />
-                    </div>
-                  </div>
-                )}
+                </div>
               </CardContent>
             </Card>
 
