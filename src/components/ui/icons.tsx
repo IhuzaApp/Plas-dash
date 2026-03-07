@@ -8,6 +8,9 @@ import {
   TrendingUp,
   Shield,
   Database,
+  Calculator,
+  Factory,
+  ShoppingCart,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -23,4 +26,7 @@ export const Icons = {
   TrendingUp,
   Shield,
   Database,
+  Calculator,
+  Factory,
+  ShoppingCart,
 } as const;

@@ -29,7 +29,8 @@ export default function HelpCenter() {
         const matchingArticles = category.articles.filter(
           article =>
             article.title.toLowerCase().includes(query) ||
-            article.content.toLowerCase().includes(query)
+            (article as any).content?.toLowerCase().includes(query) ||
+            (article as any).overview?.toLowerCase().includes(query)
         );
 
         if (categoryMatches || matchingArticles.length > 0) {
@@ -133,38 +134,86 @@ export default function HelpCenter() {
             <div>
               <h2 className="text-2xl font-semibold mb-6">Popular Topics</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1"
-                >
-                  <Icons.Package className="h-5 w-5 mb-1" />
-                  <span className="font-semibold">Track an Order</span>
-                  <span className="text-xs text-muted-foreground">Monitor real-time status</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1"
-                >
-                  <Icons.Wallet className="h-5 w-5 mb-1" />
-                  <span className="font-semibold">Manage Wallet</span>
-                  <span className="text-xs text-muted-foreground">Check balances & history</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1"
-                >
-                  <Icons.Users className="h-5 w-5 mb-1" />
-                  <span className="font-semibold">Shopper Performance</span>
-                  <span className="text-xs text-muted-foreground">View elite rankings</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1"
-                >
-                  <Icons.CreditCard className="h-5 w-5 mb-1" />
-                  <span className="font-semibold">Manage Subscriptions</span>
-                  <span className="text-xs text-muted-foreground">Track billing & renewals</span>
-                </Button>
+                <Link href="/help/subscriptions/billing-dashboard">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1 hover:border-primary/50 transition-colors"
+                  >
+                    <Icons.CreditCard className="h-5 w-5 mb-1 text-primary" />
+                    <span className="font-semibold">Subscriptions</span>
+                    <span className="text-xs text-muted-foreground">Billing & renewals</span>
+                  </Button>
+                </Link>
+                <Link href="/help/tax-management/tax-declarations">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1 hover:border-primary/50 transition-colors"
+                  >
+                    <Icons.Calculator className="h-5 w-5 mb-1 text-primary" />
+                    <span className="font-semibold">Tax Management</span>
+                    <span className="text-xs text-muted-foreground">Forecasting & reporting</span>
+                  </Button>
+                </Link>
+                <Link href="/help/pos-production/recipe-management">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1 hover:border-primary/50 transition-colors"
+                  >
+                    <Icons.Factory className="h-5 w-5 mb-1 text-primary" />
+                    <span className="font-semibold">POS Production</span>
+                    <span className="text-xs text-muted-foreground">Recipes & stock control</span>
+                  </Button>
+                </Link>
+                <Link href="/help/procurement/supplier-management">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1 hover:border-primary/50 transition-colors"
+                  >
+                    <Icons.ShoppingCart className="h-5 w-5 mb-1 text-primary" />
+                    <span className="font-semibold">Procurement</span>
+                    <span className="text-xs text-muted-foreground">Suppliers & POs</span>
+                  </Button>
+                </Link>
+                <Link href="/help/orders/create-order">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1 hover:border-primary/50 transition-colors"
+                  >
+                    <Icons.Package className="h-5 w-5 mb-1 text-primary" />
+                    <span className="font-semibold">Order Management</span>
+                    <span className="text-xs text-muted-foreground">Creation & tracking</span>
+                  </Button>
+                </Link>
+                <Link href="/help/financial/wallet-management">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1 hover:border-primary/50 transition-colors"
+                  >
+                    <Icons.Wallet className="h-5 w-5 mb-1 text-primary" />
+                    <span className="font-semibold">Financials</span>
+                    <span className="text-xs text-muted-foreground">Wallets & payouts</span>
+                  </Button>
+                </Link>
+                <Link href="/help/support/create-ticket">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1 hover:border-primary/50 transition-colors"
+                  >
+                    <Icons.Headphones className="h-5 w-5 mb-1 text-primary" />
+                    <span className="font-semibold">Customer Support</span>
+                    <span className="text-xs text-muted-foreground">Tickets & assistance</span>
+                  </Button>
+                </Link>
+                <Link href="/help/products/manual-product-entry">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start h-auto py-4 px-6 flex flex-col items-start gap-1 hover:border-primary/50 transition-colors"
+                  >
+                    <Icons.Package className="h-5 w-5 mb-1 text-primary" />
+                    <span className="font-semibold">Product Catalog</span>
+                    <span className="text-xs text-muted-foreground">Manual & bulk entry</span>
+                  </Button>
+                </Link>
               </div>
             </div>
           )}

@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 
   return {
     title: `${article.title} - Help Center`,
-    description: article.content.slice(0, 160),
+    description: ((article as any).overview || (article as any).content || '').slice(0, 160),
   };
 }
 
@@ -55,10 +55,123 @@ export default function ArticlePage({ params }: ArticlePageProps) {
         }
       />
 
-      <div className="max-w-3xl space-y-8">
+      <div className="max-w-4xl space-y-10 pb-20">
         {/* Article Content */}
-        <div className="prose prose-slate dark:prose-invert max-w-none">
-          <HelpMarkdown content={article.content} />
+        <div className="space-y-8">
+          {/* Overview */}
+          {(article as any).overview && (
+            <div className="bg-primary/5 border border-primary/10 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                <HelpCircle className="h-5 w-5 text-primary" />
+                Overview
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                {(article as any).overview}
+              </p>
+            </div>
+          )}
+
+          {/* Legacy Content Fallback */}
+          {(article as any).content && (
+            <div className="prose prose-slate dark:prose-invert max-w-none">
+              <HelpMarkdown content={(article as any).content} />
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Who Uses This */}
+            {(article as any).who_uses_this && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Who Uses This?</h3>
+                <div className="flex flex-wrap gap-2">
+                  {(article as any).who_uses_this.map((role: string) => (
+                    <span key={role} className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm">
+                      {role}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Key Features / Fields */}
+            {((article as any).key_features || (article as any).key_fields) && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">
+                  {(article as any).key_features ? "Key Features" : "Key Fields"}
+                </h3>
+                <ul className="space-y-2">
+                  {((article as any).key_features || (article as any).key_fields).map((item: string) => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Steps */}
+          {(article as any).steps && (
+            <div className="space-y-4 bg-muted/30 rounded-xl p-6">
+              <h3 className="text-lg font-semibold">Step-by-Step Guide</h3>
+              <div className="space-y-4">
+                {(article as any).steps.map((step: string, index: number) => (
+                  <div key={index} className="flex gap-4">
+                    <div className="flex-none w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                      {index + 1}
+                    </div>
+                    <div className="pt-1 text-muted-foreground font-medium">
+                      {step}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Examples */}
+          {(article as any).example && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-12">
+              <div className="bg-card border rounded-xl overflow-hidden">
+                <div className="bg-muted px-4 py-2 text-sm font-semibold border-b">
+                  Business Example
+                </div>
+                <div className="p-6 space-y-4">
+                  <p className="font-medium">{(article as any).example.scenario}</p>
+                  <pre className="text-xs bg-slate-950 text-blue-300 p-4 rounded-lg overflow-x-auto">
+                    {JSON.stringify((article as any).example.data || (article as any).example, null, 2)}
+                  </pre>
+                </div>
+              </div>
+
+              {(article as any).financial_example && (
+                <div className="bg-primary/5 border border-primary/20 rounded-xl overflow-hidden">
+                  <div className="bg-primary/10 px-4 py-2 text-sm font-semibold border-b border-primary/20">
+                    Financial Impact & Calculations
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <div className="space-y-2">
+                      {Object.entries((article as any).financial_example).map(([key, value]: [string, any]) => (
+                        <div key={key} className="flex justify-between items-center text-sm border-b border-primary/10 pb-1">
+                          <span className="capitalize">{key.replace(/_/g, ' ')}</span>
+                          <span className="font-mono font-bold text-primary">
+                            {typeof value === 'number' ? `$${value}` : value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Explanation */}
+                    {(article as any).explanation && (
+                      <div className="mt-4 text-sm italic text-muted-foreground border-l-4 border-primary pl-4">
+                        {(article as any).explanation}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Related Articles */}

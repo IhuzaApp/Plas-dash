@@ -8,59 +8,57 @@
         {
           "id": "dashboard-overview",
           "title": "Dashboard Overview",
-          "content": "The dashboard provides a comprehensive view of your delivery operations. Key features include:\n\n- **Real-time Analytics**: Monitor revenue trends, order volume, and active plasa statistics.\n- **Order Tracking**: Follow every order from creation to delivery confirmation.\n- **Financial Insights**: Real-time balance tracking for both company and shopper wallets.\n- **Service Monitoring**: Keep an eye on pending alerts and system performance metrics."
+          "overview": "The Dashboard is the main control center of the system. It provides a real-time overview of your business performance, operational activity, and system health.",
+          "who_uses_this": [
+            "Global Admin",
+            "System Admin",
+            "Project Manager",
+            "Support Staff"
+          ],
+          "content": "The dashboard displays key metrics such as total revenue, number of completed orders, pending orders, and overall activity across the platform. These metrics update automatically, allowing managers and administrators to monitor business performance without generating manual reports.\n\nEvery order processed through the system can be monitored from the dashboard. You can see which orders are newly created, currently being processed, in delivery, or already completed. This helps staff respond quickly to delays or operational issues.\n\nFinancial widgets display balances related to company wallets, shop payments, and customer transactions. This makes it easier to quickly identify revenue flow and monitor financial health.\n\nThe dashboard also highlights alerts such as overdue deliveries, system notifications, or unresolved support tickets. These alerts help teams react quickly and maintain smooth operations.",
+          "key_features": [
+            "Real-time revenue tracking",
+            "Live order monitoring",
+            "Operational alerts",
+            "Financial wallet balances"
+          ],
+          "example": {
+            "scenario": "A manager opens the dashboard at the start of the day.",
+            "data": {
+              "orders_today": 320,
+              "orders_in_progress": 24,
+              "completed_orders": 296,
+              "average_delivery_time": "42 minutes"
+            }
+          },
+          "financial_example": {
+            "average_order_value": 18,
+            "orders_today": 320,
+            "daily_revenue_calculation": "320 × 18",
+            "total_revenue": 5760
+          },
+          "explanation": "This means the business generated $5,760 in revenue today based on the current orders."
         },
         {
           "id": "first-steps",
           "title": "First Steps",
-          "content": "1. **Log in to your account**: Use your system credentials to access the secure dashboard.\n2. **Explore Navigation**: Use the sidebar to access Management, POS, and Configuration tools.\n3. **Set Up Notifications**: Ensure you stay informed about pending orders and ticket updates.\n4. **Review Documentation**: Check the 'Marketing & Growth' section to understand how to leverage promotions and referrals."
-        }
-      ]
-    },
-    {
-      "id": "access-control",
-      "title": "Access Control (RBAC)",
-      "icon": "Shield",
-      "articles": [
-        {
-          "id": "understanding-roles",
-          "title": "User Roles & Levels",
-          "content": "The system uses a hierarchical Role-Based Access Control (RBAC) system:\n\n- **Global Admin**: Full access to all system modules, including privilege management and financial overrides.\n- **System Admin**: Broad operational access, focused on system-wide configurations.\n- **Project Admin**: Management access for specific project components.\n- **Support Staff**: Access limited to customer tickets, refunds, and order monitoring."
-        },
-        {
-          "id": "managing-privileges",
-          "title": "Managing User Privileges",
-          "content": "Privileges are managed in the 'Project Users' section:\n\n1. **Module Access**: Toggle visibility and entry access for entire sections (e.g., Wallet, Inventory).\n2. **Action Privileges**: Specific permissions for Add, Edit, or Delete actions within a module.\n3. **Two-Factor Auth**: Admins can monitor and enforce 2FA for sensitive accounts."
-        },
-        {
-          "id": "global-admin-privileges",
-          "title": "Global Admin Privileges",
-          "content": "The Global Admin has absolute access to every module and action in the system.\n\n### Privilege JSON\n```json\n{\n  \"help\": {\"access\": true, \"view_help\": true, \"search_help\": true, \"view_articles\": true, \"view_categories\": true, \"edit_help_articles\": true, \"view_help_articles\": true, \"create_help_articles\": true, \"delete_help_articles\": true, \"manage_help_categories\": true},\n  \"pages\": {\"access\": true, \"access_pos\": true, \"view_pages\": true, \"access_help\": true, \"access_shops\": true, \"access_users\": true, \"access_orders\": true, \"access_wallet\": true, \"access_refunds\": true, \"access_tickets\": true, \"access_checkout\": true, \"access_products\": true, \"access_settings\": true, \"access_shoppers\": true, \"access_dashboard\": true, \"access_discounts\": true, \"access_inventory\": true, \"access_referrals\": true, \"access_promotions\": true, \"access_pos_terminal\": true, \"access_transactions\": true, \"access_project_users\": true, \"access_shop_dashboard\": true, \"access_staff_management\": true, \"access_company_dashboard\": true, \"access_delivery_settings\": true, \"access_financial_overview\": true},\n  \"shops\": {\"access\": true, \"add_shops\": true, \"edit_shops\": true, \"view_shops\": true, \"delete_shops\": true, \"view_shop_details\": true, \"manage_shop_settings\": true, \"view_shop_performance\": true},\n  \"users\": {\"access\": true, \"add_users\": true, \"edit_users\": true, \"view_users\": true, \"delete_users\": true, \"manage_user_roles\": true, \"view_user_details\": true, \"view_user_activity\": true},\n  \"orders\": {\"access\": true, \"edit_orders\": true, \"view_orders\": true, \"cancel_orders\": true, \"create_orders\": true, \"delete_orders\": true, \"export_orders\": true, \"process_orders\": true, \"assign_delivery\": true, \"view_order_details\": true, \"view_order_history\": true, \"update_order_status\": true},\n  \"wallet\": {\"access\": true, \"add_funds\": true, \"view_wallet\": true, \"remove_funds\": true, \"view_balance\": true, \"view_wallets\": true, \"process_payout\": true, \"process_payouts\": true, \"view_transactions\": true, \"export_wallet_data\": true, \"manage_wallet_settings\": true},\n  \"refunds\": {\"access\": true, \"view_refunds\": true, \"export_refunds\": true, \"reject_refunds\": true, \"approve_refunds\": true, \"process_refunds\": true, \"export_refund_data\": true, \"view_refund_details\": true, \"view_refund_history\": true},\n  \"tickets\": {\"access\": true, \"edit_tickets\": true, \"view_tickets\": true, \"assign_tickets\": true, \"create_tickets\": true, \"delete_tickets\": true, \"export_tickets\": true, \"resolve_tickets\": true, \"view_ticket_details\": true},\n  \"checkout\": {\"access\": true, \"edit_orders\": true, \"view_orders\": true, \"cancel_orders\": true, \"create_orders\": true, \"apply_discount\": true, \"process_payment\": true, \"edit_customer_info\": true, \"view_customer_info\": true, \"delete_pending_orders\": true},\n  \"products\": {\"access\": true, \"add_products\": true, \"edit_products\": true, \"view_products\": true, \"view_analytics\": true, \"delete_products\": true, \"export_products\": true, \"import_products\": true, \"manage_categories\": true},\n  \"settings\": {\"access\": true, \"edit_settings\": true, \"manage_backup\": true, \"view_settings\": true, \"view_audit_logs\": true, \"view_system_logs\": true, \"manage_notifications\": true, \"manage_system_config\": true},\n  \"shoppers\": {\"access\": true, \"add_shoppers\": true, \"edit_shoppers\": true, \"view_shoppers\": true, \"delete_shoppers\": true, \"manage_shopper_data\": true, \"view_shopper_orders\": true, \"view_shopper_wallet\": true, \"view_shopper_details\": true, \"view_shopper_history\": true, \"view_shopper_ratings\": true},\n  \"analytics\": {\"access\": true, \"export_reports\": true, \"view_analytics\": true, \"create_custom_reports\": true, \"view_performance_metrics\": true},\n  \"dashboard\": {\"access\": true, \"view_reports\": true, \"view_analytics\": true, \"view_dashboard\": true},\n  \"discounts\": {\"access\": true, \"edit_discount\": true, \"apply_discount\": true, \"view_discounts\": true, \"create_discount\": true, \"delete_discount\": true, \"manage_discount_rules\": true},\n  \"inventory\": {\"access\": true, \"add_products\": true, \"update_stock\": true, \"edit_products\": true, \"view_products\": true, \"delete_products\": true, \"export_products\": true, \"import_products\": true, \"manage_categories\": true, \"view_stock_levels\": true},\n  \"referrals\": {\"access\": true, \"view_data\": true, \"export_data\": true},\n  \"reporting\": {\"access\": true, \"export_data\": true, \"generate_reports\": true, \"schedule_reports\": true, \"view_report_history\": true},\n  \"audit_logs\": {\"access\": true, \"view_audit_logs\": true, \"export_audit_logs\": true, \"search_audit_logs\": true, \"manage_audit_settings\": true},\n  \"promotions\": {\"access\": true, \"edit_promotions\": true, \"view_promotions\": true, \"create_promotions\": true, \"delete_promotions\": true, \"export_promotions\": true, \"activate_promotions\": true, \"deactivate_promotions\": true, \"manage_promotion_rules\": true, \"view_promotion_analytics\": true},\n  \"maintenance\": {\"access\": true, \"perform_maintenance\": true, \"schedule_maintenance\": true, \"view_maintenance_logs\": true, \"manage_maintenance_schedule\": true},\n  \"pos_terminal\": {\"access\": true, \"edit_cart\": true, \"park_sale\": true, \"view_cart\": true, \"hold_order\": true, \"process_sale\": true, \"resume_order\": true, \"apply_promotions\": true},\n  \"transactions\": {\"view\": true, \"access\": true, \"export\": true, \"refund\": true, \"view_details\": true, \"view_receipts\": true, \"print_receipts\": true, \"process_refund\": true},\n  \"project_users\": {\"access\": true, \"add_project_users\": true, \"edit_project_users\": true, \"view_project_users\": true, \"delete_project_users\": true, \"manage_project_user_roles\": true, \"view_project_user_details\": true, \"view_project_user_activity\": true},\n  \"access_control\": {\"access\": true, \"audit_access\": true, \"manage_roles\": true, \"view_access_logs\": true, \"manage_permissions\": true},\n  \"shop_dashboard\": {\"access\": true, \"view_sales_data\": true, \"manage_daily_targets\": true, \"view_customer_metrics\": true, \"view_shop_performance\": true, \"view_staff_performance\": true},\n  \"global_settings\": {\"access\": true, \"system_preferences\": true, \"edit_global_settings\": true, \"manage_global_config\": true, \"view_global_settings\": true},\n  \"help_management\": {\"access\": true, \"edit_help_articles\": true, \"manage_help_content\": true, \"create_help_articles\": true, \"delete_help_articles\": true, \"manage_help_categories\": true},\n  \"user_management\": {\"access\": true, \"edit_users\": true, \"create_users\": true, \"delete_users\": true, \"view_all_users\": true, \"manage_user_roles\": true, \"view_user_activity\": true},\n  \"staff_management\": {\"access\": true, \"assign_roles\": true, \"delete_staff\": true, \"add_new_staff\": true, \"edit_accounts\": true, \"view_accounts\": true, \"edit_permissions\": true, \"view_permissions\": true, \"view_activity_logs\": true},\n  \"company_dashboard\": {\"access\": true, \"view_reports\": true, \"export_reports\": true, \"view_analytics\": true, \"view_revenue_data\": true, \"view_performance_metrics\": true},\n  \"delivery_settings\": {\"access\": true, \"set_delivery_fees\": true, \"manage_delivery_fees\": true, \"manage_delivery_zones\": true, \"view_delivery_reports\": true, \"edit_delivery_settings\": true, \"view_delivery_settings\": true, \"configure_delivery_times\": true},\n  \"development_tools\": {\"access\": true, \"access_debug_tools\": true, \"view_development_tools\": true, \"manage_development_config\": true, \"manage_development_settings\": true},\n  \"system_management\": {\"access\": true, \"system_maintenance\": true, \"view_system_status\": true, \"manage_system_health\": true, \"performance_monitoring\": true},\n  \"system_monitoring\": {\"access\": true, \"view_alerts\": true, \"manage_monitoring\": true, \"monitor_performance\": true, \"view_system_metrics\": true},\n  \"financial_overview\": {\"access\": true, \"view_profits\": true, \"view_profit_margins\": true, \"view_expense_reports\": true, \"view_revenue_reports\": true, \"export_financial_data\": true},\n  \"support_management\": {\"access\": true, \"assign_tickets\": true, \"manage_tickets\": true, \"resolve_tickets\": true, \"view_support_tickets\": true, \"view_support_analytics\": true},\n  \"security_management\": {\"access\": true, \"view_security_logs\": true, \"manage_authentication\": true, \"view_security_settings\": true, \"manage_security_policies\": true},\n  \"system_configuration\": {\"access\": true, \"system_parameters\": true, \"edit_configuration\": true, \"view_configuration\": true, \"manage_feature_flags\": true}\n}\n```"
-        },
-        {
-          "id": "project-manager-privileges",
-          "title": "Project Manager Privileges",
-          "content": "The Project Manager role focuses on operational oversight across multiple modules.\n\n### Privilege JSON\n```json\n{\n  \"orders\": {\"access\": true, \"view_orders\": true, \"create_orders\": true, \"edit_orders\": true, \"process_orders\": true, \"view_order_details\": true},\n  \"shoppers\": {\"access\": true, \"view_shoppers\": true, \"edit_shoppers\": true, \"view_shopper_details\": true, \"view_shopper_orders\": true},\n  \"users\": {\"access\": true, \"view_users\": true, \"edit_users\": true, \"view_user_details\": true},\n  \"shops\": {\"access\": true, \"view_shops\": true, \"edit_shops\": true, \"view_shop_details\": true},\n  \"products\": {\"access\": true, \"view_products\": true, \"edit_products\": true, \"manage_categories\": true},\n  \"wallet\": {\"access\": true, \"view_wallets\": true, \"process_payouts\": true, \"view_transactions\": true},\n  \"refunds\": {\"access\": true, \"view_refunds\": true, \"process_refunds\": true, \"approve_refunds\": true},\n  \"tickets\": {\"access\": true, \"view_tickets\": true, \"create_tickets\": true, \"resolve_tickets\": true},\n  \"dashboard\": {\"access\": true, \"view_reports\": true, \"view_analytics\": true},\n  \"promotions\": {\"access\": true, \"view_promotions\": true, \"create_promotions\": true, \"activate_promotions\": true}\n}\n```"
-        },
-        {
-          "id": "system-admin-privileges",
-          "title": "System Admin Privileges",
-          "content": "Broad operational access across store modules with configuration rights.\n\n### Privilege JSON\n```json\n{\n  \"checkout\": {\"access\": true, \"view_orders\": true, \"create_orders\": true, \"process_payment\": true},\n  \"inventory\": {\"access\": true, \"view_products\": true, \"add_products\": true, \"edit_products\": true, \"update_stock\": true},\n  \"transactions\": {\"access\": true, \"view\": true, \"export\": true, \"view_details\": true},\n  \"discounts\": {\"access\": true, \"view_discounts\": true, \"create_discount\": true, \"apply_discount\": true},\n  \"company_dashboard\": {\"access\": true, \"view_reports\": true, \"view_analytics\": true},\n  \"shop_dashboard\": {\"access\": true, \"view_sales_data\": true},\n  \"financial_overview\": {\"access\": true, \"view_profits\": true},\n  \"pos_terminal\": {\"access\": true, \"process_sale\": true},\n  \"products\": {\"access\": true, \"view_products\": true, \"add_products\": true},\n  \"settings\": {\"access\": true, \"view_settings\": true, \"view_audit_logs\": true},\n  \"referrals\": {\"access\": true, \"view_data\": true},\n  \"staff_management\": {\"access\": true, \"add_new_staff\": true, \"assign_roles\": true}\n}\n```"
-        },
-        {
-          "id": "customer-support-privileges",
-          "title": "Customer Support Privileges",
-          "content": "Manage orders, shoppers, and tickets to assist users.\n\n### Privilege JSON\n```json\n{\n  \"orders\": {\"access\": true, \"view_orders\": true, \"edit_orders\": true, \"view_order_details\": true},\n  \"shoppers\": {\"access\": true, \"view_shoppers\": true, \"view_shopper_details\": true},\n  \"users\": {\"access\": true, \"view_users\": true},\n  \"shops\": {\"access\": true, \"view_shops\": true},\n  \"products\": {\"access\": true, \"view_products\": true},\n  \"wallet\": {\"access\": true, \"view_wallets\": true, \"view_balance\": true},\n  \"refunds\": {\"access\": true, \"view_refunds\": true, \"process_refunds\": true},\n  \"tickets\": {\"access\": true, \"view_tickets\": true, \"resolve_tickets\": true},\n  \"help\": {\"access\": true, \"view_help\": true}\n}\n```"
-        },
-        {
-          "id": "assistant-manager-privileges",
-          "title": "Assistant Manager Privileges",
-          "content": "Oversee store operations and limited staff management.\n\n### Privilege JSON\n```json\n{\n  \"checkout\": {\"access\": true, \"view_orders\": true, \"process_payment\": true},\n  \"inventory\": {\"access\": true, \"view_products\": true, \"update_stock\": true},\n  \"pos_terminal\": {\"access\": true, \"process_sale\": true},\n  \"orders\": {\"access\": true, \"view_orders\": true, \"edit_orders\": true},\n  \"staff_management\": {\"access\": true, \"view_accounts\": true, \"add_new_staff\": true}\n}\n```"
-        },
-        {
-          "id": "cashier-privileges",
-          "title": "Cashier Privileges",
-          "content": "Focused on POS operations and order processing.\n\n### Privilege JSON\n```json\n{\n  \"checkout\": {\"access\": true, \"process_payment\": true, \"apply_discount\": true},\n  \"pos_terminal\": {\"access\": true, \"process_sale\": true},\n  \"products\": {\"access\": true, \"view_products\": true},\n  \"discounts\": {\"access\": true, \"view_discounts\": true}\n}\n```"
+          "overview": "Follow these steps when logging into the system for the first time.",
+          "who_uses_this": [
+            "New Staff",
+            "Managers",
+            "Administrators"
+          ],
+          "content": "When you first access the system, there are several important steps to help you get started efficiently.\n\nStep 1: Log in to Your Account\nUse your assigned username and password to access the secure dashboard. Only authorized users with valid credentials can access the system.\n\nStep 2: Explore the Navigation Menu\nThe sidebar menu provides access to all system modules including Orders, Products, Inventory, Financials, and Settings. Spend some time familiarizing yourself with where each function is located.\n\nStep 3: Configure Notifications\nEnable system notifications to stay informed about new orders, support tickets, low inventory alerts, and payment confirmations.\n\nStep 4: Review Documentation\nVisit the Help Center and documentation sections to learn about advanced tools such as promotions, referrals, analytics, and reporting.",
+          "steps": [
+            "Log in using your credentials",
+            "Review the dashboard summary",
+            "Explore the sidebar navigation",
+            "Check notifications and alerts",
+            "Verify your assigned permissions"
+          ],
+          "example": {
+            "scenario": "A new store manager logs in for the first time and checks today's order activity."
+          }
         }
       ]
     },
@@ -72,56 +70,53 @@
         {
           "id": "manual-product-entry",
           "title": "Manual Product Entry",
-          "content": "Administrators and shop owners can add products manually through the 'Add New Product' dialog:\n\n1. **Select Product Name**: Choose an existing name from the global catalog or create a new one.\n2. **Define Inventory Settings**: Set the base price, final price (what customers pay), and current quantity.\n3. **Stock Control**: Specify measurement units (e.g., kg, pieces) and the reorder point for low-stock alerts.\n4. **Status**: Toggle 'Is Active' to control visibility on the marketplace."
+          "overview": "Products can be added manually when introducing new items to the catalog or inventory.",
+          "who_uses_this": [
+            "System Admin",
+            "Store Manager",
+            "Inventory Manager"
+          ],
+          "content": "Products can be added manually using the 'Add New Product' form. This method is useful when introducing new items or managing small inventories.\n\nChoose an existing product from the global catalog or create a new product name if the item does not already exist. The global catalog helps maintain consistency across shops.\n\nEnter the base cost of the product and the final selling price. The base price is typically what the shop pays, while the selling price is what the customer will see.\n\nSpecify the available stock quantity and measurement unit such as pieces, kilograms, or liters. You can also set a reorder level so the system alerts you when stock becomes low.\n\nToggle the 'Active' status to control whether the product is visible in the marketplace or POS system.",
+          "key_fields": [
+            "Product Name",
+            "SKU",
+            "Barcode",
+            "Cost Price",
+            "Selling Price",
+            "Stock Quantity",
+            "Category"
+          ],
+          "example": {
+            "product": "Premium Coffee Beans",
+            "sku": "COF-001",
+            "cost_price": 8,
+            "selling_price": 12,
+            "stock": 150
+          },
+          "financial_example": {
+            "cost_price": 8,
+            "selling_price": 12,
+            "profit_per_unit": 4,
+            "profit_margin": "33%"
+          },
+          "explanation": "Each time this product sells, the business earns $4 before operational costs."
         },
         {
           "id": "bulk-import-catalog",
           "title": "Bulk Import via CSV",
-          "content": "To manage large inventories, use the Import feature in the Products section:\n\n- **CSV Format**: Upload a structured file containing Product Name, Barcode, SKU, and Description.\n- **Duplicate Handling**: The system automatically detects existing barcodes to prevent duplicate entries.\n- **Catalog Synchronization**: Imported items become part of the 'Global Product Names' catalog, making them available for all shops to link to.\n- **Progress Tracking**: View a real-time progress bar during the import process to monitor success and skip rates."
-        },
-        {
-          "id": "product-catalog-logic",
-          "title": "Global Catalog vs. Shop Inventory",
-          "content": "Our system separates the 'What' from the 'Where':\n\n- **Product Names (Catalog)**: A global database of items (labels, barcodes, images) that are shop-independent.\n- **Products (Inventory)**: Specific instances of catalog items assigned to a shop with unique prices and stock levels.\n- **Relationship**: One 'Product Name' can be linked to multiple 'Products' in different shops, ensuring consistent branding across the platform."
-        }
-      ]
-    },
-    {
-      "id": "marketing-growth",
-      "title": "Marketing & Growth",
-      "icon": "TrendingUp",
-      "articles": [
-        {
-          "id": "referral-system-core",
-          "title": "Referral System & Logic",
-          "content": "The referral system is designed to incentivize user growth through performance-based commissions:\n\n- **Relationship**: Every referral record is linked to a unique user and their generated voucher code.\n- **Order Tracking**: When a customer uses a referral code at checkout, that order is permanently linked to the referrer.\n- **Earning Trigger**: Earning calculations only begin after a referral is manually reviewed and marked as 'Active' by an administrator.\n- **Case Sensitivity**: Referral codes are processed case-insensitively to ensure users never miss out on earnings due to typing errors."
-        },
-        {
-          "id": "commission-calculations",
-          "title": "Commission & Payout Logic",
-          "content": "Commissions are calculated based on the actual markup generated, not the gross sale amount:\n\n- **The Formula**: `Referral Earnings = (SellingTotal - CostTotal) * 0.0075`.\n- **Definitions**:\n  - **SellingTotal**: The final price paid by the customer for all items in the order.\n  - **CostTotal**: The base price paid to the shop for those items.\n- **Exclusions**: System fees and delivery charges are excluded from the commission pool to protect platform margins.\n- **Real-time Stats**: Referrers can see their 'Orders Count', 'Total Volume', and 'Live Earnings' directly in their dashboard."
-        },
-        {
-          "id": "promotions-vouchers",
-          "title": "Promotions & Vouchers",
-          "content": "Manage your marketing campaigns efficiently:\n\n- **Voucher Generation**: Create unique codes for discounts.\n- **Campaign Management**: Define start/end dates and usage limits.\n- **Discount Rules**: Configure percentage or fixed-amount discounts.\n- **Performance Tracking**: Monitor how effectively each promotion is driving sales."
-        }
-      ]
-    },
-    {
-      "id": "analytics",
-      "title": "System Analytics",
-      "icon": "TrendingUp",
-      "articles": [
-        {
-          "id": "order-analytics",
-          "title": "Order & Delivery Trends",
-          "content": "Visualizing your delivery performance:\n\n- **Orders Chart**: Displays total order volume over time, helping identify peak demand periods.\n- **On-Time Trend**: Tracks the percentage of orders delivered within target timeframes (e.g., 90 minutes).\n- **Overdue Monitoring**: Real-time visualization of orders exceeding delivery SLAs, requiring immediate attention.\n- **Plasa Performance**: Comparison of delivery times across different regions or hubs."
-        },
-        {
-          "id": "financial-analytics",
-          "title": "Financial & Revenue Charts",
-          "content": "Monitor the financial health of the platform:\n\n- **Revenue Overview**: Monthly and daily revenue trends with comparative indicators.\n- **Refunds Analysis**: Breakdown of refund amounts, status distributions, and volume over time.\n- **Transaction History**: Trend visualization of payment methods (Cash, Card, Momo) and volume."
+          "overview": "For businesses with large product catalogs, the CSV import tool allows you to add hundreds or thousands of products at once.",
+          "who_uses_this": [
+            "Inventory Manager",
+            "System Admin"
+          ],
+          "content": "Prepare a spreadsheet containing product information such as Product Name, Barcode, SKU, and Description. Save the file in CSV format before uploading it to the system.\n\nThe system automatically checks barcodes and SKUs to prevent duplicate entries. If a product already exists, the system will skip or update the record depending on the import settings.\n\nImported products are added to the Global Product Names database. This allows different shops or branches to use the same standardized product information.\n\nDuring the import process, the system shows a progress indicator and provides a summary of successfully imported items, skipped entries, and any errors.",
+          "steps": [
+            "Prepare inventory spreadsheet",
+            "Save as CSV format",
+            "Upload to system",
+            "Review duplicate warnings",
+            "Confirm import"
+          ]
         }
       ]
     },
@@ -133,12 +128,56 @@
         {
           "id": "create-order",
           "title": "Creating an Order",
-          "content": "To create a new order manually or via POS:\n\n1. Select the items from the available inventory.\n2. Add customer details or select existing ones.\n3. Choose the payment method (Cash, Card, or Momo).\n4. Confirm and print the invoice for the customer."
+          "overview": "Orders can be created through the POS system or automatically through the marketplace.",
+          "who_uses_this": [
+            "Cashiers",
+            "Store Managers",
+            "Customer Support"
+          ],
+          "content": "Orders can be created either manually by staff or automatically through integrated checkout systems.\n\nChoose products from the available inventory list. The system will automatically display prices and available stock.\n\nEnter customer details such as name, phone number, and delivery address. If the customer already exists in the system, their information can be selected from the saved database.\n\nSelect the appropriate payment method including Cash, Card, or Mobile Money (MoMo). The system records the selected payment type for accounting and reporting purposes.\n\nAfter reviewing all details, confirm the order. The system generates an invoice which can be printed or shared digitally with the customer.",
+          "steps": [
+            "Select items from inventory",
+            "Add or select a customer",
+            "Choose payment method",
+            "Confirm order",
+            "Print receipt"
+          ],
+          "example": {
+            "items": [
+              {
+                "name": "Burger",
+                "price": 6,
+                "quantity": 2
+              },
+              {
+                "name": "Soda",
+                "price": 2,
+                "quantity": 1
+              }
+            ]
+          },
+          "financial_example": {
+            "items_total": 14,
+            "delivery_fee": 2,
+            "total_paid": 16
+          },
+          "explanation": "The customer pays $16 in total including delivery."
         },
         {
           "id": "barcode-scanning-advanced",
-          "title": "Advanced Scanning Logic",
-          "content": "Our system features a hardware-integrated scanning system:\n\n- **Live Camera Feed**: Access real-time scanning using your device camera.\n- **Quick Linking**: Scanned codes automatically search the Global Catalog.\n- **Fallback Mode**: If camera access fails, the system provides a manual entry field with real-time suggestions.\n- **Compatibility**: Supports EAN-13, EAN-8, UPC, Code 128, and standard QR codes."
+          "title": "Advanced Barcode Scanning",
+          "overview": "The barcode scanning feature helps speed up product selection during checkout and inventory management.",
+          "who_uses_this": [
+            "Cashiers",
+            "Inventory Team"
+          ],
+          "content": "Using your device camera, the system can scan product barcodes in real time. Once scanned, the product is automatically identified and added to the cart or product list.\n\nThe system searches the Global Product Catalog for the scanned code. If the product exists, its information is instantly retrieved.\n\nIf the camera cannot access the barcode, users can manually enter the code into the search field. The system will suggest matching products.",
+          "key_features": [
+            "Camera-Based Scanning",
+            "Automatic Catalog Lookup",
+            "Manual Fallback Mode",
+            "Multi-format support (EAN-13, QR, etc.)"
+          ]
         }
       ]
     },
@@ -148,14 +187,188 @@
       "icon": "Wallet",
       "articles": [
         {
-          "id": "refunds-management",
-          "title": "Refunds Management",
-          "content": "Handle financial reversals with confidence:\n\n- **Automated Processing**: Trigger refunds directly from the dashboard.\n- **Wallet Integration**: Refunded amounts are automatically reconciled with relevant wallet balances.\n- **Audit Trail**: Every refund is documented for financial reconciliation."
-        },
-        {
           "id": "wallet-management",
           "title": "Wallet Operations",
-          "content": "Managing financial transactions for the entire system:\n\n- **Company Payouts**: process withdrawals for system users.\n- **Reconciliation**: Audit transaction history against order records.\n- **Multi-currency**: Support for various currency formats as configured in system settings."
+          "overview": "Wallets track all money movements inside the platform.",
+          "who_uses_this": [
+            "Finance Team",
+            "Global Admin",
+            "System Admin"
+          ],
+          "content": "Payout Processing: Businesses or partners can request payouts from their wallet balance. Administrators can approve or process these withdrawals from the financial dashboard.\n\nTransaction Reconciliation: All wallet transactions can be reviewed and compared with orders, refunds, and deposits to ensure accurate accounting.\n\nMulti-Currency Support: The system can be configured to support different currencies depending on the region where the platform operates.",
+          "wallet_types": [
+            "Company Wallet",
+            "Shop Wallet",
+            "Driver Wallet",
+            "Referral Wallet"
+          ],
+          "example": {
+            "order_total": 50,
+            "shop_cost": 40,
+            "platform_commission": 10
+          },
+          "financial_distribution": {
+            "shop_wallet": 40,
+            "company_wallet": 10
+          },
+          "explanation": "The shop receives $40 while the platform earns $10 commission."
+        },
+        {
+          "id": "refunds-management",
+          "title": "Refunds Management",
+          "overview": "The refund management system allows administrators to process financial reversals when orders need to be cancelled or corrected.",
+          "who_uses_this": [
+            "Finance Team",
+            "Admin"
+          ],
+          "content": "Refunds can be initiated directly from the order details page. Once approved, the system reverses the payment according to the original payment method.\n\nIf the platform uses internal wallets, refunded amounts are automatically credited back to the correct wallet account.\n\nEvery refund transaction is logged with timestamps, responsible staff members, and related order details. This ensures full transparency during financial audits.",
+          "steps": [
+            "Locate order",
+            "Initiate refund",
+            "Select reversal method",
+            "Confirm processing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tax-management",
+      "title": "Tax Management",
+      "icon": "Calculator",
+      "articles": [
+        {
+          "id": "tax-declarations",
+          "title": "Tax Declarations",
+          "overview": "The system automatically calculates and organizes tax data required for monthly reporting.",
+          "who_uses_this": [
+            "Finance Team",
+            "Accountants",
+            "Administrators"
+          ],
+          "example": {
+            "product_price": 10,
+            "vat_rate": "18%"
+          },
+          "financial_example": {
+            "vat_amount": 1.8,
+            "total_price_paid": 11.8
+          },
+          "monthly_summary_example": {
+            "total_sales": 120000,
+            "vat_collected": 21600
+          },
+          "explanation": "At the end of the month, the business must declare $21,600 in VAT collected."
+        }
+      ]
+    },
+    {
+      "id": "pos-production",
+      "title": "Production & Recipes",
+      "icon": "Factory",
+      "articles": [
+        {
+          "id": "recipe-management",
+          "title": "Recipe & BOM Management",
+          "overview": "Define exactly how products are created from raw materials, essential for restaurants and manufacturing.",
+          "who_uses_this": [
+            "Production Manager",
+            "Chef",
+            "Kitchen Staff"
+          ],
+          "key_features": [
+            "Recipe Builder",
+            "Cost Calculation",
+            "Production Sections"
+          ],
+          "example": {
+            "recipe": "Double Cheeseburger",
+            "ingredients": [
+              {
+                "item": "Beef Patty",
+                "qty": 2
+              },
+              {
+                "item": "Cheese slice",
+                "qty": 2
+              },
+              {
+                "item": "Bun",
+                "qty": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "production-orders",
+          "title": "Production Orders",
+          "overview": "Plan and track the manufacturing process while ensuring inventory accuracy.",
+          "who_uses_this": [
+            "Operation Manager",
+            "Production Team"
+          ],
+          "steps": [
+            "Create production order",
+            "Verify ingredient availability",
+            "Execute production run",
+            "Complete order to sync stock"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "procurement",
+      "title": "Procurement & Suppliers",
+      "icon": "ShoppingCart",
+      "articles": [
+        {
+          "id": "supplier-management",
+          "title": "Supplier & RFQ",
+          "overview": "Manage vendor relationships and streamline the process of requesting quotes.",
+          "who_uses_this": [
+            "Purchasing Agent",
+            "Finance Manager"
+          ],
+          "key_features": [
+            "Supplier Directory",
+            "RFQ Workflow",
+            "Quotation Comparison"
+          ]
+        },
+        {
+          "id": "purchase-orders",
+          "title": "Purchase Orders",
+          "overview": "Formalize buying processes from order creation to receiving goods.",
+          "who_uses_this": [
+            "Procurement Team",
+            "Warehouse Staff"
+          ],
+          "steps": [
+            "Generate Purchase Order (PO)",
+            "Send to vendor",
+            "Receive goods (GRN)",
+            "Update inventory automatically"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "subscriptions",
+      "title": "Subscriptions & Billing",
+      "icon": "CreditCard",
+      "articles": [
+        {
+          "id": "billing-dashboard",
+          "title": "Billing Dashboard",
+          "overview": "Monitor all business subscriptions and upcoming renewal deadlines.",
+          "who_uses_this": [
+            "Admin",
+            "Business Owner"
+          ],
+          "key_features": [
+            "Renewal Tracking",
+            "Status Automation",
+            "Plan Assignment"
+          ]
         }
       ]
     },
@@ -167,34 +380,35 @@
         {
           "id": "create-ticket",
           "title": "Creating Support Tickets",
-          "content": "1. Navigate to Support section\n2. Click 'New Ticket'\n3. Select issue category\n4. Provide details\n5. Attach relevant files\n6. Submit ticket"
+          "overview": "Support tickets allow users or staff members to report issues or request assistance.",
+          "who_uses_this": [
+            "Customers",
+            "Staff",
+            "Vendors"
+          ],
+          "content": "Navigate to the Support module in the main menu.\n\nClick the 'New Ticket' button and select the category that best describes your issue.\n\nProvide a clear explanation of the issue and include any relevant details such as order numbers or user IDs.\n\nYou can upload screenshots, documents, or images that help explain the problem.\n\nOnce submitted, the ticket will be assigned to the appropriate support team for resolution.",
+          "steps": [
+            "Open Support module",
+            "New Ticket",
+            "Describe problem",
+            "Attach evidence",
+            "Submit"
+          ]
         },
         {
           "id": "track-resolution",
           "title": "Tracking Issue Resolution",
-          "content": "Monitor support ticket status:\n\n- View ticket history\n- Check resolution progress\n- Communicate with support team\n- Rate support experience"
-        }
-      ]
-    },
-    {
-      "id": "subscriptions",
-      "title": "Subscription Management",
-      "icon": "CreditCard",
-      "articles": [
-        {
-          "id": "subscription-dashboards",
-          "title": "Monitoring Subscriptions",
-          "content": "The **Subscriptions & Billing** section provides a unified view for all business plans:\n\n- **Live Stats Dashboard**: Instantly see total subscriptions, active (paid) accounts, upcoming renewals in 14 days, overdue payments, and expired plans.\n- **Search & Filter**: Quickly find any Shop, Restaurant, or Business by name or ID using the real-time search bar.\n- **Status Tracking**: Monitor account health through color-coded badges (Active, Due Soon, On Hold, Expired)."
-        },
-        {
-          "id": "billing-renewals",
-          "title": "Billing & Renewal Logic",
-          "content": "Our system automates the lifecycle of a subscription to ensure continuous service:\n\n- **Tabbed Management**: Toggle between the full subscription list and the 'Billing & Renewals' view to focus on upcoming deadlines.\n- **Auto-Calculation**: When assigning a plan, the system automatically calculates the `Next Billing` date based on the Start Date and your chosen cycle (Monthly/Yearly).\n- **Grace Periods**: We provide clear visibility into accounts that have entered grace periods or require immediate manual renewal."
-        },
-        {
-          "id": "status-automation",
-          "title": "Automated Status Transitions",
-          "content": "The system runs background operations to keep billing data accurate:\n\n1. **Due Soon (T-14 Days)**: Subscriptions are flagged 14 days before expiration to allow for proactive outreach.\n2. **On Hold (T+3 Days)**: Accounts that remain unpaid for 3 days after their end date are automatically put 'On Hold'.\n3. **Expiration (T+30 Days)**: Subscriptions that remain unpaid for 30 days are fully expired and require reactivation."
+          "overview": "Monitor your support requests from submission to resolution.",
+          "who_uses_this": [
+            "All Users"
+          ],
+          "content": "Each ticket displays a full timeline showing when it was created, updated, or responded to by the support team.\n\nTickets move through several statuses such as Open, In Progress, Awaiting Response, and Resolved.\n\nUsers can exchange messages with support agents directly within the ticket thread.\n\nOnce a ticket is resolved, users may rate the support experience and provide feedback to help improve service quality.",
+          "key_features": [
+            "Full timeline activity",
+            "Status updates",
+            "Direct messaging",
+            "Satisfaction rating"
+          ]
         }
       ]
     }

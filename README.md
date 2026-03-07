@@ -15,6 +15,33 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Secure API endpoint (`/api/subscriptions/automate-status`) for scheduled status updates.
   - Automated transitions: `active` → `due_soon` (14 days before) → `on_hold` (3 days after) → `expired` (30 days after).
 
+### 🧾 Tax Management
+
+- **Compliance & Reporting**
+  - Automated **Monthly Tax Summaries** and detailed VAT/Sales tax reports.
+  - Support for tax data import/export for regulatory filings.
+- **Advanced Tools**
+  - **Tax Forecasting**: Revenue-driven tax liability predictions.
+  - **Optimization**: Tools to ensure correct rate mapping and identify potential savings.
+
+### 🏭 POS Production & Recipe Management
+
+- **Manufacturing Workflow**
+  - **Recipe Builder (BOM)**: Define constituent materials and quantities for finished products.
+  - **Cost/Profit Analysis**: Real-time margin tracking based on ingredient cost fluctuations.
+- **Inventory Integration**
+  - **Automated Stock Deduction**: Deducts raw materials instantly upon production order completion.
+  - **Deduction Simulator**: Pre-production validation of ingredient availability.
+
+### 📦 Procurement System
+
+- **Supplier Relations**
+  - **Supplier Directory**: Centralized management of vendor profiles and performance.
+  - **RFQ Workspace**: Formal workflow for Request for Quotations and vendor analysis.
+- **Order Lifecycle**
+  - **Purchase Orders (PO)**: Standardized document generation and tracking.
+  - **Goods Received (GRN)**: Integrated receiving flow that auto-updates inventory stock.
+
 ## Features
 
 ### 📊 Real-time Analytics Dashboard
