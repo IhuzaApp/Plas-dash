@@ -30,6 +30,8 @@ import { AssignSubscriptionDialog } from './_components/AssignSubscriptionDialog
 import { UpcomingRenewals } from './_components/UpcomingRenewals';
 import { SubscriptionStats } from './_components/SubscriptionStats';
 
+import { SubscriptionInvoices } from './_components/SubscriptionInvoices';
+
 export interface ShopSubscription {
     id: string;
     shop_id: string;
@@ -43,6 +45,8 @@ export interface ShopSubscription {
     created_at: string;
     plan?: {
         name: string;
+        price_monthly: number;
+        price_yearly: number;
     };
     Shop?: {
         name: string;
@@ -99,6 +103,16 @@ export default function ShopSubscriptionsPage() {
         });
     }, [data?.shop_subscriptions, searchTerm]);
 
+    const formatPrice = (sub: ShopSubscription) => {
+        const price = sub.billing_cycle === 'yearly' ? sub.plan?.price_yearly : sub.plan?.price_monthly;
+        if (price === undefined || price === null) return 'N/A';
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'RWF',
+            minimumFractionDigits: 0,
+        }).format(price);
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -135,6 +149,7 @@ export default function ShopSubscriptionsPage() {
                 <TabsList>
                     <TabsTrigger value="all">Active Subscriptions</TabsTrigger>
                     <TabsTrigger value="billing">Billing & Renewals</TabsTrigger>
+                    <TabsTrigger value="invoices">Invoices & History</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="all" className="space-y-4">
@@ -145,6 +160,7 @@ export default function ShopSubscriptionsPage() {
                                     <TableHead>Target Entity</TableHead>
                                     <TableHead>Plan</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead>Price</TableHead>
                                     <TableHead>Billing</TableHead>
                                     <TableHead>Start Date</TableHead>
                                     <TableHead>Next Billing</TableHead>
@@ -153,7 +169,7 @@ export default function ShopSubscriptionsPage() {
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">
+                                        <TableCell colSpan={7} className="h-24 text-center">
                                             <div className="flex items-center justify-center">
                                                 <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary" />
                                             </div>
@@ -161,7 +177,7 @@ export default function ShopSubscriptionsPage() {
                                     </TableRow>
                                 ) : filteredSubscriptions.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                                             {searchTerm ? 'No matching subscriptions found.' : 'No active subscriptions found.'}
                                         </TableCell>
                                     </TableRow>
@@ -183,6 +199,9 @@ export default function ShopSubscriptionsPage() {
                                                 <Badge variant={sub.status === 'active' ? 'default' : 'secondary'}>
                                                     {sub.status}
                                                 </Badge>
+                                            </TableCell>
+                                            <TableCell className="font-mono text-sm text-primary font-bold">
+                                                {formatPrice(sub)}
                                             </TableCell>
                                             <TableCell className="capitalize">{sub.billing_cycle}</TableCell>
                                             <TableCell className="text-sm">
@@ -208,6 +227,10 @@ export default function ShopSubscriptionsPage() {
                         subscriptions={filteredSubscriptions}
                         isLoading={isLoading}
                     />
+                </TabsContent>
+
+                <TabsContent value="invoices">
+                    <SubscriptionInvoices />
                 </TabsContent>
             </Tabs>
 

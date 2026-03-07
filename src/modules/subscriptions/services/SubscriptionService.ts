@@ -35,17 +35,8 @@ const GET_SHOP_PLAN_AI_LIMIT = gql`
 `;
 
 const GET_AI_USAGE_CURRENT_MONTH = gql`
-  query GetAiUsageCurrentMonth($shop_id: uuid!, $month: Int!, $year: Int!) {
-    ai_usage(where: {shop_id: {_eq: $shop_id}, month: {_eq: $month}, year: {_eq: $year}}, limit: 1) {
-      id
-      request_count
-    }
-  }
-`;
-
-const INCREMENT_AI_USAGE = gql`
-  mutation IncrementAiUsage($id: uuid!) {
-    update_ai_usage_by_pk(pk_columns: {id: $id}, _inc: {request_count: 1}) {
+  query GetAiUsageCurrentMonth($where: ai_usage_bool_exp!) {
+    ai_usage(where: $where, limit: 1) {
       id
       request_count
     }
@@ -53,26 +44,16 @@ const INCREMENT_AI_USAGE = gql`
 `;
 
 const INSERT_AI_USAGE = gql`
-  mutation InsertAiUsage($shop_id: uuid!, $month: Int!, $year: Int!) {
-    insert_ai_usage_one(object: {shop_id: $shop_id, month: $month, year: $year, request_count: 1}) {
+  mutation InsertAiUsage($object: ai_usage_insert_input!) {
+    insert_ai_usage_one(object: $object) {
       id
-      request_count
     }
   }
 `;
 
 const GET_REEL_USAGE_CURRENT_MONTH = gql`
-  query GetReelUsageCurrentMonth($shop_id: uuid!, $month: Int!, $year: Int!) {
-    reel_usage(where: {shop_id: {_eq: $shop_id}, month: {_eq: $month}, year: {_eq: $year}}, limit: 1) {
-      id
-      upload_count
-    }
-  }
-`;
-
-const INCREMENT_REEL_USAGE = gql`
-  mutation IncrementReelUsage($id: uuid!) {
-    update_reel_usage_by_pk(pk_columns: {id: $id}, _inc: {upload_count: 1}) {
+  query GetReelUsageCurrentMonth($where: reel_usage_bool_exp!) {
+    reel_usage(where: $where, limit: 1) {
       id
       upload_count
     }
@@ -80,10 +61,9 @@ const INCREMENT_REEL_USAGE = gql`
 `;
 
 const INSERT_REEL_USAGE = gql`
-  mutation InsertReelUsage($shop_id: uuid!, $month: Int!, $year: Int!) {
-    insert_reel_usage_one(object: {shop_id: $shop_id, month: $month, year: $year, upload_count: 1}) {
+  mutation InsertReelUsage($object: reel_usage_insert_input!) {
+    insert_reel_usage_one(object: $object) {
       id
-      request_count
     }
   }
 `;
@@ -94,6 +74,16 @@ const GET_SUBSCRIPTIONS_FOR_AUTOMATION = gql`
       id
       status
       end_date
+      billing_cycle
+      plan_id
+      shop_id
+      restaurant_id
+      business_id
+      plan {
+        name
+        price_monthly
+        price_yearly
+      }
     }
   }
 `;
@@ -107,242 +97,173 @@ const UPDATE_SUBSCRIPTION_STATUS = gql`
   }
 `;
 
+const CREATE_INVOICE = gql`
+  mutation CreateInvoice($object: subscription_invoices_insert_input!) {
+    insert_subscription_invoices_one(object: $object) {
+      id
+      invoice_number
+    }
+  }
+`;
+
+const UPDATE_SHOP_SUBSCRIPTION = gql`
+  mutation UpdateShopSubscription($id: uuid!, $object: shop_subscriptions_set_input!) {
+    update_shop_subscriptions_by_pk(pk_columns: { id: $id }, _set: $object) {
+      id
+      plan_id
+      status
+      start_date
+      end_date
+    }
+  }
+`;
+
 export class SubscriptionService {
     /**
-     * Plans:
-     * Manage subscription tiers (e.g., Free, Pro, Enterprise)
+     * Helper to generate a unique invoice number
      */
-    async getPlans() {
-        throw new Error('Not implemented');
+    private generateInvoiceNumber(): string {
+        const prefix = 'INV';
+        const timestamp = Date.now().toString().slice(-6);
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return `${prefix}-${timestamp}-${random}`;
     }
 
     /**
-     * Modules:
-     * Manage application features/modules available for subscription (e.g., POS, Inventory, Analytics)
+     * Generate an invoice for a subscription
      */
-    async getModules() {
-        throw new Error('Not implemented');
+    async generateInvoice(subscription: any, userId?: string, issuedAt?: Date) {
+        if (!hasuraClient) throw new Error('Hasura client not initialized');
+
+        const now = issuedAt || new Date();
+        const plan = subscription.plan;
+        const price = subscription.billing_cycle === 'yearly' ? plan.price_yearly : plan.price_monthly;
+
+        const invoiceObject = {
+            shopSubscription_id: subscription.id,
+            aiUsage_id: null,   // Set to null as requested to avoid FK violations during creation
+            reelUsage_id: null, // Set to null as requested to avoid FK violations during creation
+            invoice_number: this.generateInvoiceNumber(),
+            plan_name: plan.name,
+            plan_price: price.toString(),
+            subtotal_amount: price.toString(),
+            tax_amount: "0",
+            discount_amount: "0",
+            currency: "RWF",
+            status: "pending",
+            is_overdue: false,
+            issued_at: now.toISOString(),
+            due_date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from issue
+            updated_at: new Date().toISOString()
+        };
+
+        return await hasuraClient.request(CREATE_INVOICE, { object: invoiceObject });
     }
 
     /**
-     * Plan Modules:
-     * Link modules to specific plans (which plan gets which modules)
+     * Handle new subscription assignment with trial logic
      */
-    async getPlanModules(planId: string) {
-        throw new Error('Not implemented');
-    }
+    async handleSubscriptionAssignment(payload: any, userId?: string) {
+        if (!hasuraClient) throw new Error('Hasura client not initialized');
 
-    /**
-     * Shop Subscriptions:
-     * Manage active subscriptions for shops/businesses
-     */
-    async getShopSubscription(shopId: string) {
-        throw new Error('Not implemented');
-    }
+        // 1. Check if a subscription already exists for this specific entity
+        // We only check the specific ID that is present to avoid Hasura "unexpected null value for type 'uuid'" error
+        let existingSub = null;
+        if (payload.shop_id || payload.restaurant_id || payload.business_id) {
+            const whereClause: any = {};
+            if (payload.shop_id) whereClause.shop_id = { _eq: payload.shop_id };
+            else if (payload.restaurant_id) whereClause.restaurant_id = { _eq: payload.restaurant_id };
+            else if (payload.business_id) whereClause.business_id = { _eq: payload.business_id };
 
-    /**
-     * AI Usage:
-     * Check if a shop can make an AI request based on their plan limits,
-     * and increment the usage counter if allowed.
-     */
-    async checkAiUsageLimit(shopId: string): Promise<boolean> {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
+            const existingData = await hasuraClient.request<any>(gql`
+                query GetExistingSubscriptionByTarget($where: shop_subscriptions_bool_exp!) {
+                    shop_subscriptions(where: $where, limit: 1) {
+                        id
+                        status
+                    }
+                }
+            `, { where: whereClause });
+            existingSub = existingData.shop_subscriptions?.[0];
         }
 
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth() + 1; // 1-12
-        const currentYear = currentDate.getFullYear();
-
-        try {
-            // 1. Get the shop's active plan and its AI limit
-            const planData = await hasuraClient.request<any>(GET_SHOP_PLAN_AI_LIMIT, { shop_id: shopId });
-            const activeSubscription = planData.shop_subscriptions?.[0];
-
-            if (!activeSubscription || !activeSubscription.plan) {
-                console.error(`Shop ${shopId} does not have an active subscription.`);
-                throw new Error("This feature requires an active subscription. Please upgrade your plan.");
+        // 2. Get Plan details
+        const planData = await hasuraClient.request<any>(gql`
+            query GetPlan($id: uuid!) {
+                plans_by_pk(id: $id) {
+                    name
+                    price_monthly
+                    price_yearly
+                }
             }
+        `, { id: payload.plan_id });
 
-            const plan = activeSubscription.plan;
-            const planName = plan.name?.toLowerCase() || '';
-            let limit = plan.ai_request_limit;
+        const plan = planData.plans_by_pk;
+        const isBasic = plan.name?.toLowerCase().includes('basic');
 
-            // Hardcoded fallback limits based on plan name if db column is null
-            if (limit === null || limit === undefined) {
-                if (planName.includes('basic')) limit = 5;
-                else if (planName.includes('business')) limit = 100;
-                // 'pro' or others considered unlimited if null
-            }
+        let startDate = new Date(payload.start_date || new Date());
+        let endDate: Date;
 
-            // 2. Get current month's usage
-            const usageData = await hasuraClient.request<any>(GET_AI_USAGE_CURRENT_MONTH, {
-                shop_id: shopId,
-                month: currentMonth,
-                year: currentYear
+        // 3. Apply 14-day trial if not Basic
+        if (!isBasic) {
+            // Defer the official start (billing date) by 14 days
+            startDate = new Date(startDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+        }
+
+        // 4. Calculate end date based on cycle
+        if (payload.billing_cycle === 'yearly') {
+            endDate = new Date(startDate);
+            endDate.setFullYear(endDate.getFullYear() + 1);
+        } else {
+            endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + 1);
+        }
+
+        const subscriptionUpdateObject = {
+            plan_id: payload.plan_id,
+            billing_cycle: payload.billing_cycle,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            status: 'active'
+        };
+
+        let subId: string;
+        let finalSub: any;
+
+        if (existingSub) {
+            // Update existing subscription
+            const updateResult = await hasuraClient.request<any>(UPDATE_SHOP_SUBSCRIPTION, {
+                id: existingSub.id,
+                object: subscriptionUpdateObject
             });
-            const currentUsageRecord = usageData.ai_usage?.[0];
-            const currentCount = currentUsageRecord?.request_count || 0;
-
-            // 3. Compare with limit
-            if (limit !== null && limit !== undefined && currentCount >= limit && !planName.includes('pro')) {
-                throw new Error("AI request limit reached. Upgrade your plan.");
-            }
-
-            // 4. Increment or Insert usage
-            if (currentUsageRecord) {
-                // Increment existing record
-                await hasuraClient.request(INCREMENT_AI_USAGE, { id: currentUsageRecord.id });
-            } else {
-                // Insert new record for the month (starts count at 1)
-                await hasuraClient.request(INSERT_AI_USAGE, {
-                    shop_id: shopId,
-                    month: currentMonth,
-                    year: currentYear
-                });
-            }
-
-            return true;
-        } catch (error: any) {
-            if (error.message === "AI request limit reached. Upgrade your plan." ||
-                error.message === "This feature requires an active subscription. Please upgrade your plan.") {
-                throw error; // Re-throw expected business logic errors
-            }
-            console.error('Error tracking AI usage:', error);
-            throw new Error('Failed to track AI usage');
-        }
-    }
-
-    /**
-     * Reel Usage:
-     * Check if a shop can upload a Reel based on their plan limits,
-     * and increment the usage counter if allowed.
-     */
-    async checkReelUsageLimit(shopId: string): Promise<boolean> {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
-
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth() + 1; // 1-12
-        const currentYear = currentDate.getFullYear();
-
-        try {
-            // 1. Get the shop's active plan and its Reel limit
-            // Note: we're reusing the query that gets the plan since it now includes reel_limit
-            const planData = await hasuraClient.request<any>(GET_SHOP_PLAN_AI_LIMIT, { shop_id: shopId });
-            const activeSubscription = planData.shop_subscriptions?.[0];
-
-            if (!activeSubscription || !activeSubscription.plan) {
-                console.error(`Shop ${shopId} does not have an active subscription.`);
-                throw new Error("This feature requires an active subscription. Please upgrade your plan.");
-            }
-
-            const plan = activeSubscription.plan;
-            const planName = plan.name?.toLowerCase() || '';
-            let limit = plan.reel_limit;
-
-            // Hardcoded fallback limits based on plan name if db column is null
-            if (limit === null || limit === undefined) {
-                if (planName.includes('basic')) limit = 0;
-                else if (planName.includes('business')) limit = 5;
-                else if (planName.includes('pro')) limit = 20;
-            }
-
-            // 2. Compare with limit straight away if limit is 0
-            if (limit === 0) {
-                throw new Error("You have reached your monthly reel upload limit.");
-            }
-
-            // 3. Get current month's usage
-            const usageData = await hasuraClient.request<any>(GET_REEL_USAGE_CURRENT_MONTH, {
-                shop_id: shopId,
-                month: currentMonth,
-                year: currentYear
-            });
-            const currentUsageRecord = usageData.reel_usage?.[0];
-            const currentCount = currentUsageRecord?.upload_count || 0;
-
-            // 4. Compare with limit
-            if (limit !== null && limit !== undefined && currentCount >= limit) {
-                // Notice the custom error message expected by the user prompt
-                throw new Error("You have reached your monthly reel upload limit.");
-            }
-
-            // 5. Increment or Insert usage
-            if (currentUsageRecord) {
-                // Increment existing record
-                await hasuraClient.request(INCREMENT_REEL_USAGE, { id: currentUsageRecord.id });
-            } else {
-                // Insert new record for the month (starts count at 1)
-                await hasuraClient.request(INSERT_REEL_USAGE, {
-                    shop_id: shopId,
-                    month: currentMonth,
-                    year: currentYear
-                });
-            }
-
-            return true;
-        } catch (error: any) {
-            if (error.message === "You have reached your monthly reel upload limit." ||
-                error.message === "This feature requires an active subscription. Please upgrade your plan.") {
-                throw error;
-            }
-            console.error('Error tracking Reel usage:', error);
-            throw new Error('Failed to track Reel usage');
-        }
-    }
-
-    /**
-     * Assigns the "Basic" subscription plan to a newly created shop.
-     * @param shopId The ID of the newly created shop.
-     * @returns The created shop subscription record, or null if the Basic plan was not found.
-     */
-    async assignBasicPlanToNewShop(shopId: string) {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
-
-        try {
-            // 1. Find the Basic plan
-            const planData = await hasuraClient.request<{ plans: { id: string, name: string }[] }>(GET_BASIC_PLAN);
-            const basicPlan = planData.plans[0];
-
-            if (!basicPlan) {
-                console.error('Basic plan not found. Cannot assign subscription to new shop:', shopId);
-                return null;
-            }
-
-            // 2. Insert a record into shop_subscriptions
-            const currentDate = new Date().toISOString();
-
-            const subscriptionObject = {
-                shop_id: shopId,
-                plan_id: basicPlan.id,
-                status: 'active',
-                billing_cycle: 'monthly',
-                start_date: currentDate,
-                end_date: null
+            finalSub = updateResult.update_shop_subscriptions_by_pk;
+            subId = existingSub.id;
+        } else {
+            // Create new subscription
+            const subscriptionInsertObject = {
+                ...payload,
+                ...subscriptionUpdateObject
             };
-
-            const result = await hasuraClient.request<{ insert_shop_subscriptions_one: any }>(
-                INSERT_SHOP_SUBSCRIPTION,
-                { object: subscriptionObject }
-            );
-
-            return result.insert_shop_subscriptions_one;
-        } catch (error) {
-            console.error('Error assigning basic plan to new shop:', error);
-            throw new Error(`Failed to assign basic plan to shop ${shopId}`);
+            const insertResult = await hasuraClient.request<any>(INSERT_SHOP_SUBSCRIPTION, { object: subscriptionInsertObject });
+            finalSub = insertResult.insert_shop_subscriptions_one;
+            subId = finalSub.id;
         }
+
+        // 5. Generate Initial Invoice
+        await this.generateInvoice({
+            id: subId,
+            plan,
+            billing_cycle: payload.billing_cycle,
+            shop_id: payload.shop_id,
+            restaurant_id: payload.restaurant_id,
+            business_id: payload.business_id
+        }, userId, new Date()); // Issued now
+
+        return finalSub;
     }
 
     /**
-     * Automated Status Updates:
-     * Background process to update subscription statuses based on billing dates.
-     * - due_soon: 14 days before end_date
-     * - on_hold: 3 days after end_date (unpaid)
-     * - expired: 30 days after end_date (unpaid)
+     * Automated Status Updates & Billing:
+     * Background process to update subscription statuses and generate invoices for renewals.
      */
     async processAutomatedStatusUpdates() {
         if (!hasuraClient) {
@@ -356,6 +277,7 @@ export class SubscriptionService {
             const results = {
                 total: subscriptions.length,
                 updated: 0,
+                invoicesGenerated: 0,
                 errors: 0,
                 log: [] as string[]
             };
@@ -364,21 +286,15 @@ export class SubscriptionService {
                 if (!sub.end_date) continue;
 
                 const endDate = new Date(sub.end_date);
-                let newStatus: string | null = null;
-
                 const diffDays = (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
 
-                // Logic:
-                // 1. If active and within 14 days of ending -> due_soon
+                // --- 1. Status Automation Logic ---
+                let newStatus: string | null = null;
                 if (sub.status === 'active' && diffDays <= 14 && diffDays > 0) {
                     newStatus = 'due_soon';
-                }
-                // 2. If (active or due_soon) and more than 3 days past due -> on_hold
-                else if ((sub.status === 'active' || sub.status === 'due_soon') && diffDays <= -3) {
+                } else if ((sub.status === 'active' || sub.status === 'due_soon') && diffDays <= -3) {
                     newStatus = 'on_hold';
-                }
-                // 3. If on_hold and more than 30 days past due -> expired
-                else if (sub.status === 'on_hold' && diffDays <= -30) {
+                } else if (sub.status === 'on_hold' && diffDays <= -30) {
                     newStatus = 'expired';
                 }
 
@@ -389,18 +305,50 @@ export class SubscriptionService {
                             status: newStatus
                         });
                         results.updated++;
-                        results.log.push(`Updated ${sub.id}: ${sub.status} -> ${newStatus}`);
+                        results.log.push(`Status Updated ${sub.id}: ${sub.status} -> ${newStatus}`);
                     } catch (err) {
                         results.errors++;
-                        console.error(`Failed to update subscription ${sub.id}:`, err);
+                        console.error(`Failed to update status ${sub.id}:`, err);
+                    }
+                }
+
+                // --- 2. Billing Automation Logic (Invoice Generation) ---
+                // If it's due soon (within 14 days), generate the invoice for the next period 
+                // if we haven't already generated one for this cycle.
+                if (diffDays <= 14 && diffDays > -1) {
+                    try {
+                        // Check if invoice for this expected "start of next cycle" already exists
+                        // To keep it simple, we just check if any pending invoice exists for this subscription created recently
+                        const existingInvoices = await hasuraClient.request<any>(gql`
+                            query CheckRecentInvoice($subId: uuid!) {
+                                subscription_invoices(
+                                    where: { 
+                                        shopSubscription_id: { _eq: $subId },
+                                        status: { _eq: "pending" },
+                                        created_at: { _gt: "${new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString()}" }
+                                    }
+                                    limit: 1
+                                ) {
+                                    id
+                                }
+                            }
+                        `, { subId: sub.id });
+
+                        if (existingInvoices.subscription_invoices.length === 0) {
+                            await this.generateInvoice(sub, undefined, now);
+                            results.invoicesGenerated++;
+                            results.log.push(`Invoice Generated for ${sub.id}`);
+                        }
+                    } catch (err) {
+                        console.error(`Failed to generate invoice for ${sub.id}:`, err);
                     }
                 }
             }
 
             return results;
         } catch (error) {
-            console.error('Error in automated status updates:', error);
-            throw new Error('Failed to process automated status updates');
+            console.error('Error in automated updates:', error);
+            throw new Error('Failed to process automation');
         }
     }
 }

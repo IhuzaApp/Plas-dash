@@ -188,16 +188,10 @@ export function AssignSubscriptionDialog({ open, onOpenChange }: AssignSubscript
 
     const mutation = useMutation({
         mutationFn: async (values: FormValues) => {
-            const startDate = new Date(values.start_date);
-            const endDate = values.billing_cycle === 'monthly'
-                ? addMonths(startDate, 1)
-                : addYears(startDate, 1);
-
             const payload: Record<string, string | null> = {
                 plan_id: values.plan_id,
                 billing_cycle: values.billing_cycle,
                 start_date: values.start_date,
-                end_date: format(endDate, 'yyyy-MM-dd'),
                 status: 'active',
                 shop_id: null,
                 restaurant_id: null,
@@ -351,7 +345,14 @@ export function AssignSubscriptionDialog({ open, onOpenChange }: AssignSubscript
                                         </SelectContent>
                                     </Select>
                                     {pricePreview && (
-                                        <p className="text-xs text-muted-foreground mt-1">{pricePreview}</p>
+                                        <div className="mt-1 space-y-1">
+                                            <p className="text-xs text-muted-foreground">{pricePreview}</p>
+                                            {selectedPlan?.name?.toLowerCase().includes('basic') ? (
+                                                <p className="text-[10px] text-muted-foreground italic">Basic plan starts immediately.</p>
+                                            ) : (
+                                                <p className="text-[10px] text-primary font-medium">Includes 14-day free trial before first billing.</p>
+                                            )}
+                                        </div>
                                     )}
                                     <FormMessage />
                                 </FormItem>

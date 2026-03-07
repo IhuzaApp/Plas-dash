@@ -12,30 +12,31 @@ const INSERT_SHOP_SUBSCRIPTION = gql`
   }
 `;
 
+import { SubscriptionService } from '@/modules/subscriptions/services/SubscriptionService';
+
 export async function POST(req: Request) {
-    const session = await getServerSession(authOptions as any);
-    let userId = (session as any)?.user?.id;
+  const session = await getServerSession(authOptions as any);
+  let userId = (session as any)?.user?.id;
 
-    if (!userId) {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            userId = authHeader.substring(7);
-        }
+  if (!userId) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
     }
+  }
 
-    if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    try {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
-        const body = await req.json();
-        const data = await hasuraClient.request(INSERT_SHOP_SUBSCRIPTION, { object: body });
-        return NextResponse.json({ data });
-    } catch (error) {
-        console.error('Error mutating shop_subscriptions:', error);
-        return NextResponse.json({ error: 'Failed to mutate shop_subscriptions' }, { status: 500 });
-    }
+  try {
+    const body = await req.json();
+    const service = new SubscriptionService();
+    const data = await service.handleSubscriptionAssignment(body, userId);
+
+    return NextResponse.json({ data: { insert_shop_subscriptions_one: data } });
+  } catch (error) {
+    console.error('Error mutating shop_subscriptions:', error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to mutate shop_subscriptions' }, { status: 500 });
+  }
 }
