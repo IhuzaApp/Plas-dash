@@ -225,9 +225,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             )}
             {isAuthenticated &&
               pathname !== '/pos/ai-chat' &&
-              session?.privileges?.ai_chat?.access && (
-                <FloatingChatButton />
-              )}
+              session?.privileges?.ai_chat?.access && <FloatingChatButton />}
             <Toaster />
           </div>
         </LoadingProvider>

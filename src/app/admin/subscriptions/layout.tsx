@@ -3,5 +3,5 @@
 import AdminLayout from '@/components/layout/AdminLayout';
 
 export default function SubscriptionsLayout({ children }: { children: React.ReactNode }) {
-    return <AdminLayout>{children}</AdminLayout>;
+  return <AdminLayout>{children}</AdminLayout>;
 }

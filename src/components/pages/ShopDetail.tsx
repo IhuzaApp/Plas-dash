@@ -593,10 +593,11 @@ const ShopDetail = () => {
                       <p className="text-sm font-medium text-muted-foreground">Status:</p>
                       <p>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${shop.is_active
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            shop.is_active
                               ? 'bg-green-100 text-green-800'
                               : 'bg-gray-100 text-gray-800'
-                            }`}
+                          }`}
                         >
                           {shop.is_active ? 'Active' : 'Inactive'}
                         </span>
@@ -653,8 +654,8 @@ const ShopDetail = () => {
                       <p className="text-sm">
                         {String(
                           (shop as unknown as Record<string, unknown>).relatedTo ??
-                          shop.relatedTo ??
-                          ''
+                            shop.relatedTo ??
+                            ''
                         ).trim() || '—'}
                       </p>
                     </div>
@@ -776,10 +777,11 @@ const ShopDetail = () => {
                           <TableCell>{product.measurement_unit}</TableCell>
                           <TableCell>
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.is_active
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                product.is_active
                                   ? 'bg-green-100 text-green-800'
                                   : 'bg-gray-100 text-gray-800'
-                                }`}
+                              }`}
                             >
                               {product.is_active ? 'Active' : 'Inactive'}
                             </span>

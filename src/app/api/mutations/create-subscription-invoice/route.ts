@@ -50,19 +50,23 @@ const CREATE_SUBSCRIPTION_INVOICE = gql`
 `;
 
 export async function POST(req: Request) {
-    const context = await getUserContext(req);
-    if (!context) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const context = await getUserContext(req);
+  if (!context) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    try {
-        const body = await req.json();
-        if (!hasuraClient) throw new Error('Hasura client is not initialized');
+  try {
+    const body = await req.json();
+    if (!hasuraClient) throw new Error('Hasura client is not initialized');
 
-        const data = await hasuraClient.request<{ insert_subscription_invoices: { affected_rows: number } }>(CREATE_SUBSCRIPTION_INVOICE, body);
-        return NextResponse.json({ affected_rows: data.insert_subscription_invoices?.affected_rows || 0 });
-    } catch (error) {
-        console.error('Error creating subscription_invoice:', error);
-        return NextResponse.json({ error: 'Failed to create subscription_invoice' }, { status: 500 });
-    }
+    const data = await hasuraClient.request<{
+      insert_subscription_invoices: { affected_rows: number };
+    }>(CREATE_SUBSCRIPTION_INVOICE, body);
+    return NextResponse.json({
+      affected_rows: data.insert_subscription_invoices?.affected_rows || 0,
+    });
+  } catch (error) {
+    console.error('Error creating subscription_invoice:', error);
+    return NextResponse.json({ error: 'Failed to create subscription_invoice' }, { status: 500 });
+  }
 }

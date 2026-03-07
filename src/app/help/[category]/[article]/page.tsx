@@ -65,9 +65,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 <HelpCircle className="h-5 w-5 text-primary" />
                 Overview
               </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {(article as any).overview}
-              </p>
+              <p className="text-muted-foreground leading-relaxed">{(article as any).overview}</p>
             </div>
           )}
 
@@ -85,7 +83,10 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 <h3 className="text-lg font-semibold border-b pb-2">Who Uses This?</h3>
                 <div className="flex flex-wrap gap-2">
                   {(article as any).who_uses_this.map((role: string) => (
-                    <span key={role} className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm">
+                    <span
+                      key={role}
+                      className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm"
+                    >
                       {role}
                     </span>
                   ))}
@@ -97,15 +98,20 @@ export default function ArticlePage({ params }: ArticlePageProps) {
             {((article as any).key_features || (article as any).key_fields) && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold border-b pb-2">
-                  {(article as any).key_features ? "Key Features" : "Key Fields"}
+                  {(article as any).key_features ? 'Key Features' : 'Key Fields'}
                 </h3>
                 <ul className="space-y-2">
-                  {((article as any).key_features || (article as any).key_fields).map((item: string) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                      {item}
-                    </li>
-                  ))}
+                  {((article as any).key_features || (article as any).key_fields).map(
+                    (item: string) => (
+                      <li
+                        key={item}
+                        className="flex items-start gap-2 text-sm text-muted-foreground"
+                      >
+                        <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                        {item}
+                      </li>
+                    )
+                  )}
                 </ul>
               </div>
             )}
@@ -121,9 +127,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                     <div className="flex-none w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
                       {index + 1}
                     </div>
-                    <div className="pt-1 text-muted-foreground font-medium">
-                      {step}
-                    </div>
+                    <div className="pt-1 text-muted-foreground font-medium">{step}</div>
                   </div>
                 ))}
               </div>
@@ -140,7 +144,11 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 <div className="p-6 space-y-4">
                   <p className="font-medium">{(article as any).example.scenario}</p>
                   <pre className="text-xs bg-slate-950 text-blue-300 p-4 rounded-lg overflow-x-auto">
-                    {JSON.stringify((article as any).example.data || (article as any).example, null, 2)}
+                    {JSON.stringify(
+                      (article as any).example.data || (article as any).example,
+                      null,
+                      2
+                    )}
                   </pre>
                 </div>
               </div>
@@ -152,14 +160,19 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                   </div>
                   <div className="p-6 space-y-4">
                     <div className="space-y-2">
-                      {Object.entries((article as any).financial_example).map(([key, value]: [string, any]) => (
-                        <div key={key} className="flex justify-between items-center text-sm border-b border-primary/10 pb-1">
-                          <span className="capitalize">{key.replace(/_/g, ' ')}</span>
-                          <span className="font-mono font-bold text-primary">
-                            {typeof value === 'number' ? `$${value}` : value}
-                          </span>
-                        </div>
-                      ))}
+                      {Object.entries((article as any).financial_example).map(
+                        ([key, value]: [string, any]) => (
+                          <div
+                            key={key}
+                            className="flex justify-between items-center text-sm border-b border-primary/10 pb-1"
+                          >
+                            <span className="capitalize">{key.replace(/_/g, ' ')}</span>
+                            <span className="font-mono font-bold text-primary">
+                              {typeof value === 'number' ? `$${value}` : value}
+                            </span>
+                          </div>
+                        )
+                      )}
                     </div>
                     {/* Explanation */}
                     {(article as any).explanation && (

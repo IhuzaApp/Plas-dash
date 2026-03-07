@@ -6,11 +6,8 @@ import { getUserContext } from '@/lib/auth-server';
 const INSERT_PLAN_MODULE = gql`
   mutation InsertPlanModule($plan_id: uuid!, $module_id: uuid!) {
     insert_plan_modules_one(
-      object: { plan_id: $plan_id, module_id: $module_id },
-      on_conflict: {
-        constraint: plan_modules_plan_id_module_id_key,
-        update_columns: []
-      }
+      object: { plan_id: $plan_id, module_id: $module_id }
+      on_conflict: { constraint: plan_modules_plan_id_module_id_key, update_columns: [] }
     ) {
       id
       plan_id
@@ -21,9 +18,7 @@ const INSERT_PLAN_MODULE = gql`
 
 const DELETE_PLAN_MODULE = gql`
   mutation DeletePlanModule($plan_id: uuid!, $module_id: uuid!) {
-    delete_plan_modules(
-      where: { plan_id: { _eq: $plan_id }, module_id: { _eq: $module_id } }
-    ) {
+    delete_plan_modules(where: { plan_id: { _eq: $plan_id }, module_id: { _eq: $module_id } }) {
       affected_rows
     }
   }

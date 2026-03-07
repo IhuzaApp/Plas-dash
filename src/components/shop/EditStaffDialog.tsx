@@ -123,7 +123,8 @@ const PermissionDisplay = ({
               <AccordionContent>
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   {group.permissions.map((permission: any) => {
-                    const hasAccess = privileges[group.module as PrivilegeKey]?.[permission.key] || false;
+                    const hasAccess =
+                      privileges[group.module as PrivilegeKey]?.[permission.key] || false;
                     return (
                       <div key={permission.key} className="flex items-center gap-2">
                         <div
@@ -205,13 +206,15 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
   // Only use hook when planModuleSlugs isn't provided directly
   const { availableModules: hookModules, isLoading: isLoadingModules } = useShopSubscriptionModules(
     planModuleSlugs !== undefined ? undefined : shopId,
-    planModuleSlugs !== undefined ? undefined : restaurantId,
+    planModuleSlugs !== undefined ? undefined : restaurantId
   );
 
   // undefined = subscription data not available; [] = plan has no modules assigned
   const resolvedModules: string[] | undefined =
-    planModuleSlugs !== undefined ? planModuleSlugs
-      : hookModules.length > 0 ? hookModules
+    planModuleSlugs !== undefined
+      ? planModuleSlugs
+      : hookModules.length > 0
+        ? hookModules
         : undefined;
 
   const isLoading = planModuleSlugs !== undefined ? false : isLoadingModules;
@@ -569,7 +572,9 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                           </SelectItem>
                           <SelectItem value="customer">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="border-sky-400 text-sky-600">Customer</Badge>
+                              <Badge variant="outline" className="border-sky-400 text-sky-600">
+                                Customer
+                              </Badge>
                               <span>Read-only access to orders &amp; wallet</span>
                             </div>
                           </SelectItem>
@@ -591,13 +596,15 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                 />
 
                 {/* Role Module Preview — shows module coverage for preset roles */}
-                {roleType !== 'custom' && !isLoadingModules && filteredPermissionGroups.length > 0 && (
-                  <RoleModulePreview
-                    privileges={customPrivileges}
-                    filteredPermissionGroups={filteredPermissionGroups}
-                    roleLabel={roleLabel[roleType] ?? roleType}
-                  />
-                )}
+                {roleType !== 'custom' &&
+                  !isLoadingModules &&
+                  filteredPermissionGroups.length > 0 && (
+                    <RoleModulePreview
+                      privileges={customPrivileges}
+                      filteredPermissionGroups={filteredPermissionGroups}
+                      roleLabel={roleLabel[roleType] ?? roleType}
+                    />
+                  )}
 
                 {/* Unified Permissions Section */}
                 <div className="space-y-4">
@@ -619,7 +626,9 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                     {isLoadingModules ? (
                       <div className="flex flex-col items-center justify-center p-8 space-y-4">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground">Checking subscription modules...</p>
+                        <p className="text-sm text-muted-foreground">
+                          Checking subscription modules...
+                        </p>
                       </div>
                     ) : filteredPermissionGroups.length === 0 ? (
                       <div className="p-8 text-center border rounded-lg bg-muted/20">
@@ -649,7 +658,7 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                                         <Switch
                                           checked={
                                             customPrivileges[group.module as PrivilegeKey]?.[
-                                            permission.key
+                                              permission.key
                                             ] || false
                                           }
                                           onCheckedChange={() =>

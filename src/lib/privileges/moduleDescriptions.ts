@@ -650,7 +650,11 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     actions: [
       { key: 'access', label: 'Access Recipes', description: 'Can access recipes page' },
       { key: 'view', label: 'View Recipes', description: 'Can view recipe details' },
-      { key: 'manage', label: 'Manage Recipes', description: 'Can create, edit and delete recipes' },
+      {
+        key: 'manage',
+        label: 'Manage Recipes',
+        description: 'Can create, edit and delete recipes',
+      },
     ],
   },
   production_orders: {
@@ -708,7 +712,11 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     actions: [
       { key: 'access', label: 'Access Suppliers', description: 'Can access suppliers page' },
       { key: 'view', label: 'View Suppliers', description: 'Can view vendor details' },
-      { key: 'manage', label: 'Manage Suppliers', description: 'Can create and edit vendor profiles' },
+      {
+        key: 'manage',
+        label: 'Manage Suppliers',
+        description: 'Can create and edit vendor profiles',
+      },
     ],
   },
   quotations: {
@@ -914,13 +922,33 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     group: 'System',
     description: 'Manage SaaS subscriptions, plans, and feature limits',
     actions: [
-      { key: 'access', label: 'Access Subscriptions', description: 'Can access the subscriptions module' },
-      { key: 'manage_plans', label: 'Manage Plans', description: 'Can view, create, edit, and delete subscription plans' },
-      { key: 'manage_modules', label: 'Manage Modules', description: 'Can view, create, edit, and delete software modules' },
-      { key: 'assign_plan_modules', label: 'Assign Plan Modules', description: 'Can link modules to subscription plans' },
-      { key: 'manage_shop_subscriptions', label: 'Manage Shop Subscriptions', description: 'Can view and modify active shop subscriptions' },
-    ]
-  }
+      {
+        key: 'access',
+        label: 'Access Subscriptions',
+        description: 'Can access the subscriptions module',
+      },
+      {
+        key: 'manage_plans',
+        label: 'Manage Plans',
+        description: 'Can view, create, edit, and delete subscription plans',
+      },
+      {
+        key: 'manage_modules',
+        label: 'Manage Modules',
+        description: 'Can view, create, edit, and delete software modules',
+      },
+      {
+        key: 'assign_plan_modules',
+        label: 'Assign Plan Modules',
+        description: 'Can link modules to subscription plans',
+      },
+      {
+        key: 'manage_shop_subscriptions',
+        label: 'Manage Shop Subscriptions',
+        description: 'Can view and modify active shop subscriptions',
+      },
+    ],
+  },
 };
 
 /**

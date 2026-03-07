@@ -180,17 +180,19 @@ const GET_SUBSCRIPTION_INVOICES = gql`
 `;
 
 export async function GET(req: Request) {
-    const context = await getUserContext(req);
-    if (!context) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const context = await getUserContext(req);
+  if (!context) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    try {
-        if (!hasuraClient) throw new Error('Hasura client is not initialized');
-        const data = await hasuraClient.request<{ subscription_invoices: any[] }>(GET_SUBSCRIPTION_INVOICES);
-        return NextResponse.json({ subscription_invoices: data.subscription_invoices || [] });
-    } catch (error) {
-        console.error('Error fetching subscription_invoices:', error);
-        return NextResponse.json({ error: 'Failed to fetch subscription_invoices' }, { status: 500 });
-    }
+  try {
+    if (!hasuraClient) throw new Error('Hasura client is not initialized');
+    const data = await hasuraClient.request<{ subscription_invoices: any[] }>(
+      GET_SUBSCRIPTION_INVOICES
+    );
+    return NextResponse.json({ subscription_invoices: data.subscription_invoices || [] });
+  } catch (error) {
+    console.error('Error fetching subscription_invoices:', error);
+    return NextResponse.json({ error: 'Failed to fetch subscription_invoices' }, { status: 500 });
+  }
 }

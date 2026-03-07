@@ -21,8 +21,9 @@ export const RatingCard = ({ rating }: { rating: Rating }) => {
     return Array.from({ length: 5 }).map((_, i) => (
       <Star
         key={i}
-        className={`w-3 h-3 md:w-4 md:h-4 ${i < score ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'
-          }`}
+        className={`w-3 h-3 md:w-4 md:h-4 ${
+          i < score ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'
+        }`}
       />
     ));
   };
@@ -53,7 +54,9 @@ export const RatingCard = ({ rating }: { rating: Rating }) => {
             <div className="mb-3">
               <p className="font-medium text-sm">{rating.User?.name || 'Anonymous User'}</p>
               {rating.review && (
-                <p className="text-sm text-muted-foreground mt-2 italic">&quot;{rating.review}&quot;</p>
+                <p className="text-sm text-muted-foreground mt-2 italic">
+                  &quot;{rating.review}&quot;
+                </p>
               )}
             </div>
 

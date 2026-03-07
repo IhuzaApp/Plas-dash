@@ -575,7 +575,13 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
 
     case 'customer': {
       // Customers: read-only access to their orders, wallet and basic shop info
-      const customerModules: PrivilegeKey[] = ['orders', 'wallet', 'checkout', 'shoppers', 'shop_dashboard'];
+      const customerModules: PrivilegeKey[] = [
+        'orders',
+        'wallet',
+        'checkout',
+        'shoppers',
+        'shop_dashboard',
+      ];
       customerModules.forEach(module => {
         if (privileges[module]) {
           privileges[module]!.access = true;

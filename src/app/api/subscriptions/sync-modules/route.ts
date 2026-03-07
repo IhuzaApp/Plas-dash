@@ -45,7 +45,9 @@ export async function POST(req: Request) {
     const modulesFromCode = Object.entries(MODULE_DESCRIPTIONS);
 
     // 1. Get existing modules to check for slugs
-    const { modules: existingModules } = await hasuraClient.request<{ modules: { id: string, slug: string }[] }>(GET_ALL_MODULES);
+    const { modules: existingModules } = await hasuraClient.request<{
+      modules: { id: string; slug: string }[];
+    }>(GET_ALL_MODULES);
     const existingModuleMap = new Map(existingModules.map(m => [m.slug.toLowerCase(), m.id]));
 
     for (const [slug, desc] of modulesFromCode) {
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
       const payload = {
         name: desc.title,
         slug: lowerSlug,
-        group_name: desc.group
+        group_name: desc.group,
       };
 
       if (existingModuleMap.has(lowerSlug)) {
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
         const id = existingModuleMap.get(lowerSlug);
         const data = await hasuraClient.request(UPDATE_MODULE, {
           id,
-          set: { name: payload.name, group_name: payload.group_name }
+          set: { name: payload.name, group_name: payload.group_name },
         });
         results.push(data);
       } else {
@@ -73,7 +75,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       message: `Successfully synchronized ${results.length} modules`,
-      count: results.length
+      count: results.length,
     });
   } catch (error: any) {
     console.error('Error syncing modules:', error);

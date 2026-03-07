@@ -146,7 +146,8 @@ const PermissionDisplay = ({
               <AccordionContent>
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   {group.permissions.map((permission: any) => {
-                    const hasAccess = privileges[group.module as PrivilegeKey]?.[permission.key] || false;
+                    const hasAccess =
+                      privileges[group.module as PrivilegeKey]?.[permission.key] || false;
                     return (
                       <div key={permission.key} className="flex items-center gap-2">
                         <div
@@ -181,8 +182,10 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
 
   // undefined planModuleSlugs = subscription data not available yet; [] = no modules in plan
   const resolvedModules: string[] | undefined =
-    planModuleSlugs !== undefined ? planModuleSlugs
-      : hookModules.length > 0 ? hookModules
+    planModuleSlugs !== undefined
+      ? planModuleSlugs
+      : hookModules.length > 0
+        ? hookModules
         : undefined;
 
   const isLoading = planModuleSlugs !== undefined ? false : isLoadingModules;
@@ -652,7 +655,9 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                           </SelectItem>
                           <SelectItem value="customer">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="border-sky-400 text-sky-600">Customer</Badge>
+                              <Badge variant="outline" className="border-sky-400 text-sky-600">
+                                Customer
+                              </Badge>
                               <span>Read-only access to orders & wallet</span>
                             </div>
                           </SelectItem>
@@ -674,32 +679,36 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                 />
 
                 {/* Role Module Preview — shows module coverage for preset roles */}
-                {roleType !== 'custom' && !isLoadingModules && filteredPermissionGroups.length > 0 && (
-                  <RoleModulePreview
-                    privileges={customPrivileges}
-                    filteredPermissionGroups={filteredPermissionGroups}
-                    roleLabel={{
-                      globalAdmin: 'Global Admin',
-                      systemAdmin: 'System Admin',
-                      storeAdministrator: 'Store Administrator',
-                      storeManager: 'Store Manager',
-                      assistantManager: 'Assistant Manager',
-                      cashier: 'Cashier',
-                      salesAssociate: 'Sales Associate',
-                      inventorySpecialist: 'Inventory Specialist',
-                      financeManager: 'Finance Manager',
-                      accountant: 'Accountant',
-                      kitchenManager: 'Kitchen Manager',
-                      chef: 'Chef',
-                      waiter: 'Waiter',
-                      bartender: 'Bartender',
-                      deliveryDriver: 'Delivery Driver',
-                      securityGuard: 'Security Guard',
-                      maintenanceStaff: 'Maintenance Staff',
-                      customer: 'Customer',
-                    }[roleType] ?? roleType}
-                  />
-                )}
+                {roleType !== 'custom' &&
+                  !isLoadingModules &&
+                  filteredPermissionGroups.length > 0 && (
+                    <RoleModulePreview
+                      privileges={customPrivileges}
+                      filteredPermissionGroups={filteredPermissionGroups}
+                      roleLabel={
+                        {
+                          globalAdmin: 'Global Admin',
+                          systemAdmin: 'System Admin',
+                          storeAdministrator: 'Store Administrator',
+                          storeManager: 'Store Manager',
+                          assistantManager: 'Assistant Manager',
+                          cashier: 'Cashier',
+                          salesAssociate: 'Sales Associate',
+                          inventorySpecialist: 'Inventory Specialist',
+                          financeManager: 'Finance Manager',
+                          accountant: 'Accountant',
+                          kitchenManager: 'Kitchen Manager',
+                          chef: 'Chef',
+                          waiter: 'Waiter',
+                          bartender: 'Bartender',
+                          deliveryDriver: 'Delivery Driver',
+                          securityGuard: 'Security Guard',
+                          maintenanceStaff: 'Maintenance Staff',
+                          customer: 'Customer',
+                        }[roleType] ?? roleType
+                      }
+                    />
+                  )}
 
                 {/* Unified Permissions Section */}
                 <div className="space-y-4">
@@ -756,7 +765,9 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                     {isLoadingModules ? (
                       <div className="flex flex-col items-center justify-center p-8 space-y-4">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground">Checking subscription modules...</p>
+                        <p className="text-sm text-muted-foreground">
+                          Checking subscription modules...
+                        </p>
                       </div>
                     ) : filteredPermissionGroups.length === 0 ? (
                       <div className="p-8 text-center border rounded-lg bg-muted/20">
@@ -786,7 +797,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                                         <Switch
                                           checked={
                                             customPrivileges[group.module as PrivilegeKey]?.[
-                                            permission.key
+                                              permission.key
                                             ] || false
                                           }
                                           onCheckedChange={() =>

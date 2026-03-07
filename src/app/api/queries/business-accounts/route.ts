@@ -16,17 +16,17 @@ const GET_BUSINESS_ACCOUNTS = gql`
 `;
 
 export async function GET(req: Request) {
-    const context = await getUserContext(req);
-    if (!context) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const context = await getUserContext(req);
+  if (!context) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    try {
-        if (!hasuraClient) throw new Error('Hasura client is not initialized');
-        const data = await hasuraClient.request<{ business_accounts: any[] }>(GET_BUSINESS_ACCOUNTS);
-        return NextResponse.json({ business_accounts: data.business_accounts || [] });
-    } catch (error) {
-        console.error('Error fetching business_accounts:', error);
-        return NextResponse.json({ error: 'Failed to fetch business accounts' }, { status: 500 });
-    }
+  try {
+    if (!hasuraClient) throw new Error('Hasura client is not initialized');
+    const data = await hasuraClient.request<{ business_accounts: any[] }>(GET_BUSINESS_ACCOUNTS);
+    return NextResponse.json({ business_accounts: data.business_accounts || [] });
+  } catch (error) {
+    console.error('Error fetching business_accounts:', error);
+    return NextResponse.json({ error: 'Failed to fetch business accounts' }, { status: 500 });
+  }
 }

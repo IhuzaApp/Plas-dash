@@ -16,7 +16,8 @@ export default function CompanyDashboardPage() {
         <Alert className="max-w-md">
           <Shield className="h-4 w-4" />
           <AlertDescription>
-            This page is for Organization Employees only. Project Users should use the main dashboard.
+            This page is for Organization Employees only. Project Users should use the main
+            dashboard.
           </AlertDescription>
         </Alert>
       </div>

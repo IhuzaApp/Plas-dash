@@ -9,12 +9,7 @@
           "id": "dashboard-overview",
           "title": "Dashboard Overview",
           "overview": "The Dashboard is the main control center of the system. It provides a real-time overview of your business performance, operational activity, and system health.",
-          "who_uses_this": [
-            "Global Admin",
-            "System Admin",
-            "Project Manager",
-            "Support Staff"
-          ],
+          "who_uses_this": ["Global Admin", "System Admin", "Project Manager", "Support Staff"],
           "content": "The dashboard displays key metrics such as total revenue, number of completed orders, pending orders, and overall activity across the platform. These metrics update automatically, allowing managers and administrators to monitor business performance without generating manual reports.\n\nEvery order processed through the system can be monitored from the dashboard. You can see which orders are newly created, currently being processed, in delivery, or already completed. This helps staff respond quickly to delays or operational issues.\n\nFinancial widgets display balances related to company wallets, shop payments, and customer transactions. This makes it easier to quickly identify revenue flow and monitor financial health.\n\nThe dashboard also highlights alerts such as overdue deliveries, system notifications, or unresolved support tickets. These alerts help teams react quickly and maintain smooth operations.",
           "key_features": [
             "Real-time revenue tracking",
@@ -43,11 +38,7 @@
           "id": "first-steps",
           "title": "First Steps",
           "overview": "Follow these steps when logging into the system for the first time.",
-          "who_uses_this": [
-            "New Staff",
-            "Managers",
-            "Administrators"
-          ],
+          "who_uses_this": ["New Staff", "Managers", "Administrators"],
           "content": "When you first access the system, there are several important steps to help you get started efficiently.\n\nStep 1: Log in to Your Account\nUse your assigned username and password to access the secure dashboard. Only authorized users with valid credentials can access the system.\n\nStep 2: Explore the Navigation Menu\nThe sidebar menu provides access to all system modules including Orders, Products, Inventory, Financials, and Settings. Spend some time familiarizing yourself with where each function is located.\n\nStep 3: Configure Notifications\nEnable system notifications to stay informed about new orders, support tickets, low inventory alerts, and payment confirmations.\n\nStep 4: Review Documentation\nVisit the Help Center and documentation sections to learn about advanced tools such as promotions, referrals, analytics, and reporting.",
           "steps": [
             "Log in using your credentials",
@@ -71,11 +62,7 @@
           "id": "manual-product-entry",
           "title": "Manual Product Entry",
           "overview": "Products can be added manually when introducing new items to the catalog or inventory.",
-          "who_uses_this": [
-            "System Admin",
-            "Store Manager",
-            "Inventory Manager"
-          ],
+          "who_uses_this": ["System Admin", "Store Manager", "Inventory Manager"],
           "content": "Products can be added manually using the 'Add New Product' form. This method is useful when introducing new items or managing small inventories.\n\nChoose an existing product from the global catalog or create a new product name if the item does not already exist. The global catalog helps maintain consistency across shops.\n\nEnter the base cost of the product and the final selling price. The base price is typically what the shop pays, while the selling price is what the customer will see.\n\nSpecify the available stock quantity and measurement unit such as pieces, kilograms, or liters. You can also set a reorder level so the system alerts you when stock becomes low.\n\nToggle the 'Active' status to control whether the product is visible in the marketplace or POS system.",
           "key_fields": [
             "Product Name",
@@ -105,10 +92,7 @@
           "id": "bulk-import-catalog",
           "title": "Bulk Import via CSV",
           "overview": "For businesses with large product catalogs, the CSV import tool allows you to add hundreds or thousands of products at once.",
-          "who_uses_this": [
-            "Inventory Manager",
-            "System Admin"
-          ],
+          "who_uses_this": ["Inventory Manager", "System Admin"],
           "content": "Prepare a spreadsheet containing product information such as Product Name, Barcode, SKU, and Description. Save the file in CSV format before uploading it to the system.\n\nThe system automatically checks barcodes and SKUs to prevent duplicate entries. If a product already exists, the system will skip or update the record depending on the import settings.\n\nImported products are added to the Global Product Names database. This allows different shops or branches to use the same standardized product information.\n\nDuring the import process, the system shows a progress indicator and provides a summary of successfully imported items, skipped entries, and any errors.",
           "steps": [
             "Prepare inventory spreadsheet",
@@ -129,11 +113,7 @@
           "id": "create-order",
           "title": "Creating an Order",
           "overview": "Orders can be created through the POS system or automatically through the marketplace.",
-          "who_uses_this": [
-            "Cashiers",
-            "Store Managers",
-            "Customer Support"
-          ],
+          "who_uses_this": ["Cashiers", "Store Managers", "Customer Support"],
           "content": "Orders can be created either manually by staff or automatically through integrated checkout systems.\n\nChoose products from the available inventory list. The system will automatically display prices and available stock.\n\nEnter customer details such as name, phone number, and delivery address. If the customer already exists in the system, their information can be selected from the saved database.\n\nSelect the appropriate payment method including Cash, Card, or Mobile Money (MoMo). The system records the selected payment type for accounting and reporting purposes.\n\nAfter reviewing all details, confirm the order. The system generates an invoice which can be printed or shared digitally with the customer.",
           "steps": [
             "Select items from inventory",
@@ -167,10 +147,7 @@
           "id": "barcode-scanning-advanced",
           "title": "Advanced Barcode Scanning",
           "overview": "The barcode scanning feature helps speed up product selection during checkout and inventory management.",
-          "who_uses_this": [
-            "Cashiers",
-            "Inventory Team"
-          ],
+          "who_uses_this": ["Cashiers", "Inventory Team"],
           "content": "Using your device camera, the system can scan product barcodes in real time. Once scanned, the product is automatically identified and added to the cart or product list.\n\nThe system searches the Global Product Catalog for the scanned code. If the product exists, its information is instantly retrieved.\n\nIf the camera cannot access the barcode, users can manually enter the code into the search field. The system will suggest matching products.",
           "key_features": [
             "Camera-Based Scanning",
@@ -190,18 +167,9 @@
           "id": "wallet-management",
           "title": "Wallet Operations",
           "overview": "Wallets track all money movements inside the platform.",
-          "who_uses_this": [
-            "Finance Team",
-            "Global Admin",
-            "System Admin"
-          ],
+          "who_uses_this": ["Finance Team", "Global Admin", "System Admin"],
           "content": "Payout Processing: Businesses or partners can request payouts from their wallet balance. Administrators can approve or process these withdrawals from the financial dashboard.\n\nTransaction Reconciliation: All wallet transactions can be reviewed and compared with orders, refunds, and deposits to ensure accurate accounting.\n\nMulti-Currency Support: The system can be configured to support different currencies depending on the region where the platform operates.",
-          "wallet_types": [
-            "Company Wallet",
-            "Shop Wallet",
-            "Driver Wallet",
-            "Referral Wallet"
-          ],
+          "wallet_types": ["Company Wallet", "Shop Wallet", "Driver Wallet", "Referral Wallet"],
           "example": {
             "order_total": 50,
             "shop_cost": 40,
@@ -217,10 +185,7 @@
           "id": "refunds-management",
           "title": "Refunds Management",
           "overview": "The refund management system allows administrators to process financial reversals when orders need to be cancelled or corrected.",
-          "who_uses_this": [
-            "Finance Team",
-            "Admin"
-          ],
+          "who_uses_this": ["Finance Team", "Admin"],
           "content": "Refunds can be initiated directly from the order details page. Once approved, the system reverses the payment according to the original payment method.\n\nIf the platform uses internal wallets, refunded amounts are automatically credited back to the correct wallet account.\n\nEvery refund transaction is logged with timestamps, responsible staff members, and related order details. This ensures full transparency during financial audits.",
           "steps": [
             "Locate order",
@@ -240,11 +205,7 @@
           "id": "tax-declarations",
           "title": "Tax Declarations",
           "overview": "The system automatically calculates and organizes tax data required for monthly reporting.",
-          "who_uses_this": [
-            "Finance Team",
-            "Accountants",
-            "Administrators"
-          ],
+          "who_uses_this": ["Finance Team", "Accountants", "Administrators"],
           "example": {
             "product_price": 10,
             "vat_rate": "18%"
@@ -270,16 +231,8 @@
           "id": "recipe-management",
           "title": "Recipe & BOM Management",
           "overview": "Define exactly how products are created from raw materials, essential for restaurants and manufacturing.",
-          "who_uses_this": [
-            "Production Manager",
-            "Chef",
-            "Kitchen Staff"
-          ],
-          "key_features": [
-            "Recipe Builder",
-            "Cost Calculation",
-            "Production Sections"
-          ],
+          "who_uses_this": ["Production Manager", "Chef", "Kitchen Staff"],
+          "key_features": ["Recipe Builder", "Cost Calculation", "Production Sections"],
           "example": {
             "recipe": "Double Cheeseburger",
             "ingredients": [
@@ -302,10 +255,7 @@
           "id": "production-orders",
           "title": "Production Orders",
           "overview": "Plan and track the manufacturing process while ensuring inventory accuracy.",
-          "who_uses_this": [
-            "Operation Manager",
-            "Production Team"
-          ],
+          "who_uses_this": ["Operation Manager", "Production Team"],
           "steps": [
             "Create production order",
             "Verify ingredient availability",
@@ -324,24 +274,14 @@
           "id": "supplier-management",
           "title": "Supplier & RFQ",
           "overview": "Manage vendor relationships and streamline the process of requesting quotes.",
-          "who_uses_this": [
-            "Purchasing Agent",
-            "Finance Manager"
-          ],
-          "key_features": [
-            "Supplier Directory",
-            "RFQ Workflow",
-            "Quotation Comparison"
-          ]
+          "who_uses_this": ["Purchasing Agent", "Finance Manager"],
+          "key_features": ["Supplier Directory", "RFQ Workflow", "Quotation Comparison"]
         },
         {
           "id": "purchase-orders",
           "title": "Purchase Orders",
           "overview": "Formalize buying processes from order creation to receiving goods.",
-          "who_uses_this": [
-            "Procurement Team",
-            "Warehouse Staff"
-          ],
+          "who_uses_this": ["Procurement Team", "Warehouse Staff"],
           "steps": [
             "Generate Purchase Order (PO)",
             "Send to vendor",
@@ -360,15 +300,8 @@
           "id": "billing-dashboard",
           "title": "Billing Dashboard",
           "overview": "Monitor all business subscriptions and upcoming renewal deadlines.",
-          "who_uses_this": [
-            "Admin",
-            "Business Owner"
-          ],
-          "key_features": [
-            "Renewal Tracking",
-            "Status Automation",
-            "Plan Assignment"
-          ]
+          "who_uses_this": ["Admin", "Business Owner"],
+          "key_features": ["Renewal Tracking", "Status Automation", "Plan Assignment"]
         }
       ]
     },
@@ -381,11 +314,7 @@
           "id": "create-ticket",
           "title": "Creating Support Tickets",
           "overview": "Support tickets allow users or staff members to report issues or request assistance.",
-          "who_uses_this": [
-            "Customers",
-            "Staff",
-            "Vendors"
-          ],
+          "who_uses_this": ["Customers", "Staff", "Vendors"],
           "content": "Navigate to the Support module in the main menu.\n\nClick the 'New Ticket' button and select the category that best describes your issue.\n\nProvide a clear explanation of the issue and include any relevant details such as order numbers or user IDs.\n\nYou can upload screenshots, documents, or images that help explain the problem.\n\nOnce submitted, the ticket will be assigned to the appropriate support team for resolution.",
           "steps": [
             "Open Support module",
@@ -399,9 +328,7 @@
           "id": "track-resolution",
           "title": "Tracking Issue Resolution",
           "overview": "Monitor your support requests from submission to resolution.",
-          "who_uses_this": [
-            "All Users"
-          ],
+          "who_uses_this": ["All Users"],
           "content": "Each ticket displays a full timeline showing when it was created, updated, or responded to by the support team.\n\nTickets move through several statuses such as Open, In Progress, Awaiting Response, and Resolved.\n\nUsers can exchange messages with support agents directly within the ticket thread.\n\nOnce a ticket is resolved, users may rate the support experience and provide feedback to help improve service quality.",
           "key_features": [
             "Full timeline activity",

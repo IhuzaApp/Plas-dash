@@ -37,6 +37,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: { insert_shop_subscriptions_one: data } });
   } catch (error) {
     console.error('Error mutating shop_subscriptions:', error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to mutate shop_subscriptions' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to mutate shop_subscriptions' },
+      { status: 500 }
+    );
   }
 }

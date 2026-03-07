@@ -6,10 +6,17 @@ import { getUserContext } from '@/lib/auth-server';
 const UPSERT_PLAN = gql`
   mutation UpsertPlan($object: plans_insert_input!) {
     insert_plans_one(
-      object: $object,
+      object: $object
       on_conflict: {
-        constraint: plans_pkey,
-        update_columns: [name, description, price_monthly, price_yearly, ai_request_limit, reel_limit]
+        constraint: plans_pkey
+        update_columns: [
+          name
+          description
+          price_monthly
+          price_yearly
+          ai_request_limit
+          reel_limit
+        ]
       }
     ) {
       id
