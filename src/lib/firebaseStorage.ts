@@ -27,17 +27,17 @@ export const deleteVideoFromFirebase = async (downloadURL: string): Promise<void
  * Uploads a file to Firebase Storage and returns the download URL.
  * @param file The file to upload.
  * @param onProgress Callback function to track upload progress (0-100).
- * @returns A promise that resolves to the download URL.
+ * @param folder The folder to upload to (e.g., 'videos' or 'images'). Defaults to 'videos'.
  */
-export const uploadVideoToFirebase = (
+export const uploadFileToFirebase = async (
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    folder: 'videos' | 'images' = 'videos'
 ): Promise<string> => {
     return new Promise((resolve, reject) => {
-        // Create a unique filename and ensure it is placed in the 'reels/videos' path.
-        // In Firebase Storage, prefixes like 'reels/' automatically act as directories.
+        // Create a unique filename and ensure it is placed in the designated path.
         const filename = `${Date.now()}_${file.name}`;
-        const storageRef = ref(storage, `reels/videos/${filename}`);
+        const storageRef = ref(storage, `reels/${folder}/${filename}`);
 
         const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -50,7 +50,7 @@ export const uploadVideoToFirebase = (
                 }
             },
             (error) => {
-                console.error("Firebase upload error:", error);
+                console.error("Firebase upload error:", error, "File:", file.name);
                 reject(error);
             },
             async () => {
@@ -65,3 +65,10 @@ export const uploadVideoToFirebase = (
         );
     });
 };
+
+/**
+ * Backward compatibility alias for uploading videos.
+ * @deprecated Use uploadFileToFirebase instead
+ */
+export const uploadVideoToFirebase = (file: File, onProgress?: (progress: number) => void) =>
+    uploadFileToFirebase(file, onProgress, 'videos');

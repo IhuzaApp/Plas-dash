@@ -23,12 +23,14 @@ import {
   FileVideo,
   ToggleLeft,
   ToggleRight,
+  Edit,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAddReel } from '@/hooks/useHasuraApi';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
-import { uploadVideoToFirebase } from '@/lib/firebaseStorage';
+import { uploadFileToFirebase } from '@/lib/firebaseStorage';
+import { compressVideo } from '@/lib/videoCompression';
 
 type PostType = 'restaurant' | 'supermarket' | 'chef';
 
@@ -64,11 +66,12 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
 
   // Upload state
   const [videoSource, setVideoSource] = useState<'upload' | 'youtube'>('upload');
-  const [uploadedVideo, setUploadedVideo] = useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [youtubePreviewUrl, setYoutubePreviewUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   // Helper function to check category types
   const isYouTubeCategory = (category: string) => {
@@ -79,45 +82,63 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
     return UPLOAD_CATEGORIES.includes(category.toLowerCase());
   };
 
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Check file type
-      if (!file.type.startsWith('video/')) {
-        toast.error('Please select a valid video file');
+      if (!file.type.startsWith('video/') && !file.type.startsWith('image/')) {
+        toast.error('Please select a valid video or image file');
         return;
       }
 
-      // Check file size (max 50MB for base64 storage)
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error('Video file size must be less than 50MB for database storage');
-        return;
+      setUploadedFile(file);
+      setFilePreview(URL.createObjectURL(file));
+
+      // Handle upload
+      const startUpload = async (fileToUpload: File | Blob) => {
+        setIsUploading(true);
+        setUploadProgress(0);
+
+        const folder = file.type.startsWith('image/') ? 'images' : 'videos';
+
+        uploadFileToFirebase(fileToUpload as File, (progress) => {
+          setUploadProgress(progress);
+        }, folder)
+          .then((url) => {
+            setFormData(prev => ({ ...prev, video_url: url }));
+            setIsUploading(false);
+            toast.success(`${file.type.startsWith('image/') ? 'Image' : 'Video'} uploaded successfully!`);
+          })
+          .catch((error) => {
+            setIsUploading(false);
+            toast.error('Failed to upload file');
+            removeUploadedFile();
+          });
+      };
+
+      // Only compress videos if they are large
+      if (file.type.startsWith('video/') && file.size > 10 * 1024 * 1024) {
+        setIsCompressing(true);
+        toast.info('Compressing video to reduce size...', { duration: 5000 });
+
+        compressVideo(file)
+          .then((compressedFile) => {
+            setIsCompressing(false);
+            startUpload(compressedFile);
+          })
+          .catch((error) => {
+            console.error('Compression failed:', error);
+            setIsCompressing(false);
+            startUpload(file);
+          });
+      } else {
+        startUpload(file);
       }
-
-      setUploadedVideo(file);
-      // Start upload to Firebase
-      setIsUploading(true);
-      setUploadProgress(0);
-
-      uploadVideoToFirebase(file, (progress) => {
-        setUploadProgress(progress);
-      })
-        .then((url) => {
-          setFormData(prev => ({ ...prev, video_url: url }));
-          setIsUploading(false);
-          toast.success('Video uploaded successfully!');
-        })
-        .catch((error) => {
-          setIsUploading(false);
-          toast.error('Failed to upload video');
-          removeUploadedVideo();
-        });
     }
   };
 
-  const removeUploadedVideo = () => {
-    setUploadedVideo(null);
-    setVideoPreview(null);
+  const removeUploadedFile = () => {
+    setUploadedFile(null);
+    setFilePreview(null);
     setUploadProgress(0);
     setIsUploading(false);
     if (fileInputRef.current) {
@@ -143,15 +164,15 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
           return;
         }
       } else if (videoSource === 'upload') {
-        if (!uploadedVideo && !videoUrl) {
-          toast.error('Please upload a video file or provide a video URL');
+        if (!uploadedFile && !videoUrl) {
+          toast.error('Please upload a file or provide a URL');
           return;
         }
       }
 
-      // If there's an uploaded video, the URL should already be in formData.video_url from handleVideoUpload
-      if (uploadedVideo && !formData.video_url) {
-        toast.error('Please wait for the video to finish uploading');
+      // If there's an uploaded file, the URL should already be in formData.video_url from handleFileUpload
+      if (uploadedFile && !formData.video_url) {
+        toast.error('Please wait for the file to finish uploading');
         return;
       }
 
@@ -226,8 +247,8 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
       restaurant_id: '',
       is_active: true,
     });
-    setUploadedVideo(null);
-    setVideoPreview(null);
+    setUploadedFile(null);
+    setFilePreview(null);
     setYoutubePreviewUrl(null);
     setUploadProgress(0);
     setIsUploading(false);
@@ -380,25 +401,25 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
             </div>
           )}
 
-          {/* Video Upload input */}
+          {/* File Upload input */}
           {videoSource === 'upload' && (
             <div>
               <Label className="flex items-center gap-2">
-                <FileVideo className="h-4 w-4 text-blue-500" />
-                Upload Video or URL
+                <Upload className="h-4 w-4 text-blue-500" />
+                Upload Video or Image
               </Label>
               <div className="mt-2">
-                {!uploadedVideo ? (
+                {!uploadedFile ? (
                   <div className="space-y-4">
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
                       <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">Click to upload video</p>
-                      <p className="text-xs text-gray-500">MP4, MOV, AVI up to 50MB</p>
+                      <p className="text-sm text-gray-600 mb-2">Click to upload video or image</p>
+                      <p className="text-xs text-gray-500">MP4, PNG, JPG up to 100MB</p>
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept="video/*"
-                        onChange={handleVideoUpload}
+                        accept="video/*,image/*"
+                        onChange={handleFileUpload}
                         className="hidden"
                       />
                       <Button
@@ -410,31 +431,22 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                         Choose File
                       </Button>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 border-t border-gray-200"></div>
-                      <span className="text-xs text-muted-foreground uppercase">or enter URL</span>
-                      <div className="flex-1 border-t border-gray-200"></div>
-                    </div>
-                    <div>
-                      <Input
-                        id="video_url_fallback"
-                        value={formData.video_url}
-                        onChange={e => setFormData({ ...formData, video_url: e.target.value })}
-                        placeholder="Enter direct video URL (e.g. .mp4 link)"
-                      />
-                    </div>
                   </div>
                 ) : (
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Video className="h-4 w-4 text-green-500" />
-                        <span className="text-sm font-medium">{uploadedVideo.name}</span>
+                        {uploadedFile.type.startsWith('image/') ? (
+                          <Edit className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Video className="h-4 w-4 text-green-500" />
+                        )}
+                        <span className="text-sm font-medium">{uploadedFile.name}</span>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={removeUploadedVideo}
+                        onClick={removeUploadedFile}
                         disabled={isUploading}
                       >
                         <X className="h-4 w-4" />
@@ -451,22 +463,30 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                       </div>
                     )}
 
-                    {/* Video Preview - TikTok-like experience */}
-                    {videoPreview ? (
+                    {/* Preview */}
+                    {filePreview ? (
                       <div className="relative">
-                        <video
-                          src={videoPreview}
-                          className="w-full h-48 object-cover rounded-lg"
-                          controls
-                          autoPlay
-                          muted
-                          loop
-                        />
+                        {uploadedFile.type.startsWith('image/') ? (
+                          <img
+                            src={filePreview}
+                            alt="Preview"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                        ) : (
+                          <video
+                            src={filePreview}
+                            className="w-full h-48 object-cover rounded-lg"
+                            controls
+                            autoPlay
+                            muted
+                            loop
+                          />
+                        )}
                         {isUploading && (
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
                             <div className="text-center text-white">
                               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                              <p className="text-sm">Processing video...</p>
+                              <p className="text-sm">Processing file...</p>
                             </div>
                           </div>
                         )}
@@ -475,12 +495,12 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                       <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
                         <img
                           src="/placeholder.svg"
-                          alt="No video"
+                          alt="No file"
                           className="w-full h-full object-cover opacity-50"
                         />
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
                           <Video className="h-10 w-10 mb-2 opacity-20" />
-                          <p className="text-xs font-medium">Wait for video preview...</p>
+                          <p className="text-xs font-medium">Wait for preview...</p>
                         </div>
                       </div>
                     )}
@@ -544,11 +564,13 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
           <div className="flex gap-2 pt-4">
             <Button
               onClick={handleAddReel}
-              disabled={addReelMutation.isPending || isUploading}
+              disabled={addReelMutation.isPending || isUploading || isCompressing}
               className="flex-1"
             >
-              {addReelMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Add Reel
+              {addReelMutation.isPending || isCompressing ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {isCompressing ? 'Compressing...' : 'Add Reel'}
             </Button>
             <Button
               variant="outline"

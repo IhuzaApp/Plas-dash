@@ -57,8 +57,32 @@ const ReelCard: React.FC<ReelCardProps> = ({
   onViewComments,
 }) => {
   const isYouTubeUrl = (url: string) => url?.includes('youtube.com') || url?.includes('youtu.be');
+  const isImageUrl = (url: string) => url?.includes('/reels/images/') || url?.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
+
   const isYouTube = reel.video_url ? isYouTubeUrl(reel.video_url) : false;
+  const isImage = reel.video_url ? isImageUrl(reel.video_url) : false;
   const playerRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Sync video playback state with playingVideo prop
+  React.useEffect(() => {
+    if (!videoRef.current || isYouTube || isImage) return;
+
+    const isCurrentPlaying = playingVideo === reel.id;
+
+    if (isCurrentPlaying) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          if (error.name !== 'AbortError') {
+            console.error('Video play error:', error);
+          }
+        });
+      }
+    } else {
+      videoRef.current.pause();
+    }
+  }, [playingVideo, reel.id, isYouTube, isImage]);
 
   const handleProgress = (state: any) => {
     if (state.playedSeconds >= 40) {
@@ -100,14 +124,16 @@ const ReelCard: React.FC<ReelCardProps> = ({
             width="100%"
             height="100%"
             style={{ objectFit: 'cover' }}
-            config={{
-              youtube: {
-                end: 40,
-              },
-            }}
+          />
+        ) : isImage ? (
+          <img
+            src={reel.video_url}
+            alt={reel.title}
+            className="w-full h-full object-cover"
           />
         ) : (
           <video
+            ref={videoRef}
             src={reel.video_url}
             className="w-full h-full object-cover"
             muted={mutedVideos.has(reel.id)}
@@ -133,15 +159,13 @@ const ReelCard: React.FC<ReelCardProps> = ({
                   }
                   return;
                 }
-                const video = document.querySelector(
-                  `video[src="${reel.video_url}"]`
-                ) as HTMLVideoElement;
-                if (video) {
-                  if (video.paused) {
-                    video.play().catch(err => console.warn('Play error:', err));
-                  } else {
-                    video.pause();
-                  }
+                if (isImage) return;
+
+                // Toggle via callback, useEffect handles the actual DOM play/pause
+                if (playingVideo === reel.id) {
+                  onVideoPause();
+                } else {
+                  onVideoPlay(reel.id);
                 }
               }}
             >
