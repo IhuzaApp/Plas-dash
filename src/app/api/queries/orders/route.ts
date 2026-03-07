@@ -129,7 +129,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ orders: [] });
     }
 
-    let enriched_count = 0;
     const enriched = orders.map(o => {
       const agg = o.Order_Items_aggregate?.aggregate;
       const itemsCount = agg?.count ?? o.Order_Items?.length ?? 0;
@@ -138,13 +137,6 @@ export async function GET(req: Request) {
       const baseTotal = parseFloat(o.total || '0');
       const serviceFee = parseFloat(o.service_fee || '0');
       const deliveryFee = parseFloat(o.delivery_fee || '0');
-
-      if (enriched_count < 3) {
-        console.log(
-          `Order ${o.OrderID}: base=${baseTotal}, service=${serviceFee}, delivery=${deliveryFee}, raw_service=${o.service_fee}, raw_delivery=${o.delivery_fee}`
-        );
-        enriched_count++;
-      }
 
       const grandTotal = baseTotal + serviceFee + deliveryFee;
       return {
@@ -172,11 +164,11 @@ export async function GET(req: Request) {
         shopper:
           o.Shoppers != null
             ? {
-                id: o.Shoppers.id ?? '',
-                name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
-                phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
-                email: '',
-              }
+              id: o.Shoppers.id ?? '',
+              name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
+              phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
+              email: '',
+            }
             : undefined,
         itemsCount,
         unitsCount,

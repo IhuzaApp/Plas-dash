@@ -59,6 +59,7 @@ import ReelsStats from '@/components/Reels/ReelsStats';
 import ReelsAnalytics from '@/components/Reels/ReelsAnalytics';
 import ReelCard from '@/components/Reels/ReelCard';
 import ReelsCommentsModal from '@/components/Reels/ReelsCommentsModal';
+import { deleteVideoFromFirebase } from '@/lib/firebaseStorage';
 
 type PostType = 'restaurant' | 'supermarket' | 'chef';
 
@@ -186,6 +187,14 @@ const Reels = () => {
     }
 
     try {
+      // Find the reel to get its video_url
+      const reelToDelete = reels.find((r: any) => r.id === reelId);
+
+      // If it's a Firebase URL, delete it from storage
+      if (reelToDelete?.video_url && reelToDelete.video_url.includes('firebasestorage.googleapis.com')) {
+        await deleteVideoFromFirebase(reelToDelete.video_url);
+      }
+
       await deleteReelMutation.mutateAsync({ id: reelId });
       toast.success('Reel deleted successfully');
       refetch();

@@ -60,7 +60,7 @@ const ReelCard: React.FC<ReelCardProps> = ({
   const isYouTube = reel.video_url ? isYouTubeUrl(reel.video_url) : false;
   const playerRef = useRef<any>(null);
 
-  const handleProgress = (state: { playedSeconds: number }) => {
+  const handleProgress = (state: any) => {
     if (state.playedSeconds >= 40) {
       if (playerRef.current) {
         playerRef.current.seekTo(0);
@@ -87,9 +87,12 @@ const ReelCard: React.FC<ReelCardProps> = ({
         ) : isYouTube ? (
           <ReactPlayer
             ref={playerRef}
-            url={reel.video_url}
+            src={reel.video_url}
             playing={playingVideo === reel.id}
             muted={mutedVideos.has(reel.id)}
+            controls={false}
+            loop={true}
+            playsInline={true}
             onPlay={() => onVideoPlay(reel.id)}
             onPause={onVideoPause}
             onError={() => onFailedVideo(reel.video_url)}
@@ -99,13 +102,7 @@ const ReelCard: React.FC<ReelCardProps> = ({
             style={{ objectFit: 'cover' }}
             config={{
               youtube: {
-                playerVars: {
-                  end: 40,
-                  controls: 0,
-                  modestbranding: 1,
-                  loop: 1,
-                  playsinline: 1,
-                },
+                end: 40,
               },
             }}
           />
@@ -274,11 +271,11 @@ const ReelCard: React.FC<ReelCardProps> = ({
                   </AvatarFallback>
                 </>
               ) : (
-                <AvatarFallback className="text-xs">?</AvatarFallback>
+                <AvatarFallback className="text-xs">PA</AvatarFallback>
               )}
             </Avatar>
             <span className="font-medium">
-              {reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Unknown Creator'}
+              {reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Plas Agent'}
             </span>
           </div>
           <span className="text-muted-foreground text-xs">{formatDateTime(reel.created_on)}</span>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import ReactPlayer from 'react-player';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,10 +28,11 @@ import { toast } from 'sonner';
 import { useAddReel } from '@/hooks/useHasuraApi';
 import { useAuth } from '@/components/layout/RootLayout';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
+import { uploadVideoToFirebase } from '@/lib/firebaseStorage';
 
 type PostType = 'restaurant' | 'supermarket' | 'chef';
 
-// Category types for video handling
+// Categories for reference, but no longer strict bounds for upload types
 const YOUTUBE_CATEGORIES = ['tutorial', 'recipe', 'cooking'];
 const UPLOAD_CATEGORIES = ['shopping', 'organic', 'food', 'delivery'];
 
@@ -61,17 +63,18 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
   });
 
   // Upload state
+  const [videoSource, setVideoSource] = useState<'upload' | 'youtube'>('upload');
   const [uploadedVideo, setUploadedVideo] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [youtubePreviewUrl, setYoutubePreviewUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Check if category allows YouTube URLs
+  // Helper function to check category types
   const isYouTubeCategory = (category: string) => {
     return YOUTUBE_CATEGORIES.includes(category.toLowerCase());
   };
 
-  // Check if category requires video upload
   const isUploadCategory = (category: string) => {
     return UPLOAD_CATEGORIES.includes(category.toLowerCase());
   };
@@ -92,39 +95,23 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
       }
 
       setUploadedVideo(file);
+      // Start upload to Firebase
       setIsUploading(true);
-
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setVideoPreview(previewUrl);
-
-      // Start base64 conversion progress
       setUploadProgress(0);
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(interval);
-            return 90;
-          }
-          return prev + Math.random() * 10; // Simulate conversion progress
-        });
-      }, 200);
 
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onload = () => {
-        clearInterval(interval);
-        setUploadProgress(100);
-        setIsUploading(false);
-        toast.success('Video processed successfully!');
-      };
-      reader.onerror = () => {
-        clearInterval(interval);
-        setIsUploading(false);
-        toast.error('Failed to process video');
-        removeUploadedVideo();
-      };
-      reader.readAsDataURL(file);
+      uploadVideoToFirebase(file, (progress) => {
+        setUploadProgress(progress);
+      })
+        .then((url) => {
+          setFormData(prev => ({ ...prev, video_url: url }));
+          setIsUploading(false);
+          toast.success('Video uploaded successfully!');
+        })
+        .catch((error) => {
+          setIsUploading(false);
+          toast.error('Failed to upload video');
+          removeUploadedVideo();
+        });
     }
   };
 
@@ -138,55 +125,34 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
     }
   };
 
-  const uploadVideoToServer = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          // Store the base64 video data directly in the database
-          resolve(reader.result);
-        } else {
-          reject(new Error('Failed to convert video to base64'));
-        }
-      };
-
-      reader.onerror = () => reject(new Error('Failed to read video file'));
-
-      // Convert video to base64
-      reader.readAsDataURL(file);
-    });
-  };
+  // Removed uploadVideoToServer as it is replaced by uploadVideoToFirebase
 
   const handleAddReel = async () => {
     try {
       let videoUrl = formData.video_url;
 
-      // Validate based on category
-      if (isYouTubeCategory(formData.category)) {
+      // Transform short URLs on save
+      if (videoUrl && videoUrl.includes('/shorts/')) {
+        videoUrl = videoUrl.replace('/shorts/', '/watch?v=');
+      }
+
+      // Validate based on the selected video source
+      if (videoSource === 'youtube') {
         if (!videoUrl || (!videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be'))) {
-          toast.error(
-            'Please provide a valid YouTube URL for tutorial, recipe, or cooking categories'
-          );
+          toast.error('Please provide a valid YouTube URL');
           return;
         }
-      } else if (isUploadCategory(formData.category)) {
+      } else if (videoSource === 'upload') {
         if (!uploadedVideo && !videoUrl) {
-          toast.error('Please upload a video file for this category');
+          toast.error('Please upload a video file or provide a video URL');
           return;
         }
       }
 
-      // If there's an uploaded video, convert it to base64
-      if (uploadedVideo) {
-        setUploadProgress(90);
-        try {
-          videoUrl = await uploadVideoToServer(uploadedVideo);
-          setUploadProgress(100);
-        } catch (error) {
-          toast.error('Failed to process video file');
-          return;
-        }
+      // If there's an uploaded video, the URL should already be in formData.video_url from handleVideoUpload
+      if (uploadedVideo && !formData.video_url) {
+        toast.error('Please wait for the video to finish uploading');
+        return;
       }
 
       if (!videoUrl) {
@@ -224,8 +190,8 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
         mutationVariables.restaurant_id = currentUser.restaurant_id;
       }
 
-      // Only set user_id if we have a valid UUID and no shop/restaurant context
-      if (currentUser.user_id && !currentUser.shop_id && !currentUser.restaurant_id) {
+      // Only set user_id if we have a valid UUID and no shop/restaurant context and the user is NOT a project user
+      if (currentUser.user_id && !currentUser.shop_id && !currentUser.restaurant_id && !session?.isProjectUser) {
         mutationVariables.user_id = currentUser.user_id;
       }
 
@@ -262,6 +228,7 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
     });
     setUploadedVideo(null);
     setVideoPreview(null);
+    setYoutubePreviewUrl(null);
     setUploadProgress(0);
     setIsUploading(false);
     if (fileInputRef.current) {
@@ -271,7 +238,10 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+      <SheetContent
+        side="right"
+        className="w-[90vw] !max-w-[1000px] sm:w-[600px] md:w-[800px] lg:w-[1000px] overflow-y-auto"
+      >
         <SheetHeader>
           <SheetTitle>Add New Reel</SheetTitle>
           <p className="text-sm text-muted-foreground">
@@ -338,53 +308,121 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
             </Select>
           </div>
 
-          {/* YouTube URL Input - Only for tutorial, recipe, cooking */}
-          {isYouTubeCategory(formData.category) && (
-            <div>
-              <Label htmlFor="video_url" className="flex items-center gap-2">
-                <Youtube className="h-4 w-4 text-red-500" />
+          {/* Video Source Selection */}
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Video Source</Label>
+            <div className="flex gap-4">
+              <Button
+                type="button"
+                variant={videoSource === 'upload' ? 'default' : 'outline'}
+                onClick={() => setVideoSource('upload')}
+                className="flex-1"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Upload File or URL
+              </Button>
+              <Button
+                type="button"
+                variant={videoSource === 'youtube' ? 'default' : 'outline'}
+                onClick={() => setVideoSource('youtube')}
+                className="flex-1"
+              >
+                <Youtube className="mr-2 h-4 w-4" />
                 YouTube URL
-              </Label>
-              <Input
-                id="video_url"
-                value={formData.video_url}
-                onChange={e => setFormData({ ...formData, video_url: e.target.value })}
-                placeholder="https://www.youtube.com/watch?v=..."
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Only YouTube URLs are allowed for {formData.category} category
-              </p>
+              </Button>
+            </div>
+          </div>
+
+          {/* YouTube URL Input */}
+          {videoSource === 'youtube' && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="video_url" className="flex items-center gap-2 mb-2">
+                  <Youtube className="h-4 w-4 text-red-500" />
+                  YouTube URL
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="video_url"
+                    value={formData.video_url}
+                    onChange={e => {
+                      setFormData({ ...formData, video_url: e.target.value });
+                      if (!e.target.value) setYoutubePreviewUrl(null);
+                    }}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      let url = formData.video_url;
+                      if (url && url.includes('/shorts/')) {
+                        url = url.replace('/shorts/', '/watch?v=');
+                      }
+                      setYoutubePreviewUrl(url);
+                    }}
+                  >
+                    Pull Video
+                  </Button>
+                </div>
+              </div>
+
+              {youtubePreviewUrl && (youtubePreviewUrl.includes('youtube.com') || youtubePreviewUrl.includes('youtu.be')) && (
+                <div className="border rounded-lg bg-black overflow-hidden relative aspect-video mt-4">
+                  <ReactPlayer
+                    src={youtubePreviewUrl}
+                    width="100%"
+                    height="100%"
+                    controls
+                  />
+                </div>
+              )}
             </div>
           )}
 
-          {/* Video Upload - Only for shopping, organic, food, delivery */}
-          {isUploadCategory(formData.category) && (
+          {/* Video Upload input */}
+          {videoSource === 'upload' && (
             <div>
               <Label className="flex items-center gap-2">
                 <FileVideo className="h-4 w-4 text-blue-500" />
-                Upload Video
+                Upload Video or URL
               </Label>
               <div className="mt-2">
                 {!uploadedVideo ? (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-                    <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Click to upload video</p>
-                    <p className="text-xs text-gray-500">MP4, MOV, AVI up to 50MB</p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="mt-2"
-                    >
-                      Choose File
-                    </Button>
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                      <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600 mb-2">Click to upload video</p>
+                      <p className="text-xs text-gray-500">MP4, MOV, AVI up to 50MB</p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="mt-2"
+                      >
+                        Choose File
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 border-t border-gray-200"></div>
+                      <span className="text-xs text-muted-foreground uppercase">or enter URL</span>
+                      <div className="flex-1 border-t border-gray-200"></div>
+                    </div>
+                    <div>
+                      <Input
+                        id="video_url_fallback"
+                        value={formData.video_url}
+                        onChange={e => setFormData({ ...formData, video_url: e.target.value })}
+                        placeholder="Enter direct video URL (e.g. .mp4 link)"
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="border rounded-lg p-4 bg-gray-50">
@@ -452,39 +490,28 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
             </div>
           )}
 
-          {/* Regular URL Input - For other categories */}
-          {!isYouTubeCategory(formData.category) && !isUploadCategory(formData.category) && (
-            <div>
-              <Label htmlFor="video_url">Video URL</Label>
-              <Input
-                id="video_url"
-                value={formData.video_url}
-                onChange={e => setFormData({ ...formData, video_url: e.target.value })}
-                placeholder="Enter video URL"
-              />
+          {formData.category?.toLowerCase() !== 'recipe' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  value={formData.Price}
+                  onChange={e => setFormData({ ...formData, Price: e.target.value })}
+                  placeholder="Enter price"
+                />
+              </div>
+              <div>
+                <Label htmlFor="delivery_time">Delivery Time</Label>
+                <Input
+                  id="delivery_time"
+                  value={formData.delivery_time}
+                  onChange={e => setFormData({ ...formData, delivery_time: e.target.value })}
+                  placeholder="e.g., 30-45 min"
+                />
+              </div>
             </div>
           )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="price">Price</Label>
-              <Input
-                id="price"
-                value={formData.Price}
-                onChange={e => setFormData({ ...formData, Price: e.target.value })}
-                placeholder="Enter price"
-              />
-            </div>
-            <div>
-              <Label htmlFor="delivery_time">Delivery Time</Label>
-              <Input
-                id="delivery_time"
-                value={formData.delivery_time}
-                onChange={e => setFormData({ ...formData, delivery_time: e.target.value })}
-                placeholder="e.g., 30-45 min"
-              />
-            </div>
-          </div>
 
           <div className="flex items-center justify-between">
             <Label htmlFor="is_active" className="text-sm font-medium">
