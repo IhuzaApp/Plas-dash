@@ -83,6 +83,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'referrals',
         'plasmarket',
         'restaurants',
+        'reels',
         'subscriptions',
       ];
 
@@ -114,6 +115,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'settings',
         'plasmarket',
         'restaurants',
+        'reels',
         'ai_chat',
         'subscriptions',
       ];
@@ -175,6 +177,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'promotions',
         'plasmarket',
         'restaurants',
+        'reels',
         'withdraw_requests',
         'ai_chat',
       ];
@@ -231,6 +234,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'tickets',
         'help',
         'restaurants',
+        'reels',
         'withdraw_requests',
       ];
       customerSupportModules.forEach(module => {

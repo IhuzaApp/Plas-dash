@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
+import ReactPlayer from 'react-player';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +56,19 @@ const ReelCard: React.FC<ReelCardProps> = ({
   onDelete,
   onViewComments,
 }) => {
+  const isYouTubeUrl = (url: string) => url?.includes('youtube.com') || url?.includes('youtu.be');
+  const isYouTube = reel.video_url ? isYouTubeUrl(reel.video_url) : false;
+  const playerRef = useRef<any>(null);
+
+  const handleProgress = (state: { playedSeconds: number }) => {
+    if (state.playedSeconds >= 40) {
+      if (playerRef.current) {
+        playerRef.current.seekTo(0);
+        onVideoPause();
+      }
+    }
+  };
+
   return (
     <Card className="overflow-hidden">
       <div className="relative aspect-video bg-black">
@@ -70,6 +84,31 @@ const ReelCard: React.FC<ReelCardProps> = ({
               <p className="text-xs font-medium">Video unavailable</p>
             </div>
           </div>
+        ) : isYouTube ? (
+          <ReactPlayer
+            ref={playerRef}
+            url={reel.video_url}
+            playing={playingVideo === reel.id}
+            muted={mutedVideos.has(reel.id)}
+            onPlay={() => onVideoPlay(reel.id)}
+            onPause={onVideoPause}
+            onError={() => onFailedVideo(reel.video_url)}
+            onProgress={handleProgress}
+            width="100%"
+            height="100%"
+            style={{ objectFit: 'cover' }}
+            config={{
+              youtube: {
+                playerVars: {
+                  end: 40,
+                  controls: 0,
+                  modestbranding: 1,
+                  loop: 1,
+                  playsinline: 1,
+                },
+              },
+            }}
+          />
         ) : (
           <video
             src={reel.video_url}
@@ -89,6 +128,14 @@ const ReelCard: React.FC<ReelCardProps> = ({
               size="icon"
               className="bg-white/20 hover:bg-white/30 text-white"
               onClick={() => {
+                if (isYouTube) {
+                  if (playingVideo === reel.id) {
+                    onVideoPause();
+                  } else {
+                    onVideoPlay(reel.id);
+                  }
+                  return;
+                }
                 const video = document.querySelector(
                   `video[src="${reel.video_url}"]`
                 ) as HTMLVideoElement;

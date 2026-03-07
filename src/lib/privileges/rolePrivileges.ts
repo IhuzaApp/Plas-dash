@@ -52,6 +52,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'procurement',
         'production',
         'tax',
+        'reels',
         'ai_chat',
         'subscriptions',
       ];
@@ -126,6 +127,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'production',
         'tax',
         'help',
+        'reels',
         'ai_chat',
       ];
       storeManagerModules.forEach(module => {
@@ -178,6 +180,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'wallet',
         'refunds',
         'tickets',
+        'reels',
       ];
       assistantManagerModules.forEach(module => {
         if (privileges[module]) {

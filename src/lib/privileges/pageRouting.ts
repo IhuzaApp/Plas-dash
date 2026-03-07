@@ -89,6 +89,7 @@ export const PAGE_ROUTES: PageRoute[] = [
   { path: '/users', module: 'users', action: 'access', title: 'Users', priority: 50 },
   { path: '/shops', module: 'shops', action: 'access', title: 'Shops', priority: 45 },
   { path: '/shoppers', module: 'shoppers', action: 'access', title: 'Shoppers', priority: 40 },
+  { path: '/reels', module: 'reels', action: 'access', title: 'Reels', priority: 38 },
 
   // Financial & Support
   {

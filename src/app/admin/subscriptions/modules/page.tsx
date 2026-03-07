@@ -149,7 +149,7 @@ export default function ModulesPage() {
             className="gap-2"
           >
             <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Syncing...' : 'Sync with Code'}
+            {isSyncing ? 'Syncing...' : 'Sync with new Moduls'}
           </Button>
         </div>
       </div>

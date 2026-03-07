@@ -309,6 +309,7 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     access_tax: false,
     access_ai_chat: false,
     access_subscriptions: false,
+    access_reels: false,
   },
   referrals: {
     access: false,
@@ -397,12 +398,14 @@ export function hasPrivilege(
       module === 'help' ||
       module === 'plasmarket' ||
       module === 'restaurants' ||
+      module === 'reels' ||
       module === 'withdraw_requests' ||
       (module === 'pages' &&
         (action === 'access_referrals' ||
           action === 'access_help' ||
           action === 'access_plasmarket' ||
           action === 'access_restaurants' ||
+          action === 'access_reels' ||
           action === 'access_withdraw_requests')))
   ) {
     return true;

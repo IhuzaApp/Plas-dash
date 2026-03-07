@@ -58,6 +58,7 @@ export interface ProjectUserPrivileges {
   referrals?: ProjectModulePrivileges;
   plasmarket?: ProjectModulePrivileges;
   withdraw_requests?: ProjectModulePrivileges;
+  reels?: ProjectModulePrivileges;
   ai_chat?: ProjectModulePrivileges;
 
   // Subscription Management (Platform Admin only)
@@ -426,6 +427,7 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     access_financial_overview: false,
     access_pos_terminal: false,
     access_referrals: false,
+    access_reels: false,
     access_ai_chat: false,
     access_subscriptions: false,
   },
@@ -445,6 +447,11 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     view: false,
     approve: false,
     reject: false,
+  },
+  reels: {
+    access: false,
+    view: false,
+    manage: false,
   },
   ai_chat: {
     access: false,
@@ -481,12 +488,14 @@ export function hasProjectPrivilege(
       module === 'help' ||
       module === 'plasmarket' ||
       module === 'restaurants' ||
+      module === 'reels' ||
       module === 'withdraw_requests' ||
       (module === 'pages' &&
         (action === 'access_referrals' ||
           action === 'access_help' ||
           action === 'access_plasmarket' ||
           action === 'access_restaurants' ||
+          action === 'access_reels' ||
           action === 'access_withdraw_requests')))
   ) {
     return true;

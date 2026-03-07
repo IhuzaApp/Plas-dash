@@ -14,7 +14,7 @@ export interface MenuPrivilege {
 export const menuPrivileges: Record<string, MenuPrivilege> = {
   Dashboard: { module: 'company_dashboard', isProjectUser: true },
   Orders: { module: 'orders' },
-  Reels: { module: 'reels' },
+  Reels: { module: 'reels', isProjectUser: true },
   Plasas: { module: 'shoppers', isProjectUser: true },
   Customers: { module: 'users', isProjectUser: true },
   'Project Users': { module: 'project_users', isProjectUser: true },
