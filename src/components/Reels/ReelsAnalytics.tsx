@@ -57,7 +57,7 @@ const ReelsAnalytics: React.FC<ReelsAnalyticsProps> = ({ topReels, categoryData,
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4" /> Sales by Category
+              <PieChartIcon className="h-4 w-4" /> Reels by Ownership Type
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -82,7 +82,7 @@ const ReelsAnalytics: React.FC<ReelsAnalyticsProps> = ({ topReels, categoryData,
               </ResponsiveContainer>
             </div>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
-              {categoryData.slice(0, 4).map((entry: any, index: number) => (
+              {categoryData.slice(0, 5).map((entry: any, index: number) => (
                 <div key={index} className="flex items-center gap-1.5">
                   <div
                     className="w-2 h-2 rounded-full"
@@ -100,7 +100,7 @@ const ReelsAnalytics: React.FC<ReelsAnalyticsProps> = ({ topReels, categoryData,
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4" /> Sales by Owner
+              <PieChartIcon className="h-4 w-4" /> Sales (Orders) by Individual Owner
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -125,7 +125,7 @@ const ReelsAnalytics: React.FC<ReelsAnalyticsProps> = ({ topReels, categoryData,
               </ResponsiveContainer>
             </div>
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
-              {ownerData.slice(0, 4).map((entry: any, index: number) => (
+              {ownerData.slice(0, 5).map((entry: any, index: number) => (
                 <div key={index} className="flex items-center gap-1.5">
                   <div
                     className="w-2 h-2 rounded-full"

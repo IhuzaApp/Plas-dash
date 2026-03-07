@@ -304,18 +304,43 @@ const Reels = () => {
       likes: r.likes,
     }));
 
+  // Analytics Data Processing: Reels by Type (Count)
   const categoryData = reels.reduce((acc: any[], reel) => {
-    const existing = acc.find(item => item.name === reel.category);
-    if (existing) {
-      existing.value += reel.reel_orders.length;
+    let typeName = 'System (Unknown)';
+
+    // Check by ID presence first (more reliable in this schema)
+    if (reel.restaurant_id) {
+      typeName = 'Restaurant';
+    } else if (reel.shop_id) {
+      typeName = 'Shop';
+    } else if (reel.user_id) {
+      // If it has user_id but not shop/restaurant, it's a User reel
+      // unless specifically tagged as business or system
+      if (reel.type === 'business') typeName = 'Business';
+      else if (reel.type === 'chef' || reel.type === 'user') typeName = 'User';
+      else typeName = 'User';
     } else {
-      acc.push({ name: reel.category, value: reel.reel_orders.length });
+      // Fallback to type field
+      if (reel.type === 'restaurant') typeName = 'Restaurant';
+      else if (reel.type === 'supermarket' || reel.type === 'shop') typeName = 'Shop';
+      else if (reel.type === 'business') typeName = 'Business';
+      else if (reel.type === 'chef' || reel.type === 'user') typeName = 'User';
+    }
+
+    const existing = acc.find(item => item.name === typeName);
+    if (existing) {
+      existing.value += 1;
+    } else {
+      acc.push({ name: typeName, value: 1 });
     }
     return acc;
   }, []);
 
+  // Sort category data by value
+  categoryData.sort((a, b) => b.value - a.value);
+
   const ownerData = reels.reduce((acc: any[], reel) => {
-    const ownerName = reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Unknown';
+    const ownerName = reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'System';
     const existing = acc.find(item => item.name === ownerName);
     if (existing) {
       existing.value += reel.reel_orders.length;
@@ -324,6 +349,8 @@ const Reels = () => {
     }
     return acc;
   }, []);
+
+  ownerData.sort((a, b) => b.value - a.value);
 
   if (isLoading) {
     return (

@@ -118,6 +118,26 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Custom module privileges (`ai_chat`) configurable per user role
   - Context-aware global floating chat button access
 
+### 📱 Reels Content Management
+
+- **Cloud-Native Storage**
+  - **Firebase Integration**: Replaced legacy base64 database storage with Firebase Storage for high-performance video and image hosting.
+  - **Automatic Cleanup**: Integrated lifecycle management that deletes Firebase assets when reels are removed from the database.
+- **Smart Content Processing**
+  - **Intelligent Compression**: Client-side video re-encoding (H.264/AAC, 720p) for files >30MB to ensure fast uploads and smooth mobile playback.
+  - **Hard Limits**: Enforced 100MB upload ceiling to maintain browser stability and performance.
+  - **Broad Compatibility**: Robust video loading logic supporting all major browsers (Chrome, Safari, Firefox).
+- **Flexible Content Types**
+  - **Dual Mode**: Support for both direct file uploads and YouTube URL integration.
+  - **Multimedia**: Seamless support for both short-form video and high-quality image reels.
+- **Entity-Based Association**
+  - **Granular Ownership**: Reels can be specifically assigned to **Shops**, **Restaurants**, or **Individual Users**.
+  - **Mutual Exclusion**: Strict enforcement of ownership logic to ensure content is correctly attributed.
+- **Advanced Content Controls**
+  - **Filtering**: Tabbed navigation to filter content by source (User, Restaurant, Shop, Business).
+  - **Upload Management**: Real-time progress tracking with the ability to cancel ongoing uploads.
+  - **Status Toggling**: Instant active/inactive state management for content moderation.
+
 ### 🏪 Point of Sale (POS)
 
 - **Company Dashboard**

@@ -33,7 +33,7 @@ import { uploadFileToFirebase, deleteVideoFromFirebase } from '@/lib/firebaseSto
 import { compressVideo } from '@/lib/videoCompression';
 import { UploadTask } from 'firebase/storage';
 
-type PostType = 'restaurant' | 'supermarket' | 'chef';
+type PostType = 'restaurant' | 'shop' | 'business' | 'user' | 'system';
 
 // Categories for reference
 const YOUTUBE_CATEGORIES = ['tutorial', 'recipe', 'cooking'];
@@ -324,8 +324,10 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="restaurant">Restaurant</SelectItem>
-                <SelectItem value="supermarket">Supermarket</SelectItem>
-                <SelectItem value="chef">Chef</SelectItem>
+                <SelectItem value="shop">Shop</SelectItem>
+                <SelectItem value="business">Business</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="system">System</SelectItem>
               </SelectContent>
             </Select>
           </div>
