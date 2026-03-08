@@ -39,7 +39,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 import { uploadFileToFirebase } from '@/lib/firebaseStorage';
 import { UploadTask } from 'firebase/storage';
-import { useDishesByName, useCreateDish, useAddDishToMenu, useProducts } from '@/hooks/useHasuraApi';
+import { useAddDishToMenu, useCategories, useDishesByName, useCreateDish, useSearchProductNames, useProducts } from '@/hooks/useHasuraApi';
 
 const PREDEFINED_CATEGORIES = [
     'Main Course',
@@ -68,7 +68,7 @@ const PREDEFINED_CATEGORIES = [
 
 const addDishSchema = z.object({
     // Mode
-    mode: z.enum(['existing', 'new']),
+    mode: z.enum(['existing', 'new', 'product']),
 
     // Existing base dish
     selectedDishId: z.string().optional(),
@@ -79,7 +79,7 @@ const addDishSchema = z.object({
     category: z.string().optional(),
 
     // Restaurant Menu attributes
-    price: z.string().optional(),
+    price: z.string().min(1, 'Price is required'),
     discount: z.preprocess((val) => Number(val), z.number().min(0).max(100).optional()),
     preparingTime: z.string().optional(),
     promo: z.string().optional(),
@@ -89,11 +89,11 @@ const addDishSchema = z.object({
     image: z.string().url('Invalid URL').or(z.literal('')).optional(),
     product_id: z.string().optional(),
 }).refine(data => {
-    if (data.mode === 'existing' && (!data.price || data.price.trim() === '')) return false;
+    if (data.mode === 'new' && (!data.name || data.name.trim() === '')) return false;
     return true;
 }, {
-    message: "Price is required to add this dish to your menu",
-    path: ["price"],
+    message: "Name is required for new items",
+    path: ["name"],
 });
 
 type AddDishFormValues = z.infer<typeof addDishSchema>;
@@ -120,15 +120,13 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
     const [openProductPopover, setOpenProductPopover] = useState(false);
     const [createdDishName, setCreatedDishName] = useState('');
     const { data: searchResults, isLoading: isSearching } = useDishesByName(searchTerm);
+    const { data: searchProductNamesData, isLoading: isSearchingProducts } = useSearchProductNames(searchTerm);
     const { data: productsData, isLoading: isLoadingProducts } = useProducts();
 
     const filteredProducts = useMemo(() => {
-        if (!searchTerm || !productsData?.Products) return [];
-        const term = searchTerm.toLowerCase();
-        return productsData.Products.filter((p: any) =>
-            p.ProductName?.name?.toLowerCase().includes(term)
-        ).slice(0, 5); // Limit to top 5 products matching the search
-    }, [searchTerm, productsData]);
+        if (!searchTerm || !searchProductNamesData?.productNames) return [];
+        return searchProductNamesData.productNames;
+    }, [searchTerm, searchProductNamesData]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -215,42 +213,45 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
         form.setValue('mode', 'new');
         form.setValue('name', searchTerm);
         form.setValue('selectedDishId', '');
+        form.setValue('product_id', '');
         setOpenPopover(false);
     };
 
     const onSubmit = async (values: AddDishFormValues) => {
         if (values.mode === 'existing' && !values.selectedDishId) {
-            toast.error("Please select a dish");
+            toast.error("Please select an item");
+            return;
+        }
+        if (values.mode === 'product' && !values.product_id) {
+            toast.error("Please link a product");
             return;
         }
 
         try {
-            // 1. If mode is "new", create the base dish first
+            let finalDishId = values.selectedDishId || null;
+
+            // 1. If mode is "new" AND no product is linked, create the base dish first
             if (values.mode === 'new') {
                 if (!values.name) {
-                    toast.error("Dish name is required");
+                    toast.error("Item name is required");
                     return;
                 }
                 const result = await createDishMutation.mutateAsync({
                     name: values.name,
                     description: values.description || '',
                     category: values.category || 'General',
-                    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=100&h=100&auto=format&fit=crop', // Default image
+                    image: values.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=100&h=100&auto=format&fit=crop', // Uploaded image or default
                 });
                 if (result?.insert_dishes_one?.id) {
-                    form.setValue('selectedDishId', result.insert_dishes_one.id);
-                    form.setValue('mode', 'existing');
+                    finalDishId = result.insert_dishes_one.id;
                     setCreatedDishName(values.name);
-                    toast.success('Base dish created! Now set your menu pricing.');
-                    return; // Stop and let the user fill in pricing
                 } else {
-                    throw new Error("Failed to get new dish ID");
+                    throw new Error("Failed to get new item ID");
                 }
             }
 
-            let finalDishId = values.selectedDishId;
-            if (!finalDishId) {
-                toast.error("Dish ID is missing");
+            if (!finalDishId && !values.product_id) {
+                toast.error("Item ID or Product ID is missing");
                 return;
             }
 
@@ -273,7 +274,7 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                 promo: false,
                 promo_type: '',
                 image: values.image || '', // Leave empty to fallback to base dish image
-                product_id: values.product_id || undefined,
+                product_id: values.product_id || null,
                 SKU: generatedSKU,
             });
 
@@ -319,7 +320,7 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                                                 aria-expanded={openPopover}
                                                 className="w-full justify-between"
                                             >
-                                                {mode === 'new' ? `New: ${form.watch('name')}` : (selectedDishName || createdDishName || "Search for a base dish...")}
+                                                {mode === 'new' ? `New: ${form.watch('name')}` : mode === 'product' ? `Product: ${form.watch('name')}` : (selectedDishName || createdDishName || "Search for a base item...")}
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
@@ -332,7 +333,7 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                                                     className="h-9"
                                                 />
                                             </div>
-                                            <div className="max-h-60 overflow-y-auto">
+                                            <ScrollArea className="h-72">
                                                 {isSearching ? (
                                                     <div className="flex items-center justify-center py-4">
                                                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -357,8 +358,12 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                                                                     )}
                                                                 />
                                                                 <div className="flex items-center gap-3">
-                                                                    {d.image && (
+                                                                    {d.image ? (
                                                                         <img src={d.image} alt={d.name} className="w-8 h-8 rounded object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
+                                                                            <ImageIcon className="h-4 w-4 text-muted-foreground/50" />
+                                                                        </div>
                                                                     )}
                                                                     <div className="flex flex-col">
                                                                         <span className="font-medium text-sm">{d.name}</span>
@@ -378,27 +383,45 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                                                         {filteredProducts.map((p: any) => (
                                                             <div
                                                                 key={`prod-${p.id}`}
-                                                                className="flex items-center px-4 py-3 hover:bg-accent hover:text-accent-foreground cursor-pointer border-t"
+                                                                className="flex items-center px-4 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer border-t"
                                                                 onClick={() => {
-                                                                    form.setValue('mode', 'new');
-                                                                    form.setValue('name', p.ProductName?.name || '');
+                                                                    form.setValue('mode', 'product');
+                                                                    form.setValue('name', p.name || '');
                                                                     form.setValue('selectedDishId', '');
-                                                                    if (p.category) form.setValue('category', p.category);
-                                                                    if (p.price) form.setValue('price', p.price.toString());
                                                                     form.setValue('product_id', p.id);
-                                                                    setCreatedDishName(p.ProductName?.name || '');
+
+                                                                    // Pre-fill image with the product's image if available
+                                                                    const productImage = p.image;
+                                                                    if (productImage) form.setValue('image', productImage);
+
+                                                                    setCreatedDishName(p.name || '');
                                                                     setOpenPopover(false);
                                                                 }}
                                                             >
-                                                                <div className="flex items-center gap-2 text-blue-600 font-medium w-full">
-                                                                    <span className="truncate">Create from product: "{p.ProductName?.name}"</span>
-                                                                    {p.price && <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">GHS {p.price}</span>}
+                                                                <Check
+                                                                    className={cn(
+                                                                        'mr-2 h-4 w-4',
+                                                                        form.watch('product_id') === p.id && mode === 'product' ? 'opacity-100' : 'opacity-0'
+                                                                    )}
+                                                                />
+                                                                <div className="flex items-center gap-3">
+                                                                    {p.image ? (
+                                                                        <img src={p.image} alt={p.name} className="w-8 h-8 rounded object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
+                                                                            <ImageIcon className="h-4 w-4 text-muted-foreground/50" />
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-medium text-sm">Create from catalog: {p.name || 'Unnamed Product'}</span>
+                                                                        <span className="text-xs text-muted-foreground">Product</span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 )}
-                                            </div>
+                                            </ScrollArea>
                                         </PopoverContent>
                                     </Popover>
                                     <FormMessage>{form.formState.errors.selectedDishId?.message}</FormMessage>
@@ -498,226 +521,160 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                                 )}
                             </div>
 
-                            {mode === 'existing' && (
-                                <div className="border-t pt-6 animate-in fade-in zoom-in duration-300">
-                                    <h3 className="text-sm font-semibold mb-4 text-primary">Restaurant Menu Pricing & Inventory</h3>
+                            <div className="border-t pt-6 animate-in fade-in zoom-in duration-300">
+                                <h3 className="text-sm font-semibold mb-4 text-primary">Restaurant Menu Pricing & Inventory</h3>
 
-                                    {/* Image Section */}
-                                    <div className="space-y-3 mb-6">
-                                        <FormLabel>Menu Image (Override)</FormLabel>
-                                        <div className="flex flex-col items-center gap-4 p-4 border-2 border-dashed rounded-xl bg-muted/30">
-                                            {currentImage ? (
-                                                <div className="relative group w-32 h-32 rounded-lg overflow-hidden border shadow-sm">
-                                                    <img
-                                                        src={currentImage}
-                                                        alt="Dish preview"
-                                                        className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => form.setValue('image', '')}
-                                                        className="absolute top-1 right-1 p-1 bg-destructive/90 text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    >
-                                                        <X className="h-3 w-3" />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="w-32 h-32 rounded-lg bg-muted flex items-center justify-center border shadow-inner">
-                                                    <ImageIcon className="h-10 w-10 text-muted-foreground/50" />
-                                                </div>
-                                            )}
-
-                                            <div className="flex flex-col items-center gap-2">
-                                                <input
-                                                    type="file"
-                                                    ref={fileInputRef}
-                                                    onChange={handleFileUpload}
-                                                    accept="image/*"
-                                                    className="hidden"
+                                {/* Image Section */}
+                                <div className="space-y-3 mb-6">
+                                    <FormLabel>Menu Image (Override)</FormLabel>
+                                    <div className="flex flex-col items-center gap-4 p-4 border-2 border-dashed rounded-xl bg-muted/30">
+                                        {currentImage ? (
+                                            <div className="relative group w-32 h-32 rounded-lg overflow-hidden border shadow-sm">
+                                                <img
+                                                    src={currentImage}
+                                                    alt="Dish preview"
+                                                    className="w-full h-full object-cover transition-transform group-hover:scale-110"
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => form.setValue('image', '')}
+                                                    className="absolute top-1 right-1 p-1 bg-destructive/90 text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="w-32 h-32 rounded-lg bg-muted flex items-center justify-center border shadow-inner">
+                                                <ImageIcon className="h-10 w-10 text-muted-foreground/50" />
+                                            </div>
+                                        )}
+
+                                        <div className="flex flex-col items-center gap-2">
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleFileUpload}
+                                                accept="image/*"
+                                                className="hidden"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={isUploading}
+                                                className="bg-background hover:bg-muted"
+                                            >
+                                                {isUploading ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Uploading {uploadProgress}%
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Upload className="mr-2 h-4 w-4" />
+                                                        {currentImage ? 'Change Image' : 'Upload Image'}
+                                                    </>
+                                                )}
+                                            </Button>
+                                            {isUploading && (
                                                 <Button
                                                     type="button"
-                                                    variant="outline"
+                                                    variant="ghost"
                                                     size="sm"
-                                                    onClick={() => fileInputRef.current?.click()}
-                                                    disabled={isUploading}
-                                                    className="bg-background hover:bg-muted"
+                                                    onClick={handleCancelUpload}
+                                                    className="text-destructive h-6 text-xs px-2"
                                                 >
-                                                    {isUploading ? (
-                                                        <>
-                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                            Uploading {uploadProgress}%
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Upload className="mr-2 h-4 w-4" />
-                                                            {currentImage ? 'Change Image' : 'Upload Image'}
-                                                        </>
-                                                    )}
+                                                    Cancel
                                                 </Button>
-                                                {isUploading && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={handleCancelUpload}
-                                                        className="text-destructive h-6 text-xs px-2"
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                )}
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-4 mb-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="price"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Price *</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="0.00" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="discount"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Discount (%)</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4 mb-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="quantity"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Available Quantity</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="preparingTime"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Prep Time</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="20-30 mins" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="bg-muted/30 p-4 rounded-lg space-y-4 mb-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="product_id"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel>Link Product (Optional)</FormLabel>
-                                                    <Popover open={openProductPopover} onOpenChange={setOpenProductPopover}>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    role="combobox"
-                                                                    className={cn(
-                                                                        "w-full justify-between font-normal",
-                                                                        !field.value && "text-muted-foreground"
-                                                                    )}
-                                                                >
-                                                                    {field.value && productsData?.Products
-                                                                        ? productsData.Products.find((p) => p.id === field.value)?.ProductName?.name || 'Unknown Product'
-                                                                        : "Select a product to link..."}
-                                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-[490px] p-0" align="start">
-                                                            <Command>
-                                                                <CommandInput placeholder="Search products..." />
-                                                                <CommandList>
-                                                                    <CommandEmpty>No product found.</CommandEmpty>
-                                                                    <CommandGroup>
-                                                                        {isLoadingProducts ? (
-                                                                            <div className="flex items-center justify-center p-4">
-                                                                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                                                            </div>
-                                                                        ) : (
-                                                                            productsData?.Products?.map((product: any) => (
-                                                                                <CommandItem
-                                                                                    key={product.id}
-                                                                                    value={product.ProductName?.name || product.id}
-                                                                                    onSelect={() => {
-                                                                                        form.setValue("product_id", product.id);
-                                                                                        setOpenProductPopover(false);
-                                                                                    }}
-                                                                                >
-                                                                                    <Check
-                                                                                        className={cn(
-                                                                                            "mr-2 h-4 w-4",
-                                                                                            product.id === field.value ? "opacity-100" : "opacity-0"
-                                                                                        )}
-                                                                                    />
-                                                                                    {product.ProductName?.name || 'Unnamed Product'} {product.price ? `(GHS ${product.price})` : ''}
-                                                                                </CommandItem>
-                                                                            ))
-                                                                        )}
-                                                                    </CommandGroup>
-                                                                </CommandList>
-                                                            </Command>
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    <div className="bg-muted/30 p-4 rounded-lg space-y-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="is_active"
-                                            render={({ field }) => (
-                                                <FormItem className="flex items-center justify-between">
-                                                    <div className="space-y-0.5">
-                                                        <FormLabel>Active Status</FormLabel>
-                                                        <div className="text-xs text-muted-foreground">
-                                                            Whether this dish is visible to customers immediately.
-                                                        </div>
-                                                    </div>
-                                                    <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
                                 </div>
-                            )}
+
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="price"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Price *</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="0.00" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="discount"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Discount (%)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="quantity"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Available Quantity</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="preparingTime"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Prep Time</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="20-30 mins" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+
+
+                                <div className="bg-muted/30 p-4 rounded-lg space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="is_active"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel>Active Status</FormLabel>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        Whether this dish is visible to customers immediately.
+                                                    </div>
+                                                </div>
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
                         </form>
                     </Form>
                 </ScrollArea>
@@ -730,7 +687,7 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                         {(addDishToMenuMutation.isPending || createDishMutation.isPending) && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
-                        {mode === 'new' ? 'Next: Add Pricing' : 'Add to Menu'}
+                        Add to Menu
                     </Button>
                 </SheetFooter>
             </SheetContent>

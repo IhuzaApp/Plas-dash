@@ -1739,7 +1739,7 @@ export function useAddDishToMenu() {
     Error,
     {
       restaurant_id: string;
-      dish_id: string;
+      dish_id?: string | null;
       price: string;
       discount?: string;
       quantity?: string;

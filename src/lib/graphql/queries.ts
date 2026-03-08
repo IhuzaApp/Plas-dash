@@ -1862,7 +1862,7 @@ export const SEARCH_PRODUCT_NAMES = `
           { sku: { _ilike: $searchTerm } }
         ]
       },
-      limit: 10,
+      limit: 30,
       order_by: { name: asc }
     ) {
       id
