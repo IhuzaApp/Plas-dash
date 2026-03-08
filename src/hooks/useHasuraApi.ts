@@ -1155,6 +1155,18 @@ export function useUpdateRestaurant() {
   });
 }
 
+// Type-safe hook for Restaurant details (fetched via API)
+export function useRestaurantById(id: string) {
+  return useQuery<{ Restaurants_by_pk: any }, Error>({
+    queryKey: ['api', 'restaurant', id],
+    queryFn: async () => {
+      const res = await apiGet<{ restaurant: any }>(`/api/queries/restaurants/${id}`);
+      return { Restaurants_by_pk: res.restaurant };
+    },
+    enabled: !!id,
+  });
+}
+
 // Type-safe hook for adding a reel
 export function useAddReel() {
   return useMutation<

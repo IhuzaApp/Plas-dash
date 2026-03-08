@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -42,9 +43,8 @@ const Restaurants = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
+  const router = useRouter();
   const { hasAction } = usePrivilege();
   const queryClient = useQueryClient();
   const updateRestaurantMutation = useUpdateRestaurant();
@@ -279,10 +279,7 @@ const Restaurants = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  setSelectedRestaurant(restaurant);
-                                  setIsDrawerOpen(true);
-                                }}
+                                onClick={() => router.push(`/restaurants/${restaurant.id}`)}
                               >
                                 View Details
                               </Button>
@@ -308,10 +305,7 @@ const Restaurants = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  setSelectedRestaurant(restaurant);
-                                  setIsDrawerOpen(true);
-                                }}
+                                onClick={() => router.push(`/restaurants/${restaurant.id}`)}
                               >
                                 View Details
                               </Button>
@@ -357,12 +351,6 @@ const Restaurants = () => {
         </Card>
       </div>
 
-      <RestaurantDetailsSheet
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        restaurant={selectedRestaurant}
-        onApprove={handleApprove}
-      />
 
       <AddRestaurantModal
         isOpen={isAddModalOpen}
