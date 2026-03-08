@@ -113,7 +113,7 @@ const EditRestaurantDrawer: React.FC<EditRestaurantDrawerProps> = ({
                     'company images and logos'
                 );
 
-                form.setValue('logo', url);
+                form.setValue('logo', url, { shouldDirty: true });
                 setIsUploading(false);
                 toast.success('Logo uploaded successfully!');
             } catch (error: any) {
@@ -139,9 +139,29 @@ const EditRestaurantDrawer: React.FC<EditRestaurantDrawerProps> = ({
 
     const onSubmit = async (values: RestaurantFormValues) => {
         try {
+            const dirtyFields = form.formState.dirtyFields;
+            const updatedValues = Object.keys(dirtyFields).reduce((acc, key) => {
+                const k = key as keyof RestaurantFormValues;
+                if (dirtyFields[k]) {
+                    acc[k] = values[k] as any;
+                }
+                return acc;
+            }, {} as Partial<RestaurantFormValues>);
+
+            // Capture logo change if it got bypassed by RHF
+            if (values.logo !== (restaurant?.logo?.toString() || '')) {
+                updatedValues.logo = values.logo;
+            }
+
+            if (Object.keys(updatedValues).length === 0) {
+                toast.info('No changes detected');
+                onClose();
+                return;
+            }
+
             await updateRestaurant.mutateAsync({
                 id: restaurant.id,
-                ...values,
+                ...updatedValues,
             });
             toast.success('Restaurant updated successfully');
             if (onSuccess) onSuccess();

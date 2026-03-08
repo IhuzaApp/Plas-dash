@@ -274,7 +274,7 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                 promo: false,
                 promo_type: '',
                 image: values.image || '', // Leave empty to fallback to base dish image
-                product_id: values.product_id || null,
+                product_id: values.product_id || undefined,
                 SKU: generatedSKU,
             });
 
