@@ -1,13 +1,12 @@
-'use client';
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Pencil } from 'lucide-react';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useRestaurantById } from '@/hooks/useHasuraApi';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import EditRestaurantDrawer from './EditRestaurantDrawer';
 
 // Tab Components
 import OverviewTab from './tabs/OverviewTab';
@@ -27,7 +26,8 @@ const RestaurantDetails: React.FC<RestaurantDetailsProps> = ({
     onApprove,
 }) => {
     const { hasAction } = usePrivilege();
-    const { data, isLoading, isError } = useRestaurantById(id);
+    const { data, isLoading, isError, refetch } = useRestaurantById(id);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const restaurant = data?.Restaurants_by_pk;
 
     if (isLoading) {
@@ -78,18 +78,33 @@ const RestaurantDetails: React.FC<RestaurantDetailsProps> = ({
                         </div>
                     </div>
                 </div>
-                {(!restaurant?.is_active || !restaurant?.verified) &&
-                    hasAction('restaurants', 'edit_restaurants') && onApprove && (
+
+                <div className="flex items-center gap-2">
+                    {hasAction('restaurants', 'edit_restaurants') && (
                         <Button
-                            variant="default"
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={() => {
-                                onApprove(restaurant.id);
-                            }}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsEditDialogOpen(true)}
                         >
-                            Approve Restaurant
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit Details
                         </Button>
                     )}
+
+                    {(!restaurant?.is_active || !restaurant?.verified) &&
+                        hasAction('restaurants', 'edit_restaurants') && onApprove && (
+                            <Button
+                                variant="default"
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => {
+                                    onApprove(restaurant.id);
+                                }}
+                            >
+                                Approve Restaurant
+                            </Button>
+                        )}
+                </div>
             </div>
 
             <Tabs defaultValue="overview" className="w-full">
@@ -107,7 +122,10 @@ const RestaurantDetails: React.FC<RestaurantDetailsProps> = ({
                 </TabsContent>
 
                 <TabsContent value="dishes" className="pt-0">
-                    <DishesTab dishes={restaurant?.restaurant_dishes} />
+                    <DishesTab
+                        dishes={restaurant?.restaurant_dishes}
+                        onRefresh={() => refetch()}
+                    />
                 </TabsContent>
 
                 <TabsContent value="staff" className="pt-0">
@@ -129,6 +147,13 @@ const RestaurantDetails: React.FC<RestaurantDetailsProps> = ({
                     />
                 </TabsContent>
             </Tabs>
+
+            <EditRestaurantDrawer
+                restaurant={restaurant}
+                isOpen={isEditDialogOpen}
+                onClose={() => setIsEditDialogOpen(false)}
+                onSuccess={() => refetch()}
+            />
         </div>
     );
 };

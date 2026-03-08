@@ -34,12 +34,13 @@ export const uploadFileToFirebase = async (
     file: File,
     onProgress?: (progress: number) => void,
     folder: 'videos' | 'images' = 'videos',
-    onTask?: (task: UploadTask) => void
+    onTask?: (task: UploadTask) => void,
+    rootFolder: string = 'reels'
 ): Promise<string> => {
     return new Promise((resolve, reject) => {
         // Create a unique filename and ensure it is placed in the designated path.
         const filename = `${Date.now()}_${file.name}`;
-        const storageRef = ref(storage, `reels/${folder}/${filename}`);
+        const storageRef = ref(storage, `${rootFolder}/${folder}/${filename}`);
 
         const uploadTask = uploadBytesResumable(storageRef, file);
 

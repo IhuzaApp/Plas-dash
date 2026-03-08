@@ -718,18 +718,51 @@ export const ADD_RESTAURANT = `
 export const UPDATE_RESTAURANT = `
   mutation UpdateRestaurant(
     $id: uuid!
+    $email: String
     $is_active: Boolean
+    $lat: String
+    $location: String
+    $logo: String
+    $long: String
+    $name: String
+    $phone: String
+    $profile: String
+    $relatedTo: String
+    $tin: String
+    $ussd: String
     $verified: Boolean
   ) {
     update_Restaurants_by_pk(
       pk_columns: { id: $id }
       _set: {
+        email: $email
         is_active: $is_active
+        lat: $lat
+        location: $location
+        logo: $logo
+        long: $long
+        name: $name
+        phone: $phone
+        profile: $profile
+        relatedTo: $relatedTo
+        tin: $tin
+        ussd: $ussd
         verified: $verified
       }
     ) {
       id
+      email
       is_active
+      lat
+      location
+      logo
+      long
+      name
+      phone
+      profile
+      relatedTo
+      tin
+      ussd
       verified
     }
   }
@@ -874,3 +907,40 @@ export const DELETE_ORDER_OFFERS = `
     }
   }
 `;
+
+export const UPDATE_RESTAURANT_DISH = `
+  mutation UpdateRestaurantDish(
+    $id: uuid!,
+    $discount: String = "",
+    $dish_id: uuid = null,
+    $preparingTime: String = "",
+    $price: String = "",
+    $product_id: uuid = null,
+    $promo_type: String = "",
+    $promo: Boolean = false,
+    $is_active: Boolean = false,
+    $quantity: String = "",
+    $image: String = "",
+    $updated_at: timestamptz = "now()"
+  ) {
+    update_restaurant_menu(
+      where: { id: { _eq: $id } },
+      _set: {
+        discount: $discount,
+        dish_id: $dish_id,
+        is_active: $is_active,
+        preparingTime: $preparingTime,
+        price: $price,
+        product_id: $product_id,
+        promo: $promo,
+        promo_type: $promo_type,
+        quantity: $quantity,
+        image: $image,
+        updated_at: $updated_at
+      }
+    ) {
+      affected_rows
+    }
+  }
+`;
+

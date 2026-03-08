@@ -49,6 +49,7 @@ import {
   DELETE_REEL,
   DELETE_REEL_COMMENT,
   DELETE_ORDER_OFFERS,
+  UPDATE_RESTAURANT_DISH,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -1115,27 +1116,51 @@ export function useUpdateRestaurant() {
     Error,
     {
       id: string;
+      email?: string;
       is_active?: boolean;
+      lat?: string;
+      location?: string;
+      logo?: string;
+      long?: string;
+      name?: string;
+      phone?: string;
+      profile?: string;
+      relatedTo?: string;
+      tin?: string;
+      ussd?: string;
       verified?: boolean;
     }
   >({
     mutationFn: variables => {
       const { id, ...updateData } = variables;
 
-      const setFields = [];
+      const setFields: string[] = [];
       const varDefinitions = [`$id: uuid!`];
       const hasuraVariables: any = { id };
 
-      if (updateData.is_active !== undefined) {
-        setFields.push(`is_active: $is_active`);
-        varDefinitions.push(`$is_active: Boolean`);
-        hasuraVariables.is_active = updateData.is_active;
-      }
-      if (updateData.verified !== undefined) {
-        setFields.push(`verified: $verified`);
-        varDefinitions.push(`$verified: Boolean`);
-        hasuraVariables.verified = updateData.verified;
-      }
+      const fieldsMapping: Record<string, string> = {
+        email: 'String',
+        is_active: 'Boolean',
+        lat: 'String',
+        location: 'String',
+        logo: 'String',
+        long: 'String',
+        name: 'String',
+        phone: 'String',
+        profile: 'String',
+        relatedTo: 'String',
+        tin: 'String',
+        ussd: 'String',
+        verified: 'Boolean',
+      };
+
+      Object.entries(updateData).forEach(([key, value]) => {
+        if (value !== undefined && fieldsMapping[key]) {
+          setFields.push(`${key}: $${key}`);
+          varDefinitions.push(`$${key}: ${fieldsMapping[key]}`);
+          hasuraVariables[key] = value;
+        }
+      });
 
       const mutation = `
         mutation UpdateRestaurant(${varDefinitions.join(', ')}) {
@@ -1144,7 +1169,18 @@ export function useUpdateRestaurant() {
             _set: { ${setFields.join(', ')} }
           ) {
             id
+            email
             is_active
+            lat
+            location
+            logo
+            long
+            name
+            phone
+            profile
+            relatedTo
+            tin
+            ussd
             verified
           }
         }
@@ -1623,3 +1659,40 @@ export function useDeleteReelsComment() {
     mutationFn: variables => hasuraRequest(DELETE_REEL_COMMENT, variables),
   });
 }
+
+export function useUpdateRestaurantDish() {
+  return useMutation<
+    { update_restaurant_menu: { affected_rows: number } },
+    Error,
+    {
+      id: string;
+      discount?: string;
+      dish_id?: string;
+      preparingTime?: string;
+      price?: string;
+      product_id?: string;
+      promo_type?: string;
+      promo?: boolean;
+      is_active?: boolean;
+      quantity?: string;
+      image?: string;
+      updated_at?: string;
+    }
+  >({
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/mutations/update-restaurant-dish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update restaurant dish');
+      }
+
+      return response.json();
+    },
+  });
+}
+

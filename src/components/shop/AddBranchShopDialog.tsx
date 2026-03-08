@@ -122,6 +122,8 @@ interface CreateShopMutationData {
   relatedTo?: string; // Optional for branch shops
 }
 
+import { uploadFileToFirebase } from '@/lib/firebaseStorage';
+
 const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
   isOpen,
   onClose,
@@ -131,6 +133,8 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
   const queryClient = useQueryClient();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [formData, setFormData] = useState<CreateBranchShopFormData>({
     name: '',
@@ -256,7 +260,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
@@ -269,29 +273,56 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
         return;
       }
 
-      // Validate file size (2MB limit)
-      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      // Validate file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
         toast({
           title: 'Error',
-          description: 'Image file size must be less than 2MB.',
+          description: 'Image file size must be less than 10MB.',
           variant: 'destructive',
         });
         return;
       }
 
       setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setImagePreview(URL.createObjectURL(file));
+
+      try {
+        setIsUploading(true);
+        setUploadProgress(0);
+
+        const url = await uploadFileToFirebase(
+          file,
+          (progress) => setUploadProgress(progress),
+          'images',
+          undefined,
+          'company images and logos'
+        );
+
+        setFormData(prev => ({ ...prev, logo: url }));
+        setIsUploading(false);
+        toast({
+          title: 'Success',
+          description: 'Logo uploaded successfully!',
+        });
+      } catch (error) {
+        console.error('Upload failed:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to upload logo',
+          variant: 'destructive',
+        });
+        setIsUploading(false);
+        setImageFile(null);
+        setImagePreview(null);
+      }
     }
   };
 
   const handleRemoveLogo = () => {
     setImageFile(null);
     setImagePreview(null);
+    setFormData(prev => ({ ...prev, logo: null }));
     // Clear the file input
     const fileInput = document.getElementById('logo') as HTMLInputElement;
     if (fileInput) {
@@ -328,7 +359,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
 
     const submitData = {
       ...formData,
-      logo: imagePreview,
+      // logo is already in formData.logo from the upload
     };
 
     console.log('=== ADD BRANCH SHOP DIALOG: SUBMITTING DATA ===');
@@ -409,6 +440,8 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
     });
     setImageFile(null);
     setImagePreview(null);
+    setUploadProgress(0);
+    setIsUploading(false);
     // Clear the file input
     const fileInput = document.getElementById('logo') as HTMLInputElement;
     if (fileInput) {
@@ -447,17 +480,24 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
             <div className="flex items-start gap-4">
               <div className="relative">
                 <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Logo preview"
-                      className="h-full w-full object-contain"
-                    />
+                  {imagePreview || formData.logo ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={imagePreview || formData.logo || ''}
+                        alt="Logo preview"
+                        className={`h-full w-full object-contain ${isUploading ? 'opacity-50' : ''}`}
+                      />
+                      {isUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <Store className="h-10 w-10 text-muted-foreground" />
                   )}
                 </div>
-                {imagePreview && (
+                {(imagePreview || formData.logo) && !isUploading && (
                   <Button
                     type="button"
                     variant="destructive"
@@ -471,25 +511,52 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
                 )}
               </div>
               <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="space-y-2">
                   <Input
-                    id="logo"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="flex-1"
+                    placeholder="Logo URL..."
+                    value={formData.logo || ''}
+                    onChange={e => handleInputChange('logo', e.target.value)}
+                    disabled={isUploading}
                   />
-                  {imagePreview && (
-                    <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo}>
-                      Remove
-                    </Button>
-                  )}
+                  <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground whitespace-nowrap">
+                        or upload file
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="logo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="flex-1"
+                      disabled={isUploading}
+                    />
+                    {imagePreview && !isUploading && (
+                      <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo}>
+                        Remove
+                      </Button>
+                    )}
+                  </div>
                 </div>
+                {isUploading && (
+                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                    <div
+                      className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                )}
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>• Recommended size: 512x512px</p>
                   <p>• Supported formats: JPG, PNG, GIF, WebP</p>
-                  <p>• Maximum file size: 2MB</p>
-                  {imageFile && (
+                  <p>• Maximum file size: 10MB</p>
+                  {imageFile && !isUploading && (
                     <p className="text-green-600 font-medium">
                       ✓ {imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)}MB)
                     </p>

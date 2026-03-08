@@ -19,8 +19,13 @@ interface AddRestaurantModalProps {
   onSuccess: () => void;
 }
 
+import { uploadFileToFirebase } from '@/lib/firebaseStorage';
+
 const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ profile: 0, logo: 0 });
+  const [isUploading, setIsUploading] = useState({ profile: false, logo: false });
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -48,7 +53,7 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImageUpload = (
+  const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: 'profile' | 'logo'
   ) => {
@@ -58,8 +63,8 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
         toast.error('Please select a valid image file');
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image file size must be less than 5MB');
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image file size must be less than 10MB');
         return;
       }
 
@@ -67,11 +72,37 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
       if (type === 'profile') {
         setUploadedProfile(file);
         setProfilePreview(previewUrl);
-        setFormData(prev => ({ ...prev, profile: '' })); // clear url if file selected
       } else {
         setUploadedLogo(file);
         setLogoPreview(previewUrl);
-        setFormData(prev => ({ ...prev, logo: '' })); // clear url if file selected
+      }
+
+      try {
+        setIsUploading(prev => ({ ...prev, [type]: true }));
+        setUploadProgress(prev => ({ ...prev, [type]: 0 }));
+
+        const url = await uploadFileToFirebase(
+          file,
+          (progress) => setUploadProgress(prev => ({ ...prev, [type]: progress })),
+          'images',
+          undefined,
+          'company images and logos'
+        );
+
+        setFormData(prev => ({ ...prev, [type]: url }));
+        setIsUploading(prev => ({ ...prev, [type]: false }));
+        toast.success(`${type === 'logo' ? 'Logo' : 'Profile image'} uploaded successfully!`);
+      } catch (error) {
+        console.error(`Upload failed for ${type}:`, error);
+        toast.error(`Failed to upload ${type}`);
+        setIsUploading(prev => ({ ...prev, [type]: false }));
+        if (type === 'profile') {
+          setUploadedProfile(null);
+          setProfilePreview(null);
+        } else {
+          setUploadedLogo(null);
+          setLogoPreview(null);
+        }
       }
     }
   };
@@ -80,47 +111,29 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
     if (type === 'profile') {
       setUploadedProfile(null);
       setProfilePreview(null);
+      setFormData(prev => ({ ...prev, profile: '' }));
       if (profileInputRef.current) profileInputRef.current.value = '';
     } else {
       setUploadedLogo(null);
       setLogoPreview(null);
+      setFormData(prev => ({ ...prev, logo: '' }));
       if (logoInputRef.current) logoInputRef.current.value = '';
     }
   };
 
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          resolve(reader.result);
-        } else {
-          reject(new Error('Failed to convert image to base64'));
-        }
-      };
-      reader.onerror = () => reject(new Error('Failed to read image file'));
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isUploading.profile || isUploading.logo) {
+      toast.error('Please wait for uploads to complete');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       // Basic validation
       if (!formData.name || !formData.email || !formData.phone) {
         throw new Error('Please fill in all required fields.');
-      }
-
-      let profilePayload = formData.profile;
-      let logoPayload = formData.logo;
-
-      if (uploadedProfile) {
-        profilePayload = await convertToBase64(uploadedProfile);
-      }
-      if (uploadedLogo) {
-        logoPayload = await convertToBase64(uploadedLogo);
       }
 
       const variables = {
@@ -130,10 +143,10 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
         location: formData.location,
         ussd: formData.ussd,
         tin: formData.tin,
-        profile: profilePayload,
+        profile: formData.profile,
         lat: formData.lat,
         long: formData.long,
-        logo: logoPayload,
+        logo: formData.logo,
         is_active: false,
       };
 
@@ -298,7 +311,7 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
                     placeholder="Image URL..."
                     value={formData.profile}
                     onChange={handleChange}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isUploading.profile}
                   />
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
@@ -324,24 +337,37 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
                   </div>
                 </div>
               ) : (
-                <div className="border rounded-lg p-2 relative h-[120px]">
-                  <img
-                    src={profilePreview || ''}
-                    alt="Profile Preview"
-                    className="w-full h-full object-cover rounded-md"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                    onClick={() => removeImage('profile')}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                  <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1 rounded truncate max-w-[90%]">
-                    {uploadedProfile.name}
-                  </span>
+                <div className="space-y-2">
+                  <div className="border rounded-lg p-2 relative h-[120px] bg-muted/20">
+                    <img
+                      src={profilePreview || ''}
+                      alt="Profile Preview"
+                      className={`w-full h-full object-cover rounded-md ${isUploading.profile ? 'opacity-50' : ''}`}
+                    />
+                    {isUploading.profile && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                      onClick={() => removeImage('profile')}
+                      disabled={isUploading.profile}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  {isUploading.profile && (
+                    <div className="w-full bg-muted rounded-full h-1">
+                      <div
+                        className="bg-primary h-1 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress.profile}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -354,7 +380,7 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
                     placeholder="Logo URL..."
                     value={formData.logo}
                     onChange={handleChange}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isUploading.logo}
                   />
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
@@ -380,24 +406,37 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
                   </div>
                 </div>
               ) : (
-                <div className="border rounded-lg p-2 relative h-[120px]">
-                  <img
-                    src={logoPreview || ''}
-                    alt="Logo Preview"
-                    className="w-full h-full object-contain rounded-md bg-muted/20"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                    onClick={() => removeImage('logo')}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                  <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1 rounded truncate max-w-[90%]">
-                    {uploadedLogo.name}
-                  </span>
+                <div className="space-y-2">
+                  <div className="border rounded-lg p-2 relative h-[120px] bg-muted/20">
+                    <img
+                      src={logoPreview || ''}
+                      alt="Logo Preview"
+                      className={`w-full h-full object-contain rounded-md ${isUploading.logo ? 'opacity-50' : ''}`}
+                    />
+                    {isUploading.logo && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                      onClick={() => removeImage('logo')}
+                      disabled={isUploading.logo}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  {isUploading.logo && (
+                    <div className="w-full bg-muted rounded-full h-1">
+                      <div
+                        className="bg-primary h-1 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress.logo}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
