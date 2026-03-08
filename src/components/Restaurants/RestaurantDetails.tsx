@@ -110,7 +110,7 @@ const RestaurantDetails: React.FC<RestaurantDetailsProps> = ({
             <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="dishes">Dishes</TabsTrigger>
+                    <TabsTrigger value="dishes">Menu</TabsTrigger>
                     <TabsTrigger value="staff">Staff</TabsTrigger>
                     <TabsTrigger value="orders">Orders</TabsTrigger>
                     <TabsTrigger value="subscription">Subscription</TabsTrigger>
@@ -125,6 +125,7 @@ const RestaurantDetails: React.FC<RestaurantDetailsProps> = ({
                     <DishesTab
                         dishes={restaurant?.restaurant_dishes}
                         onRefresh={() => refetch()}
+                        restaurantId={id}
                     />
                 </TabsContent>
 

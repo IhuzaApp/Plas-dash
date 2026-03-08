@@ -131,6 +131,22 @@ export const GET_USERS = `
   }
 `;
 
+// Dishes queries
+export const GET_DISHES_BY_NAME = `
+  query GetDishesByName($name: String!) {
+    dishes(where: { name: { _ilike: $name } }, limit: 10) {
+      id
+      name
+      description
+      category
+      image
+      ingredients
+      created_at
+      update_at
+    }
+  }
+`;
+
 // Products queries
 export const GET_PRODUCTS = `
   query GetProducts {

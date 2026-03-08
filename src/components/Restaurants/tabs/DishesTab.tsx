@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Utensils, Search, Edit2, Play, Pause, Loader2 } from 'lucide-react';
+import { Utensils, Search, Edit2, Play, Pause, Loader2, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,17 +17,20 @@ import {
 import { useUpdateRestaurantDish } from '@/hooks/useHasuraApi';
 import { toast } from 'sonner';
 import EditDishDrawer from '../drawers/EditDishDrawer';
+import AddRestaurantDishDrawer from '../drawers/AddRestaurantDishDrawer';
 
 interface DishesTabProps {
     dishes: any[];
     onRefresh?: () => void;
+    restaurantId: string;
 }
 
-const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
+const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh, restaurantId }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedDish, setSelectedDish] = useState<any>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const updateDish = useUpdateRestaurantDish();
+    const [isAddOpen, setIsAddOpen] = useState(false);
+    const updateDishStatus = useUpdateRestaurantDish();
 
     const filteredDishes = useMemo(() => {
         if (!dishes) return [];
@@ -39,9 +42,23 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
         });
     }, [dishes, searchQuery]);
 
+    const ITEMS_PER_PAGE = 30;
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Reset pagination when search changes
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredDishes.length / ITEMS_PER_PAGE));
+    const paginatedDishes = filteredDishes.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
     const handleToggleStatus = async (rd: any) => {
         try {
-            await updateDish.mutateAsync({
+            await updateDishStatus.mutateAsync({
                 id: rd.id,
                 is_active: !rd.is_active,
                 discount: rd.discount?.toString() || '0',
@@ -73,10 +90,13 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                 <div className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle className="text-lg flex items-center">
-                            <Utensils className="h-5 w-5 mr-2 text-primary" /> Restaurant Dishes
+                            <Utensils className="h-5 w-5 mr-2 text-primary" /> Restaurant Menu
                         </CardTitle>
-                        <CardDescription>Total dishes: {dishes?.length || 0}</CardDescription>
+                        <CardDescription>Total items: {dishes?.length || 0}</CardDescription>
                     </div>
+                    <Button onClick={() => setIsAddOpen(true)} className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" /> Add Item
+                    </Button>
                 </div>
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -105,8 +125,8 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredDishes.length > 0 ? (
-                                filteredDishes.map((rd: any) => (
+                            {paginatedDishes.length > 0 ? (
+                                paginatedDishes.map((rd: any) => (
                                     <TableRow key={rd.id} className="hover:bg-muted/30 transition-colors">
                                         <TableCell className="font-medium">
                                             <div className="flex items-center gap-3">
@@ -176,9 +196,9 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                                                     size="icon"
                                                     className={`h-8 w-8 ${rd.is_active ? 'text-orange-500 hover:text-orange-600' : 'text-green-500 hover:text-green-600'}`}
                                                     onClick={() => handleToggleStatus(rd)}
-                                                    disabled={updateDish.isPending && updateDish.variables?.id === rd.id}
+                                                    disabled={updateDishStatus.isPending && updateDishStatus.variables?.id === rd.id}
                                                 >
-                                                    {updateDish.isPending && updateDish.variables?.id === rd.id ? (
+                                                    {updateDishStatus.isPending && updateDishStatus.variables?.id === rd.id ? (
                                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                                     ) : rd.is_active ? (
                                                         <Pause className="h-3.5 w-3.5" />
@@ -194,7 +214,7 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                                 <TableRow>
                                     <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                                         <div className="flex flex-col items-center gap-1">
-                                            <p>No dishes found matching your search.</p>
+                                            <p>No items found matching your search.</p>
                                             {searchQuery && (
                                                 <Button variant="link" size="sm" onClick={() => setSearchQuery('')}>
                                                     Clear search
@@ -207,6 +227,35 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                         </TableBody>
                     </Table>
                 </div>
+
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between py-4">
+                        <div className="text-sm text-muted-foreground">
+                            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredDishes.length)} of {filteredDishes.length} dishes
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <div className="text-sm font-medium mx-2">
+                                Page {currentPage} of {totalPages}
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </CardContent>
 
             {selectedDish && (
@@ -220,6 +269,13 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                     onSuccess={onRefresh}
                 />
             )}
+
+            <AddRestaurantDishDrawer
+                restaurantId={restaurantId}
+                isOpen={isAddOpen}
+                onClose={() => setIsAddOpen(false)}
+                onSuccess={onRefresh}
+            />
         </Card>
     );
 };

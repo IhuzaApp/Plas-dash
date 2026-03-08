@@ -21,6 +21,7 @@ import {
   GET_PRODUCT_NAMES,
   SEARCH_PRODUCT_NAMES,
   GET_ORDER_OFFERS,
+  GET_DISHES_BY_NAME,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -595,6 +596,14 @@ export function useOrderOffers() {
   return useQuery<{ order_offers: OrderOffer[] }, Error>({
     queryKey: ['order-offers'],
     queryFn: () => hasuraRequest(GET_ORDER_OFFERS, {}),
+  });
+}
+
+export function useDishesByName(name: string) {
+  return useQuery<{ dishes: any[] }, Error>({
+    queryKey: ['dishesByName', name],
+    queryFn: () => hasuraRequest(GET_DISHES_BY_NAME, { name: `%${name}%` }),
+    enabled: !!name && name.length > 2,
   });
 }
 
@@ -1689,6 +1698,70 @@ export function useUpdateRestaurantDish() {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to update restaurant dish');
+      }
+
+      return response.json();
+    },
+  });
+}
+
+export function useCreateDish() {
+  return useMutation<
+    { insert_dishes_one: { id: string } },
+    Error,
+    {
+      name: string;
+      description?: string;
+      category?: string;
+      image?: string;
+    }
+  >({
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/mutations/create-dish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create base dish');
+      }
+
+      return response.json();
+    },
+  });
+}
+
+export function useAddDishToMenu() {
+  return useMutation<
+    { insert_restaurant_menu_one: { id: string } },
+    Error,
+    {
+      restaurant_id: string;
+      dish_id: string;
+      price: string;
+      discount?: string;
+      quantity?: string;
+      preparingTime?: string;
+      is_active?: boolean;
+      promo?: boolean;
+      promo_type?: string;
+      image?: string;
+      product_id?: string;
+      SKU?: string;
+    }
+  >({
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/mutations/add-dish-to-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add dish to menu');
       }
 
       return response.json();
