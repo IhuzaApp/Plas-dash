@@ -96,7 +96,8 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                             <TableRow>
                                 <TableHead>Dish</TableHead>
                                 <TableHead>Category</TableHead>
-                                <TableHead>Pricing</TableHead>
+                                <TableHead>Price</TableHead>
+                                <TableHead>Discount</TableHead>
                                 <TableHead>Inventory</TableHead>
                                 <TableHead>Prep Time</TableHead>
                                 <TableHead>Status</TableHead>
@@ -109,15 +110,20 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                                     <TableRow key={rd.id} className="hover:bg-muted/30 transition-colors">
                                         <TableCell className="font-medium">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0 border">
+                                                <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0 border">
                                                     <img
-                                                        src={rd.dishes?.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=100&h=100&auto=format&fit=crop'}
+                                                        src={rd.image || rd.dishes?.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=100&h=100&auto=format&fit=crop'}
                                                         alt={rd.dishes?.name || 'Dish'}
                                                         className="w-full h-full object-cover"
                                                     />
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-bold">{rd.dishes?.name || 'Unknown'}</span>
+                                                <div className="flex flex-col items-start gap-1">
+                                                    {rd.promo && (
+                                                        <Badge className="bg-gradient-to-r from-pink-500 to-indigo-500 hover:from-pink-600 hover:to-indigo-600 text-[10px] uppercase tracking-wider h-5 px-2 py-0 leading-none shadow-sm animate-in fade-in zoom-in duration-300">
+                                                            {rd.promo_type || 'PROMO'}
+                                                        </Badge>
+                                                    )}
+                                                    <span className="text-sm font-bold leading-none mt-0.5">{rd.dishes?.name || 'Unknown'}</span>
                                                     <span className="text-[10px] text-muted-foreground font-mono">SKU: {rd.SKU || 'N/A'}</span>
                                                 </div>
                                             </div>
@@ -128,19 +134,20 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-semibold">{rd.price}</span>
-                                                {rd.discount > 0 && (
-                                                    <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1 rounded inline-block w-fit">
-                                                        -{rd.discount}% OFF
-                                                    </span>
-                                                )}
-                                            </div>
+                                            <span className="text-sm font-semibold">{rd.price}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            {(rd.discount > 0 || rd.discount?.toString() !== '0') ? (
+                                                <Badge variant="outline" className="text-[11px] text-emerald-600 font-bold bg-emerald-50 border-emerald-200 px-2 py-0.5 h-6">
+                                                    -{rd.discount}% OFF
+                                                </Badge>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">-</span>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-col">
                                                 <span className="text-xs">{rd.quantity || 0} in stock</span>
-                                                {rd.promo && <span className="text-[10px] text-primary truncate max-w-[80px]">Promo: {rd.promo}</span>}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
@@ -185,7 +192,7 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh }) => {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                                         <div className="flex flex-col items-center gap-1">
                                             <p>No dishes found matching your search.</p>
                                             {searchQuery && (

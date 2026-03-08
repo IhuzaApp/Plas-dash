@@ -74,7 +74,7 @@ const EditDishDrawer: React.FC<EditDishDrawerProps> = ({
             promo_type: dish?.promo_type?.toString() || '',
             quantity: typeof dish?.quantity === 'number' ? dish.quantity : 0,
             is_active: dish?.is_active ?? true,
-            image: dish?.dishes?.image?.toString() || '',
+            image: dish?.image?.toString() || dish?.dishes?.image?.toString() || '',
         },
     });
 

@@ -171,6 +171,7 @@ const GET_RESTAURANT_BY_ID = gql`
         promo_type
         quantity
         restaurant_id
+        image
         updated_at
         dishes {
           category
