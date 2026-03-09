@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -97,6 +97,22 @@ const EditDishDrawer: React.FC<EditDishDrawerProps> = ({
             image: dish?.image?.toString() || dish?.dishes?.image?.toString() || '',
         },
     });
+
+    useEffect(() => {
+        if (dish && isOpen) {
+            form.reset({
+                price: dish.price?.toString() || '',
+                discount: dish.discount !== undefined ? Number(dish.discount) : 0,
+                SKU: dish.SKU?.toString() || '',
+                preparingTime: dish.preparingTime?.toString() || '',
+                promo: !!dish.promo,
+                promo_type: dish.promo_type?.toString() || '',
+                quantity: dish.quantity !== undefined ? Number(dish.quantity) : 0,
+                is_active: dish.is_active ?? true,
+                image: dish.image?.toString() || dish.dishes?.image?.toString() || '',
+            });
+        }
+    }, [dish, isOpen, form]);
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
