@@ -9,9 +9,9 @@ const hasuraClient = new GraphQLClient(HASURA_URL, {
 });
 
 const ADD_PROMOTION_MUTATION = `
-  mutation AddPromotion($usage_per_customer: Int = 10, $usage_limit: Int = 10, $status: String = "", $start_time: timetz = null, $start_date: timestamptz = null, $restaurant_id: uuid = null, $shop_id: uuid = null, $promotion_type: String = "", $priority: Int = 10, $name: String = "", $min_purchase_amount: String = "", $end_time: timetz = null, $end_date: timestamptz = null, $discount_value: String = "", $discount_type: String = "", $code: String = "", $buy_quantity: String = "", $applies_to_type: String = "", $applies_to_id: uuid = null, $promotion_scope: String = "", $customer_discount_percent: numeric = null, $influencer_id: uuid = null, $influencer_code: String = "", $earning_per_order: numeric = null) {
-    insert_promotions(objects: {usage_per_customer: $usage_per_customer, usage_limit: $usage_limit, status: $status, start_time: $start_time, start_date: $start_date, restaurant_id: $restaurant_id, shop_id: $shop_id, promotion_type: $promotion_type, priority: $priority, name: $name, min_purchase_amount: $min_purchase_amount, is_stackable: false, end_time: $end_time, end_date: $end_date, discount_value: $discount_value, discount_type: $discount_type, code: $code, buy_quantity: $buy_quantity, applies_to_type: $applies_to_type, applies_to_id: $applies_to_id, promotion_scope: $promotion_scope, customer_discount_percent: $customer_discount_percent, influencer_id: $influencer_id, influencer_code: $influencer_code, earning_per_order: $earning_per_order}) {
-      affected_rows
+  mutation AddPromotion($object: promotions_insert_input!) {
+    insert_promotions_one(object: $object) {
+      id
     }
   }
 `;
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Explicitly filter variables and handle type conversions (e.g., "" to null for UUIDs)
+    // Explicitly filter variables and handle type conversions
     const allowedFields = [
       'usage_per_customer', 'usage_limit', 'status', 'start_time', 'start_date',
       'restaurant_id', 'shop_id', 'promotion_type', 'priority', 'name', 'min_purchase_amount',
@@ -37,25 +37,45 @@ export async function POST(req: NextRequest) {
     ];
 
     const uuidFields = ['restaurant_id', 'shop_id', 'applies_to_id', 'influencer_id'];
-    const dateFields = ['start_date', 'end_date', 'start_time', 'end_time'];
+    const dateFields = ['start_date', 'end_date'];
+    const timeFields = ['start_time', 'end_time'];
 
-    const sanitizedVariables: Record<string, any> = {};
+    const insertObject: Record<string, any> = {
+      is_stackable: false // Default
+    };
+
     allowedFields.forEach(field => {
       let value = variables[field];
 
-      // Convert empty strings to null for UUID and Date/Time fields
-      if (value === "" && (uuidFields.includes(field) || dateFields.includes(field))) {
-        value = null;
+      // Omit empty strings for UUIDs, Dates, and Times, but keep explicit nulls
+      if (value === "") {
+        if (uuidFields.includes(field) || dateFields.includes(field) || timeFields.includes(field)) {
+          return; // Omit empty strings
+        }
       }
 
-      if (value !== undefined) {
-        sanitizedVariables[field] = value;
+      if (value === null) {
+        if (uuidFields.includes(field) || dateFields.includes(field) || timeFields.includes(field)) {
+          insertObject[field] = null; // Keep explicit nulls for UUID/Date/Time
+          return;
+        }
+      }
+
+      // Special handling for numeric fields that Hasura expects as Strings
+      if (['customer_discount_percent', 'earning_per_order'].includes(field) && value != null) {
+        value = value.toString();
+      }
+
+      if (value !== undefined && value !== "") {
+        insertObject[field] = value;
+      } else if (value === "" && !uuidFields.includes(field) && !dateFields.includes(field) && !timeFields.includes(field)) {
+        insertObject[field] = value;
       }
     });
 
-    console.log('[ADD_PROMOTION] Sanitized variables for Hasura:', JSON.stringify(sanitizedVariables, null, 2));
+    console.log('[ADD_PROMOTION] Sanitized object for Hasura:', JSON.stringify(insertObject, null, 2));
 
-    const data = await hasuraClient.request<any>(ADD_PROMOTION_MUTATION, sanitizedVariables);
+    const data = await hasuraClient.request<any>(ADD_PROMOTION_MUTATION, { object: insertObject });
 
     return NextResponse.json(data);
   } catch (error: any) {

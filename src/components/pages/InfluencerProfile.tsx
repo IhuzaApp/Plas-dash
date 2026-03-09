@@ -56,6 +56,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { Switch } from '@/components/ui/switch';
 
 interface InfluencerProfileProps {
     id: string;
@@ -67,6 +68,7 @@ const commissionRuleSchema = z.object({
     order_threshold: z.number().nullable().optional(),
     high_value_influencer_bonus: z.string().optional(),
     high_value_order_threshold: z.string().optional(),
+    free_delivery_enabled: z.boolean().default(false),
 });
 
 type CommissionRuleFormValues = z.infer<typeof commissionRuleSchema>;
@@ -77,6 +79,7 @@ const DEFAULT_RULE_VALUES: CommissionRuleFormValues = {
     order_threshold: null,
     high_value_influencer_bonus: '0',
     high_value_order_threshold: '0',
+    free_delivery_enabled: false,
 };
 
 const InfluencerProfile = ({ id }: InfluencerProfileProps) => {
@@ -133,6 +136,7 @@ const InfluencerProfile = ({ id }: InfluencerProfileProps) => {
             order_threshold: rule.order_threshold,
             high_value_influencer_bonus: rule.high_value_influencer_bonus?.toString() || '0',
             high_value_order_threshold: rule.high_value_order_threshold?.toString() || '0',
+            free_delivery_enabled: !!rule.free_delivery_enabled,
         });
         setIsRuleDrawerOpen(true);
     };
@@ -415,8 +419,9 @@ const InfluencerProfile = ({ id }: InfluencerProfileProps) => {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Type</TableHead>
-                                        <TableHead>Amount</TableHead>
-                                        <TableHead>Order Threshold</TableHead>
+                                        <TableHead>Benefit</TableHead>
+                                        <TableHead>Thresholds</TableHead>
+                                        <TableHead>Free Delivery</TableHead>
                                         <TableHead>Created</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -424,14 +429,39 @@ const InfluencerProfile = ({ id }: InfluencerProfileProps) => {
                                 <TableBody>
                                     {influencer.influencer_commissions?.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">No commission rules defined</TableCell>
+                                            <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">No commission rules defined</TableCell>
                                         </TableRow>
                                     ) : (
                                         influencer.influencer_commissions?.map((rule: any) => (
                                             <TableRow key={rule.id}>
                                                 <TableCell className="capitalize">{rule.commission_type.replace('_', ' ')}</TableCell>
-                                                <TableCell className="font-semibold">{currency} {rule.amount}</TableCell>
-                                                <TableCell>{rule.order_threshold || 'No threshold'}</TableCell>
+                                                <TableCell>
+                                                    <div className="font-semibold">{currency} {rule.amount}</div>
+                                                    {rule.high_value_influencer_bonus && rule.high_value_influencer_bonus !== '0' && (
+                                                        <div className="text-[10px] text-green-600 font-medium">
+                                                            +{currency} {rule.high_value_influencer_bonus} (High Value)
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="text-sm">
+                                                        {rule.order_threshold ? `${rule.order_threshold} orders` : 'All orders'}
+                                                    </div>
+                                                    {rule.high_value_order_threshold && rule.high_value_order_threshold !== '0' && (
+                                                        <div className="text-[10px] text-muted-foreground italic">
+                                                            High value from {currency} {rule.high_value_order_threshold}
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {rule.free_delivery_enabled ? (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 uppercase">
+                                                            Enabled
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-xs">—</span>
+                                                    )}
+                                                </TableCell>
                                                 <TableCell className="text-xs text-muted-foreground">
                                                     {format(new Date(rule.created_at), 'MMM d, yyyy')}
                                                 </TableCell>
@@ -595,6 +625,27 @@ const InfluencerProfile = ({ id }: InfluencerProfileProps) => {
                                         )}
                                     />
                                 </div>
+
+                                <FormField
+                                    control={ruleForm.control}
+                                    name="free_delivery_enabled"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <FormLabel className="text-base">Enable Free Delivery</FormLabel>
+                                                <FormDescription>
+                                                    Orders under this rule will have no delivery charges.
+                                                </FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
                             </form>
                         </Form>
                     </div>

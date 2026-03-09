@@ -9,8 +9,8 @@ const hasuraClient = new GraphQLClient(HASURA_URL, {
 });
 
 const UPDATE_PROMOTION_MUTATION = `
-  mutation UpdatePromotion($id: uuid!, $usage_per_customer: Int, $usage_limit: Int, $status: String, $start_time: timetz, $start_date: timestamptz, $restaurant_id: uuid, $shop_id: uuid, $promotion_type: String, $priority: Int, $name: String, $min_purchase_amount: String, $end_time: timetz, $end_date: timestamptz, $discount_value: String, $discount_type: String, $code: String, $buy_quantity: String, $applies_to_type: String, $applies_to_id: uuid, $promotion_scope: String, $customer_discount_percent: numeric, $influencer_id: uuid, $influencer_code: String, $earning_per_order: numeric) {
-    update_promotions(where: {id: {_eq: $id}}, _set: {usage_per_customer: $usage_per_customer, usage_limit: $usage_limit, status: $status, start_time: $start_time, start_date: $start_date, restaurant_id: $restaurant_id, shop_id: $shop_id, promotion_type: $promotion_type, priority: $priority, name: $name, min_purchase_amount: $min_purchase_amount, is_stackable: false, end_time: $end_time, end_date: $end_date, discount_value: $discount_value, discount_type: $discount_type, code: $code, buy_quantity: $buy_quantity, applies_to_type: $applies_to_type, applies_to_id: $applies_to_id, promotion_scope: $promotion_scope, customer_discount_percent: $customer_discount_percent, influencer_id: $influencer_id, influencer_code: $influencer_code, earning_per_order: $earning_per_order}) {
+  mutation UpdatePromotion($id: uuid!, $set: promotions_set_input!) {
+    update_promotions(where: {id: {_eq: $id}}, _set: $set) {
       affected_rows
     }
   }
@@ -27,31 +27,51 @@ export async function POST(req: NextRequest) {
 
         // Explicitly filter variables to match the mutation signature
         const allowedFields = [
-            'id', 'usage_per_customer', 'usage_limit', 'status', 'start_time', 'start_date',
+            'usage_per_customer', 'usage_limit', 'status', 'start_time', 'start_date',
             'restaurant_id', 'shop_id', 'promotion_type', 'priority', 'name', 'min_purchase_amount',
             'end_time', 'end_date', 'discount_value', 'discount_type', 'code',
             'buy_quantity', 'applies_to_type', 'applies_to_id',
             'promotion_scope', 'customer_discount_percent', 'influencer_id', 'influencer_code', 'earning_per_order'
         ];
 
-        const uuidFields = ['id', 'restaurant_id', 'shop_id', 'applies_to_id', 'influencer_id'];
-        const dateFields = ['start_date', 'end_date', 'start_time', 'end_time'];
+        const uuidFields = ['restaurant_id', 'shop_id', 'applies_to_id', 'influencer_id'];
+        const dateFields = ['start_date', 'end_date'];
+        const timeFields = ['start_time', 'end_time'];
 
-        const sanitizedVariables: Record<string, any> = {};
+        const setObject: Record<string, any> = {};
         allowedFields.forEach(field => {
             let value = variables[field];
 
-            // Convert empty strings to null for UUID and Date/Time fields
-            if (value === "" && (uuidFields.includes(field) || dateFields.includes(field))) {
-                value = null;
+            // Omit empty strings but keep explicit nulls for UUIDs/Dates/Times
+            if (value === "") {
+                if (uuidFields.includes(field) || dateFields.includes(field) || timeFields.includes(field)) {
+                    return; // Omit
+                }
             }
 
-            if (value !== undefined) {
-                sanitizedVariables[field] = value;
+            if (value === null) {
+                if (uuidFields.includes(field) || dateFields.includes(field) || timeFields.includes(field)) {
+                    setObject[field] = null;
+                    return;
+                }
+            }
+
+            // Stringify numeric fields for Hasura
+            if (['customer_discount_percent', 'earning_per_order'].includes(field) && value != null) {
+                value = value.toString();
+            }
+
+            if (value !== undefined && value !== "") {
+                setObject[field] = value;
+            } else if (value === "" && !uuidFields.includes(field) && !dateFields.includes(field) && !timeFields.includes(field)) {
+                setObject[field] = value;
             }
         });
 
-        const data = await hasuraClient.request<any>(UPDATE_PROMOTION_MUTATION, sanitizedVariables);
+        const data = await hasuraClient.request<any>(UPDATE_PROMOTION_MUTATION, {
+            id: variables.id,
+            set: setObject
+        });
 
         return NextResponse.json(data);
     } catch (error: any) {

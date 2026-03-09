@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'influencer_id, commission_type, and amount are required' }, { status: 400 });
         }
 
-        const allowedFields = ['influencer_id', 'commission_type', 'amount', 'order_threshold', 'high_value_influencer_bonus', 'high_value_order_threshold'];
+        const allowedFields = ['influencer_id', 'commission_type', 'amount', 'order_threshold', 'high_value_influencer_bonus', 'high_value_order_threshold', 'free_delivery_enabled'];
         const sanitizedVariables: any = {};
         allowedFields.forEach(field => {
             if (variables[field] !== undefined) {
