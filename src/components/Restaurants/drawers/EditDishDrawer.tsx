@@ -29,13 +29,25 @@ import { toast } from 'sonner';
 import { Loader2, Upload, X, ImageIcon } from 'lucide-react';
 import { uploadFileToFirebase } from '@/lib/firebaseStorage';
 import { UploadTask } from 'firebase/storage';
+import { useQuery } from '@tanstack/react-query';
+import { apiGet } from '@/lib/api';
+import { Promotion } from '@/components/promotions/types';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tag } from 'lucide-react';
 
 const dishSchema = z.object({
     price: z.string().min(1, 'Price is required'),
     discount: z.preprocess((val) => Number(val), z.number().min(0).max(100)),
     SKU: z.string().optional(),
     preparingTime: z.string().optional(),
-    promo: z.string().optional(),
+    promo: z.boolean().default(false),
     promo_type: z.string().optional(),
     quantity: z.preprocess((val) => Number(val), z.number().min(0)),
     is_active: z.boolean().default(true),
@@ -63,16 +75,24 @@ const EditDishDrawer: React.FC<EditDishDrawerProps> = ({
     const [isUploading, setIsUploading] = useState(false);
     const uploadTaskRef = useRef<UploadTask | null>(null);
 
+    const { data: promotions, isLoading: isLoadingPromos } = useQuery({
+        queryKey: ['promotions'],
+        queryFn: () => apiGet<{ promotions: Promotion[] }>('/api/queries/promotions').then(r => r.promotions),
+    });
+
+    // Filter promotions for this specific restaurant
+    const restaurantPromos = promotions?.filter(p => p.restaurant_id === dish?.restaurant_id) || [];
+
     const form = useForm<DishFormValues>({
         resolver: zodResolver(dishSchema),
         defaultValues: {
             price: dish?.price !== undefined && dish?.price !== null ? dish.price.toString() : '',
-            discount: typeof dish?.discount === 'number' ? dish.discount : 0,
+            discount: dish?.discount !== undefined ? Number(dish.discount) : 0,
             SKU: dish?.SKU?.toString() || '',
             preparingTime: dish?.preparingTime?.toString() || '',
-            promo: dish?.promo?.toString() || '',
+            promo: !!dish?.promo,
             promo_type: dish?.promo_type?.toString() || '',
-            quantity: typeof dish?.quantity === 'number' ? dish.quantity : 0,
+            quantity: dish?.quantity !== undefined ? Number(dish.quantity) : 0,
             is_active: dish?.is_active ?? true,
             image: dish?.image?.toString() || dish?.dishes?.image?.toString() || '',
         },
@@ -139,7 +159,7 @@ const EditDishDrawer: React.FC<EditDishDrawerProps> = ({
                 quantity: quantity.toString(),
                 preparingTime: restaurantValues.preparingTime || '',
                 price: restaurantValues.price || '0',
-                promo: !!promo,
+                promo: promo,
                 promo_type: restaurantValues.promo_type || '',
                 is_active: restaurantValues.is_active,
                 image: image || '',
@@ -302,17 +322,80 @@ const EditDishDrawer: React.FC<EditDishDrawerProps> = ({
                                 />
                             </div>
 
+                            <div className="bg-muted/30 p-4 rounded-lg space-y-4">
+                                <div className="space-y-2">
+                                    <FormLabel className="flex items-center gap-2">
+                                        <Tag className="h-4 w-4 text-primary" />
+                                        Select existing Promotion
+                                    </FormLabel>
+                                    <Select
+                                        onValueChange={(value) => {
+                                            if (value === 'none') {
+                                                form.setValue('promo', false);
+                                                form.setValue('promo_type', '');
+                                                return;
+                                            }
+                                            const selectedPromo = restaurantPromos.find(p => p.id === value);
+                                            if (selectedPromo) {
+                                                form.setValue('promo', true);
+                                                form.setValue('promo_type', selectedPromo.code || selectedPromo.name || '');
+
+                                                // If it's a percentage promotion, auto-fill the discount field
+                                                if (selectedPromo.promotion_type === 'percentage' && selectedPromo.discount_value) {
+                                                    const disc = parseInt(selectedPromo.discount_value);
+                                                    if (!isNaN(disc)) form.setValue('discount', disc);
+                                                }
+
+                                                toast.info(`Applied promotion: ${selectedPromo.name}`);
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger className="bg-background">
+                                            <SelectValue placeholder={isLoadingPromos ? "Loading promotions..." : "Choose a promotion..."} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">No Promotion</SelectItem>
+                                            {restaurantPromos.map((promo) => (
+                                                <SelectItem key={promo.id} value={promo.id}>
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        <span className="font-medium">{promo.name}</span>
+                                                        <div className="flex gap-2">
+                                                            <Badge variant="outline" className="text-[10px] px-1 h-4">
+                                                                {promo.code}
+                                                            </Badge>
+                                                            <span className="text-[10px] text-muted-foreground">
+                                                                {promo.promotion_type === 'percentage' ? `${promo.discount_value}% OFF` : promo.promotion_type}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Selecting a promotion will auto-fill the code and discount type.
+                                    </p>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="promo"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Promo Code</FormLabel>
+                                        <FormItem className="flex items-center justify-between border rounded-md p-3 bg-muted/20">
+                                            <div className="space-y-0.5">
+                                                <FormLabel>Promotional Dish</FormLabel>
+                                                <div className="text-[10px] text-muted-foreground line-clamp-1">
+                                                    Activate promotional status
+                                                </div>
+                                            </div>
                                             <FormControl>
-                                                <Input placeholder="SUMMER24" {...field} />
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
                                             </FormControl>
-                                            <FormMessage />
                                         </FormItem>
                                     )}
                                 />
@@ -321,9 +404,9 @@ const EditDishDrawer: React.FC<EditDishDrawerProps> = ({
                                     name="promo_type"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Promo Type</FormLabel>
+                                            <FormLabel>Promo Code/Type</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Percentage/Fixed" {...field} />
+                                                <Input placeholder="Code or Name" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
