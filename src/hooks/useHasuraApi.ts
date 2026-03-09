@@ -1769,3 +1769,93 @@ export function useAddDishToMenu() {
   });
 }
 
+export function useCreatePromotion() {
+  return useMutation<
+    { insert_promotions: { affected_rows: number } },
+    Error,
+    {
+      applies_to_type?: string;
+      buy_quantity?: string;
+      code?: string;
+      discount_type?: string;
+      discount_value?: string;
+      end_date?: string;
+      end_time?: string;
+      min_purchase_amount?: string;
+      name: string;
+      priority?: number;
+      promotion_type: string;
+      restaurant_id?: string;
+      start_date?: string;
+      start_time?: string;
+      status?: string;
+      update_on?: string;
+      usage_limit?: number;
+      usage_per_customer?: number;
+      applies_to_id?: string;
+      shop_id?: string | null;
+    }
+  >({
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/mutations/add-promotion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create promotion');
+      }
+
+      return response.json();
+    },
+  });
+}
+
+export const useUpdatePromotion = () => {
+  return useMutation<
+    any,
+    Error,
+    {
+      id: string;
+      name?: string;
+      code?: string;
+      promotion_type?: string;
+      applies_to_type?: string;
+      applies_to_id?: string;
+      start_date?: string;
+      end_date?: string;
+      start_time?: string;
+      end_time?: string;
+      min_purchase_amount?: string;
+      usage_per_customer?: number;
+      usage_limit?: number;
+      priority?: number;
+      status?: string;
+      discount_type?: string;
+      discount_value?: string;
+      buy_quantity?: string;
+      shop_id?: string | null;
+    }
+  >({
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/mutations/update-promotion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update promotion');
+      }
+
+      return response.json();
+    },
+  });
+};

@@ -150,9 +150,9 @@ export async function GET(req: Request) {
           ...item,
           Product: item.Product
             ? {
-                name: item.Product?.ProductName?.name ?? undefined,
-                ProductName: item.Product?.ProductName ?? undefined,
-              }
+              name: item.Product?.ProductName?.name ?? undefined,
+              ProductName: item.Product?.ProductName ?? undefined,
+            }
             : undefined,
         })),
       })),
