@@ -35,8 +35,8 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh, restaurantId }
     const filteredDishes = useMemo(() => {
         if (!dishes) return [];
         return dishes.filter((rd: any) => {
-            const name = rd.dishes?.name?.toLowerCase() || '';
-            const sku = rd.SKU?.toLowerCase() || '';
+            const name = rd.dishes?.name?.toLowerCase() || rd.ProductNames?.name?.toLowerCase() || '';
+            const sku = rd.SKU?.toLowerCase() || rd.ProductNames?.sku?.toLowerCase() || '';
             const query = searchQuery.toLowerCase();
             return name.includes(query) || sku.includes(query);
         });
@@ -143,8 +143,8 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, onRefresh, restaurantId }
                                                             {rd.promo_type || 'PROMO'}
                                                         </Badge>
                                                     )}
-                                                    <span className="text-sm font-bold leading-none mt-0.5">{rd.dishes?.name || 'Unknown'}</span>
-                                                    <span className="text-[10px] text-muted-foreground font-mono">SKU: {rd.SKU || 'N/A'}</span>
+                                                    <span className="text-sm font-bold leading-none mt-0.5">{rd.dishes?.name || rd.ProductNames?.name || 'Unknown'}</span>
+                                                    <span className="text-[10px] text-muted-foreground font-mono">SKU: {rd.SKU || rd.ProductNames?.sku || 'N/A'}</span>
                                                 </div>
                                             </div>
                                         </TableCell>

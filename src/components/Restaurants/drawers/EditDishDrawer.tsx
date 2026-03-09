@@ -98,8 +98,9 @@ const EditDishDrawer: React.FC<EditDishDrawerProps> = ({
         },
     });
 
+    // Reset form values when the dish changes
     useEffect(() => {
-        if (dish && isOpen) {
+        if (dish) {
             form.reset({
                 price: dish.price?.toString() || '',
                 discount: dish.discount !== undefined ? Number(dish.discount) : 0,
@@ -112,7 +113,7 @@ const EditDishDrawer: React.FC<EditDishDrawerProps> = ({
                 image: dish.image?.toString() || dish.dishes?.image?.toString() || '',
             });
         }
-    }, [dish, isOpen, form]);
+    }, [dish, form]);
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];

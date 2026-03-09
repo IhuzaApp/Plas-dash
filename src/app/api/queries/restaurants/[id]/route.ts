@@ -183,6 +183,15 @@ const GET_RESTAURANT_BY_ID = gql`
           name
           update_at
         }
+        ProductNames {
+          barcode
+          create_at
+          description
+          id
+          image
+          name
+          sku
+        }
       }
       restaurant_orders(order_by: { created_at: desc }) {
         id
@@ -210,39 +219,39 @@ const GET_RESTAURANT_BY_ID = gql`
 `;
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-    const session = await getServerSession(authOptions);
-    let userId = (session as any)?.user?.id;
+  const session = await getServerSession(authOptions);
+  let userId = (session as any)?.user?.id;
 
-    if (!userId) {
-        const authHeader = _request.headers.get('authorization');
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            userId = authHeader.substring(7);
-        }
+  if (!userId) {
+    const authHeader = _request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
     }
+  }
 
-    if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    const { id } = await params;
-    if (!id) {
-        return NextResponse.json({ error: 'Restaurant ID required' }, { status: 400 });
-    }
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json({ error: 'Restaurant ID required' }, { status: 400 });
+  }
 
-    try {
-        if (!hasuraClient) {
-            throw new Error('Hasura client is not initialized');
-        }
-        const data = await hasuraClient.request<{
-            Restaurants_by_pk: Record<string, unknown> | null;
-        }>(GET_RESTAURANT_BY_ID, { id });
-        const restaurant = data.Restaurants_by_pk;
-        if (!restaurant) {
-            return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
-        }
-        return NextResponse.json({ restaurant });
-    } catch (error) {
-        console.error('Error fetching restaurant by id:', error);
-        return NextResponse.json({ error: 'Failed to fetch restaurant' }, { status: 500 });
+  try {
+    if (!hasuraClient) {
+      throw new Error('Hasura client is not initialized');
     }
+    const data = await hasuraClient.request<{
+      Restaurants_by_pk: Record<string, unknown> | null;
+    }>(GET_RESTAURANT_BY_ID, { id });
+    const restaurant = data.Restaurants_by_pk;
+    if (!restaurant) {
+      return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
+    }
+    return NextResponse.json({ restaurant });
+  } catch (error) {
+    console.error('Error fetching restaurant by id:', error);
+    return NextResponse.json({ error: 'Failed to fetch restaurant' }, { status: 500 });
+  }
 }
