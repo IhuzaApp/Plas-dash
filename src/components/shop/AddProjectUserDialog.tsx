@@ -399,8 +399,9 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
     try {
       setIsLoading(true);
 
-      // Generate privileges based on the selected role
-      const privileges = getDefaultProjectPrivilegesForRole(data.role);
+      // Use the user-customized privileges state (includes any manual UI changes)
+      // Fall back to role defaults only if privileges state is somehow null
+      const finalPrivileges = privileges || getDefaultProjectPrivilegesForRole(data.role);
 
       // Prepare the mutation data
       const mutationData = {
@@ -413,7 +414,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
         gender: data.gender || '', // Use empty string for optional field
         device_details: '', // Use empty string for optional field
         profile: profileImage || '', // Include profile image
-        privileges: privileges || getDefaultProjectPrivilegesForRole(data.role),
+        privileges: finalPrivileges,
       };
 
       // Call the mutation
@@ -849,6 +850,24 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                         <div className="flex items-center gap-2">
                           <Shield className="h-4 w-4" />
                           Global System Admin
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="support">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Support (Shops, Tickets, Shoppers, PlasMarket)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="sales">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Sales (Finance Modules)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="manager">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Manager (Users &amp; Staff Mgmt)
                         </div>
                       </SelectItem>
                     </SelectContent>

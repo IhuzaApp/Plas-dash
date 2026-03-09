@@ -323,4 +323,13 @@ export const permissionGroups: PermissionGroup[] = [
       { key: 'manage_shop_subscriptions', label: 'Manage Shop Subscriptions' },
     ],
   },
+  {
+    title: 'Influencers',
+    module: 'influencers' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Influencers' },
+      { key: 'view_earnings', label: 'View Earnings' },
+      { key: 'manage_influencers', label: 'Manage Influencers' },
+    ],
+  },
 ];

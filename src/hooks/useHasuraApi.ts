@@ -1794,6 +1794,11 @@ export function useCreatePromotion() {
       usage_per_customer?: number;
       applies_to_id?: string;
       shop_id?: string | null;
+      promotion_scope?: string;
+      customer_discount_percent?: number;
+      influencer_id?: string;
+      influencer_code?: string;
+      earning_per_order?: number;
     }
   >({
     mutationFn: async (variables) => {
@@ -1839,6 +1844,11 @@ export const useUpdatePromotion = () => {
       discount_value?: string;
       buy_quantity?: string;
       shop_id?: string | null;
+      promotion_scope?: string;
+      customer_discount_percent?: number;
+      influencer_id?: string;
+      influencer_code?: string;
+      earning_per_order?: number;
     }
   >({
     mutationFn: async (variables) => {
@@ -1858,4 +1868,73 @@ export const useUpdatePromotion = () => {
       return response.json();
     },
   });
-};
+}
+
+// Influencer Mutation Hooks
+export function useAddInfluencer() {
+  return useMutation<any, Error, any>({
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/mutations/add-influencer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add influencer');
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useUpdateInfluencer() {
+  return useMutation<any, Error, any>({
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/mutations/update-influencer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update influencer');
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useAddCommissionRule() {
+  return useMutation<any, Error, any>({
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/mutations/add-commission-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add commission rule');
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useUpdateCommissionRule() {
+  return useMutation<any, Error, any>({
+    mutationFn: async (variables) => {
+      const response = await fetch('/api/mutations/update-commission-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update commission rule');
+      }
+      return response.json();
+    },
+  });
+}

@@ -9,8 +9,8 @@ const hasuraClient = new GraphQLClient(HASURA_URL, {
 });
 
 const ADD_PROMOTION_MUTATION = `
-  mutation AddPromotion($usage_per_customer: Int = 10, $usage_limit: Int = 10, $status: String = "", $start_time: timetz = null, $start_date: timestamptz = null, $restaurant_id: uuid = null, $shop_id: uuid = null, $promotion_type: String = "", $priority: Int = 10, $name: String = "", $min_purchase_amount: String = "", $end_time: timetz = null, $end_date: timestamptz = null, $discount_value: String = "", $discount_type: String = "", $code: String = "", $buy_quantity: String = "", $applies_to_type: String = "", $applies_to_id: uuid = null) {
-    insert_promotions(objects: {usage_per_customer: $usage_per_customer, usage_limit: $usage_limit, status: $status, start_time: $start_time, start_date: $start_date, restaurant_id: $restaurant_id, shop_id: $shop_id, promotion_type: $promotion_type, priority: $priority, name: $name, min_purchase_amount: $min_purchase_amount, is_stackable: false, end_time: $end_time, end_date: $end_date, discount_value: $discount_value, discount_type: $discount_type, code: $code, buy_quantity: $buy_quantity, applies_to_type: $applies_to_type, applies_to_id: $applies_to_id}) {
+  mutation AddPromotion($usage_per_customer: Int = 10, $usage_limit: Int = 10, $status: String = "", $start_time: timetz = null, $start_date: timestamptz = null, $restaurant_id: uuid = null, $shop_id: uuid = null, $promotion_type: String = "", $priority: Int = 10, $name: String = "", $min_purchase_amount: String = "", $end_time: timetz = null, $end_date: timestamptz = null, $discount_value: String = "", $discount_type: String = "", $code: String = "", $buy_quantity: String = "", $applies_to_type: String = "", $applies_to_id: uuid = null, $promotion_scope: String = "", $customer_discount_percent: numeric = null, $influencer_id: uuid = null, $influencer_code: String = "", $earning_per_order: numeric = null) {
+    insert_promotions(objects: {usage_per_customer: $usage_per_customer, usage_limit: $usage_limit, status: $status, start_time: $start_time, start_date: $start_date, restaurant_id: $restaurant_id, shop_id: $shop_id, promotion_type: $promotion_type, priority: $priority, name: $name, min_purchase_amount: $min_purchase_amount, is_stackable: false, end_time: $end_time, end_date: $end_date, discount_value: $discount_value, discount_type: $discount_type, code: $code, buy_quantity: $buy_quantity, applies_to_type: $applies_to_type, applies_to_id: $applies_to_id, promotion_scope: $promotion_scope, customer_discount_percent: $customer_discount_percent, influencer_id: $influencer_id, influencer_code: $influencer_code, earning_per_order: $earning_per_order}) {
       affected_rows
     }
   }
@@ -32,10 +32,11 @@ export async function POST(req: NextRequest) {
       'usage_per_customer', 'usage_limit', 'status', 'start_time', 'start_date',
       'restaurant_id', 'shop_id', 'promotion_type', 'priority', 'name', 'min_purchase_amount',
       'end_time', 'end_date', 'discount_value', 'discount_type', 'code',
-      'buy_quantity', 'applies_to_type', 'applies_to_id'
+      'buy_quantity', 'applies_to_type', 'applies_to_id',
+      'promotion_scope', 'customer_discount_percent', 'influencer_id', 'influencer_code', 'earning_per_order'
     ];
 
-    const uuidFields = ['restaurant_id', 'shop_id', 'applies_to_id'];
+    const uuidFields = ['restaurant_id', 'shop_id', 'applies_to_id', 'influencer_id'];
     const dateFields = ['start_date', 'end_date', 'start_time', 'end_time'];
 
     const sanitizedVariables: Record<string, any> = {};

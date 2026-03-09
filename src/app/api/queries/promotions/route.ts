@@ -50,6 +50,14 @@ query GetPromotions($where: promotions_bool_exp) {
     buy_quantity
     applies_to_type
     applies_to_id
+    promotion_scope
+    customer_discount_percent
+    influencer_id
+    influencer_code
+    earning_per_order
+    Influencer {
+      name
+    }
     update_on
   }
 }

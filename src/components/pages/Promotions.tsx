@@ -102,6 +102,15 @@ interface Promotion {
   is_stackable: boolean;
   created_at: string;
   update_on: string;
+  promotion_scope?: string;
+  customer_discount_percent?: number;
+  influencer_id?: string;
+  influencer_code?: string;
+  earning_per_order?: number;
+  Influencer?: {
+    name: string;
+    code: string;
+  };
 }
 
 const DEFAULT_FORM_VALUES: PromotionFormValues = {
@@ -125,6 +134,11 @@ const DEFAULT_FORM_VALUES: PromotionFormValues = {
   priority: '10',
   is_stackable: false,
   status: 'active',
+  promotion_scope: 'public',
+  customer_discount_percent: '',
+  influencer_id: '',
+  influencer_code: '',
+  earning_per_order: '',
 };
 
 const generatePromotionCode = () => {
@@ -166,6 +180,11 @@ const promotionFormSchema = z.object({
   priority: z.string().default('10'),
   is_stackable: z.boolean().default(false),
   status: z.enum(['active', 'scheduled', 'disabled']).default('active'),
+  promotion_scope: z.enum(['public', 'influencer_only']).default('public'),
+  customer_discount_percent: z.string().optional(),
+  influencer_id: z.string().optional(),
+  influencer_code: z.string().optional(),
+  earning_per_order: z.string().optional(),
 })
   .refine(data => {
     if (data.promotion_type === 'percentage' && (!data.discount_value || isNaN(Number(data.discount_value)) || Number(data.discount_value) <= 0 || Number(data.discount_value) > 100)) {
@@ -210,6 +229,13 @@ const Promotions = () => {
     queryKey: ['promotions'],
     queryFn: () =>
       apiGet<{ promotions: Promotion[] }>('/api/queries/promotions').then(r => r.promotions),
+  });
+
+  const { data: influencersData } = useQuery({
+    queryKey: ['influencers'],
+    queryFn: () =>
+      apiGet<{ influencers: any[] }>('/api/queries/influencers').then(r => r.influencers),
+    enabled: !!session?.isProjectUser,
   });
 
   const { data: shopsData } = useQuery({
@@ -269,6 +295,11 @@ const Promotions = () => {
         buy_quantity: "",
         restaurant_id: values.business_type === 'restaurant' ? values.business_id : null,
         shop_id: values.business_type === 'shop' ? values.business_id : null,
+        promotion_scope: values.promotion_scope,
+        customer_discount_percent: values.customer_discount_percent ? parseInt(values.customer_discount_percent) : null,
+        influencer_id: values.influencer_id || null,
+        influencer_code: values.influencer_code || null,
+        earning_per_order: values.earning_per_order ? parseFloat(values.earning_per_order) : null,
       };
 
       if (values.promotion_type === 'percentage' || values.promotion_type === 'fixed') {
@@ -337,6 +368,11 @@ const Promotions = () => {
       status: promotion.status as any,
       business_type: promotion.restaurant_id ? 'restaurant' : 'shop',
       business_id: (promotion.restaurant_id || promotion.shop_id) || '',
+      promotion_scope: (promotion.promotion_scope as any) || 'public',
+      customer_discount_percent: promotion.customer_discount_percent?.toString() || '',
+      influencer_id: promotion.influencer_id || '',
+      influencer_code: promotion.influencer_code || '',
+      earning_per_order: promotion.earning_per_order?.toString() || '',
     });
     setIsDrawerOpen(true);
   };
@@ -576,7 +612,7 @@ const Promotions = () => {
                                 </div>
                               </div>
 
-                              {/* Usage Statistics (Placeholder) */}
+                              {/* Usage Statistics */}
                               <div className="space-y-4">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                                   <RefreshCw className="h-4 w-4" />
@@ -606,6 +642,38 @@ const Promotions = () => {
                                   </p>
                                 </div>
                               </div>
+
+                              {/* Influencer Information (If applicable) */}
+                              {(promotion.promotion_scope === 'influencer_only' || promotion.influencer_id) && (
+                                <div className="space-y-4">
+                                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                                    <User className="h-4 w-4" />
+                                    Influencer Information
+                                  </div>
+                                  <div className="space-y-3 bg-background rounded-lg p-4 border shadow-sm text-xs">
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Scope:</span>
+                                      <span className="capitalize font-medium text-orange-600">{promotion.promotion_scope?.replace('_', ' ')}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Assigned Influencer:</span>
+                                      <span className="font-medium text-primary">{promotion.Influencer?.name || 'Not assigned'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Influencer Code:</span>
+                                      <span className="font-mono bg-muted px-1.5 py-0.5 rounded">{promotion.influencer_code || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Extra Customer Disc:</span>
+                                      <span className="font-semibold">{promotion.customer_discount_percent ? `${promotion.customer_discount_percent}%` : '0%'}</span>
+                                    </div>
+                                    <div className="flex justify-between pt-2 border-t">
+                                      <span className="text-muted-foreground">Influencer Earning:</span>
+                                      <span className="font-bold text-green-600">Ksh {promotion.earning_per_order || '0'}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </TableCell>
@@ -1101,6 +1169,124 @@ const Promotions = () => {
                         </FormItem>
                       )}
                     />
+                  </div>
+                </div>
+
+                {/* 7. Influencer Settings */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-primary">7. Influencer Settings</h3>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                      <Info className="h-3 w-3" />
+                      Optional for influencer campaigns
+                    </div>
+                  </div>
+                  <div className="bg-muted/30 p-4 rounded-xl border space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="promotion_scope"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel>Promotion Visibility</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="flex gap-4"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="public" id="scope-public" />
+                                <Label htmlFor="scope-public">Public (Everyone)</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="influencer_only" id="scope-influencer" />
+                                <Label htmlFor="scope-influencer">Influencer Only</Label>
+                              </div>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                          <FormDescription>
+                            Influencer only promotions are hidden from the general store view.
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="influencer_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Assign Influencer</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select influencer" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">None (Generic)</SelectItem>
+                                {influencersData?.map(influencer => (
+                                  <SelectItem key={influencer.id} value={influencer.id}>
+                                    {influencer.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>Link this promotion to a specific influencer.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="influencer_code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Influencer Specific Code</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g. KIM20" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormDescription>Unique code for the influencer to track.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="customer_discount_percent"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Extra Customer Discount (%)</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="5" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormDescription>Additional discount for customers using this code.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="earning_per_order"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Influencer Earning (Ksh)</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="100.00" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormDescription>Amount influencer earns per successful order.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
 

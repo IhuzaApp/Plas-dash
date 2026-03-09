@@ -51,6 +51,7 @@ export interface UserPrivileges {
   tax?: ModulePrivileges;
   ai_chat?: ModulePrivileges;
   subscriptions?: ModulePrivileges;
+  influencers?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -374,6 +375,11 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
   ai_chat: {
     access: false,
     use_chat: false,
+  },
+  influencers: {
+    access: false,
+    view_earnings: false,
+    manage_influencers: false,
   },
 };
 

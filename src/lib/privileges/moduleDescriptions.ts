@@ -798,6 +798,20 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       },
     ],
   },
+  influencers: {
+    title: 'Influencers',
+    group: 'Marketing',
+    description: 'Manage influencer profiles, commissions, and earnings',
+    actions: [
+      { key: 'access', label: 'Access Influencers', description: 'Can access influencers page' },
+      { key: 'view_earnings', label: 'View Earnings', description: 'Can view influencer earnings' },
+      {
+        key: 'manage_influencers',
+        label: 'Manage Influencers',
+        description: 'Can create, edit, and delete influencers',
+      },
+    ],
+  },
   withdraw_requests: {
     title: 'Withdraw Requests',
     group: 'Finance',

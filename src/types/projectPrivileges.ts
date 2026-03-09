@@ -63,6 +63,7 @@ export interface ProjectUserPrivileges {
 
   // Subscription Management (Platform Admin only)
   subscriptions?: ProjectModulePrivileges;
+  influencers?: ProjectModulePrivileges;
 }
 
 // Default project privileges template
@@ -430,6 +431,7 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     access_reels: false,
     access_ai_chat: false,
     access_subscriptions: false,
+    access_influencers: false,
   },
   referrals: {
     access: false,
@@ -463,6 +465,11 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     manage_modules: false,
     assign_plan_modules: false,
     manage_shop_subscriptions: false,
+  },
+  influencers: {
+    access: false,
+    view_earnings: false,
+    manage_influencers: false,
   },
 };
 

@@ -944,3 +944,143 @@ export const UPDATE_RESTAURANT_DISH = `
   }
 `;
 
+// Influencer Mutations
+export const ADD_INFLUENCER = `
+  mutation AddInfluencer(
+    $name: String!
+    $email: String!
+    $phone: String!
+    $status: String = "active"
+    $membershipId: String
+    $description: String
+    $payment_method: String
+    $payment_terms: String
+    $momo_number: String
+    $bank_name: String
+    $bank_account_number: String
+    $bank_account_name: String
+    $contract_start_date: String
+    $contract_end_date: String
+  ) {
+    insert_influencers_one(
+      object: {
+        name: $name
+        email: $email
+        phone: $phone
+        status: $status
+        membershipId: $membershipId
+        description: $description
+        payment_method: $payment_method
+        payment_terms: $payment_terms
+        momo_number: $momo_number
+        bank_name: $bank_name
+        bank_account_number: $bank_account_number
+        bank_account_name: $bank_account_name
+        contract_start_date: $contract_start_date
+        contract_end_date: $contract_end_date
+      }
+    ) {
+      id
+      name
+      membershipId
+    }
+  }
+`;
+
+export const UPDATE_INFLUENCER = `
+  mutation UpdateInfluencer(
+    $id: uuid!
+    $name: String
+    $email: String
+    $phone: String
+    $status: String
+    $membershipId: String
+    $description: String
+    $payment_method: String
+    $payment_terms: String
+    $momo_number: String
+    $bank_name: String
+    $bank_account_number: String
+    $bank_account_name: String
+    $contract_start_date: String
+    $contract_end_date: String
+  ) {
+    update_influencers_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        name: $name
+        email: $email
+        phone: $phone
+        status: $status
+        membershipId: $membershipId
+        description: $description
+        payment_method: $payment_method
+        payment_terms: $payment_terms
+        momo_number: $momo_number
+        bank_name: $bank_name
+        bank_account_number: $bank_account_number
+        bank_account_name: $bank_account_name
+        contract_start_date: $contract_start_date
+        contract_end_date: $contract_end_date
+        updated_at: "now()"
+      }
+    ) {
+      id
+      name
+      status
+    }
+  }
+`;
+
+export const ADD_COMMISSION_RULE = `
+  mutation AddCommissionRule(
+    $influencer_id: uuid!
+    $commission_type: String!
+    $amount: String!
+    $order_threshold: Int
+    $high_value_influencer_bonus: String
+    $high_value_order_threshold: String
+  ) {
+    insert_influencer_commissions_one(
+      object: {
+        influencer_id: $influencer_id
+        commission_type: $commission_type
+        amount: $amount
+        order_threshold: $order_threshold
+        high_value_influencer_bonus: $high_value_influencer_bonus
+        high_value_order_threshold: $high_value_order_threshold
+      }
+    ) {
+      id
+      influencer_id
+      commission_type
+      amount
+    }
+  }
+`;
+
+export const UPDATE_COMMISSION_RULE = `
+  mutation UpdateCommissionRule(
+    $id: uuid!
+    $commission_type: String
+    $amount: String
+    $order_threshold: Int
+    $high_value_influencer_bonus: String
+    $high_value_order_threshold: String
+  ) {
+    update_influencer_commissions_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        commission_type: $commission_type
+        amount: $amount
+        order_threshold: $order_threshold
+        high_value_influencer_bonus: $high_value_influencer_bonus
+        high_value_order_threshold: $high_value_order_threshold
+      }
+    ) {
+      id
+      commission_type
+      amount
+    }
+  }
+`;

@@ -193,37 +193,37 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       items: [
         ...(showShopGuardedItems
           ? [
-              { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
-              { title: 'Recipes', icon: ChefHat, path: '/pos/inventory/production/recipes' },
-              {
-                title: 'Production Orders',
-                icon: ClipboardList,
-                path: '/pos/inventory/production/orders',
-              },
-              { title: 'Production Dashboard', icon: Activity, path: '/pos/inventory/production' },
-              {
-                title: 'Cost & Profit',
-                icon: DollarSign,
-                path: '/pos/inventory/production/cost-profit',
-              },
-              {
-                title: 'Simulate Stock',
-                icon: FlaskConical,
-                path: '/pos/inventory/production/simulate',
-              },
-            ]
+            { title: 'Company Dashboard', icon: LayoutDashboard, path: '/pos/company-dashboard' },
+            { title: 'Recipes', icon: ChefHat, path: '/pos/inventory/production/recipes' },
+            {
+              title: 'Production Orders',
+              icon: ClipboardList,
+              path: '/pos/inventory/production/orders',
+            },
+            { title: 'Production Dashboard', icon: Activity, path: '/pos/inventory/production' },
+            {
+              title: 'Cost & Profit',
+              icon: DollarSign,
+              path: '/pos/inventory/production/cost-profit',
+            },
+            {
+              title: 'Simulate Stock',
+              icon: FlaskConical,
+              path: '/pos/inventory/production/simulate',
+            },
+          ]
           : []),
         ...(isLoggedIntoShop
           ? [
-              // Shop-specific POS items when logged into a shop
-              { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
-              { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
-              { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
-              { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
-              { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
-              { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
-              { title: 'Staff Management', icon: Users, path: '/pos/staff' },
-            ]
+            // Shop-specific POS items when logged into a shop
+            { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
+            { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
+            { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
+            { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
+            { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
+            { title: 'Financial Overview', icon: Coins, path: '/pos/financial' },
+            { title: 'Staff Management', icon: Users, path: '/pos/staff' },
+          ]
           : []),
       ],
     },
@@ -233,17 +233,17 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       items: [
         ...(showShopGuardedItems
           ? [
-              { title: 'Procurement Dashboard', icon: LayoutDashboard, path: '/pos/procurement' },
-              { title: 'Suppliers', icon: Building2, path: '/pos/procurement/suppliers' },
-              { title: 'Quotations', icon: FileText, path: '/pos/procurement/quotations' },
-              {
-                title: 'Purchase Orders',
-                icon: ClipboardList,
-                path: '/pos/procurement/purchase-orders',
-              },
-              { title: 'Goods Received', icon: Truck, path: '/pos/procurement/goods-received' },
-              { title: 'Procurement Reports', icon: BarChart, path: '/pos/procurement/reports' },
-            ]
+            { title: 'Procurement Dashboard', icon: LayoutDashboard, path: '/pos/procurement' },
+            { title: 'Suppliers', icon: Building2, path: '/pos/procurement/suppliers' },
+            { title: 'Quotations', icon: FileText, path: '/pos/procurement/quotations' },
+            {
+              title: 'Purchase Orders',
+              icon: ClipboardList,
+              path: '/pos/procurement/purchase-orders',
+            },
+            { title: 'Goods Received', icon: Truck, path: '/pos/procurement/goods-received' },
+            { title: 'Procurement Reports', icon: BarChart, path: '/pos/procurement/reports' },
+          ]
           : []),
       ],
     },
@@ -263,15 +263,15 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       items: [
         ...(showShopGuardedItems
           ? [
-              { title: 'Tax Dashboard', icon: LayoutDashboard, path: '/tax' },
-              { title: 'Tax Declaration', icon: FileText, path: '/tax/declaration' },
-              { title: 'Forecasting', icon: TrendingUp, path: '/tax/forecasting' },
-              { title: 'Smart Import', icon: Upload, path: '/tax/import' },
-              { title: 'Tax Summary', icon: LayoutDashboard, path: '/tax/summary' },
-              { title: 'Optimization', icon: Tag, path: '/tax/optimization' },
-              { title: 'Reports', icon: BarChart, path: '/tax/reports' },
-              { title: 'Settings', icon: Settings, path: '/tax/settings' },
-            ]
+            { title: 'Tax Dashboard', icon: LayoutDashboard, path: '/tax' },
+            { title: 'Tax Declaration', icon: FileText, path: '/tax/declaration' },
+            { title: 'Forecasting', icon: TrendingUp, path: '/tax/forecasting' },
+            { title: 'Smart Import', icon: Upload, path: '/tax/import' },
+            { title: 'Tax Summary', icon: LayoutDashboard, path: '/tax/summary' },
+            { title: 'Optimization', icon: Tag, path: '/tax/optimization' },
+            { title: 'Reports', icon: BarChart, path: '/tax/reports' },
+            { title: 'Settings', icon: Settings, path: '/tax/settings' },
+          ]
           : []),
       ],
     },
@@ -282,6 +282,14 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       items: [
         { title: 'Tickets', icon: MessageSquare, path: '/tickets', badge: '2' },
         { title: 'Help Center', icon: HelpCircle, path: '/help' },
+      ],
+    },
+    {
+      section: 'Marketing',
+      icon: TrendingUp,
+      items: [
+        { title: 'Referrals', icon: Users, path: '/referrals' },
+        { title: 'Influencers', icon: Users, path: '/influencers' },
       ],
     },
     {
@@ -300,7 +308,6 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       items: [
         { title: 'Delivery Settings', icon: Clock, path: '/delivery-settings' },
         { title: 'Promotions', icon: Percent, path: '/promotions' },
-        { title: 'Referrals', icon: Users, path: '/referrals' },
         { title: 'System Settings', icon: Settings, path: '/settings' },
       ],
     },
@@ -370,7 +377,8 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
       hasModuleAccess('delivery_settings') ||
       hasModuleAccess('plasmarket') ||
       hasModuleAccess('procurement') ||
-      hasModuleAccess('subscriptions');
+      hasModuleAccess('subscriptions') ||
+      hasModuleAccess('influencers');
 
     return pagesHasAccess || moduleHasAccess || pathname?.startsWith('/tax');
   })();
@@ -518,10 +526,10 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
           hasModuleAccess('orders') ||
           hasModuleAccess('discounts') ||
           hasModuleAccess('shop_dashboard')) && (
-          <SidebarGroup>
-            <ShopSelector isSidebarOpen={isSidebarOpen} />
-          </SidebarGroup>
-        )}
+            <SidebarGroup>
+              <ShopSelector isSidebarOpen={isSidebarOpen} />
+            </SidebarGroup>
+          )}
 
         {filteredMenuItems.map(section => (
           <SidebarGroup key={section.section}>
