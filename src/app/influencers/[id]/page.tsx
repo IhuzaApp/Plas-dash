@@ -5,15 +5,15 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import InfluencerProfile from '@/components/pages/InfluencerProfile';
 
 export default function InfluencerProfilePage() {
-    const params = useParams();
+  const params = useParams();
 
-    if (!params || !params.id) return null;
+  if (!params || !params.id) return null;
 
-    const id = params.id as string;
+  const id = params.id as string;
 
-    return (
-        <ProtectedRoute requiredPrivilege="influencers" requiredAction="access">
-            <InfluencerProfile id={id} />
-        </ProtectedRoute>
-    );
+  return (
+    <ProtectedRoute requiredPrivilege="influencers" requiredAction="access">
+      <InfluencerProfile id={id} />
+    </ProtectedRoute>
+  );
 }

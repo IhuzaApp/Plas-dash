@@ -824,7 +824,11 @@ const MODULE_DESCRIPTIONS: Record<
     actions: [
       { key: 'access', label: 'Access Orders', description: 'Can access production orders' },
       { key: 'view', label: 'View Orders', description: 'Can view production order details' },
-      { key: 'manage', label: 'Manage Orders', description: 'Can create and edit production orders' },
+      {
+        key: 'manage',
+        label: 'Manage Orders',
+        description: 'Can create and edit production orders',
+      },
     ],
   },
   production_dashboard: {
@@ -918,7 +922,11 @@ const MODULE_DESCRIPTIONS: Record<
     actions: [
       { key: 'access', label: 'Access Influencers', description: 'Can access influencers' },
       { key: 'view_earnings', label: 'View Earnings', description: 'Can view influencer earnings' },
-      { key: 'manage_influencers', label: 'Manage Influencers', description: 'Can manage influencer profiles' },
+      {
+        key: 'manage_influencers',
+        label: 'Manage Influencers',
+        description: 'Can manage influencer profiles',
+      },
     ],
   },
 };

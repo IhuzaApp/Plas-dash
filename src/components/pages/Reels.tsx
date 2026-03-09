@@ -105,7 +105,9 @@ const Reels = () => {
   const [failedVideos, setFailedVideos] = useState<Set<string>>(new Set());
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [selectedCommentsReel, setSelectedCommentsReel] = useState<any>(null);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'user' | 'restaurant' | 'shop' | 'business'>('all');
+  const [activeFilter, setActiveFilter] = useState<
+    'all' | 'user' | 'restaurant' | 'shop' | 'business'
+  >('all');
 
   const deleteReelMutation = useDeleteReel();
   const deleteCommentMutation = useDeleteReelsComment();
@@ -207,7 +209,10 @@ const Reels = () => {
       const reelToDelete = reels.find((r: any) => r.id === reelId);
 
       // If it's a Firebase URL, delete it from storage
-      if (reelToDelete?.video_url && reelToDelete.video_url.includes('firebasestorage.googleapis.com')) {
+      if (
+        reelToDelete?.video_url &&
+        reelToDelete.video_url.includes('firebasestorage.googleapis.com')
+      ) {
         await deleteVideoFromFirebase(reelToDelete.video_url);
       }
 
@@ -247,15 +252,14 @@ const Reels = () => {
   const filteredReels = reels
     .filter(reel => {
       const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = (
+      const matchesSearch =
         reel.title?.toLowerCase().includes(searchLower) ||
         reel.description?.toLowerCase().includes(searchLower) ||
         reel.category?.toLowerCase().includes(searchLower) ||
         reel.User?.name?.toLowerCase().includes(searchLower) ||
         reel.Restaurant?.name?.toLowerCase().includes(searchLower) ||
         reel.Shops?.name?.toLowerCase().includes(searchLower) ||
-        reel.BusinessAccount?.business_name?.toLowerCase().includes(searchLower)
-      );
+        reel.BusinessAccount?.business_name?.toLowerCase().includes(searchLower);
 
       if (!matchesSearch) return false;
 
@@ -341,7 +345,12 @@ const Reels = () => {
   categoryData.sort((a, b) => b.value - a.value);
 
   const ownerData = reels.reduce((acc: any[], reel) => {
-    const ownerName = reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || reel.BusinessAccount?.business_name || 'System';
+    const ownerName =
+      reel.User?.name ||
+      reel.Shops?.name ||
+      reel.Restaurant?.name ||
+      reel.BusinessAccount?.business_name ||
+      'System';
     const existing = acc.find(item => item.name === ownerName);
     if (existing) {
       existing.value += reel.reel_orders.length;

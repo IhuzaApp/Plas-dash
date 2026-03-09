@@ -29,11 +29,30 @@ export async function POST(req: NextRequest) {
 
     // Explicitly filter variables and handle type conversions
     const allowedFields = [
-      'usage_per_customer', 'usage_limit', 'status', 'start_time', 'start_date',
-      'restaurant_id', 'shop_id', 'promotion_type', 'priority', 'name', 'min_purchase_amount',
-      'end_time', 'end_date', 'discount_value', 'discount_type', 'code',
-      'buy_quantity', 'applies_to_type', 'applies_to_id',
-      'promotion_scope', 'customer_discount_percent', 'influencer_id', 'influencer_code', 'earning_per_order'
+      'usage_per_customer',
+      'usage_limit',
+      'status',
+      'start_time',
+      'start_date',
+      'restaurant_id',
+      'shop_id',
+      'promotion_type',
+      'priority',
+      'name',
+      'min_purchase_amount',
+      'end_time',
+      'end_date',
+      'discount_value',
+      'discount_type',
+      'code',
+      'buy_quantity',
+      'applies_to_type',
+      'applies_to_id',
+      'promotion_scope',
+      'customer_discount_percent',
+      'influencer_id',
+      'influencer_code',
+      'earning_per_order',
     ];
 
     const uuidFields = ['restaurant_id', 'shop_id', 'applies_to_id', 'influencer_id'];
@@ -41,21 +60,29 @@ export async function POST(req: NextRequest) {
     const timeFields = ['start_time', 'end_time'];
 
     const insertObject: Record<string, any> = {
-      is_stackable: false // Default
+      is_stackable: false, // Default
     };
 
     allowedFields.forEach(field => {
       let value = variables[field];
 
       // Omit empty strings for UUIDs, Dates, and Times, but keep explicit nulls
-      if (value === "") {
-        if (uuidFields.includes(field) || dateFields.includes(field) || timeFields.includes(field)) {
+      if (value === '') {
+        if (
+          uuidFields.includes(field) ||
+          dateFields.includes(field) ||
+          timeFields.includes(field)
+        ) {
           return; // Omit empty strings
         }
       }
 
       if (value === null) {
-        if (uuidFields.includes(field) || dateFields.includes(field) || timeFields.includes(field)) {
+        if (
+          uuidFields.includes(field) ||
+          dateFields.includes(field) ||
+          timeFields.includes(field)
+        ) {
           insertObject[field] = null; // Keep explicit nulls for UUID/Date/Time
           return;
         }
@@ -66,14 +93,22 @@ export async function POST(req: NextRequest) {
         value = value.toString();
       }
 
-      if (value !== undefined && value !== "") {
+      if (value !== undefined && value !== '') {
         insertObject[field] = value;
-      } else if (value === "" && !uuidFields.includes(field) && !dateFields.includes(field) && !timeFields.includes(field)) {
+      } else if (
+        value === '' &&
+        !uuidFields.includes(field) &&
+        !dateFields.includes(field) &&
+        !timeFields.includes(field)
+      ) {
         insertObject[field] = value;
       }
     });
 
-    console.log('[ADD_PROMOTION] Sanitized object for Hasura:', JSON.stringify(insertObject, null, 2));
+    console.log(
+      '[ADD_PROMOTION] Sanitized object for Hasura:',
+      JSON.stringify(insertObject, null, 2)
+    );
 
     const data = await hasuraClient.request<any>(ADD_PROMOTION_MUTATION, { object: insertObject });
 

@@ -83,7 +83,7 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ isOpen, onClose
 
         const url = await uploadFileToFirebase(
           file,
-          (progress) => setUploadProgress(prev => ({ ...prev, [type]: progress })),
+          progress => setUploadProgress(prev => ({ ...prev, [type]: progress })),
           'images',
           undefined,
           'company images and logos'

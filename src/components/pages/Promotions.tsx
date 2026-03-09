@@ -20,12 +20,15 @@ import { usePrivilege } from '@/hooks/usePrivilege';
 import { useCreatePromotion, useUpdatePromotion } from '@/hooks/useHasuraApi';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { Promotion } from '@/components/promotions/types';
-import { PromotionFormValues, promotionFormSchema, DEFAULT_FORM_VALUES } from '@/components/promotions/schema';
+import {
+  PromotionFormValues,
+  promotionFormSchema,
+  DEFAULT_FORM_VALUES,
+} from '@/components/promotions/schema';
 import { PromotionTable } from '@/components/promotions/PromotionTable';
 import { PromotionForm } from '@/components/promotions/PromotionForm';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
 import { PromotionFilters } from '@/components/promotions/PromotionFilters';
-
 
 const Promotions = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -61,7 +64,8 @@ const Promotions = () => {
 
   const { data: restaurantsData } = useQuery({
     queryKey: ['restaurants'],
-    queryFn: () => apiGet<{ restaurants: any[] }>('/api/queries/restaurants').then(r => r.restaurants),
+    queryFn: () =>
+      apiGet<{ restaurants: any[] }>('/api/queries/restaurants').then(r => r.restaurants),
     enabled: !!session?.isProjectUser,
   });
 
@@ -98,7 +102,7 @@ const Promotions = () => {
     try {
       const payload: any = {
         name: values.name,
-        code: values.business_type === 'none' ? values.influencer_code : (values.code || ""),
+        code: values.business_type === 'none' ? values.influencer_code : values.code || '',
         promotion_type: values.promotion_type,
         applies_to_type: values.applies_to_type,
         applies_to_id: values.applies_to_id || undefined,
@@ -106,18 +110,20 @@ const Promotions = () => {
         end_date: values.end_date.toISOString(),
         start_time: values.start_time || undefined,
         end_time: values.end_time || undefined,
-        min_purchase_amount: values.min_purchase_amount || "",
+        min_purchase_amount: values.min_purchase_amount || '',
         usage_per_customer: values.usage_per_customer ? parseInt(values.usage_per_customer) : 10,
         usage_limit: values.usage_limit ? parseInt(values.usage_limit) : 10,
         priority: parseInt(values.priority) || 10,
         status: values.status,
         discount_type: values.promotion_type,
-        discount_value: "",
-        buy_quantity: "",
+        discount_value: '',
+        buy_quantity: '',
         restaurant_id: values.business_type === 'restaurant' ? values.business_id : null,
         shop_id: values.business_type === 'shop' ? values.business_id : null,
         promotion_scope: values.promotion_scope,
-        customer_discount_percent: values.customer_discount_percent ? parseInt(values.customer_discount_percent) : null,
+        customer_discount_percent: values.customer_discount_percent
+          ? parseInt(values.customer_discount_percent)
+          : null,
         influencer_id: values.influencer_id === 'none' ? null : values.influencer_id,
         influencer_code: values.influencer_code || null,
         earning_per_order: values.earning_per_order ? parseFloat(values.earning_per_order) : null,
@@ -126,13 +132,13 @@ const Promotions = () => {
       if (values.business_type === 'none') {
         payload.promotion_type = 'percentage';
         payload.applies_to_type = 'entire_store';
-        payload.discount_value = "0";
+        payload.discount_value = '0';
         payload.priority = 0;
       } else {
         if (values.promotion_type === 'percentage' || values.promotion_type === 'fixed') {
-          payload.discount_value = values.discount_value || "";
+          payload.discount_value = values.discount_value || '';
         } else if (values.promotion_type === 'bogo') {
-          payload.buy_quantity = values.buy_quantity || "";
+          payload.buy_quantity = values.buy_quantity || '';
           payload.discount_value = `Buy ${values.buy_quantity} Get ${values.get_quantity}`;
         } else {
           payload.discount_value = values.discount_value || 'Special Offer';
@@ -142,7 +148,7 @@ const Promotions = () => {
       if (selectedPromotion) {
         await updatePromotionMutation.mutateAsync({
           id: selectedPromotion.id,
-          ...payload
+          ...payload,
         });
         toast.success('Promotion updated successfully');
       } else {
@@ -162,8 +168,14 @@ const Promotions = () => {
 
   const handleCreate = () => {
     setSelectedPromotion(null);
-    const businessId = session?.isProjectUser ? '' : (session?.shop_id || orgEmployee?.restaurant_id || '');
-    const businessType = session?.isProjectUser ? 'restaurant' : (session?.shop_id ? 'shop' : 'restaurant');
+    const businessId = session?.isProjectUser
+      ? ''
+      : session?.shop_id || orgEmployee?.restaurant_id || '';
+    const businessType = session?.isProjectUser
+      ? 'restaurant'
+      : session?.shop_id
+        ? 'shop'
+        : 'restaurant';
 
     form.reset({
       ...DEFAULT_FORM_VALUES,
@@ -181,7 +193,9 @@ const Promotions = () => {
       promotion_type: promotion.promotion_type as any,
       discount_value: promotion.discount_value,
       buy_quantity: promotion.buy_quantity || '',
-      get_quantity: promotion.discount_value?.includes('Get ') ? promotion.discount_value.split('Get ')[1] : '',
+      get_quantity: promotion.discount_value?.includes('Get ')
+        ? promotion.discount_value.split('Get ')[1]
+        : '',
       applies_to_type: promotion.applies_to_type as any,
       applies_to_id: promotion.applies_to_id || '',
       start_date: new Date(promotion.start_date),
@@ -194,8 +208,13 @@ const Promotions = () => {
       priority: promotion.priority.toString(),
       is_stackable: promotion.is_stackable,
       status: promotion.status as any,
-      business_type: (promotion.restaurant_id || promotion.shop_id) ? (promotion.restaurant_id ? 'restaurant' : 'shop') : 'none',
-      business_id: (promotion.restaurant_id || promotion.shop_id) || '',
+      business_type:
+        promotion.restaurant_id || promotion.shop_id
+          ? promotion.restaurant_id
+            ? 'restaurant'
+            : 'shop'
+          : 'none',
+      business_id: promotion.restaurant_id || promotion.shop_id || '',
       promotion_scope: promotion.promotion_scope || 'all_orders',
       customer_discount_percent: promotion.customer_discount_percent?.toString() || '',
       influencer_id: promotion.influencer_id || 'none',
@@ -242,12 +261,8 @@ const Promotions = () => {
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <SheetContent className="w-[100vw] sm:max-w-xl flex flex-col p-0 h-full">
           <SheetHeader className="p-6 pb-2 border-b">
-            <SheetTitle>
-              {selectedPromotion ? 'Edit Promotion' : 'Create Promotion'}
-            </SheetTitle>
-            <SheetDescription>
-              Set up a new discount or special offer.
-            </SheetDescription>
+            <SheetTitle>{selectedPromotion ? 'Edit Promotion' : 'Create Promotion'}</SheetTitle>
+            <SheetDescription>Set up a new discount or special offer.</SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto p-6">

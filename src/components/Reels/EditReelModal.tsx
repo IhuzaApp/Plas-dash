@@ -145,7 +145,9 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
 
       const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
       if (file.size > MAX_FILE_SIZE) {
-        toast.error(`File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum limit is 100MB.`);
+        toast.error(
+          `File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum limit is 100MB.`
+        );
         return;
       }
 
@@ -158,15 +160,22 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
 
         const folder = file.type.startsWith('image/') ? 'images' : 'videos';
 
-        uploadFileToFirebase(fileToUpload as File, progress => {
-          setUploadProgress(progress);
-        }, folder, (task) => {
-          uploadTaskRef.current = task;
-        })
+        uploadFileToFirebase(
+          fileToUpload as File,
+          progress => {
+            setUploadProgress(progress);
+          },
+          folder,
+          task => {
+            uploadTaskRef.current = task;
+          }
+        )
           .then(url => {
             setFormData(prev => ({ ...prev, video_url: url }));
             setIsUploading(false);
-            toast.success(`${file.type.startsWith('image/') ? 'Image' : 'Video'} uploaded successfully!`);
+            toast.success(
+              `${file.type.startsWith('image/') ? 'Image' : 'Video'} uploaded successfully!`
+            );
           })
           .catch(error => {
             setIsUploading(false);
@@ -182,11 +191,11 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         toast.info('Compressing video to reduce size...', { duration: 5000 });
 
         compressVideo(file)
-          .then((compressedFile) => {
+          .then(compressedFile => {
             setIsCompressing(false);
             startUpload(compressedFile);
           })
-          .catch((error) => {
+          .catch(error => {
             console.error('Compression failed:', error);
             setIsCompressing(false);
             startUpload(file);
@@ -211,7 +220,6 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
     // Restore original file if we remove the new one
     setFormData(prev => ({ ...prev, video_url: oldFileUrl || '' }));
   };
-
 
   const handleUpdateReel = async () => {
     if (!reel) {
@@ -247,7 +255,10 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
         return;
       }
 
-      if (formData.video_url !== oldFileUrl && oldFileUrl?.includes('firebasestorage.googleapis.com')) {
+      if (
+        formData.video_url !== oldFileUrl &&
+        oldFileUrl?.includes('firebasestorage.googleapis.com')
+      ) {
         await deleteVideoFromFirebase(oldFileUrl);
       }
 
@@ -367,10 +378,17 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
                 <Label htmlFor="shop_id">Assign to Shop</Label>
                 <Select
                   value={formData.shop_id || 'none'}
-                  onValueChange={value => setFormData({ ...formData, shop_id: value === 'none' ? '' : value, restaurant_id: '', business_id: '' })}
+                  onValueChange={value =>
+                    setFormData({
+                      ...formData,
+                      shop_id: value === 'none' ? '' : value,
+                      restaurant_id: '',
+                      business_id: '',
+                    })
+                  }
                 >
                   <SelectTrigger id="shop_id">
-                    <SelectValue placeholder={isLoadingShops ? "Loading..." : "Select Shop"} />
+                    <SelectValue placeholder={isLoadingShops ? 'Loading...' : 'Select Shop'} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
@@ -386,10 +404,19 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
                 <Label htmlFor="restaurant_id">Assign to Restaurant</Label>
                 <Select
                   value={formData.restaurant_id || 'none'}
-                  onValueChange={value => setFormData({ ...formData, restaurant_id: value === 'none' ? '' : value, shop_id: '', business_id: '' })}
+                  onValueChange={value =>
+                    setFormData({
+                      ...formData,
+                      restaurant_id: value === 'none' ? '' : value,
+                      shop_id: '',
+                      business_id: '',
+                    })
+                  }
                 >
                   <SelectTrigger id="restaurant_id">
-                    <SelectValue placeholder={isLoadingRestaurants ? "Loading..." : "Select Restaurant"} />
+                    <SelectValue
+                      placeholder={isLoadingRestaurants ? 'Loading...' : 'Select Restaurant'}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
@@ -416,7 +443,9 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
                   }
                 >
                   <SelectTrigger id="business_id">
-                    <SelectValue placeholder={isLoadingBusinesses ? "Loading..." : "Select a business..."} />
+                    <SelectValue
+                      placeholder={isLoadingBusinesses ? 'Loading...' : 'Select a business...'}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
@@ -617,12 +646,12 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
               </Label>
               <div className="mt-2">
                 {formData.video_url &&
-                  !formData.video_url.includes('youtube.com') &&
-                  !formData.video_url.includes('youtu.be') ? (
+                !formData.video_url.includes('youtube.com') &&
+                !formData.video_url.includes('youtu.be') ? (
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <div className="relative aspect-video">
                       {formData.video_url.includes('/reels/images/') ||
-                        formData.video_url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i) ? (
+                      formData.video_url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i) ? (
                         <img
                           src={formData.video_url}
                           alt="Current"

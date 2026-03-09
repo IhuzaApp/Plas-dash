@@ -111,7 +111,9 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
 
       const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
       if (file.size > MAX_FILE_SIZE) {
-        toast.error(`File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum limit is 100MB.`);
+        toast.error(
+          `File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum limit is 100MB.`
+        );
         return;
       }
 
@@ -125,17 +127,24 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
 
         const folder = file.type.startsWith('image/') ? 'images' : 'videos';
 
-        uploadFileToFirebase(fileToUpload as File, (progress) => {
-          setUploadProgress(progress);
-        }, folder, (task) => {
-          uploadTaskRef.current = task;
-        })
-          .then((url) => {
+        uploadFileToFirebase(
+          fileToUpload as File,
+          progress => {
+            setUploadProgress(progress);
+          },
+          folder,
+          task => {
+            uploadTaskRef.current = task;
+          }
+        )
+          .then(url => {
             setFormData(prev => ({ ...prev, video_url: url }));
             setIsUploading(false);
-            toast.success(`${file.type.startsWith('image/') ? 'Image' : 'Video'} uploaded successfully!`);
+            toast.success(
+              `${file.type.startsWith('image/') ? 'Image' : 'Video'} uploaded successfully!`
+            );
           })
-          .catch((error) => {
+          .catch(error => {
             setIsUploading(false);
             toast.error('Failed to upload file');
             removeUploadedFile();
@@ -150,11 +159,11 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
         toast.info('Compressing video to reduce size...', { duration: 5000 });
 
         compressVideo(file)
-          .then((compressedFile) => {
+          .then(compressedFile => {
             setIsCompressing(false);
             startUpload(compressedFile);
           })
-          .catch((error) => {
+          .catch(error => {
             console.error('Compression failed:', error);
             setIsCompressing(false);
             startUpload(file);
@@ -174,7 +183,6 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
       fileInputRef.current.value = '';
     }
   };
-
 
   // Removed uploadVideoToServer as it is replaced by uploadVideoToFirebase
 
@@ -245,7 +253,12 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
       }
 
       // Only set user_id if we have a valid UUID and no shop/resturarant context and the user is NOT a project user
-      if (currentUser.user_id && !mutationVariables.shop_id && !mutationVariables.restaurant_id && !session?.isProjectUser) {
+      if (
+        currentUser.user_id &&
+        !mutationVariables.shop_id &&
+        !mutationVariables.restaurant_id &&
+        !session?.isProjectUser
+      ) {
         mutationVariables.user_id = currentUser.user_id;
       }
       // Validate required fields
@@ -370,10 +383,12 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                 <Label htmlFor="shop_id">Assign to Shop</Label>
                 <Select
                   value={formData.shop_id}
-                  onValueChange={value => setFormData({ ...formData, shop_id: value, restaurant_id: '', business_id: '' })}
+                  onValueChange={value =>
+                    setFormData({ ...formData, shop_id: value, restaurant_id: '', business_id: '' })
+                  }
                 >
                   <SelectTrigger id="shop_id">
-                    <SelectValue placeholder={isLoadingShops ? "Loading..." : "Select Shop"} />
+                    <SelectValue placeholder={isLoadingShops ? 'Loading...' : 'Select Shop'} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
@@ -389,10 +404,14 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                 <Label htmlFor="restaurant_id">Assign to Restaurant</Label>
                 <Select
                   value={formData.restaurant_id}
-                  onValueChange={value => setFormData({ ...formData, restaurant_id: value, shop_id: '', business_id: '' })}
+                  onValueChange={value =>
+                    setFormData({ ...formData, restaurant_id: value, shop_id: '', business_id: '' })
+                  }
                 >
                   <SelectTrigger id="restaurant_id">
-                    <SelectValue placeholder={isLoadingRestaurants ? "Loading..." : "Select Restaurant"} />
+                    <SelectValue
+                      placeholder={isLoadingRestaurants ? 'Loading...' : 'Select Restaurant'}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
@@ -493,16 +512,13 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                 </div>
               </div>
 
-              {youtubePreviewUrl && (youtubePreviewUrl.includes('youtube.com') || youtubePreviewUrl.includes('youtu.be')) && (
-                <div className="border rounded-lg bg-black overflow-hidden relative aspect-video mt-4">
-                  <ReactPlayer
-                    src={youtubePreviewUrl}
-                    width="100%"
-                    height="100%"
-                    controls
-                  />
-                </div>
-              )}
+              {youtubePreviewUrl &&
+                (youtubePreviewUrl.includes('youtube.com') ||
+                  youtubePreviewUrl.includes('youtu.be')) && (
+                  <div className="border rounded-lg bg-black overflow-hidden relative aspect-video mt-4">
+                    <ReactPlayer src={youtubePreviewUrl} width="100%" height="100%" controls />
+                  </div>
+                )}
             </div>
           )}
 

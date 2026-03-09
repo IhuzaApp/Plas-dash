@@ -293,7 +293,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
 
         const url = await uploadFileToFirebase(
           file,
-          (progress) => setUploadProgress(progress),
+          progress => setUploadProgress(progress),
           'images',
           undefined,
           'company images and logos'

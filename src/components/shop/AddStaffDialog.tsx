@@ -797,7 +797,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                                         <Switch
                                           checked={
                                             customPrivileges[group.module as PrivilegeKey]?.[
-                                            permission.key
+                                              permission.key
                                             ] || false
                                           }
                                           onCheckedChange={() =>

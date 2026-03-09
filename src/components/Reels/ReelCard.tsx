@@ -57,7 +57,8 @@ const ReelCard: React.FC<ReelCardProps> = ({
   onViewComments,
 }) => {
   const isYouTubeUrl = (url: string) => url?.includes('youtube.com') || url?.includes('youtu.be');
-  const isImageUrl = (url: string) => url?.includes('/reels/images/') || url?.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
+  const isImageUrl = (url: string) =>
+    url?.includes('/reels/images/') || url?.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
 
   const isYouTube = reel.video_url ? isYouTubeUrl(reel.video_url) : false;
   const isImage = reel.video_url ? isImageUrl(reel.video_url) : false;
@@ -73,7 +74,7 @@ const ReelCard: React.FC<ReelCardProps> = ({
     if (isCurrentPlaying) {
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch((error) => {
+        playPromise.catch(error => {
           if (error.name !== 'AbortError') {
             console.error('Video play error:', error);
           }
@@ -126,11 +127,7 @@ const ReelCard: React.FC<ReelCardProps> = ({
             style={{ objectFit: 'cover' }}
           />
         ) : isImage ? (
-          <img
-            src={reel.video_url}
-            alt={reel.title}
-            className="w-full h-full object-cover"
-          />
+          <img src={reel.video_url} alt={reel.title} className="w-full h-full object-cover" />
         ) : (
           <video
             ref={videoRef}
@@ -306,7 +303,11 @@ const ReelCard: React.FC<ReelCardProps> = ({
               )}
             </Avatar>
             <span className="font-medium">
-              {reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || reel.BusinessAccount?.business_name || 'Plas Agent'}
+              {reel.User?.name ||
+                reel.Shops?.name ||
+                reel.Restaurant?.name ||
+                reel.BusinessAccount?.business_name ||
+                'Plas Agent'}
             </span>
           </div>
           <span className="text-muted-foreground text-xs">{formatDateTime(reel.created_on)}</span>

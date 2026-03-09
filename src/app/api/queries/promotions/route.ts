@@ -4,63 +4,63 @@ import { gql } from 'graphql-request';
 import { getUserContext } from '@/lib/auth-server';
 
 const GET_PROMOTIONS = gql`
-query GetPromotions($where: promotions_bool_exp) {
-  promotions(where: $where, order_by: {created_at: desc}) {
-    id
-    min_purchase_amount
-    is_stackable
-    name
-    promotion_type
-    priority
-    restaurant_id
-    shop_id
-    Shop {
+  query GetPromotions($where: promotions_bool_exp) {
+    promotions(where: $where, order_by: { created_at: desc }) {
+      id
+      min_purchase_amount
+      is_stackable
       name
-      description
-      category_id
+      promotion_type
+      priority
+      restaurant_id
+      shop_id
+      Shop {
+        name
+        description
+        category_id
+        created_at
+        logo
+        longitude
+        latitude
+        image
+        phone
+        relatedTo
+        ssd
+        tin
+      }
+      Restaurant {
+        name
+        is_active
+        phone
+        profile
+        tin
+        ussd
+      }
+      start_date
+      start_time
+      status
+      usage_limit
+      usage_per_customer
+      end_time
+      end_date
+      discount_value
+      discount_type
       created_at
-      logo
-      longitude
-      latitude
-      image
-      phone
-      relatedTo
-      ssd
-      tin
+      code
+      buy_quantity
+      applies_to_type
+      applies_to_id
+      promotion_scope
+      customer_discount_percent
+      influencer_id
+      influencer_code
+      earning_per_order
+      Influencer {
+        name
+      }
+      update_on
     }
-    Restaurant {
-      name
-      is_active
-      phone
-      profile
-      tin
-      ussd
-    }
-    start_date
-    start_time
-    status
-    usage_limit
-    usage_per_customer
-    end_time
-    end_date
-    discount_value
-    discount_type
-    created_at
-    code
-    buy_quantity
-    applies_to_type
-    applies_to_id
-    promotion_scope
-    customer_discount_percent
-    influencer_id
-    influencer_code
-    earning_per_order
-    Influencer {
-      name
-    }
-    update_on
   }
-}
 `;
 
 export async function GET(req: Request) {

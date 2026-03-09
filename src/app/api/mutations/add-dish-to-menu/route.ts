@@ -46,9 +46,20 @@ export async function POST(req: NextRequest) {
   try {
     const { variables } = await req.json();
 
-
-    if (!variables || !variables.restaurant_id || (!variables.dish_id && !variables.product_id) || variables.price === undefined || variables.price === null || variables.price === '') {
-      console.error('[ADD_DISH_TO_MENU] Validation failed. Missing required fields:', { restaurant_id: variables?.restaurant_id, dish_id: variables?.dish_id, product_id: variables?.product_id, price: variables?.price });
+    if (
+      !variables ||
+      !variables.restaurant_id ||
+      (!variables.dish_id && !variables.product_id) ||
+      variables.price === undefined ||
+      variables.price === null ||
+      variables.price === ''
+    ) {
+      console.error('[ADD_DISH_TO_MENU] Validation failed. Missing required fields:', {
+        restaurant_id: variables?.restaurant_id,
+        dish_id: variables?.dish_id,
+        product_id: variables?.product_id,
+        price: variables?.price,
+      });
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 

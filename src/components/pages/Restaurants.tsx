@@ -351,7 +351,6 @@ const Restaurants = () => {
         </Card>
       </div>
 
-
       <AddRestaurantModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

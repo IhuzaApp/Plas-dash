@@ -215,7 +215,7 @@ const GET_RESTAURANT_BY_ID = gql`
         }
       }
     }
-}
+  }
 `;
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -63,8 +63,6 @@ export default function ModulesPage() {
     setExpandedCategories(newExpanded);
   };
 
-
-
   const { data, isLoading, refetch } = useQuery<{ modules: ModuleData[] }>({
     queryKey: ['modules'],
     queryFn: () => apiGet<{ modules: ModuleData[] }>('/api/queries/modules'),

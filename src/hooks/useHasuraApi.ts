@@ -1688,7 +1688,7 @@ export function useUpdateRestaurantDish() {
       updated_at?: string;
     }
   >({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await fetch('/api/mutations/update-restaurant-dish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1716,7 +1716,7 @@ export function useCreateDish() {
       image?: string;
     }
   >({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await fetch('/api/mutations/create-dish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1752,7 +1752,7 @@ export function useAddDishToMenu() {
       SKU?: string;
     }
   >({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await fetch('/api/mutations/add-dish-to-menu', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1801,7 +1801,7 @@ export function useCreatePromotion() {
       earning_per_order?: number;
     }
   >({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await fetch('/api/mutations/add-promotion', {
         method: 'POST',
         headers: {
@@ -1851,7 +1851,7 @@ export const useUpdatePromotion = () => {
       earning_per_order?: number;
     }
   >({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await fetch('/api/mutations/update-promotion', {
         method: 'POST',
         headers: {
@@ -1868,12 +1868,12 @@ export const useUpdatePromotion = () => {
       return response.json();
     },
   });
-}
+};
 
 // Influencer Mutation Hooks
 export function useAddInfluencer() {
   return useMutation<any, Error, any>({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await fetch('/api/mutations/add-influencer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1890,7 +1890,7 @@ export function useAddInfluencer() {
 
 export function useUpdateInfluencer() {
   return useMutation<any, Error, any>({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await fetch('/api/mutations/update-influencer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1907,7 +1907,7 @@ export function useUpdateInfluencer() {
 
 export function useAddCommissionRule() {
   return useMutation<any, Error, any>({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await fetch('/api/mutations/add-commission-rule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1924,7 +1924,7 @@ export function useAddCommissionRule() {
 
 export function useUpdateCommissionRule() {
   return useMutation<any, Error, any>({
-    mutationFn: async (variables) => {
+    mutationFn: async variables => {
       const response = await fetch('/api/mutations/update-commission-rule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

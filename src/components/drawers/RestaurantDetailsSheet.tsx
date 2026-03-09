@@ -95,10 +95,7 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                           {restaurant?.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                         {restaurant?.verified && (
-                          <Badge
-                            variant="outline"
-                            className="text-green-600 border-green-600"
-                          >
+                          <Badge variant="outline" className="text-green-600 border-green-600">
                             Verified
                           </Badge>
                         )}
@@ -127,7 +124,9 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                     <TabsTrigger value="staff">Staff</TabsTrigger>
                     <TabsTrigger value="orders">Orders</TabsTrigger>
                     <TabsTrigger value="subscription">Subscription</TabsTrigger>
-                    <TabsTrigger value="usage" className="hidden lg:flex">Usage</TabsTrigger>
+                    <TabsTrigger value="usage" className="hidden lg:flex">
+                      Usage
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="overview" className="space-y-6 pt-4">
@@ -147,7 +146,9 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Rating:</span>
-                            <span className="font-medium">{restaurant?.rating ? `${restaurant.rating}/5` : 'No rating'}</span>
+                            <span className="font-medium">
+                              {restaurant?.rating ? `${restaurant.rating}/5` : 'No rating'}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Related To:</span>
@@ -163,12 +164,16 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                         <div className="bg-muted/30 rounded-lg p-3 space-y-2 text-sm border">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Address:</span>
-                            <span className="font-medium text-right">{restaurant?.location || 'N/A'}</span>
+                            <span className="font-medium text-right">
+                              {restaurant?.location || 'N/A'}
+                            </span>
                           </div>
                           {restaurant?.lat && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Coordinates:</span>
-                              <span className="font-medium">{restaurant.lat}, {restaurant.long}</span>
+                              <span className="font-medium">
+                                {restaurant.lat}, {restaurant.long}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -189,7 +194,9 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Member Since:</span>
-                            <span className="font-medium">{formatDateTime(restaurant?.created_at)}</span>
+                            <span className="font-medium">
+                              {formatDateTime(restaurant?.created_at)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -200,7 +207,8 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-sm text-muted-foreground flex items-center">
-                          <Utensils className="h-4 w-4 mr-2" /> Restaurant Dishes ({restaurant?.restaurant_dishes?.length || 0})
+                          <Utensils className="h-4 w-4 mr-2" /> Restaurant Dishes (
+                          {restaurant?.restaurant_dishes?.length || 0})
                         </h4>
                       </div>
                       <div className="border rounded-md overflow-hidden">
@@ -220,21 +228,36 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                                   <TableCell className="font-medium">
                                     <div className="flex items-center gap-2">
                                       {rd.dishes?.image && (
-                                        <img src={rd.dishes.image} alt={rd.dishes.name} className="w-8 h-8 rounded-full object-cover" />
+                                        <img
+                                          src={rd.dishes.image}
+                                          alt={rd.dishes.name}
+                                          className="w-8 h-8 rounded-full object-cover"
+                                        />
                                       )}
                                       <div>
                                         <div>{rd.dishes?.name || 'Unknown'}</div>
-                                        <div className="text-xs text-muted-foreground">SKU: {rd.SKU}</div>
+                                        <div className="text-xs text-muted-foreground">
+                                          SKU: {rd.SKU}
+                                        </div>
                                       </div>
                                     </div>
                                   </TableCell>
                                   <TableCell>{rd.dishes?.category || 'N/A'}</TableCell>
                                   <TableCell className="font-medium">
                                     {rd.price}
-                                    {rd.discount > 0 && <span className="ml-1 text-xs text-green-600">(-{rd.discount}%)</span>}
+                                    {rd.discount > 0 && (
+                                      <span className="ml-1 text-xs text-green-600">
+                                        (-{rd.discount}%)
+                                      </span>
+                                    )}
                                   </TableCell>
                                   <TableCell>
-                                    <Badge variant={rd.is_active ? 'outline' : 'secondary'} className={rd.is_active ? 'border-green-600 text-green-600' : ''}>
+                                    <Badge
+                                      variant={rd.is_active ? 'outline' : 'secondary'}
+                                      className={
+                                        rd.is_active ? 'border-green-600 text-green-600' : ''
+                                      }
+                                    >
                                       {rd.is_active ? 'Active' : 'Inactive'}
                                     </Badge>
                                   </TableCell>
@@ -242,7 +265,10 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                               ))
                             ) : (
                               <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                <TableCell
+                                  colSpan={4}
+                                  className="h-24 text-center text-muted-foreground"
+                                >
                                   No dishes found for this restaurant.
                                 </TableCell>
                               </TableRow>
@@ -257,7 +283,8 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-sm text-muted-foreground flex items-center">
-                          <Users className="h-4 w-4 mr-2" /> Organization Employees ({restaurant?.orgEmployees?.length || 0})
+                          <Users className="h-4 w-4 mr-2" /> Organization Employees (
+                          {restaurant?.orgEmployees?.length || 0})
                         </h4>
                       </div>
                       <div className="border rounded-md overflow-hidden">
@@ -277,14 +304,21 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                                   <TableCell className="font-medium">{emp.fullnames}</TableCell>
                                   <TableCell>
                                     <div className="text-sm">{emp.Position}</div>
-                                    <div className="text-xs text-muted-foreground">{emp.roleType}</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {emp.roleType}
+                                    </div>
                                   </TableCell>
                                   <TableCell>
                                     <div className="text-xs">{emp.email}</div>
                                     <div className="text-xs text-muted-foreground">{emp.phone}</div>
                                   </TableCell>
                                   <TableCell>
-                                    <Badge variant={emp.active ? 'outline' : 'secondary'} className={emp.active ? 'border-green-600 text-green-600' : ''}>
+                                    <Badge
+                                      variant={emp.active ? 'outline' : 'secondary'}
+                                      className={
+                                        emp.active ? 'border-green-600 text-green-600' : ''
+                                      }
+                                    >
                                       {emp.active ? 'Online' : 'Offline'}
                                     </Badge>
                                   </TableCell>
@@ -292,7 +326,10 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                               ))
                             ) : (
                               <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                <TableCell
+                                  colSpan={4}
+                                  className="h-24 text-center text-muted-foreground"
+                                >
                                   No employees registered for this restaurant.
                                 </TableCell>
                               </TableRow>
@@ -307,7 +344,8 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold text-sm text-muted-foreground flex items-center">
-                          <BarChart3 className="h-4 w-4 mr-2" /> Restaurant Orders ({restaurant?.restaurant_orders?.length || 0})
+                          <BarChart3 className="h-4 w-4 mr-2" /> Restaurant Orders (
+                          {restaurant?.restaurant_orders?.length || 0})
                         </h4>
                       </div>
                       <div className="border rounded-md overflow-hidden">
@@ -325,22 +363,31 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                             {restaurant?.restaurant_orders?.length > 0 ? (
                               restaurant.restaurant_orders.map((order: any) => (
                                 <TableRow key={order.id}>
-                                  <TableCell className="font-medium">{order.OrderID || order.id.slice(0, 8)}</TableCell>
+                                  <TableCell className="font-medium">
+                                    {order.OrderID || order.id.slice(0, 8)}
+                                  </TableCell>
                                   <TableCell>
                                     <Badge variant="outline" className="capitalize">
                                       {order.status}
                                     </Badge>
                                   </TableCell>
                                   <TableCell className="font-medium">{order.total}</TableCell>
-                                  <TableCell className="text-xs">{formatDateTime(order.created_at)}</TableCell>
+                                  <TableCell className="text-xs">
+                                    {formatDateTime(order.created_at)}
+                                  </TableCell>
                                   <TableCell>
-                                    <span className="text-xs text-muted-foreground">Manual Check</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      Manual Check
+                                    </span>
                                   </TableCell>
                                 </TableRow>
                               ))
                             ) : (
                               <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                <TableCell
+                                  colSpan={5}
+                                  className="h-24 text-center text-muted-foreground"
+                                >
                                   No orders found for this restaurant.
                                 </TableCell>
                               </TableRow>
@@ -360,10 +407,15 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                               <Calendar className="h-5 w-5 text-primary" />
                               <div>
                                 <h4 className="font-bold text-lg">{sub.plan?.name} Plan</h4>
-                                <p className="text-sm text-muted-foreground">Billing: {sub.billing_cycle}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Billing: {sub.billing_cycle}
+                                </p>
                               </div>
                             </div>
-                            <Badge variant={sub.status === 'active' ? 'default' : 'destructive'} className="h-6">
+                            <Badge
+                              variant={sub.status === 'active' ? 'default' : 'destructive'}
+                              className="h-6"
+                            >
                               {sub.status.toUpperCase()}
                             </Badge>
                           </div>
@@ -371,7 +423,9 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 py-2">
                             <div>
                               <p className="text-xs text-muted-foreground">Start Date</p>
-                              <p className="text-sm font-medium">{formatDateTime(sub.start_date)}</p>
+                              <p className="text-sm font-medium">
+                                {formatDateTime(sub.start_date)}
+                              </p>
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground">End Date</p>
@@ -379,20 +433,30 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground">AI Limit</p>
-                              <p className="text-sm font-medium">{sub.plan?.ai_request_limit || 0} req/mo</p>
+                              <p className="text-sm font-medium">
+                                {sub.plan?.ai_request_limit || 0} req/mo
+                              </p>
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground">Reel Limit</p>
-                              <p className="text-sm font-medium">{sub.plan?.reel_limit || 0} uploads/mo</p>
+                              <p className="text-sm font-medium">
+                                {sub.plan?.reel_limit || 0} uploads/mo
+                              </p>
                             </div>
                           </div>
 
                           {sub.plan?.plan_modules?.length > 0 && (
                             <div className="space-y-2">
-                              <p className="text-xs font-semibold text-muted-foreground uppercase">Enabled Modules</p>
+                              <p className="text-xs font-semibold text-muted-foreground uppercase">
+                                Enabled Modules
+                              </p>
                               <div className="flex flex-wrap gap-2">
                                 {sub.plan.plan_modules.map((m: any) => (
-                                  <Badge key={m.id} variant="secondary" className="bg-primary/10 text-primary border-none">
+                                  <Badge
+                                    key={m.id}
+                                    variant="secondary"
+                                    className="bg-primary/10 text-primary border-none"
+                                  >
                                     {m.module?.name}
                                   </Badge>
                                 ))}
@@ -419,13 +483,20 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                         <div className="space-y-2">
                           {restaurant?.ai_usages?.length > 0 ? (
                             restaurant.ai_usages.map((usage: any) => (
-                              <div key={usage.id} className="flex justify-between text-sm py-1 border-b last:border-0">
-                                <span>{usage.month}/{usage.year}</span>
+                              <div
+                                key={usage.id}
+                                className="flex justify-between text-sm py-1 border-b last:border-0"
+                              >
+                                <span>
+                                  {usage.month}/{usage.year}
+                                </span>
                                 <span className="font-bold">{usage.request_count} requests</span>
                               </div>
                             ))
                           ) : (
-                            <p className="text-sm text-muted-foreground text-center py-4">No AI usage data available.</p>
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              No AI usage data available.
+                            </p>
                           )}
                         </div>
                       </div>
@@ -439,13 +510,20 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                         <div className="space-y-2">
                           {restaurant?.reel_usages?.length > 0 ? (
                             restaurant.reel_usages.map((usage: any) => (
-                              <div key={usage.id} className="flex justify-between text-sm py-1 border-b last:border-0">
-                                <span>{usage.month}/{usage.year}</span>
+                              <div
+                                key={usage.id}
+                                className="flex justify-between text-sm py-1 border-b last:border-0"
+                              >
+                                <span>
+                                  {usage.month}/{usage.year}
+                                </span>
                                 <span className="font-bold">{usage.upload_count} uploads</span>
                               </div>
                             ))
                           ) : (
-                            <p className="text-sm text-muted-foreground text-center py-4">No Reel usage data available.</p>
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              No Reel usage data available.
+                            </p>
                           )}
                         </div>
                       </div>
@@ -463,7 +541,7 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
           </Button>
         </div>
       </SheetContent>
-    </Sheet >
+    </Sheet>
   );
 };
 
