@@ -277,7 +277,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`user-${item.id}`} 
                     value={`user ${item.name} ${item.email}`}
-                    onSelect={() => handleSelect('/users')} 
+                    onSelect={() => handleSelect(`/users?q=${encodeURIComponent(item.name || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <UserIcon className="mr-3 h-5 w-5 text-white" />
@@ -291,7 +291,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`shopper-${item.id}`} 
                     value={`shopper ${item.full_name} ${item.Employment_id}`}
-                    onSelect={() => handleSelect('/shoppers')} 
+                    onSelect={() => handleSelect(`/shoppers?q=${encodeURIComponent(item.full_name || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Truck className="mr-3 h-5 w-5 text-white" />
@@ -305,7 +305,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`admin-${item.id}`} 
                     value={`admin project user ${item.username} ${item.email}`}
-                    onSelect={() => handleSelect('/project-users')} 
+                    onSelect={() => handleSelect(`/project-users?q=${encodeURIComponent(item.username || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <ShieldCheck className="mr-3 h-5 w-5 text-white" />
@@ -319,7 +319,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`staff-${item.id}`} 
                     value={`staff employee ${item.fullnames} ${item.employeeID}`}
-                    onSelect={() => handleSelect('/pos/staff')} 
+                    onSelect={() => handleSelect(`/pos/staff?q=${encodeURIComponent(item.fullnames || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <UsersIcon className="mr-3 h-5 w-5 text-white" />
@@ -338,7 +338,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`order-${item.id}`} 
                     value={`order ${item.OrderID} ${item.pin} ${item.status}`}
-                    onSelect={() => handleSelect('/orders')} 
+                    onSelect={() => handleSelect(`/orders?q=${item.OrderID}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Package className="mr-3 h-5 w-5 text-white" />
@@ -355,7 +355,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`rest-order-${item.id}`} 
                     value={`restaurant order ${item.OrderID} ${item.pin} ${item.status}`}
-                    onSelect={() => handleSelect('/restaurants')} 
+                    onSelect={() => handleSelect(`/restaurants?q=${item.OrderID}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <ShoppingBag className="mr-3 h-5 w-5 text-white" />
@@ -372,7 +372,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`biz-order-${item.id}`} 
                     value={`business order ${item.OrderID} ${item.pin} ${item.status}`}
-                    onSelect={() => handleSelect('/pos/inventory')} 
+                    onSelect={() => handleSelect(`/pos/inventory?q=${item.OrderID}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Building2 className="mr-3 h-5 w-5 text-white" />
@@ -389,7 +389,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`reel-order-${item.id}`} 
                     value={`reel order ${item.OrderID} ${item.pin} ${item.status}`}
-                    onSelect={() => handleSelect('/reels')} 
+                    onSelect={() => handleSelect(`/reels?q=${item.OrderID}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Video className="mr-3 h-5 w-5 text-white" />
@@ -403,7 +403,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`pkg-${item.id}`} 
                     value={`package delivery ${item.DeliveryCode} ${item.status}`}
-                    onSelect={() => handleSelect('/orders')} 
+                    onSelect={() => handleSelect(`/orders?q=${item.DeliveryCode}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Truck className="mr-3 h-5 w-5 text-white" />
@@ -422,7 +422,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`shop-${item.id}`} 
                     value={`shop store ${item.name}`}
-                    onSelect={() => handleSelect('/shops')} 
+                    onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.name || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Store className="mr-3 h-5 w-5 text-white" />
@@ -436,7 +436,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`restaurant-${item.id}`} 
                     value={`restaurant food ${item.name}`}
-                    onSelect={() => handleSelect('/restaurants')} 
+                    onSelect={() => handleSelect(`/restaurants?q=${encodeURIComponent(item.name || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Building2 className="mr-3 h-5 w-5 text-white" />
@@ -450,7 +450,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`biz-store-${item.id}`} 
                     value={`business store account ${item.name}`}
-                    onSelect={() => handleSelect('/shops')} 
+                    onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.name || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Building2 className="mr-3 h-5 w-5 text-white" />
@@ -464,7 +464,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`logistics-${item.id}`} 
                     value={`logistics account ${item.fullname}`}
-                    onSelect={() => handleSelect('/shops')} 
+                    onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.fullname || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Truck className="mr-3 h-5 w-5 text-white" />
@@ -478,7 +478,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`pet-${item.id}`} 
                     value={`pet vendor vendor ${item.fullname}`}
-                    onSelect={() => handleSelect('/shops')} 
+                    onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.fullname || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Tag className="mr-3 h-5 w-5 text-white" />
@@ -497,7 +497,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`vehicle-${item.id}`} 
                     value={`vehicle plate car ${item.plate_number}`}
-                    onSelect={() => handleSelect('/shoppers')} 
+                    onSelect={() => handleSelect(`/shoppers?q=${encodeURIComponent(item.plate_number || '')}`)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Car className="mr-3 h-5 w-5 text-white" />
