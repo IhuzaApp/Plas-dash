@@ -81,6 +81,24 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Delivery time estimation
   - Customer communication tools
 
+### 📈 Enhanced Order Operations & Financial Visibility
+
+#### 1. Centralized Financial Tracking
+- **Unified Transaction Layer**: Integrated `order_transactions` and `Wallet_Transactions` into a single global interface (`UnifiedOrder`).
+- **Global Transactions Dashboard**: A dedicated view to track all financial movements (Revenue, Wallet Credits, Refunds) across Regular, Business, Reel, and Restaurant orders in one place.
+- **Real-time Reconciliation**: Live status monitoring of payment gateway responses (e.g., MTN MOMO) integrated directly into the order details.
+
+#### 2. Shopper fleet & Notifications
+- **Smart Dispatching**: Manual and automated order assignment to shoppers with real-time fleet availability checks.
+- **Firebase/FCM Integration**: Production-ready notification system that triggers instant alerts to shopper mobile devices upon order offer or assignment.
+- **Notification Persistence**: Firestore-backed notification history for shoppers to track their assignment logs.
+
+#### 3. Advanced Admin UI (Table 2.0)
+- **Dynamic Column Management**: User-configured column visibility with `localStorage` persistence. Admins can customize their view and the system remembers it.
+- **Horizontal Table Scrolling**: Optimized for data-heavy views; the table scrolls independently of the page layout, ensuring stability on all screen sizes.
+- **Quick-Copy ID System**: Hover-to-copy functionality for all Order IDs, Package IDs, and Combined Batch IDs for rapid support and tracking.
+- **Universal Search**: Integrated real-time search across all operational tabs (Individual, Grouped, Combined, Packages, and Offers).
+
 ### 💰 Financial Management
 
 - **Wallet System**
