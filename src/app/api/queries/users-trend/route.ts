@@ -13,9 +13,6 @@ const GET_USERS_FOR_TREND = gql`
       created_at
       role
       is_guest
-      shopper {
-        active
-      }
     }
   }
 `;
@@ -118,8 +115,7 @@ export async function GET(req: Request) {
       const customers = users.filter(
         u =>
           (u.role?.toLowerCase() ?? '') === 'user' &&
-          new Date(u.created_at) <= bucketEnd &&
-          u.shopper?.active !== true
+          new Date(u.created_at) <= bucketEnd
       ).length;
 
       const activeIds = new Set<string>();

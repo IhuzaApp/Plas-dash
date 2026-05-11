@@ -41,13 +41,13 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
             <div className="relative w-full max-w-[400px]">
               <Button
                 variant="outline"
-                className="relative h-10 w-full justify-start text-sm text-muted-foreground bg-muted/30 border-muted/50 hover:bg-muted/50 hover:border-primary/30 transition-all duration-300 rounded-xl px-4 group"
+                className="relative h-11 w-full justify-start text-sm text-muted-foreground bg-zinc-100/80 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-800 hover:border-primary/50 hover:text-primary transition-all duration-300 rounded-2xl px-4 group shadow-sm"
                 onClick={() => setOpen(true)}
               >
-                <Search className="h-4 w-4 mr-2 group-hover:text-primary transition-colors" />
-                <span className="hidden lg:inline-flex">Search everything...</span>
+                <Search className="h-4 w-4 mr-2 group-hover:scale-110 transition-all duration-300" />
+                <span className="hidden lg:inline-flex">Search users, orders, shops...</span>
                 <span className="inline-flex lg:hidden">Search...</span>
-                <kbd className="pointer-events-none absolute right-2 top-2.5 hidden h-5 select-none items-center gap-1 rounded-lg border bg-background px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden h-6 select-none items-center gap-1 rounded-lg border bg-white dark:bg-zinc-900 px-2 font-mono text-[10px] font-medium opacity-100 sm:flex border-zinc-200 dark:border-zinc-700 group-hover:border-primary/30 transition-colors">
                   <span className="text-xs">⌘</span>K
                 </kbd>
               </Button>
