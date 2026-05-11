@@ -131,6 +131,117 @@ export const GET_USERS = `
   }
 `;
 
+export const GET_LOGISTICS_ACCOUNT = `
+  query GetLogisticsAccount($where: logisticsAccount_bool_exp!) {
+    logisticsAccount(where: $where) {
+      user_id
+      updated_on
+      type
+      status
+      proof_address
+      num_of_cars
+      nationalIdOrPassport
+      license
+      id
+      fullname
+      disabled
+      created_at
+      business_cert
+      businessName
+      address
+      RentalVehicles {
+        category
+        created_at
+        disabled
+        drive_provided
+        engine
+        exterior
+        fuel_type
+        id
+        interior
+        location
+        logisticAccount_id
+        main_photo
+        name
+        passenger
+        platNumber
+        price
+        refundable_amount
+        seats
+        status
+        transmission
+        updated_at
+      }
+      User {
+        id
+        name
+        email
+      }
+    }
+  }
+`;
+
+export const GET_PET_VENDOR = `
+  query GetPetVendor($where: pet_vendors_bool_exp!) {
+    pet_vendors(where: $where) {
+      address
+      created_at
+      disabled
+      fullname
+      id
+      nationalIdOrPassport
+      organisationName
+      proof_residency
+      rdb_certificate
+      sherter_permit
+      specialties
+      status
+      updated_at
+      user_id
+      pets {
+        age
+        amount
+        breed
+        color
+        created_at
+        favourite_food
+        free
+        gender
+        id
+        image
+        months
+        name
+        parent_images
+        pet_type
+        quantity
+        quantity_sold
+        story
+        updated_at
+        vaccinated
+        vaccination_cert
+        vaccinations
+        vendor_id
+        video
+        weight
+        petAdoptions {
+          address
+          amount
+          comment
+          created_at
+          customer_id
+          id
+          latitude
+          longitude
+          pet_id
+          phone
+          status
+          updated_at
+        }
+      }
+    }
+  }
+`;
+
 // Dishes queries
 export const GET_DISHES_BY_NAME = `
   query GetDishesByName($name: String!) {

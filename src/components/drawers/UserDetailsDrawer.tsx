@@ -14,6 +14,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserDetails } from '@/hooks/useUsers';
 import { Loader2, User, Mail, Phone, Calendar, MapPin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  useLogisticsAccount, 
+  usePetVendor, 
+  useCreateLogisticsAccount, 
+  useCreatePetVendor 
+} from '@/hooks/useHasuraApi';
+import LogisticsAccountModal from '@/components/modals/LogisticsAccountModal';
+import PetVendorModal from '@/components/modals/PetVendorModal';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Truck, PawPrint, ExternalLink, Plus } from 'lucide-react';
 
 interface UserDetailsDrawerProps {
   userId: string | null;
@@ -24,6 +35,57 @@ interface UserDetailsDrawerProps {
 const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onClose }) => {
   const { data: userData, isLoading } = useUserDetails(userId || undefined);
   const user = userData?.Users_by_pk;
+
+  const { data: logisticsData, isLoading: isLoadingLogistics } = useLogisticsAccount(
+    userId ? { user_id: { _eq: userId } } : null
+  );
+  const { data: petVendorData, isLoading: isLoadingPetVendor } = usePetVendor(
+    userId ? { user_id: { _eq: userId } } : null
+  );
+
+  const logistics = logisticsData?.logisticsAccount?.[0];
+  const petVendor = petVendorData?.pet_vendors?.[0];
+
+  const createLogistics = useCreateLogisticsAccount();
+  const createPetVendor = useCreatePetVendor();
+
+  const [isLogisticsModalOpen, setIsLogisticsModalOpen] = React.useState(false);
+  const [isPetVendorModalOpen, setIsPetVendorModalOpen] = React.useState(false);
+
+  const handleAssignLogistics = async () => {
+    if (!userId || !user) return;
+    try {
+      await createLogistics.mutateAsync({
+        object: {
+          user_id: userId,
+          fullname: user.name,
+          status: 'pending',
+          type: 'standard',
+          businessName: `${user.name} Logistics`,
+        },
+      });
+      toast.success('Logistics account created successfully');
+    } catch (error) {
+      toast.error('Failed to create logistics account');
+    }
+  };
+
+  const handleAssignPetVendor = async () => {
+    if (!userId || !user) return;
+    try {
+      await createPetVendor.mutateAsync({
+        object: {
+          user_id: userId,
+          fullname: user.name,
+          status: 'pending',
+          organisationName: `${user.name} Pets`,
+        },
+      });
+      toast.success('Pet vendor account created successfully');
+    } catch (error) {
+      toast.error('Failed to create pet vendor account');
+    }
+  };
 
   if (!open) return null;
 
@@ -114,12 +176,39 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
             </div>
           </Card>
 
+          <div className="flex gap-2">
+            {!logistics && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 gap-2" 
+                onClick={handleAssignLogistics}
+                disabled={createLogistics.isPending}
+              >
+                <Plus className="h-4 w-4" /> Assign Logistics
+              </Button>
+            )}
+            {!petVendor && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 gap-2" 
+                onClick={handleAssignPetVendor}
+                disabled={createPetVendor.isPending}
+              >
+                <Plus className="h-4 w-4" /> Assign Pet Vendor
+              </Button>
+            )}
+          </div>
+
           <Tabs defaultValue="details">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="orders">Orders</TabsTrigger>
               <TabsTrigger value="invoices">Invoices</TabsTrigger>
               <TabsTrigger value="schedule">Schedule</TabsTrigger>
+              <TabsTrigger value="logistics" disabled={!logistics}>Logistics</TabsTrigger>
+              <TabsTrigger value="pets" disabled={!petVendor}>Pets</TabsTrigger>
             </TabsList>
 
             <TabsContent value="details" className="space-y-4">
@@ -450,8 +539,61 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
                 )}
               </Card>
             </TabsContent>
+
+            <TabsContent value="logistics" className="space-y-4">
+              {logistics ? (
+                <Card className="p-6 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Truck className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">{logistics.businessName}</h3>
+                    <Badge variant="outline" className="mt-1 capitalize">{logistics.status}</Badge>
+                  </div>
+                  <Button onClick={() => setIsLogisticsModalOpen(true)} className="gap-2">
+                    <ExternalLink className="h-4 w-4" /> View Full Logistics Profile
+                  </Button>
+                </Card>
+              ) : (
+                <div className="py-12 text-center text-muted-foreground">
+                  No logistics account associated.
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="pets" className="space-y-4">
+              {petVendor ? (
+                <Card className="p-6 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <PawPrint className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">{petVendor.organisationName}</h3>
+                    <Badge variant="outline" className="mt-1 capitalize">{petVendor.status}</Badge>
+                  </div>
+                  <Button onClick={() => setIsPetVendorModalOpen(true)} className="gap-2">
+                    <ExternalLink className="h-4 w-4" /> View Full Pet Vendor Profile
+                  </Button>
+                </Card>
+              ) : (
+                <div className="py-12 text-center text-muted-foreground">
+                  No pet vendor account associated.
+                </div>
+              )}
+            </TabsContent>
           </Tabs>
         </div>
+
+        <LogisticsAccountModal 
+          open={isLogisticsModalOpen} 
+          onOpenChange={setIsLogisticsModalOpen} 
+          userId={userId} 
+        />
+        <PetVendorModal 
+          open={isPetVendorModalOpen} 
+          onOpenChange={setIsPetVendorModalOpen} 
+          userId={userId} 
+        />
       </SheetContent>
     </Sheet>
   );

@@ -52,6 +52,8 @@ export interface UserPrivileges {
   ai_chat?: ModulePrivileges;
   subscriptions?: ModulePrivileges;
   influencers?: ModulePrivileges;
+  logistics?: ModulePrivileges;
+  pets?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -311,6 +313,8 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     access_ai_chat: false,
     access_subscriptions: false,
     access_reels: false,
+    access_logistics: false,
+    access_pets: false,
   },
   referrals: {
     access: false,
@@ -381,6 +385,18 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     view_earnings: false,
     manage_influencers: false,
   },
+  logistics: {
+    access: false,
+    view_accounts: false,
+    manage_vehicles: false,
+    manage_assignments: false,
+  },
+  pets: {
+    access: false,
+    view_vendors: false,
+    manage_pets: false,
+    manage_adoptions: false,
+  },
 };
 
 // Privilege check helper types
@@ -406,13 +422,17 @@ export function hasPrivilege(
       module === 'restaurants' ||
       module === 'reels' ||
       module === 'withdraw_requests' ||
+      module === 'logistics' ||
+      module === 'pets' ||
       (module === 'pages' &&
         (action === 'access_referrals' ||
           action === 'access_help' ||
           action === 'access_plasmarket' ||
           action === 'access_restaurants' ||
           action === 'access_reels' ||
-          action === 'access_withdraw_requests')))
+          action === 'access_withdraw_requests' ||
+          action === 'access_logistics' ||
+          action === 'access_pets')))
   ) {
     return true;
   }

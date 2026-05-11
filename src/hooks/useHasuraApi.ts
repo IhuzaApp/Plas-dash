@@ -22,6 +22,8 @@ import {
   SEARCH_PRODUCT_NAMES,
   GET_ORDER_OFFERS,
   GET_DISHES_BY_NAME,
+  GET_LOGISTICS_ACCOUNT,
+  GET_PET_VENDOR,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -57,6 +59,8 @@ import {
   UPDATE_RESTAURANT_ORDER_SHOPPER,
   UPDATE_PACKAGE_DELIVERY_SHOPPER,
   CREATE_ORDER_OFFER,
+  CREATE_LOGISTICS_ACCOUNT,
+  CREATE_PET_VENDOR,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -71,6 +75,115 @@ import type {
   WalletTransaction,
   Refund,
 } from './useGraphql';
+
+export interface RentalVehicle {
+  category: string;
+  created_at: string;
+  disabled: boolean;
+  drive_provided: boolean;
+  engine: string;
+  exterior: string;
+  fuel_type: string;
+  id: string;
+  interior: string;
+  location: string;
+  logisticAccount_id: string;
+  main_photo: string;
+  name: string;
+  passenger: number;
+  platNumber: string;
+  price: number;
+  refundable_amount: number;
+  seats: number;
+  status: string;
+  transmission: string;
+  updated_at: string;
+}
+
+export interface LogisticsAccount {
+  user_id: string;
+  updated_on: string;
+  type: string;
+  status: string;
+  proof_address: string;
+  num_of_cars: number;
+  nationalIdOrPassport: string;
+  license: string;
+  id: string;
+  fullname: string;
+  disabled: boolean;
+  created_at: string;
+  business_cert: string;
+  businessName: string;
+  address: string;
+  RentalVehicles: RentalVehicle[];
+  User: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface PetAdoption {
+  address: string;
+  amount: number;
+  comment: string;
+  created_at: string;
+  customer_id: string;
+  id: string;
+  latitude: number;
+  longitude: number;
+  pet_id: string;
+  phone: string;
+  status: string;
+  updated_at: string;
+}
+
+export interface Pet {
+  age: string;
+  amount: number;
+  breed: string;
+  color: string;
+  created_at: string;
+  favourite_food: string;
+  free: boolean;
+  gender: string;
+  id: string;
+  image: string;
+  months: number;
+  name: string;
+  parent_images: any;
+  pet_type: string;
+  quantity: number;
+  quantity_sold: number;
+  story: string;
+  updated_at: string;
+  vaccinated: boolean;
+  vaccination_cert: string;
+  vaccinations: string;
+  vendor_id: string;
+  video: string;
+  weight: string;
+  petAdoptions: PetAdoption[];
+}
+
+export interface PetVendor {
+  address: string;
+  created_at: string;
+  disabled: boolean;
+  fullname: string;
+  id: string;
+  nationalIdOrPassport: string;
+  organisationName: string;
+  proof_residency: string;
+  rdb_certificate: string;
+  sherter_permit: string;
+  specialties: string;
+  status: string;
+  updated_at: string;
+  user_id: string;
+  pets: Pet[];
+}
 
 export interface Rating {
   businessProduct_id: string | null;
@@ -628,6 +741,24 @@ export function useShops() {
     },
     retry: 2,
     retryDelay: 1000,
+  });
+}
+
+// Type-safe hook for Logistics Account
+export function useLogisticsAccount(where: any) {
+  return useQuery<{ logisticsAccount: LogisticsAccount[] }, Error>({
+    queryKey: ['logistics-account', where],
+    queryFn: () => hasuraRequest(GET_LOGISTICS_ACCOUNT, { where }),
+    enabled: !!where,
+  });
+}
+
+// Type-safe hook for Pet Vendor
+export function usePetVendor(where: any) {
+  return useQuery<{ pet_vendors: PetVendor[] }, Error>({
+    queryKey: ['pet-vendor', where],
+    queryFn: () => hasuraRequest(GET_PET_VENDOR, { where }),
+    enabled: !!where,
   });
 }
 
@@ -2061,6 +2192,26 @@ export function useCreateOrderOffer() {
     mutationFn: variables => hasuraRequest(CREATE_ORDER_OFFER, variables),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order-offers'] });
+    },
+  });
+}
+
+export function useCreateLogisticsAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: { object: any }) => hasuraRequest(CREATE_LOGISTICS_ACCOUNT, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['logistics-account'] });
+    },
+  });
+}
+
+export function useCreatePetVendor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: { object: any }) => hasuraRequest(CREATE_PET_VENDOR, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pet-vendor'] });
     },
   });
 }

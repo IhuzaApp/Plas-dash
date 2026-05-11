@@ -43,6 +43,8 @@ import {
 } from 'lucide-react';
 import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import LogisticsAccountModal from '@/components/modals/LogisticsAccountModal';
+import PetVendorModal from '@/components/modals/PetVendorModal';
 
 interface SearchResult {
   Users: any[];
@@ -127,6 +129,24 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const { session } = useAuth();
   const [searchValue, setSearchValue] = React.useState('');
   const [activeScope, setActiveScope] = React.useState<string | null>(null);
+  
+  // Modal states
+  const [logisticsId, setLogisticsId] = React.useState<string | null>(null);
+  const [petVendorId, setPetVendorId] = React.useState<string | null>(null);
+  const [isLogisticsModalOpen, setIsLogisticsModalOpen] = React.useState(false);
+  const [isPetVendorModalOpen, setIsPetVendorModalOpen] = React.useState(false);
+
+  const handleOpenLogistics = (id: string) => {
+    setLogisticsId(id);
+    setIsLogisticsModalOpen(true);
+    onOpenChange(false); // Close the search command
+  };
+
+  const handleOpenPetVendor = (id: string) => {
+    setPetVendorId(id);
+    setIsPetVendorModalOpen(true);
+    onOpenChange(false); // Close the search command
+  };
 
   const handleInputChange = (val: string) => {
     const trimmed = val.trim().toLowerCase();
@@ -464,7 +484,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`logistics-${item.id}`} 
                     value={`logistics account ${item.fullname}`}
-                    onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.fullname || '')}`)} 
+                    onSelect={() => handleOpenLogistics(item.id)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Truck className="mr-3 h-5 w-5 text-white" />
@@ -478,7 +498,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                   <CommandItem 
                     key={`pet-${item.id}`} 
                     value={`pet vendor vendor ${item.fullname}`}
-                    onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.fullname || '')}`)} 
+                    onSelect={() => handleOpenPetVendor(item.id)} 
                     className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
                   >
                     <Tag className="mr-3 h-5 w-5 text-white" />
@@ -512,6 +532,17 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
           </>
         )}
       </CommandList>
+
+      <LogisticsAccountModal 
+        open={isLogisticsModalOpen} 
+        onOpenChange={setIsLogisticsModalOpen} 
+        accountId={logisticsId || undefined} 
+      />
+      <PetVendorModal 
+        open={isPetVendorModalOpen} 
+        onOpenChange={setIsPetVendorModalOpen} 
+        vendorId={petVendorId || undefined} 
+      />
     </CommandDialog>
   );
 }

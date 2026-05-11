@@ -929,6 +929,34 @@ const MODULE_DESCRIPTIONS: Record<
       },
     ],
   },
+  logistics: {
+    title: 'Logistics Partner',
+    description: 'Manage logistics partners, fleet vehicles, and driver assignments',
+    actions: [
+      { key: 'access', label: 'Access Logistics', description: 'Can access logistics partner module' },
+      { key: 'view_accounts', label: 'View Accounts', description: 'Can view logistics partner accounts' },
+      { key: 'manage_vehicles', label: 'Manage Vehicles', description: 'Can manage fleet vehicles' },
+      {
+        key: 'manage_assignments',
+        label: 'Manage Assignments',
+        description: 'Can assign drivers to vehicles',
+      },
+    ],
+  },
+  pets: {
+    title: 'Pet Vendor',
+    description: 'Manage pet vendors, inventory, and adoption processes',
+    actions: [
+      { key: 'access', label: 'Access Pets', description: 'Can access pet vendor module' },
+      { key: 'view_vendors', label: 'View Vendors', description: 'Can view pet vendor accounts' },
+      { key: 'manage_pets', label: 'Manage Pets', description: 'Can manage pet listings and inventory' },
+      {
+        key: 'manage_adoptions',
+        label: 'Manage Adoptions',
+        description: 'Can manage pet adoption workflows',
+      },
+    ],
+  },
 };
 
 export function PrivilegeManager({

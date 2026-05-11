@@ -1148,3 +1148,24 @@ export const CREATE_ORDER_OFFER = `
   }
 `;
 
+// Partner Assignment Mutations
+export const CREATE_LOGISTICS_ACCOUNT = `
+  mutation CreateLogisticsAccount($object: logisticsAccount_insert_input!) {
+    insert_logisticsAccount_one(object: $object) {
+      id
+      fullname
+      status
+    }
+  }
+`;
+
+export const CREATE_PET_VENDOR = `
+  mutation CreatePetVendor($object: pet_vendors_insert_input!) {
+    insert_pet_vendors_one(object: $object) {
+      id
+      fullname
+      status
+    }
+  }
+`;
+
