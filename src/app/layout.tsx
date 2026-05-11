@@ -29,6 +29,10 @@ export default function AppRootLayout({ children }: { children: React.ReactNode 
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>Plas Dashboard</title>
+        <link rel="icon" href="/favicon.png" />
+      </head>
       <body className={inter.className}>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider

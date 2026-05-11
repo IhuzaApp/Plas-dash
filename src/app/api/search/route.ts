@@ -105,14 +105,6 @@ export async function GET(request: Request) {
     };
 
     const data: any = await hasuraClient.request(GLOBAL_SEARCH_QUERY, variables);
-    
-    // Log exactly what was found in each category to find the "invisible" result
-    console.log(`Search for "${query}" (Scope: ${scope}) found:`);
-    Object.keys(data || {}).forEach(key => {
-      if (data[key]?.length > 0) {
-        console.log(` - ${key}: ${data[key].length} items`);
-      }
-    });
 
     return NextResponse.json({ results: data || {} });
   } catch (error: any) {

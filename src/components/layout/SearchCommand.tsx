@@ -71,21 +71,34 @@ const COMMAND_MAP: Record<string, string> = {
   '/user': 'user',
   '/users': 'user',
   '/customer': 'user',
+  '/customers': 'user',
   '/shopper': 'shopper',
   '/shoppers': 'shopper',
   '/plasa': 'shopper',
+  '/courier': 'shopper',
   '/order': 'order',
   '/orders': 'order',
   '/pkg': 'order',
+  '/package': 'order',
+  '/delivery': 'order',
   '/shop': 'shop',
   '/shops': 'shop',
+  '/store': 'shop',
+  '/stores': 'shop',
+  '/business': 'shop',
+  '/vendor': 'shop',
   '/restaurant': 'restaurant',
   '/restaurants': 'restaurant',
   '/staff': 'staff',
   '/employee': 'staff',
+  '/employees': 'staff',
   '/vehicle': 'vehicle',
   '/vehicles': 'vehicle',
   '/admin': 'admin',
+  '/project': 'admin',
+  '/projectUser': 'admin',
+  '/projectUsers': 'admin',
+  '/project user': 'admin',
 };
 
 const ALL_MODULES = [
@@ -196,7 +209,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   }, [accessibleModules, searchValue]);
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange} className="max-w-3xl">
+    <CommandDialog open={open} onOpenChange={onOpenChange} className="max-w-5xl">
       <DialogTitle className="sr-only">Search</DialogTitle>
       <DialogDescription className="sr-only">Use /commands then Enter to filter</DialogDescription>
       
@@ -234,23 +247,25 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
           )}
         </CommandEmpty>
 
-        {/* Modules Grid */}
-        <CommandGroup heading={searchValue ? "Matching Modules" : "Accessible Modules"}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-1 p-2">
-            {filteredModules.map(item => (
-              <CommandItem 
-                key={item.path} 
-                onSelect={() => handleSelect(item.path)} 
-                className="cursor-pointer flex items-center p-3 rounded-xl hover:bg-primary/5 group"
-              >
-                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center mr-3 group-hover:bg-primary/10 transition-colors">
-                  <item.icon className="h-4 w-4 group-hover:text-primary transition-colors" />
-                </div>
-                <span className="font-medium group-hover:text-primary transition-colors">{item.title}</span>
-              </CommandItem>
-            ))}
-          </div>
-        </CommandGroup>
+        {/* Modules Grid - Hide when a scope is active to focus on results */}
+        {!activeScope && (
+          <CommandGroup heading={searchValue ? "Matching Modules" : "Accessible Modules"}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1 p-2">
+              {filteredModules.map(item => (
+                <CommandItem 
+                  key={item.path} 
+                  onSelect={() => handleSelect(item.path)} 
+                  className="cursor-pointer flex items-center p-3 rounded-xl hover:bg-primary/5 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center mr-3 group-hover:bg-primary/10 transition-colors">
+                    <item.icon className="h-4 w-4 group-hover:text-primary transition-colors" />
+                  </div>
+                  <span className="font-medium group-hover:text-primary transition-colors">{item.title}</span>
+                </CommandItem>
+              ))}
+            </div>
+          </CommandGroup>
+        )}
 
         {(searchValue.length >= 2 || activeScope) && data && (
           <>
@@ -283,6 +298,34 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     <div className="flex flex-col">
                       <span className="font-bold text-white">{item.full_name}</span>
                       <span className="text-[10px] text-white/90 uppercase">{item.Employment_id} • Plasa</span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.ProjectUsers?.map(item => (
+                  <CommandItem 
+                    key={`admin-${item.id}`} 
+                    value={`admin project user ${item.username} ${item.email}`}
+                    onSelect={() => handleSelect('/project-users')} 
+                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                  >
+                    <ShieldCheck className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.username}</span>
+                      <span className="text-[10px] text-white/90 uppercase">{item.email} • Project Admin</span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.orgEmployees?.map(item => (
+                  <CommandItem 
+                    key={`staff-${item.id}`} 
+                    value={`staff employee ${item.fullnames} ${item.employeeID}`}
+                    onSelect={() => handleSelect('/pos/staff')} 
+                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                  >
+                    <UsersIcon className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.fullnames}</span>
+                      <span className="text-[10px] text-white/90 uppercase">ID: {item.employeeID} • Staff</span>
                     </div>
                   </CommandItem>
                 ))}
@@ -400,6 +443,48 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     <div className="flex flex-col">
                       <span className="font-bold text-white">{item.name}</span>
                       <span className="text-[10px] text-white/90 uppercase">Restaurant</span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.business_stores?.map(item => (
+                  <CommandItem 
+                    key={`biz-store-${item.id}`} 
+                    value={`business store account ${item.name}`}
+                    onSelect={() => handleSelect('/shops')} 
+                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                  >
+                    <Building2 className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.name}</span>
+                      <span className="text-[10px] text-white/90 uppercase">Business Account</span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.logisticsAccount?.map(item => (
+                  <CommandItem 
+                    key={`logistics-${item.id}`} 
+                    value={`logistics account ${item.fullname}`}
+                    onSelect={() => handleSelect('/shops')} 
+                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                  >
+                    <Truck className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.fullname}</span>
+                      <span className="text-[10px] text-white/90 uppercase">Logistics Partner</span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.pet_vendors?.map(item => (
+                  <CommandItem 
+                    key={`pet-${item.id}`} 
+                    value={`pet vendor vendor ${item.fullname}`}
+                    onSelect={() => handleSelect('/shops')} 
+                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                  >
+                    <Tag className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.fullname}</span>
+                      <span className="text-[10px] text-white/90 uppercase">Pet Vendor</span>
                     </div>
                   </CommandItem>
                 ))}
