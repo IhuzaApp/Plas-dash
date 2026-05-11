@@ -20,8 +20,8 @@ import {
   useCreateLogisticsAccount, 
   useCreatePetVendor 
 } from '@/hooks/useHasuraApi';
-import LogisticsAccountModal from '@/components/modals/LogisticsAccountModal';
-import PetVendorModal from '@/components/modals/PetVendorModal';
+import { LogisticsAccountModal } from '@/components/modals/LogisticsAccountModal';
+import { PetVendorModal } from '@/components/modals/PetVendorModal';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Truck, PawPrint, ExternalLink, Plus } from 'lucide-react';

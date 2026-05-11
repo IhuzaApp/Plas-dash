@@ -37,6 +37,7 @@ import {
   DollarSign,
   ChevronLeft,
   ShieldCheck,
+  Dog,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -174,6 +175,8 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
         { title: 'Plasas', icon: User, path: '/shoppers' },
         { title: 'Customers', icon: Users, path: '/users' },
         { title: 'Project Users', icon: Users, path: '/project-users' },
+        { title: 'Logistics', icon: Truck, path: '/logistics' },
+        { title: 'Pet Vendors', icon: Dog, path: '/pets' },
         { title: 'Shops', icon: Store, path: '/shops' },
         { title: 'Restaurants', icon: Store, path: '/restaurants' },
         { title: 'Reels', icon: Video, path: '/reels' },

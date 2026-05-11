@@ -24,6 +24,8 @@ import {
   GET_DISHES_BY_NAME,
   GET_LOGISTICS_ACCOUNT,
   GET_PET_VENDOR,
+  GET_ALL_LOGISTICS_ACCOUNTS,
+  GET_ALL_PET_VENDORS,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -2213,6 +2215,20 @@ export function useCreatePetVendor() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pet-vendor'] });
     },
+  });
+}
+
+export function useLogisticsAccounts() {
+  return useQuery({
+    queryKey: ['logistics-accounts'],
+    queryFn: () => hasuraRequest(GET_ALL_LOGISTICS_ACCOUNTS),
+  });
+}
+
+export function usePetVendors() {
+  return useQuery({
+    queryKey: ['pet-vendors'],
+    queryFn: () => hasuraRequest(GET_ALL_PET_VENDORS),
   });
 }
 

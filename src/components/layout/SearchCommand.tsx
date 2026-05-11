@@ -43,8 +43,8 @@ import {
 } from 'lucide-react';
 import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import LogisticsAccountModal from '@/components/modals/LogisticsAccountModal';
-import PetVendorModal from '@/components/modals/PetVendorModal';
+import { LogisticsAccountModal } from '@/components/modals/LogisticsAccountModal';
+import { PetVendorModal } from '@/components/modals/PetVendorModal';
 
 interface SearchResult {
   Users: any[];

@@ -36,7 +36,7 @@ interface PetVendorModalProps {
   userId?: string;
 }
 
-const PetVendorModal: React.FC<PetVendorModalProps> = ({
+export const PetVendorModal: React.FC<PetVendorModalProps> = ({
   open,
   onOpenChange,
   vendorId,
@@ -247,3 +247,4 @@ const PetVendorModal: React.FC<PetVendorModalProps> = ({
 };
 
 export default PetVendorModal;
+

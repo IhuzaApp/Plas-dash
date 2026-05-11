@@ -2307,3 +2307,52 @@ export const GET_ORDER_OFFERS = `
     }
   }
 `;
+
+export const GET_ALL_LOGISTICS_ACCOUNTS = `
+  query GetAllLogisticsAccounts {
+    logisticsAccount(order_by: {created_at: desc}) {
+      id
+      fullname
+      businessName
+      type
+      status
+      disabled
+      created_at
+      User {
+        id
+        name
+        email
+      }
+      RentalVehicles {
+        id
+        name
+        platNumber
+        status
+      }
+    }
+  }
+`;
+
+export const GET_ALL_PET_VENDORS = `
+  query GetAllPetVendors {
+    pet_vendors(order_by: {created_at: desc}) {
+      id
+      fullname
+      organisationName
+      address
+      disabled
+      created_at
+      User {
+        id
+        name
+        email
+      }
+      Pets {
+        id
+        name
+        breed
+        status
+      }
+    }
+  }
+`;

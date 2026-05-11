@@ -36,7 +36,7 @@ interface LogisticsAccountModalProps {
   userId?: string;
 }
 
-const LogisticsAccountModal: React.FC<LogisticsAccountModalProps> = ({
+export const LogisticsAccountModal: React.FC<LogisticsAccountModalProps> = ({
   open,
   onOpenChange,
   accountId,
@@ -230,3 +230,4 @@ const LogisticsAccountModal: React.FC<LogisticsAccountModalProps> = ({
 };
 
 export default LogisticsAccountModal;
+

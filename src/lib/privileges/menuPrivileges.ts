@@ -18,6 +18,8 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   Plasas: { module: 'shoppers', isProjectUser: true },
   Customers: { module: 'users', isProjectUser: true },
   'Project Users': { module: 'project_users', isProjectUser: true },
+  Logistics: { module: 'logistics', isProjectUser: true },
+  'Pet Vendors': { module: 'pets', isProjectUser: true },
   Shops: { module: 'shops', isProjectUser: true },
   Restaurants: { module: 'restaurants', isProjectUser: true },
   Products: { module: 'products', isProjectUser: true },
