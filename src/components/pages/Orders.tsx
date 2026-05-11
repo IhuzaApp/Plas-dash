@@ -238,6 +238,8 @@ const Orders = () => {
   const businessOrderItems: any[] = businessOrdersData?.orders || [];
   const restaurantOrderItems: any[] = restaurantOrdersData?.orders || [];
   const [searchTerm, setSearchTerm] = useState('');
+  const [combinedSearchTerm, setCombinedSearchTerm] = useState('');
+  const [packagesSearchTerm, setPackagesSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'delayed' | 'delivered' | 'pending' | 'shopping' | 'on_the_way'
   >('all');
@@ -433,11 +435,34 @@ const Orders = () => {
     const filteredGroups: Record<string, UnifiedOrder[]> = {};
     Object.entries(groups).forEach(([id, groupOrders]) => {
       if (groupOrders.length > 1) {
-        filteredGroups[id] = groupOrders;
+        if (combinedSearchTerm) {
+          const term = combinedSearchTerm.toLowerCase();
+          const shopperName = groupOrders.find(o => o.shopper)?.shopper?.name?.toLowerCase() || '';
+          const orderIds = groupOrders.map(o => (o.OrderID || o.id).toString().toLowerCase()).join(' ');
+          
+          if (id.toLowerCase().includes(term) || shopperName.includes(term) || orderIds.includes(term)) {
+            filteredGroups[id] = groupOrders;
+          }
+        } else {
+          filteredGroups[id] = groupOrders;
+        }
       }
     });
     return filteredGroups;
-  }, [allOrders]);
+  }, [allOrders, combinedSearchTerm]);
+
+  const filteredPackages = useMemo(() => {
+    const packages = packageData?.packages || [];
+    if (!packagesSearchTerm) return packages;
+
+    const term = packagesSearchTerm.toLowerCase();
+    return packages.filter((pkg: any) =>
+      (pkg.DeliveryCode || pkg.id).toString().toLowerCase().includes(term) ||
+      (pkg.receiver_name || '').toLowerCase().includes(term) ||
+      (pkg.shopper?.full_name || '').toLowerCase().includes(term) ||
+      (pkg.status || '').toLowerCase().includes(term)
+    );
+  }, [packageData, packagesSearchTerm]);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
@@ -1085,6 +1110,15 @@ const Orders = () => {
             </TabsContent>
 
             <TabsContent value="combined" className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Combined ID, Order ID, or Shopper..."
+                  className="pl-8"
+                  value={combinedSearchTerm}
+                  onChange={e => setCombinedSearchTerm(e.target.value)}
+                />
+              </div>
               <CombinedOrdersTable
                 combinedOrdersGroups={combinedOrdersGroups}
                 getOrderWarnings={getOrderWarnings}
@@ -1098,36 +1132,46 @@ const Orders = () => {
             </TabsContent>
 
             <TabsContent value="packages" className="space-y-4">
-              <Card>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Package ID</TableHead>
-                      <TableHead>Receiver</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Route</TableHead>
-                      <TableHead>Fee</TableHead>
-                      <TableHead>Shopper</TableHead>
-                      <TableHead>Scheduled</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isPackagesLoading ? (
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Package ID, Receiver, or Shopper..."
+                  className="pl-8"
+                  value={packagesSearchTerm}
+                  onChange={e => setPackagesSearchTerm(e.target.value)}
+                />
+              </div>
+              <Card className="border-2 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
                       <TableRow>
-                        <TableCell colSpan={9} className="h-24 text-center">
-                          <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
-                        </TableCell>
+                        <TableHead className="font-bold">Package ID</TableHead>
+                        <TableHead className="font-bold">Receiver</TableHead>
+                        <TableHead className="font-bold">Status</TableHead>
+                        <TableHead className="font-bold">Route</TableHead>
+                        <TableHead className="font-bold">Fee</TableHead>
+                        <TableHead className="font-bold">Shopper</TableHead>
+                        <TableHead className="font-bold">Scheduled</TableHead>
+                        <TableHead className="font-bold">Created</TableHead>
+                        <TableHead className="text-right font-bold">Actions</TableHead>
                       </TableRow>
-                    ) : !packageData?.packages || packageData.packages.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                          No package deliveries found.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      packageData.packages.map((pkg: any) => (
+                    </TableHeader>
+                    <TableBody>
+                      {isPackagesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="h-24 text-center">
+                            <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                          </TableCell>
+                        </TableRow>
+                      ) : filteredPackages.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                            {packagesSearchTerm ? 'No packages match your search.' : 'No package deliveries found.'}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredPackages.map((pkg: any) => (
                         <PackageOrderRow
                           key={pkg.id}
                           pkg={pkg}
@@ -1152,8 +1196,9 @@ const Orders = () => {
                     )}
                   </TableBody>
                 </Table>
-              </Card>
-            </TabsContent>
+              </div>
+            </Card>
+          </TabsContent>
           </>
         )}
       </Tabs>
