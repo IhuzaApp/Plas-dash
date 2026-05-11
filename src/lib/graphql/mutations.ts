@@ -1084,3 +1084,67 @@ export const UPDATE_COMMISSION_RULE = `
     }
   }
 `;
+
+// Order Assignment Mutations
+export const UPDATE_ORDER_SHOPPER = `
+  mutation UpdateOrderShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_Orders_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+export const UPDATE_REEL_ORDER_SHOPPER = `
+  mutation UpdateReelOrderShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_reel_orders_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+export const UPDATE_BUSINESS_ORDER_SHOPPER = `
+  mutation UpdateBusinessOrderShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_businessProductOrders_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+export const UPDATE_RESTAURANT_ORDER_SHOPPER = `
+  mutation UpdateRestaurantOrderShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_restaurant_orders_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+export const UPDATE_PACKAGE_DELIVERY_SHOPPER = `
+  mutation UpdatePackageDeliveryShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_package_delivery_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+// Order Offering Mutations
+export const CREATE_ORDER_OFFER = `
+  mutation CreateOrderOffer($object: order_offers_insert_input!) {
+    insert_order_offers_one(object: $object) {
+      id
+      status
+      offered_at
+      expires_at
+    }
+  }
+`;
+

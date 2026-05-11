@@ -12,9 +12,12 @@ import { Separator } from '@/components/ui/separator';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-import { useSystemConfig } from '@/hooks/useHasuraApi';
+import { useSystemConfig, useShoppers, useAssignOrder, useCreateOrderOffer } from '@/hooks/useHasuraApi';
 import { useOrderPayments } from '@/hooks/useShoppers';
-import { Loader2, Video } from 'lucide-react';
+import { Loader2, Video, UserPlus, Send, Check, X, Phone, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { WalletTransaction, Refund } from '@/hooks/useShoppers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -172,8 +175,102 @@ const generateShortId = (id: string) => {
 const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, onClose }) => {
   const { data: paymentData, isLoading: isLoadingPayments } = useOrderPayments(order?.id || '');
   const { data: systemConfig } = useSystemConfig();
+  const { data: shoppersData } = useShoppers();
+  const assignOrder = useAssignOrder();
+  const createOffer = useCreateOrderOffer();
+  const { toast } = useToast();
+
+  const [selectedShopperId, setSelectedShopperId] = React.useState<string>('');
+  const [isAssigning, setIsAssigning] = React.useState(false);
+
+  const handleAssign = async () => {
+    if (!selectedShopperId || !order) return;
+    setIsAssigning(true);
+    try {
+      await assignOrder.mutateAsync({
+        id: order.id,
+        shopper_id: selectedShopperId,
+        status: 'accepted',
+        type: order.type,
+      });
+      toast({
+        title: 'Success',
+        description: 'Order assigned successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to assign order',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleOffer = async () => {
+    if (!selectedShopperId || !order) return;
+    setIsAssigning(true);
+    try {
+      const offerObject: any = {
+        shopper_id: selectedShopperId,
+        order_type: order.type,
+        status: 'pending',
+        offered_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 15 * 60000).toISOString(), // 15 mins expiry
+      };
+
+      // Map order ID based on type
+      if (order.type === 'regular') offerObject.order_id = order.id;
+      else if (order.type === 'reel') offerObject.reel_order_id = order.id;
+      else if (order.type === 'business') offerObject.business_order_id = order.id;
+      else if (order.type === 'restaurant') offerObject.restaurant_order_id = order.id;
+      // Packages might not be in order_offers schema yet, but we'll try order_id if it's generic
+      else if (order.type === 'package') offerObject.order_id = order.id;
+
+      await createOffer.mutateAsync({ object: offerObject });
+      toast({
+        title: 'Offer Sent',
+        description: `Order offered to shopper`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to send offer',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleUnassign = async () => {
+    if (!order) return;
+    setIsAssigning(true);
+    try {
+      await assignOrder.mutateAsync({
+        id: order.id,
+        shopper_id: null,
+        status: 'pending',
+        type: order.type,
+      });
+      toast({
+        title: 'Success',
+        description: 'Shopper unassigned successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to unassign shopper',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
 
   if (!order) return null;
+
   // Restaurant orders: Wallet_Transactions from list API. Business: businessTransactions (different schema, no amount).
   const walletTransactions = (
     order.type === 'restaurant' && order.Wallet_Transactions?.length
@@ -581,7 +678,103 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
             </Card>
           </div>
 
+          {/* Shopper Assignment Section */}
+          <div>
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Shopper Assignment
+            </h3>
+            <Card className="p-4 border-2 border-primary/10">
+              {order.shopper ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 border-2 border-primary/20">
+                      <AvatarFallback className="bg-primary/5 text-primary">
+                        {order.shopper.name?.split(' ').map((n: string) => n[0]).join('') || 'S'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold text-sm">{order.shopper.name || 'Unknown Shopper'}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {order.shopper.phone || 'No phone'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                      <Check className="h-3 w-3 mr-1" />
+                      Assigned
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleUnassign}
+                      disabled={isAssigning}
+                      className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      {isAssigning ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-4 w-4" />}
+                      Unassign
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg border italic">
+                    No shopper assigned to this order yet.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+                        Select Shopper
+                      </label>
+                      <Select value={selectedShopperId} onValueChange={setSelectedShopperId}>
+                        <SelectTrigger className="w-full bg-background border-2 focus:ring-primary/20 transition-all">
+                          <SelectValue placeholder="Choose a shopper..." />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {shoppersData?.shoppers?.filter(s => s.active).map(shopper => (
+                            <SelectItem key={shopper.id} value={shopper.id} className="py-2">
+                              <div className="flex flex-col">
+                                <span className="font-medium">{shopper.full_name}</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {shopper.transport_mode || 'No vehicle'} • {shopper.phone_number}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button 
+                        onClick={handleOffer} 
+                        disabled={!selectedShopperId || isAssigning}
+                        variant="outline"
+                        className="h-11 border-2 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all gap-2"
+                      >
+                        {isAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        Offer Order
+                      </Button>
+                      <Button 
+                        onClick={handleAssign} 
+                        disabled={!selectedShopperId || isAssigning}
+                        className="h-11 bg-primary hover:bg-primary/90 shadow-md transition-all gap-2"
+                      >
+                        {isAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                        Assign Directly
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+
           {/* Payment Information */}
+
           <div>
             <h3 className="text-lg font-semibold mb-3">Payment Details</h3>
             <Card className="p-4">

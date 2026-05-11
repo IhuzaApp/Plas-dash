@@ -11,8 +11,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -20,7 +18,7 @@ import {
   Area,
 } from 'recharts';
 import { OrderOffer } from '@/hooks/useHasuraApi';
-import { format, startOfDay, startOfWeek, startOfMonth } from 'date-fns';
+import { format } from 'date-fns';
 
 interface OrderOffersAnalyticsProps {
   offers: OrderOffer[];

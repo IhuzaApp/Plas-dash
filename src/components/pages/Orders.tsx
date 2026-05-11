@@ -37,6 +37,7 @@ import {
 } from '@/hooks/useHasuraApi';
 import PackageOrderRow from '@/components/Orders/PackageOrderRow';
 import OrderOffersTable from '@/components/Orders/OrderOffersTable';
+import ManualDispatchCenter from '@/components/Orders/ManualDispatchCenter';
 import OrderOffersAnalytics from '@/components/Orders/OrderOffersAnalytics';
 import SingleOrderRow from '@/components/Orders/SingleOrderRow';
 import GroupedOrderRow from '@/components/Orders/GroupedOrderRow';
@@ -329,13 +330,27 @@ const Orders = () => {
       Wallet_Transactions: o.Wallet_Transactions,
     }));
 
+    const packageOrdersMapped: UnifiedOrder[] = (packageData?.packages || []).map((pkg: any) => ({
+      ...pkg,
+      OrderID: pkg.DeliveryCode || pkg.id,
+      type: 'package' as const,
+      total: pkg.delivery_fee || '0',
+      shopper: pkg.shopper ? {
+        id: pkg.shopper.id || pkg.shopper.user_id,
+        name: pkg.shopper.full_name,
+        phone: pkg.shopper.phone_number || pkg.shopper.phone,
+        email: pkg.shopper.email
+      } : undefined
+    }));
+
     return [
       ...regularOrders,
       ...reelOrdersMapped,
       ...businessOrdersMapped,
       ...restaurantOrdersMapped,
+      ...packageOrdersMapped,
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [orders, reelOrderItems, businessOrderItems, restaurantOrderItems]);
+  }, [orders, reelOrderItems, businessOrderItems, restaurantOrderItems, packageData]);
 
   const combinedOrdersGroups = useMemo(() => {
     const groups: Record<string, UnifiedOrder[]> = {};
@@ -859,7 +874,9 @@ const Orders = () => {
 
         {isProjectUser && (
           <>
-            <TabsContent value="offers" className="space-y-4">
+            <TabsContent value="offers" className="space-y-6">
+              <ManualDispatchCenter allOrders={allOrders} />
+              
               <Tabs defaultValue="analytics" className="w-full">
                 <TabsList className="grid w-64 grid-cols-2 mb-4">
                   <TabsTrigger value="analytics" className="flex items-center gap-2">
@@ -938,6 +955,12 @@ const Orders = () => {
                               OrderID: pkg.DeliveryCode || pkg.id,
                               type: 'package',
                               total: pkg.delivery_fee || '0',
+                              shopper: pkg.shopper ? {
+                                id: pkg.shopper.id || pkg.shopper.user_id,
+                                name: pkg.shopper.full_name,
+                                phone: pkg.shopper.phone_number || pkg.shopper.phone,
+                                email: pkg.shopper.email
+                              } : undefined
                             };
                             handleViewDetails(unifiedPkg);
                           }}

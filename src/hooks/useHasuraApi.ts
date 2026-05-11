@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '../lib/hasura';
 import { apiGet } from '../lib/api';
 import {
@@ -51,6 +51,12 @@ import {
   DELETE_REEL_COMMENT,
   DELETE_ORDER_OFFERS,
   UPDATE_RESTAURANT_DISH,
+  UPDATE_ORDER_SHOPPER,
+  UPDATE_REEL_ORDER_SHOPPER,
+  UPDATE_BUSINESS_ORDER_SHOPPER,
+  UPDATE_RESTAURANT_ORDER_SHOPPER,
+  UPDATE_PACKAGE_DELIVERY_SHOPPER,
+  CREATE_ORDER_OFFER,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -629,6 +635,8 @@ export function useOrders() {
     },
   });
 }
+
+
 
 // Type-safe hook for Order Offers
 export function useOrderOffers() {
@@ -1988,3 +1996,66 @@ export function useUpdateCommissionRule() {
     },
   });
 }
+
+export function useAssignOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    any,
+    Error,
+    {
+      id: string;
+      shopper_id: string | null;
+      status: string;
+      type: 'regular' | 'reel' | 'business' | 'restaurant' | 'package';
+    }
+  >({
+    mutationFn: ({ id, shopper_id, status, type }) => {
+      let mutation;
+      switch (type) {
+        case 'regular':
+          mutation = UPDATE_ORDER_SHOPPER;
+          break;
+        case 'reel':
+          mutation = UPDATE_REEL_ORDER_SHOPPER;
+          break;
+        case 'business':
+          mutation = UPDATE_BUSINESS_ORDER_SHOPPER;
+          break;
+        case 'restaurant':
+          mutation = UPDATE_RESTAURANT_ORDER_SHOPPER;
+          break;
+        case 'package':
+          mutation = UPDATE_PACKAGE_DELIVERY_SHOPPER;
+          break;
+        default:
+          throw new Error('Invalid order type');
+      }
+      return hasuraRequest(mutation, { id, shopper_id, status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['api', 'orders'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'reel-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'business-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'restaurant-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'package-deliveries'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'shopper-detail'] });
+    },
+  });
+}
+
+export function useCreateOrderOffer() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    { insert_order_offers_one: { id: string } },
+    Error,
+    { object: any }
+  >({
+    mutationFn: variables => hasuraRequest(CREATE_ORDER_OFFER, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order-offers'] });
+    },
+  });
+}
+
