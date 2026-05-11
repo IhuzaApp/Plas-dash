@@ -24,6 +24,10 @@ import {
   BarChart3,
   ClipboardList,
   LayoutGrid,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Receipt,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -42,6 +46,7 @@ import OrderOffersAnalytics from '@/components/Orders/OrderOffersAnalytics';
 import SingleOrderRow from '@/components/Orders/SingleOrderRow';
 import GroupedOrderRow from '@/components/Orders/GroupedOrderRow';
 import CombinedOrdersTable from '@/components/Orders/CombinedOrdersTable';
+import TransactionsTable from '@/components/Orders/TransactionsTable';
 import { format, differenceInMinutes, formatDistanceToNow } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -206,6 +211,7 @@ interface UnifiedOrder {
   timeAndDate?: string | null;
   package_image?: string | null;
   package_pickup_image?: string | null;
+  order_transactions?: any[];
 }
 
 const Orders = () => {
@@ -245,6 +251,8 @@ const Orders = () => {
       ...order,
       type: 'regular' as const,
       OrderID: order.OrderID || order.id,
+      Wallet_Transactions: order.Wallet_Transactions || [],
+      order_transactions: order.order_transactions || [],
     }));
 
     const reelOrdersMapped: UnifiedOrder[] = reelOrderItems.map((reelOrder: any) => ({
@@ -275,6 +283,8 @@ const Orders = () => {
       Address: reelOrder.Address,
       User: reelOrder.User,
       Shop: reelOrder.Shop,
+      Wallet_Transactions: reelOrder.Wallet_Transactions || [],
+      order_transactions: reelOrder.order_transactions || [],
     }));
 
     const businessOrdersMapped: UnifiedOrder[] = businessOrderItems.map((o: any) => ({
@@ -291,7 +301,8 @@ const Orders = () => {
       allProducts: o.allProducts,
       units: o.units,
       business_store: o.business_store,
-      businessTransactions: o.businessTransactions,
+      businessTransactions: o.businessTransactions || [],
+      order_transactions: o.order_transactions || [],
       shopper: o.shopper,
       delivery_time: o.delivery_time ?? o.delivered_time ?? null,
       delivery_fee: o.transportation_fee,
@@ -327,7 +338,8 @@ const Orders = () => {
       combined_order_id: o.combined_order_id,
       assigned_at: o.assigned_at,
       delivery_photo_url: o.delivery_photo_url,
-      Wallet_Transactions: o.Wallet_Transactions,
+      Wallet_Transactions: o.Wallet_Transactions || [],
+      order_transactions: o.order_transactions || [],
     }));
 
     const packageOrdersMapped: UnifiedOrder[] = (packageData?.packages || []).map((pkg: any) => ({
@@ -667,46 +679,125 @@ const Orders = () => {
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{allOrders.length}</div>
-            <p className="text-muted-foreground">Total Orders</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{pendingOrders.length}</div>
-            <p className="text-muted-foreground">Pending Orders</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{inProgressOrders.length}</div>
-            <p className="text-muted-foreground">In Progress</p>
-          </CardContent>
-        </Card>
-        <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20">
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-orange-700 dark:text-orange-400">
-              {delayedOrders.length}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-primary/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Orders</p>
+                <h3 className="text-3xl font-bold">{allOrders.length}</h3>
+              </div>
+              <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ClipboardList className="h-6 w-6 text-primary" />
+              </div>
             </div>
-            <p className="text-muted-foreground">Delayed Orders</p>
-          </CardContent>
-        </Card>
-        <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-700 dark:text-green-400">
-              {deliveredOrders.length}
+            <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-green-500" />
+                Across all categories
+              </span>
             </div>
-            <p className="text-muted-foreground">Delivered</p>
           </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-primary/20" />
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue.toString())}</div>
-            <p className="text-muted-foreground">Total Sales</p>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-blue-500/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Pending Dispatch</p>
+                <h3 className="text-3xl font-bold text-blue-600 dark:text-blue-400">{pendingOrders.length}</h3>
+              </div>
+              <div className="h-12 w-12 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Clock className="h-6 w-6 text-blue-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1 italic">
+                Awaiting shopper assignment
+              </span>
+            </div>
           </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-blue-500/20" />
+        </Card>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-indigo-500/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">In Progress</p>
+                <h3 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{inProgressOrders.length}</h3>
+              </div>
+              <div className="h-12 w-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ShoppingBag className="h-6 w-6 text-indigo-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1 italic">
+                Actively being shopped or delivered
+              </span>
+            </div>
+          </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-indigo-500/20" />
+        </Card>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-red-500/20 bg-red-50/10 dark:bg-red-950/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1 text-red-600 dark:text-red-400">Delayed Alerts</p>
+                <h3 className="text-3xl font-bold text-red-600 dark:text-red-400">{delayedOrders.length}</h3>
+              </div>
+              <div className="h-12 w-12 bg-red-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <AlertCircle className="h-6 w-6 text-red-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-red-500/70 font-medium">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Action required immediately
+              </span>
+            </div>
+          </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-red-500/40" />
+        </Card>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-green-500/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Delivered Today</p>
+                <h3 className="text-3xl font-bold text-green-600 dark:text-green-400">{deliveredOrders.length}</h3>
+              </div>
+              <div className="h-12 w-12 bg-green-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CheckCircle2 className="h-6 w-6 text-green-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1 italic">
+                Successfully completed orders
+              </span>
+            </div>
+          </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-green-500/20" />
+        </Card>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-emerald-500/20 bg-emerald-50/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Sales</p>
+                <h3 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalRevenue.toString())}</h3>
+              </div>
+              <div className="h-12 w-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <DollarSign className="h-6 w-6 text-emerald-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-emerald-600/70 font-semibold uppercase tracking-widest">
+              Live Revenue
+            </div>
+          </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-emerald-500/40" />
         </Card>
       </div>
 
@@ -730,9 +821,17 @@ const Orders = () => {
                 <LayoutGrid className="h-4 w-4" />
                 Packages
               </TabsTrigger>
+              <TabsTrigger value="transactions" className="flex items-center gap-2">
+                <Receipt className="h-4 w-4" />
+                Transactions
+              </TabsTrigger>
             </>
           )}
         </TabsList>
+
+        <TabsContent value="transactions" className="space-y-4">
+          <TransactionsTable orders={allOrders} formatCurrency={formatCurrency} />
+        </TabsContent>
 
         <TabsContent value="all" className="space-y-4">
           <div className="flex flex-col gap-4">
@@ -752,8 +851,8 @@ const Orders = () => {
             </div>
 
             {/* Status filter tabs */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground mr-1">Filter:</span>
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+              <span className="text-sm font-medium text-muted-foreground shrink-0">Filter:</span>
               {[
                 { value: 'all' as const, label: 'All', count: undefined as number | undefined },
                 { value: 'delayed' as const, label: 'Delayed', count: delayedOrders.length },
@@ -804,14 +903,14 @@ const Orders = () => {
                   <TableHead>Order ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Items</TableHead>
+                  <TableHead className="hidden md:table-cell">Items</TableHead>
                   <TableHead>Total</TableHead>
-                  <TableHead>Combined ID</TableHead>
-                  <TableHead>Delivery Fee</TableHead>
-                  <TableHead>Service Fee</TableHead>
-                  <TableHead>Expected delivery</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Last Updated</TableHead>
+                  <TableHead className="hidden lg:table-cell">Combined ID</TableHead>
+                  <TableHead className="hidden xl:table-cell">Delivery Fee</TableHead>
+                  <TableHead className="hidden xl:table-cell">Service Fee</TableHead>
+                  <TableHead className="hidden sm:table-cell">Expected delivery</TableHead>
+                  <TableHead className="hidden md:table-cell">Created</TableHead>
+                  <TableHead className="hidden lg:table-cell">Last Updated</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -875,7 +974,10 @@ const Orders = () => {
         {isProjectUser && (
           <>
             <TabsContent value="offers" className="space-y-6">
-              <ManualDispatchCenter allOrders={allOrders} />
+              <ManualDispatchCenter 
+                allOrders={allOrders} 
+                offers={offersData?.order_offers || []}
+              />
               
               <Tabs defaultValue="analytics" className="w-full">
                 <TabsList className="grid w-64 grid-cols-2 mb-4">

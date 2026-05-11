@@ -135,6 +135,27 @@ const GET_ALL_RESTAURANT_ORDERS = gql`
         type
         wallet_id
       }
+      order_transactions {
+        amount
+        business_order_id
+        created_at
+        currency
+        id
+        mtn_response
+        order_id
+        package_id
+        petAdoptionId
+        phone
+        reel_order_id
+        reference_id
+        restaurant_order_id
+        status
+        type
+        updated_at
+        user_id
+        vehicleBookingsId
+        wallet_id
+      }
     }
   }
 `;
@@ -318,6 +339,7 @@ export async function GET(req: Request) {
         delivery_photo_url: o.delivery_photo_url ?? undefined,
         voucher_code: o.voucher_code ?? undefined,
         Wallet_Transactions: o.Wallet_Transactions ?? [],
+        order_transactions: o.order_transactions ?? [],
         orderedBy: o.orderedBy,
         Address: o.Address,
         Restaurant: o.Restaurant,

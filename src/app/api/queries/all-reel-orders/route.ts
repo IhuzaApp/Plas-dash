@@ -74,6 +74,46 @@ const GET_ALL_REEL_ORDERS = gql`
         full_name
         phone_number
       }
+      Wallet_Transactions {
+        amount
+        created_at
+        currency
+        description
+        id
+        mtn_response
+        petAdoptionId
+        phone
+        reference_id
+        relate_business_order_id
+        related_order_id
+        related_reel_orderId
+        related_restaurant_order_id
+        status
+        type
+        vehicleBookingsId
+        wallet_id
+      }
+      order_transactions {
+        amount
+        business_order_id
+        created_at
+        currency
+        id
+        mtn_response
+        order_id
+        package_id
+        petAdoptionId
+        phone
+        reel_order_id
+        reference_id
+        restaurant_order_id
+        status
+        type
+        updated_at
+        user_id
+        vehicleBookingsId
+        wallet_id
+      }
     }
   }
 `;
@@ -206,6 +246,8 @@ export async function GET(req: Request) {
       User: o.User,
       Address: o.Address,
       Reel: o.Reel,
+      Wallet_Transactions: o.Wallet_Transactions ?? [],
+      order_transactions: o.order_transactions ?? [],
       shopper: o.shoppers
         ? {
             id: o.shoppers.id,

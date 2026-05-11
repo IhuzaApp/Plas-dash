@@ -35,7 +35,7 @@ const GroupedOrderRow: React.FC<GroupedOrderRowProps> = ({
     <React.Fragment>
       <TableRow className="bg-muted/40 border-t-2 border-t-primary/30 active:bg-muted/40 hover:bg-muted/40">
         <TableCell colSpan={12} className="py-3 px-4">
-          <div className="flex items-center justify-between w-full">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
             <div className="flex items-center gap-4">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none mb-1">
@@ -45,10 +45,10 @@ const GroupedOrderRow: React.FC<GroupedOrderRowProps> = ({
                   #{item.combinedId?.split('-')[0]}
                 </span>
               </div>
-              <div className="h-8 w-px bg-border mx-2" />
+              <div className="h-8 w-px bg-border mx-2 hidden sm:block" />
               {item.shopper ? (
                 <div className="flex items-center gap-2">
-                  <div className="bg-primary/10 p-1.5 rounded-full">
+                  <div className="bg-primary/10 p-1.5 rounded-full hidden sm:block">
                     <ShoppingBag className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex flex-col">
@@ -70,14 +70,14 @@ const GroupedOrderRow: React.FC<GroupedOrderRowProps> = ({
               ) : (
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm text-muted-foreground italic">
-                    No shopper assigned to group
+                  <span className="text-xs sm:text-sm text-muted-foreground italic">
+                    No shopper assigned
                   </span>
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right flex flex-col items-end">
+            <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3">
+              <div className="text-left sm:text-right flex flex-col items-start sm:items-end">
                 <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
                   Group Total
                 </span>
@@ -86,7 +86,7 @@ const GroupedOrderRow: React.FC<GroupedOrderRowProps> = ({
                     item.orders
                       .reduce((sum: number, o: any) => sum + parseFloat(o.total || '0'), 0)
                       .toString()
-                  )}
+                   )}
                 </span>
               </div>
               <Badge variant="secondary" className="font-bold">
@@ -131,17 +131,17 @@ const GroupedOrderRow: React.FC<GroupedOrderRowProps> = ({
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                <Badge variant="outline" className="text-[10px] px-1 capitalize h-4">
+                <Badge variant="outline" className="text-[10px] px-1 capitalize h-4 hidden sm:inline-flex">
                   {order.type}
                 </Badge>
               </div>
             </TableCell>
             <TableCell>
-              <div className="flex flex-col">
-                <span className="font-medium leading-tight">
+              <div className="flex flex-col max-w-[100px] sm:max-w-none">
+                <span className="font-medium leading-tight truncate">
                   {order.User?.name ?? order.orderedBy?.name ?? 'Guest'}
                 </span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-muted-foreground truncate hidden sm:block">
                   {order.User?.email ?? order.orderedBy?.email ?? order.user_id}
                 </span>
               </div>
@@ -155,7 +155,7 @@ const GroupedOrderRow: React.FC<GroupedOrderRowProps> = ({
                 {order.status}
               </span>
             </TableCell>
-            <TableCell className="text-xs">
+            <TableCell className="hidden md:table-cell text-xs">
               {order.type === 'reel'
                 ? order.Reel?.title || 'Reel Order'
                 : order.type === 'business'
@@ -165,10 +165,10 @@ const GroupedOrderRow: React.FC<GroupedOrderRowProps> = ({
                     : `${order.itemsCount ?? order.Order_Items?.length ?? 0} item(s)`}
             </TableCell>
             <TableCell className="text-sm font-medium">{formatCurrency(order.total)}</TableCell>
-            <TableCell className="text-xs text-muted-foreground">—</TableCell>
-            <TableCell className="text-xs">{formatCurrency(order.delivery_fee ?? '0')}</TableCell>
-            <TableCell className="text-xs">{formatCurrency(order.service_fee ?? '0')}</TableCell>
-            <TableCell>
+            <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">—</TableCell>
+            <TableCell className="hidden xl:table-cell text-xs">{formatCurrency(order.delivery_fee ?? '0')}</TableCell>
+            <TableCell className="hidden xl:table-cell text-xs">{formatCurrency(order.service_fee ?? '0')}</TableCell>
+            <TableCell className="hidden sm:table-cell">
               {(() => {
                 const { text, isOverdue } = getDeliveryCountdown(order.delivery_time);
                 return (
@@ -178,17 +178,17 @@ const GroupedOrderRow: React.FC<GroupedOrderRowProps> = ({
                 );
               })()}
             </TableCell>
-            <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
+            <TableCell className="hidden md:table-cell text-[10px] text-muted-foreground whitespace-nowrap">
               {format(new Date(order.created_at), 'HH:mm')}
             </TableCell>
-            <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
+            <TableCell className="hidden lg:table-cell text-[10px] text-muted-foreground whitespace-nowrap">
               {format(new Date(order.updated_at), 'HH:mm')}
             </TableCell>
             <TableCell className="text-right">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs"
+                className="h-7 text-xs px-2"
                 onClick={() => handleViewDetails(order)}
               >
                 Details

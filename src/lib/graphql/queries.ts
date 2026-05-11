@@ -2114,7 +2114,7 @@ export const GET_REFERRAL_ORDERS = `
 
 export const GET_ORDER_OFFERS = `
   query GetOrderOffers {
-    order_offers {
+    order_offers(order_by: { offered_at: desc }) {
       business_order_id
       done_on
       expires_at
@@ -2122,48 +2122,32 @@ export const GET_ORDER_OFFERS = `
       offered_at
       order_id
       order_type
+      package_order_id
       reel_order_id
       restaurant_order_id
       round_number
       shopper_id
       status
       updated_at
+      shoppers {
+        id
+        full_name
+        phone_number
+        transport_mode
+        active
+      }
+      restaurantOrder {
+        OrderID
+        status
+        total
+      }
       reelOrders {
         OrderID
-        delivery_note
-        delivery_photo_url
-        delivery_time
-        service_fee
         status
-      }
-      ShopperUser {
-        email
-        shopper {
-          Employment_id
-          active
-          address
-          full_name
-          onboarding_step
-          phone
-          phone_number
-          status
-        }
+        total
       }
       Orders {
         OrderID
-        assigned_at
-        created_at
-        delivery_address_id
-        delivery_fee
-        delivery_notes
-        discount
-        delivery_time
-        pin
-        service_fee
-        shop_id
-        shopper_id
-        status
-        total
         updated_at
       }
       businessProductOrders {

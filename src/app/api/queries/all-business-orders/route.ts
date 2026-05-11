@@ -100,9 +100,31 @@ const GET_ALL_BUSINESS_ORDERS = gql`
         phone
         phone_number
         status
+        updated_at
         plate_number
         transport_mode
         updated_at
+      }
+      order_transactions {
+        amount
+        business_order_id
+        created_at
+        currency
+        id
+        mtn_response
+        order_id
+        package_id
+        petAdoptionId
+        phone
+        reel_order_id
+        reference_id
+        restaurant_order_id
+        status
+        type
+        updated_at
+        user_id
+        vehicleBookingsId
+        wallet_id
       }
     }
   }
@@ -234,6 +256,7 @@ export async function GET(req: Request) {
         transportation_fee: o.transportation_fee ?? null,
         service_fee: o.service_fee ?? null,
         businessTransactions: o.businessTransactions ?? [],
+        order_transactions: o.order_transactions ?? [],
         shopper: o.shoppers
           ? {
               id: o.shoppers.id,

@@ -388,24 +388,30 @@ export interface OrderOffer {
   offered_at: string;
   order_id?: string | null;
   order_type: string;
+  package_order_id?: string | null;
   reel_order_id?: string | null;
   restaurant_order_id?: string | null;
   round_number: number;
   shopper_id: string;
   status: string;
   updated_at: string;
+  shoppers?: {
+    full_name: string;
+    phone_number: string;
+    transport_mode?: string;
+    active?: boolean;
+    [key: string]: any;
+  };
+  restaurantOrder?: any;
   reelOrders?: any;
+  Orders?: any;
+  businessProductOrders?: any;
   ShopperUser?: {
     email: string;
     shopper?: {
-      Employment_id: string;
-      active: boolean;
-      address: string;
       full_name: string;
-      onboarding_step: string;
-      phone: string;
       phone_number: string;
-      status: string;
+      [key: string]: any;
     };
   };
   Orders?: any;
