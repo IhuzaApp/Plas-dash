@@ -3,18 +3,6 @@
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarHeader,
-  SidebarFooter,
-} from '@/components/ui/sidebar';
-import {
   BarChart,
   Package,
   Users,
@@ -47,6 +35,8 @@ import {
   FlaskConical,
   Activity,
   DollarSign,
+  ChevronLeft,
+  ShieldCheck,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -63,9 +53,10 @@ import { useQueryClient } from '@tanstack/react-query';
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
+  toggleSidebar?: () => void;
 }
 
-const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
+const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
@@ -385,30 +376,36 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
 
   if (!hasAnyModuleAccess) {
     return (
-      <Sidebar
+      <aside
         className={cn(
-          'fixed left-0 top-0 bottom-0 z-40 transition-all duration-300',
+          'sticky top-0 h-screen z-40 transition-all duration-500 ease-in-out flex flex-col',
           isSidebarOpen ? 'w-64' : 'w-20',
-          'border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'
+          'border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl shadow-black/50'
         )}
       >
-        <SidebarHeader className="h-14 flex items-center px-4 border-b">
+        <div className="h-20 flex items-center px-6 border-b border-sidebar-border/50 bg-black/10 backdrop-blur-md">
           <div className="flex items-center justify-center w-full">
-            <div className="w-8 h-8 rounded-md bg-transparent flex items-center justify-center overflow-hidden">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden">
               <img
                 src="/Assets/logo/Plas Icon.png"
                 alt="Plas Logo"
-                className="w-full h-full object-contain"
+                className="w-8 h-8 object-contain"
               />
             </div>
           </div>
-        </SidebarHeader>
-        <SidebarContent className="px-2">
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            No access to any modules
+        </div>
+        <div className="flex-1 p-8 text-center flex flex-col items-center justify-center space-y-4">
+          <div className="p-4 rounded-full bg-destructive/10 text-destructive">
+            <ShieldCheck className="h-8 w-8" />
           </div>
-        </SidebarContent>
-      </Sidebar>
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-white">Access Denied</p>
+            <p className="text-xs text-sidebar-foreground/50">
+              No modules assigned to your account.
+            </p>
+          </div>
+        </div>
+      </aside>
     );
   }
 
@@ -417,60 +414,70 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
     const isLoading = isNavigating && navigatingTo === item.path;
 
     return (
-      <TooltipProvider key={item.title} delayDuration={0}>
+      <TooltipProvider key={item.path} delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <button
-                  onClick={() => handleNavigation(item.path)}
-                  className={cn(
-                    'flex items-center w-full',
-                    isSidebarOpen ? 'px-3' : 'justify-center',
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'hover:bg-primary/5 text-muted-foreground hover:text-primary',
-                    'rounded-md py-2 transition-all duration-200 group'
-                  )}
-                >
-                  {isLoading ? (
-                    <Loader2 className={cn('h-5 w-5 animate-spin', isSidebarOpen ? 'mr-2' : '')} />
-                  ) : (
-                    <item.icon
-                      className={cn(
-                        'h-5 w-5',
-                        isSidebarOpen ? 'mr-2' : '',
-                        isActive ? 'text-primary' : 'group-hover:text-primary'
-                      )}
-                    />
-                  )}
-                  {isSidebarOpen && (
-                    <div className="flex items-center justify-between w-full">
-                      <span>{item.title}</span>
-                      {item.badge && !isLoading && (
-                        <Badge
-                          variant={item.badge === 'New' ? 'default' : 'secondary'}
-                          className="ml-2 px-2 py-0.5 text-xs"
-                        >
-                          {item.badge}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </button>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <div className="px-1">
+              <button
+                onClick={() => handleNavigation(item.path)}
+                className={cn(
+                  'flex items-center w-full relative group transition-all duration-300 ease-out',
+                  isSidebarOpen ? 'px-4 py-2.5' : 'justify-center py-3',
+                  isActive
+                    ? 'bg-sidebar-primary text-white font-semibold shadow-lg shadow-sidebar-primary/20'
+                    : 'text-sidebar-foreground/60 hover:text-white hover:bg-sidebar-accent/50',
+                  'rounded-xl'
+                )}
+              >
+                {/* Active Indicator Dot */}
+                {isActive && isSidebarOpen && (
+                  <div className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+                )}
+
+                {isLoading ? (
+                  <Loader2 className={cn('h-5 w-5 animate-spin text-primary', isSidebarOpen ? 'mr-3' : '')} />
+                ) : (
+                  <item.icon
+                    className={cn(
+                      'h-5 w-5 transition-transform duration-300 group-hover:scale-110',
+                      isSidebarOpen ? 'mr-3' : '',
+                      isActive ? 'text-primary' : 'group-hover:text-primary'
+                    )}
+                  />
+                )}
+                {isSidebarOpen && (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="truncate">{item.label}</span>
+                    {item.badge && !isLoading && (
+                      <span className={cn(
+                        "ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full",
+                        item.badge === 'New' 
+                          ? "bg-primary text-white shadow-[0_0_8px_rgba(34,197,94,0.3)]" 
+                          : "bg-white/10 text-white/70"
+                      )}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Subtle hover effect for collapsed mode */}
+                {!isSidebarOpen && isActive && (
+                  <div className="absolute bottom-1 w-1 h-1 bg-primary rounded-full" />
+                )}
+              </button>
+            </div>
           </TooltipTrigger>
           <TooltipContent
             side="right"
-            className={cn('bg-primary text-primary-foreground', isSidebarOpen ? 'hidden' : 'block')}
+            className={cn('bg-sidebar-accent text-white border-sidebar-border shadow-xl backdrop-blur-md', isSidebarOpen ? 'hidden' : 'block')}
           >
-            <div className="flex items-center">
-              <span>{item.title}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{item.title}</span>
               {item.badge && !isLoading && (
                 <Badge
                   variant={item.badge === 'New' ? 'default' : 'secondary'}
-                  className="ml-2 px-2 py-0.5 text-xs"
+                  className="px-1.5 py-0 text-[9px] h-4"
                 >
                   {item.badge}
                 </Badge>
@@ -483,41 +490,62 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
   };
 
   return (
-    <Sidebar
+    <aside
       className={cn(
-        'fixed left-0 top-0 bottom-0 z-40 transition-all duration-300',
+        'sticky top-0 h-screen z-40 transition-all duration-500 ease-in-out flex flex-col',
         isSidebarOpen ? 'w-64' : 'w-20',
-        'border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'
+        'border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl shadow-black/50'
       )}
     >
-      <SidebarHeader className="h-14 flex items-center px-4 border-b">
+      {/* Header */}
+      <div className="h-20 flex items-center px-6 border-b border-sidebar-border/50 bg-black/10 backdrop-blur-md relative group/header">
         <div
           className={cn(
-            'flex items-center w-full',
-            isSidebarOpen ? 'justify-start' : 'justify-center'
+            'flex items-center w-full transition-all duration-300',
+            isSidebarOpen ? 'justify-between' : 'justify-center'
           )}
         >
           {isSidebarOpen ? (
-            <div className="flex items-center">
-              <img
-                src="/Assets/logo/PlasLogoPNG.png"
-                alt="Plas Dashboard"
-                className="h-8 object-contain"
-              />
-            </div>
+            <>
+              <div className="flex items-center gap-3 group cursor-pointer">
+                <div className="p-2 rounded-xl bg-primary/20 backdrop-blur-sm group-hover:bg-primary/30 transition-all duration-300">
+                  <img
+                    src="/Assets/logo/Plas Icon.png"
+                    alt="Plas Icon"
+                    className="h-8 w-8 object-contain"
+                  />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-lg font-bold tracking-tight text-white leading-none">PLAS</span>
+                  <span className="text-[10px] uppercase tracking-widest text-primary font-bold">Dashboard</span>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="h-8 w-8 rounded-lg hover:bg-white/10 text-white opacity-0 group-hover/header:opacity-100 transition-opacity duration-300"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </>
           ) : (
-            <div className="w-8 h-8 rounded-md bg-transparent flex items-center justify-center overflow-hidden">
+            <div 
+              onClick={toggleSidebar}
+              className="w-12 h-12 rounded-xl bg-primary/20 backdrop-blur-sm flex items-center justify-center overflow-hidden hover:bg-primary/30 transition-all duration-300 cursor-pointer"
+            >
               <img
                 src="/Assets/logo/Plas Icon.png"
                 alt="Plas Logo"
-                className="w-full h-full object-contain"
+                className="w-8 h-8 object-contain"
               />
             </div>
           )}
         </div>
-      </SidebarHeader>
+      </div>
 
-      <SidebarContent className="px-2">
+      {/* Content */}
+      <div className="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-none">
         {/* Shop Selector for POS and shop-related users */}
         {(hasModuleAccess('pos_terminal') ||
           hasModuleAccess('checkout') ||
@@ -526,62 +554,72 @@ const AdminSidebar = ({ isSidebarOpen }: AdminSidebarProps) => {
           hasModuleAccess('orders') ||
           hasModuleAccess('discounts') ||
           hasModuleAccess('shop_dashboard')) && (
-          <SidebarGroup>
+          <div className="mb-6 px-1">
             <ShopSelector isSidebarOpen={isSidebarOpen} />
-          </SidebarGroup>
+          </div>
         )}
 
-        {filteredMenuItems.map(section => (
-          <SidebarGroup key={section.section}>
+        {filteredMenuItems.map((section, idx) => (
+          <div key={section.section} className="mb-6">
             {isSidebarOpen && (
-              <SidebarGroupLabel className="flex items-center text-xs font-medium text-muted-foreground/70">
-                <section.icon className="h-4 w-4 mr-2" />
+              <h3 className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-sidebar-foreground/30">
                 {section.section}
-              </SidebarGroupLabel>
+              </h3>
             )}
-            <SidebarGroupContent>
-              <SidebarMenu>{section.items.map(renderMenuItem)}</SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+            <div className="space-y-1">
+              {section.items.map(renderMenuItem)}
+            </div>
+          </div>
         ))}
-      </SidebarContent>
+      </div>
 
-      <SidebarFooter className="border-t p-4">
+      {/* Footer */}
+      <div className="border-t border-sidebar-border/50 p-4 bg-black/5 backdrop-blur-sm">
         {isSidebarOpen ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <div>
-                <p className="font-medium">Plas Dashboard</p>
-                <p className="text-xs">v1.2.0</p>
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all duration-300 group">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold overflow-hidden border border-primary/20 group-hover:scale-105 transition-transform duration-300">
+                   {session?.username?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div className="flex flex-col">
+                  <p className="text-sm font-semibold text-white truncate max-w-[100px]">{session?.username || 'User'}</p>
+                  <p className="text-[10px] text-sidebar-foreground/50">{session?.role || 'Admin'}</p>
+                </div>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-destructive/10 hover:text-destructive"
+                className="h-8 w-8 rounded-lg hover:bg-destructive/20 hover:text-destructive text-sidebar-foreground/50"
                 onClick={handleLogout}
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-4 w-4" />
               </Button>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
-              <Bell className="h-4 w-4" />
-              <span>3 new notifications</span>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hover:bg-destructive/10 hover:text-destructive"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
+          <div className="flex flex-col items-center py-2">
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 rounded-xl hover:bg-destructive/20 hover:text-destructive text-sidebar-foreground/50"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-destructive text-destructive-foreground">
+                  Logout
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         )}
-      </SidebarFooter>
-    </Sidebar>
+      </div>
+    </aside>
   );
 };
 

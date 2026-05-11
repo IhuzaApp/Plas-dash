@@ -1,5 +1,6 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/components/layout/RootLayout';
+import { usePageLoading } from '@/hooks/usePageLoading';
 import {
   isPageAccessible,
   getRecommendedLandingPage,
@@ -16,6 +17,7 @@ export const usePageAccess = (currentPath?: string) => {
   const router = useRouter();
   const pathname = usePathname();
   const { session, isAuthenticated } = useAuth();
+  const { startLoading } = usePageLoading();
   const currentPathname = currentPath || pathname || '/';
 
   // Check if current page is accessible
@@ -30,6 +32,7 @@ export const usePageAccess = (currentPath?: string) => {
   // Navigate to recommended page
   const navigateToRecommended = () => {
     if (recommendedPage && recommendedPage.path !== currentPathname) {
+      startLoading();
       router.push(recommendedPage.path);
     }
   };
@@ -37,6 +40,9 @@ export const usePageAccess = (currentPath?: string) => {
   // Navigate to specific page if accessible
   const navigateToPage = (path: string) => {
     if (isPageAccessible(session?.privileges || null, path)) {
+      if (path !== pathname) {
+        startLoading();
+      }
       router.push(path);
     } else {
       console.warn(`Page ${path} is not accessible to current user`);

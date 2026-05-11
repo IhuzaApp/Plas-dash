@@ -212,13 +212,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <title key="title">{pageTitle}</title>
           <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
           <meta key="description" name="description" content="Plas Admin Dashboard" />
-          <link key="favicon" rel="icon" href="/favicon.ico" />
+          <link key="favicon" rel="icon" href="/favicon.png" />
         </Head>
         <LoadingProvider>
-          <div className="min-h-screen bg-background relative">
+          <div className="min-h-screen bg-background relative selection:bg-primary/20 selection:text-primary">
             <React.Suspense fallback={null}>{children}</React.Suspense>
             {!isAuthenticated && !pathname?.startsWith('/tax') && (
-              <div className="fixed inset-0 z-40 bg-white/30 backdrop-blur-md pointer-events-none" />
+              <div className="fixed inset-0 z-40 bg-white/30 dark:bg-black/30 backdrop-blur-md pointer-events-none" />
             )}
             {!isAuthenticated && !pathname?.startsWith('/tax') && (
               <LoginModal onLoginSuccess={handleLoginSuccess} />

@@ -119,66 +119,112 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
 
   return (
     <Dialog open>
-      <DialogContent className="max-w-md rounded-2xl shadow-2xl border-2 border-zinc-200 dark:border-zinc-800 p-0 overflow-hidden">
-        <div className="bg-white dark:bg-zinc-900/90 p-8 rounded-2xl shadow-lg border border-zinc-100 dark:border-zinc-800">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold mb-2 text-center">
-              Org Employee Login
-            </DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-              <FormField
-                control={form.control}
-                name="identifier"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold">
-                      Username / Full Name / Email / Number
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" />
-                        <Input
-                          {...field}
-                          className="pl-10 bg-zinc-100 dark:bg-zinc-800/60 border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-zinc-900/90 transition"
-                          placeholder="Enter your identifier"
-                          disabled={loading}
-                        />
+      <DialogContent className="max-w-md w-[90%] rounded-[2rem] shadow-2xl border-none p-0 overflow-hidden bg-transparent">
+        <div className="relative bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl p-10 flex flex-col items-center">
+          {/* Background Decorative Elements */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+          
+          <div className="z-10 w-full">
+            <DialogHeader className="mb-8">
+              <div className="flex flex-col items-center gap-4">
+                <div className="p-4 rounded-3xl bg-primary/10 border border-primary/20 shadow-inner group transition-all duration-500 hover:scale-110">
+                  <img
+                    src="/Assets/logo/Plas Icon.png"
+                    alt="Plas Logo"
+                    className="w-12 h-12 object-contain"
+                  />
+                </div>
+                <div className="text-center">
+                  <DialogTitle className="text-3xl font-black tracking-tight text-zinc-900 dark:text-white">
+                    Welcome Back
+                  </DialogTitle>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                    Access the Plas Admin ecosystem
+                  </p>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <FormField
+                  control={form.control}
+                  name="identifier"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 ml-1">
+                        Login Identity
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative group">
+                          <User className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-primary transition-colors w-5 h-5" />
+                          <Input
+                            {...field}
+                            className="h-14 pl-12 pr-4 bg-zinc-100/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-primary/50 focus:bg-white dark:focus:bg-zinc-800 rounded-2xl transition-all duration-300 font-medium"
+                            placeholder="Email or Username"
+                            disabled={loading}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between ml-1">
+                        <FormLabel className="text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                          Secure Password
+                        </FormLabel>
                       </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                      <FormControl>
+                        <div className="relative group">
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-primary transition-colors w-5 h-5" />
+                          <Input
+                            {...field}
+                            type="password"
+                            className="h-14 pl-12 pr-4 bg-zinc-100/50 dark:bg-zinc-800/50 border-2 border-transparent focus:border-primary/50 focus:bg-white dark:focus:bg-zinc-800 rounded-2xl transition-all duration-300 font-medium"
+                            placeholder="••••••••"
+                            disabled={loading}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {error && (
+                  <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold p-3 rounded-xl text-center animate-shake">
+                    {error}
+                  </div>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold">Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" />
-                        <Input
-                          {...field}
-                          type="password"
-                          className="pl-10 bg-zinc-100 dark:bg-zinc-800/60 border-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-zinc-900/90 transition"
-                          placeholder="Enter your password"
-                          disabled={loading}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-              <Button type="submit" className="w-full mt-2" size="lg" disabled={loading}>
-                {loading ? 'Logging in...' : 'Login'}
-              </Button>
-            </form>
-          </Form>
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-14 mt-4 bg-primary hover:bg-primary/90 text-white rounded-2xl text-lg font-bold shadow-xl shadow-primary/20 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                       <Loader2 className="w-5 h-5 animate-spin" />
+                       <span>Authenticating...</span>
+                    </div>
+                  ) : 'Sign In to Dashboard'}
+                </Button>
+              </form>
+            </Form>
+            
+            <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800 text-center">
+               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">
+                 Powered by Plas Intelligence
+               </p>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
