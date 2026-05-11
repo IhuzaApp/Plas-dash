@@ -49,6 +49,7 @@ import { menuPrivileges } from '@/lib/privileges';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import { useShopSession } from '@/contexts/ShopSessionContext';
 import ShopSelector from './ShopSelector';
+import { usePageLoading } from '@/hooks/usePageLoading';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface AdminSidebarProps {
@@ -150,7 +151,9 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
     navigateToPage(path);
   };
 
+  const { startLoading } = usePageLoading();
   const handleLogout = () => {
+    startLoading();
     logout();
     window.location.reload();
   };

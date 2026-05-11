@@ -8,6 +8,7 @@ import { Lock, User, Loader2, ShieldCheck } from 'lucide-react';
 import { UserPrivileges, DEFAULT_PRIVILEGES } from '@/types/privileges';
 import { convertCustomPermissionsToPrivileges } from '@/lib/privileges/privilegeConverters';
 import { cn } from '@/lib/utils';
+import { usePageLoading } from '@/hooks/usePageLoading';
 
 interface LoginModalProps {
   onLoginSuccess: (sessionData: any) => void;
@@ -47,6 +48,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
   const form = useForm<LoginFormInputs>({ defaultValues: { identifier: '', password: '' } });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { startLoading } = usePageLoading();
 
   const onSubmit = async (data: LoginFormInputs) => {
     setLoading(true);
@@ -67,6 +69,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
 
       const { user: session, isProjectUser } = await response.json();
       console.log('DEBUG: Login API success, type:', isProjectUser ? 'ProjectUser' : 'OrgEmployee');
+
+      // Start global loading overlay
+      startLoading();
 
       // Update session data based on user type
       if (isProjectUser) {
