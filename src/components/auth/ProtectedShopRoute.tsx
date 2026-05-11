@@ -34,6 +34,11 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
     return null;
   }
 
+  // If user is a ProjectUser, they don't need shop authentication
+  if (session?.isProjectUser) {
+    return <>{children}</>;
+  }
+
   // Determine if user has a shop assigned at all
   const hasAssignedShop = !!session?.shop_id;
 

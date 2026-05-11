@@ -427,8 +427,8 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
                   'flex items-center w-full relative group transition-all duration-300 ease-out',
                   isSidebarOpen ? 'px-4 py-2.5' : 'justify-center py-3',
                   isActive
-                    ? 'bg-sidebar-primary text-white font-semibold shadow-lg shadow-sidebar-primary/20'
-                    : 'text-sidebar-foreground/60 hover:text-white hover:bg-sidebar-accent/50',
+                    ? 'bg-primary text-white font-semibold shadow-lg shadow-primary/20'
+                    : 'text-white/60 hover:text-white hover:bg-white/10',
                   'rounded-xl'
                 )}
               >
@@ -444,13 +444,13 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
                     className={cn(
                       'h-5 w-5 transition-transform duration-300 group-hover:scale-110',
                       isSidebarOpen ? 'mr-3' : '',
-                      isActive ? 'text-primary' : 'group-hover:text-primary'
+                      isActive ? 'text-white' : 'group-hover:text-primary'
                     )}
                   />
                 )}
                 {isSidebarOpen && (
                   <div className="flex items-center justify-between w-full">
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate">{item.title}</span>
                     {item.badge && !isLoading && (
                       <span className={cn(
                         "ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full",
@@ -550,7 +550,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
       {/* Content */}
       <div className="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-none">
         {/* Shop Selector for POS and shop-related users */}
-        {(hasModuleAccess('pos_terminal') ||
+        {!session?.isProjectUser && (hasModuleAccess('pos_terminal') ||
           hasModuleAccess('checkout') ||
           hasModuleAccess('inventory') ||
           hasModuleAccess('transactions') ||
@@ -565,7 +565,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
         {filteredMenuItems.map((section, idx) => (
           <div key={section.section} className="mb-6">
             {isSidebarOpen && (
-              <h3 className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-sidebar-foreground/30">
+              <h3 className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
                 {section.section}
               </h3>
             )}
