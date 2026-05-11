@@ -28,7 +28,18 @@ import {
   Clock,
   DollarSign,
   Receipt,
+  Settings,
+  Columns
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { 
+  DropdownMenu, 
+  DropdownMenuCheckboxItem, 
+  DropdownMenuContent, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useOrders,
@@ -236,6 +247,49 @@ const Orders = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupedView, setIsGroupedView] = useState(false);
   const [tick, setTick] = useState(0);
+  
+  // Column visibility logic
+  const ALL_COLUMNS = [
+    { id: 'id', label: 'Order ID', default: true },
+    { id: 'customer', label: 'Customer', default: true },
+    { id: 'status', label: 'Status', default: true },
+    { id: 'items', label: 'Items', default: true },
+    { id: 'total', label: 'Total', default: true },
+    { id: 'combined_id', label: 'Combined ID', default: false },
+    { id: 'delivery_fee', label: 'Delivery Fee', default: false },
+    { id: 'service_fee', label: 'Service Fee', default: false },
+    { id: 'expected_delivery', label: 'Expected Delivery', default: true },
+    { id: 'created', label: 'Created', default: false },
+    { id: 'updated', label: 'Last Updated', default: false },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('orders_column_visibility');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse saved columns', e);
+        }
+      }
+    }
+    const initial: Record<string, boolean> = {};
+    ALL_COLUMNS.forEach(col => initial[col.id] = col.default);
+    return initial;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('orders_column_visibility', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
+
+  const toggleColumn = (columnId: string) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [columnId]: !prev[columnId]
+    }));
+  };
+
   const { hasAction, session } = usePrivilege();
   const isProjectUser = session?.isProjectUser;
 
@@ -884,6 +938,28 @@ const Orders = () => {
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Columns className="h-4 w-4" />
+                    Columns
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {ALL_COLUMNS.map(col => (
+                    <DropdownMenuCheckboxItem
+                      key={col.id}
+                      checked={visibleColumns[col.id]}
+                      onCheckedChange={() => toggleColumn(col.id)}
+                    >
+                      {col.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant={isGroupedView ? 'default' : 'outline'}
                 size="sm"
@@ -896,24 +972,25 @@ const Orders = () => {
             </div>
           </div>
 
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">Items</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead className="hidden lg:table-cell">Combined ID</TableHead>
-                  <TableHead className="hidden xl:table-cell">Delivery Fee</TableHead>
-                  <TableHead className="hidden xl:table-cell">Service Fee</TableHead>
-                  <TableHead className="hidden sm:table-cell">Expected delivery</TableHead>
-                  <TableHead className="hidden md:table-cell">Created</TableHead>
-                  <TableHead className="hidden lg:table-cell">Last Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+          <Card className="border-2 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    {visibleColumns.id && <TableHead className="font-bold">Order ID</TableHead>}
+                    {visibleColumns.customer && <TableHead className="font-bold">Customer</TableHead>}
+                    {visibleColumns.status && <TableHead className="font-bold">Status</TableHead>}
+                    {visibleColumns.items && <TableHead className="font-bold">Items</TableHead>}
+                    {visibleColumns.total && <TableHead className="font-bold">Total</TableHead>}
+                    {visibleColumns.combined_id && <TableHead className="font-bold">Combined ID</TableHead>}
+                    {visibleColumns.delivery_fee && <TableHead className="font-bold">Del. Fee</TableHead>}
+                    {visibleColumns.service_fee && <TableHead className="font-bold">Svc. Fee</TableHead>}
+                    {visibleColumns.expected_delivery && <TableHead className="font-bold">Expected</TableHead>}
+                    {visibleColumns.created && <TableHead className="font-bold">Created</TableHead>}
+                    {visibleColumns.updated && <TableHead className="font-bold">Updated</TableHead>}
+                    <TableHead className="text-right font-bold">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {currentDisplayItems.length === 0 ? (
                   <TableRow>
@@ -936,6 +1013,7 @@ const Orders = () => {
                           getDeliveryCountdown={getDeliveryCountdown}
                           handleCallShopper={handleCallShopper}
                           handleViewDetails={handleViewDetails}
+                          visibleColumns={visibleColumns}
                         />
                       );
                     } else {
@@ -950,6 +1028,7 @@ const Orders = () => {
                           getDeliveryCountdown={getDeliveryCountdown}
                           handleCallShopper={handleCallShopper}
                           handleViewDetails={handleViewDetails}
+                          visibleColumns={visibleColumns}
                         />
                       );
                     }
@@ -957,19 +1036,20 @@ const Orders = () => {
                 )}
               </TableBody>
             </Table>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={size => {
-                setPageSize(size);
-                setCurrentPage(1);
-              }}
-              totalItems={totalItems}
-            />
-          </Card>
-        </TabsContent>
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={size => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+            totalItems={totalItems}
+          />
+        </Card>
+      </TabsContent>
 
         {isProjectUser && (
           <>
