@@ -23,6 +23,10 @@ interface PromotionTableProps {
   systemConfig?: SystemConfig;
 }
 
+// Base column count: Promotion, Shop/Restaurant, Code, Benefit, Period, Limits, Funded By, Stacking, Free Delivery, Status, Actions = 11
+// + 1 expand toggle column for project users = 12
+const BASE_COLS = 11;
+
 export const PromotionTable: React.FC<PromotionTableProps> = ({
   promotions,
   isLoading,
@@ -32,6 +36,8 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
   isProjectUser,
   systemConfig,
 }) => {
+  const colSpan = isProjectUser ? BASE_COLS + 1 : BASE_COLS;
+
   return (
     <Card>
       <Table>
@@ -44,6 +50,9 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
             <TableHead>Benefit</TableHead>
             <TableHead>Period</TableHead>
             <TableHead>Limits</TableHead>
+            <TableHead>Funded By</TableHead>
+            <TableHead>Stacking</TableHead>
+            <TableHead>Free Del.</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -51,7 +60,7 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={isProjectUser ? 9 : 8} className="text-center py-8">
+              <TableCell colSpan={colSpan} className="text-center py-8">
                 <div className="flex justify-center items-center">
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
@@ -59,7 +68,7 @@ export const PromotionTable: React.FC<PromotionTableProps> = ({
             </TableRow>
           ) : promotions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={isProjectUser ? 9 : 8} className="text-center py-8">
+              <TableCell colSpan={colSpan} className="text-center py-8">
                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                   <Tag className="h-8 w-8 text-muted-foreground/50" />
                   <p>No promotions found</p>

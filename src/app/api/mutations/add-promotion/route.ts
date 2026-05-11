@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Explicitly filter variables and handle type conversions
+    // budget_used is NEVER allowed — it is read-only and managed by the backend only
     const allowedFields = [
       'usage_per_customer',
       'usage_limit',
@@ -39,7 +40,6 @@ export async function POST(req: NextRequest) {
       'promotion_type',
       'priority',
       'name',
-      'min_purchase_amount',
       'end_time',
       'end_date',
       'discount_value',
@@ -52,7 +52,21 @@ export async function POST(req: NextRequest) {
       'customer_discount_percent',
       'influencer_id',
       'influencer_code',
-      'earning_per_order',
+      // ✅ COMMISSION (replaces earning_per_order)
+      'commission_type',
+      'commission_value',
+      'commission_cap',
+      // ✅ ECONOMICS
+      'funded_by',
+      'affects',
+      'stacking_type',
+      'max_discount',
+      'min_order_value',
+      // ✅ DELIVERY
+      'free_delivery',
+      'delivery_paid_by',
+      // ✅ BUDGET (budget_used intentionally excluded — backend only)
+      'budget_limit',
     ];
 
     const uuidFields = ['restaurant_id', 'shop_id', 'applies_to_id', 'influencer_id'];
@@ -88,8 +102,8 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Special handling for numeric fields that Hasura expects as Strings
-      if (['customer_discount_percent', 'earning_per_order'].includes(field) && value != null) {
+      // Special handling for numeric fields
+      if (['customer_discount_percent'].includes(field) && value != null) {
         value = value.toString();
       }
 

@@ -1874,7 +1874,7 @@ export const GET_REEL_ORDERS = `
         user_id
         video_url
       }
-      Shoppers {
+      shoppers {
         created_at
         email
         gender

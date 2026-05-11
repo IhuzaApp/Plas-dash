@@ -52,6 +52,7 @@ interface Reel {
   shop_id?: string | null;
   restaurant_id?: string | null;
   user_id?: string | null;
+  business_id?: string | null;
 }
 
 interface EditReelModalProps {
@@ -171,7 +172,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
           }
         )
           .then(url => {
-            setFormData(prev => ({ ...prev, video_url: url }));
+            setFormData((prev: any) => ({ ...prev, video_url: url }));
             setIsUploading(false);
             toast.success(
               `${file.type.startsWith('image/') ? 'Image' : 'Video'} uploaded successfully!`
@@ -218,7 +219,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
       fileInputRef.current.value = '';
     }
     // Restore original file if we remove the new one
-    setFormData(prev => ({ ...prev, video_url: oldFileUrl || '' }));
+    setFormData((prev: any) => ({ ...prev, video_url: oldFileUrl || '' }));
   };
 
   const handleUpdateReel = async () => {
@@ -434,7 +435,7 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
                 <Select
                   value={formData.business_id || 'none'}
                   onValueChange={value =>
-                    setFormData(prev => ({
+                    setFormData((prev: any) => ({
                       ...prev,
                       business_id: value === 'none' ? '' : value,
                       shop_id: '', // Mutual exclusion
@@ -646,12 +647,12 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
               </Label>
               <div className="mt-2">
                 {formData.video_url &&
-                !formData.video_url.includes('youtube.com') &&
-                !formData.video_url.includes('youtu.be') ? (
+                  !formData.video_url.includes('youtube.com') &&
+                  !formData.video_url.includes('youtu.be') ? (
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <div className="relative aspect-video">
                       {formData.video_url.includes('/reels/images/') ||
-                      formData.video_url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i) ? (
+                        formData.video_url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i) ? (
                         <img
                           src={formData.video_url}
                           alt="Current"

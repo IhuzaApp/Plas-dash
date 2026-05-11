@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, Filter, Plus, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
 import {
@@ -28,12 +27,22 @@ import {
 import { PromotionTable } from '@/components/promotions/PromotionTable';
 import { PromotionForm } from '@/components/promotions/PromotionForm';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
-import { PromotionFilters } from '@/components/promotions/PromotionFilters';
+import {
+  PromotionFilters,
+  PromotionFilterState,
+} from '@/components/promotions/PromotionFilters';
+
+const DEFAULT_FILTERS: PromotionFilterState = {
+  searchQuery: '',
+  fundedBy: 'all',
+  freeDelivery: 'all',
+  promoType: 'all',
+};
 
 const Promotions = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<PromotionFilterState>(DEFAULT_FILTERS);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const queryClient = useQueryClient();
@@ -70,18 +79,41 @@ const Promotions = () => {
   });
 
   const filteredPromotions = useMemo(() => {
-    if (!data || !searchQuery.trim()) return data || [];
+    if (!data) return [];
 
-    const query = searchQuery.toLowerCase().trim();
     return data.filter(promotion => {
-      return (
-        promotion.name.toLowerCase().includes(query) ||
-        promotion.code?.toLowerCase().includes(query) ||
-        promotion.status.toLowerCase().includes(query) ||
-        (promotion.discount_value && promotion.discount_value.toLowerCase().includes(query))
-      );
+      // Text search
+      if (filters.searchQuery.trim()) {
+        const q = filters.searchQuery.toLowerCase().trim();
+        const matches =
+          promotion.name.toLowerCase().includes(q) ||
+          promotion.code?.toLowerCase().includes(q) ||
+          promotion.status.toLowerCase().includes(q) ||
+          (promotion.discount_value && promotion.discount_value.toLowerCase().includes(q));
+        if (!matches) return false;
+      }
+
+      // Funded by filter
+      if (filters.fundedBy !== 'all' && promotion.funded_by !== filters.fundedBy) {
+        return false;
+      }
+
+      // Free delivery filter
+      if (filters.freeDelivery === 'yes' && !promotion.free_delivery) return false;
+      if (filters.freeDelivery === 'no' && promotion.free_delivery) return false;
+
+      // Promo type filter
+      if (filters.promoType === 'influencer' && !promotion.influencer_id) return false;
+      if (
+        filters.promoType === 'standard' &&
+        promotion.influencer_id &&
+        promotion.influencer_id !== 'none'
+      )
+        return false;
+
+      return true;
     });
-  }, [data, searchQuery]);
+  }, [data, filters]);
 
   const form = useForm<PromotionFormValues>({
     resolver: zodResolver(promotionFormSchema),
@@ -100,9 +132,11 @@ const Promotions = () => {
 
   const onSubmit = async (values: PromotionFormValues) => {
     try {
+      const isInfluencerPromo = values.business_type === 'none';
+
       const payload: any = {
         name: values.name,
-        code: values.business_type === 'none' ? values.influencer_code : values.code || '',
+        code: isInfluencerPromo ? values.influencer_code : values.code || '',
         promotion_type: values.promotion_type,
         applies_to_type: values.applies_to_type,
         applies_to_id: values.applies_to_id || undefined,
@@ -124,12 +158,39 @@ const Promotions = () => {
         customer_discount_percent: values.customer_discount_percent
           ? parseInt(values.customer_discount_percent)
           : null,
-        influencer_id: values.influencer_id === 'none' ? null : values.influencer_id,
-        influencer_code: values.influencer_code || null,
-        earning_per_order: values.earning_per_order ? parseFloat(values.earning_per_order) : null,
+
+        // 👤 INFLUENCER — only set when business_type = 'none'
+        influencer_id: isInfluencerPromo
+          ? values.influencer_id === 'none'
+            ? null
+            : values.influencer_id
+          : null,
+        influencer_code: isInfluencerPromo ? values.influencer_code || null : null,
+        commission_type: isInfluencerPromo ? values.commission_type || null : null,
+        commission_value: isInfluencerPromo && values.commission_value
+          ? parseFloat(values.commission_value)
+          : null,
+        commission_cap: isInfluencerPromo && values.commission_cap
+          ? parseFloat(values.commission_cap)
+          : null,
+
+        // 💰 ECONOMICS
+        funded_by: values.funded_by,
+        affects: values.affects,
+        stacking_type: values.stacking_type,
+        max_discount: values.max_discount ? parseFloat(values.max_discount) : null,
+        min_order_value: values.min_order_value ? parseFloat(values.min_order_value) : null,
+
+        // 🚚 DELIVERY
+        free_delivery: values.free_delivery ?? false,
+        delivery_paid_by: values.free_delivery ? values.delivery_paid_by || null : null,
+
+        // 💰 BUDGET — budget_limit only; budget_used is NEVER sent (backend-managed)
+        budget_limit: values.budget_limit ? parseFloat(values.budget_limit) : null,
       };
 
-      if (values.business_type === 'none') {
+      // Influencer-only promotion overrides
+      if (isInfluencerPromo) {
         payload.promotion_type = 'percentage';
         payload.applies_to_type = 'entire_store';
         payload.discount_value = '0';
@@ -191,10 +252,10 @@ const Promotions = () => {
       name: promotion.name,
       code: promotion.code || '',
       promotion_type: promotion.promotion_type as any,
-      discount_value: promotion.discount_value,
+      discount_value: promotion.discount_value?.toString() || '',
       buy_quantity: promotion.buy_quantity || '',
-      get_quantity: promotion.discount_value?.includes('Get ')
-        ? promotion.discount_value.split('Get ')[1]
+      get_quantity: promotion.discount_value?.toString().includes('Get ')
+        ? promotion.discount_value.toString().split('Get ')[1]
         : '',
       applies_to_type: promotion.applies_to_type as any,
       applies_to_id: promotion.applies_to_id || '',
@@ -217,9 +278,27 @@ const Promotions = () => {
       business_id: promotion.restaurant_id || promotion.shop_id || '',
       promotion_scope: promotion.promotion_scope || 'all_orders',
       customer_discount_percent: promotion.customer_discount_percent?.toString() || '',
+
+      // 👤 Influencer
       influencer_id: promotion.influencer_id || 'none',
       influencer_code: promotion.influencer_code || '',
-      earning_per_order: promotion.earning_per_order?.toString() || '',
+      commission_type: promotion.commission_type ?? 'fixed',
+      commission_value: promotion.commission_value?.toString() || '',
+      commission_cap: promotion.commission_cap?.toString() || '',
+
+      // 💰 Economics — fallback defaults for old promotions
+      funded_by: promotion.funded_by ?? 'platform',
+      affects: promotion.affects ?? 'subtotal',
+      stacking_type: promotion.stacking_type ?? 'exclusive',
+      max_discount: promotion.max_discount?.toString() || '',
+      min_order_value: promotion.min_order_value?.toString() || '',
+
+      // 🚚 Delivery
+      free_delivery: promotion.free_delivery ?? false,
+      delivery_paid_by: promotion.delivery_paid_by ?? undefined,
+
+      // 💰 Budget (budget_used is read-only — never mapped to form)
+      budget_limit: promotion.budget_limit?.toString() || '',
     });
     setIsDrawerOpen(true);
   };
@@ -241,14 +320,10 @@ const Promotions = () => {
       />
 
       <div className="space-y-4">
-        <PromotionFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onClearSearch={() => setSearchQuery('')}
-        />
+        <PromotionFilters filters={filters} onFiltersChange={setFilters} />
 
         <PromotionTable
-          promotions={filteredPromotions || []}
+          promotions={filteredPromotions}
           isLoading={isLoading}
           expandedRows={expandedRows}
           onToggleRow={toggleRow}

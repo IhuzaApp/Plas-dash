@@ -25,7 +25,6 @@ export async function POST(req: NextRequest) {
       'order_threshold',
       'high_value_influencer_bonus',
       'high_value_order_threshold',
-      'free_delivery_enabled',
     ];
     const sanitizedVariables: any = {};
     allowedFields.forEach(field => {

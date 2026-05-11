@@ -115,12 +115,7 @@ interface UnifiedOrder {
     description: string;
     video_url: string;
   };
-  Shoppers?: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-  } | null;
+  // Removed redundant Shoppers field in favor of shopper field above
   // Business order
   orderedBy?: {
     id: string;
@@ -261,7 +256,7 @@ const Orders = () => {
       delivery_note: reelOrder.delivery_note,
       found: reelOrder.found,
       Reel: reelOrder.Reel,
-      Shoppers: reelOrder.Shoppers,
+      shopper: reelOrder.shopper,
       Address: reelOrder.Address,
       User: reelOrder.User,
       Shop: reelOrder.Shop,

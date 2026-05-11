@@ -1,7 +1,7 @@
 import React from 'react';
 import { useWatch, UseFormReturn } from 'react-hook-form';
 import { format } from 'date-fns';
-import { CalendarIcon, RefreshCw, Loader2 } from 'lucide-react';
+import { CalendarIcon, RefreshCw, Loader2, DollarSign, Layers, Truck, PiggyBank, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,7 +80,20 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                           <FormLabel>Business Type</FormLabel>
                           <FormControl>
                             <RadioGroup
-                              onValueChange={field.onChange}
+                              onValueChange={(val) => {
+                                field.onChange(val);
+                                if (val !== 'none') {
+                                  // Clear influencer/commission fields when switching to standard promo
+                                  form.setValue('influencer_id', 'none');
+                                  form.setValue('influencer_code', '');
+                                  form.setValue('commission_type', undefined as any);
+                                  form.setValue('commission_value', '');
+                                  form.setValue('commission_cap', '');
+                                } else {
+                                  // Set default when switching to influencer promo
+                                  form.setValue('commission_type', 'fixed');
+                                }
+                              }}
                               defaultValue={field.value}
                               className="flex gap-4"
                             >
@@ -122,15 +135,15 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                               <SelectContent>
                                 {watchAll.business_type === 'restaurant'
                                   ? restaurants?.map(r => (
-                                      <SelectItem key={r.id} value={r.id}>
-                                        {r.name}
-                                      </SelectItem>
-                                    ))
+                                    <SelectItem key={r.id} value={r.id}>
+                                      {r.name}
+                                    </SelectItem>
+                                  ))
                                   : shops?.map(s => (
-                                      <SelectItem key={s.id} value={s.id}>
-                                        {s.name}
-                                      </SelectItem>
-                                    ))}
+                                    <SelectItem key={s.id} value={s.id}>
+                                      {s.name}
+                                    </SelectItem>
+                                  ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -228,21 +241,73 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                               </FormItem>
                             )}
                           />
-
                           <FormField
                             control={form.control}
-                            name="earning_per_order"
+                            name="commission_type"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Earning Per Purchase</FormLabel>
+                                <FormLabel>Commission Type</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="fixed">Fixed Amount</SelectItem>
+                                    <SelectItem value="percentage">Percentage</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="commission_value"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Commission Value
+                                  {watchAll.commission_type === 'percentage' ? ' (%)' : ''}
+                                </FormLabel>
                                 <FormControl>
                                   <Input
                                     type="number"
-                                    placeholder="100.00"
+                                    min="0"
+                                    max={watchAll.commission_type === 'percentage' ? 100 : undefined}
+                                    placeholder={watchAll.commission_type === 'percentage' ? '10' : '500'}
                                     {...field}
                                     value={field.value ?? ''}
                                   />
                                 </FormControl>
+                                <FormDescription>
+                                  {watchAll.commission_type === 'percentage'
+                                    ? 'Max 100%. Percentage of order value.'
+                                    : 'Fixed amount per qualifying order.'}
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="commission_cap"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Commission Cap</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    placeholder="Max payout per order"
+                                    {...field}
+                                    value={field.value ?? ''}
+                                  />
+                                </FormControl>
+                                <FormDescription>Max payout per order (optional).</FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -767,6 +832,226 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                 </div>
               </div>
             )}
+
+            {/* 6. Promotion Economics */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                6. Promotion Economics
+              </h3>
+              <div className="bg-muted/30 p-4 rounded-xl border space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="funded_by"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Who Pays *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select funder" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="platform">Platform</SelectItem>
+                            <SelectItem value="merchant">Merchant</SelectItem>
+                            <SelectItem value="shared">Shared</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>Who absorbs the cost of this promotion.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="affects"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Affects *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select target" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="subtotal">Product Price</SelectItem>
+                            <SelectItem value="delivery_fee">Delivery Fee</SelectItem>
+                            <SelectItem value="service_fee">Service Fee</SelectItem>
+                            <SelectItem value="total">Entire Order</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>Which part of the order is discounted.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="max_discount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Discount Cap</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="e.g. 5000"
+                            {...field}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormDescription>Max discount amount in {systemConfig?.currency || 'currency'}.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="min_order_value"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Min Order Value</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="e.g. 10000"
+                            {...field}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormDescription>Order must exceed this to qualify.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="stacking_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Stacking Rule *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select rule" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="exclusive">Exclusive (no stacking)</SelectItem>
+                            <SelectItem value="with_referral">Allow Referral Only</SelectItem>
+                            <SelectItem value="stackable">Fully Stackable</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Free Delivery */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                7. Free Delivery
+              </h3>
+              <div className="bg-muted/30 p-4 rounded-xl border space-y-4">
+                <FormField
+                  control={form.control}
+                  name="free_delivery"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border bg-background p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Enable Free Delivery</FormLabel>
+                        <FormDescription>
+                          Customer pays nothing for delivery with this promotion.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                {watchAll.free_delivery && (
+                  <FormField
+                    control={form.control}
+                    name="delivery_paid_by"
+                    render={({ field }) => (
+                      <FormItem className="animate-in fade-in slide-in-from-top-1">
+                        <FormLabel>Delivery Cost Paid By *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select who covers delivery" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="platform">Platform</SelectItem>
+                            <SelectItem value="merchant">Merchant</SelectItem>
+                            <SelectItem value="shared">Shared</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>Required — delivery is never truly free.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* 8. Budget Control */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+                <PiggyBank className="h-4 w-4" />
+                8. Budget Control
+              </h3>
+              <div className="bg-muted/30 p-4 rounded-xl border space-y-4">
+                <FormField
+                  control={form.control}
+                  name="budget_limit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Total Campaign Budget</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="e.g. 500000"
+                          {...field}
+                          value={field.value ?? ''}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Promotion pauses automatically when this budget is exhausted. Budget usage is tracked by the backend only.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* High Risk Warning */}
+            {watchAll.funded_by === 'platform' && watchAll.free_delivery && watchAll.business_type === 'none' && watchAll.commission_type && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-xl flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-sm">High Platform Cost Warning</p>
+                  <p className="text-xs text-yellow-700/90 leading-relaxed">
+                    This promotion is <strong>fully funded by the platform</strong>, includes <strong>free delivery</strong>, AND pays an <strong>influencer commission</strong>. This configuration carries a high risk of negative profitability per order.
+                  </p>
+                </div>
+              </div>
+            )}
           </form>
         </Form>
       </div>
@@ -812,7 +1097,7 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                 ? `Buy ${watchAll.buy_quantity} Get ${watchAll.get_quantity} `
                 : ''}
               {['rush_hour', 'flash_sale', 'bundle'].includes(watchPromotionType as string) &&
-              watchAll.discount_value
+                watchAll.discount_value
                 ? `${watchAll.discount_value} `
                 : ''}
               {watchAll.code ? (

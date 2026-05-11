@@ -57,7 +57,6 @@ const GET_INFLUENCER_BY_ID = `
         commission_type
         amount
         order_threshold
-        free_delivery_enabled
         high_value_influencer_bonus
         high_value_order_threshold
         created_at
@@ -83,7 +82,9 @@ const GET_INFLUENCER_BY_ID = `
         promotion_type
         discount_value
         influencer_code
-        earning_per_order
+        commission_type
+        commission_value
+        commission_cap
         start_date
         end_date
         created_at
@@ -93,7 +94,6 @@ const GET_INFLUENCER_BY_ID = `
         buy_quantity
         applies_to_id
         influencer_id
-        is_stackable
         min_purchase_amount
         priority
         promotion_scope

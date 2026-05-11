@@ -69,7 +69,7 @@ const GET_ALL_REEL_ORDERS = gql`
           longitude
         }
       }
-      Shoppers {
+      shoppers {
         id
         name
         phone
@@ -179,7 +179,7 @@ export async function GET(req: Request) {
             longitude?: number | null;
           } | null;
         } | null;
-        Shoppers: {
+        shoppers: {
           id: string;
           name?: string | null;
           phone?: string | null;
@@ -215,7 +215,7 @@ export async function GET(req: Request) {
       User: o.User,
       Address: o.Address,
       Reel: o.Reel,
-      Shoppers: o.Shoppers,
+      shopper: o.shoppers,
       Shop: o.Reel?.Shops
         ? {
             id: o.Reel.Shops.id,

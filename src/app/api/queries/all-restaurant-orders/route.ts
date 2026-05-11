@@ -96,7 +96,7 @@ const GET_ALL_RESTAURANT_ORDERS = gql`
           }
         }
       }
-      shopper {
+      shoppers {
         id
         name
         shopper {
@@ -277,7 +277,7 @@ export async function GET(req: Request) {
           aggregate: { count: number } | null;
         };
         restaurant_order_items: RestaurantOrderItem[];
-        shopper: {
+        shoppers: {
           id: string;
           name?: string;
           updated_at?: string;
@@ -344,15 +344,15 @@ export async function GET(req: Request) {
         unitsCount,
         shopper_id: o.shopper_id,
         shopper:
-          o.shopper != null
+          o.shoppers != null
             ? {
-                id: o.shopper.id,
-                name: o.shopper.name ?? o.shopper.shopper?.full_name ?? '',
-                phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? '',
+                id: o.shoppers.id,
+                name: o.shoppers.name ?? o.shoppers.shopper?.full_name ?? '',
+                phone: o.shoppers.shopper?.phone_number ?? o.shoppers.shopper?.phone ?? '',
                 email: '',
-                shopper: o.shopper.shopper,
-                vehicle: o.shopper.vehicle,
-                updated_at: o.shopper.updated_at,
+                shopper: o.shoppers.shopper,
+                vehicle: o.shoppers.vehicle,
+                updated_at: o.shoppers.updated_at,
               }
             : undefined,
       };

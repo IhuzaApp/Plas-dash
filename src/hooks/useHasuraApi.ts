@@ -348,7 +348,7 @@ interface ReelOrder {
     user_id: string | null;
     video_url: string;
   };
-  Shoppers: {
+  shopper: {
     created_at: string;
     email: string;
     gender: string;
@@ -1036,7 +1036,7 @@ export function useSearchProductNames(searchTerm: string) {
   });
 }
 
-// Admin: all reel orders (from API route; includes User, Address, Reel, Shoppers, Shop)
+// Admin: all reel orders (from API route; includes User, Address, Reel, shopper, Shop)
 export function useReelOrders() {
   return useQuery<{ reel_orders: ReelOrder[] }, Error>({
     queryKey: ['api', 'all-reel-orders'],

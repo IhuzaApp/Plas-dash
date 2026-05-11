@@ -420,7 +420,7 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                                 className="flex items-center px-4 py-3 hover:bg-accent hover:text-accent-foreground cursor-pointer border-t mt-1 text-primary font-medium"
                                 onClick={handleCreateNewDish}
                               >
-                                <span>Create new item: "{searchTerm}"</span>
+                                <span>Create new item: &quot;{searchTerm}&quot;</span>
                               </div>
                             )}
                             {filteredProducts.map((p: any) => (
@@ -518,8 +518,8 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                                 >
                                   {field.value
                                     ? PREDEFINED_CATEGORIES.find(
-                                        category => category === field.value
-                                      )
+                                      category => category === field.value
+                                    )
                                     : 'Select category'}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>

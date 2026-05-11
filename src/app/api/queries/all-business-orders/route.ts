@@ -84,7 +84,7 @@ const GET_ALL_BUSINESS_ORDERS = gql`
           status
         }
       }
-      shopper {
+      shoppers {
         id
         shopper {
           full_name
@@ -193,7 +193,7 @@ export async function GET(req: Request) {
           created_at?: string;
           business_account?: any;
         } | null;
-        shopper: {
+        shoppers: {
           id: string;
           name?: string;
           phone?: string;
@@ -212,7 +212,7 @@ export async function GET(req: Request) {
     }>(GET_ALL_BUSINESS_ORDERS, { where });
 
     const orders = (data.businessProductOrders || []).map(o => {
-      const nested = o.shopper?.shopper;
+      const nested = o.shoppers?.shopper;
       return {
         id: o.id,
         OrderID: o.OrderID ?? o.id,
@@ -237,12 +237,12 @@ export async function GET(req: Request) {
         transportation_fee: o.transportation_fee ?? null,
         service_fee: o.service_fee ?? null,
         businessTransactions: o.businessTransactions ?? [],
-        shopper: o.shopper
+        shopper: o.shoppers
           ? {
-              id: o.shopper.id,
-              name: (o.shopper as any).name ?? nested?.full_name ?? '',
-              phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
-              email: (o.shopper as any).email ?? '',
+              id: o.shoppers.id,
+              name: (o.shoppers as any).name ?? nested?.full_name ?? '',
+              phone: (o.shoppers as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
+              email: (o.shoppers as any).email ?? '',
             }
           : undefined,
       };

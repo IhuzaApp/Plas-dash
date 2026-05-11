@@ -1040,7 +1040,6 @@ export const ADD_COMMISSION_RULE = `
     $order_threshold: Int
     $high_value_influencer_bonus: String
     $high_value_order_threshold: String
-    $free_delivery_enabled: Boolean
   ) {
     insert_influencer_commissions_one(
       object: {
@@ -1050,7 +1049,6 @@ export const ADD_COMMISSION_RULE = `
         order_threshold: $order_threshold
         high_value_influencer_bonus: $high_value_influencer_bonus
         high_value_order_threshold: $high_value_order_threshold
-        free_delivery_enabled: $free_delivery_enabled
       }
     ) {
       id
@@ -1069,7 +1067,6 @@ export const UPDATE_COMMISSION_RULE = `
     $order_threshold: Int
     $high_value_influencer_bonus: String
     $high_value_order_threshold: String
-    $free_delivery_enabled: Boolean
   ) {
     update_influencer_commissions_by_pk(
       pk_columns: { id: $id }
@@ -1079,7 +1076,6 @@ export const UPDATE_COMMISSION_RULE = `
         order_threshold: $order_threshold
         high_value_influencer_bonus: $high_value_influencer_bonus
         high_value_order_threshold: $high_value_order_threshold
-        free_delivery_enabled: $free_delivery_enabled
       }
     ) {
       id

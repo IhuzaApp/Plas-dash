@@ -50,7 +50,7 @@ const GET_ORDERS = gql`
           }
         }
       }
-      Shoppers {
+      shoppers {
         id
         name
         phone
@@ -114,7 +114,7 @@ export async function GET(req: Request) {
             sum: { quantity: number | null } | null;
           } | null;
         };
-        Shoppers?: {
+        shoppers?: {
           id?: string;
           name?: string;
           phone?: string;
@@ -162,11 +162,11 @@ export async function GET(req: Request) {
         Address: o.Address ?? undefined,
         Order_Items: o.Order_Items ?? [],
         shopper:
-          o.Shoppers != null
+          o.shoppers != null
             ? {
-                id: o.Shoppers.id ?? '',
-                name: o.Shoppers.name ?? o.Shoppers.shopper?.full_name ?? '',
-                phone: o.Shoppers.phone ?? o.Shoppers.shopper?.phone_number ?? '',
+                id: o.shoppers.id ?? '',
+                name: o.shoppers.name ?? o.shoppers.shopper?.full_name ?? '',
+                phone: o.shoppers.phone ?? o.shoppers.shopper?.phone_number ?? '',
                 email: '',
               }
             : undefined,

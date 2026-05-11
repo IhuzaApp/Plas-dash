@@ -29,9 +29,28 @@ export const promotionFormSchema = z
     status: z.enum(['active', 'scheduled', 'disabled']).default('active'),
     promotion_scope: z.string().default('all_orders'),
     customer_discount_percent: z.string().optional(),
+
+    // Influencer fields (only used when business_type = 'none')
     influencer_id: z.string().optional(),
     influencer_code: z.string().optional(),
-    earning_per_order: z.string().optional(),
+    // ✅ COMMISSION FIELDS — replaces earning_per_order
+    commission_type: z.enum(['fixed', 'percentage']).optional(),
+    commission_value: z.string().optional(),
+    commission_cap: z.string().optional(),
+
+    // 💰 ECONOMICS
+    funded_by: z.enum(['platform', 'merchant', 'shared']).default('platform'),
+    affects: z.enum(['subtotal', 'delivery_fee', 'service_fee', 'total']).default('subtotal'),
+    stacking_type: z.enum(['exclusive', 'with_referral', 'stackable']).default('exclusive'),
+    max_discount: z.string().optional(),
+    min_order_value: z.string().optional(),
+
+    // 🚚 DELIVERY
+    free_delivery: z.boolean().default(false),
+    delivery_paid_by: z.enum(['platform', 'merchant', 'shared']).optional(),
+
+    // 💰 BUDGET
+    budget_limit: z.string().optional(),
   })
   .refine(
     data => {
@@ -47,11 +66,10 @@ export const promotionFormSchema = z
   )
   .refine(
     data => {
-      // Skip these checks for Influencer Promotions (None) as they use customer_discount_percent instead
+      // Skip discount checks for Influencer Promotions (None)
       if (data.business_type === 'none') {
         return true;
       }
-
       if (
         data.promotion_type === 'percentage' &&
         (!data.discount_value ||
@@ -77,6 +95,63 @@ export const promotionFormSchema = z
     {
       message: 'Invalid discount details for the selected promotion type',
       path: ['discount_value'],
+    }
+  )
+  // 🔴 CRITICAL: delivery_paid_by is required when free_delivery = true
+  .refine(
+    data => {
+      if (data.free_delivery && !data.delivery_paid_by) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Delivery payer is required when free delivery is enabled',
+      path: ['delivery_paid_by'],
+    }
+  )
+  // 🔴 CRITICAL: commission_value percentage cannot exceed 100%
+  .refine(
+    data => {
+      // Only apply this check to influencer promotions using a percentage commission
+      if (data.business_type === 'none' && data.commission_type === 'percentage') {
+        if (data.commission_value) {
+          return Number(data.commission_value) <= 100;
+        }
+      }
+      return true;
+    },
+    {
+      message: 'Percentage commission cannot exceed 100%',
+      path: ['commission_value'],
+    }
+  )
+  // 🔴 CRITICAL: commission_value must be non-negative
+  .refine(
+    data => {
+      if (data.business_type === 'none' && data.commission_value) {
+        return Number(data.commission_value) >= 0;
+      }
+      return true;
+    },
+    {
+      message: 'Commission value must be 0 or greater',
+      path: ['commission_value'],
+    }
+  )
+  // 🔴 CRITICAL: Null handling for commission fields — must be empty for standard promos
+  .refine(
+    data => {
+      if (data.business_type !== 'none') {
+        // Strict enforcement: if it's not an influencer promo, these should be empty
+        // Note: form clears these naturally, but this is an extra safety check
+        return !data.commission_type && !data.commission_value && !data.commission_cap;
+      }
+      return true;
+    },
+    {
+      message: 'Commission fields must be empty for standard promotions',
+      path: ['commission_type'], // point to one field for UX
     }
   );
 
@@ -105,15 +180,33 @@ export const DEFAULT_FORM_VALUES: PromotionFormValues = {
   status: 'active',
   promotion_scope: 'public',
   customer_discount_percent: '',
+
+  // Influencer
   influencer_id: 'none',
   influencer_code: '',
-  earning_per_order: '',
+  commission_type: 'fixed',
+  commission_value: '500',
+  commission_cap: '500',
+
+  // Economics
+  funded_by: 'platform',
+  affects: 'subtotal',
+  stacking_type: 'exclusive',
+  max_discount: '1000',
+  min_order_value: '8000',
+
+  // Delivery
+  free_delivery: false,
+  delivery_paid_by: undefined,
+
+  // Budget
+  budget_limit: '1000000',
 };
 
 export const generatePromotionCode = () => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz';
   let code = '';
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 6; i++) {
     code += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return code;

@@ -128,13 +128,7 @@ const SingleOrderRow: React.FC<SingleOrderRowProps> = ({
               variant="outline"
               size="sm"
               onClick={() =>
-                handleCallShopper(
-                  order.type === 'regular' ||
-                    order.type === 'business' ||
-                    order.type === 'restaurant'
-                    ? order.shopper?.phone
-                    : order.Shoppers?.phone
-                )
+                handleCallShopper(order.shopper?.phone)
               }
               className="text-yellow-600 hover:text-yellow-700"
             >

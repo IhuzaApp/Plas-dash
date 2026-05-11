@@ -69,12 +69,7 @@ interface UnifiedOrder {
     description: string;
     video_url: string;
   };
-  Shoppers?: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-  } | null;
+  // Removed redundant Shoppers field in favor of shopper field above
   orderedBy?: {
     id: string;
     name: string;
