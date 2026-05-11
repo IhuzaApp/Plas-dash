@@ -33,7 +33,9 @@ import {
   useRestaurantOrders,
   useSystemConfig,
   useOrderOffers,
+  usePackageDeliveries,
 } from '@/hooks/useHasuraApi';
+import PackageOrderRow from '@/components/Orders/PackageOrderRow';
 import OrderOffersTable from '@/components/Orders/OrderOffersTable';
 import OrderOffersAnalytics from '@/components/Orders/OrderOffersAnalytics';
 import SingleOrderRow from '@/components/Orders/SingleOrderRow';
@@ -66,7 +68,7 @@ const generateShortId = (id: string) => {
 interface UnifiedOrder {
   id: string;
   OrderID: string;
-  type: 'regular' | 'reel' | 'business' | 'restaurant';
+  type: 'regular' | 'reel' | 'business' | 'restaurant' | 'package';
   status: string;
   total: string;
   created_at: string;
@@ -192,6 +194,17 @@ interface UnifiedOrder {
     related_restaurant_order_id?: string | null;
     relate_business_order_id?: string | null;
   }>;
+  // Package delivery
+  DeliveryCode?: string | null;
+  deliveryMethod?: string | null;
+  dropoffLocation?: string | null;
+  pickupLocation?: string | null;
+  receiverName?: string | null;
+  receiverPhone?: string | null;
+  comment?: string | null;
+  timeAndDate?: string | null;
+  package_image?: string | null;
+  package_pickup_image?: string | null;
 }
 
 const Orders = () => {
@@ -201,6 +214,7 @@ const Orders = () => {
   const { data: restaurantOrdersData } = useRestaurantOrders();
   const { data: systemConfig } = useSystemConfig();
   const { data: offersData, isLoading: isOffersLoading } = useOrderOffers();
+  const { data: packageData, isLoading: isPackagesLoading } = usePackageDeliveries();
   const orders = data?.Orders || [];
   const reelOrderItems: any[] = reelOrders?.reel_orders || [];
   const businessOrderItems: any[] = businessOrdersData?.orders || [];
@@ -697,6 +711,10 @@ const Orders = () => {
                 <ShoppingBag className="h-4 w-4" />
                 Combined Orders
               </TabsTrigger>
+              <TabsTrigger value="packages" className="flex items-center gap-2">
+                <LayoutGrid className="h-4 w-4" />
+                Packages
+              </TabsTrigger>
             </>
           )}
         </TabsList>
@@ -878,6 +896,58 @@ const Orders = () => {
                 handleCallShopper={handleCallShopper}
                 handleViewDetails={handleViewDetails}
               />
+            </TabsContent>
+
+            <TabsContent value="packages" className="space-y-4">
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Package ID</TableHead>
+                      <TableHead>Receiver</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Route</TableHead>
+                      <TableHead>Fee</TableHead>
+                      <TableHead>Shopper</TableHead>
+                      <TableHead>Scheduled</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isPackagesLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="h-24 text-center">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                        </TableCell>
+                      </TableRow>
+                    ) : !packageData?.packages || packageData.packages.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                          No package deliveries found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      packageData.packages.map((pkg: any) => (
+                        <PackageOrderRow
+                          key={pkg.id}
+                          pkg={pkg}
+                          onViewDetails={() => {
+                            const unifiedPkg: UnifiedOrder = {
+                              ...pkg,
+                              OrderID: pkg.DeliveryCode || pkg.id,
+                              type: 'package',
+                              total: pkg.delivery_fee || '0',
+                            };
+                            handleViewDetails(unifiedPkg);
+                          }}
+                          formatCurrency={formatCurrency}
+                        />
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
             </TabsContent>
           </>
         )}

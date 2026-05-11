@@ -617,7 +617,6 @@ export const GET_ALL_WALLETS_WITH_TRANSACTIONS = `
           signature
           updated_at
           transport_mode
-          telegram_id
           status
           user_id
           phone_number
@@ -1170,7 +1169,6 @@ export const GET_SHOPPERS = `
         updated_at
       }
     }
-    telegram_id
     Revenues {
       amount
       commission_percentage
@@ -1388,7 +1386,6 @@ export const GET_SHOPPER_FULL_DETAILS = `
           updated_at
         }
       }
-      telegram_id
       Revenues {
         amount
         commission_percentage
@@ -1618,7 +1615,6 @@ export const GET_ALL_REVENUE_DETAILED = `
         phone_number
         profile_photo
         status
-        telegram_id
         transport_mode
         updated_at
         user_id
@@ -1875,16 +1871,9 @@ export const GET_REEL_ORDERS = `
         video_url
       }
       shoppers {
-        created_at
-        email
-        gender
         id
-        is_active
-        name
-        phone
-        profile_picture
-        role
-        updated_at
+        full_name
+        phone_number
       }
       Address {
         city

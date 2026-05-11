@@ -26,7 +26,6 @@ query getShopperInformation {
     latitude
     proofOfResidency
     signature
-    telegram_id
     drivingLicense_Image
     collection_comment
     guarantor
@@ -140,7 +139,6 @@ query GetShoppersByUser_id($user_id: uuid = "") {
         shopper_id
       }
     }
-    telegram_id
     Revenues {
       amount
       commission_percentage

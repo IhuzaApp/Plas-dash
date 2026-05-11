@@ -98,31 +98,22 @@ const GET_ALL_RESTAURANT_ORDERS = gql`
       }
       shoppers {
         id
-        name
-        shopper {
-          full_name
-          phone_number
-          Employment_id
-          Police_Clearance_Cert
-          active
-          address
-          drivingLicense_Image
-          driving_license
-          guarantorPhone
-          guarantor
-          phone
-          signature
-          profile_photo
-          updated_at
-        }
+        full_name
+        phone_number
+        Employment_id
+        Police_Clearance_Cert
+        active
+        address
+        drivingLicense_Image
+        driving_license
+        guarantorPhone
+        guarantor
+        phone
+        signature
+        profile_photo
+        plate_number
+        transport_mode
         updated_at
-        vehicle {
-          model
-          photo
-          plate_number
-          type
-          id
-        }
       }
       discount
       found
@@ -279,31 +270,22 @@ export async function GET(req: Request) {
         restaurant_order_items: RestaurantOrderItem[];
         shoppers: {
           id: string;
-          name?: string;
+          full_name?: string;
+          phone_number?: string;
           updated_at?: string;
-          shopper?: {
-            full_name?: string;
-            phone_number?: string;
-            Employment_id?: string;
-            Police_Clearance_Cert?: string;
-            active?: boolean;
-            address?: string;
-            drivingLicense_Image?: string;
-            driving_license?: string;
-            guarantorPhone?: string;
-            guarantor?: string;
-            phone?: string;
-            signature?: string;
-            profile_photo?: string;
-            updated_at?: string;
-          } | null;
-          vehicle?: {
-            model?: string;
-            photo?: string;
-            plate_number?: string;
-            type?: string;
-            id?: string;
-          } | null;
+          Employment_id?: string;
+          Police_Clearance_Cert?: string;
+          active?: boolean;
+          address?: string;
+          drivingLicense_Image?: string;
+          driving_license?: string;
+          guarantorPhone?: string;
+          guarantor?: string;
+          phone?: string;
+          signature?: string;
+          profile_photo?: string;
+          plate_number?: string;
+          transport_mode?: string;
         } | null;
       }>;
     }>(GET_ALL_RESTAURANT_ORDERS, { where });
@@ -347,11 +329,11 @@ export async function GET(req: Request) {
           o.shoppers != null
             ? {
                 id: o.shoppers.id,
-                name: o.shoppers.name ?? o.shoppers.shopper?.full_name ?? '',
-                phone: o.shoppers.shopper?.phone_number ?? o.shoppers.shopper?.phone ?? '',
+                name: o.shoppers.full_name ?? '',
+                phone: o.shoppers.phone_number ?? o.shoppers.phone ?? '',
                 email: '',
-                shopper: o.shoppers.shopper,
-                vehicle: o.shoppers.vehicle,
+                shopper: o.shoppers,
+                vehicle: o.shoppers.plate_number ? { plate_number: o.shoppers.plate_number } : undefined,
                 updated_at: o.shoppers.updated_at,
               }
             : undefined,

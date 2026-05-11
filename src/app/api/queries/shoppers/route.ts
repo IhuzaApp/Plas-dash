@@ -34,7 +34,6 @@ const GET_SHOPPERS = gql`
       latitude
       proofOfResidency
       signature
-      telegram_id
       drivingLicense_Image
       collection_comment
       guarantor
@@ -78,7 +77,6 @@ const GET_SHOPPER_BY_USER_ID = gql`
       latitude
       proofOfResidency
       signature
-      telegram_id
       drivingLicense_Image
       collection_comment
       guarantor

@@ -52,12 +52,8 @@ const GET_ORDERS = gql`
       }
       shoppers {
         id
-        name
-        phone
-        shopper {
-          full_name
-          phone_number
-        }
+        full_name
+        phone_number
       }
       Shop {
         id
@@ -116,10 +112,9 @@ export async function GET(req: Request) {
         };
         shoppers?: {
           id?: string;
-          name?: string;
-          phone?: string;
-          shopper?: { full_name?: string; phone_number?: string } | null;
-        } | null;
+          full_name?: string;
+          phone_number?: string;
+        };
         Shop?: { id?: string; name?: string; address?: string; image?: string } | null;
       }>;
     }>(GET_ORDERS, { where });
@@ -165,8 +160,8 @@ export async function GET(req: Request) {
           o.shoppers != null
             ? {
                 id: o.shoppers.id ?? '',
-                name: o.shoppers.name ?? o.shoppers.shopper?.full_name ?? '',
-                phone: o.shoppers.phone ?? o.shoppers.shopper?.phone_number ?? '',
+                name: o.shoppers.full_name ?? '',
+                phone: o.shoppers.phone_number ?? '',
                 email: '',
               }
             : undefined,

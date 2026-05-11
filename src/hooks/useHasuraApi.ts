@@ -349,16 +349,16 @@ interface ReelOrder {
     video_url: string;
   };
   shopper: {
-    created_at: string;
-    email: string;
-    gender: string;
     id: string;
-    is_active: boolean;
     name: string;
     phone: string;
-    profile_picture: string;
-    role: string;
-    updated_at: string;
+    email?: string;
+    created_at?: string;
+    gender?: string;
+    is_active?: boolean;
+    profile_picture?: string;
+    role?: string;
+    updated_at?: string;
   } | null;
   Address: {
     city: string;
@@ -567,6 +567,45 @@ export function useProductsByShop(shopId: string) {
   });
 }
 
+export interface PackageDelivery {
+  id: string;
+  comment: string | null;
+  created_at: string;
+  DeliveryCode: string | null;
+  deliveryMethod: string | null;
+  delivery_fee: string | null;
+  distance: string | null;
+  dropoffDetails: string | null;
+  dropoffLocation: string | null;
+  dropoff_latitude: number | null;
+  dropoff_longitude: number | null;
+  package_image: string | null;
+  package_pickup_image: string | null;
+  payment_method: string | null;
+  pickupDetials: string | null;
+  pickupLocation: string | null;
+  pickup_latitude: number | null;
+  pickup_longitude: number | null;
+  receiverName: string | null;
+  receiverPhone: string | null;
+  scheduled: boolean;
+  shopper_id: string | null;
+  status: string;
+  timeAndDate: string | null;
+  updated_at: string;
+  user_id: string;
+  order_transactions?: any[];
+  shopper?: {
+    id: string;
+    full_name: string;
+    phone_number: string;
+    plate_number?: string;
+    transport_mode?: string;
+    profile_photo?: string;
+    [key: string]: any;
+  } | null;
+}
+
 // Type-safe hook for Shops (data from API)
 export function useShops() {
   return useQuery<{ Shops: Shop[] }, Error>({
@@ -596,6 +635,17 @@ export function useOrderOffers() {
   return useQuery<{ order_offers: OrderOffer[] }, Error>({
     queryKey: ['order-offers'],
     queryFn: () => hasuraRequest(GET_ORDER_OFFERS, {}),
+  });
+}
+
+// Type-safe hook for Package Deliveries (data from API)
+export function usePackageDeliveries() {
+  return useQuery<{ packages: PackageDelivery[] }, Error>({
+    queryKey: ['api', 'package-deliveries'],
+    queryFn: async () => {
+      const res = await apiGet<{ packages: PackageDelivery[] }>('/api/queries/package-deliveries');
+      return { packages: res.packages || [] };
+    },
   });
 }
 

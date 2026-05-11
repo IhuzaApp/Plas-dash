@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Order } from '@/types/order';
+
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { useOrderPayments } from '@/hooks/useShoppers';
 import { Loader2, Video } from 'lucide-react';
@@ -22,7 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface UnifiedOrder {
   id: string;
   OrderID: string;
-  type: 'regular' | 'reel' | 'business' | 'restaurant';
+  type: 'regular' | 'reel' | 'business' | 'restaurant' | 'package';
   status: string;
   total: string;
   created_at: string;
@@ -133,6 +133,18 @@ interface UnifiedOrder {
     type: string;
     wallet_id: string;
   }>;
+  // Package delivery
+  DeliveryCode?: string | null;
+  deliveryMethod?: string | null;
+  dropoffLocation?: string | null;
+  pickupLocation?: string | null;
+  receiverName?: string | null;
+  receiverPhone?: string | null;
+  comment?: string | null;
+  timeAndDate?: string | null;
+  package_image?: string | null;
+  package_pickup_image?: string | null;
+  order_transactions?: any[];
 }
 
 interface OrderDetailsDrawerProps {
@@ -166,13 +178,16 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
   const walletTransactions = (
     order.type === 'restaurant' && order.Wallet_Transactions?.length
       ? order.Wallet_Transactions
-      : paymentData?.Wallet_Transactions || []
+      : order.type === 'package' && order.order_transactions?.length
+        ? order.order_transactions
+        : paymentData?.Wallet_Transactions || []
   ) as WalletTransaction[];
   const businessTransactions = order.type === 'business' ? (order.businessTransactions ?? []) : [];
   const refunds = (paymentData?.Refunds || []) as Refund[];
   const isLoadingPaymentsResolved =
     (order.type === 'restaurant' && order.Wallet_Transactions) ||
-    (order.type === 'business' && order.businessTransactions)
+      (order.type === 'business' && order.businessTransactions) ||
+      (order.type === 'package' && order.order_transactions)
       ? false
       : isLoadingPayments;
 
@@ -258,7 +273,9 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
             <h3 className="text-lg font-semibold mb-3">
               {order.type === 'regular' || order.type === 'business' || order.type === 'restaurant'
                 ? 'Customer Details'
-                : 'Reel Details'}
+                : order.type === 'package'
+                  ? 'Receiver Details'
+                  : 'Reel Details'}
             </h3>
             <Card className="p-4">
               <div className="flex items-center space-x-4">
@@ -266,7 +283,9 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                   <AvatarFallback>
                     {(order.type === 'regular'
                       ? order.User?.name
-                      : (order.orderedBy?.name ?? order.Reel?.title)
+                      : order.type === 'package'
+                        ? order.receiverName
+                        : (order.orderedBy?.name ?? order.Reel?.title)
                     )
                       ?.split(' ')
                       .map((n: string) => n[0])
@@ -277,16 +296,20 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                   <p className="font-medium">
                     {order.type === 'regular'
                       ? order.User?.name
-                      : order.type === 'business' || order.type === 'restaurant'
-                        ? order.orderedBy?.name
-                        : order.Reel?.title}
+                      : order.type === 'package'
+                        ? order.receiverName
+                        : order.type === 'business' || order.type === 'restaurant'
+                          ? order.orderedBy?.name
+                          : order.Reel?.title}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {order.type === 'regular'
                       ? order.User?.email
-                      : order.type === 'business' || order.type === 'restaurant'
-                        ? order.orderedBy?.email
-                        : order.Reel?.description}
+                      : order.type === 'package'
+                        ? `Phone: ${order.receiverPhone}`
+                        : order.type === 'business' || order.type === 'restaurant'
+                          ? order.orderedBy?.email
+                          : order.Reel?.description}
                   </p>
                   {(order.type === 'business' || order.type === 'restaurant') &&
                     order.orderedBy?.phone && (
@@ -313,9 +336,9 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
 
           {/* Shop / Restaurant / Business (merchant info with logo) */}
           {(order.type === 'regular' && order.Shop) ||
-          (order.type === 'reel' && order.Shop) ||
-          (order.type === 'restaurant' && order.Restaurant) ||
-          (order.type === 'business' && order.business_store) ? (
+            (order.type === 'reel' && order.Shop) ||
+            (order.type === 'restaurant' && order.Restaurant) ||
+            (order.type === 'business' && order.business_store) ? (
             <div>
               <h3 className="text-lg font-semibold mb-3">
                 {order.type === 'regular' || order.type === 'reel'
@@ -327,9 +350,9 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
               <Card className="p-4">
                 <div className="flex items-center gap-4">
                   {(order.type === 'regular' && order.Shop?.image) ||
-                  (order.type === 'reel' && order.Shop?.image) ||
-                  (order.type === 'restaurant' && order.Restaurant?.logo) ||
-                  (order.type === 'business' && order.business_store?.image) ? (
+                    (order.type === 'reel' && order.Shop?.image) ||
+                    (order.type === 'restaurant' && order.Restaurant?.logo) ||
+                    (order.type === 'business' && order.business_store?.image) ? (
                     <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-muted border">
                       <img
                         src={
@@ -507,6 +530,53 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                     <p className="font-medium">{formatCurrency(order.Reel?.Price || '0')}</p>
                   </div>
                 )}
+                {order.type === 'package' && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="font-medium">Package Delivery</p>
+                        <p className="text-sm text-muted-foreground">
+                          Method: {order.deliveryMethod || 'Standard'}
+                        </p>
+                      </div>
+                      <p className="font-medium">{formatCurrency(order.delivery_fee || '0')}</p>
+                    </div>
+                    {order.comment && (
+                      <div className="bg-muted p-3 rounded-md">
+                        <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">
+                          Comment
+                        </p>
+                        <p className="text-sm italic">"{order.comment}"</p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                      {order.package_image && (
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium">Dropoff Photo</p>
+                          <div className="aspect-video rounded-md overflow-hidden border">
+                            <img
+                              src={order.package_image}
+                              alt="Dropoff"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {order.package_pickup_image && (
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium">Pickup Photo</p>
+                          <div className="aspect-video rounded-md overflow-hidden border">
+                            <img
+                              src={order.package_pickup_image}
+                              alt="Pickup"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
@@ -652,13 +722,21 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
               <div className="space-y-2">
                 <p className="text-sm">
                   <span className="font-medium">Address: </span>
-                  {order.Address
-                    ? `${order.Address.street}, ${order.Address.city} ${order.Address.postal_code}`
-                    : 'Address not available'}
+                  {order.type === 'package'
+                    ? order.dropoffLocation
+                    : order.Address
+                      ? `${order.Address.street}, ${order.Address.city} ${order.Address.postal_code}`
+                      : 'Address not available'}
                 </p>
+                {order.type === 'package' && order.pickupLocation && (
+                  <p className="text-sm">
+                    <span className="font-medium">Pickup Address: </span>
+                    {order.pickupLocation}
+                  </p>
+                )}
                 <p className="text-sm">
                   <span className="font-medium">Delivery Notes: </span>
-                  {order.delivery_notes || order.delivery_note || 'No special instructions'}
+                  {order.delivery_notes || order.delivery_note || order.comment || 'No special instructions'}
                 </p>
                 {order.delivery_time && (
                   <p className="text-sm">

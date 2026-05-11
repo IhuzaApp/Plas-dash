@@ -86,30 +86,23 @@ const GET_ALL_BUSINESS_ORDERS = gql`
       }
       shoppers {
         id
-        shopper {
-          full_name
-          Employment_id
-          Police_Clearance_Cert
-          active
-          address
-          driving_license
-          drivingLicense_Image
-          guarantor
-          guarantorPhone
-          latitude
-          longitude
-          phone
-          phone_number
-          status
-        }
+        full_name
+        Employment_id
+        Police_Clearance_Cert
+        active
+        address
+        driving_license
+        drivingLicense_Image
+        guarantor
+        guarantorPhone
+        latitude
+        longitude
+        phone
+        phone_number
+        status
+        plate_number
+        transport_mode
         updated_at
-        vehicle {
-          model
-          photo
-          plate_number
-          update_on
-          user_id
-        }
       }
     }
   }
@@ -195,24 +188,28 @@ export async function GET(req: Request) {
         } | null;
         shoppers: {
           id: string;
-          name?: string;
+          full_name?: string;
+          phone_number?: string;
           phone?: string;
-          email?: string;
+          address?: string;
+          status?: string;
+          Employment_id?: string;
+          Police_Clearance_Cert?: string;
+          active?: boolean;
+          driving_license?: string;
+          drivingLicense_Image?: string;
+          guarantor?: string;
+          guarantorPhone?: string;
+          latitude?: number;
+          longitude?: number;
+          plate_number?: string;
+          transport_mode?: string;
           updated_at?: string;
-          shopper?: {
-            full_name?: string;
-            phone_number?: string;
-            phone?: string;
-            address?: string;
-            status?: string;
-          } | null;
-          vehicle?: any;
         } | null;
       }>;
     }>(GET_ALL_BUSINESS_ORDERS, { where });
 
     const orders = (data.businessProductOrders || []).map(o => {
-      const nested = o.shoppers?.shopper;
       return {
         id: o.id,
         OrderID: o.OrderID ?? o.id,
@@ -240,9 +237,9 @@ export async function GET(req: Request) {
         shopper: o.shoppers
           ? {
               id: o.shoppers.id,
-              name: (o.shoppers as any).name ?? nested?.full_name ?? '',
-              phone: (o.shoppers as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
-              email: (o.shoppers as any).email ?? '',
+              name: o.shoppers.full_name ?? '',
+              phone: o.shoppers.phone_number ?? o.shoppers.phone ?? '',
+              email: '',
             }
           : undefined,
       };

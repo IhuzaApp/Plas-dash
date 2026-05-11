@@ -71,14 +71,8 @@ const GET_ALL_REEL_ORDERS = gql`
       }
       shoppers {
         id
-        name
-        phone
-        email
-        profile_picture
-        shopper {
-          full_name
-          phone_number
-        }
+        full_name
+        phone_number
       }
     }
   }
@@ -181,11 +175,8 @@ export async function GET(req: Request) {
         } | null;
         shoppers: {
           id: string;
-          name?: string | null;
-          phone?: string | null;
-          email?: string | null;
-          profile_picture?: string | null;
-          shopper?: { full_name?: string; phone_number?: string } | null;
+          full_name?: string | null;
+          phone_number?: string | null;
         } | null;
       }>;
     }>(GET_ALL_REEL_ORDERS, { where });
@@ -215,7 +206,14 @@ export async function GET(req: Request) {
       User: o.User,
       Address: o.Address,
       Reel: o.Reel,
-      shopper: o.shoppers,
+      shopper: o.shoppers
+        ? {
+            id: o.shoppers.id,
+            name: o.shoppers.full_name || '',
+            phone: o.shoppers.phone_number || '',
+            email: '',
+          }
+        : undefined,
       Shop: o.Reel?.Shops
         ? {
             id: o.Reel.Shops.id,
