@@ -919,12 +919,25 @@ export const GET_ALL_PENDING_PAYOUTS = `
       updated_on
       user_id
       wallet_id
+      Users {
+        email
+        id
+        is_guest
+        phone
+        name
+        profile_picture
+      }
       Wallets {
         id
         available_balance
         last_updated
         reserved_balance
         shopper_id
+        shoppers {
+          full_name
+          phone_number
+          profile_photo
+        }
         Wallet_Transactions {
           amount
           created_at
@@ -936,16 +949,6 @@ export const GET_ALL_PENDING_PAYOUTS = `
           related_reel_orderId
           related_order_id
           relate_business_order_id
-        }
-        User {
-          email
-          gender
-          id
-          is_guest
-          is_active
-          name
-          phone
-          profile_picture
         }
       }
     }

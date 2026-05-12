@@ -22,12 +22,15 @@ const GET_ALL_PENDING_WITHDRAW_REQUESTS = gql`
         full_name
         phone_number
         profile_photo
-        User {
-          Wallets {
-            available_balance
-            id
-            reserved_balance
-          }
+      }
+      Wallets {
+        available_balance
+        id
+        reserved_balance
+        shoppers {
+          full_name
+          phone_number
+          profile_photo
         }
       }
       business_wallets {
@@ -67,10 +70,33 @@ export async function GET(req: Request) {
   if (!hasuraClient) return NextResponse.json({ error: 'DB not initialized' }, { status: 500 });
 
   try {
-    const data = await hasuraClient.request<{ withDraweRequest: unknown[] }>(
+    const data = await hasuraClient.request<{ withDraweRequest: any[] }>(
       GET_ALL_PENDING_WITHDRAW_REQUESTS
     );
-    return NextResponse.json({ requests: data.withDraweRequest ?? [] });
+    console.log('Raw Hasura Withdraw Requests:', JSON.stringify(data, null, 2));
+
+    // Map plural relationships to singular for UI compatibility
+    const mappedRequests = (data.withDraweRequest ?? []).map(req => {
+      // Hasura might return relationships as arrays or objects depending on config
+      const shoppersArr = Array.isArray(req.shoppers) ? req.shoppers : (req.shoppers ? [req.shoppers] : []);
+      const walletsArr = Array.isArray(req.Wallets) ? req.Wallets : (req.Wallets ? [req.Wallets] : []);
+      const wallet = walletsArr[0] || null;
+      const walletShoppersArr = wallet && Array.isArray(wallet.shoppers) ? wallet.shoppers : (wallet?.shoppers ? [wallet.shoppers] : []);
+      
+      const shopper = shoppersArr[0] || walletShoppersArr[0] || null;
+      const businessAccount = Array.isArray(req.business_accounts) ? req.business_accounts[0] : req.business_accounts;
+      const businessWallet = Array.isArray(req.business_wallets) ? req.business_wallets[0] : req.business_wallets;
+
+      return {
+        ...req,
+        shoppers: shopper,
+        Wallets: wallet,
+        business_accounts: businessAccount,
+        business_wallets: businessWallet
+      };
+    });
+
+    return NextResponse.json({ requests: mappedRequests });
   } catch (error) {
     console.error('Error fetching withdraw requests:', error);
     return NextResponse.json({ error: 'Failed to fetch withdraw requests' }, { status: 500 });

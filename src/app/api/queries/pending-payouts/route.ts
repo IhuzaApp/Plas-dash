@@ -14,12 +14,25 @@ const GET_ALL_PENDING_PAYOUTS = gql`
       updated_on
       user_id
       wallet_id
+      Users {
+        email
+        id
+        is_guest
+        phone
+        name
+        profile_picture
+      }
       Wallets {
         id
         available_balance
         last_updated
         reserved_balance
         shopper_id
+        shoppers {
+          full_name
+          phone_number
+          profile_photo
+        }
         Wallet_Transactions {
           amount
           created_at
@@ -31,16 +44,6 @@ const GET_ALL_PENDING_PAYOUTS = gql`
           related_reel_orderId
           related_order_id
           relate_business_order_id
-        }
-        User {
-          email
-          gender
-          id
-          is_guest
-          is_active
-          name
-          phone
-          profile_picture
         }
       }
     }
@@ -62,8 +65,32 @@ export async function GET(req: Request) {
   if (!hasuraClient) return NextResponse.json({ error: 'DB not initialized' }, { status: 500 });
 
   try {
-    const data = await hasuraClient.request<{ payouts: unknown[] }>(GET_ALL_PENDING_PAYOUTS);
-    return NextResponse.json({ payouts: data.payouts ?? [] });
+    const data = await hasuraClient.request<{ payouts: any[] }>(GET_ALL_PENDING_PAYOUTS);
+    console.log('Raw Hasura Payouts:', JSON.stringify(data, null, 2));
+    
+    // Map plural relationships to singular for UI compatibility
+    const mappedPayouts = (data.payouts ?? []).map(p => {
+      const usersArr = Array.isArray(p.Users) ? p.Users : (p.Users ? [p.Users] : []);
+      const walletsArr = Array.isArray(p.Wallets) ? p.Wallets : (p.Wallets ? [p.Wallets] : []);
+      const wallet = walletsArr[0] || null;
+      const shopperArr = wallet && Array.isArray(wallet.shoppers) ? wallet.shoppers : (wallet?.shoppers ? [wallet.shoppers] : []);
+      
+      const user = usersArr[0] || null;
+      const shopper = shopperArr[0] || null;
+      
+      return {
+        ...p,
+        User: user,
+        shopper: shopper,
+        Wallets: wallet ? {
+          ...wallet,
+          User: user,
+          shopper: shopper
+        } : null
+      };
+    });
+
+    return NextResponse.json({ payouts: mappedPayouts });
   } catch (error) {
     console.error('Error fetching pending payouts:', error);
     return NextResponse.json({ error: 'Failed to fetch payouts' }, { status: 500 });

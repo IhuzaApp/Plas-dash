@@ -28,6 +28,7 @@ import WithdrawRequestApprovalDialog, {
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 interface WithdrawRequest {
+  Wallets: any;
   id: string;
   amount: string;
   status: string;
@@ -72,6 +73,8 @@ interface WithdrawRequest {
 }
 
 interface Payout {
+  shopper: any;
+  User: any;
   id: string;
   amount: string;
   status: string;
@@ -134,12 +137,12 @@ const WithdrawRequests = () => {
   const rawSession = typeof window !== 'undefined' ? sessionStorage.getItem('userSession') : null;
   const session: { TwoAuth_enabled?: boolean; email?: string } | null = rawSession
     ? (() => {
-        try {
-          return JSON.parse(rawSession);
-        } catch {
-          return null;
-        }
-      })()
+      try {
+        return JSON.parse(rawSession);
+      } catch {
+        return null;
+      }
+    })()
     : null;
 
   // ── Data fetching ─────────────────────────────────────────────────────────
@@ -251,13 +254,15 @@ const WithdrawRequests = () => {
                   <EmptyCell colSpan={8} label="No pending withdraw requests." />
                 ) : (
                   withdrawQuery.data.map(req => {
-                    const isBusiness = !!req.business_id;
-                    const accountType = isBusiness
-                      ? (req.business_accounts?.account_type ?? 'Business')
-                      : 'Shopper';
+                    console.log('Withdraw Request Data:', req);
+                    const isBusiness = !!req.business_id && req.business_id !== '00000000-0000-0000-0000-000000000000';
+                    let accountType = isBusiness ? 'Business' : 'Personal';
+                    if (isBusiness && req.business_accounts?.account_type === 'personal') {
+                      accountType = 'Personal Business';
+                    }
                     const name = isBusiness
-                      ? req.business_accounts?.business_name
-                      : (req.shoppers?.full_name ?? 'Unknown');
+                      ? (req.business_accounts?.business_name || 'Business')
+                      : (req.shoppers?.full_name || 'Unknown');
                     const phone =
                       req.phoneNumber ||
                       (isBusiness
@@ -266,7 +271,7 @@ const WithdrawRequests = () => {
                       'N/A';
                     const balance = isBusiness
                       ? req.business_wallets?.amount
-                      : req.shoppers?.User?.Wallets?.[0]?.available_balance;
+                      : req.Wallets?.available_balance;
 
                     return (
                       <TableRow key={req.id}>
@@ -337,16 +342,35 @@ const WithdrawRequests = () => {
                   <EmptyCell colSpan={7} label="No pending payouts." />
                 ) : (
                   payoutsQuery.data.map(payout => {
-                    const user = payout.Wallets?.User;
+                    console.log('Payout Data:', payout);
+                    const shopper = payout.shopper;
+                    const user = payout.User;
                     const wallet = payout.Wallets;
+
+                    const displayName = shopper?.full_name || user?.name || 'Unknown';
+                    const displayPhone = shopper?.phone_number || user?.phone || 'N/A';
+                    const displayImage = shopper?.profile_photo || user?.profile_picture;
 
                     return (
                       <TableRow key={payout.id}>
                         <TableCell>
                           {format(new Date(payout.created_at), 'MMM d, yyyy HH:mm')}
                         </TableCell>
-                        <TableCell className="font-medium">{user?.name ?? 'Unknown'}</TableCell>
-                        <TableCell>{user?.phone ?? 'N/A'}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-muted overflow-hidden flex-shrink-0 border">
+                              {displayImage ? (
+                                <img src={displayImage} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground uppercase">
+                                  {displayName.charAt(0)}
+                                </div>
+                              )}
+                            </div>
+                            <span className="font-medium">{displayName}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{displayPhone}</TableCell>
                         <TableCell className="font-semibold">{fmtAmt(payout.amount)}</TableCell>
                         <TableCell>{wallet ? fmtAmt(wallet.available_balance) : 'N/A'}</TableCell>
                         <TableCell>
