@@ -255,26 +255,31 @@ const WithdrawRequests = () => {
                 ) : (
                   withdrawQuery.data.map(req => {
                     const isBusiness = !!req.business_id && req.business_id !== '00000000-0000-0000-0000-000000000000';
-                    let accountType = isBusiness ? 'Business' : 'Personal';
-                    if (isBusiness) {
-                      if (req.business_accounts?.account_type === 'personal') {
-                        accountType = 'Personal Business';
-                      }
-                    } else {
-                      accountType = 'Plasa'
+                    let accountType = isBusiness ? 'Business' : 'Plasa';
+                    
+                    const businessAccount = req.business_accounts;
+                    const businessWallet = req.business_wallets;
+                    const shopper = req.shoppers;
+                    const wallet = req.Wallets;
+
+                    if (isBusiness && businessAccount?.account_type === 'personal') {
+                      accountType = 'Personal Business';
                     }
+
                     const name = isBusiness
-                      ? (req.business_accounts?.business_name || 'Business')
-                      : (req.shoppers?.full_name || 'Unknown');
+                      ? (businessAccount?.business_name || 'Business Account')
+                      : (shopper?.full_name || 'Unknown Shopper');
+                    
                     const phone =
                       req.phoneNumber ||
                       (isBusiness
-                        ? req.business_accounts?.business_phone
-                        : req.shoppers?.phone_number) ||
+                        ? businessAccount?.business_phone
+                        : shopper?.phone_number) ||
                       'N/A';
+                    
                     const balance = isBusiness
-                      ? req.business_wallets?.amount
-                      : req.Wallets?.available_balance;
+                      ? (businessWallet?.amount || '0')
+                      : (wallet?.available_balance || '0');
 
                     return (
                       <TableRow key={req.id}>

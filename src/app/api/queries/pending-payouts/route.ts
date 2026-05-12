@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
@@ -17,33 +17,19 @@ const GET_ALL_PENDING_PAYOUTS = gql`
       Users {
         email
         id
-        is_guest
-        phone
         name
+        phone
         profile_picture
       }
       Wallets {
         id
         available_balance
-        last_updated
         reserved_balance
         shopper_id
         shoppers {
           full_name
           phone_number
           profile_photo
-        }
-        Wallet_Transactions {
-          amount
-          created_at
-          description
-          id
-          status
-          type
-          wallet_id
-          related_reel_orderId
-          related_order_id
-          relate_business_order_id
         }
       }
     }
@@ -67,24 +53,25 @@ export async function GET(req: Request) {
   try {
     const data = await hasuraClient.request<{ payouts: any[] }>(GET_ALL_PENDING_PAYOUTS);
     
-    // Map plural relationships to singular for UI compatibility
+    // Map plural/singular relationships to a consistent format
     const mappedPayouts = (data.payouts ?? []).map(p => {
-      const usersArr = Array.isArray(p.Users) ? p.Users : (p.Users ? [p.Users] : []);
-      const walletsArr = Array.isArray(p.Wallets) ? p.Wallets : (p.Wallets ? [p.Wallets] : []);
-      const wallet = walletsArr[0] || null;
-      const shopperArr = wallet && Array.isArray(wallet.shoppers) ? wallet.shoppers : (wallet?.shoppers ? [wallet.shoppers] : []);
+      const rawUser = p.Users;
+      const user = Array.isArray(rawUser) ? rawUser[0] : rawUser;
       
-      const user = usersArr[0] || null;
-      const shopper = shopperArr[0] || null;
+      const rawWallet = p.Wallets;
+      const wallet = Array.isArray(rawWallet) ? rawWallet[0] : rawWallet;
+      
+      const rawShopper = wallet?.shoppers;
+      const shopper = Array.isArray(rawShopper) ? rawShopper[0] : rawShopper;
       
       return {
         ...p,
-        User: user,
-        shopper: shopper,
+        User: user || null,
+        shopper: shopper || null,
         Wallets: wallet ? {
           ...wallet,
-          User: user,
-          shopper: shopper
+          User: user || null,
+          shopper: shopper || null
         } : null
       };
     });

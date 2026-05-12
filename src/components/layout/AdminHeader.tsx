@@ -2,12 +2,15 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Bell, Menu, Search, User } from 'lucide-react';
+import { Bell, Menu, Search, User as UserIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import ThemeToggle from './ThemeToggle';
 import { SearchCommand } from './SearchCommand';
 import { usePageLoading } from '@/hooks/usePageLoading';
 import { cn } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from 'next/link';
 
 interface AdminHeaderProps {
   toggleSidebar: () => void;
@@ -17,6 +20,8 @@ interface AdminHeaderProps {
 const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   const [open, setOpen] = React.useState(false);
   const { isLoading } = usePageLoading();
+  const { data: session } = useSession();
+  const user = session?.user as any;
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -88,11 +93,31 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
             
             <ThemeToggle />
             
-            <div className="hidden md:flex items-center gap-3 pl-2">
-               <div className="flex flex-col items-end">
+            <div className="flex items-center gap-3 pl-2">
+              {user ? (
+                <Link href="/settings">
+                  <Button 
+                    variant="ghost" 
+                    className="p-1 pr-3 rounded-2xl border bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-primary/10 hover:border-primary/20 transition-all"
+                  >
+                    <Avatar className="h-8 w-8 rounded-xl mr-2 shadow-sm border border-border">
+                      <AvatarImage src={user.image || user.profile_picture} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                        {user.name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start mr-1">
+                      <span className="text-[11px] font-bold leading-tight">{user.name?.split(' ')[0]}</span>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-tighter font-medium">{user.role || 'Admin'}</span>
+                    </div>
+                  </Button>
+                </Link>
+              ) : (
+                <div className="flex flex-col items-end px-2">
                   <span className="text-xs font-bold leading-none">Admin Portal</span>
                   <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">v1.2.0</span>
-               </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

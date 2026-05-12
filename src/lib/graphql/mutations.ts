@@ -1189,3 +1189,15 @@ export const UPDATE_LOGISTICS_ACCOUNT = `
     }
   }
 `;
+
+export const UPDATE_PROJECT_USER_2FA = `
+  mutation UpdateProjectUser2FA($id: uuid!, $enabled: Boolean!) {
+    update_ProjectUsers_by_pk(
+      pk_columns: { id: $id }
+      _set: { TwoAuth_enabled: $enabled }
+    ) {
+      id
+      TwoAuth_enabled
+    }
+  }
+`;

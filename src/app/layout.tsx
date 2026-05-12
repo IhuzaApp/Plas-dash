@@ -11,6 +11,7 @@ import '@/styles/globals.css';
 import '@/styles/nprogress.css';
 import { useState } from 'react';
 import RootLayout from '@/components/layout/RootLayout';
+import { SessionProvider } from 'next-auth/react';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -36,22 +37,24 @@ export default function AppRootLayout({ children }: { children: React.ReactNode 
         <link rel="icon" href="/favicon.png" />
       </head>
       <body className={inter.className}>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <TooltipProvider>
-              <Suspense fallback={null}>
-                <RootLayout>{children}</RootLayout>
-              </Suspense>
-              <Toaster />
-              <Sonner />
-            </TooltipProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
+        <SessionProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <TooltipProvider>
+                <Suspense fallback={null}>
+                  <RootLayout>{children}</RootLayout>
+                </Suspense>
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </SessionProvider>
       </body>
     </html>
   );

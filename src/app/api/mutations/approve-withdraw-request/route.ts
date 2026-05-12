@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { sendSMS } from '@/lib/SMS/pindo';
 
 // ─── GraphQL operations ───────────────────────────────────────────────────────
 
@@ -17,6 +18,12 @@ const GET_WITHDRAW_REQUEST = gql`
       shopperWallet_id
       business_id
       businessWallet_id
+      shoppers {
+        full_name
+      }
+      business_accounts {
+        business_name
+      }
     }
   }
 `;
@@ -142,18 +149,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'action must be approved or rejected' }, { status: 400 });
     }
 
-    // ── Rejection is simple: just update the status ──────────────────────────
-    if (action === 'rejected') {
-      await hasuraClient.request(UPDATE_WITHDRAW_STATUS, {
-        id,
-        status: 'rejected',
-        update_at: new Date().toISOString(),
-      });
-      return NextResponse.json({ success: true, action: 'rejected' });
-    }
-
-    // ── Approval flow ─────────────────────────────────────────────────────────
-
     // 1. Load the withdraw request
     const reqData = await hasuraClient.request<{
       withDraweRequest_by_pk: {
@@ -165,6 +160,8 @@ export async function POST(request: Request) {
         shopperWallet_id?: string;
         business_id?: string;
         businessWallet_id?: string;
+        shoppers?: { full_name: string };
+        business_accounts?: { business_name: string };
       } | null;
     }>(GET_WITHDRAW_REQUEST, { id });
 
@@ -172,11 +169,48 @@ export async function POST(request: Request) {
     if (!req) {
       return NextResponse.json({ error: 'Withdraw request not found' }, { status: 404 });
     }
+
+    const amount = parseFloat(req.amount);
+    
+    // Extract names (handling potential arrays from Hasura)
+    const rawShopper = req.shoppers;
+    const shopper = Array.isArray(rawShopper) ? rawShopper[0] : rawShopper;
+    
+    const rawBusiness = req.business_accounts;
+    const business = Array.isArray(rawBusiness) ? rawBusiness[0] : rawBusiness;
+
+    const recipientName = shopper?.full_name || business?.business_name || 'User';
+    const recipientPhone = req.phoneNumber;
+
+    // ── Rejection Flow ────────────────────────────────────────────────────────
+    if (action === 'rejected') {
+      await hasuraClient.request(UPDATE_WITHDRAW_STATUS, {
+        id,
+        status: 'rejected',
+        update_at: new Date().toISOString(),
+      });
+
+      // Send SMS notification
+      if (recipientPhone) {
+        try {
+          await sendSMS(
+            recipientPhone,
+            `Dear ${recipientName}, your withdrawal request of ${amount} RWF has been rejected. Please contact support.`
+          );
+        } catch (smsError) {
+          console.error('Failed to send rejection SMS:', smsError);
+        }
+      }
+
+      return NextResponse.json({ success: true, action: 'rejected' });
+    }
+
+    // ── Approval flow ─────────────────────────────────────────────────────────
+
     if (req.status !== 'pending') {
       return NextResponse.json({ error: `Request is already ${req.status}` }, { status: 409 });
     }
 
-    const amount = parseFloat(req.amount);
     if (isNaN(amount) || amount <= 0) {
       return NextResponse.json({ error: 'Invalid withdraw amount' }, { status: 400 });
     }
@@ -192,11 +226,9 @@ export async function POST(request: Request) {
 
     if (isBusiness) {
       // ── Business withdrawal ────────────────────────────────────────────────
-      // Deduct full amount from business wallet, keep withdrawCharges% as revenue, pay out the rest
       const fee = (amount * withdrawChargesPct) / 100;
       const netPayout = amount - fee;
 
-      // Fetch current business wallet balance
       const walletData = await hasuraClient.request<{
         business_wallet: { id: string; amount: string; business_id: string }[];
       }>(GET_BUSINESS_WALLET, { business_id: req.business_id });
@@ -216,14 +248,12 @@ export async function POST(request: Request) {
 
       const newBalance = (currentBalance - amount).toFixed(2);
 
-      // Deduct from business wallet
       await hasuraClient.request(UPDATE_BUSINESS_WALLET, {
         amount: newBalance,
         updated_at: new Date().toISOString(),
         business_id: req.business_id,
       });
 
-      // Record revenue for the fee
       if (fee > 0) {
         await hasuraClient.request(INSERT_REVENUE, {
           amount: fee.toFixed(2),
@@ -234,12 +264,23 @@ export async function POST(request: Request) {
         });
       }
 
-      // Approve the request
       await hasuraClient.request(UPDATE_WITHDRAW_STATUS, {
         id,
         status: 'approved',
         update_at: new Date().toISOString(),
       });
+
+      // Send SMS notification
+      if (recipientPhone) {
+        try {
+          await sendSMS(
+            recipientPhone,
+            `Dear ${recipientName}, your business withdrawal of ${amount} RWF has been approved. Net payout: ${netPayout.toFixed(2)} RWF.`
+          );
+        } catch (smsError) {
+          console.error('Failed to send approval SMS:', smsError);
+        }
+      }
 
       return NextResponse.json({
         success: true,
@@ -252,7 +293,6 @@ export async function POST(request: Request) {
       });
     } else {
       // ── Shopper withdrawal ─────────────────────────────────────────────────
-      // Deduct full amount from shopper's Wallets (no fee for shoppers)
       const walletId = req.shopperWallet_id;
       if (!walletId) {
         return NextResponse.json(
@@ -277,19 +317,29 @@ export async function POST(request: Request) {
 
       const newBalance = (currentBalance - amount).toFixed(2);
 
-      // Deduct from shopper wallet
       await hasuraClient.request(UPDATE_SHOPPER_WALLET, {
         wallet_id: walletId,
         available_balance: newBalance,
         reserved_balance: sWallet.reserved_balance,
       });
 
-      // Approve the request
       await hasuraClient.request(UPDATE_WITHDRAW_STATUS, {
         id,
         status: 'approved',
         update_at: new Date().toISOString(),
       });
+
+      // Send SMS notification
+      if (recipientPhone) {
+        try {
+          await sendSMS(
+            recipientPhone,
+            `Dear ${recipientName}, your withdrawal request of ${amount} RWF has been approved.`
+          );
+        } catch (smsError) {
+          console.error('Failed to send approval SMS:', smsError);
+        }
+      }
 
       return NextResponse.json({
         success: true,

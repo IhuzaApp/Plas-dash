@@ -2358,3 +2358,60 @@ export const GET_ALL_PET_VENDORS = `
     }
   }
 `;
+
+export const GET_PROJECT_USER_BY_ID = `
+  query GetProjectUserById($id: uuid!) {
+    ProjectUsers_by_pk(id: $id) {
+      id
+      MembershipId
+      username
+      email
+      password
+      role
+      is_active
+      TwoAuth_enabled
+      last_Login
+      created_at
+      updated_at
+      gender
+      device_details
+      profile
+      privileges
+    }
+  }
+`;
+
+export const GET_ORG_EMPLOYEE_BY_ID = `
+  query GetOrgEmployeeById($id: uuid!) {
+    orgEmployees_by_pk(id: $id) {
+      id
+      fullnames
+      email
+      phone
+      gender
+      roleType
+      active
+      last_login
+      online
+      Address
+      Position
+      shop_id
+      restaurant_id
+    }
+  }
+`;
+
+export const GET_USER_BY_ID_SIMPLE = `
+  query GetUserByIdSimple($id: uuid!) {
+    Users_by_pk(id: $id) {
+      id
+      name
+      email
+      phone
+      gender
+      role
+      profile_picture
+      is_active
+    }
+  }
+`;

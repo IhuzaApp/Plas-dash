@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
@@ -74,24 +74,26 @@ export async function GET(req: Request) {
       GET_ALL_PENDING_WITHDRAW_REQUESTS
     );
 
-    // Map plural relationships to singular for UI compatibility
+    // Map plural/singular relationships to a consistent format
     const mappedRequests = (data.withDraweRequest ?? []).map(req => {
-      // Hasura might return relationships as arrays or objects depending on config
-      const shoppersArr = Array.isArray(req.shoppers) ? req.shoppers : (req.shoppers ? [req.shoppers] : []);
-      const walletsArr = Array.isArray(req.Wallets) ? req.Wallets : (req.Wallets ? [req.Wallets] : []);
-      const wallet = walletsArr[0] || null;
-      const walletShoppersArr = wallet && Array.isArray(wallet.shoppers) ? wallet.shoppers : (wallet?.shoppers ? [wallet.shoppers] : []);
+      const rawShoppers = req.shopper || req.shoppers;
+      const shopper = Array.isArray(rawShoppers) ? rawShoppers[0] : rawShoppers;
       
-      const shopper = shoppersArr[0] || walletShoppersArr[0] || null;
+      const rawWallets = req.Wallet || req.Wallets;
+      const wallet = Array.isArray(rawWallets) ? rawWallets[0] : rawWallets;
+      
+      const walletShoppers = wallet?.shopper || wallet?.shoppers;
+      const finalShopper = shopper || (Array.isArray(walletShoppers) ? walletShoppers[0] : walletShoppers);
+
       const businessAccount = Array.isArray(req.business_accounts) ? req.business_accounts[0] : req.business_accounts;
       const businessWallet = Array.isArray(req.business_wallets) ? req.business_wallets[0] : req.business_wallets;
 
       return {
         ...req,
-        shoppers: shopper,
-        Wallets: wallet,
-        business_accounts: businessAccount,
-        business_wallets: businessWallet
+        shoppers: finalShopper || null,
+        Wallets: wallet || null,
+        business_accounts: businessAccount || null,
+        business_wallets: businessWallet || null
       };
     });
 
