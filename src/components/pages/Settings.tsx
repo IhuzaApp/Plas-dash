@@ -17,6 +17,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Settings as SettingsIcon, Store, Building2, User, Mail, Phone, Shield, Smartphone, Fingerprint } from 'lucide-react';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import SupermarketSettings from './SupermarketSettings';
@@ -183,39 +190,143 @@ const Settings = () => {
     }
   };
 
+  const [passwordState, setPasswordState] = useState({ current: '', new: '', confirm: '' });
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!passwordState.current || !passwordState.new || !passwordState.confirm) {
+      toast.error('All password fields are required');
+      return;
+    }
+
+    if (passwordState.new !== passwordState.confirm) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (passwordState.new.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const response = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordState.current,
+          newPassword: passwordState.new
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to update password');
+
+      toast.success('Password updated successfully');
+      setPasswordState({ current: '', new: '', confirm: '' });
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      toast.error(error.message || 'Failed to update password');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
+  const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
+  const [avatarStyle, setAvatarStyle] = useState('fun-emoji');
+  const [avatarSeed, setAvatarSeed] = useState(user?.name || 'default');
+  const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+
+  const avatarStyles = [
+    { id: 'fun-emoji', name: 'Fun Emojis' },
+    { id: 'superhero', name: 'Superheroes' },
+    { id: 'icons', name: 'System Icons' },
+    { id: 'notionists', name: 'Notion Style' },
+    { id: 'open-peeps', name: 'Hand Drawn' },
+    { id: 'adventurer', name: 'Adventurer' },
+    { id: 'big-smile', name: 'Big Smile' },
+    { id: 'bottts', name: 'Robots' },
+    { id: 'lorelei', name: 'Lorelei' },
+    { id: 'pixel-art', name: 'Pixel Art' },
+    { id: 'avataaars', name: 'Avatars' },
+    { id: 'shapes', name: 'Geometric' },
+    { id: 'thumbs', name: 'Abstract' },
+    { id: 'micah', name: 'Characters' },
+  ];
+
+  const handleUpdateAvatar = async (imageUrl: string) => {
+    setIsUpdatingAvatar(true);
+    try {
+      const response = await fetch('/api/user/update-profile-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileImage: imageUrl }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update avatar');
+
+      setProfileData((prev: any) => ({ ...prev, display_image: imageUrl }));
+      toast.success('Profile picture updated');
+      setIsAvatarDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      toast.error('Failed to update profile picture');
+    } finally {
+      setIsUpdatingAvatar(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+      handleUpdateAvatar(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
+
 
   return (
     <AdminLayout>
       <PageHeader
         title="System Settings"
         description="Configure platform settings and preferences."
-        actions={<Button onClick={handleSaveChanges}>Save All Changes</Button>}
         icon={<SettingsIcon className="h-6 w-6" />}
       />
 
       <Tabs defaultValue="profile">
         <TabsList className="mb-4 bg-zinc-100/80 dark:bg-zinc-800/50 p-1 rounded-xl border">
           <TabsTrigger value="profile" className="rounded-lg px-6">My Profile</TabsTrigger>
-          <TabsTrigger value="general" className="rounded-lg px-6">General</TabsTrigger>
-          {hasAction('settings', 'view_settings') && (
-            <TabsTrigger value="supermarket" className="rounded-lg px-6">Supermarket</TabsTrigger>
+          {(profileData?.display_role === 'globalAdmin' || profileData?.display_role === 'storeAdministrator') && (
+            <>
+              <TabsTrigger value="general" className="rounded-lg px-6">General</TabsTrigger>
+              <TabsTrigger value="supermarket" className="rounded-lg px-6">Supermarket</TabsTrigger>
+            </>
           )}
           <TabsTrigger value="appearance" className="rounded-lg px-6">Appearance</TabsTrigger>
-          <TabsTrigger value="notifications" className="rounded-lg px-6">Notifications</TabsTrigger>
+          {(profileData?.display_role === 'globalAdmin' || profileData?.display_role === 'storeAdministrator') && (
+            <TabsTrigger value="notifications" className="rounded-lg px-6">Notifications</TabsTrigger>
+          )}
           <TabsTrigger value="security" className="rounded-lg px-6">Security</TabsTrigger>
-          <TabsTrigger value="api" className="rounded-lg px-6">API</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-1 border-none shadow-xl bg-gradient-to-br from-primary/5 via-background to-background rounded-3xl overflow-hidden">
               <div className="h-24 bg-primary/10 relative">
-                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
-                   <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
+                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 group cursor-pointer" onClick={() => setIsAvatarDialogOpen(true)}>
+                   <Avatar className="h-20 w-20 border-4 border-background shadow-lg transition-transform group-hover:scale-105">
                       <AvatarImage src={profileData?.display_image || user?.image || user?.profile_picture} />
                       <AvatarFallback className="text-xl font-bold bg-zinc-100">
                         {profileData?.display_name?.charAt(0) || user?.name?.charAt(0) || 'U'}
                       </AvatarFallback>
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                        <Smartphone className="h-5 w-5 text-white" />
+                      </div>
                    </Avatar>
                 </div>
               </div>
@@ -249,7 +360,6 @@ const Settings = () => {
                       </div>
                    </div>
                 </div>
-                <Button variant="outline" className="w-full rounded-xl border-dashed">Edit Public Profile</Button>
               </CardContent>
             </Card>
 
@@ -257,13 +367,13 @@ const Settings = () => {
               <Card className="border-none shadow-lg rounded-3xl overflow-hidden">
                 <CardHeader className="border-b bg-zinc-50/50 dark:bg-zinc-900/50">
                   <CardTitle>Personal Details</CardTitle>
-                  <CardDescription>Manage your account identity and contact information.</CardDescription>
+                  <CardDescription>View your account identity and contact information.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label>Full Name / Username</Label>
-                      <Input defaultValue={profileData?.display_name || user?.name} className="rounded-xl" />
+                      <Input defaultValue={profileData?.display_name || user?.name} disabled className="rounded-xl bg-zinc-100/50" />
                     </div>
                     <div className="space-y-2">
                       <Label>Account ID</Label>
@@ -277,12 +387,12 @@ const Settings = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>Phone Number</Label>
-                      <Input defaultValue={profileData?.display_phone || user?.phone} className="rounded-xl" />
+                      <Input defaultValue={profileData?.display_phone || user?.phone} disabled className="rounded-xl bg-zinc-100/50" />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Bio / Signature</Label>
-                    <Textarea placeholder="Tell us about yourself..." className="rounded-2xl min-h-[100px]" />
+                    <Textarea placeholder="No bio available..." disabled className="rounded-2xl min-h-[100px] bg-zinc-100/50" />
                   </div>
                 </CardContent>
               </Card>
@@ -478,119 +588,97 @@ const Settings = () => {
               <CardDescription>Configure security options and access policies for your account.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-8">
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                   Authentication
-                </h3>
-                <div className="grid gap-4 border rounded-2xl p-6 bg-zinc-50/50 dark:bg-zinc-900/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                        <Smartphone className="h-5 w-5" />
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
+                     Security Authentication
+                  </h3>
+                  <div className="grid gap-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                          <Shield className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-bold">Two-Factor Authentication</p>
+                          <p className="text-[10px] text-muted-foreground">Secure your account with SMS verification</p>
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        <Label htmlFor="2fa" className="text-sm font-bold cursor-pointer">Two-Factor Authentication</Label>
-                        <p className="text-[10px] text-muted-foreground">Secure your account with SMS OTP via Pindo</p>
-                      </div>
+                      <Switch 
+                        id="2fa" 
+                        checked={isTwoFactorEnabled}
+                        onCheckedChange={handleToggle2FA}
+                        disabled={isLoadingUser}
+                      />
                     </div>
-                    <Switch 
-                      id="2fa" 
-                      checked={isTwoFactorEnabled}
-                      onCheckedChange={handleToggle2FA}
-                      disabled={isLoadingUser}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between opacity-50 cursor-not-allowed border-t pt-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
-                        <Fingerprint className="h-5 w-5" />
+                    
+                    <div className="flex items-center justify-between opacity-50 cursor-not-allowed border-t pt-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
+                          <Fingerprint className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-bold">Biometric Login</p>
+                          <p className="text-[10px] text-muted-foreground">Unlock with FaceID or Fingerprint</p>
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-bold">Biometric Login</p>
-                        <p className="text-[10px] text-muted-foreground">Unlock with FaceID or Fingerprint</p>
-                      </div>
+                      <Switch disabled />
                     </div>
-                    <Switch disabled />
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                   System Policies
-                </h3>
-                <div className="grid gap-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium">Session Timeout</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Automatically log out inactive users
-                      </p>
+                <div className="pt-6 border-t">
+                  <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider mb-4">
+                     Change Password
+                  </h3>
+                  <div className="grid gap-4 max-w-md">
+                    <div className="space-y-2">
+                      <Label htmlFor="current-password">Current Password</Label>
+                      <Input 
+                        id="current-password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        className="rounded-xl"
+                        value={passwordState.current}
+                        onChange={(e) => setPasswordState({...passwordState, current: e.target.value})}
+                      />
                     </div>
-                    <Switch id="session-timeout" defaultChecked />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="timeout-duration">Timeout Duration (minutes)</Label>
-                    <Input id="timeout-duration" type="number" defaultValue="30" className="rounded-xl" />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium">Password Requirements</h3>
-                      <p className="text-xs text-muted-foreground">Enforce strong password policy</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input 
+                        id="new-password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        className="rounded-xl"
+                        value={passwordState.new}
+                        onChange={(e) => setPasswordState({...passwordState, new: e.target.value})}
+                      />
                     </div>
-                    <Switch id="strong-passwords" defaultChecked />
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm New Password</Label>
+                      <Input 
+                        id="confirm-password" 
+                        type="password" 
+                        placeholder="••••••••" 
+                        className="rounded-xl"
+                        value={passwordState.confirm}
+                        onChange={(e) => setPasswordState({...passwordState, confirm: e.target.value})}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleChangePassword} 
+                      disabled={isUpdatingPassword}
+                      className="w-full md:w-auto rounded-xl"
+                    >
+                      {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                    </Button>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="api" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>API Settings</CardTitle>
-              <CardDescription>Manage API keys and access permissions.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="api-key">API Key</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="api-key"
-                    readOnly
-                    defaultValue="sk_live_51Abcde1234567890"
-                    className="font-mono"
-                  />
-                  <Button variant="outline">Regenerate</Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="webhook-url">Webhook URL</Label>
-                <Input id="webhook-url" defaultValue="https://yourapp.com/api/webhook" />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch id="api-active" defaultChecked />
-                <Label htmlFor="api-active">API Access Enabled</Label>
-              </div>
-
-              <div className="space-y-2">
-                <Label>API Rate Limiting</Label>
-                <div className="flex gap-4 items-center">
-                  <Input type="number" defaultValue="100" className="w-24" />
-                  <span>requests per</span>
-                  <Input type="number" defaultValue="60" className="w-24" />
-                  <span>seconds</span>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
+
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -630,6 +718,86 @@ const Settings = () => {
               </Button>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
+        <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <div className="bg-zinc-50 dark:bg-zinc-900/50 p-8 flex flex-col items-center justify-center border-r">
+               <div className="relative group">
+                 <Avatar className="h-40 w-40 border-8 border-background shadow-2xl transition-transform group-hover:scale-105 duration-500">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${avatarSeed}`} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-4xl">
+                      {avatarSeed.charAt(0)}
+                    </AvatarFallback>
+                 </Avatar>
+                 <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-full shadow-lg">
+                   <Smartphone className="h-5 w-5" />
+                 </div>
+               </div>
+               <div className="mt-6 text-center">
+                 <h3 className="font-bold text-lg">Avatar Preview</h3>
+                 <p className="text-xs text-muted-foreground">Generated using {avatarStyle}</p>
+               </div>
+               <Button 
+                 onClick={() => handleUpdateAvatar(`https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${avatarSeed}`)}
+                 disabled={isUpdatingAvatar}
+                 className="mt-8 w-full rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+               >
+                 {isUpdatingAvatar ? 'Saving...' : 'Set as Profile Picture'}
+               </Button>
+            </div>
+            
+            <div className="p-8 space-y-6 bg-background">
+               <div>
+                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Choose Style</Label>
+                 <Select value={avatarStyle} onValueChange={setAvatarStyle}>
+                    <SelectTrigger className="w-full mt-2 rounded-xl">
+                      <SelectValue placeholder="Select a style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {avatarStyles.map((style) => (
+                        <SelectItem key={style.id} value={style.id}>
+                          {style.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                 </Select>
+               </div>
+
+               <div className="space-y-2">
+                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Custom Seed</Label>
+                 <Input 
+                   value={avatarSeed}
+                   onChange={(e) => setAvatarSeed(e.target.value)}
+                   placeholder="Type anything to randomize..."
+                   className="rounded-xl"
+                 />
+                 <p className="text-[10px] text-muted-foreground">Changing the text will generate a unique character.</p>
+               </div>
+
+               <div className="pt-4 border-t">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-3">Or Upload Photo</Label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="avatar-upload"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                    />
+                    <Button 
+                      variant="outline" 
+                      className="w-full rounded-xl border-dashed py-8 h-auto flex flex-col gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all"
+                      onClick={() => document.getElementById('avatar-upload')?.click()}
+                    >
+                      <Smartphone className="h-6 w-6 text-primary" />
+                      <span className="text-xs font-medium">Click to upload image</span>
+                    </Button>
+                  </div>
+               </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </AdminLayout>

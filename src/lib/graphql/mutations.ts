@@ -1201,3 +1201,21 @@ export const UPDATE_PROJECT_USER_2FA = `
     }
   }
 `;
+
+export const UPDATE_PROJECT_USER_PROFILE_IMAGE = `
+  mutation UpdateProjectUserProfileImage($id: uuid!, $profile: String!) {
+    update_ProjectUsers_by_pk(pk_columns: { id: $id }, _set: { profile: $profile }) { id profile }
+  }
+`;
+
+export const UPDATE_USER_PROFILE_IMAGE = `
+  mutation UpdateUserProfileImage($id: uuid!, $profile_picture: String!) {
+    update_Users_by_pk(pk_columns: { id: $id }, _set: { profile_picture: $profile_picture }) { id profile_picture }
+  }
+`;
+
+export const UPDATE_EMPLOYEE_PROFILE_IMAGE = `
+  mutation UpdateEmployeeProfileImage($id: uuid!, $profile_photo: String!) {
+    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { profile_photo: $profile_photo }) { id profile_photo }
+  }
+`;
