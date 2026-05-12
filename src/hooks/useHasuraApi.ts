@@ -63,6 +63,8 @@ import {
   CREATE_ORDER_OFFER,
   CREATE_LOGISTICS_ACCOUNT,
   CREATE_PET_VENDOR,
+  UPDATE_PET_VENDOR,
+  UPDATE_LOGISTICS_ACCOUNT,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -2218,6 +2220,18 @@ export function useCreatePetVendor() {
   });
 }
 
+export function useUpdatePetVendor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: { id: string; disabled: boolean; status: string; updated_at: string }) =>
+      hasuraRequest(UPDATE_PET_VENDOR, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pet-vendor'] });
+      queryClient.invalidateQueries({ queryKey: ['pet-vendors'] });
+    },
+  });
+}
+
 export function useLogisticsAccounts() {
   return useQuery({
     queryKey: ['logistics-accounts'],
@@ -2229,6 +2243,18 @@ export function usePetVendors() {
   return useQuery({
     queryKey: ['pet-vendors'],
     queryFn: () => hasuraRequest(GET_ALL_PET_VENDORS),
+  });
+}
+
+export function useUpdateLogisticsAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: { id: string; disabled: boolean; status: string; updated_at: string }) =>
+      hasuraRequest(UPDATE_LOGISTICS_ACCOUNT, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['logistics-account'] });
+      queryClient.invalidateQueries({ queryKey: ['logistics-accounts'] });
+    },
   });
 }
 

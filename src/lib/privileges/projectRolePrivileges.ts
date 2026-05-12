@@ -86,6 +86,8 @@ export const getDefaultProjectPrivilegesForRole = (
         'reels',
         'subscriptions',
         'influencers',
+        'logistics',
+        'pets',
       ];
 
       globalAdminModules.forEach(module => {
@@ -120,6 +122,8 @@ export const getDefaultProjectPrivilegesForRole = (
         'ai_chat',
         'subscriptions',
         'influencers',
+        'logistics',
+        'pets',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -183,6 +187,8 @@ export const getDefaultProjectPrivilegesForRole = (
         'withdraw_requests',
         'ai_chat',
         'influencers',
+        'logistics',
+        'pets',
       ];
       projectManagerModules.forEach(module => {
         if (privileges[module]) {

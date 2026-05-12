@@ -2347,11 +2347,10 @@ export const GET_ALL_PET_VENDORS = `
         name
         email
       }
-      Pets {
+      pets {
         id
         name
         breed
-        status
       }
     }
   }

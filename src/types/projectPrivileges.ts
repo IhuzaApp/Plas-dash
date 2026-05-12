@@ -64,6 +64,10 @@ export interface ProjectUserPrivileges {
   // Subscription Management (Platform Admin only)
   subscriptions?: ProjectModulePrivileges;
   influencers?: ProjectModulePrivileges;
+
+  // Logistics and Pets
+  logistics?: ProjectModulePrivileges;
+  pets?: ProjectModulePrivileges;
 }
 
 // Default project privileges template
@@ -432,6 +436,8 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     access_ai_chat: false,
     access_subscriptions: false,
     access_influencers: false,
+    access_logistics: false,
+    access_pets: false,
   },
   referrals: {
     access: false,
@@ -471,6 +477,18 @@ export const DEFAULT_PROJECT_PRIVILEGES: ProjectUserPrivileges = {
     view_earnings: false,
     manage_influencers: false,
   },
+  logistics: {
+    access: false,
+    view_accounts: false,
+    manage_vehicles: false,
+    manage_assignments: false,
+  },
+  pets: {
+    access: false,
+    view_vendors: false,
+    manage_pets: false,
+    manage_adoptions: false,
+  },
 };
 
 // Project privilege check helper types
@@ -503,7 +521,17 @@ export function hasProjectPrivilege(
           action === 'access_plasmarket' ||
           action === 'access_restaurants' ||
           action === 'access_reels' ||
-          action === 'access_withdraw_requests')))
+          action === 'access_withdraw_requests' ||
+          action === 'access_logistics' ||
+          action === 'access_pets')))
+  ) {
+    return true;
+  }
+
+  if (
+    isAdminRole &&
+    (module === 'logistics' ||
+      module === 'pets')
   ) {
     return true;
   }

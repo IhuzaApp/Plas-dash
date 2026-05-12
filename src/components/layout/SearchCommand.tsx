@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/components/layout/RootLayout';
 import { hasPrivilege } from '@/types/privileges';
+import { usePrivilege } from '@/hooks/usePrivilege';
 import {
   Users as UsersIcon,
   Store,
@@ -127,6 +128,7 @@ const ALL_MODULES = [
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const router = useRouter();
   const { session } = useAuth();
+  const { hasModuleAccess } = usePrivilege();
   const [searchValue, setSearchValue] = React.useState('');
   const [activeScope, setActiveScope] = React.useState<string | null>(null);
   
@@ -480,7 +482,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     </div>
                   </CommandItem>
                 ))}
-                {data.logisticsAccount?.map(item => (
+                {hasModuleAccess('logistics') && data.logisticsAccount?.map(item => (
                   <CommandItem 
                     key={`logistics-${item.id}`} 
                     value={`logistics account ${item.fullname}`}
@@ -494,7 +496,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     </div>
                   </CommandItem>
                 ))}
-                {data.pet_vendors?.map(item => (
+                {hasModuleAccess('pets') && data.pet_vendors?.map(item => (
                   <CommandItem 
                     key={`pet-${item.id}`} 
                     value={`pet vendor vendor ${item.fullname}`}

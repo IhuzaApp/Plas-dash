@@ -1169,3 +1169,23 @@ export const CREATE_PET_VENDOR = `
   }
 `;
 
+export const UPDATE_PET_VENDOR = `
+  mutation UpdatePetVendor($id: uuid!, $disabled: Boolean!, $status: String!, $updated_at: timestamptz!) {
+    update_pet_vendors(
+      where: { id: { _eq: $id } },
+      _set: { disabled: $disabled, status: $status, updated_at: $updated_at }
+    ) {
+      affected_rows
+    }
+  }
+`;
+export const UPDATE_LOGISTICS_ACCOUNT = `
+  mutation UpdateLogisticsAccount($id: uuid!, $disabled: Boolean!, $status: String!, $updated_at: timestamptz!) {
+    update_logisticsAccount(
+      where: { id: { _eq: $id } },
+      _set: { disabled: $disabled, status: $status, updated_at: $updated_at }
+    ) {
+      affected_rows
+    }
+  }
+`;

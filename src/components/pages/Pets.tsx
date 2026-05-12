@@ -16,7 +16,8 @@ import { Search, Filter, Loader2, Dog } from 'lucide-react';
 import { usePetVendors } from '@/hooks/useHasuraApi';
 import { Badge } from '@/components/ui/badge';
 import Pagination from '@/components/ui/pagination';
-import { PetVendorModal } from '@/components/modals/PetVendorModal';
+import { useRouter } from 'next/navigation';
+import { usePageLoading } from '@/hooks/usePageLoading';
 
 const Pets = () => {
   const { data, isLoading, isError, error } = usePetVendors();
@@ -25,13 +26,12 @@ const Pets = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   
-  // Selection for modal
-  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
+  const { startLoading } = usePageLoading();
 
   const handleViewDetails = (id: string) => {
-    setSelectedVendorId(id);
-    setIsModalOpen(true);
+    startLoading();
+    router.push(`/pets/${id}`);
   };
 
   // Filter vendors based on search term
@@ -97,7 +97,7 @@ const Pets = () => {
         <Card className="bg-blue-500/5 border-blue-500/20">
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold text-blue-600">
-              {vendors.reduce((acc: number, curr: any) => acc + (curr.Pets?.length || 0), 0)}
+              {vendors.reduce((acc: number, curr: any) => acc + (curr.pets?.length || 0), 0)}
             </div>
             <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Total Pets Registered</p>
           </CardContent>
@@ -152,7 +152,7 @@ const Pets = () => {
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
                           <Dog className="h-4 w-4 text-primary/70" />
-                          <span className="font-mono font-medium">{v.Pets?.length || 0}</span>
+                          <span className="font-mono font-medium">{v.pets?.length || 0}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -194,11 +194,6 @@ const Pets = () => {
         </Card>
       </div>
 
-      <PetVendorModal
-        vendorId={selectedVendorId || ''}
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-      />
     </AdminLayout>
   );
 };

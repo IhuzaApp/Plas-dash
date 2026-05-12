@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserDetails } from '@/hooks/useUsers';
 import { Loader2, User, Mail, Phone, Calendar, MapPin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePrivilege } from '@/hooks/usePrivilege';
 import { 
   useLogisticsAccount, 
   usePetVendor, 
@@ -35,6 +36,7 @@ interface UserDetailsDrawerProps {
 const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onClose }) => {
   const { data: userData, isLoading } = useUserDetails(userId || undefined);
   const user = userData?.Users_by_pk;
+  const { hasModuleAccess } = usePrivilege();
 
   const { data: logisticsData, isLoading: isLoadingLogistics } = useLogisticsAccount(
     userId ? { user_id: { _eq: userId } } : null
@@ -177,7 +179,7 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
           </Card>
 
           <div className="flex gap-2">
-            {!logistics && (
+            {!logistics && hasModuleAccess('logistics') && (
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -188,7 +190,7 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
                 <Plus className="h-4 w-4" /> Assign Logistics
               </Button>
             )}
-            {!petVendor && (
+            {!petVendor && hasModuleAccess('pets') && (
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -207,8 +209,8 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
               <TabsTrigger value="orders">Orders</TabsTrigger>
               <TabsTrigger value="invoices">Invoices</TabsTrigger>
               <TabsTrigger value="schedule">Schedule</TabsTrigger>
-              <TabsTrigger value="logistics" disabled={!logistics}>Logistics</TabsTrigger>
-              <TabsTrigger value="pets" disabled={!petVendor}>Pets</TabsTrigger>
+              {hasModuleAccess('logistics') && <TabsTrigger value="logistics" disabled={!logistics}>Logistics</TabsTrigger>}
+              {hasModuleAccess('pets') && <TabsTrigger value="pets" disabled={!petVendor}>Pets</TabsTrigger>}
             </TabsList>
 
             <TabsContent value="details" className="space-y-4">

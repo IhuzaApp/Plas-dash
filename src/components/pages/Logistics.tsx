@@ -16,7 +16,8 @@ import { Search, Filter, Loader2, Truck } from 'lucide-react';
 import { useLogisticsAccounts } from '@/hooks/useHasuraApi';
 import { Badge } from '@/components/ui/badge';
 import Pagination from '@/components/ui/pagination';
-import { LogisticsAccountModal } from '@/components/modals/LogisticsAccountModal';
+import { useRouter } from 'next/navigation';
+import { usePageLoading } from '@/hooks/usePageLoading';
 
 const Logistics = () => {
   const { data, isLoading, isError, error } = useLogisticsAccounts();
@@ -25,13 +26,12 @@ const Logistics = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   
-  // Selection for modal
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
+  const { startLoading } = usePageLoading();
 
   const handleViewDetails = (id: string) => {
-    setSelectedAccountId(id);
-    setIsModalOpen(true);
+    startLoading();
+    router.push(`/logistics/${id}`);
   };
 
   // Filter accounts based on search term
@@ -80,9 +80,9 @@ const Logistics = () => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="bg-primary/5 border-primary/20">
+        <Card className="bg-emerald-500/5 border-emerald-500/20">
           <CardContent className="pt-6 text-center">
-            <div className="text-3xl font-bold text-primary">{accounts.length}</div>
+            <div className="text-3xl font-bold text-emerald-600">{accounts.length}</div>
             <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Total Partners</p>
           </CardContent>
         </Card>
@@ -94,9 +94,9 @@ const Logistics = () => {
             <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Active Accounts</p>
           </CardContent>
         </Card>
-        <Card className="bg-blue-500/5 border-blue-500/20">
+        <Card className="bg-emerald-500/5 border-emerald-500/20">
           <CardContent className="pt-6 text-center">
-            <div className="text-3xl font-bold text-blue-600">
+            <div className="text-3xl font-bold text-emerald-600">
               {accounts.reduce((acc: number, curr: any) => acc + (curr.RentalVehicles?.length || 0), 0)}
             </div>
             <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Total Fleet Vehicles</p>
@@ -197,12 +197,6 @@ const Logistics = () => {
           )}
         </Card>
       </div>
-
-      <LogisticsAccountModal
-        accountId={selectedAccountId || ''}
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-      />
     </AdminLayout>
   );
 };

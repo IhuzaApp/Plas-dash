@@ -58,8 +58,10 @@ export const PetVendorModal: React.FC<PetVendorModalProps> = ({
               <DialogTitle className="text-2xl font-bold">
                 {isLoading ? <Skeleton className="h-8 w-48" /> : vendor?.fullname || 'Pet Vendor'}
               </DialogTitle>
-              <DialogDescription>
-                {isLoading ? <Skeleton className="h-4 w-64 mt-1" /> : `Pet Vendor Management • ${vendor?.organisationName || 'Organisation'}`}
+              <DialogDescription asChild>
+                <div className="text-sm text-muted-foreground">
+                  {isLoading ? <Skeleton className="h-4 w-64 mt-1" /> : `Pet Vendor Management • ${vendor?.organisationName || 'Organisation'}`}
+                </div>
               </DialogDescription>
             </div>
             {!isLoading && vendor && (
