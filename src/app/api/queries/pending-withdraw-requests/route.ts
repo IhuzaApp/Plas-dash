@@ -73,7 +73,6 @@ export async function GET(req: Request) {
     const data = await hasuraClient.request<{ withDraweRequest: any[] }>(
       GET_ALL_PENDING_WITHDRAW_REQUESTS
     );
-    console.log('Raw Hasura Withdraw Requests:', JSON.stringify(data, null, 2));
 
     // Map plural relationships to singular for UI compatibility
     const mappedRequests = (data.withDraweRequest ?? []).map(req => {

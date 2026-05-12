@@ -66,7 +66,6 @@ export async function GET(req: Request) {
 
   try {
     const data = await hasuraClient.request<{ payouts: any[] }>(GET_ALL_PENDING_PAYOUTS);
-    console.log('Raw Hasura Payouts:', JSON.stringify(data, null, 2));
     
     // Map plural relationships to singular for UI compatibility
     const mappedPayouts = (data.payouts ?? []).map(p => {

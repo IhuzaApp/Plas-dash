@@ -254,11 +254,14 @@ const WithdrawRequests = () => {
                   <EmptyCell colSpan={8} label="No pending withdraw requests." />
                 ) : (
                   withdrawQuery.data.map(req => {
-                    console.log('Withdraw Request Data:', req);
                     const isBusiness = !!req.business_id && req.business_id !== '00000000-0000-0000-0000-000000000000';
                     let accountType = isBusiness ? 'Business' : 'Personal';
-                    if (isBusiness && req.business_accounts?.account_type === 'personal') {
-                      accountType = 'Personal Business';
+                    if (isBusiness) {
+                      if (req.business_accounts?.account_type === 'personal') {
+                        accountType = 'Personal Business';
+                      }
+                    } else {
+                      accountType = 'Plasa'
                     }
                     const name = isBusiness
                       ? (req.business_accounts?.business_name || 'Business')
@@ -342,7 +345,6 @@ const WithdrawRequests = () => {
                   <EmptyCell colSpan={7} label="No pending payouts." />
                 ) : (
                   payoutsQuery.data.map(payout => {
-                    console.log('Payout Data:', payout);
                     const shopper = payout.shopper;
                     const user = payout.User;
                     const wallet = payout.Wallets;
