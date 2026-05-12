@@ -1,69 +1,130 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
+import { cacheGet, cacheSet } from '@/lib/cache';
 
 export const useDashboardData = () => {
   const { data: shopsRes, isLoading: isLoadingShops } = useQuery({
     queryKey: ['dashboard', 'shops'],
-    queryFn: () => apiGet<{ shops: any[] }>('/api/queries/shops'),
+    queryFn: async () => {
+      const res = await apiGet<{ shops: any[] }>('/api/queries/shops');
+      cacheSet('dashboard_shops', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ shops: any[] }>('dashboard_shops') || undefined,
   });
+  
   const { data: usersRes, isLoading: isLoadingUsers } = useQuery({
     queryKey: ['dashboard', 'users'],
-    queryFn: () => apiGet<{ users: any[] }>('/api/queries/users'),
+    queryFn: async () => {
+      const res = await apiGet<{ users: any[] }>('/api/queries/users');
+      cacheSet('dashboard_users', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ users: any[] }>('dashboard_users') || undefined,
   });
+  
   const { data: productsRes, isLoading: isLoadingProducts } = useQuery({
     queryKey: ['dashboard', 'products'],
-    queryFn: () => apiGet<{ products: any[] }>('/api/queries/products'),
+    queryFn: async () => {
+      const res = await apiGet<{ products: any[] }>('/api/queries/products');
+      cacheSet('dashboard_products', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ products: any[] }>('dashboard_products') || undefined,
   });
+  
   const { data: ordersRes, isLoading: isLoadingOrders } = useQuery({
     queryKey: ['dashboard', 'orders'],
-    queryFn: () => apiGet<{ orders: any[] }>('/api/queries/orders'),
+    queryFn: async () => {
+      const res = await apiGet<{ orders: any[] }>('/api/queries/orders');
+      cacheSet('dashboard_orders', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ orders: any[] }>('dashboard_orders') || undefined,
   });
+  
   const { data: orderStatsRes, isLoading: isLoadingOrderStats } = useQuery({
     queryKey: ['dashboard', 'order-stats'],
-    queryFn: () =>
-      apiGet<{
+    queryFn: async () => {
+      const res = await apiGet<{
         totalOrders: number;
         monthlyOrders: number;
         pendingOrders: number;
         breakdown?: { regular: number; reel: number; restaurant: number; business: number };
         monthlyBreakdown?: { regular: number; reel: number; restaurant: number; business: number };
-      }>('/api/queries/order-stats'),
+      }>('/api/queries/order-stats');
+      cacheSet('dashboard_order_stats', res);
+      return res;
+    },
+    initialData: () => cacheGet<any>('dashboard_order_stats') || undefined,
   });
+
   const { data: shoppersRes, isLoading: isLoadingShoppers } = useQuery({
     queryKey: ['dashboard', 'shoppers'],
-    queryFn: () => apiGet<{ shoppers: any[] }>('/api/queries/shoppers'),
+    queryFn: async () => {
+      const res = await apiGet<{ shoppers: any[] }>('/api/queries/shoppers');
+      cacheSet('dashboard_shoppers', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ shoppers: any[] }>('dashboard_shoppers') || undefined,
   });
+
   const { data: revenueArray, isLoading: isLoadingRevenue } = useQuery({
     queryKey: ['dashboard', 'revenue'],
-    queryFn: () => apiGet<any[]>('/api/revenue'),
+    queryFn: async () => {
+      const res = await apiGet<any[]>('/api/revenue');
+      cacheSet('dashboard_revenue', res);
+      return res;
+    },
+    initialData: () => cacheGet<any[]>('dashboard_revenue') || undefined,
   });
+
   const { data: refundsRes, isLoading: isLoadingRefunds } = useQuery({
     queryKey: ['dashboard', 'all-refunds'],
-    queryFn: () => apiGet<{ refunds: any[] }>('/api/queries/all-refunds'),
+    queryFn: async () => {
+      const res = await apiGet<{ refunds: any[] }>('/api/queries/all-refunds');
+      cacheSet('dashboard_refunds', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ refunds: any[] }>('dashboard_refunds') || undefined,
   });
+
   const { data: ticketsRes, isLoading: isLoadingTickets } = useQuery({
     queryKey: ['dashboard', 'tickets'],
-    queryFn: () => apiGet<{ tickets: any[] }>('/api/queries/tickets'),
+    queryFn: async () => {
+      const res = await apiGet<{ tickets: any[] }>('/api/queries/tickets');
+      cacheSet('dashboard_tickets', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ tickets: any[] }>('dashboard_tickets') || undefined,
   });
 
   // Wallet balances across all wallet tables
   const { data: walletTotalsRes, isLoading: isLoadingWalletTotals } = useQuery({
     queryKey: ['dashboard', 'wallet-totals'],
-    queryFn: () =>
-      apiGet<{ walletBalance: number; businessBalance: number; total: number }>(
+    queryFn: async () => {
+      const res = await apiGet<{ walletBalance: number; businessBalance: number; total: number }>(
         '/api/queries/wallet-totals'
-      ),
+      );
+      cacheSet('dashboard_wallet_totals', res);
+      return res;
+    },
     staleTime: 2 * 60 * 1000,
+    initialData: () => cacheGet<any>('dashboard_wallet_totals') || undefined,
   });
 
   // Pending orders total value across all order types
   const { data: pendingOrderTotalsRes, isLoading: isLoadingPendingOrderTotals } = useQuery({
     queryKey: ['dashboard', 'pending-order-totals'],
-    queryFn: () =>
-      apiGet<{ total: number; breakdown: Record<string, number> }>(
+    queryFn: async () => {
+      const res = await apiGet<{ total: number; breakdown: Record<string, number> }>(
         '/api/queries/pending-order-totals'
-      ),
+      );
+      cacheSet('dashboard_pending_order_totals', res);
+      return res;
+    },
     staleTime: 2 * 60 * 1000,
+    initialData: () => cacheGet<any>('dashboard_pending_order_totals') || undefined,
   });
 
   const shopsData = shopsRes ? { Shops: shopsRes.shops } : undefined;

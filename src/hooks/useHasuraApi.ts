@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '../lib/hasura';
 import { apiGet } from '../lib/api';
+import { cacheGet, cacheSet } from '../lib/cache';
 import {
   GET_PRODUCTS_BY_SHOP,
   GET_RESTAURANTS,
@@ -2233,16 +2234,26 @@ export function useUpdatePetVendor() {
 }
 
 export function useLogisticsAccounts() {
-  return useQuery({
+  return useQuery<{ logisticsAccount: LogisticsAccount[] }, Error>({
     queryKey: ['logistics-accounts'],
-    queryFn: () => hasuraRequest(GET_ALL_LOGISTICS_ACCOUNTS),
+    queryFn: async () => {
+      const res = await hasuraRequest<{ logisticsAccount: LogisticsAccount[] }>(GET_ALL_LOGISTICS_ACCOUNTS);
+      cacheSet('logistics_accounts', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ logisticsAccount: LogisticsAccount[] }>('logistics_accounts') || undefined,
   });
 }
 
 export function usePetVendors() {
-  return useQuery({
+  return useQuery<{ pet_vendors: PetVendor[] }, Error>({
     queryKey: ['pet-vendors'],
-    queryFn: () => hasuraRequest(GET_ALL_PET_VENDORS),
+    queryFn: async () => {
+      const res = await hasuraRequest<{ pet_vendors: PetVendor[] }>(GET_ALL_PET_VENDORS);
+      cacheSet('pet_vendors', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ pet_vendors: PetVendor[] }>('pet_vendors') || undefined,
   });
 }
 
