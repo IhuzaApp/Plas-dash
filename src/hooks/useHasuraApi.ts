@@ -753,6 +753,16 @@ export function useShops() {
   });
 }
 
+export function usePlans() {
+  return useQuery<{ plans: any[] }, Error>({
+    queryKey: ['api', 'plans'],
+    queryFn: async () => {
+      const res = await apiGet<{ plans: any[] }>('/api/queries/plans');
+      return res;
+    },
+  });
+}
+
 // Type-safe hook for Logistics Account
 export function useLogisticsAccount(where: any) {
   return useQuery<{ logisticsAccount: LogisticsAccount[] }, Error>({

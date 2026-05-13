@@ -22,9 +22,9 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { CREATE_SHOP } from '@/lib/graphql/mutations';
-import { useCategories } from '@/hooks/useHasuraApi';
+import { useCategories, usePlans } from '@/hooks/useHasuraApi';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Store, Upload, X } from 'lucide-react';
+import { CreditCard, Loader2, Store, Upload, X } from 'lucide-react';
 
 // Utility function to get default image based on category name
 const getDefaultImageForCategory = (categoryName: string): string => {
@@ -156,6 +156,8 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
     tin: '',
     ssd: '',
     is_active: true,
+    plan_id: '',
+    billing_cycle: 'monthly',
   });
 
   // Fetch categories
@@ -165,64 +167,13 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
     error: categoriesError,
   } = useCategories();
 
-  // Create shop mutation
-  const createShopMutation = useMutation({
-    mutationFn: async (data: CreateShopMutationData) => {
-      console.log('=== ADD SHOP DIALOG: MUTATION FUNCTION CALLED ===');
-      console.log('Mutation data:', data);
-      console.log('CREATE_SHOP mutation:', CREATE_SHOP);
+  // Fetch plans
+  const {
+    data: plansData,
+    isLoading: plansLoading,
+  } = usePlans();
 
-      try {
-        const result = await hasuraRequest(CREATE_SHOP, data);
-        console.log('=== ADD SHOP DIALOG: MUTATION SUCCESS ===');
-        console.log('Mutation result:', result);
-        return result;
-      } catch (error: any) {
-        console.error('=== ADD SHOP DIALOG: MUTATION ERROR ===');
-        console.error('Mutation error:', error);
-        console.error('Error details:', {
-          message: error?.message,
-          response: error?.response,
-          status: error?.response?.status,
-          data: error?.response?.data,
-        });
-        throw error;
-      }
-    },
-    onSuccess: data => {
-      console.log('=== ADD SHOP DIALOG: ON SUCCESS CALLED ===');
-      console.log('Success data:', data);
-      toast({
-        title: 'Success',
-        description: 'Shop created successfully!',
-      });
-      queryClient.invalidateQueries({ queryKey: ['shops'] });
-      queryClient.invalidateQueries({ queryKey: ['branchShops'] });
-      handleClose();
-    },
-    onError: (error: any) => {
-      console.error('=== ADD SHOP DIALOG: ON ERROR CALLED ===');
-      console.error('Error in onError:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error response:', error?.response);
 
-      let errorMessage = 'Failed to create shop. Please try again.';
-
-      if (error?.response?.data?.errors) {
-        const graphqlErrors = error.response.data.errors;
-        console.error('GraphQL errors:', graphqlErrors);
-        errorMessage = graphqlErrors.map((err: any) => err.message).join(', ');
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    },
-  });
 
   const handleInputChange = (field: keyof CreateShopFormData, value: any) => {
     setFormData(prev => ({
@@ -373,7 +324,16 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Clean the data to avoid null values for String fields
+    const selectedPlan = plansData?.plans?.find(p => p.id === formData.plan_id);
+    if (!selectedPlan) {
+      toast({
+        title: 'Error',
+        description: 'Please select a subscription plan.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const cleanedData = {
       name: submitData.name,
       description: submitData.description?.trim() || undefined,
@@ -393,8 +353,43 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
     console.log('=== ADD SHOP DIALOG: CLEANED DATA ===');
     console.log('Cleaned data:', cleanedData);
 
-    createShopMutation.mutate(cleanedData as CreateShopMutationData);
+    createShopMutation.mutate({
+      shop: cleanedData,
+      plan: selectedPlan,
+      billing_cycle: formData.billing_cycle,
+    });
   };
+
+  // Update mutation logic to use the new endpoint
+  const createShopMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch('/api/mutations/shops/create-with-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to create shop');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Shop and subscription created successfully!',
+      });
+      queryClient.invalidateQueries({ queryKey: ['api', 'shops'] });
+      handleClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const handleClose = () => {
     setFormData({
@@ -581,6 +576,50 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
                   <span className="font-medium">{formData.image.split('/').pop()}</span>
                 </div>
               )}
+            </div>
+          </div>
+          
+          <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-4">
+            <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+              <CreditCard className="h-4 w-4" /> Subscription Plan
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="plan">Select Plan *</Label>
+                <Select
+                  value={formData.plan_id}
+                  onValueChange={value => handleInputChange('plan_id', value)}
+                  disabled={plansLoading}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue
+                      placeholder={plansLoading ? 'Loading plans...' : 'Select a plan'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plansData?.plans?.map(plan => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name} - {formData.billing_cycle === 'monthly' ? `RWF ${plan.price_monthly}/mo` : `RWF ${plan.price_yearly}/yr`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing_cycle">Billing Cycle</Label>
+                <Select
+                  value={formData.billing_cycle}
+                  onValueChange={value => handleInputChange('billing_cycle', value)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select cycle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
