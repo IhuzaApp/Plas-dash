@@ -101,6 +101,8 @@ interface CreateShopFormData {
   tin: string;
   ssd: string;
   is_active: boolean;
+  plan_id: string;
+  billing_cycle: 'monthly' | 'yearly';
 }
 
 interface CreateShopMutationData {
@@ -418,6 +420,8 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       tin: '',
       ssd: '',
       is_active: true,
+      plan_id: '',
+      billing_cycle: 'monthly',
     });
     setImageFile(null);
     setImagePreview(null);
