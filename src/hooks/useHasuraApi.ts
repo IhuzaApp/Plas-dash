@@ -294,6 +294,19 @@ interface Shop {
       Product: { name: string };
     }>;
   }>;
+  shop_subscription?: {
+    id: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+    billing_cycle: string;
+    plan: {
+      id: string;
+      name: string;
+      price_monthly: number;
+      price_yearly: number;
+    };
+  } | null;
 }
 
 interface ShopProduct {

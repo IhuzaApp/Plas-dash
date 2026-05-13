@@ -142,12 +142,23 @@ const Shops = () => {
     },
   });
 
-  const handleDisableShop = (shopId: string, currentStatus: boolean) => {
-    const newStatus = !currentStatus;
+  const handleDisableShop = (shop: any) => {
+    const newStatus = !shop.is_active;
+    
+    // Validation: Cannot activate a shop without a subscription
+    if (newStatus && (!shop.shop_subscription || shop.shop_subscription.status !== 'active')) {
+      toast({
+        title: 'Activation Prevented',
+        description: 'This shop has no active subscription and cannot be activated.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const action = newStatus ? 'enable' : 'disable';
 
     if (confirm(`Are you sure you want to ${action} this shop?`)) {
-      disableShopMutation.mutate({ shopId, isActive: newStatus });
+      disableShopMutation.mutate({ shopId: shop.id, isActive: newStatus });
     }
   };
 
@@ -353,7 +364,7 @@ const Shops = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDisableShop(shop.id, shop.is_active)}
+                              onClick={() => handleDisableShop(shop)}
                               disabled={disableShopMutation.isPending}
                               className="h-8 w-8 p-0"
                               title={shop.is_active ? 'Disable Shop' : 'Enable Shop'}
