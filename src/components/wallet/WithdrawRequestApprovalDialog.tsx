@@ -504,7 +504,7 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
                 Back
               </Button>
               <Button
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-primary hover:bg-primary/90"
                 onClick={handleConfirmApprove}
                 disabled={loading}
               >

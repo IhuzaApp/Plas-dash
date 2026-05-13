@@ -198,7 +198,7 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                             </Button>
                             <Button
                               size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white h-8"
+                              className="bg-primary hover:bg-primary/90 text-white h-8"
                               disabled={busy}
                               onClick={() => handleAction(req.id, 'approved')}
                             >

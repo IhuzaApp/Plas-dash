@@ -300,7 +300,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`user-${item.id}`} 
                     value={`user ${item.name} ${item.email}`}
                     onSelect={() => handleSelect(`/users?q=${encodeURIComponent(item.name || '')}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <UserIcon className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -314,7 +314,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`shopper-${item.id}`} 
                     value={`shopper ${item.full_name} ${item.Employment_id}`}
                     onSelect={() => handleSelect(`/shoppers?q=${encodeURIComponent(item.full_name || '')}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Truck className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -328,7 +328,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`admin-${item.id}`} 
                     value={`admin project user ${item.username} ${item.email}`}
                     onSelect={() => handleSelect(`/project-users?q=${encodeURIComponent(item.username || '')}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <ShieldCheck className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -342,7 +342,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`staff-${item.id}`} 
                     value={`staff employee ${item.fullnames} ${item.employeeID}`}
                     onSelect={() => handleSelect(`/pos/staff?q=${encodeURIComponent(item.fullnames || '')}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <UsersIcon className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -361,7 +361,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`order-${item.id}`} 
                     value={`order ${item.OrderID} ${item.pin} ${item.status}`}
                     onSelect={() => handleSelect(`/orders?q=${item.OrderID}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Package className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -378,7 +378,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`rest-order-${item.id}`} 
                     value={`restaurant order ${item.OrderID} ${item.pin} ${item.status}`}
                     onSelect={() => handleSelect(`/restaurants?q=${item.OrderID}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <ShoppingBag className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -395,7 +395,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`biz-order-${item.id}`} 
                     value={`business order ${item.OrderID} ${item.pin} ${item.status}`}
                     onSelect={() => handleSelect(`/pos/inventory?q=${item.OrderID}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Building2 className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -412,7 +412,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`reel-order-${item.id}`} 
                     value={`reel order ${item.OrderID} ${item.pin} ${item.status}`}
                     onSelect={() => handleSelect(`/reels?q=${item.OrderID}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Video className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -426,7 +426,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`pkg-${item.id}`} 
                     value={`package delivery ${item.DeliveryCode} ${item.status}`}
                     onSelect={() => handleSelect(`/orders?q=${item.DeliveryCode}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Truck className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -445,7 +445,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`shop-${item.id}`} 
                     value={`shop store ${item.name}`}
                     onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.name || '')}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Store className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -459,7 +459,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`restaurant-${item.id}`} 
                     value={`restaurant food ${item.name}`}
                     onSelect={() => handleSelect(`/restaurants?q=${encodeURIComponent(item.name || '')}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Building2 className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -473,7 +473,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`biz-store-${item.id}`} 
                     value={`business store account ${item.name}`}
                     onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.name || '')}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Building2 className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -487,7 +487,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`logistics-${item.id}`} 
                     value={`logistics account ${item.fullname}`}
                     onSelect={() => handleOpenLogistics(item.id)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Truck className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -501,7 +501,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`pet-${item.id}`} 
                     value={`pet vendor vendor ${item.fullname}`}
                     onSelect={() => handleOpenPetVendor(item.id)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Tag className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">
@@ -520,7 +520,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
                     key={`vehicle-${item.id}`} 
                     value={`vehicle plate car ${item.plate_number}`}
                     onSelect={() => handleSelect(`/shoppers?q=${encodeURIComponent(item.plate_number || '')}`)} 
-                    className="cursor-pointer h-16 mb-1 bg-green-600 hover:bg-green-700 aria-selected:bg-green-700 rounded-lg"
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
                   >
                     <Car className="mr-3 h-5 w-5 text-white" />
                     <div className="flex flex-col">

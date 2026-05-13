@@ -227,7 +227,7 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, open, onOpenChange 
             {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                  <Button className="w-full">
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Mark as Resolved
                   </Button>
@@ -244,7 +244,6 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, open, onOpenChange 
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => handleUpdateStatus('resolved')}
-                      className="bg-green-600 hover:bg-green-700"
                     >
                       {isUpdating ? 'Updating...' : 'Confirm Resolution'}
                     </AlertDialogAction>
