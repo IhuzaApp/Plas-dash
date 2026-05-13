@@ -51,6 +51,7 @@ const hexToHsl = (hex: string): string => {
 
 export const ThemeColorProvider = ({ children }: { children: React.ReactNode }) => {
   const [color, setInternalColor] = useState<ThemeColor>(defaultColor);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const savedColor = localStorage.getItem('theme-primary-color');
@@ -61,6 +62,7 @@ export const ThemeColorProvider = ({ children }: { children: React.ReactNode }) 
         console.error('Failed to parse theme color', e);
       }
     }
+    setIsInitialized(true);
   }, []);
 
   const setCustomColor = (hex: string) => {
@@ -73,18 +75,24 @@ export const ThemeColorProvider = ({ children }: { children: React.ReactNode }) 
   };
 
   useEffect(() => {
+    if (!isInitialized) return;
+
     // Inject CSS variables
     const root = document.documentElement;
     const h = color.hsl.split(' ')[0];
     const s = color.hsl.split(' ')[1];
-    const l = color.hsl.split(' ')[2].replace('%', '');
 
     // Main primary
     root.style.setProperty('--primary', color.hsl);
     root.style.setProperty('--ring', color.hsl);
     
-    // Sidebar overrides - calculating variations based on primary
-    // Background: very dark (5-10% lightness)
+    // Secondary and Accent - derived from primary
+    // Secondary: slightly more saturated or lighter
+    root.style.setProperty('--secondary', `${h} ${s} 35%`);
+    root.style.setProperty('--accent', `${h} ${s} 22%`);
+    root.style.setProperty('--muted', `${h} 20% 96%`); // Keep muted very light but tint with hue
+
+    // Sidebar overrides
     root.style.setProperty('--sidebar-background', `${h} ${s} 8%`);
     root.style.setProperty('--sidebar-foreground', `${h} 10% 98%`);
     root.style.setProperty('--sidebar-primary', color.hsl);
@@ -92,7 +100,7 @@ export const ThemeColorProvider = ({ children }: { children: React.ReactNode }) 
     root.style.setProperty('--sidebar-border', `${h} ${s} 12%`);
     root.style.setProperty('--sidebar-ring', color.hsl);
 
-    // Chart colors - different lightness
+    // Chart colors
     root.style.setProperty('--chart-1', `${h} ${s} 25%`);
     root.style.setProperty('--chart-2', `${h} ${s} 35%`);
     root.style.setProperty('--chart-3', `${h} ${s} 45%`);
@@ -100,7 +108,7 @@ export const ThemeColorProvider = ({ children }: { children: React.ReactNode }) 
     root.style.setProperty('--chart-5', `${h} ${s} 65%`);
     
     localStorage.setItem('theme-primary-color', JSON.stringify(color));
-  }, [color]);
+  }, [color, isInitialized]);
 
   return (
     <ThemeColorContext.Provider value={{ color, setColor: setInternalColor, setCustomColor }}>

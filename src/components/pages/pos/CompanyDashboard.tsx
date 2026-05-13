@@ -306,8 +306,8 @@ const CompanyDashboard = () => {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip cursor={{ fill: 'transparent' }} />
-                    <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Revenue" />
-                    <Bar dataKey="target" fill="#94a3b8" radius={[4, 4, 0, 0]} name="Target" />
+                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Revenue" />
+                    <Bar dataKey="target" fill="hsl(var(--muted-foreground) / 0.3)" radius={[4, 4, 0, 0]} name="Target" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -331,7 +331,7 @@ const CompanyDashboard = () => {
                     <Line
                       type="monotone"
                       dataKey="performance"
-                      stroke="#10b981"
+                      stroke="hsl(var(--primary))"
                       strokeWidth={2}
                       name="Performance %"
                     />
@@ -398,15 +398,15 @@ const CompanyDashboard = () => {
                           </TableCell>
                           <TableCell>
                             {store.trend === 'up' ? (
-                              <div className="flex items-center text-green-500">
+                              <div className="flex items-center text-primary font-medium">
                                 <TrendingUp className="mr-1 h-4 w-4" /> Up
                               </div>
                             ) : store.trend === 'down' ? (
-                              <div className="flex items-center text-red-500">
+                              <div className="flex items-center text-destructive font-medium">
                                 <TrendingDown className="mr-1 h-4 w-4" /> Down
                               </div>
                             ) : (
-                              <div className="flex items-center text-gray-500">
+                              <div className="flex items-center text-muted-foreground font-medium">
                                 <Clock className="mr-1 h-4 w-4" /> Stable
                               </div>
                             )}
@@ -454,7 +454,7 @@ const CompanyDashboard = () => {
                       <Tooltip cursor={{ fill: 'transparent' }} />
                       <Bar
                         dataKey="sales"
-                        fill="#8b5cf6"
+                        fill="hsl(var(--primary))"
                         radius={[0, 4, 4, 0]}
                         name="Sales"
                         barSize={20}
@@ -468,7 +468,7 @@ const CompanyDashboard = () => {
                     <div key={i} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{p.name}</span>
-                        <Badge variant="outline">{p.sales} units sold</Badge>
+                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">{p.sales} units sold</Badge>
                       </div>
                     </div>
                   ))}
@@ -491,52 +491,52 @@ const CompanyDashboard = () => {
                   {/* Mock Categories since actual mapping might vary */}
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4 text-green-600" />
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <ShoppingBag className="h-4 w-4 text-primary" />
                       </div>
                       <span>Dairy Products</span>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">Normal</Badge>
+                    <Badge className="bg-primary/10 text-primary border-none">Normal</Badge>
                   </div>
 
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4 text-green-600" />
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <ShoppingBag className="h-4 w-4 text-primary" />
                       </div>
                       <span>Bakery</span>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">Normal</Badge>
+                    <Badge className="bg-primary/10 text-primary border-none">Normal</Badge>
                   </div>
 
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4 text-yellow-600" />
+                      <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center dark:bg-yellow-900/30">
+                        <ShoppingBag className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
                       </div>
                       <span>Meat & Poultry</span>
                     </div>
-                    <Badge className="bg-yellow-100 text-yellow-800">Delayed</Badge>
+                    <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 border-none">Delayed</Badge>
                   </div>
 
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4 text-green-600" />
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <ShoppingBag className="h-4 w-4 text-primary" />
                       </div>
                       <span>Fresh Produce</span>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">Normal</Badge>
+                    <Badge className="bg-primary/10 text-primary border-none">Normal</Badge>
                   </div>
 
                   <div className="flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4 text-red-600" />
+                      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center dark:bg-red-900/30">
+                        <ShoppingBag className="h-4 w-4 text-red-600 dark:text-red-500" />
                       </div>
                       <span>Imported Goods</span>
                     </div>
-                    <Badge className="bg-red-100 text-red-800">Disrupted</Badge>
+                    <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500 border-none">Disrupted</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -625,18 +625,19 @@ const CompanyDashboard = () => {
                         recentActivity.map(activity => (
                           <div
                             key={activity.id}
-                            className="flex items-center justify-between p-2 border rounded-md"
+                            className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900/50 border rounded-xl hover:border-primary/30 transition-colors"
                           >
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                                <Clock className="h-4 w-4 text-primary" />
+                              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                <Clock className="h-5 w-5 text-primary" />
                               </div>
                               <div>
                                 <div>
-                                  <span className="font-medium">{activity.employeeName}</span>{' '}
-                                  {activity.action} at {activity.storeName}
+                                  <span className="font-bold">{activity.employeeName}</span>{' '}
+                                  <span className="text-muted-foreground">{activity.action}</span> at <span className="font-medium">{activity.storeName}</span>
                                 </div>
-                                <div className="text-xs text-muted-foreground">
+                                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                  <Clock className="h-3 w-3" />
                                   {activity.timeAgo}
                                 </div>
                               </div>
