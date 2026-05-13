@@ -37,6 +37,16 @@ import { useShops } from '@/hooks/useHasuraApi';
 import Pagination from '@/components/ui/pagination';
 import { format } from 'date-fns';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import AddShopDialog from '../shop/AddShopDialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
@@ -95,6 +105,7 @@ const Shops = () => {
   const [pageSize, setPageSize] = useState(10);
   const [expandedShops, setExpandedShops] = useState<Set<string>>(new Set());
   const [isAddShopDialogOpen, setIsAddShopDialogOpen] = useState(false);
+  const [shopToToggle, setShopToToggle] = useState<any>(null);
   const { hasAction } = usePrivilege();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -155,11 +166,7 @@ const Shops = () => {
       return;
     }
 
-    const action = newStatus ? 'enable' : 'disable';
-
-    if (confirm(`Are you sure you want to ${action} this shop?`)) {
-      disableShopMutation.mutate({ shopId: shop.id, isActive: newStatus });
-    }
+    setShopToToggle(shop);
   };
 
   const toggleShopExpansion = (shopId: string) => {
@@ -659,6 +666,39 @@ const Shops = () => {
       </Tabs>
 
       <AddShopDialog isOpen={isAddShopDialogOpen} onClose={() => setIsAddShopDialogOpen(false)} />
+
+      <AlertDialog open={!!shopToToggle} onOpenChange={open => !open && setShopToToggle(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {shopToToggle?.is_active ? 'Disable Shop' : 'Enable Shop'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {shopToToggle?.is_active ? 'disable' : 'enable'} <strong>{shopToToggle?.name}</strong>? 
+              {shopToToggle?.is_active ? ' This will hide the shop and its products from the marketplace.' : ' This will make the shop and its products visible to customers.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (shopToToggle) {
+                  disableShopMutation.mutate({ 
+                    shopId: shopToToggle.id, 
+                    isActive: !shopToToggle.is_active 
+                  });
+                }
+              }}
+              className={shopToToggle?.is_active ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-green-600 hover:bg-green-700 text-white'}
+            >
+              {disableShopMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Confirm {shopToToggle?.is_active ? 'Disable' : 'Enable'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
