@@ -130,6 +130,8 @@ const GET_SHOPPER_BY_USER_ID = gql`
           shopper_id
           updated_at
           businessProduct_id
+          vehicleBookingsId
+          package_id
         }
         tickets {
           created_on
@@ -142,6 +144,9 @@ const GET_SHOPPER_BY_USER_ID = gql`
           update_on
           user_id
           category
+          projectUser_id
+          employee_id
+          description
         }
         Invoices {
           Proof
@@ -159,6 +164,7 @@ const GET_SHOPPER_BY_USER_ID = gql`
           subtotal
           tax
           total_amount
+          restarurant_order_id
         }
         Delivery_Issues {
           created_at
@@ -170,6 +176,37 @@ const GET_SHOPPER_BY_USER_ID = gql`
           shopper_id
           status
           updated_at
+          reel_order_id
+          package_id
+          package_delivery {
+            DeliveryCode
+            comment
+            deliveryMethod
+            delivery_fee
+            dropoffDetails
+            distance
+            dropoffLocation
+            dropoff_latitude
+            dropoff_longitude
+            id
+            package_image
+            package_pickup_image
+            payment_method
+            pickupDetials
+            pickupLocation
+            pickup_latitude
+            pickup_longitude
+            receiverName
+            scheduled
+            receiverPhone
+            shopper_id
+            status
+            timeAndDate
+            updated_at
+            user_id
+          }
+          code
+          business_order_id
         }
         Payment_Methods {
           CCV
@@ -183,6 +220,7 @@ const GET_SHOPPER_BY_USER_ID = gql`
           user_id
           validity
         }
+        is_guest
       }
       Wallets {
         available_balance
@@ -221,21 +259,121 @@ const GET_SHOPPER_BY_USER_ID = gql`
         reelOrders {
           OrderID
           id
+          delivery_time
+          discount
+          discount_breakdown
+          found
+          payment_method
+          pin
+          quantity
+          reel_id
+          service_fee
+          shopper_id
+          status
+          total
+          updated_at
+          user_id
+          voucher_code
+          created_at
+          delivery_address_id
+          delivery_fee
+          delivery_note
+          delivery_photo_url
+          applied_promotions
+          assigned_at
+          combined_order_id
+          User {
+            email
+            gender
+            phone
+          }
         }
       }
       businessProductOrders {
         OrderID
         id
+        allProducts
+        combined_order_id
+        comment
+        created_at
+        delivered_time
+        deliveryAddress
+        delivery_proof
+        latitude
+        longitude
+        pin
+        ordered_by
+        orderedBy {
+          gender
+          email
+          id
+          is_active
+          is_guest
+          created_at
+          name
+          phone
+          profile_picture
+        }
+        status
+        store_id
+        timeRange
+        total
+        transportation_fee
+        units
+        service_fee
+        shopper_id
       }
       Orders {
         OrderID
         id
+        pin
+        service_fee
+        shop_id
+        shopper_id
+        status
+        updated_at
+        total
+        user_id
+        voucher_code
+        delivery_photo_url
+        delivery_time
+        discount
+        discount_breakdown
+        combined_order_id
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_notes
+        assigned_at
+        applied_promotions
       }
       package_deliveries {
         DeliveryCode
         comment
         distance
         id
+        user_id
+        updated_at
+        package_image
+        package_pickup_image
+        payment_method
+        pickupDetials
+        pickupLocation
+        pickup_latitude
+        pickup_longitude
+        receiverName
+        receiverPhone
+        scheduled
+        shopper_id
+        status
+        timeAndDate
+        dropoffDetails
+        dropoffLocation
+        dropoff_latitude
+        dropoff_longitude
+        deliveryMethod
+        delivery_fee
+        created_at
       }
       payment_requests {
         id
@@ -252,10 +390,51 @@ const GET_SHOPPER_BY_USER_ID = gql`
       reel_orders {
         OrderID
         id
+        pin
+        payment_method
+        quantity
+        reel_id
+        service_fee
+        shopper_id
+        status
+        total
+        updated_at
+        user_id
+        voucher_code
+        found
+        discount_breakdown
+        discount
+        applied_promotions
+        assigned_at
+        combined_order_id
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_note
+        delivery_photo_url
+        delivery_time
       }
       restaurant_orders {
         OrderID
         id
+        assigned_at
+        combined_order_id
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_notes
+        delivery_photo_url
+        delivery_time
+        discount
+        found
+        pin
+        restaurant_id
+        shopper_id
+        status
+        total
+        updated_at
+        user_id
+        voucher_code
       }
       withDraweRequests {
         businessWallet_id

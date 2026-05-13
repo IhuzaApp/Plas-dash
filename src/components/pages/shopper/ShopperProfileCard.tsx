@@ -39,7 +39,17 @@ const ShopperProfileCard: React.FC<ShopperProfileCardProps> = ({ shopper, user }
               <p>{shopper.email}</p>
               {shopper.dob && <p>DOB: {new Date(shopper.dob).toLocaleDateString()}</p>}
               {shopper.courier && <p>Courier: {shopper.courier}</p>}
-              {shopper.plate_number && <p>Plate: {shopper.plate_number}</p>}
+              {shopper.plate_number && (
+                <div className="flex items-center gap-2">
+                  <span>Plate:</span>
+                  <img 
+                    src={shopper.plate_number} 
+                    alt="Plate Number" 
+                    className="h-6 w-12 object-contain rounded border bg-white cursor-pointer hover:scale-110 transition-transform"
+                    onClick={() => window.open(shopper.plate_number, '_blank')}
+                  />
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap gap-2 mt-4">
               <Badge

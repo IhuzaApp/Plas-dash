@@ -77,9 +77,12 @@ const ActivityTab: React.FC<ActivityTabProps> = ({ shopper, formatCurrency }) =>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Delivery Code</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Receiver</TableHead>
+                  <TableHead>Route</TableHead>
                   <TableHead>Distance</TableHead>
-                  <TableHead>Comment</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -87,13 +90,30 @@ const ActivityTab: React.FC<ActivityTabProps> = ({ shopper, formatCurrency }) =>
                   packageDeliveries.map((delivery: any) => (
                     <TableRow key={delivery.id}>
                       <TableCell className="font-medium">{delivery.DeliveryCode}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{delivery.receiverName || 'N/A'}</span>
+                          <span className="text-xs text-muted-foreground">{delivery.receiverPhone}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                         <div className="flex flex-col max-w-[200px]">
+                          <span className="text-xs font-medium">From: {delivery.pickupLocation || 'N/A'}</span>
+                          <span className="text-xs text-muted-foreground">To: {delivery.dropoffLocation || 'N/A'}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>{delivery.distance} km</TableCell>
-                      <TableCell>{delivery.comment || 'None'}</TableCell>
+                      <TableCell>
+                        <Badge variant={delivery.status === 'completed' ? 'default' : 'outline'}>
+                          {delivery.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(delivery.created_at).toLocaleDateString()}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                       No package deliveries found
                     </TableCell>
                   </TableRow>

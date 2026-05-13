@@ -105,7 +105,7 @@ const VerificationTab: React.FC<VerificationTabProps> = ({ shopper }) => {
           </CardHeader>
           <CardContent className="px-0 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <VerificationItem icon={Truck} label="Courier Type" value={shopper.courier} />
-            <VerificationItem icon={CreditCard} label="Plate Number" value={shopper.plate_number} />
+            <VerificationItem icon={ImageIcon} label="Plate Number" value={shopper.plate_number} isImage={true} />
             <VerificationItem icon={FileText} label="Driving License" value={shopper.driving_license} />
             <VerificationItem icon={Truck} label="Transport Mode" value={shopper.transport_mode} />
           </CardContent>
