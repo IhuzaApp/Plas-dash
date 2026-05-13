@@ -177,7 +177,7 @@ const Settings = () => {
       const response = await fetch('/api/mutations/update-project-user-2fa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: user.id, enabled }),
+        body: JSON.stringify({ id: currentUserId, enabled }),
       });
       
       if (!response.ok) throw new Error('Failed to update 2FA');
@@ -209,11 +209,20 @@ const Settings = () => {
       return;
     }
 
+    let currentUserId = user?.id;
+    if (!currentUserId && typeof window !== 'undefined') {
+      const local = localStorage.getItem('orgEmployeeSession');
+      if (local) currentUserId = JSON.parse(local).id;
+    }
+
     setIsUpdatingPassword(true);
     try {
       const response = await fetch('/api/user/change-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUserId}`
+        },
         body: JSON.stringify({
           currentPassword: passwordState.current,
           newPassword: passwordState.new
@@ -256,11 +265,20 @@ const Settings = () => {
   ];
 
   const handleUpdateAvatar = async (imageUrl: string) => {
+    let currentUserId = user?.id;
+    if (!currentUserId && typeof window !== 'undefined') {
+      const local = localStorage.getItem('orgEmployeeSession');
+      if (local) currentUserId = JSON.parse(local).id;
+    }
+
     setIsUpdatingAvatar(true);
     try {
       const response = await fetch('/api/user/update-profile-image', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUserId}`
+        },
         body: JSON.stringify({ profileImage: imageUrl }),
       });
 
@@ -291,11 +309,11 @@ const Settings = () => {
 
 
   return (
-    <AdminLayout>
+    <AdminLayout isLoading={isLoadingUser || !profileData}>
       <PageHeader
-        title="System Settings"
-        description="Configure platform settings and preferences."
-        icon={<SettingsIcon className="h-6 w-6" />}
+        title="Settings"
+        description="Manage your account preferences and security settings."
+        icon={<SettingsIcon className="h-8 w-8" />}
       />
 
       <Tabs defaultValue="profile">
@@ -390,9 +408,36 @@ const Settings = () => {
                       <Input defaultValue={profileData?.display_phone || user?.phone} disabled className="rounded-xl bg-zinc-100/50" />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Bio / Signature</Label>
-                    <Textarea placeholder="No bio available..." disabled className="rounded-2xl min-h-[100px] bg-zinc-100/50" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Position / Role</Label>
+                      <Input defaultValue={profileData?.display_role || 'General User'} disabled className="rounded-xl bg-zinc-100/50 capitalize" />
+                    </div>
+                  </div>
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Account Privileges</Label>
+                      <Badge variant="outline" className="rounded-full text-[10px]">
+                        {profileData?.display_role || 'General Access'}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {profileData?.privileges ? (
+                        Object.entries(profileData.privileges)
+                          .filter(([_, value]) => value && (typeof value === 'object' ? Object.values(value).some(v => v === true) : value === true))
+                          .map(([key, _]) => (
+                            <Badge 
+                              key={key} 
+                              variant="secondary" 
+                              className="rounded-lg px-3 py-1 bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 transition-colors capitalize text-[11px]"
+                            >
+                              {key.replace(/_/g, ' ')}
+                            </Badge>
+                          ))
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">No specific privileges assigned.</p>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -722,6 +767,10 @@ const Settings = () => {
       </Dialog>
       <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
         <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Edit Profile Picture</DialogTitle>
+            <DialogDescription>Choose a character style or upload your own photo.</DialogDescription>
+          </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2">
             <div className="bg-zinc-50 dark:bg-zinc-900/50 p-8 flex flex-col items-center justify-center border-r">
                <div className="relative group">

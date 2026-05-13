@@ -9,7 +9,13 @@ import {
 import {
   UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE,
   UPDATE_PROJECT_USER_LAST_LOGIN,
+  DEACTIVATE_PROJECT_USER,
+  DEACTIVATE_ORG_EMPLOYEE,
 } from '@/lib/graphql/mutations';
+
+// In-memory store for failed attempts (Resets on server restart)
+const failedAttemptsMap = new Map<string, number>();
+const MAX_ATTEMPTS = 3;
 
 const verifyOrgEmployeePassword = (inputPassword: string, hashedPassword: string): boolean => {
   try {
@@ -68,6 +74,7 @@ export async function POST(request: Request) {
     }
 
     const now = new Date().toISOString();
+    const attempts = failedAttemptsMap.get(identifier) || 0;
 
     // 1. Try OrgEmployee
     const orgData = await hasuraClient.request<{ orgEmployees: any[] }>(
@@ -77,7 +84,15 @@ export async function POST(request: Request) {
 
     if (orgData.orgEmployees?.[0]) {
       const emp = orgData.orgEmployees[0];
+      
+      if (!emp.active) {
+        return NextResponse.json({ error: 'Your account is deactivated. Please contact IT support to reactivate your account.' }, { status: 403 });
+      }
+
       if (emp.password && verifyOrgEmployeePassword(password, emp.password)) {
+        // Success: reset attempts
+        failedAttemptsMap.delete(identifier);
+        
         // Update last login and online status
         try {
           await hasuraClient.request(UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE, {
@@ -94,6 +109,17 @@ export async function POST(request: Request) {
           user: employeeWithoutPassword,
           isProjectUser: false,
         });
+      } else {
+        // Failed attempt for this user
+        const newAttempts = attempts + 1;
+        failedAttemptsMap.set(identifier, newAttempts);
+
+        if (newAttempts >= MAX_ATTEMPTS) {
+          await hasuraClient.request(DEACTIVATE_ORG_EMPLOYEE, { id: emp.id });
+          return NextResponse.json({ 
+            error: 'Security Alert: Account deactivated due to multiple failed login attempts. Please contact IT support to reactivate your account.' 
+          }, { status: 403 });
+        }
       }
     }
 
@@ -126,8 +152,14 @@ export async function POST(request: Request) {
 
     if (projectUsers.length > 0) {
       for (const user of projectUsers) {
-        if (!user.is_active) continue;
+        if (!user.is_active) {
+           return NextResponse.json({ error: 'Your account is deactivated. Please contact IT support to reactivate your account.' }, { status: 403 });
+        }
+
         if (user.password && (await verifyProjectUserPassword(password, user.password))) {
+          // Success: reset attempts
+          failedAttemptsMap.delete(identifier);
+
           // Update last login
           try {
             await hasuraClient.request(UPDATE_PROJECT_USER_LAST_LOGIN, {
@@ -143,9 +175,24 @@ export async function POST(request: Request) {
             user: userWithoutPassword,
             isProjectUser: true,
           });
+        } else {
+          // Failed attempt for this user
+          const newAttempts = attempts + 1;
+          failedAttemptsMap.set(identifier, newAttempts);
+
+          if (newAttempts >= MAX_ATTEMPTS) {
+            await hasuraClient.request(DEACTIVATE_PROJECT_USER, { id: user.id });
+            return NextResponse.json({ 
+              error: 'Security Alert: Account deactivated due to multiple failed login attempts. Please contact IT support to reactivate your account.' 
+            }, { status: 403 });
+          }
         }
       }
     }
+
+    // If we reach here, either the user doesn't exist or we haven't hit the 3 attempts yet for a non-existent/incorrect combo
+    // We should still increment attempts for unknown identifiers to prevent brute force
+    failedAttemptsMap.set(identifier, attempts + 1);
 
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   } catch (error: any) {

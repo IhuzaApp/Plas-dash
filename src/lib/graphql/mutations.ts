@@ -1219,3 +1219,15 @@ export const UPDATE_EMPLOYEE_PROFILE_IMAGE = `
     update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { profile_photo: $profile_photo }) { id profile_photo }
   }
 `;
+
+export const DEACTIVATE_PROJECT_USER = `
+  mutation DeactivateProjectUser($id: uuid!) {
+    update_ProjectUsers_by_pk(pk_columns: { id: $id }, _set: { is_active: false }) { id is_active }
+  }
+`;
+
+export const DEACTIVATE_ORG_EMPLOYEE = `
+  mutation DeactivateOrgEmployee($id: uuid!) {
+    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { active: false }) { id active }
+  }
+`;

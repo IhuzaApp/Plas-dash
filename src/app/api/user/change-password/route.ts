@@ -46,10 +46,32 @@ export async function POST(request: Request) {
   let userId = (session as any)?.user?.id;
   let userType = (session as any)?.user?.type;
 
-  // Fallback for custom session if needed
   if (!userId) {
-     // For simplicity in this route, we rely on the session being present
-     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authHeader = request.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
+    }
+  }
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // If userType is missing, we try to detect it
+  if (!userType) {
+    try {
+      if (hasuraClient) {
+        const pCheck = await hasuraClient.request<any>(gql`query checkP($id: uuid!) { ProjectUsers_by_pk(id: $id) { id } }`, { id: userId });
+        if (pCheck.ProjectUsers_by_pk) userType = 'project_user';
+        else {
+          const eCheck = await hasuraClient.request<any>(gql`query checkE($id: uuid!) { orgEmployees_by_pk(id: $id) { id } }`, { id: userId });
+          if (eCheck.orgEmployees_by_pk) userType = 'employee';
+          else userType = 'user';
+        }
+      }
+    } catch (e) {
+      userType = 'user';
+    }
   }
 
   const { currentPassword, newPassword } = await request.json();

@@ -6,11 +6,14 @@ import AdminHeader from './AdminHeader';
 import LoadingProvider from './LoadingProvider';
 import { cn } from '@/lib/utils';
 
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
+
 interface AdminLayoutProps {
   children: React.ReactNode;
+  isLoading?: boolean;
 }
 
-const AdminLayout = ({ children }: AdminLayoutProps) => {
+const AdminLayout = ({ children, isLoading }: AdminLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -25,7 +28,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         <LoadingProvider>
           <main className="flex-1 p-4 md:p-8 overflow-auto min-h-0 bg-muted/5">
              <div className="max-w-[1600px] mx-auto w-full">
-                {children}
+                {isLoading ? <PageSkeleton /> : children}
              </div>
           </main>
         </LoadingProvider>

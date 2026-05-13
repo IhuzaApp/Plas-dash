@@ -28,6 +28,7 @@ interface SessionData {
 interface AuthContextType {
   session: SessionData | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   login: (sessionData: SessionData) => void;
   logout: () => void;
 }
@@ -81,6 +82,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   const pageTitle = getPageTitle(pathname);
   const [session, setSession] = React.useState<SessionData | null>(null);
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [isInitializing, setIsInitializing] = React.useState(true);
 
   React.useEffect(() => {
     // Check for session in localStorage and expiration (8 hours)
@@ -108,6 +110,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       setSession(null);
       setIsAuthenticated(false);
     }
+    setIsInitializing(false);
   }, []);
 
   React.useEffect(() => {
@@ -201,9 +204,21 @@ export default function RootLayout({ children }: RootLayoutProps) {
   const authValue: AuthContextType = {
     session,
     isAuthenticated,
+    isInitializing, // Add this if you want to use it in other components
     login: handleLoginSuccess,
     logout: handleLogout,
   };
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-medium text-muted-foreground animate-pulse">Initializing Plas...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={authValue}>
