@@ -12,6 +12,7 @@ import '@/styles/nprogress.css';
 import { useState } from 'react';
 import RootLayout from '@/components/layout/RootLayout';
 import { SessionProvider } from 'next-auth/react';
+import { GoogleMapProvider } from '@/contexts/GoogleProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -46,9 +47,11 @@ export default function AppRootLayout({ children }: { children: React.ReactNode 
               disableTransitionOnChange
             >
               <TooltipProvider>
-                <Suspense fallback={null}>
-                  <RootLayout>{children}</RootLayout>
-                </Suspense>
+                <GoogleMapProvider>
+                  <Suspense fallback={null}>
+                    <RootLayout>{children}</RootLayout>
+                  </Suspense>
+                </GoogleMapProvider>
                 <Toaster />
                 <Sonner />
               </TooltipProvider>

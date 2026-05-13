@@ -31,6 +31,8 @@ interface AddRestaurantModalProps {
 
 import { uploadFileToFirebase } from '@/lib/firebaseStorage';
 import { Textarea } from '@/components/ui/textarea';
+import { GoogleMap, Marker, Autocomplete } from '@react-google-maps/api';
+import { useGoogleMap } from '@/contexts/GoogleProvider';
 
 const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ 
   isOpen, 
@@ -61,6 +63,62 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
   });
 
   const isEditMode = !!restaurant;
+  const { isLoaded } = useGoogleMap();
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+
+  const defaultCenter = { lat: -1.9441, lng: 30.0619 }; // Kigali
+  const [center, setCenter] = useState(defaultCenter);
+
+  const onMapLoad = React.useCallback((map: google.maps.Map) => {
+    setMap(map);
+  }, []);
+
+  const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete) => {
+    setAutocomplete(autocomplete);
+  };
+
+  const onPlaceChanged = () => {
+    if (autocomplete !== null) {
+      const place = autocomplete.getPlace();
+      if (place.geometry && place.geometry.location) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const address = place.formatted_address || '';
+        
+        setCenter({ lat, lng });
+        setFormData(prev => ({
+          ...prev,
+          lat: lat.toString(),
+          long: lng.toString(),
+          location: address
+        }));
+      }
+    }
+  };
+
+  const onMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      setFormData(prev => ({
+        ...prev,
+        lat: lat.toString(),
+        long: lng.toString()
+      }));
+      
+      // Reverse geocode to get address
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === "OK" && results?.[0]) {
+          setFormData(prev => ({
+            ...prev,
+            location: results[0].formatted_address
+          }));
+        }
+      });
+    }
+  };
 
   React.useEffect(() => {
     if (restaurant && isOpen) {
@@ -83,11 +141,21 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
           : restaurant.operating_hours || '',
       });
       
+      if (restaurant.lat && restaurant.long) {
+        setCenter({
+          lat: parseFloat(restaurant.lat.toString()),
+          lng: parseFloat(restaurant.long.toString()),
+        });
+      } else {
+        setCenter(defaultCenter);
+      }
+      
       if (restaurant.profile) setProfilePreview(restaurant.profile);
       if (restaurant.logo) setLogoPreview(restaurant.logo);
       if (restaurant.rdb_cert) setRdbCertPreview(restaurant.rdb_cert);
     } else if (!isOpen) {
       // Reset form on close
+      setCenter(defaultCenter);
       setFormData({
         name: '',
         email: '',
@@ -418,14 +486,30 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
           )}
           <div className="space-y-2">
             <Label htmlFor="location">Physical Location</Label>
-            <Input
-              id="location"
-              name="location"
-              placeholder="e.g. 123 Main St, Springfield"
-              value={formData.location}
-              onChange={handleChange}
-              disabled={isSubmitting}
-            />
+            {isLoaded ? (
+              <Autocomplete
+                onLoad={onAutocompleteLoad}
+                onPlaceChanged={onPlaceChanged}
+              >
+                <Input
+                  id="location"
+                  name="location"
+                  placeholder="Search for a location..."
+                  value={formData.location}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                />
+              </Autocomplete>
+            ) : (
+              <Input
+                id="location"
+                name="location"
+                placeholder="e.g. 123 Main St, Springfield"
+                value={formData.location}
+                onChange={handleChange}
+                disabled={isSubmitting}
+              />
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -451,6 +535,27 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
               />
             </div>
           </div>
+
+          {isLoaded && (
+            <div className="border rounded-lg overflow-hidden h-[200px] w-full">
+              <GoogleMap
+                mapContainerStyle={{ width: '100%', height: '100%' }}
+                center={center}
+                zoom={15}
+                onLoad={onMapLoad}
+                options={{
+                  streetViewControl: false,
+                  mapTypeControl: false,
+                }}
+              >
+                <Marker
+                  position={center}
+                  draggable={true}
+                  onDragEnd={onMarkerDragEnd}
+                />
+              </GoogleMap>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="ussd">USSD</Label>
