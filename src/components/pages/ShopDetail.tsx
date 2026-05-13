@@ -67,7 +67,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { apiGet, apiPost, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiDelete, apiPatch } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
@@ -568,9 +568,9 @@ const ShopDetail = () => {
         {/* Cover Photo */}
         <div className="absolute inset-0">
           {/* Go Back Button */}
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="absolute top-6 left-6 z-20 bg-black/20 hover:bg-black/40 text-white border border-white/10 backdrop-blur-md transition-all"
             asChild
           >
@@ -625,14 +625,13 @@ const ShopDetail = () => {
           </div>
 
           <div className="flex flex-wrap gap-3 mb-2">
-            <Button 
-              onClick={() => handleToggleStatus(shop.id, shop.is_active)} 
-              variant="outline" 
-              className={`border-white/10 backdrop-blur-md transition-all ${
-                shop.is_active 
-                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/30' 
+            <Button
+              onClick={() => handleToggleStatus(shop.id, shop.is_active)}
+              variant="outline"
+              className={`border-white/10 backdrop-blur-md transition-all ${shop.is_active
+                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/30'
                   : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/30'
-              }`}
+                }`}
             >
               {shop.is_active ? (
                 <><PowerOff className="h-4 w-4 mr-2" /> Deactivate</>
@@ -681,11 +680,10 @@ const ShopDetail = () => {
                       <p className="text-sm font-medium text-muted-foreground">Status:</p>
                       <p>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            shop.is_active
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${shop.is_active
                               ? 'bg-green-100 text-green-800'
                               : 'bg-gray-100 text-gray-800'
-                          }`}
+                            }`}
                         >
                           {shop.is_active ? 'Active' : 'Inactive'}
                         </span>
@@ -742,8 +740,8 @@ const ShopDetail = () => {
                       <p className="text-sm">
                         {String(
                           (shop as unknown as Record<string, unknown>).relatedTo ??
-                            shop.relatedTo ??
-                            ''
+                          shop.relatedTo ??
+                          ''
                         ).trim() || '—'}
                       </p>
                     </div>
@@ -865,11 +863,10 @@ const ShopDetail = () => {
                           <TableCell>{product.measurement_unit}</TableCell>
                           <TableCell>
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                product.is_active
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.is_active
                                   ? 'bg-green-100 text-green-800'
                                   : 'bg-gray-100 text-gray-800'
-                              }`}
+                                }`}
                             >
                               {product.is_active ? 'Active' : 'Inactive'}
                             </span>
@@ -1175,7 +1172,7 @@ const ShopDetail = () => {
                   <CardHeader className="flex flex-row items-center justify-between py-4">
                     <CardTitle className="text-base font-semibold">Module Access</CardTitle>
                     <div className="flex gap-2">
-                       {/* <ManageManualModules shop={shop} onUpdate={() => refetch()} /> */}
+                      {/* <ManageManualModules shop={shop} onUpdate={() => refetch()} /> */}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4 px-4 pb-4">
