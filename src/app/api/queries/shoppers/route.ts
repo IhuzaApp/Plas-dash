@@ -9,37 +9,47 @@ const GET_SHOPPERS = gql`
   query getShopperInformation {
     shoppers(order_by: { created_at: desc }) {
       Employment_id
+      Police_Clearance_Cert
+      SignaturePad
+      active
       address
       background_check_completed
+      collection_comment
+      courier
       created_at
-      driving_license
-      full_name
-      id
-      national_id
-      onboarding_step
-      phone_number
-      profile_photo
-      status
-      transport_mode
-      updated_at
+      dob
+      drivingLicense_Image
+      verification_metadata
       user_id
-      active
+      updated_at
+      transport_mode
+      status
+      signature
+      proofOfResidency
+      profile_photo
+      plate_number
+      phone_number
       phone
+      onboarding_step
       needCollection
       national_id_photo_front
       national_id_photo_back
+      national_id
       mutual_status
+      id
+      guarantorRelationship
+      latitude
       longitude
       mutual_StatusCertificate
-      latitude
-      proofOfResidency
-      signature
-      drivingLicense_Image
-      collection_comment
-      guarantor
       guarantorPhone
-      guarantorRelationship
-      Police_Clearance_Cert
+      guarantor
+      full_name
+      driving_license
+      driving_license_back
+      driving_license_front
+      email
+      face_liveness_images
+      face_verified
       User {
         gender
       }
@@ -52,37 +62,47 @@ const GET_SHOPPER_BY_USER_ID = gql`
   query GetShoppersByUser_id($user_id: uuid!) {
     shoppers(where: { user_id: { _eq: $user_id } }) {
       Employment_id
+      Police_Clearance_Cert
+      SignaturePad
+      active
       address
       background_check_completed
+      collection_comment
+      courier
       created_at
-      driving_license
-      full_name
-      id
-      national_id
-      onboarding_step
-      phone_number
-      profile_photo
-      status
-      transport_mode
-      updated_at
+      dob
+      drivingLicense_Image
+      verification_metadata
       user_id
-      active
+      updated_at
+      transport_mode
+      status
+      signature
+      proofOfResidency
+      profile_photo
+      plate_number
+      phone_number
       phone
+      onboarding_step
       needCollection
       national_id_photo_front
       national_id_photo_back
+      national_id
       mutual_status
+      id
+      guarantorRelationship
+      latitude
       longitude
       mutual_StatusCertificate
-      latitude
-      proofOfResidency
-      signature
-      drivingLicense_Image
-      collection_comment
-      guarantor
       guarantorPhone
-      guarantorRelationship
-      Police_Clearance_Cert
+      guarantor
+      full_name
+      driving_license
+      driving_license_back
+      driving_license_front
+      email
+      face_liveness_images
+      face_verified
       User {
         id
         email
@@ -182,6 +202,73 @@ const GET_SHOPPER_BY_USER_ID = gql`
             status
           }
         }
+      }
+      order_offers {
+        business_order_id
+        done_on
+        expires_at
+        id
+        offered_at
+        order_id
+        order_type
+        package_order_id
+        reel_order_id
+        restaurant_order_id
+        round_number
+        shopper_id
+        status
+        updated_at
+        reelOrders {
+          OrderID
+          id
+        }
+      }
+      businessProductOrders {
+        OrderID
+        id
+      }
+      Orders {
+        OrderID
+        id
+      }
+      package_deliveries {
+        DeliveryCode
+        comment
+        distance
+        id
+      }
+      payment_requests {
+        id
+        order_id
+        amount
+        agent_approved_id
+        created_at
+        shop_id
+        shopper_id
+        status
+        transactionCode
+        updated_on
+      }
+      reel_orders {
+        OrderID
+        id
+      }
+      restaurant_orders {
+        OrderID
+        id
+      }
+      withDraweRequests {
+        businessWallet_id
+        amount
+        business_id
+        created_at
+        id
+        phoneNumber
+        shopperWallet_id
+        shopper_id
+        status
+        update_at
+        verification_image
       }
       Revenues {
         amount

@@ -33,9 +33,15 @@ const ShopperProfileCard: React.FC<ShopperProfileCardProps> = ({ shopper, user }
           </Avatar>
           <div className="space-y-1">
             <h2 className="text-2xl font-bold">{shopper.full_name}</h2>
-            <p className="text-muted-foreground">{shopper.Employment_id}</p>
-            <p className="text-muted-foreground">{shopper.phone_number}</p>
-            <div className="flex gap-2 mt-2">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground mt-2">
+              <p>{shopper.Employment_id}</p>
+              <p>{shopper.phone_number || shopper.phone}</p>
+              <p>{shopper.email}</p>
+              {shopper.dob && <p>DOB: {new Date(shopper.dob).toLocaleDateString()}</p>}
+              {shopper.courier && <p>Courier: {shopper.courier}</p>}
+              {shopper.plate_number && <p>Plate: {shopper.plate_number}</p>}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-4">
               <Badge
                 className={
                   user.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
@@ -54,6 +60,11 @@ const ShopperProfileCard: React.FC<ShopperProfileCardProps> = ({ shopper, user }
                   ? 'Background Check Completed'
                   : 'Background Check Pending'}
               </Badge>
+              {shopper.face_verified && (
+                <Badge className="bg-blue-100 text-blue-800 border-none">
+                  Face Verified
+                </Badge>
+              )}
               <Badge variant="outline" className="capitalize">
                 {shopper.transport_mode}
               </Badge>
