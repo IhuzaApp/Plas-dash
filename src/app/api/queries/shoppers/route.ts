@@ -163,23 +163,23 @@ const GET_SHOPPER_BY_USER_ID = gql`
           user_id
           validity
         }
-        Wallets {
-          available_balance
+      }
+      Wallets {
+        available_balance
+        id
+        last_updated
+        reserved_balance
+        shopper_id
+        Wallet_Transactions {
           id
-          last_updated
-          reserved_balance
-          shopper_id
-          Wallet_Transactions {
-            id
-            amount
-            type
+          amount
+          type
+          status
+          created_at
+          related_order_id
+          Order {
+            OrderID
             status
-            created_at
-            related_order_id
-            Order {
-              OrderID
-              status
-            }
           }
         }
       }
@@ -474,7 +474,7 @@ export async function GET(request: Request) {
         // Fallback to nested Revenues if root Revenue query fails (e.g. different schema)
         revenues = shopper.Revenues || [];
       }
-      const wallet = shopper.User?.Wallets?.[0];
+      const wallet = shopper.Wallets?.[0];
       const ratings = shopper.User?.Ratings || [];
 
       const pendingWithdrawAmount = withdrawRequests
