@@ -537,9 +537,6 @@ export interface OrderOffer {
       [key: string]: any;
     };
   };
-  Orders?: any;
-  businessProductOrders?: any;
-  restaurantOrder?: any;
 }
 
 interface Restaurant {
