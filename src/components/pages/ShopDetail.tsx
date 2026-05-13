@@ -16,26 +16,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Search,
-  Filter,
-  Loader2,
-  Package,
-  User,
+  ArrowLeft,
   Calendar,
   DollarSign,
-  MapPin,
-  Plus,
-  FileUp,
-  Users,
   Edit,
-  Trash2,
-  UserX,
-  Store,
+  FileUp,
+  Filter,
+  Image as ImageIcon,
+  Loader2,
+  MapPin,
+  Package,
+  Plus,
+  Power,
+  PowerOff,
+  Search,
+  Settings,
   Shield,
   ShieldAlert,
   ShieldCheck,
-  Image as ImageIcon,
+  Star,
+  Store,
+  Trash2,
+  TrendingDown,
+  User,
+  Users,
+  UserX,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   useShopById,
   useReelOrders,
@@ -174,7 +182,18 @@ type ProductFormData = z.infer<typeof productFormSchema>;
 
 const ShopDetail = () => {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id?.toString() || '';
+
+  const handleToggleStatus = async (shopId: string, currentStatus: boolean) => {
+    try {
+      await apiPatch(`/api/mutations/shops/${shopId}`, { is_active: !currentStatus });
+      toast.success(`Shop ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      refetch();
+    } catch (e) {
+      toast.error('Failed to update shop status');
+    }
+  };
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
@@ -548,6 +567,18 @@ const ShopDetail = () => {
       <div className="relative h-80 w-full mb-8 overflow-hidden rounded-2xl shadow-2xl group">
         {/* Cover Photo */}
         <div className="absolute inset-0">
+          {/* Go Back Button */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="absolute top-6 left-6 z-20 bg-black/20 hover:bg-black/40 text-white border border-white/10 backdrop-blur-md transition-all"
+            asChild
+          >
+            <Link href="/shops">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back
+            </Link>
+          </Button>
+
           {shop.image ? (
             <img
               src={shop.image}
@@ -593,7 +624,23 @@ const ShopDetail = () => {
             </div>
           </div>
 
-          <div className="flex gap-3 mb-2">
+          <div className="flex flex-wrap gap-3 mb-2">
+            <Button 
+              onClick={() => handleToggleStatus(shop.id, shop.is_active)} 
+              variant="outline" 
+              className={`border-white/10 backdrop-blur-md transition-all ${
+                shop.is_active 
+                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/30' 
+                  : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/30'
+              }`}
+            >
+              {shop.is_active ? (
+                <><PowerOff className="h-4 w-4 mr-2" /> Deactivate</>
+              ) : (
+                <><Power className="h-4 w-4 mr-2" /> Activate</>
+              )}
+            </Button>
+
             {hasAction('products', 'add_products') && (
               <Button onClick={() => setIsAddProductOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
                 <Plus className="h-4 w-4 mr-2" /> Add Product
