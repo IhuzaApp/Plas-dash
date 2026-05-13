@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
@@ -99,6 +99,25 @@ const Shops = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Filter shops based on search term
+  const filteredShops = useMemo(() => {
+    return (data?.Shops || []).filter(
+      shop =>
+        searchTerm === '' ||
+        shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        shop.category?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [data?.Shops, searchTerm]);
+
+  // Calculate pagination
+  const totalItems = filteredShops.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentShops = useMemo(() => {
+    return filteredShops.slice(startIndex, endIndex);
+  }, [filteredShops, startIndex, endIndex]);
+
   // Disable shop mutation
   const disableShopMutation = useMutation({
     mutationFn: async ({ shopId, isActive }: { shopId: string; isActive: boolean }) => {
@@ -108,12 +127,11 @@ const Shops = () => {
       });
     },
     onSuccess: (data, variables) => {
-      const action = variables.isActive ? 'enabled' : 'disabled';
       toast({
         title: 'Success',
-        description: `Shop ${action} successfully!`,
+        description: `Shop ${variables.isActive ? 'enabled' : 'disabled'} successfully.`,
       });
-      queryClient.invalidateQueries({ queryKey: ['shops'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'shops'] });
     },
     onError: (error: any) => {
       toast({
@@ -132,22 +150,6 @@ const Shops = () => {
       disableShopMutation.mutate({ shopId, isActive: newStatus });
     }
   };
-
-  // Filter shops based on search term
-  const filteredShops =
-    data?.Shops?.filter(
-      shop =>
-        searchTerm === '' ||
-        shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        shop.category?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
-
-  // Calculate pagination
-  const totalItems = filteredShops.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const currentShops = filteredShops.slice(startIndex, endIndex);
 
   const toggleShopExpansion = (shopId: string) => {
     const newExpanded = new Set(expandedShops);
@@ -200,9 +202,17 @@ const Shops = () => {
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
             Partner Shops
           </h1>
-          <p className="text-gray-300 max-w-md text-lg">
+          <p className="text-gray-300 max-w-md text-lg mb-6">
             Monitor shop performance, manage active subscriptions, and track promotional campaigns across your marketplace.
           </p>
+          {hasAction('shops', 'add_shops') && (
+            <Button 
+              onClick={() => setIsAddShopDialogOpen(true)}
+              className="w-fit bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+            >
+              <Plus className="h-4 w-4 mr-2" /> Add New Shop
+            </Button>
+          )}
         </div>
       </div>
 

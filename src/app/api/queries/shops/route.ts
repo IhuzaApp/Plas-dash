@@ -62,7 +62,7 @@ const GET_SHOPS = gql`
           price_yearly
         }
       }
-      Orders(order_by: { created_at: desc }, limit: 50) {
+      Orders(order_by: { created_at: desc }, limit: 10) {
         id
         OrderID
         status

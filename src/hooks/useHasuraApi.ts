@@ -746,6 +746,8 @@ export function useShops() {
       const res = await apiGet<{ shops: Shop[] }>('/api/queries/shops');
       return { Shops: res.shops || [] };
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     retry: 2,
     retryDelay: 1000,
   });
