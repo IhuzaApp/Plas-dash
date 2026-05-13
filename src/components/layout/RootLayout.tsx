@@ -10,6 +10,7 @@ import { hasPrivilege } from '@/types/privileges';
 import { getRecommendedLandingPage, isPageAccessible } from '@/lib/privileges';
 import { ShopSessionProvider } from '@/contexts/ShopSessionContext';
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
+import { ThemeColorProvider } from '@/components/providers/ThemeColorProvider';
 
 interface SessionData {
   id: string;
@@ -222,29 +223,31 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
   return (
     <AuthContext.Provider value={authValue}>
-      <ShopSessionProvider>
-        <Head>
-          <title key="title">{pageTitle}</title>
-          <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
-          <meta key="description" name="description" content="Plas Admin Dashboard" />
-          <link key="favicon" rel="icon" href="/favicon.png" />
-        </Head>
-        <LoadingProvider>
-          <div className="min-h-screen bg-background relative selection:bg-primary/20 selection:text-primary">
-            <React.Suspense fallback={null}>{children}</React.Suspense>
-            {!isAuthenticated && !pathname?.startsWith('/tax') && (
-              <div className="fixed inset-0 z-40 bg-white/30 dark:bg-black/30 backdrop-blur-md pointer-events-none" />
-            )}
-            {!isAuthenticated && !pathname?.startsWith('/tax') && (
-              <LoginModal onLoginSuccess={handleLoginSuccess} />
-            )}
-            {isAuthenticated &&
-              pathname !== '/pos/ai-chat' &&
-              session?.privileges?.ai_chat?.access && <FloatingChatButton />}
-            <Toaster />
-          </div>
-        </LoadingProvider>
-      </ShopSessionProvider>
+      <ThemeColorProvider>
+        <ShopSessionProvider>
+          <Head>
+            <title key="title">{pageTitle}</title>
+            <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
+            <meta key="description" name="description" content="Plas Admin Dashboard" />
+            <link key="favicon" rel="icon" href="/favicon.png" />
+          </Head>
+          <LoadingProvider>
+            <div className="min-h-screen bg-background relative selection:bg-primary/20 selection:text-primary">
+              <React.Suspense fallback={null}>{children}</React.Suspense>
+              {!isAuthenticated && !pathname?.startsWith('/tax') && (
+                <div className="fixed inset-0 z-40 bg-white/30 dark:bg-black/30 backdrop-blur-md pointer-events-none" />
+              )}
+              {!isAuthenticated && !pathname?.startsWith('/tax') && (
+                <LoginModal onLoginSuccess={handleLoginSuccess} />
+              )}
+              {isAuthenticated &&
+                pathname !== '/pos/ai-chat' &&
+                session?.privileges?.ai_chat?.access && <FloatingChatButton />}
+              <Toaster />
+            </div>
+          </LoadingProvider>
+        </ShopSessionProvider>
+      </ThemeColorProvider>
     </AuthContext.Provider>
   );
 }

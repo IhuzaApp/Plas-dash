@@ -24,20 +24,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Settings as SettingsIcon, Store, Building2, User, Mail, Phone, Shield, Smartphone, Fingerprint } from 'lucide-react';
+import { Settings as SettingsIcon, Store, Building2, User, Mail, Phone, Shield, Smartphone, Fingerprint, Sun, Moon } from 'lucide-react';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import SupermarketSettings from './SupermarketSettings';
 import { useSession } from 'next-auth/react';
+import { useTheme } from 'next-themes';
+import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { GET_PROJECT_USER_BY_ID, GET_ORG_EMPLOYEE_BY_ID, GET_USER_BY_ID_SIMPLE } from '@/lib/graphql/queries';
 import { useEffect } from 'react';
+import { useThemeColor } from '@/components/providers/ThemeColorProvider';
+
+const themePresets = [
+  { name: 'Emerald (Default)', hsl: '142 76% 17%', primary: '#064e3b' },
+  { name: 'Ocean Blue', hsl: '221 83% 53%', primary: '#3b82f6' },
+  { name: 'Royal Purple', hsl: '262 83% 58%', primary: '#8b5cf6' },
+  { name: 'Rose Pink', hsl: '346 84% 61%', primary: '#f43f5e' },
+  { name: 'Amber Glow', hsl: '38 92% 50%', primary: '#f59e0b' },
+  { name: 'Midnight', hsl: '222 47% 11%', primary: '#0f172a' },
+  { name: 'Crimson', hsl: '0 72% 51%', primary: '#dc2626' },
+  { name: 'Teal', hsl: '174 75% 39%', primary: '#0d9488' },
+];
 
 const Settings = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { theme, setTheme } = useTheme();
+  const { color: activeColor, setColor: setActiveColor, setCustomColor } = useThemeColor();
 
   const handleSaveChanges = () => {
     toast.success('Settings saved successfully');
@@ -75,23 +92,19 @@ const Settings = () => {
             const parsed = JSON.parse(localSession);
             currentUserId = parsed.id;
             currentUserType = parsed.isProjectUser ? 'project_user' : 'employee';
-            console.log('Settings: Found local session:', { currentUserId, currentUserType });
           } catch (e) {
-            console.error('Settings: Error parsing local session', e);
+            // Silently fail
           }
         }
       }
 
       if (!currentUserId) {
-        console.warn('Settings: No user ID found in session or localStorage');
         return;
       }
 
       setIsLoadingUser(true);
-      console.log('Settings: Fetching data for:', { id: currentUserId, type: currentUserType });
       
       if (!hasuraClient) {
-        console.error('Settings: hasuraClient is null. Check your environment variables.');
         setIsLoadingUser(false);
         return;
       }
@@ -99,9 +112,7 @@ const Settings = () => {
       try {
         let data: any;
         if (currentUserType === 'project_user') {
-          console.log('Settings: Querying ProjectUsers...');
           data = await hasuraClient.request<any>(GET_PROJECT_USER_BY_ID, { id: currentUserId });
-          console.log('Settings: ProjectUsers Raw Data:', data);
           if (data.ProjectUsers_by_pk) {
             const pUser = data.ProjectUsers_by_pk;
             setProfileData({
@@ -116,9 +127,7 @@ const Settings = () => {
             setIsTwoFactorEnabled(pUser.TwoAuth_enabled);
           }
         } else if (currentUserType === 'employee') {
-          console.log('Settings: Querying orgEmployees...');
           data = await hasuraClient.request<any>(GET_ORG_EMPLOYEE_BY_ID, { id: currentUserId });
-          console.log('Settings: orgEmployees Raw Data:', data);
           if (data.orgEmployees_by_pk) {
             const eUser = data.orgEmployees_by_pk;
             setProfileData({
@@ -131,9 +140,7 @@ const Settings = () => {
             });
           }
         } else {
-          console.log('Settings: Querying Users (Standard)...');
           data = await hasuraClient.request<any>(GET_USER_BY_ID_SIMPLE, { id: currentUserId });
-          console.log('Settings: Standard Users Raw Data:', data);
           if (data.Users_by_pk) {
             const uUser = data.Users_by_pk;
             setProfileData({
@@ -147,7 +154,7 @@ const Settings = () => {
           }
         }
       } catch (error) {
-        console.error('Settings: Error fetching user data:', error);
+        // Error fetching user data
       } finally {
         setIsLoadingUser(false);
       }
@@ -527,45 +534,110 @@ const Settings = () => {
           </TabsContent>
         )}
 
-        <TabsContent value="appearance" className="space-y-6">
-          <Card>
-            <CardHeader>
+        <TabsContent value="appearance" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <Card className="border-none shadow-lg rounded-3xl overflow-hidden">
+            <CardHeader className="border-b bg-zinc-50/50 dark:bg-zinc-900/50">
               <CardTitle>Appearance Settings</CardTitle>
-              <CardDescription>Customize the look and feel of the platform.</CardDescription>
+              <CardDescription>Customize the look and feel of your dashboard experience.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Theme</Label>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input type="radio" id="theme-light" name="theme" defaultChecked />
-                    <Label htmlFor="theme-light">Light</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="radio" id="theme-dark" name="theme" />
-                    <Label htmlFor="theme-dark">Dark</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="radio" id="theme-system" name="theme" />
-                    <Label htmlFor="theme-system">System Default</Label>
+            <CardContent className="pt-6 space-y-8">
+              <div className="space-y-4">
+                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Interface Theme</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { id: 'light', name: 'Light', icon: <Sun className="h-4 w-4" /> },
+                    { id: 'dark', name: 'Dark', icon: <Moon className="h-4 w-4" /> },
+                    { id: 'system', name: 'System', icon: <Smartphone className="h-4 w-4" /> },
+                  ].map((t) => (
+                    <Button
+                      key={t.id}
+                      variant={theme === t.id ? 'default' : 'outline'}
+                      className={cn(
+                        "h-20 flex flex-col gap-2 rounded-2xl transition-all duration-300",
+                        theme === t.id ? "bg-primary shadow-lg shadow-primary/20 scale-105" : "hover:bg-primary/5 hover:border-primary/30"
+                      )}
+                      onClick={() => setTheme(t.id)}
+                    >
+                      {t.icon}
+                      <span className="text-xs font-bold uppercase tracking-tight">{t.name}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Primary Color Accent</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {themePresets.map((p) => (
+                    <Button
+                      key={p.name}
+                      variant="outline"
+                      className={cn(
+                        "h-14 flex items-center justify-start gap-3 rounded-2xl transition-all duration-300 px-3 overflow-hidden",
+                        activeColor.name === p.name 
+                          ? "border-primary bg-primary/5 shadow-md scale-[1.02]" 
+                          : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      )}
+                      onClick={() => {
+                        setActiveColor(p);
+                        toast.success(`Theme updated to ${p.name}`);
+                      }}
+                    >
+                      <div 
+                        className="h-6 w-6 rounded-lg shadow-inner flex-shrink-0" 
+                        style={{ backgroundColor: p.primary }}
+                      />
+                      <span className={cn(
+                        "text-[10px] font-bold uppercase tracking-tighter truncate",
+                        activeColor.name === p.name ? "text-primary" : "text-zinc-500"
+                      )}>
+                        {p.name.split(' ')[0]}
+                      </span>
+                    </Button>
+                  ))}
+                  
+                  {/* Custom Color Picker */}
+                  <div className="relative group">
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "h-14 w-full flex items-center justify-start gap-3 rounded-2xl transition-all duration-300 px-3 overflow-hidden",
+                        activeColor.name === 'Custom' 
+                          ? "border-primary bg-primary/5 shadow-md scale-[1.02]" 
+                          : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      )}
+                      onClick={() => document.getElementById('custom-color-picker')?.click()}
+                    >
+                      <div 
+                        className="h-6 w-6 rounded-lg shadow-inner flex-shrink-0 border-2 border-dashed border-zinc-300 flex items-center justify-center text-[10px]" 
+                        style={{ backgroundColor: activeColor.name === 'Custom' ? activeColor.primary : 'transparent' }}
+                      >
+                        {activeColor.name !== 'Custom' && '+'}
+                      </div>
+                      <span className={cn(
+                        "text-[10px] font-bold uppercase tracking-tighter truncate",
+                        activeColor.name === 'Custom' ? "text-primary" : "text-zinc-500"
+                      )}>
+                        Custom
+                      </span>
+                    </Button>
+                    <input 
+                      id="custom-color-picker"
+                      type="color"
+                      className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
+                      value={activeColor.primary}
+                      onChange={(e) => setCustomColor(e.target.value)}
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Primary Color</Label>
-                <div className="flex gap-2">
-                  <input
-                    type="color"
-                    className="w-10 h-10 rounded cursor-pointer"
-                    defaultValue="#9b87f5"
-                  />
+              <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-dashed">
+                <div className="space-y-0.5">
+                  <Label htmlFor="compact-mode" className="text-sm font-bold">Compact Interface</Label>
+                  <p className="text-[10px] text-muted-foreground">Reduce spacing and padding for a denser layout.</p>
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
                 <Switch id="compact-mode" />
-                <Label htmlFor="compact-mode">Enable Compact Mode</Label>
               </div>
             </CardContent>
           </Card>

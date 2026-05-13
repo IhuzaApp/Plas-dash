@@ -9,6 +9,7 @@ import { SearchCommand } from './SearchCommand';
 import { usePageLoading } from '@/hooks/usePageLoading';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
+import { useAuth } from './RootLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 
@@ -20,8 +21,13 @@ interface AdminHeaderProps {
 const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   const [open, setOpen] = React.useState(false);
   const { isLoading } = usePageLoading();
-  const { data: session } = useSession();
-  const user = session?.user as any;
+  const { data: nextSession } = useSession();
+  const { session: customSession } = useAuth();
+  
+  const displayUser = customSession || nextSession?.user;
+  const userImage = displayUser?.image || (displayUser as any)?.profile_picture || (displayUser as any)?.profile || (displayUser as any)?.display_image;
+  const userName = displayUser?.name || (displayUser as any)?.username || (displayUser as any)?.fullName || 'User';
+  const userRole = (displayUser as any)?.role || (displayUser as any)?.roleType || (displayUser as any)?.display_role || 'Admin';
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -94,21 +100,21 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
             <ThemeToggle />
             
             <div className="flex items-center gap-3 pl-2">
-              {user ? (
+              {displayUser ? (
                 <Link href="/settings">
                   <Button 
                     variant="ghost" 
                     className="p-1 pr-3 rounded-2xl border bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-primary/10 hover:border-primary/20 transition-all"
                   >
                     <Avatar className="h-8 w-8 rounded-xl mr-2 shadow-sm border border-border">
-                      <AvatarImage src={user.image || user.profile_picture} />
+                      <AvatarImage src={userImage} />
                       <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
-                        {user.name?.charAt(0) || 'U'}
+                        {userName.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-start mr-1">
-                      <span className="text-[11px] font-bold leading-tight">{user.name?.split(' ')[0]}</span>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-tighter font-medium">{user.role || 'Admin'}</span>
+                      <span className="text-[11px] font-bold leading-tight">{userName.split(' ')[0]}</span>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-tighter font-medium">{userRole}</span>
                     </div>
                   </Button>
                 </Link>
