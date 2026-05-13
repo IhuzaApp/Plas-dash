@@ -4,6 +4,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -29,6 +30,8 @@ import {
   Eye,
   Edit,
   Store,
+  CreditCard,
+  Tag,
 } from 'lucide-react';
 import { useShops } from '@/hooks/useHasuraApi';
 import Pagination from '@/components/ui/pagination';
@@ -183,40 +186,61 @@ const Shops = () => {
 
   return (
     <AdminLayout>
-      <PageHeader
-        title="Shops"
-        description="Manage partner shops and their products."
-        actions={
-          <div className="flex gap-2">
-            {hasAction('shops', 'add_shops') && (
-              <Button onClick={() => setIsAddShopDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" /> Add New Shop
-              </Button>
-            )}
-          </div>
-        }
-      />
+      {/* Hero Banner Section */}
+      <div className="relative h-64 w-full rounded-2xl overflow-hidden mb-8 shadow-xl group">
+        <img
+          src="/shops_marketplace_banner_1778665219782.png"
+          alt="Marketplace Banner"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-12">
+          <Badge className="w-fit mb-4 bg-primary/20 text-primary-foreground border-primary/30 backdrop-blur-md">
+            Management Portal
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+            Partner Shops
+          </h1>
+          <p className="text-gray-300 max-w-md text-lg">
+            Monitor shop performance, manage active subscriptions, and track promotional campaigns across your marketplace.
+          </p>
+        </div>
+      </div>
 
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search shops..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={e => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page on search
-              }}
-            />
+      <Tabs defaultValue="all" className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30 p-2 rounded-xl backdrop-blur-sm border border-border/50">
+          <TabsList className="bg-background/50">
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              <Store className="h-4 w-4" /> All Shops
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" /> Subscriptions
+            </TabsTrigger>
+            <TabsTrigger value="promotions" className="flex items-center gap-2">
+              <Tag className="h-4 w-4" /> Promotions
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search shops..."
+                className="pl-8 bg-background/50 border-none shadow-none"
+                value={searchTerm}
+                onChange={e => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <Button variant="outline" size="icon" className="shrink-0 bg-background/50">
+              <Filter className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" /> Filter
-          </Button>
         </div>
 
-        <Card>
+        <TabsContent value="all" className="space-y-4">
+          <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -430,8 +454,188 @@ const Shops = () => {
               totalItems={totalItems}
             />
           )}
-        </Card>
-      </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="subscriptions" className="space-y-4">
+          <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold">Active Subscriptions</h3>
+              <Button size="sm" variant="outline">
+                View Billing Reports
+              </Button>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Shop</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Cycle</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : data?.Shops?.filter(s => s.shop_subscription).length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      No active subscriptions found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data?.Shops?.filter(s => s.shop_subscription).map(shop => {
+                    const sub = (shop as any).shop_subscription;
+                    return (
+                      <TableRow key={shop.id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded bg-muted flex items-center justify-center overflow-hidden">
+                              {shop.logo ? (
+                                <img src={shop.logo} className="object-contain h-full w-full" />
+                              ) : (
+                                <Store className="h-4 w-4" />
+                              )}
+                            </div>
+                            {shop.name}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-primary/5">
+                            {sub.plan?.name || 'N/A'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="capitalize">{sub.billing_cycle || '—'}</TableCell>
+                        <TableCell>
+                          {sub.start_date ? format(new Date(sub.start_date), 'MMM dd, yyyy') : '—'}
+                        </TableCell>
+                        <TableCell>
+                          {sub.end_date ? format(new Date(sub.end_date), 'MMM dd, yyyy') : '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              sub.status === 'active'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }
+                          >
+                            {sub.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="promotions" className="space-y-4">
+          <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold">Active Promotions</h3>
+              <Link href="/promotions">
+                <Button size="sm" variant="outline">
+                  Manage Global Promos
+                </Button>
+              </Link>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Shop</TableHead>
+                  <TableHead>Promo Name</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Budget Used</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : data?.Shops?.filter(s => (s as any).promotions && (s as any).promotions.length > 0).length ===
+                  0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      No active promotions found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data?.Shops?.flatMap(shop =>
+                    ((shop as any).promotions || []).map((promo: any) => ({ ...promo, shopName: shop.name, shopLogo: shop.logo }))
+                  ).map(promo => (
+                    <TableRow key={promo.id} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded bg-muted flex items-center justify-center overflow-hidden">
+                            {promo.shopLogo ? (
+                              <img src={promo.shopLogo} className="object-contain h-full w-full" />
+                            ) : (
+                              <Store className="h-4 w-4" />
+                            )}
+                          </div>
+                          {promo.shopName}
+                        </div>
+                      </TableCell>
+                      <TableCell>{promo.name}</TableCell>
+                      <TableCell className="font-mono text-xs">{promo.code || '—'}</TableCell>
+                      <TableCell className="capitalize">{promo.discount_type}</TableCell>
+                      <TableCell>
+                        {promo.discount_type === 'percentage'
+                          ? `${promo.discount_value}%`
+                          : formatCurrency(promo.discount_value)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="w-full bg-muted rounded-full h-1.5 mb-1">
+                          <div
+                            className="bg-primary h-1.5 rounded-full"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                (parseFloat(promo.budget_used || '0') /
+                                  parseFloat(promo.budget_limit || '1')) *
+                                  100
+                              )}%`,
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatCurrency(promo.budget_used || '0')} / {formatCurrency(promo.budget_limit || '0')}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={
+                            promo.status === 'active'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }
+                        >
+                          {promo.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <AddShopDialog isOpen={isAddShopDialogOpen} onClose={() => setIsAddShopDialogOpen(false)} />
     </AdminLayout>

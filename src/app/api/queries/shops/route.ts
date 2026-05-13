@@ -37,6 +37,31 @@ const GET_SHOPS = gql`
           count
         }
       }
+      promotions {
+        id
+        name
+        code
+        status
+        discount_type
+        discount_value
+        start_date
+        end_date
+        budget_limit
+        budget_used
+      }
+      shop_subscription {
+        id
+        status
+        start_date
+        end_date
+        billing_cycle
+        plan {
+          id
+          name
+          price_monthly
+          price_yearly
+        }
+      }
       Orders(order_by: { created_at: desc }, limit: 50) {
         id
         OrderID

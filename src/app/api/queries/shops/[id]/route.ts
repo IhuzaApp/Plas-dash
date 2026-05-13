@@ -25,18 +25,172 @@ const GET_SHOP_BY_ID = gql`
       created_at
       updated_at
       category_id
-      shop_subscription {
+      promotions {
+        affects
+        applies_to_id
+        applies_to_type
+        budget_limit
+        budget_used
+        buy_quantity
+        code
+        commission_cap
+        commission_type
+        commission_value
+        created_at
+        customer_discount_percent
+        delivery_paid_by
+        discount_type
+        discount_value
+        end_date
+        end_time
+        free_delivery
+        funded_by
         id
+        influencer_code
+        influencer_id
+        max_discount
+        max_platform_loss
+        min_order_value
+        min_profit_required
+        min_purchase_amount
+        name
+        priority
+        promotion_scope
+        promotion_type
+        restaurant_id
+        shop_id
+        stacking_type
+        start_date
+        start_time
         status
-        plan {
+        update_on
+        usage_limit
+        usage_per_customer
+        Influencer {
+          bank_account_name
+          bank_account_number
+          bank_name
+          contract_end_date
+          contract_start_date
+          created_at
+          description
+          email
           id
+          membershipId
+          momo_number
           name
+          payment_method
+          payment_terms
+          phone
+          status
+          updated_at
+          influencer_commissions {
+            affects
+            amount
+            commission_cap
+            commission_type
+            created_at
+            delivery_paid_by
+            free_delivery
+            funded_by
+            high_value_influencer_bonus
+            high_value_order_threshold
+            id
+            influencer_id
+            min_order_value
+            order_threshold
+          }
+        }
+      }
+      shop_subscription {
+        billing_cycle
+        business_id
+        created_at
+        end_date
+        id
+        plan_id
+        restaurant_id
+        shop_id
+        start_date
+        status
+        updated_at
+        subscription_invoices {
+          aiUsage_id
+          created_at
+          currency
+          deleted
+          deleted_at
+          discount_amount
+          due_date
+          id
+          invoice_number
+          is_overdue
+          issued_at
+          paid_at
+          plan_name
+          payment_method
+          plan_price
+          reelUsage_id
+          shopSubscription_id
+          status
+          subtotal_amount
+          tax_amount
+          updated_at
+        }
+        subscription_transactions {
+          amount
+          created_on
+          currency
+          id
+          mtn_response
+          phone
+          reference_id
+          status
+          subscription_id
+          type
+          update_at
+          user_id
+        }
+        plan {
+          ai_request_limit
+          created_at
+          description
+          name
+          id
+          price_monthly
+          price_yearly
+          reel_limit
           plan_modules {
+            id
+            plan_id
+            module_id
             module {
+              created_at
+              group_name
+              id
+              name
               slug
             }
           }
         }
+      }
+      reel_usages {
+        business_id
+        id
+        month
+        restaurant_id
+        shop_id
+        upload_count
+        year
+      }
+      merchant_wallet {
+        active
+        balance
+        created_at
+        id
+        restaurant_id
+        shop_id
+        update_at
       }
       Category {
         id

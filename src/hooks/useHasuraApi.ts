@@ -326,7 +326,7 @@ interface ShopDetails extends Shop {
   tin?: string | null;
   ssd?: string | null;
   relatedTo?: string | null;
-  operating_hours: string;
+  operating_hours: string | Record<string, string>;
   latitude: number;
   longitude: number;
   image: string;
@@ -334,6 +334,11 @@ interface ShopDetails extends Shop {
   created_at: string;
   updated_at: string;
   Products: ShopProduct[];
+  promotions: any[];
+  shop_subscription: any | null;
+  shop_modules: any[];
+  reel_usages: any[];
+  merchant_wallet: any | null;
   Orders: Array<{
     id: string;
     OrderID: string;
