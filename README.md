@@ -52,6 +52,21 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - **Centralized Dictionary**: The `@/lib/privileges/moduleDescriptions.ts` file acts as the single source of truth for all human-readable module definitions, grouping (e.g., 'Operations', 'Dashboards'), and granular actions (e.g., 'Delete Orders', 'Apply Discount').
   - **Visual Feedback**: The interface renders actionable toggles and read-only badge previews (the `RoleModulePreview` component) natively mapped to these descriptions, grouping privileges organically by their functional domain.
 
+### 🏪 Shop & Subscription Management
+
+- **Automated Onboarding**
+  - **One-Click Setup**: When creating a new shop, the system automatically initializes its entire subscription lifecycle, including Plan assignment, initial AI/Reel usage limits, and the first billing invoice.
+  - **Plan-Driven Limits**: Usage quotas for AI requests and video Reels are dynamically assigned based on the selected marketplace plan at the moment of creation.
+- **Manual Module Overrides**
+  - **Granular Control**: Admins can manually assign or remove specific feature modules (e.g., Inventory, POS, Analytics) for any individual shop, regardless of their base subscription plan.
+  - **Visual Management**: Dedicated "Manual Overrides" section in the Shop Details dashboard with categorized module toggles and real-time status indicators.
+- **Activation Safeguards**
+  - **Subscription Validation**: A shop cannot be activated in the marketplace unless it has an `active` subscription.
+  - **Smart Alerts**: Interactive UI popups prevent accidental activation of non-paying partners, ensuring financial compliance before a shop goes live.
+- **Performance Optimized UI**
+  - **Client-Side Caching**: Shops list uses `useQuery` with advanced caching (`staleTime: 5m`) to ensure near-instantaneous page transitions.
+  - **Payload Optimization**: GraphQL queries are optimized to fetch only essential data for the list view, with heavy details (like full order histories) loaded only on demand.
+
 ## Features
 
 ### 📊 Real-time Analytics Dashboard
