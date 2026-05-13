@@ -567,7 +567,60 @@ interface Restaurant {
   relatedTo: string;
   tin: string;
   ussd: string;
+  rdb_cert: string;
   created_at: string;
+  reel_usages?: Array<{
+    id: string;
+    month: string;
+    year: string;
+    upload_count: number;
+  }>;
+  merchant_wallet?: {
+    id: string;
+    balance: number;
+    active: boolean;
+  };
+  merchant_wallets?: Array<{
+    id: string;
+    balance: number;
+    active: boolean;
+  }>;
+  orgEmployees?: Array<{
+    id: string;
+    fullnames: string;
+    email: string;
+    roleType: string;
+    Position: string;
+  }>;
+  ai_usages?: Array<{
+    id: string;
+    month: string;
+    year: string;
+    request_count: number;
+    requests_sent: number;
+  }>;
+  shop_subscription?: {
+    id: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+    billing_cycle: string;
+    plan_id: string;
+    subscription_invoices?: Array<{
+      id: string;
+      invoice_number: string;
+      status: string;
+      total_amount: string;
+      issued_at: string;
+    }>;
+    subscription_transactions?: Array<{
+      id: string;
+      amount: string;
+      status: string;
+      type: string;
+      created_on: string;
+    }>;
+  } | null;
 }
 
 interface Reel {
@@ -1300,7 +1353,7 @@ export function useRestaurantOrders() {
 export function useRestaurants() {
   return useQuery<{ Restaurants: Restaurant[] }, Error>({
     queryKey: ['restaurants'],
-    queryFn: () => hasuraRequest(GET_RESTAURANTS, {}),
+    queryFn: () => hasuraRequest<{ Restaurants: Restaurant[] }>(GET_RESTAURANTS, {}),
   });
 }
 

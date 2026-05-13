@@ -2008,22 +2008,125 @@ export const GET_REEL_ORDERS = `
 // Restaurants query
 export const GET_RESTAURANTS = `
   query getRestaurantsDetails {
-    Restaurants {
+    Restaurants(order_by: { name: asc }) {
       created_at
       email
       id
+      is_active
       lat
       location
+      logo
       long
       name
       phone
       profile
-      verified
-      logo
-      is_active
       relatedTo
       tin
       ussd
+      verified
+      rdb_cert
+      reel_usages {
+        business_id
+        id
+        month
+        restaurant_id
+        shop_id
+        upload_count
+        year
+      }
+      merchant_wallet {
+        active
+        balance
+        created_at
+        id
+        restaurant_id
+        shop_id
+        update_at
+      }
+      orgEmployees {
+        Position
+        Address
+        active
+        created_on
+        dob
+        email
+        employeeID
+        fullnames
+        gender
+        id
+        last_login
+        multAuthEnabled
+        online
+        phone
+        restaurant_id
+        roleType
+        shop_id
+        updated_on
+      }
+      merchant_wallets {
+        active
+        balance
+        created_at
+        id
+        restaurant_id
+        shop_id
+        update_at
+      }
+      ai_usages {
+        business_id
+        id
+        month
+        request_count
+        requests_sent
+        restaurant_id
+        shop_id
+        user_id
+        year
+      }
+      shop_subscription {
+        billing_cycle
+        business_id
+        created_at
+        end_date
+        id
+        plan_id
+        restaurant_id
+        shop_id
+        start_date
+        status
+        updated_at
+        subscription_invoices {
+          created_at
+          currency
+          discount_amount
+          due_date
+          id
+          invoice_number
+          is_overdue
+          issued_at
+          paid_at
+          payment_method
+          plan_name
+          plan_price
+          status
+          subtotal_amount
+          tax_amount
+          updated_at
+        }
+        subscription_transactions {
+          amount
+          created_on
+          currency
+          id
+          phone
+          reference_id
+          status
+          subscription_id
+          type
+          update_at
+          user_id
+        }
+      }
     }
   }
 `;

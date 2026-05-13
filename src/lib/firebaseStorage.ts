@@ -39,7 +39,7 @@ export const deleteVideoFromFirebase = async (downloadURL: string): Promise<void
 export const uploadFileToFirebase = async (
   file: File,
   onProgress?: (progress: number) => void,
-  folder: 'videos' | 'images' = 'videos',
+  folder: 'videos' | 'images' | 'certificates' | 'documents' = 'videos',
   onTask?: (task: UploadTask) => void,
   rootFolder: string = 'reels'
 ): Promise<string> => {
