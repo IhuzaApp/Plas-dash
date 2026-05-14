@@ -186,14 +186,14 @@ export async function GET(request: Request) {
     add(packageOrders);
 
     const sortedKeys = Object.keys(buckets).sort();
-    const data = sortedKeys.map(key => ({
+    const trendData = sortedKeys.map(key => ({
       period: key,
       name: getPeriodLabel(key, period),
       on_time: buckets[key].on_time,
       late: buckets[key].late,
     }));
 
-    return NextResponse.json({ data, groupBy: period });
+    return NextResponse.json({ data: trendData, groupBy: period });
   } catch (error) {
     console.error('Error fetching orders on-time trend:', error);
     return NextResponse.json({ error: 'Failed to fetch orders on-time trend' }, { status: 500 });
