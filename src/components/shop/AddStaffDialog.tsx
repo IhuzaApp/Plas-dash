@@ -85,6 +85,8 @@ const formSchema = z.object({
     'customer',
     'custom',
   ]),
+  multAuthEnabled: z.boolean().default(false),
+  sms_auth: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -216,6 +218,8 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
       password: '',
       generatePassword: false,
       roleType: 'cashier',
+      multAuthEnabled: false,
+      sms_auth: false,
     },
   });
 
@@ -296,6 +300,10 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
       }
     });
 
+    // Set MFA requirement flags
+    if (values.multAuthEnabled) strictlyFilteredPrivileges.twoFactorRequired = true;
+    if (values.sms_auth) strictlyFilteredPrivileges.smsAuthRequired = true;
+
     // Hash the password before submitting
     const hashedPassword = bcrypt.hashSync(employeeData.password, 10);
 
@@ -304,6 +312,8 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
         ...employeeData,
         password: hashedPassword,
         Position: position,
+        multAuthEnabled: false, // Don't enable until setup is complete
+        sms_auth: false,       // Don't enable until setup is complete
       },
       privileges: strictlyFilteredPrivileges,
     });
@@ -451,6 +461,44 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="multAuthEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Two-Factor Auth</FormLabel>
+                          <FormDescription>
+                            Enable app-based 2FA
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="sms_auth"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">SMS Auth</FormLabel>
+                          <FormDescription>
+                            Enable SMS-based auth
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {!generatePassword && (
                   <FormField

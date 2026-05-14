@@ -142,6 +142,7 @@ const formSchema = z
     role: z.enum(PROJECT_ROLE_TYPES),
     is_active: z.boolean().default(true),
     TwoAuth_enabled: z.boolean().default(false),
+    sms_auth: z.boolean().default(false),
     gender: z.string().optional(),
   })
   .refine(
@@ -219,6 +220,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
       role: 'customerSupport',
       is_active: true,
       TwoAuth_enabled: false,
+      sms_auth: false,
       gender: '',
     },
   });
@@ -403,6 +405,13 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
       // Fall back to role defaults only if privileges state is somehow null
       const finalPrivileges = privileges || getDefaultProjectPrivilegesForRole(data.role);
 
+      // Add 2FA/SMS requirement to privileges if toggled
+      const updatedPrivileges = {
+        ...finalPrivileges,
+        twoFactorRequired: data.TwoAuth_enabled,
+        smsAuthRequired: data.sms_auth
+      };
+
       // Prepare the mutation data
       const mutationData = {
         username: data.username,
@@ -410,14 +419,15 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
         password: await hashPassword(data.password),
         role: data.role,
         is_active: data.is_active,
-        TwoAuth_enabled: data.TwoAuth_enabled,
-        gender: data.gender || '', // Use empty string for optional field
-        device_details: '', // Use empty string for optional field
-        profile: profileImage || '', // Include profile image
-        privileges: finalPrivileges,
+        TwoAuth_enabled: false, // Don't enable until setup is complete
+        sms_auth: false,       // Don't enable until setup is complete
+        gender: data.gender || '',
+        device_details: '',
+        profile: profileImage || '',
+        privileges: updatedPrivileges,
       };
 
-      // Call the mutation
+      // Call the mutation (only once)
       await addProjectUserMutation.mutateAsync(mutationData);
 
       // Store user info for success dialog (use original password, not hashed)
@@ -426,19 +436,6 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
         email: data.email,
         password: data.password, // Store original password for display
       });
-
-      // Add 2FA requirement to privileges if toggled
-      const updatedPrivileges = {
-        ...(mutationData.privileges || {}),
-        twoFactorRequired: data.TwoAuth_enabled
-      };
-      mutationData.privileges = updatedPrivileges;
-      
-      // Remove TwoAuth_enabled from DB insert as per user request
-      delete mutationData.TwoAuth_enabled;
-
-      // Call the mutation
-      await addProjectUserMutation.mutateAsync(mutationData);
 
       // If 2FA is enabled (requirement added), send the setup email via API
       if (data.TwoAuth_enabled) {
@@ -949,6 +946,20 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                     id="TwoAuth_enabled"
                     checked={form.watch('TwoAuth_enabled')}
                     onCheckedChange={checked => form.setValue('TwoAuth_enabled', checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="sms_auth">SMS Authentication</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Enable SMS-based authentication
+                    </p>
+                  </div>
+                  <Switch
+                    id="sms_auth"
+                    checked={form.watch('sms_auth')}
+                    onCheckedChange={checked => form.setValue('sms_auth', checked)}
                   />
                 </div>
               </div>

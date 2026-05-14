@@ -519,6 +519,36 @@ export const UPDATE_ORG_EMPLOYEE_TWO_FACTOR_SECRETS = `
   }
 `;
 
+export const UPDATE_ORG_EMPLOYEE_AUTH_SETTINGS = `
+  mutation UpdateOrgEmployeeAuthSettings($id: uuid!, $twoFactorSecrets: String, $sms_auth: Boolean, $multAuthEnabled: Boolean) {
+    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { 
+      twoFactorSecrets: $twoFactorSecrets, 
+      sms_auth: $sms_auth,
+      multAuthEnabled: $multAuthEnabled
+    }) {
+      id
+      twoFactorSecrets
+      sms_auth
+      multAuthEnabled
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_USER_AUTH_SETTINGS = `
+  mutation UpdateProjectUserAuthSettings($id: uuid!, $twoFactorSecrets: String, $sms_auth: Boolean, $TwoAuth_enabled: Boolean) {
+    update_ProjectUsers_by_pk(pk_columns: { id: $id }, _set: { 
+      twoFactorSecrets: $twoFactorSecrets, 
+      sms_auth: $sms_auth,
+      TwoAuth_enabled: $TwoAuth_enabled
+    }) {
+      id
+      twoFactorSecrets
+      sms_auth
+      TwoAuth_enabled
+    }
+  }
+`;
+
 // Update ProjectUser last login
 export const UPDATE_PROJECT_USER_LAST_LOGIN = `
   mutation UpdateProjectUserLastLogin($id: uuid!, $lastLogin: String!) {

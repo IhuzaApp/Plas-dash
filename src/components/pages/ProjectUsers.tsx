@@ -186,7 +186,7 @@ const ProjectUsers = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Two-Factor</TableHead>
+                  <TableHead>Security</TableHead>
                   <TableHead>Last Login</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -266,9 +266,36 @@ const ProjectUsers = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.TwoAuth_enabled ? 'default' : 'outline'}>
-                          {user.TwoAuth_enabled ? 'Enabled' : 'Disabled'}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          {/* App-based 2FA Status */}
+                          {user.TwoAuth_enabled ? (
+                            <Badge variant="default" className="text-[10px] bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
+                              2FA Enabled
+                            </Badge>
+                          ) : user.privileges?.twoFactorRequired ? (
+                            <Badge variant="outline" className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse">
+                              2FA Setup Required
+                            </Badge>
+                          ) : null}
+
+                          {/* SMS Auth Status */}
+                          {user.sms_auth ? (
+                            <Badge variant="default" className="text-[10px] bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200">
+                              SMS Enabled
+                            </Badge>
+                          ) : user.privileges?.smsAuthRequired ? (
+                            <Badge variant="outline" className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse">
+                              SMS Setup Required
+                            </Badge>
+                          ) : null}
+
+                          {/* No Auth enabled or required */}
+                          {!user.TwoAuth_enabled && !user.sms_auth && !user.privileges?.twoFactorRequired && !user.privileges?.smsAuthRequired && (
+                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                              Standard
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {user.last_Login ? (

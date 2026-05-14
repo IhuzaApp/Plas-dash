@@ -77,6 +77,7 @@ type FormData = {
   role: string;
   is_active: boolean;
   TwoAuth_enabled: boolean;
+  sms_auth: boolean;
   gender?: string;
   profile?: string;
 };
@@ -144,6 +145,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
         role: (user.role as any) || 'customerSupport',
         is_active: user.is_active || true,
         TwoAuth_enabled: user.TwoAuth_enabled || false,
+        sms_auth: user.sms_auth || false,
         gender: user.gender || '',
         profile: user.profile || '',
       });
@@ -360,7 +362,8 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
       // Add 2FA requirement to privileges if toggled
       const updatedPrivileges = {
         ...(privileges || user.privileges || {}),
-        twoFactorRequired: data.TwoAuth_enabled
+        twoFactorRequired: data.TwoAuth_enabled,
+        smsAuthRequired: data.sms_auth
       };
       updateData.privileges = updatedPrivileges;
       
@@ -373,6 +376,15 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
         // It will be flipped by the user during their first setup.
         delete updateData.TwoAuth_enabled;
         console.log('DEBUG: Admin is requiring 2FA. Requirement flag set in privileges.');
+      }
+
+      // Handle SMS auth DB flag
+      if (!data.sms_auth) {
+        updateData.sms_auth = false;
+      } else if (data.sms_auth && !user.sms_auth) {
+        // Only set the requirement flag, don't flip the DB flag yet
+        // similar to 2FA logic
+        delete updateData.sms_auth;
       }
 
       // Call the mutation
@@ -675,6 +687,20 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                     id="TwoAuth_enabled"
                     checked={form.watch('TwoAuth_enabled')}
                     onCheckedChange={checked => form.setValue('TwoAuth_enabled', checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="sms_auth">SMS Authentication</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Enable SMS-based authentication
+                    </p>
+                  </div>
+                  <Switch
+                    id="sms_auth"
+                    checked={form.watch('sms_auth')}
+                    onCheckedChange={checked => form.setValue('sms_auth', checked)}
                   />
                 </div>
               </div>

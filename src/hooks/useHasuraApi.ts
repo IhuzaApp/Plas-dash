@@ -1600,6 +1600,8 @@ export interface OrgEmployee {
   dob: string;
   gender: string;
   multAuthEnabled: boolean;
+  sms_auth: boolean;
+  twoFactorSecrets: string | null;
   orgEmployeeRoles: OrgEmployeeRole[];
   Shops: {
     id: string;
@@ -1624,6 +1626,8 @@ export interface ProjectUser {
   role: string;
   is_active: boolean;
   TwoAuth_enabled: boolean;
+  sms_auth: boolean;
+  twoFactorSecrets: string | null;
   last_Login: string | null;
   created_at: string;
   updated_at: string;
@@ -1844,6 +1848,7 @@ export function useProjectUsers() {
             profile
             role
             username
+            sms_auth
             updated_at
           }
         }
@@ -1919,6 +1924,8 @@ export function useUpdateProjectUser() {
       role?: string;
       is_active?: boolean;
       TwoAuth_enabled?: boolean;
+      sms_auth?: boolean;
+      twoFactorSecrets?: string | null;
       gender?: string;
       device_details?: string;
       profile?: string;
@@ -1941,6 +1948,9 @@ export function useUpdateProjectUser() {
       if (updateData.is_active !== undefined) setObject.is_active = updateData.is_active;
       if (updateData.TwoAuth_enabled !== undefined)
         setObject.TwoAuth_enabled = updateData.TwoAuth_enabled;
+      if (updateData.sms_auth !== undefined) setObject.sms_auth = updateData.sms_auth;
+      if (updateData.twoFactorSecrets !== undefined)
+        setObject.twoFactorSecrets = updateData.twoFactorSecrets;
       if (updateData.gender !== undefined) setObject.gender = updateData.gender;
       if (updateData.device_details !== undefined)
         setObject.device_details = updateData.device_details;

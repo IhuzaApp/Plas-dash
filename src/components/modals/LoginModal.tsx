@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
@@ -9,6 +9,7 @@ import { UserPrivileges, DEFAULT_PRIVILEGES } from '@/types/privileges';
 import { convertCustomPermissionsToPrivileges } from '@/lib/privileges/privilegeConverters';
 import { cn } from '@/lib/utils';
 import { usePageLoading } from '@/hooks/usePageLoading';
+import MultiFactorAuthStep from './MultiFactorAuthStep';
 
 interface LoginModalProps {
   onLoginSuccess: (sessionData: any) => void;
@@ -48,6 +49,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
   const form = useForm<LoginFormInputs>({ defaultValues: { identifier: '', password: '' } });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authStep, setAuthStep] = useState<'login' | 'mfa'>('login');
+  const [mfaUser, setMfaUser] = useState<any>(null);
   const { startLoading } = usePageLoading();
 
   const onSubmit = async (data: LoginFormInputs) => {
@@ -69,6 +72,18 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
 
       const { user: session, isProjectUser } = await response.json();
       console.log('DEBUG: Login API success, type:', isProjectUser ? 'ProjectUser' : 'OrgEmployee');
+
+      // Check for MFA requirements (either enabled or required by admin)
+      const twoFactorRequired = !!(session.privileges?.twoFactorRequired || session.TwoAuth_enabled || session.multAuthEnabled);
+      const smsRequired = !!(session.privileges?.smsAuthRequired || session.sms_auth);
+
+      if (twoFactorRequired || smsRequired) {
+        console.log('DEBUG: MFA Required, switching to MFA step');
+        setMfaUser({ session, isProjectUser, twoFactorRequired, smsRequired });
+        setAuthStep('mfa');
+        setLoading(false);
+        return;
+      }
 
       // Start global loading overlay
       startLoading();
@@ -194,8 +209,72 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
               </div>
             </DialogHeader>
 
-            {!showHelp ? (
+            {authStep === 'mfa' ? (
+              <MultiFactorAuthStep
+                user={mfaUser.session}
+                isProjectUser={mfaUser.isProjectUser}
+                twoFactorRequired={mfaUser.twoFactorRequired}
+                smsRequired={mfaUser.smsRequired}
+                onSuccess={(updatedSession) => {
+                  console.log('DEBUG: MultiFactorAuthStep onSuccess triggered', { 
+                    id: updatedSession?.id,
+                    isProjectUser: mfaUser.isProjectUser 
+                  });
+                  
+                  const isProjectUser = mfaUser.isProjectUser;
+                  // Start global loading overlay
+                  startLoading();
+                  
+                  try {
+                    if (isProjectUser) {
+                      const sessionData = {
+                        id: updatedSession.id,
+                        username: updatedSession.username,
+                        email: updatedSession.email,
+                        role: updatedSession.role,
+                        is_active: updatedSession.is_active,
+                        TwoAuth_enabled: updatedSession.TwoAuth_enabled,
+                        sms_auth: updatedSession.sms_auth,
+                        profile: updatedSession.profile,
+                        privileges: updatedSession.privileges || {},
+                        isProjectUser: true,
+                        fullName: updatedSession.username,
+                        phoneNumber: updatedSession.phone || '',
+                        shop_id: null,
+                        orgEmployeeRoles: null,
+                      };
+                      console.log('DEBUG: Finalizing ProjectUser sessionData', sessionData.id);
+                      onLoginSuccess(sessionData);
+                    } else {
+                      const privileges = convertPrivilegesToNewFormat(updatedSession.orgEmployeeRoles);
+                      const sessionData = {
+                        id: updatedSession.id,
+                        username: updatedSession.fullnames || updatedSession.username,
+                        fullName: updatedSession.fullnames || updatedSession.fullName,
+                        email: updatedSession.email,
+                        phoneNumber: updatedSession.phone || updatedSession.phoneNumber,
+                        shop_id: updatedSession.shop_id,
+                        privileges: privileges,
+                        orgEmployeeRoles: updatedSession.orgEmployeeRoles,
+                        isProjectUser: false,
+                        role: updatedSession.roleType,
+                      };
+                      console.log('DEBUG: Finalizing OrgEmployee sessionData', sessionData.id);
+                      onLoginSuccess(sessionData);
+                    }
+                  } catch (err) {
+                    console.error('DEBUG: Error in onSuccess session mapping:', err);
+                    setError('Session initialization failed');
+                    setLoading(false);
+                  }
+                }}
+                onCancel={() => setAuthStep('login')}
+              />
+            ) : !showHelp ? (
               <>
+                <DialogDescription className="sr-only">
+                  Enter your credentials to access the Plas Admin dashboard.
+                </DialogDescription>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
@@ -287,6 +366,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                 onSubmit={handleSupportSubmit}
                 className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
               >
+                <DialogDescription className="sr-only">
+                  Raise a support ticket if you are having trouble signing in.
+                </DialogDescription>
                 {supportSuccess ? (
                   <div className="py-8 flex flex-col items-center text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 animate-bounce">

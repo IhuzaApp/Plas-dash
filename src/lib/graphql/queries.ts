@@ -1770,6 +1770,7 @@ export const GET_ORG_EMPLOYEES_BY_SHOP = `
       multAuthEnabled
       password
       phone
+      sms_auth
       restaurant_id
       shop_id
       updated_on
@@ -1812,6 +1813,8 @@ export const GET_ORG_EMPLOYEE_BY_IDENTITY = `
       id
       last_login
       multAuthEnabled
+      sms_auth
+      twoFactorSecrets
       password
       phone
       restaurant_id
@@ -1847,6 +1850,8 @@ export const GET_PROJECT_USER_BY_IDENTITY = `
       role
       is_active
       TwoAuth_enabled
+      sms_auth
+      twoFactorSecrets
       last_Login
       created_at
       updated_at
@@ -1872,6 +1877,8 @@ export const GET_PROJECT_USER_BY_MEMBERSHIP_ID = `
       role
       is_active
       TwoAuth_enabled
+      sms_auth
+      twoFactorSecrets
       last_Login
       created_at
       updated_at
@@ -2487,6 +2494,8 @@ export const GET_PROJECT_USER_BY_ID = `
       role
       is_active
       TwoAuth_enabled
+      sms_auth
+      twoFactorSecrets
       last_Login
       created_at
       updated_at

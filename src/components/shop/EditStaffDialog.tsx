@@ -79,6 +79,8 @@ const formSchema = z.object({
     'customer',
     'custom',
   ]),
+  multAuthEnabled: z.boolean().default(false),
+  sms_auth: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -144,6 +146,28 @@ const PermissionDisplay = ({
   );
 };
 
+const roleLabel: Record<string, string> = {
+  globalAdmin: 'Global Admin',
+  systemAdmin: 'System Admin',
+  storeAdministrator: 'Store Administrator',
+  storeManager: 'Store Manager',
+  assistantManager: 'Assistant Manager',
+  cashier: 'Cashier',
+  salesAssociate: 'Sales Associate',
+  inventorySpecialist: 'Inventory Specialist',
+  financeManager: 'Finance Manager',
+  accountant: 'Accountant',
+  kitchenManager: 'Kitchen Manager',
+  chef: 'Chef',
+  waiter: 'Waiter',
+  bartender: 'Bartender',
+  deliveryDriver: 'Delivery Driver',
+  securityGuard: 'Security Guard',
+  maintenanceStaff: 'Maintenance Staff',
+  customer: 'Customer',
+  custom: 'Custom Role',
+};
+
 const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
   open,
   onOpenChange,
@@ -179,6 +203,8 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         position: employee.Position || '',
         active: employee.active ?? true,
         roleType: (employee.roleType as any) || 'cashier',
+        multAuthEnabled: employee.multAuthEnabled ?? false,
+        sms_auth: employee.sms_auth ?? false,
       };
       form.reset(formData);
 
@@ -280,6 +306,8 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
     if (values.position !== employee.Position) changes.Position = values.position;
     if (values.active !== employee.active) changes.active = values.active;
     if (values.roleType !== employee.roleType) changes.roleType = values.roleType;
+    if (values.multAuthEnabled !== employee.multAuthEnabled) changes.multAuthEnabled = values.multAuthEnabled;
+    if (values.sms_auth !== employee.sms_auth) changes.sms_auth = values.sms_auth;
 
     const finalChanges = Object.fromEntries(
       Object.entries(changes).filter(([_, value]) => {
@@ -311,6 +339,21 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
       }
     });
 
+    // Handle MFA requirement logic
+    if (values.multAuthEnabled && !employee.multAuthEnabled) {
+      strictlyFilteredPrivileges.twoFactorRequired = true;
+      delete finalChanges.multAuthEnabled;
+    } else if (!values.multAuthEnabled) {
+      strictlyFilteredPrivileges.twoFactorRequired = false;
+    }
+
+    if (values.sms_auth && !employee.sms_auth) {
+      strictlyFilteredPrivileges.smsAuthRequired = true;
+      delete finalChanges.sms_auth;
+    } else if (!values.sms_auth) {
+      strictlyFilteredPrivileges.smsAuthRequired = false;
+    }
+
     onSubmit({
       id: employee.id,
       employee: finalChanges,
@@ -319,28 +362,6 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
   }
 
   if (!employee) return null;
-
-  const roleLabel: Record<string, string> = {
-    globalAdmin: 'Global Admin',
-    systemAdmin: 'System Admin',
-    storeAdministrator: 'Store Administrator',
-    storeManager: 'Store Manager',
-    assistantManager: 'Assistant Manager',
-    cashier: 'Cashier',
-    salesAssociate: 'Sales Associate',
-    inventorySpecialist: 'Inventory Specialist',
-    financeManager: 'Finance Manager',
-    accountant: 'Accountant',
-    kitchenManager: 'Kitchen Manager',
-    chef: 'Chef',
-    waiter: 'Waiter',
-    bartender: 'Bartender',
-    deliveryDriver: 'Delivery Driver',
-    securityGuard: 'Security Guard',
-    maintenanceStaff: 'Maintenance Staff',
-    customer: 'Customer',
-    custom: 'Custom Role',
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -437,6 +458,38 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                         <div className="space-y-0.5">
                           <FormLabel className="text-base">Active Status</FormLabel>
                           <FormDescription>Enable or disable this staff member</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="multAuthEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Two-Factor Auth</FormLabel>
+                          <FormDescription>Enable app-based 2FA</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="sms_auth"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">SMS Auth</FormLabel>
+                          <FormDescription>Enable SMS-based auth</FormDescription>
                         </div>
                         <FormControl>
                           <Switch checked={field.value} onCheckedChange={field.onChange} />
