@@ -21,6 +21,7 @@ import { usePageAccess } from '@/hooks/usePageAccess';
 import AddProjectUserDialog from '@/components/shop/AddProjectUserDialog';
 import EditProjectUserDialog from '@/components/shop/EditProjectUserDialog';
 import DeleteProjectUserDialog from '@/components/shop/DeleteProjectUserDialog';
+import ProjectUserDetailsDrawer from '@/components/drawers/ProjectUserDetailsDrawer';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ const ProjectUsers = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ProjectUser | null>(null);
   const [profileImageModal, setProfileImageModal] = useState<{
     isOpen: boolean;
@@ -93,6 +95,11 @@ const ProjectUsers = () => {
     } else {
       toast.error('You do not have permission to delete project users');
     }
+  };
+  
+  const handleViewDetails = (user: ProjectUser) => {
+    setSelectedUser(user);
+    setIsDetailsDrawerOpen(true);
   };
 
   const handleAddSuccess = () => {
@@ -188,14 +195,13 @@ const ProjectUsers = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Security</TableHead>
                   <TableHead>Last Login</TableHead>
-                  <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currentUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <div className="flex flex-col items-center space-y-2">
                         <User className="h-8 w-8 text-muted-foreground" />
                         <p className="text-muted-foreground">No project users found</p>
@@ -209,7 +215,11 @@ const ProjectUsers = () => {
                   </TableRow>
                 ) : (
                   currentUsers.map(user => (
-                    <TableRow key={user.id}>
+                    <TableRow 
+                      key={user.id}
+                      className="cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors"
+                      onClick={() => handleViewDetails(user)}
+                    >
                       <TableCell>
                         {user.profile ? (
                           <div className="relative group">
@@ -304,8 +314,7 @@ const ProjectUsers = () => {
                           <span className="text-muted-foreground">Never</span>
                         )}
                       </TableCell>
-                      <TableCell>{format(new Date(user.created_at), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end space-x-2">
                           {hasAction('project_users', 'edit_project_users') && (
                             <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
@@ -378,6 +387,11 @@ const ProjectUsers = () => {
         onOpenChange={setIsDeleteDialogOpen}
         user={selectedUser}
         onSuccess={handleDeleteSuccess}
+      />
+      <ProjectUserDetailsDrawer
+        open={isDetailsDrawerOpen}
+        onOpenChange={setIsDetailsDrawerOpen}
+        user={selectedUser}
       />
 
       {/* Profile Image Modal */}
