@@ -1632,6 +1632,7 @@ export interface ProjectUser {
   created_at: string;
   updated_at: string;
   gender: string | null;
+  phone: string | null;
   device_details: string | null;
   profile: string | null;
   privileges: any; // JSON object for project user privileges
@@ -1848,6 +1849,7 @@ export function useProjectUsers() {
             profile
             role
             username
+            phone
             sms_auth
             updated_at
           }
