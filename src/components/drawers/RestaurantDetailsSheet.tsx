@@ -108,7 +108,26 @@ const RestaurantDetailsSheet: React.FC<RestaurantDetailsSheetProps> = ({
                         variant="default"
                         className="bg-green-600 hover:bg-green-700"
                         onClick={() => {
+                          console.log('DEBUG: Approving restaurant:', restaurant.id, restaurant.email);
                           onApprove(restaurant.id);
+                          
+                          // Trigger welcome/approval email
+                          if (restaurant.email) {
+                            console.log('DEBUG: Triggering restaurant approval email');
+                            fetch('/api/emails/send-2fa', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                type: 'enabled',
+                                to: restaurant.email,
+                                customerName: restaurant.name,
+                              }),
+                            }).then(res => {
+                              if (!res.ok) console.error('Failed to send approval email: Server returned error');
+                              else console.log('DEBUG: Approval email API call successful');
+                            }).catch(err => console.error('Failed to send approval email:', err));
+                          }
+                          
                           onClose();
                         }}
                       >

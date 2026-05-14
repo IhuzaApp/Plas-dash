@@ -215,7 +215,7 @@ const ProjectUsers = () => {
                           <div className="relative group">
                             <img
                               src={
-                                user.profile.startsWith('data:')
+                                user.profile.startsWith('data:') || user.profile.startsWith('http')
                                   ? user.profile
                                   : `data:image/jpeg;base64,${user.profile}`
                               }
@@ -368,7 +368,8 @@ const ProjectUsers = () => {
           <div className="flex justify-center">
             <img
               src={
-                profileImageModal.image.startsWith('data:')
+                profileImageModal.image.startsWith('data:') ||
+                profileImageModal.image.startsWith('http')
                   ? profileImageModal.image
                   : `data:image/jpeg;base64,${profileImageModal.image}`
               }

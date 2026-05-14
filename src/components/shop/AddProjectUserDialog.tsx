@@ -427,6 +427,34 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
         password: data.password, // Store original password for display
       });
 
+      // Add 2FA requirement to privileges if toggled
+      const updatedPrivileges = {
+        ...(mutationData.privileges || {}),
+        twoFactorRequired: data.TwoAuth_enabled
+      };
+      mutationData.privileges = updatedPrivileges;
+      
+      // Remove TwoAuth_enabled from DB insert as per user request
+      delete mutationData.TwoAuth_enabled;
+
+      // Call the mutation
+      await addProjectUserMutation.mutateAsync(mutationData);
+
+      // If 2FA is enabled (requirement added), send the setup email via API
+      if (data.TwoAuth_enabled) {
+        fetch('/api/emails/send-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'enabled',
+            to: data.email,
+            customerName: data.username,
+          }),
+        }).then(res => {
+          if (!res.ok) console.error('Failed to send 2FA email: Server returned error');
+        }).catch(err => console.error('Failed to send 2FA email:', err));
+      }
+
       // Show success dialog instead of closing immediately
       setShowSuccessDialog(true);
       form.reset();

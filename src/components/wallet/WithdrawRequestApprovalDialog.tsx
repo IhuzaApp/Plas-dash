@@ -95,7 +95,11 @@ interface Props {
   open: boolean;
   onClose: () => void;
   item: RequestItem | null;
-  session: { TwoAuth_enabled?: boolean; email?: string } | null;
+  session: {
+    TwoAuth_enabled?: boolean;
+    email?: string;
+    privileges?: { twoFactorRequired?: boolean };
+  } | null;
   onSuccess: () => void;
 }
 
@@ -203,22 +207,56 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
 
   // ── Proceed from review ───────────────────────────────────────────────────
   const handleProceedFromReview = () => {
-    if (!session?.TwoAuth_enabled) {
+    const is2FAEnabled = session?.TwoAuth_enabled;
+    const is2FARequired = session?.privileges?.twoFactorRequired;
+
+    if (is2FAEnabled) {
+      handleSendOtp();
+    } else if (is2FARequired) {
       setStep('twofa');
     } else {
-      handleSendOtp();
+      // Not enabled and not required, skip to approval
+      handleApprove();
     }
   };
 
-  // ── Send OTP (simulated) ──────────────────────────────────────────────────
-  const handleSendOtp = () => {
+  // ── Send OTP ──────────────────────────────────────────────────
+  const handleSendOtp = async () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(code);
     setStep('otp');
-    toast.info(`OTP code: ${code}`, {
-      description: 'In production this would be sent via SMS to your registered number.',
-      duration: 60000,
-    });
+
+    if (session?.email) {
+      try {
+        const response = await fetch('/api/emails/send-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'code',
+            to: session.email,
+            customerName: session.email.split('@')[0],
+            code: code,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to send email');
+
+        toast.success('Verification code sent to your email');
+      } catch (error) {
+        console.error('Failed to send verification email:', error);
+        toast.error('Failed to send verification email. Please try again.');
+        // Still show the toast with code in dev mode for convenience if it fails
+        toast.info(`OTP code (Dev Mode): ${code}`, {
+          description: 'Email sending failed, but here is your code for testing.',
+          duration: 10000,
+        });
+      }
+    } else {
+      toast.info(`OTP code: ${code}`, {
+        description: 'In production this would be sent via SMS to your registered number.',
+        duration: 60000,
+      });
+    }
   };
 
   // ── Verify OTP ────────────────────────────────────────────────────────────
@@ -533,3 +571,7 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
 };
 
 export default WithdrawRequestApprovalDialog;
+function handleApprove() {
+  throw new Error('Function not implemented.');
+}
+
