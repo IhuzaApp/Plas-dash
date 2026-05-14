@@ -4,7 +4,7 @@ import StatCard from '@/components/dashboard/StatCard';
 import RecentOrders from '@/components/dashboard/RecentOrders';
 import TopShoppers from '@/components/dashboard/TopShoppers';
 import OrdersChart from '@/components/dashboard/OrdersChart';
-import OrdersOverdueCard from '@/components/dashboard/OrdersOverdueCard';
+import TopCustomers from '@/components/dashboard/TopCustomers';
 import ShoppersByGenderChart from '@/components/dashboard/ShoppersByGenderChart';
 import ShoppersBySignupChart from '@/components/dashboard/ShoppersBySignupChart';
 import ApprovedShoppersOverTimeChart from '@/components/dashboard/ApprovedShoppersOverTimeChart';
@@ -273,7 +273,7 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <RecentOrders />
-          <OrdersOverdueCard />
+          <TopCustomers />
           <TopShoppers />
         </div>
       </div>
