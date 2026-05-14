@@ -22,6 +22,7 @@ const ORDER_LABELS: Record<string, string> = {
   reel: 'Reel',
   restaurant: 'Restaurant',
   business: 'Business',
+  package: 'Package',
 };
 
 export default function OrderTypesComparisonChart() {
@@ -46,6 +47,8 @@ export default function OrderTypesComparisonChart() {
         return CHART_COLORS.red;
       case 'business':
         return CHART_COLORS.orange;
+      case 'package':
+        return CHART_COLORS.purple || '#8B5CF6';
       default:
         return CHART_COLORS.yellow;
     }
@@ -62,7 +65,7 @@ export default function OrderTypesComparisonChart() {
           Order Types Comparison
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Reel orders, restaurant orders, business orders, and regular orders.
+          Reel, restaurant, business, regular, and package delivery orders.
         </p>
       </CardHeader>
       <CardContent>

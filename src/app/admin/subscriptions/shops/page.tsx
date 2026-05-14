@@ -25,9 +25,12 @@ import { AssignSubscriptionDialog } from './_components/AssignSubscriptionDialog
 import { UpcomingRenewals } from './_components/UpcomingRenewals';
 import { SubscriptionStats } from './_components/SubscriptionStats';
 import { BillingTrendChart } from './_components/BillingTrendChart';
+import { UsageAnalytics } from './_components/UsageAnalytics';
+import { SubscriberTrendChart } from './_components/SubscriberTrendChart';
 
 import { SubscriptionInvoices } from './_components/SubscriptionInvoices';
 import Pagination from '@/components/ui/pagination';
+import { useSubscriptionsAnalytics } from '@/hooks/useHasuraApi';
 
 export interface ShopSubscription {
   id: string;
@@ -64,12 +67,7 @@ export default function ShopSubscriptionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const { data, isLoading: isSubsLoading } = useQuery<{ shop_subscriptions: ShopSubscription[] }>({
-    queryKey: ['shop-subscriptions'],
-    queryFn: () =>
-      apiGet<{ shop_subscriptions: ShopSubscription[] }>('/api/queries/shop-subscriptions'),
-  });
-
+  const { data: subscriptions, isLoading: isSubsLoading } = useSubscriptionsAnalytics();
   const { data: invoiceData, isLoading: isInvoicesLoading } = useQuery<{
     subscription_invoices: any[];
   }>({
@@ -80,11 +78,11 @@ export default function ShopSubscriptionsPage() {
   const isLoading = isSubsLoading || isInvoicesLoading;
 
   const filteredSubscriptions = useMemo(() => {
-    if (!data?.shop_subscriptions) return [];
-    if (!searchTerm.trim()) return data.shop_subscriptions;
+    if (!subscriptions) return [];
+    if (!searchTerm.trim()) return subscriptions;
 
     const term = searchTerm.toLowerCase().trim();
-    return data.shop_subscriptions.filter(sub => {
+    return subscriptions.filter((sub: any) => {
       const shopName = sub.Shop?.name?.toLowerCase() || '';
       const restaurantName = sub.Restaurant?.name?.toLowerCase() || '';
       const businessName = sub.business_account?.business_name?.toLowerCase() || '';
@@ -99,7 +97,7 @@ export default function ShopSubscriptionsPage() {
         id.includes(term)
       );
     });
-  }, [data?.shop_subscriptions, searchTerm]);
+  }, [subscriptions, searchTerm]);
 
   const paginatedSubscriptions = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -144,7 +142,7 @@ export default function ShopSubscriptionsPage() {
       </div>
 
       <SubscriptionStats
-        subscriptions={data?.shop_subscriptions || []}
+        subscriptions={subscriptions || []}
         invoices={invoiceData?.subscription_invoices || []}
         isLoading={isLoading}
       />
@@ -164,13 +162,15 @@ export default function ShopSubscriptionsPage() {
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
           <TabsTrigger value="all">Active Subscriptions</TabsTrigger>
+          <TabsTrigger value="trends">Subscription Trends</TabsTrigger>
+          <TabsTrigger value="usage">Usage Analytics</TabsTrigger>
           <TabsTrigger value="billing">Billing & Renewals</TabsTrigger>
           <TabsTrigger value="invoices">Invoices & History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
           <BillingTrendChart
-            subscriptions={data?.shop_subscriptions || []}
+            subscriptions={subscriptions || []}
             invoices={invoiceData?.subscription_invoices || []}
           />
           <div className="rounded-md border bg-card">
@@ -257,6 +257,14 @@ export default function ShopSubscriptionsPage() {
               />
             )}
           </div>
+        </TabsContent>
+        
+        <TabsContent value="trends" className="space-y-4">
+          <SubscriberTrendChart subscriptions={subscriptions || []} isLoading={isSubsLoading} />
+        </TabsContent>
+
+        <TabsContent value="usage" className="space-y-4">
+          <UsageAnalytics subscriptions={subscriptions || []} isLoading={isSubsLoading} />
         </TabsContent>
 
         <TabsContent value="billing">

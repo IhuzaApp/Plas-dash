@@ -3,22 +3,29 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
+import { subYears } from 'date-fns';
 
 const GET_PLATFORM_JOINERS = gql`
-  query GetPlatformJoiners {
-    Shops(order_by: { created_at: asc }) {
+  query GetPlatformJoiners($start: timestamptz!, $end: timestamptz!) {
+    Shops(where: { created_at: { _gte: $start, _lte: $end } }, order_by: { created_at: asc }) {
       created_at
     }
-    Users(order_by: { created_at: asc }) {
+    Users(where: { created_at: { _gte: $start, _lte: $end } }, order_by: { created_at: asc }) {
       created_at
     }
-    Restaurants(order_by: { created_at: asc }) {
+    Restaurants(where: { created_at: { _gte: $start, _lte: $end } }, order_by: { created_at: asc }) {
       created_at
     }
-    business_accounts(order_by: { created_at: asc }) {
+    business_accounts(
+      where: { created_at: { _gte: $start, _lte: $end } }
+      order_by: { created_at: asc }
+    ) {
       created_at
     }
-    business_stores(order_by: { created_at: asc }) {
+    business_stores(
+      where: { created_at: { _gte: $start, _lte: $end } }
+      order_by: { created_at: asc }
+    ) {
       created_at
     }
   }
@@ -39,6 +46,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { searchParams } = new URL(req.url);
+  const start = searchParams.get('start') || subYears(new Date(), 2).toISOString();
+  const end = searchParams.get('end') || new Date().toISOString();
+
   try {
     if (!hasuraClient) {
       throw new Error('Hasura client is not initialized');
@@ -50,7 +61,7 @@ export async function GET(req: Request) {
       Restaurants: { created_at: string }[];
       business_accounts: { created_at: string }[];
       business_stores: { created_at: string }[];
-    }>(GET_PLATFORM_JOINERS);
+    }>(GET_PLATFORM_JOINERS, { start, end });
 
     return NextResponse.json({
       shops: data.Shops || [],

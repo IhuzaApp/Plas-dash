@@ -127,6 +127,30 @@ export const useDashboardData = () => {
     initialData: () => cacheGet<any>('dashboard_pending_order_totals') || undefined,
   });
 
+  const { data: subsAnalytics, isLoading: isLoadingSubs } = useQuery({
+    queryKey: ['dashboard', 'subscriptions-analytics'],
+    queryFn: async () => {
+      const res = await apiGet<{ shop_subscriptions: any[] }>('/api/queries/shop-subscriptions');
+      return res.shop_subscriptions || [];
+    },
+  });
+
+  const { data: logisticsRes, isLoading: isLoadingLogistics } = useQuery({
+    queryKey: ['dashboard', 'logistics-accounts'],
+    queryFn: async () => {
+      const res = await apiGet<{ accounts: any[] }>('/api/queries/logistics-accounts');
+      return res.accounts || [];
+    },
+  });
+
+  const { data: petVendorsRes, isLoading: isLoadingPetVendors } = useQuery({
+    queryKey: ['dashboard', 'pet-vendors'],
+    queryFn: async () => {
+      const res = await apiGet<{ vendors: any[] }>('/api/queries/pet-vendors');
+      return res.vendors || [];
+    },
+  });
+
   const shopsData = shopsRes ? { Shops: shopsRes.shops } : undefined;
   const usersData = usersRes ? { Users: usersRes.users } : undefined;
   const productsData = productsRes ? { Products: productsRes.products } : undefined;
@@ -207,6 +231,32 @@ export const useDashboardData = () => {
     // Pending order value
     pendingOrdersValue: pendingOrderTotalsRes?.total ?? 0,
 
+    // Subscription statistics
+    totalSubscriptions: subsAnalytics?.length || 0,
+    subscriptions: subsAnalytics || [],
+
+    // Logistics and Pet Vendor statistics
+    totalLogistics: logisticsRes?.length || 0,
+    totalPetVendors: petVendorsRes?.length || 0,
+
+    // Service Usage statistics
+    totalAiUsage: (subsAnalytics || []).reduce((sum: number, sub: any) => {
+      let subSum = 0;
+      (sub.subscription_invoices || []).forEach((inv: any) => {
+        (inv.ai_usage || []).forEach((ai: any) => {
+          subSum += (ai.requests_sent || 0);
+        });
+      });
+      return sum + subSum;
+    }, 0),
+    totalReelUsage: (subsAnalytics || []).reduce((sum: number, sub: any) => {
+      let subSum = 0;
+      (sub.subscription_invoices || []).forEach((inv: any) => {
+        subSum += (inv.reel_usage || []).length;
+      });
+      return sum + subSum;
+    }, 0),
+
     // Loading states
     isLoading:
       isLoadingShops ||
@@ -219,7 +269,10 @@ export const useDashboardData = () => {
       isLoadingRefunds ||
       isLoadingTickets ||
       isLoadingWalletTotals ||
-      isLoadingPendingOrderTotals,
+      isLoadingPendingOrderTotals ||
+      isLoadingSubs ||
+      isLoadingLogistics ||
+      isLoadingPetVendors,
     // Expose order breakdown for FinancialOverview / other consumers
     orderBreakdown: orderStats?.breakdown,
     monthlyOrderBreakdown: orderStats?.monthlyBreakdown,

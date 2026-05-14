@@ -27,6 +27,7 @@ import {
   GET_PET_VENDOR,
   GET_ALL_LOGISTICS_ACCOUNTS,
   GET_ALL_PET_VENDORS,
+  GET_SUBSCRIPTIONS_ANALYTICS,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -2378,6 +2379,16 @@ export function useUpdateLogisticsAccount() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['logistics-account'] });
       queryClient.invalidateQueries({ queryKey: ['logistics-accounts'] });
+    },
+  });
+}
+
+export function useSubscriptionsAnalytics() {
+  return useQuery({
+    queryKey: ['subscriptions-analytics'],
+    queryFn: async () => {
+      const data = await hasuraRequest<any>(GET_SUBSCRIPTIONS_ANALYTICS, {});
+      return data.shop_subscriptions || [];
     },
   });
 }

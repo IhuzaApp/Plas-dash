@@ -50,6 +50,7 @@ export function SubscriptionStats({ subscriptions, invoices, isLoading }: Subscr
       return isAfter(endDate, today) && isBefore(endDate, in14Days);
     }).length,
     overdueCount: invoices.filter(inv => inv.status?.toLowerCase() === 'overdue').length,
+    pendingCount: invoices.filter(inv => inv.status?.toLowerCase() === 'pending').length,
 
     // Financials based on Invoices
     totalRevenue: invoices.reduce((sum, inv) => {
@@ -109,6 +110,13 @@ export function SubscriptionStats({ subscriptions, invoices, isLoading }: Subscr
       color: 'text-orange-500',
     },
     {
+      title: 'Due Invoices',
+      value: stats.pendingCount,
+      icon: CreditCard,
+      description: 'Pending payments',
+      color: 'text-yellow-500',
+    },
+    {
       title: 'Pending / Overdue',
       value: formatCurrency(stats.overdueAmount),
       icon: AlertCircle,
@@ -139,7 +147,7 @@ export function SubscriptionStats({ subscriptions, invoices, isLoading }: Subscr
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
       {metrics.map(metric => (
         <Card key={metric.title} className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

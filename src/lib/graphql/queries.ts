@@ -2532,3 +2532,93 @@ export const GET_USER_BY_ID_SIMPLE = `
     }
   }
 `;
+
+export const GET_SUBSCRIPTIONS_ANALYTICS = `
+  query GetSubscriptionsAnalytics {
+    shop_subscriptions {
+      billing_cycle
+      business_id
+      created_at
+      end_date
+      id
+      plan_id
+      restaurant_id
+      shop_id
+      start_date
+      status
+      updated_at
+      Restaurant {
+        created_at
+        email
+        id
+        logo
+        name
+        profile
+      }
+      Shop {
+        id
+        image
+        logo
+        name
+      }
+      business_account {
+        id
+        business_name
+      }
+      plan {
+        name
+        id
+      }
+      subscription_invoices {
+        id
+        reel_usage {
+          business_id
+          id
+          month
+          year
+          business_account {
+            id
+            business_name
+          }
+          Restaurant {
+            id
+            name
+            logo
+          }
+          Shop {
+            id
+            image
+            logo
+            name
+          }
+        }
+        plan_name
+        ai_usage {
+          month
+          restaurant_id
+          requests_sent
+          User {
+            id
+            name
+          }
+          Shop {
+            id
+            image
+            logo
+            name
+          }
+          business_account {
+            id
+            business_name
+          }
+          Restaurant {
+            id
+            logo
+            name
+          }
+        }
+        aiUsage_id
+      }
+    }
+  }
+`;

@@ -14,6 +14,7 @@ import TicketsComparisonChart from '@/components/dashboard/TicketsComparisonChar
 import PlatformJoinersChart from '@/components/dashboard/PlatformJoinersChart';
 import GuestVsRegisteredChart from '@/components/dashboard/GuestVsRegisteredChart';
 import RevenueTrendChart from '@/components/dashboard/RevenueTrendChart';
+import { SubscriberTrendChart } from '@/app/admin/subscriptions/shops/_components/SubscriberTrendChart';
 import {
   ShoppingCart,
   User,
@@ -26,6 +27,11 @@ import {
   ChevronUp,
   Wallet,
   ShoppingBag,
+  CreditCard,
+  Truck,
+  Dog,
+  Brain,
+  Film,
 } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
@@ -49,6 +55,12 @@ const Index = () => {
     personalWalletBalance,
     businessWalletBalance,
     pendingOrdersValue,
+    totalSubscriptions,
+    subscriptions,
+    totalLogistics,
+    totalPetVendors,
+    totalAiUsage,
+    totalReelUsage,
     isLoading,
   } = useDashboardData();
 
@@ -154,15 +166,43 @@ const Index = () => {
       trend: { value: 0, isPositive: true },
     },
     {
-      title: 'Pending Orders Value',
-      value: isLoading ? 'Loading...' : formatCurrency(pendingOrdersValue),
-      description: 'All types incl. fees (not delivered/cancelled)',
-      icon: <ShoppingBag />,
-      trend: { value: 0, isPositive: false },
+      title: 'Active Subscriptions',
+      value: isLoading ? 'Loading...' : totalSubscriptions.toLocaleString(),
+      description: 'Total active plans',
+      icon: <CreditCard />,
+      trend: { value: 4, isPositive: true },
+    },
+    {
+      title: 'Logistics Fleets',
+      value: isLoading ? 'Loading...' : totalLogistics.toLocaleString(),
+      description: 'Active logistics partners',
+      icon: <Truck />,
+      trend: { value: 2, isPositive: true },
+    },
+    {
+      title: 'Pet Vendors',
+      value: isLoading ? 'Loading...' : totalPetVendors.toLocaleString(),
+      description: 'Verified pet shops',
+      icon: <Dog />,
+      trend: { value: 5, isPositive: true },
+    },
+    {
+      title: 'AI Usage (Total)',
+      value: isLoading ? 'Loading...' : totalAiUsage.toLocaleString(),
+      description: 'Requests across all plans',
+      icon: <Brain />,
+      trend: { value: 12, isPositive: true },
+    },
+    {
+      title: 'Reel Ads Usage',
+      value: isLoading ? 'Loading...' : totalReelUsage.toLocaleString(),
+      description: 'Advertising sessions',
+      icon: <Film />,
+      trend: { value: 8, isPositive: true },
     },
   ];
 
-  const visibleStats = showAllStats ? allStats : allStats.slice(0, 4);
+  const visibleStats = showAllStats ? allStats : allStats.slice(0, 8);
 
   return (
     <AdminLayout>
@@ -209,11 +249,14 @@ const Index = () => {
 
         <RevenueTrendChart />
 
+        <SubscriberTrendChart subscriptions={subscriptions} isLoading={isLoading} />
+
         <OrdersChart />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <ApprovedShoppersOverTimeChart />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <ShoppersByGenderChart />
-          <ApprovedShoppersOverTimeChart />
           <ShoppersBySignupChart />
         </div>
 
