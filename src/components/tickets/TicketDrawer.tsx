@@ -242,9 +242,7 @@ const TicketDrawer: React.FC<TicketDrawerProps> = ({ ticket, open, onOpenChange 
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleUpdateStatus('resolved')}
-                    >
+                    <AlertDialogAction onClick={() => handleUpdateStatus('resolved')}>
                       {isUpdating ? 'Updating...' : 'Confirm Resolution'}
                     </AlertDialogAction>
                   </AlertDialogFooter>

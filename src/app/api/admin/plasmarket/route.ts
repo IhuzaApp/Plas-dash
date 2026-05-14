@@ -83,32 +83,23 @@ const GET_PLASMARKET_BUSINESSES = gql`
           ordered_by
           pin
           service_fee
-          shopper {
-            shopper {
-              Employment_id
-              Police_Clearance_Cert
-              active
-              address
-              background_check_completed
-              collection_comment
-              created_at
-              drivingLicense_Image
-              full_name
-              guarantorPhone
-              guarantorRelationship
-              latitude
-              longitude
-              mutual_status
-              phone
-              onboarding_step
-              proofOfResidency
-              phone_number
-              profile_photo
-              updated_at
-              transport_mode
-              status
-            }
+          shoppers {
+            Employment_id
+            Police_Clearance_Cert
+            active
+            address
+            created_at
+            drivingLicense_Image
+            full_name
+            guarantorPhone
+            latitude
+            longitude
+            phone
+            phone_number
+            profile_photo
             updated_at
+            transport_mode
+            status
           }
           business_store {
             id

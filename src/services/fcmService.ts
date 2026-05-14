@@ -21,7 +21,7 @@ export const sendNotificationToUser = async (notification: NotificationData) => 
       isRead: false,
       createdAt: serverTimestamp(),
     });
-    
+
     // Also trigger FCM if needed via the send-notification API
     try {
       await fetch('/api/fcm/send-notification', {
@@ -34,7 +34,7 @@ export const sendNotificationToUser = async (notification: NotificationData) => 
           orderId: notification.data?.orderId || '',
           conversationId: notification.data?.conversationId || '',
           title: notification.title,
-          type: notification.type
+          type: notification.type,
         }),
       });
     } catch (fcmError) {
@@ -48,23 +48,31 @@ export const sendNotificationToUser = async (notification: NotificationData) => 
   }
 };
 
-export const sendNewOrderNotification = async (recipientId: string, orderId: string, orderType: string) => {
+export const sendNewOrderNotification = async (
+  recipientId: string,
+  orderId: string,
+  orderType: string
+) => {
   return sendNotificationToUser({
     recipientId,
     title: 'New Order Offer',
     body: `You have a new ${orderType} order offer!`,
     type: 'new_order_offer',
-    data: { orderId, orderType }
+    data: { orderId, orderType },
   });
 };
 
-export const sendOrderAssignedNotification = async (recipientId: string, orderId: string, orderType: string) => {
+export const sendOrderAssignedNotification = async (
+  recipientId: string,
+  orderId: string,
+  orderType: string
+) => {
   return sendNotificationToUser({
     recipientId,
     title: 'Order Assigned',
     body: `You have been directly assigned a new ${orderType} order.`,
     type: 'order_assigned',
-    data: { orderId, orderType }
+    data: { orderId, orderType },
   });
 };
 
@@ -80,12 +88,18 @@ export const removeFCMToken = async (...args: any[]) => {
   console.log('FCM Stub: removeFCMToken called', args);
 };
 
-export const sendChatNotification = async (recipientId: string, senderName: string, message: string, orderId: string, conversationId: string) => {
+export const sendChatNotification = async (
+  recipientId: string,
+  senderName: string,
+  message: string,
+  orderId: string,
+  conversationId: string
+) => {
   return sendNotificationToUser({
     recipientId,
     title: `New message from ${senderName}`,
     body: message,
     type: 'chat_message',
-    data: { orderId, conversationId, senderName }
+    data: { orderId, conversationId, senderName },
   });
 };

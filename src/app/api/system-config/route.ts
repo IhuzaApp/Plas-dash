@@ -63,7 +63,7 @@ export async function GET(req: Request) {
     }
 
     const data = await hasuraClient.request<SystemConfigResponse>(GET_SYSTEM_CONFIG);
-    const config = data.System_configuratioins[0] || null;
+    const config = data.System_configuratioins?.[0] || null;
 
     return NextResponse.json({
       success: true,

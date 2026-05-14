@@ -53,7 +53,8 @@ const OrderOffersAnalytics = ({ offers }: OrderOffersAnalyticsProps) => {
     const shopperStats: Record<string, any> = {};
 
     offers.forEach(offer => {
-      const shopperName = offer.shoppers?.full_name || offer.ShopperUser?.shopper?.full_name || 'Unknown';
+      const shopperName =
+        offer.shoppers?.full_name || offer.ShopperUser?.shopper?.full_name || 'Unknown';
       if (!shopperStats[shopperName]) {
         shopperStats[shopperName] = { name: shopperName, accepted: 0, total: 0 };
       }

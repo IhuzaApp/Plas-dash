@@ -23,7 +23,11 @@ export function ProtectedProjectRoute({
   fallback,
   showAccessDenied = true,
 }: ProtectedProjectRouteProps) {
-  const { hasProjectModuleAccess, hasProjectAction, isProjectUser: checkIsProjectUser } = useProjectPrivilege();
+  const {
+    hasProjectModuleAccess,
+    hasProjectAction,
+    isProjectUser: checkIsProjectUser,
+  } = useProjectPrivilege();
   const { session, isAuthenticated } = useAuth();
   const [isMounted, setIsMounted] = React.useState(false);
 

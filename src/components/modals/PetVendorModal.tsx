@@ -11,19 +11,19 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  PawPrint, 
-  User, 
-  MapPin, 
-  Calendar, 
-  FileCheck, 
+import {
+  PawPrint,
+  User,
+  MapPin,
+  Calendar,
+  FileCheck,
   Heart,
   Building2,
   Info,
   Tag,
   Stethoscope,
   ShieldCheck,
-  Video
+  Video,
 } from 'lucide-react';
 import { usePetVendor } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
@@ -60,12 +60,16 @@ export const PetVendorModal: React.FC<PetVendorModalProps> = ({
               </DialogTitle>
               <DialogDescription asChild>
                 <div className="text-sm text-muted-foreground">
-                  {isLoading ? <Skeleton className="h-4 w-64 mt-1" /> : `Pet Vendor Management • ${vendor?.organisationName || 'Organisation'}`}
+                  {isLoading ? (
+                    <Skeleton className="h-4 w-64 mt-1" />
+                  ) : (
+                    `Pet Vendor Management • ${vendor?.organisationName || 'Organisation'}`
+                  )}
                 </div>
               </DialogDescription>
             </div>
             {!isLoading && vendor && (
-              <Badge 
+              <Badge
                 variant={vendor.status === 'active' ? 'default' : 'secondary'}
                 className={`ml-auto capitalize ${vendor.status === 'active' ? 'bg-green-500 hover:bg-green-600' : ''}`}
               >
@@ -120,7 +124,8 @@ export const PetVendorModal: React.FC<PetVendorModalProps> = ({
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Member Since</span>
                       <span className="font-medium flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> {format(new Date(vendor.created_at), 'MMM dd, yyyy')}
+                        <Calendar className="w-3 h-3" />{' '}
+                        {format(new Date(vendor.created_at), 'MMM dd, yyyy')}
                       </span>
                     </div>
                   </CardContent>
@@ -170,19 +175,24 @@ export const PetVendorModal: React.FC<PetVendorModalProps> = ({
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Heart className="w-5 h-5 text-primary" />
-                    Available Pets 
-                    <Badge variant="secondary" className="ml-2">{vendor.pets?.length || 0} Listed</Badge>
+                    Available Pets
+                    <Badge variant="secondary" className="ml-2">
+                      {vendor.pets?.length || 0} Listed
+                    </Badge>
                   </h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {vendor.pets?.map((pet) => (
-                    <Card key={pet.id} className="overflow-hidden group hover:border-primary/50 transition-colors">
+                  {vendor.pets?.map(pet => (
+                    <Card
+                      key={pet.id}
+                      className="overflow-hidden group hover:border-primary/50 transition-colors"
+                    >
                       <div className="aspect-square relative overflow-hidden bg-muted">
                         {pet.image ? (
-                          <img 
-                            src={pet.image} 
-                            alt={pet.name} 
+                          <img
+                            src={pet.image}
+                            alt={pet.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
@@ -210,7 +220,9 @@ export const PetVendorModal: React.FC<PetVendorModalProps> = ({
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <h4 className="font-bold text-lg">{pet.name}</h4>
-                            <p className="text-xs text-muted-foreground">{pet.gender}, {pet.age}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {pet.gender}, {pet.age}
+                            </p>
                           </div>
                           {pet.video && (
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -249,4 +261,3 @@ export const PetVendorModal: React.FC<PetVendorModalProps> = ({
 };
 
 export default PetVendorModal;
-

@@ -105,7 +105,15 @@ const Restaurants = () => {
 
   // Update restaurant mutation (Activation/Deactivation)
   const updateRestaurantMutation = useMutation({
-    mutationFn: async ({ id, is_active, verified }: { id: string; is_active?: boolean; verified?: boolean }) => {
+    mutationFn: async ({
+      id,
+      is_active,
+      verified,
+    }: {
+      id: string;
+      is_active?: boolean;
+      verified?: boolean;
+    }) => {
       return hasuraRequest(UPDATE_RESTAURANT, {
         id,
         is_active,
@@ -113,9 +121,12 @@ const Restaurants = () => {
       });
     },
     onSuccess: (data, variables) => {
-      const action = variables.is_active !== undefined
-        ? (variables.is_active ? 'enabled' : 'disabled')
-        : 'updated';
+      const action =
+        variables.is_active !== undefined
+          ? variables.is_active
+            ? 'enabled'
+            : 'disabled'
+          : 'updated';
 
       toast({
         title: 'Success',
@@ -137,7 +148,10 @@ const Restaurants = () => {
     const newStatus = !restaurant.is_active;
 
     // Validation: Cannot activate a restaurant without a subscription
-    if (newStatus && (!restaurant.shop_subscription || restaurant.shop_subscription.status !== 'active')) {
+    if (
+      newStatus &&
+      (!restaurant.shop_subscription || restaurant.shop_subscription.status !== 'active')
+    ) {
       toast({
         title: 'Subscription Required',
         description: 'This restaurant has no active subscription and cannot be activated.',
@@ -166,7 +180,8 @@ const Restaurants = () => {
             Gourmet Partners
           </h1>
           <p className="text-gray-300 max-w-md text-lg mb-6">
-            Manage your culinary network, monitor subscription health, and verify new restaurant applications.
+            Manage your culinary network, monitor subscription health, and verify new restaurant
+            applications.
           </p>
           {hasAction('restaurants', 'add_restaurants') && (
             <Button
@@ -256,7 +271,11 @@ const Restaurants = () => {
                           <Avatar className="h-10 w-10 border border-border">
                             <AvatarImage src={restaurant.logo} alt={restaurant.name} />
                             <AvatarFallback className="bg-primary/5 text-primary">
-                              {restaurant.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              {restaurant.name
+                                ?.split(' ')
+                                .map(n => n[0])
+                                .join('')
+                                .slice(0, 2)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -282,13 +301,19 @@ const Restaurants = () => {
                       <TableCell>
                         <div className="flex items-center text-xs">
                           <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
-                          <span className="truncate max-w-[120px]">{restaurant.location || 'N/A'}</span>
+                          <span className="truncate max-w-[120px]">
+                            {restaurant.location || 'N/A'}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge
                           variant={restaurant.is_active ? 'default' : 'secondary'}
-                          className={restaurant.is_active ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}
+                          className={
+                            restaurant.is_active
+                              ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                              : ''
+                          }
                         >
                           {restaurant.is_active ? 'Active' : 'Inactive'}
                         </Badge>
@@ -306,7 +331,9 @@ const Restaurants = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">
-                        {restaurant.created_at ? format(new Date(restaurant.created_at), 'MMM dd, yyyy') : '—'}
+                        {restaurant.created_at
+                          ? format(new Date(restaurant.created_at), 'MMM dd, yyyy')
+                          : '—'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
@@ -316,9 +343,9 @@ const Restaurants = () => {
                             </Button>
                           </Link>
                           {hasAction('restaurants', 'edit_restaurants') && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="h-8 w-8 p-0"
                               onClick={() => handleEdit(restaurant)}
                             >
@@ -332,7 +359,9 @@ const Restaurants = () => {
                               onClick={() => handleToggleStatus(restaurant)}
                               disabled={updateRestaurantMutation.isPending}
                               className="h-8 w-8 p-0"
-                              title={restaurant.is_active ? 'Disable Restaurant' : 'Enable Restaurant'}
+                              title={
+                                restaurant.is_active ? 'Disable Restaurant' : 'Enable Restaurant'
+                              }
                             >
                               {updateRestaurantMutation.isPending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -407,7 +436,9 @@ const Restaurants = () => {
                           <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={restaurant.logo} />
-                              <AvatarFallback><Utensils className="h-4 w-4" /></AvatarFallback>
+                              <AvatarFallback>
+                                <Utensils className="h-4 w-4" />
+                              </AvatarFallback>
                             </Avatar>
                             {restaurant.name}
                           </div>
@@ -417,7 +448,9 @@ const Restaurants = () => {
                             {sub.plan?.name || 'N/A'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="capitalize text-xs">{sub.billing_cycle || '—'}</TableCell>
+                        <TableCell className="capitalize text-xs">
+                          {sub.billing_cycle || '—'}
+                        </TableCell>
                         <TableCell className="text-xs">
                           {sub.start_date ? format(new Date(sub.start_date), 'MMM dd, yyyy') : '—'}
                         </TableCell>
@@ -454,14 +487,19 @@ const Restaurants = () => {
                 </div>
               ) : (
                 data?.Restaurants?.filter(r => !r.verified).map(restaurant => (
-                  <Card key={restaurant.id} className="bg-background/50 border-none shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  <Card
+                    key={restaurant.id}
+                    className="bg-background/50 border-none shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                  >
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between mb-4">
                         <Avatar className="h-12 w-12 border">
                           <AvatarImage src={restaurant.logo} />
                           <AvatarFallback>{restaurant.name?.[0]}</AvatarFallback>
                         </Avatar>
-                        <Badge variant="destructive" className="animate-pulse">Pending</Badge>
+                        <Badge variant="destructive" className="animate-pulse">
+                          Pending
+                        </Badge>
                       </div>
                       <h4 className="font-bold text-lg mb-1">{restaurant.name}</h4>
                       <div className="space-y-2 mb-6">
@@ -476,7 +514,13 @@ const Restaurants = () => {
                         <Button
                           className="flex-1 bg-green-600 hover:bg-green-700"
                           size="sm"
-                          onClick={() => updateRestaurantMutation.mutate({ id: restaurant.id, verified: true, is_active: true })}
+                          onClick={() =>
+                            updateRestaurantMutation.mutate({
+                              id: restaurant.id,
+                              verified: true,
+                              is_active: true,
+                            })
+                          }
                         >
                           Approve
                         </Button>
@@ -510,15 +554,21 @@ const Restaurants = () => {
         restaurant={editingRestaurant}
       />
 
-      <AlertDialog open={!!restaurantToToggle} onOpenChange={open => !open && setRestaurantToToggle(null)}>
+      <AlertDialog
+        open={!!restaurantToToggle}
+        onOpenChange={open => !open && setRestaurantToToggle(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
               {restaurantToToggle?.is_active ? 'Disable Restaurant' : 'Enable Restaurant'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {restaurantToToggle?.is_active ? 'disable' : 'enable'} <strong>{restaurantToToggle?.name}</strong>?
-              {restaurantToToggle?.is_active ? ' This will hide the restaurant and its menu from the marketplace.' : ' This will make the restaurant and its menu visible to customers.'}
+              Are you sure you want to {restaurantToToggle?.is_active ? 'disable' : 'enable'}{' '}
+              <strong>{restaurantToToggle?.name}</strong>?
+              {restaurantToToggle?.is_active
+                ? ' This will hide the restaurant and its menu from the marketplace.'
+                : ' This will make the restaurant and its menu visible to customers.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -528,11 +578,15 @@ const Restaurants = () => {
                 if (restaurantToToggle) {
                   updateRestaurantMutation.mutate({
                     id: restaurantToToggle.id,
-                    is_active: !restaurantToToggle.is_active
+                    is_active: !restaurantToToggle.is_active,
                   });
                 }
               }}
-              className={restaurantToToggle?.is_active ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-green-600 hover:bg-green-700 text-white'}
+              className={
+                restaurantToToggle?.is_active
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }
             >
               {updateRestaurantMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

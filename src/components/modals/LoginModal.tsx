@@ -264,7 +264,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                           <Loader2 className="w-4 h-4 animate-spin" />
                           <span>Authenticating...</span>
                         </div>
-                      ) : 'Sign In'}
+                      ) : (
+                        'Sign In'
+                      )}
                     </Button>
                   </form>
                 </Form>
@@ -281,15 +283,22 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                 </div>
               </>
             ) : (
-              <form onSubmit={handleSupportSubmit} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <form
+                onSubmit={handleSupportSubmit}
+                className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500"
+              >
                 {supportSuccess ? (
                   <div className="py-8 flex flex-col items-center text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 animate-bounce">
                       <ShieldCheck className="w-8 h-8" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-zinc-900 dark:text-white">Request Raised!</h4>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Account verified. Our team is investigating your issue.</p>
+                      <h4 className="text-lg font-bold text-zinc-900 dark:text-white">
+                        Request Raised!
+                      </h4>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Account verified. Our team is investigating your issue.
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -303,7 +312,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                           required
                           type="email"
                           value={supportData.email}
-                          onChange={(e) => setSupportData({ ...supportData, email: e.target.value })}
+                          onChange={e => setSupportData({ ...supportData, email: e.target.value })}
                           className="h-11 bg-zinc-100/50 dark:bg-zinc-800/50 border-2 border-zinc-200/50 dark:border-zinc-700/50 focus:border-primary/50 focus:bg-white dark:focus:bg-zinc-800 rounded-xl text-sm font-medium transition-all duration-300"
                           placeholder="your@email.com"
                         />
@@ -315,7 +324,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                         <Input
                           required
                           value={supportData.sharedId}
-                          onChange={(e) => setSupportData({ ...supportData, sharedId: e.target.value })}
+                          onChange={e =>
+                            setSupportData({ ...supportData, sharedId: e.target.value })
+                          }
                           className="h-11 bg-zinc-100/50 dark:bg-zinc-800/50 border-2 border-zinc-200/50 dark:border-zinc-700/50 focus:border-primary/50 focus:bg-white dark:focus:bg-zinc-800 rounded-xl text-sm font-medium transition-all duration-300"
                           placeholder="Enter your assigned ID"
                         />
@@ -327,7 +338,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                         <textarea
                           required
                           value={supportData.description}
-                          onChange={(e) => setSupportData({ ...supportData, description: e.target.value })}
+                          onChange={e =>
+                            setSupportData({ ...supportData, description: e.target.value })
+                          }
                           className="w-full h-24 p-3 bg-zinc-100/50 dark:bg-zinc-800/50 border-2 border-zinc-200/50 dark:border-zinc-700/50 focus:border-primary/50 focus:bg-white dark:focus:bg-zinc-800 rounded-xl text-sm font-medium resize-none outline-none transition-all duration-300"
                           placeholder="Briefly describe the login error..."
                         />
@@ -359,7 +372,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                             <Loader2 className="w-4 h-4 animate-spin" />
                             <span>Verifying...</span>
                           </div>
-                        ) : 'Verify & Submit'}
+                        ) : (
+                          'Verify & Submit'
+                        )}
                       </Button>
                     </div>
                   </>

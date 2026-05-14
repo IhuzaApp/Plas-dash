@@ -647,12 +647,12 @@ const EditReelModal: React.FC<EditReelModalProps> = ({ open, onOpenChange, onSuc
               </Label>
               <div className="mt-2">
                 {formData.video_url &&
-                  !formData.video_url.includes('youtube.com') &&
-                  !formData.video_url.includes('youtu.be') ? (
+                !formData.video_url.includes('youtube.com') &&
+                !formData.video_url.includes('youtu.be') ? (
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <div className="relative aspect-video">
                       {formData.video_url.includes('/reels/images/') ||
-                        formData.video_url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i) ? (
+                      formData.video_url.match(/\.(jpg|jpeg|png|gif|webp|svg)/i) ? (
                         <img
                           src={formData.video_url}
                           alt="Current"

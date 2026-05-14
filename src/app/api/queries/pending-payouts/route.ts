@@ -52,27 +52,29 @@ export async function GET(req: Request) {
 
   try {
     const data = await hasuraClient.request<{ payouts: any[] }>(GET_ALL_PENDING_PAYOUTS);
-    
+
     // Map plural/singular relationships to a consistent format
     const mappedPayouts = (data.payouts ?? []).map(p => {
       const rawUser = p.Users;
       const user = Array.isArray(rawUser) ? rawUser[0] : rawUser;
-      
+
       const rawWallet = p.Wallets;
       const wallet = Array.isArray(rawWallet) ? rawWallet[0] : rawWallet;
-      
+
       const rawShopper = wallet?.shoppers;
       const shopper = Array.isArray(rawShopper) ? rawShopper[0] : rawShopper;
-      
+
       return {
         ...p,
         User: user || null,
         shopper: shopper || null,
-        Wallets: wallet ? {
-          ...wallet,
-          User: user || null,
-          shopper: shopper || null
-        } : null
+        Wallets: wallet
+          ? {
+              ...wallet,
+              User: user || null,
+              shopper: shopper || null,
+            }
+          : null,
       };
     });
 

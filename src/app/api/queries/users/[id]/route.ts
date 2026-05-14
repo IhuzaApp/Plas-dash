@@ -51,17 +51,15 @@ const GET_USER_BY_ID = gql`
         reserved_balance
         shopper_id
       }
-      shopper {
+      shoppers {
         Employment_id
         active
         address
-        background_check_completed
         created_at
         driving_license
         full_name
         id
         national_id
-        onboarding_step
         phone_number
         profile_photo
         status

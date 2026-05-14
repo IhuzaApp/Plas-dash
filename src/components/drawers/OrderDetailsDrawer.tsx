@@ -12,29 +12,40 @@ import { Separator } from '@/components/ui/separator';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-import { useSystemConfig, useShoppers, useAssignOrder, useCreateOrderOffer } from '@/hooks/useHasuraApi';
+import {
+  useSystemConfig,
+  useShoppers,
+  useAssignOrder,
+  useCreateOrderOffer,
+} from '@/hooks/useHasuraApi';
 import { useOrderPayments } from '@/hooks/useShoppers';
 import { sendNewOrderNotification, sendOrderAssignedNotification } from '@/services/fcmService';
-import { 
-  Loader2, 
-  Video, 
-  UserPlus, 
-  Send, 
-  Check, 
-  X, 
-  Phone, 
-  MapPin, 
-  CreditCard, 
-  Receipt, 
+import {
+  Loader2,
+  Video,
+  UserPlus,
+  Send,
+  Check,
+  X,
+  Phone,
+  MapPin,
+  CreditCard,
+  Receipt,
   ArrowRightLeft,
   Search,
   ClipboardList,
   Truck,
-  DollarSign
+  DollarSign,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { WalletTransaction, Refund } from '@/hooks/useShoppers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -235,7 +246,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
     ...(order.Wallet_Transactions || []),
     ...(order.order_transactions || []),
     ...(order.businessTransactions || []),
-    ...(paymentData?.Wallet_Transactions || [])
+    ...(paymentData?.Wallet_Transactions || []),
   ].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i); // Deduplicate
 
   const refunds = (paymentData?.Refunds || []) as Refund[];
@@ -257,21 +268,27 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
   const getStatusColor = (status: string) => {
     const statusLower = status?.toLowerCase();
     switch (statusLower) {
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
       case 'shopping':
       case 'in_progress':
       case 'accepted':
       case 'picked_up':
-      case 'on_the_way': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'on_the_way':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getPaymentStatusColor = (status: string) => {
     const statusLower = status?.toLowerCase();
-    if (statusLower === 'completed' || statusLower === 'success') return 'bg-green-100 text-green-800';
+    if (statusLower === 'completed' || statusLower === 'success')
+      return 'bg-green-100 text-green-800';
     if (statusLower === 'pending') return 'bg-yellow-100 text-yellow-800';
     if (statusLower === 'failed' || statusLower === 'error') return 'bg-red-100 text-red-800';
     return 'bg-gray-100 text-gray-800';
@@ -324,7 +341,9 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
             <TabsContent value="overview" className="mt-0 space-y-6">
               {/* Customer Information */}
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Customer Details</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Customer Details
+                </h3>
                 <Card className="p-4 border-2">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12">
@@ -366,43 +385,60 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
 
               {/* Items Section */}
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Items</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Items
+                </h3>
                 <Card className="p-0 overflow-hidden border-2">
                   <div className="divide-y">
-                    {order.type === 'regular' && order.Order_Items?.map((item) => (
-                      <div key={item.id} className="p-4 flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-sm">Product #{generateShortId(item.product_id)}</p>
-                          <p className="text-xs text-muted-foreground">Quantity: {item.quantity}</p>
+                    {order.type === 'regular' &&
+                      order.Order_Items?.map(item => (
+                        <div key={item.id} className="p-4 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-sm">
+                              Product #{generateShortId(item.product_id)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Quantity: {item.quantity}
+                            </p>
+                          </div>
+                          <p className="font-bold text-sm">{formatCurrency(item.price)}</p>
                         </div>
-                        <p className="font-bold text-sm">{formatCurrency(item.price)}</p>
-                      </div>
-                    ))}
-                    {order.type === 'restaurant' && order.restaurant_order_items?.map((item) => (
-                      <div key={item.id} className="p-4 flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-sm">{item.restaurant_dishes?.dishes?.name || 'Unknown Dish'}</p>
-                          <p className="text-xs text-muted-foreground">Quantity: {item.quantity}</p>
+                      ))}
+                    {order.type === 'restaurant' &&
+                      order.restaurant_order_items?.map(item => (
+                        <div key={item.id} className="p-4 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-sm">
+                              {item.restaurant_dishes?.dishes?.name || 'Unknown Dish'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Quantity: {item.quantity}
+                            </p>
+                          </div>
+                          <p className="font-bold text-sm">{formatCurrency(item.price)}</p>
                         </div>
-                        <p className="font-bold text-sm">{formatCurrency(item.price)}</p>
-                      </div>
-                    ))}
-                    {order.type === 'business' && order.allProducts?.map((item: any, index: number) => (
-                      <div key={index} className="p-4 flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-sm">{item.name || 'Business Item'}</p>
-                          <p className="text-xs text-muted-foreground">Quantity: {item.quantity || 1}</p>
+                      ))}
+                    {order.type === 'business' &&
+                      order.allProducts?.map((item: any, index: number) => (
+                        <div key={index} className="p-4 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-sm">{item.name || 'Business Item'}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Quantity: {item.quantity || 1}
+                            </p>
+                          </div>
+                          <p className="font-bold text-sm">{formatCurrency(item.price || '0')}</p>
                         </div>
-                        <p className="font-bold text-sm">{formatCurrency(item.price || '0')}</p>
-                      </div>
-                    ))}
+                      ))}
                     {order.type === 'reel' && (
                       <div className="p-4 flex justify-between items-center">
                         <div>
                           <p className="font-medium text-sm">{order.Reel?.title}</p>
                           <p className="text-xs text-muted-foreground">Reel Product</p>
                         </div>
-                        <p className="font-bold text-sm">{formatCurrency(order.Reel?.Price || '0')}</p>
+                        <p className="font-bold text-sm">
+                          {formatCurrency(order.Reel?.Price || '0')}
+                        </p>
                       </div>
                     )}
                     {order.type === 'package' && (
@@ -437,13 +473,17 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
 
               {/* Delivery Info */}
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Delivery Info</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Delivery Info
+                </h3>
                 <Card className="p-4 border-2">
                   <div className="space-y-4">
                     <div className="flex gap-3">
                       <MapPin className="h-5 w-5 text-primary shrink-0" />
                       <div>
-                        <p className="text-xs font-bold uppercase text-muted-foreground">Dropoff Address</p>
+                        <p className="text-xs font-bold uppercase text-muted-foreground">
+                          Dropoff Address
+                        </p>
                         <p className="text-sm">
                           {order.type === 'package'
                             ? order.dropoffLocation
@@ -457,7 +497,9 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                       <div className="flex gap-3">
                         <Truck className="h-5 w-5 text-primary shrink-0" />
                         <div>
-                          <p className="text-xs font-bold uppercase text-muted-foreground">Pickup Address</p>
+                          <p className="text-xs font-bold uppercase text-muted-foreground">
+                            Pickup Address
+                          </p>
                           <p className="text-sm">{order.pickupLocation}</p>
                         </div>
                       </div>
@@ -469,10 +511,12 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
 
             <TabsContent value="transactions" className="mt-0 space-y-6">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Order Transactions</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Order Transactions
+                </h3>
                 {allOrderTransactions.length > 0 ? (
                   <div className="space-y-3">
-                    {allOrderTransactions.map((tx) => (
+                    {allOrderTransactions.map(tx => (
                       <Card key={tx.id} className="p-4 border-2">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-3">
@@ -480,14 +524,22 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                               <DollarSign className="h-4 w-4 text-primary" />
                             </div>
                             <div>
-                              <p className="font-bold capitalize">{tx.type || tx.action || 'Transaction'}</p>
-                              <p className="text-[10px] text-muted-foreground font-mono">{tx.reference_id || tx.id}</p>
-                              <p className="text-[10px] text-muted-foreground">{formatDateTime(tx.created_at)}</p>
+                              <p className="font-bold capitalize">
+                                {tx.type || tx.action || 'Transaction'}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground font-mono">
+                                {tx.reference_id || tx.id}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {formatDateTime(tx.created_at)}
+                              </p>
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="font-bold text-lg">{formatCurrency(tx.amount || '0')}</p>
-                            <Badge className={`${getPaymentStatusColor(tx.status)} text-[10px] h-5`}>
+                            <Badge
+                              className={`${getPaymentStatusColor(tx.status)} text-[10px] h-5`}
+                            >
                               {tx.status}
                             </Badge>
                           </div>
@@ -503,26 +555,37 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                 ) : (
                   <Card className="p-8 text-center border-dashed border-2">
                     <Receipt className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-20" />
-                    <p className="text-sm text-muted-foreground">No transactions found for this order</p>
+                    <p className="text-sm text-muted-foreground">
+                      No transactions found for this order
+                    </p>
                   </Card>
                 )}
               </div>
 
               {refunds.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Refunds</h3>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                    Refunds
+                  </h3>
                   <div className="space-y-3">
-                    {refunds.map((refund) => (
+                    {refunds.map(refund => (
                       <Card key={refund.id} className="p-4 border-2 border-red-100 bg-red-50/10">
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="font-bold text-red-600">Refund Issued</p>
                             <p className="text-xs text-muted-foreground">{refund.reason}</p>
-                            <p className="text-[10px] text-muted-foreground">{formatDateTime(refund.created_at)}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {formatDateTime(refund.created_at)}
+                            </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-red-600 text-lg">-{formatCurrency(refund.amount)}</p>
-                            <Badge variant="outline" className={getPaymentStatusColor(refund.status)}>
+                            <p className="font-bold text-red-600 text-lg">
+                              -{formatCurrency(refund.amount)}
+                            </p>
+                            <Badge
+                              variant="outline"
+                              className={getPaymentStatusColor(refund.status)}
+                            >
                               {refund.status}
                             </Badge>
                           </div>
@@ -536,23 +599,33 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
 
             <TabsContent value="assignment" className="mt-0 space-y-6">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Shopper Assignment</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Shopper Assignment
+                </h3>
                 {order.shopper_id ? (
                   <Card className="p-4 border-2 border-primary/20 bg-primary/[0.02]">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <Avatar className="h-14 w-14 border-2 border-primary/20">
                           <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                            {order.shopper?.name?.split(' ').map((n: string) => n[0]).join('') || 'S'}
+                            {order.shopper?.name
+                              ?.split(' ')
+                              .map((n: string) => n[0])
+                              .join('') || 'S'}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-bold text-lg">{order.shopper?.name || 'Assigned Shopper'}</p>
+                          <p className="font-bold text-lg">
+                            {order.shopper?.name || 'Assigned Shopper'}
+                          </p>
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
                             <Phone className="h-3 w-3" />
                             {order.shopper?.phone || 'No phone'}
                           </p>
-                          <Badge variant="outline" className="mt-1 bg-green-50 text-green-700 border-green-200">
+                          <Badge
+                            variant="outline"
+                            className="mt-1 bg-green-50 text-green-700 border-green-200"
+                          >
                             Active Session
                           </Badge>
                         </div>
@@ -564,7 +637,11 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                         disabled={isAssigning}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
-                        {isAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                        {isAssigning ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
                         Unassign
                       </Button>
                     </div>
@@ -574,7 +651,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                     <Card className="p-8 text-center border-dashed border-2">
                       <UserPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-20" />
                       <p className="text-sm text-muted-foreground mb-4">No shopper assigned yet</p>
-                      
+
                       <div className="space-y-4 max-w-sm mx-auto">
                         <div className="text-left">
                           <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block ml-1">
@@ -585,36 +662,47 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
                               <SelectValue placeholder="Search available shoppers..." />
                             </SelectTrigger>
                             <SelectContent>
-                              {shoppersData?.shoppers?.filter(s => s.active).map(shopper => (
-                                <SelectItem key={shopper.id} value={shopper.id}>
-                                  <div className="flex flex-col py-1">
-                                    <span className="font-bold">{shopper.full_name}</span>
-                                    <span className="text-[10px] text-muted-foreground">
-                                      {shopper.transport_mode || 'Standard'} • {shopper.phone_number}
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
+                              {shoppersData?.shoppers
+                                ?.filter(s => s.active)
+                                .map(shopper => (
+                                  <SelectItem key={shopper.id} value={shopper.id}>
+                                    <div className="flex flex-col py-1">
+                                      <span className="font-bold">{shopper.full_name}</span>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {shopper.transport_mode || 'Standard'} •{' '}
+                                        {shopper.phone_number}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                          <Button 
-                            onClick={handleOffer} 
+                          <Button
+                            onClick={handleOffer}
                             disabled={!selectedShopperId || isAssigning}
                             variant="outline"
                             className="h-11 border-2 gap-2"
                           >
-                            {isAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            {isAssigning ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
                             Offer
                           </Button>
-                          <Button 
-                            onClick={handleAssign} 
+                          <Button
+                            onClick={handleAssign}
                             disabled={!selectedShopperId || isAssigning}
                             className="h-11 gap-2 shadow-lg"
                           >
-                            {isAssigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                            {isAssigning ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <UserPlus className="h-4 w-4" />
+                            )}
                             Assign
                           </Button>
                         </div>

@@ -1,53 +1,53 @@
-import { Resend } from "resend";
-import { insertSystemLog } from "../../pages/api/queries/system-logs";
-import { logger } from "../utils/logger";
+import { Resend } from 'resend';
+import { insertSystemLog } from '../../pages/api/queries/system-logs';
+import { logger } from '../utils/logger';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 
 if (!resendApiKey) {
-    logger.warn(
-        "RESEND_API_KEY is not set in environment variables. Email sending will be mocked.",
-        "ResendLib"
-    );
+  logger.warn(
+    'RESEND_API_KEY is not set in environment variables. Email sending will be mocked.',
+    'ResendLib'
+  );
 }
 
 // Fallback mock to prevent top-level crashes and API route failures
 export const resend = resendApiKey
-    ? new Resend(resendApiKey)
-    : ({
-        emails: {
-            send: async (payload: any) => {
-                logger.warn("[MOCK] Email sending disabled", "ResendLib", {
-                    subject: payload.subject,
-                    to: payload.to,
-                });
-                return { id: "mock_email_id" };
-            },
+  ? new Resend(resendApiKey)
+  : ({
+      emails: {
+        send: async (payload: any) => {
+          logger.warn('[MOCK] Email sending disabled', 'ResendLib', {
+            subject: payload.subject,
+            to: payload.to,
+          });
+          return { id: 'mock_email_id' };
         },
+      },
     } as unknown as Resend);
 
 export async function sendRentalInvoice({
-    to,
-    customerName,
-    vehicleName,
-    platNumber,
-    amount,
-    refundableDeposit,
-    serviceFee,
-    platformFee,
+  to,
+  customerName,
+  vehicleName,
+  platNumber,
+  amount,
+  refundableDeposit,
+  serviceFee,
+  platformFee,
 }: {
-    to: string;
-    customerName: string;
-    vehicleName: string;
-    platNumber: string;
-    amount: string;
-    refundableDeposit: string;
-    serviceFee: string;
-    platformFee: string;
+  to: string;
+  customerName: string;
+  vehicleName: string;
+  platNumber: string;
+  amount: string;
+  refundableDeposit: string;
+  serviceFee: string;
+  platformFee: string;
 }) {
-    try {
-        const subject = `Invoice for your rental: ${vehicleName} (${platNumber})`;
-        const html = `
+  try {
+    const subject = `Invoice for your rental: ${vehicleName} (${platNumber})`;
+    const html = `
       <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background-color: #ffffff; border: 1px solid #f0f0f0; border-radius: 24px;">
         <div style="margin-bottom: 40px;">
           <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0;">Rental Invoice</h1>
@@ -85,10 +85,11 @@ export async function sendRentalInvoice({
         <div style="padding: 24px; background-color: #f9fafb; border-radius: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span style="font-size: 16px; font-weight: 800; color: #111827;">Total Paid</span>
-            <span style="font-size: 24px; font-weight: 900; color: #10b981;">RWF ${parseInt(amount) +
-            parseInt(serviceFee) +
-            parseInt(platformFee) +
-            parseInt(refundableDeposit)
+            <span style="font-size: 24px; font-weight: 900; color: #10b981;">RWF ${
+              parseInt(amount) +
+              parseInt(serviceFee) +
+              parseInt(platformFee) +
+              parseInt(refundableDeposit)
             }</span>
           </div>
         </div>
@@ -102,48 +103,45 @@ export async function sendRentalInvoice({
       </div>
     `;
 
-        const result = await resend.emails.send({
-            from: "Plas <onboarding@resend.dev>",
-            to,
-            subject,
-            html,
-        });
+    const result = await resend.emails.send({
+      from: 'Plas <onboarding@resend.dev>',
+      to,
+      subject,
+      html,
+    });
 
-        return result;
-    } catch (error) {
-        logger.error(
-            "Failed to send rental invoice email",
-            "ResendLib:sendRentalInvoice",
-            { error, to }
-        );
-        await insertSystemLog(
-            "error",
-            "Failed to send rental invoice email",
-            "ResendLib",
-            { error, to }
-        );
-        return null;
-    }
+    return result;
+  } catch (error) {
+    logger.error('Failed to send rental invoice email', 'ResendLib:sendRentalInvoice', {
+      error,
+      to,
+    });
+    await insertSystemLog('error', 'Failed to send rental invoice email', 'ResendLib', {
+      error,
+      to,
+    });
+    return null;
+  }
 }
 
 export async function sendWithdrawalInvoice({
-    to,
-    customerName,
-    amount,
-    fee,
-    newBalance,
-    referenceId,
+  to,
+  customerName,
+  amount,
+  fee,
+  newBalance,
+  referenceId,
 }: {
-    to: string;
-    customerName: string;
-    amount: string;
-    fee: string;
-    newBalance: string;
-    referenceId: string;
+  to: string;
+  customerName: string;
+  amount: string;
+  fee: string;
+  newBalance: string;
+  referenceId: string;
 }) {
-    try {
-        const subject = `Withdrawal Receipt: RWF ${amount}`;
-        const html = `
+  try {
+    const subject = `Withdrawal Receipt: RWF ${amount}`;
+    const html = `
       <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background-color: #ffffff; border: 1px solid #f0f0f0; border-radius: 24px;">
         <div style="margin-bottom: 40px;">
           <h1 style="font-size: 24px; font-weight: 800; color: #111827; margin: 0;">Withdrawal Receipt</h1>
@@ -168,8 +166,9 @@ export async function sendWithdrawalInvoice({
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-top: 12px; border-top: 1px dashed #e5e7eb;">
               <span style="color: #6b7280; font-size: 14px;">Total Deducted</span>
-              <span style="color: #ef4444; font-size: 14px; font-weight: 700;">RWF ${parseFloat(amount) + parseFloat(fee)
-            }</span>
+              <span style="color: #ef4444; font-size: 14px; font-weight: 700;">RWF ${
+                parseFloat(amount) + parseFloat(fee)
+              }</span>
             </div>
           </div>
         </div>
@@ -190,26 +189,23 @@ export async function sendWithdrawalInvoice({
       </div>
     `;
 
-        const result = await resend.emails.send({
-            from: "Plas <onboarding@resend.dev>",
-            to,
-            subject,
-            html,
-        });
+    const result = await resend.emails.send({
+      from: 'Plas <onboarding@resend.dev>',
+      to,
+      subject,
+      html,
+    });
 
-        return result;
-    } catch (error) {
-        logger.error(
-            "Failed to send withdrawal invoice email",
-            "ResendLib:sendWithdrawalInvoice",
-            { error, to }
-        );
-        await insertSystemLog(
-            "error",
-            "Failed to send withdrawal invoice email",
-            "ResendLib",
-            { error, to }
-        );
-        return null;
-    }
+    return result;
+  } catch (error) {
+    logger.error('Failed to send withdrawal invoice email', 'ResendLib:sendWithdrawalInvoice', {
+      error,
+      to,
+    });
+    await insertSystemLog('error', 'Failed to send withdrawal invoice email', 'ResendLib', {
+      error,
+      to,
+    });
+    return null;
+  }
 }

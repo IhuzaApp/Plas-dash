@@ -16,7 +16,7 @@ import ActivityTab from './ActivityTab';
 interface ShopperTabsProps {
   // Verification tab
   detailedShopper: any;
-  
+
   // Wallet tab
   wallet: any;
   totalEarnings: number;

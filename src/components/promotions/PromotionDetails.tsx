@@ -280,8 +280,8 @@ export const PromotionDetails: React.FC<PromotionDetailsProps> = ({
                 <div className="flex justify-between items-end">
                   <span className="text-muted-foreground font-medium">Campaign Budget</span>
                   <span className={cn('text-sm font-bold', budgetExhausted && 'text-red-600')}>
-                    {currency} {(promotion.budget_used ?? 0).toLocaleString()} /{' '}
-                    {currency} {promotion.budget_limit.toLocaleString()}
+                    {currency} {(promotion.budget_used ?? 0).toLocaleString()} / {currency}{' '}
+                    {promotion.budget_limit.toLocaleString()}
                   </span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2 overflow-hidden">

@@ -25,7 +25,7 @@ const Logistics = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
+
   const router = useRouter();
   const { startLoading } = usePageLoading();
 
@@ -83,7 +83,9 @@ const Logistics = () => {
         <Card className="bg-emerald-500/5 border-emerald-500/20">
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold text-emerald-600">{accounts.length}</div>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Total Partners</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">
+              Total Partners
+            </p>
           </CardContent>
         </Card>
         <Card className="bg-green-500/5 border-green-500/20">
@@ -91,15 +93,22 @@ const Logistics = () => {
             <div className="text-3xl font-bold text-green-600">
               {accounts.filter((a: any) => !a.disabled).length}
             </div>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Active Accounts</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">
+              Active Accounts
+            </p>
           </CardContent>
         </Card>
         <Card className="bg-emerald-500/5 border-emerald-500/20">
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold text-emerald-600">
-              {accounts.reduce((acc: number, curr: any) => acc + (curr.RentalVehicles?.length || 0), 0)}
+              {accounts.reduce(
+                (acc: number, curr: any) => acc + (curr.RentalVehicles?.length || 0),
+                0
+              )}
             </div>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Total Fleet Vehicles</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">
+              Total Fleet Vehicles
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -156,21 +165,23 @@ const Logistics = () => {
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
                           <Truck className="h-4 w-4 text-primary/70" />
-                          <span className="font-mono font-medium">{acc.RentalVehicles?.length || 0}</span>
+                          <span className="font-mono font-medium">
+                            {acc.RentalVehicles?.length || 0}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge 
+                        <Badge
                           variant={acc.disabled ? 'destructive' : 'default'}
-                          className={!acc.disabled ? "bg-green-500 hover:bg-green-600" : ""}
+                          className={!acc.disabled ? 'bg-green-500 hover:bg-green-600' : ''}
                         >
                           {acc.disabled ? 'Disabled' : 'Active'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="hover:bg-primary hover:text-white transition-all"
                           onClick={() => handleViewDetails(acc.id)}
                         >

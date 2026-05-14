@@ -11,19 +11,19 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Truck, 
-  User, 
-  MapPin, 
-  Calendar, 
-  CreditCard, 
-  FileCheck, 
+import {
+  Truck,
+  User,
+  MapPin,
+  Calendar,
+  CreditCard,
+  FileCheck,
   Car,
   Building2,
   Info,
   Users,
   Settings,
-  Fuel
+  Fuel,
 } from 'lucide-react';
 import { useLogisticsAccount } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
@@ -42,7 +42,11 @@ export const LogisticsAccountModal: React.FC<LogisticsAccountModalProps> = ({
   accountId,
   userId,
 }) => {
-  const where = accountId ? { id: { _eq: accountId } } : userId ? { user_id: { _eq: userId } } : null;
+  const where = accountId
+    ? { id: { _eq: accountId } }
+    : userId
+      ? { user_id: { _eq: userId } }
+      : null;
   const { data, isLoading } = useLogisticsAccount(where);
   const account = data?.logisticsAccount?.[0];
 
@@ -56,14 +60,22 @@ export const LogisticsAccountModal: React.FC<LogisticsAccountModalProps> = ({
             </div>
             <div>
               <DialogTitle className="text-2xl font-bold">
-                {isLoading ? <Skeleton className="h-8 w-48" /> : account?.fullname || 'Logistics Partner'}
+                {isLoading ? (
+                  <Skeleton className="h-8 w-48" />
+                ) : (
+                  account?.fullname || 'Logistics Partner'
+                )}
               </DialogTitle>
               <DialogDescription>
-                {isLoading ? <Skeleton className="h-4 w-64 mt-1" /> : `Logistics Account Management • ${account?.businessName || 'Business'}`}
+                {isLoading ? (
+                  <Skeleton className="h-4 w-64 mt-1" />
+                ) : (
+                  `Logistics Account Management • ${account?.businessName || 'Business'}`
+                )}
               </DialogDescription>
             </div>
             {!isLoading && account && (
-              <Badge 
+              <Badge
                 variant={account.status === 'active' ? 'default' : 'secondary'}
                 className={`ml-auto capitalize ${account.status === 'active' ? 'bg-green-500 hover:bg-green-600' : ''}`}
               >
@@ -114,12 +126,15 @@ export const LogisticsAccountModal: React.FC<LogisticsAccountModalProps> = ({
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Member Since</span>
                       <span className="font-medium flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> {format(new Date(account.created_at), 'MMM dd, yyyy')}
+                        <Calendar className="w-3 h-3" />{' '}
+                        {format(new Date(account.created_at), 'MMM dd, yyyy')}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Partner Type</span>
-                      <Badge variant="outline" className="capitalize">{account.type}</Badge>
+                      <Badge variant="outline" className="capitalize">
+                        {account.type}
+                      </Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -168,19 +183,24 @@ export const LogisticsAccountModal: React.FC<LogisticsAccountModalProps> = ({
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Car className="w-5 h-5 text-primary" />
-                    Fleet Management 
-                    <Badge variant="secondary" className="ml-2">{account.RentalVehicles?.length || 0} Vehicles</Badge>
+                    Fleet Management
+                    <Badge variant="secondary" className="ml-2">
+                      {account.RentalVehicles?.length || 0} Vehicles
+                    </Badge>
                   </h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {account.RentalVehicles?.map((vehicle) => (
-                    <Card key={vehicle.id} className="overflow-hidden group hover:border-primary/50 transition-colors">
+                  {account.RentalVehicles?.map(vehicle => (
+                    <Card
+                      key={vehicle.id}
+                      className="overflow-hidden group hover:border-primary/50 transition-colors"
+                    >
                       <div className="aspect-video relative overflow-hidden bg-muted">
                         {vehicle.main_photo ? (
-                          <img 
-                            src={vehicle.main_photo} 
-                            alt={vehicle.name} 
+                          <img
+                            src={vehicle.main_photo}
+                            alt={vehicle.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
@@ -195,7 +215,9 @@ export const LogisticsAccountModal: React.FC<LogisticsAccountModalProps> = ({
                       <CardContent className="p-3">
                         <div className="flex justify-between items-start mb-1">
                           <h4 className="font-bold truncate pr-2">{vehicle.name}</h4>
-                          <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded uppercase">{vehicle.platNumber}</span>
+                          <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded uppercase">
+                            {vehicle.platNumber}
+                          </span>
                         </div>
                         <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-muted-foreground">
                           <div className="flex items-center gap-1">
@@ -230,4 +252,3 @@ export const LogisticsAccountModal: React.FC<LogisticsAccountModalProps> = ({
 };
 
 export default LogisticsAccountModal;
-

@@ -170,12 +170,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
   } = useCategories();
 
   // Fetch plans
-  const {
-    data: plansData,
-    isLoading: plansLoading,
-  } = usePlans();
-
-
+  const { data: plansData, isLoading: plansLoading } = usePlans();
 
   const handleInputChange = (field: keyof CreateShopFormData, value: any) => {
     setFormData(prev => ({
@@ -582,7 +577,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               )}
             </div>
           </div>
-          
+
           <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-4">
             <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
               <CreditCard className="h-4 w-4" /> Subscription Plan
@@ -603,7 +598,10 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
                   <SelectContent>
                     {plansData?.plans?.map(plan => (
                       <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name} - {formData.billing_cycle === 'monthly' ? `RWF ${plan.price_monthly}/mo` : `RWF ${plan.price_yearly}/yr`}
+                        {plan.name} -{' '}
+                        {formData.billing_cycle === 'monthly'
+                          ? `RWF ${plan.price_monthly}/mo`
+                          : `RWF ${plan.price_yearly}/yr`}
                       </SelectItem>
                     ))}
                   </SelectContent>

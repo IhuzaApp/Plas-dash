@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
         identifier: { label: 'Email, Username, or Phone', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      authorize: async (credentials) => {
+      authorize: async credentials => {
         if (!credentials) return null;
         const { identifier, password } = credentials;
 
@@ -68,7 +68,14 @@ export const authOptions: NextAuthOptions = {
             userQuery = gql`
               query GetUserByEmail($email: String!) {
                 Users(where: { email: { _eq: $email }, is_active: { _eq: true } }) {
-                  id name email password_hash phone gender role is_guest
+                  id
+                  name
+                  email
+                  password_hash
+                  phone
+                  gender
+                  role
+                  is_guest
                 }
               }
             `;
@@ -78,7 +85,14 @@ export const authOptions: NextAuthOptions = {
             userQuery = gql`
               query GetUserByPhone($phone: String!) {
                 Users(where: { phone: { _eq: $phone }, is_active: { _eq: true } }) {
-                  id name email password_hash phone gender role is_guest
+                  id
+                  name
+                  email
+                  password_hash
+                  phone
+                  gender
+                  role
+                  is_guest
                 }
               }
             `;
@@ -87,7 +101,14 @@ export const authOptions: NextAuthOptions = {
             userQuery = gql`
               query GetUserByUsername($name: String!) {
                 Users(where: { name: { _eq: $name }, is_active: { _eq: true } }) {
-                  id name email password_hash phone gender role is_guest
+                  id
+                  name
+                  email
+                  password_hash
+                  phone
+                  gender
+                  role
+                  is_guest
                 }
               }
             `;
@@ -97,7 +118,7 @@ export const authOptions: NextAuthOptions = {
           const res = await hasuraClient.request<{ Users: any[] }>(userQuery, variables);
           const user = res.Users[0];
 
-          if (user && await bcrypt.compare(password, user.password_hash)) {
+          if (user && (await bcrypt.compare(password, user.password_hash))) {
             return {
               id: user.id,
               name: user.name,
@@ -106,24 +127,39 @@ export const authOptions: NextAuthOptions = {
               gender: user.gender,
               role: user.role,
               is_guest: user.is_guest || false,
-              type: 'user'
+              type: 'user',
             };
           }
-        } catch (e) { console.error('Users auth error:', e); }
+        } catch (e) {
+          console.error('Users auth error:', e);
+        }
 
         // 2. Try ProjectUsers table
         try {
           const projectQuery = gql`
             query GetProjectUser($identity: String!) {
-              ProjectUsers(where: { _or: [{ username: { _eq: $identity } }, { email: { _eq: $identity } }], is_active: { _eq: true } }) {
-                id username email password role gender profile
+              ProjectUsers(
+                where: {
+                  _or: [{ username: { _eq: $identity } }, { email: { _eq: $identity } }]
+                  is_active: { _eq: true }
+                }
+              ) {
+                id
+                username
+                email
+                password
+                role
+                gender
+                profile
               }
             }
           `;
-          const pRes = await hasuraClient.request<{ ProjectUsers: any[] }>(projectQuery, { identity: identifier });
+          const pRes = await hasuraClient.request<{ ProjectUsers: any[] }>(projectQuery, {
+            identity: identifier,
+          });
           const pUser = pRes.ProjectUsers[0];
 
-          if (pUser && await verifyProjectUserPassword(password, pUser.password)) {
+          if (pUser && (await verifyProjectUserPassword(password, pUser.password))) {
             return {
               id: pUser.id,
               name: pUser.username,
@@ -131,24 +167,42 @@ export const authOptions: NextAuthOptions = {
               role: pUser.role,
               gender: pUser.gender,
               image: pUser.profile,
-              type: 'project_user'
+              type: 'project_user',
             };
           }
-        } catch (e) { console.error('ProjectUsers auth error:', e); }
+        } catch (e) {
+          console.error('ProjectUsers auth error:', e);
+        }
 
         // 3. Try orgEmployees table
         try {
           const empQuery = gql`
             query GetEmployee($identity: String!) {
-              orgEmployees(where: { _or: [{ email: { _eq: $identity } }, { phone: { _eq: $identity } }], active: { _eq: true } }) {
-                id fullnames email phone password roleType gender
+              orgEmployees(
+                where: {
+                  _or: [{ email: { _eq: $identity } }, { phone: { _eq: $identity } }]
+                  active: { _eq: true }
+                }
+              ) {
+                id
+                fullnames
+                email
+                phone
+                password
+                roleType
+                gender
               }
             }
           `;
-          const eRes = await hasuraClient.request<{ orgEmployees: any[] }>(empQuery, { identity: identifier });
+          const eRes = await hasuraClient.request<{ orgEmployees: any[] }>(empQuery, {
+            identity: identifier,
+          });
           const eUser = eRes.orgEmployees[0];
 
-          if (eUser && (eUser.password === password || await bcrypt.compare(password, eUser.password))) {
+          if (
+            eUser &&
+            (eUser.password === password || (await bcrypt.compare(password, eUser.password)))
+          ) {
             return {
               id: eUser.id,
               name: eUser.fullnames,
@@ -156,10 +210,12 @@ export const authOptions: NextAuthOptions = {
               phone: eUser.phone,
               role: eUser.roleType,
               gender: eUser.gender,
-              type: 'employee'
+              type: 'employee',
             };
           }
-        } catch (e) { console.error('Employee auth error:', e); }
+        } catch (e) {
+          console.error('Employee auth error:', e);
+        }
 
         throw new Error('Invalid credentials');
       },

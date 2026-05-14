@@ -113,9 +113,7 @@ export async function GET(req: Request) {
         u => u.is_guest && new Date(u.created_at) <= bucketEnd
       ).length;
       const customers = users.filter(
-        u =>
-          (u.role?.toLowerCase() ?? '') === 'user' &&
-          new Date(u.created_at) <= bucketEnd
+        u => (u.role?.toLowerCase() ?? '') === 'user' && new Date(u.created_at) <= bucketEnd
       ).length;
 
       const activeIds = new Set<string>();

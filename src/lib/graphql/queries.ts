@@ -109,7 +109,7 @@ export const GET_USERS = `
       profile_picture
       role
       updated_at
-      shopper {
+      shoppers {
         Employment_id
         active
         address
@@ -546,13 +546,15 @@ export const GET_ALL_WALLETS = `
       reserved_balance
       available_balance
       last_updated
-      User {
-        id
-        name
-        email
-        phone
-        profile_picture
-        is_active
+      shoppers {
+        User {
+          id
+          name
+          email
+          phone
+          profile_picture
+          is_active
+        }
       }
       Wallet_Transactions {
         id
@@ -614,14 +616,16 @@ export const GET_ALL_WALLET_TRANSACTIONS = `
         available_balance
         reserved_balance
         last_updated
-        User {
-          id
-          name
-          email
-          phone
-          gender
-          profile_picture
-          is_active
+        shoppers {
+          User {
+            id
+            name
+            email
+            phone
+            gender
+            profile_picture
+            is_active
+          }
         }
       }
       Order {
@@ -710,36 +714,46 @@ export const GET_ALL_WALLETS_WITH_TRANSACTIONS = `
           user_id
         }
       }
-      User {
-        shopper {
-          address
-          active
-          full_name
-          collection_comment
-          driving_license
-          drivingLicense_Image
+      shoppers {
+        User {
+          email
           id
-          guarantorPhone
-          guarantorRelationship
-          guarantor
+          is_active
+          name
           phone
-          national_id_photo_front
-          needCollection
-          signature
+          profile_picture
           updated_at
-          transport_mode
-          status
-          user_id
-          phone_number
-          profile_photo
           created_at
-          background_check_completed
-          latitude
-          longitude
-          mutual_StatusCertificate
-          national_id
-          national_id_photo_back
+          gender
+          role
         }
+        address
+        active
+        full_name
+        collection_comment
+        driving_license
+        drivingLicense_Image
+        id
+        guarantorPhone
+        guarantorRelationship
+        guarantor
+        phone
+        national_id_photo_front
+        needCollection
+        signature
+        updated_at
+        transport_mode
+        status
+        user_id
+        phone_number
+        profile_photo
+        created_at
+        background_check_completed
+        latitude
+        longitude
+        mutual_StatusCertificate
+        national_id
+        national_id_photo_back
       }
     }
   }
@@ -1625,13 +1639,13 @@ export const GET_TOP_SHOPPERS = `
   query TopShoppers($start: timestamptz!, $end: timestamptz!) {
     Users(
       where: {
-        shopper: {active: {_eq: true}}
+        shoppers: {active: {_eq: true}}
       }
     ) {
       id
       name
       profile_picture
-      shopper {
+      shoppers {
         id
         active
         status
@@ -1715,7 +1729,7 @@ export const GET_ALL_REVENUE_DETAILED = `
       shop_id
       shopper_id
       type
-      shopper {
+      shoppers {
         Employment_id
         active
         address

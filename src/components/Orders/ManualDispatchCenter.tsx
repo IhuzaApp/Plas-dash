@@ -4,31 +4,31 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Loader2, 
-  Send, 
-  UserPlus, 
-  ShoppingBag, 
-  Truck, 
-  Package, 
-  UtensilsCrossed, 
+import {
+  Loader2,
+  Send,
+  UserPlus,
+  ShoppingBag,
+  Truck,
+  Package,
+  UtensilsCrossed,
   Video,
   Search,
   Check,
-  ChevronsUpDown
+  ChevronsUpDown,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useShoppers, useAssignOrder, useCreateOrderOffer, OrderOffer } from '@/hooks/useHasuraApi';
 import { sendNewOrderNotification, sendOrderAssignedNotification } from '@/services/fcmService';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { 
-  Command, 
-  CommandEmpty, 
-  CommandGroup, 
-  CommandInput, 
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
   CommandItem,
-  CommandList
+  CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 
@@ -50,21 +50,25 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
   const [shopperOpen, setShopperOpen] = React.useState(false);
 
   // Helper to check if order already has an offer
-  const isAlreadyOffered = React.useCallback((order: any) => {
-    return offers.some(offer => {
-      if (order.type === 'regular' && offer.order_id === order.id) return true;
-      if (order.type === 'reel' && offer.reel_order_id === order.id) return true;
-      if (order.type === 'business' && offer.business_order_id === order.id) return true;
-      if (order.type === 'restaurant' && offer.restaurant_order_id === order.id) return true;
-      if (order.type === 'package' && offer.package_order_id === order.id) return true;
-      return false;
-    });
-  }, [offers]);
+  const isAlreadyOffered = React.useCallback(
+    (order: any) => {
+      return offers.some(offer => {
+        if (order.type === 'regular' && offer.order_id === order.id) return true;
+        if (order.type === 'reel' && offer.reel_order_id === order.id) return true;
+        if (order.type === 'business' && offer.business_order_id === order.id) return true;
+        if (order.type === 'restaurant' && offer.restaurant_order_id === order.id) return true;
+        if (order.type === 'package' && offer.package_order_id === order.id) return true;
+        return false;
+      });
+    },
+    [offers]
+  );
 
   // Filter pending orders of all types that haven't been offered yet
   const pendingOrders = React.useMemo(() => {
     return allOrders.filter(o => {
-      const isPending = o.status.toLowerCase() === 'pending' || o.status.toLowerCase() === 'searching';
+      const isPending =
+        o.status.toLowerCase() === 'pending' || o.status.toLowerCase() === 'searching';
       return isPending && !isAlreadyOffered(o);
     });
   }, [allOrders, isAlreadyOffered]);
@@ -152,12 +156,18 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
 
   const getOrderIcon = (type: string) => {
     switch (type) {
-      case 'regular': return <ShoppingBag className="h-4 w-4" />;
-      case 'reel': return <Video className="h-4 w-4" />;
-      case 'business': return <Truck className="h-4 w-4" />;
-      case 'restaurant': return <UtensilsCrossed className="h-4 w-4" />;
-      case 'package': return <Package className="h-4 w-4" />;
-      default: return <ShoppingBag className="h-4 w-4" />;
+      case 'regular':
+        return <ShoppingBag className="h-4 w-4" />;
+      case 'reel':
+        return <Video className="h-4 w-4" />;
+      case 'business':
+        return <Truck className="h-4 w-4" />;
+      case 'restaurant':
+        return <UtensilsCrossed className="h-4 w-4" />;
+      case 'package':
+        return <Package className="h-4 w-4" />;
+      default:
+        return <ShoppingBag className="h-4 w-4" />;
     }
   };
 
@@ -173,7 +183,9 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
               <Truck className="h-6 w-6 text-primary" />
               Manual Dispatch Center
             </CardTitle>
-            <CardDescription>Manually assign or offer pending orders to shoppers platform-wide</CardDescription>
+            <CardDescription>
+              Manually assign or offer pending orders to shoppers platform-wide
+            </CardDescription>
           </div>
           <Badge variant="outline" className="bg-background">
             {pendingOrders.length} Available for Dispatch
@@ -201,15 +213,18 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
                       {getOrderIcon(selectedOrder?.type || '')}
                       <div className="flex flex-col items-start overflow-hidden">
                         <span className="font-medium text-sm truncate">
-                          #{selectedOrder?.OrderID?.toString().slice(0, 8) || selectedOrderId.slice(0, 8)}
+                          #
+                          {selectedOrder?.OrderID?.toString().slice(0, 8) ||
+                            selectedOrderId.slice(0, 8)}
                         </span>
                         <span className="text-[10px] text-muted-foreground truncate">
-                          {selectedOrder?.type} • {selectedOrder?.User?.name || selectedOrder?.orderedBy?.name || 'Guest'}
+                          {selectedOrder?.type} •{' '}
+                          {selectedOrder?.User?.name || selectedOrder?.orderedBy?.name || 'Guest'}
                         </span>
                       </div>
                     </div>
                   ) : (
-                    "Choose order to dispatch..."
+                    'Choose order to dispatch...'
                   )}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -220,7 +235,7 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
                   <CommandList>
                     <CommandEmpty>No pending orders found.</CommandEmpty>
                     <CommandGroup>
-                      {pendingOrders.map((order) => (
+                      {pendingOrders.map(order => (
                         <CommandItem
                           key={order.id}
                           value={`${order.OrderID} ${order.User?.name || order.orderedBy?.name || ''}`}
@@ -232,8 +247,8 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
                         >
                           <Check
                             className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedOrderId === order.id ? "opacity-100" : "opacity-0"
+                              'mr-2 h-4 w-4',
+                              selectedOrderId === order.id ? 'opacity-100' : 'opacity-0'
                             )}
                           />
                           <div className="flex items-center gap-2">
@@ -243,7 +258,8 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
                                 #{order.OrderID?.toString().slice(0, 8) || order.id.slice(0, 8)}
                               </span>
                               <span className="text-[10px] text-muted-foreground capitalize">
-                                {order.type} • {order.User?.name || order.orderedBy?.name || 'Guest'}
+                                {order.type} •{' '}
+                                {order.User?.name || order.orderedBy?.name || 'Guest'}
                               </span>
                             </div>
                           </div>
@@ -278,14 +294,17 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col items-start overflow-hidden">
-                        <span className="font-medium text-sm truncate">{selectedShopper?.full_name}</span>
+                        <span className="font-medium text-sm truncate">
+                          {selectedShopper?.full_name}
+                        </span>
                         <span className="text-[10px] text-muted-foreground truncate">
-                          {selectedShopper?.transport_mode || 'Standard'} • {selectedShopper?.phone_number}
+                          {selectedShopper?.transport_mode || 'Standard'} •{' '}
+                          {selectedShopper?.phone_number}
                         </span>
                       </div>
                     </div>
                   ) : (
-                    "Choose shopper..."
+                    'Choose shopper...'
                   )}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -296,37 +315,39 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
                   <CommandList>
                     <CommandEmpty>No active shoppers found.</CommandEmpty>
                     <CommandGroup>
-                      {shoppersData?.shoppers?.filter(s => s.active).map((shopper) => (
-                        <CommandItem
-                          key={shopper.id}
-                          value={`${shopper.full_name} ${shopper.phone_number}`}
-                          onSelect={() => {
-                            setSelectedShopperId(shopper.id);
-                            setShopperOpen(false);
-                          }}
-                          className="py-3"
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedShopperId === shopper.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-7 w-7">
-                              <AvatarFallback className="text-[10px] bg-primary/10">
-                                {shopper.full_name?.charAt(0) || 'S'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{shopper.full_name}</span>
-                              <span className="text-[10px] text-muted-foreground">
-                                {shopper.transport_mode || 'Standard'} • {shopper.phone_number}
-                              </span>
+                      {shoppersData?.shoppers
+                        ?.filter(s => s.active)
+                        .map(shopper => (
+                          <CommandItem
+                            key={shopper.id}
+                            value={`${shopper.full_name} ${shopper.phone_number}`}
+                            onSelect={() => {
+                              setSelectedShopperId(shopper.id);
+                              setShopperOpen(false);
+                            }}
+                            className="py-3"
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                selectedShopperId === shopper.id ? 'opacity-100' : 'opacity-0'
+                              )}
+                            />
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-7 w-7">
+                                <AvatarFallback className="text-[10px] bg-primary/10">
+                                  {shopper.full_name?.charAt(0) || 'S'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{shopper.full_name}</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {shopper.transport_mode || 'Standard'} • {shopper.phone_number}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        </CommandItem>
-                      ))}
+                          </CommandItem>
+                        ))}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -335,21 +356,29 @@ const ManualDispatchCenter = ({ allOrders = [], offers = [] }: ManualDispatchCen
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Button 
-              onClick={handleOffer} 
+            <Button
+              onClick={handleOffer}
               disabled={!selectedOrderId || !selectedShopperId || isProcessing}
               variant="outline"
               className="h-12 border-2 gap-2 hover:bg-primary/5 transition-all"
             >
-              {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {isProcessing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
               Send Offer
             </Button>
-            <Button 
-              onClick={handleAssign} 
+            <Button
+              onClick={handleAssign}
               disabled={!selectedOrderId || !selectedShopperId || isProcessing}
               className="h-12 bg-primary hover:bg-primary/90 gap-2 shadow-md transition-all"
             >
-              {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              {isProcessing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="h-4 w-4" />
+              )}
               Assign Now
             </Button>
           </div>

@@ -89,9 +89,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   const { data: shopsData } = useShops();
   const { data: systemConfig } = useSystemConfig();
-  const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+  const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
   const defaultCommission =
-    systemConfig?.System_configuratioins[0]?.productCommissionPercentage || 0;
+    systemConfig?.System_configuratioins?.[0]?.productCommissionPercentage || 0;
 
   // Hooks for searching by barcode and SKU
   const getProductByBarcode = useGetProductNameByBarcode();

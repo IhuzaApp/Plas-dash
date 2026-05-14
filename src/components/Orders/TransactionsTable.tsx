@@ -66,21 +66,22 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ orders, formatCur
     });
 
     // Sort by date desc
-    return transactions.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    return transactions.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   }, [orders]);
 
   const filteredTransactions = useMemo(() => {
     if (!searchTerm) return allTransactions;
     const term = searchTerm.toLowerCase();
-    return allTransactions.filter(tx => 
-      tx.id?.toLowerCase().includes(term) ||
-      tx.orderId?.toString().toLowerCase().includes(term) ||
-      tx.reference_id?.toLowerCase().includes(term) ||
-      tx.description?.toLowerCase().includes(term) ||
-      tx.type?.toLowerCase().includes(term) ||
-      tx.phone?.toLowerCase().includes(term)
+    return allTransactions.filter(
+      tx =>
+        tx.id?.toLowerCase().includes(term) ||
+        tx.orderId?.toString().toLowerCase().includes(term) ||
+        tx.reference_id?.toLowerCase().includes(term) ||
+        tx.description?.toLowerCase().includes(term) ||
+        tx.type?.toLowerCase().includes(term) ||
+        tx.phone?.toLowerCase().includes(term)
     );
   }, [allTransactions, searchTerm]);
 
@@ -94,10 +95,14 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ orders, formatCur
 
   const getSourceIcon = (source: string) => {
     switch (source) {
-      case 'Wallet': return <CreditCard className="h-4 w-4 text-blue-500" />;
-      case 'Order': return <Receipt className="h-4 w-4 text-purple-500" />;
-      case 'Business': return <ArrowRightLeft className="h-4 w-4 text-emerald-500" />;
-      default: return <CreditCard className="h-4 w-4" />;
+      case 'Wallet':
+        return <CreditCard className="h-4 w-4 text-blue-500" />;
+      case 'Order':
+        return <Receipt className="h-4 w-4 text-purple-500" />;
+      case 'Business':
+        return <ArrowRightLeft className="h-4 w-4 text-emerald-500" />;
+      default:
+        return <CreditCard className="h-4 w-4" />;
     }
   };
 
@@ -110,7 +115,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ orders, formatCur
             placeholder="Search transactions by ID, Order ID, reference, or description..."
             className="pl-8"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
       </div>

@@ -43,16 +43,14 @@ const GET_STORE_DETAILS = gql`
         total
         transportation_fee
         units
-        shopper {
-          created_at
-          email
-          gender
+        shoppers {
           id
-          is_active
-          is_guest
-          name
+          full_name
           phone
-          updated_at
+          phone_number
+          status
+          active
+          transport_mode
         }
         orderedBy {
           created_at

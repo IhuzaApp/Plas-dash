@@ -120,14 +120,14 @@ export async function POST(request: Request) {
     }
 
     const amount = parseFloat(payout.amount);
-    
+
     // Extract user/shopper info (handling potential arrays from Hasura)
     const rawUser = payout.Users;
     const user = Array.isArray(rawUser) ? rawUser[0] : rawUser;
-    
+
     const rawWallet = payout.Wallets;
     const wallet = Array.isArray(rawWallet) ? rawWallet[0] : rawWallet;
-    
+
     const rawShopper = wallet?.shoppers;
     const shopper = Array.isArray(rawShopper) ? rawShopper[0] : rawShopper;
 

@@ -528,11 +528,7 @@ export function hasProjectPrivilege(
     return true;
   }
 
-  if (
-    isAdminRole &&
-    (module === 'logistics' ||
-      module === 'pets')
-  ) {
+  if (isAdminRole && (module === 'logistics' || module === 'pets')) {
     return true;
   }
 

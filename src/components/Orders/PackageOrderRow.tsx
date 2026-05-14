@@ -12,7 +12,11 @@ interface PackageOrderRowProps {
   formatCurrency: (amount: string) => string;
 }
 
-const PackageOrderRow: React.FC<PackageOrderRowProps> = ({ pkg, onViewDetails, formatCurrency }) => {
+const PackageOrderRow: React.FC<PackageOrderRowProps> = ({
+  pkg,
+  onViewDetails,
+  formatCurrency,
+}) => {
   const getStatusColor = (status: string) => {
     const s = status.toLowerCase();
     if (s === 'delivered') return 'bg-green-100 text-green-800';
@@ -50,7 +54,10 @@ const PackageOrderRow: React.FC<PackageOrderRowProps> = ({ pkg, onViewDetails, f
           <span className="text-xs font-medium truncate" title={pkg.pickupLocation || ''}>
             From: {pkg.pickupLocation || 'N/A'}
           </span>
-          <span className="text-xs text-muted-foreground truncate" title={pkg.dropoffLocation || ''}>
+          <span
+            className="text-xs text-muted-foreground truncate"
+            title={pkg.dropoffLocation || ''}
+          >
             To: {pkg.dropoffLocation || 'N/A'}
           </span>
         </div>

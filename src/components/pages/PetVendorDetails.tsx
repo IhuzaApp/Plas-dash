@@ -7,12 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { 
-  PawPrint, 
-  User, 
-  MapPin, 
-  Calendar, 
-  FileCheck, 
+import {
+  PawPrint,
+  User,
+  MapPin,
+  Calendar,
+  FileCheck,
   Heart,
   Building2,
   Info,
@@ -21,7 +21,7 @@ import {
   ShieldCheck,
   Video,
   ChevronLeft,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import { usePetVendor, useUpdatePetVendor } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
@@ -92,11 +92,17 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
         <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] text-center p-4">
           <Info className="w-12 h-12 mb-4 text-muted-foreground opacity-20" />
           <h2 className="text-xl font-bold">Pet Vendor Not Found</h2>
-          <p className="text-muted-foreground mt-2">The requested vendor details could not be loaded or do not exist.</p>
-          <Button variant="outline" className="mt-6" onClick={() => {
-            startLoading();
-            router.push('/pets');
-          }}>
+          <p className="text-muted-foreground mt-2">
+            The requested vendor details could not be loaded or do not exist.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-6"
+            onClick={() => {
+              startLoading();
+              router.push('/pets');
+            }}
+          >
             <ChevronLeft className="w-4 h-4 mr-2" /> Back to Vendors
           </Button>
         </div>
@@ -109,9 +115,9 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => {
                 startLoading();
                 router.push('/pets');
@@ -140,7 +146,11 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
               size="sm"
               onClick={handleToggleStatus}
               disabled={updateMutation.isPending}
-              className={vendor.disabled ? 'text-green-600 border-green-200 hover:bg-green-50' : 'text-destructive border-destructive/20 hover:bg-destructive/10'}
+              className={
+                vendor.disabled
+                  ? 'text-green-600 border-green-200 hover:bg-green-50'
+                  : 'text-destructive border-destructive/20 hover:bg-destructive/10'
+              }
             >
               {updateMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -151,7 +161,7 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
               )}
               {vendor.disabled ? 'Enable Account' : 'Disable Account'}
             </Button>
-            <Badge 
+            <Badge
               variant={vendor.status === 'active' ? 'default' : 'secondary'}
               className={`px-4 py-1 text-sm capitalize ${vendor.status === 'active' ? 'bg-green-500 hover:bg-green-600' : ''}`}
             >
@@ -175,13 +185,15 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Manager</span>
                     <span className="font-medium flex items-center gap-2">
-                      <User className="w-4 h-4 text-primary/60" /> {String(vendor.fullname || 'N/A')}
+                      <User className="w-4 h-4 text-primary/60" />{' '}
+                      {String(vendor.fullname || 'N/A')}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Address</span>
                     <span className="font-medium flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-primary/60" /> {String(vendor.address || 'N/A')}
+                      <MapPin className="w-4 h-4 text-primary/60" />{' '}
+                      {String(vendor.address || 'N/A')}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
@@ -193,7 +205,8 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Member Since</span>
                     <span className="font-medium flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-primary/60" /> {format(new Date(vendor.created_at), 'MMMM dd, yyyy')}
+                      <Calendar className="w-4 h-4 text-primary/60" />{' '}
+                      {format(new Date(vendor.created_at), 'MMMM dd, yyyy')}
                     </span>
                   </div>
                 </CardContent>
@@ -214,7 +227,10 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                       </div>
                       <span className="text-sm font-medium">RDB Certificate</span>
                     </div>
-                    <Badge variant={vendor.rdb_certificate ? 'default' : 'outline'} className={vendor.rdb_certificate ? 'bg-green-500' : ''}>
+                    <Badge
+                      variant={vendor.rdb_certificate ? 'default' : 'outline'}
+                      className={vendor.rdb_certificate ? 'bg-green-500' : ''}
+                    >
                       {vendor.rdb_certificate ? 'Verified' : 'Missing'}
                     </Badge>
                   </div>
@@ -225,7 +241,10 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                       </div>
                       <span className="text-sm font-medium">Shelter Permit</span>
                     </div>
-                    <Badge variant={vendor.sherter_permit ? 'default' : 'outline'} className={vendor.sherter_permit ? 'bg-green-500' : ''}>
+                    <Badge
+                      variant={vendor.sherter_permit ? 'default' : 'outline'}
+                      className={vendor.sherter_permit ? 'bg-green-500' : ''}
+                    >
                       {vendor.sherter_permit ? 'Verified' : 'Missing'}
                     </Badge>
                   </div>
@@ -236,7 +255,10 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                       </div>
                       <span className="text-sm font-medium">Proof of Residency</span>
                     </div>
-                    <Badge variant={vendor.proof_residency ? 'default' : 'outline'} className={vendor.proof_residency ? 'bg-green-500' : ''}>
+                    <Badge
+                      variant={vendor.proof_residency ? 'default' : 'outline'}
+                      className={vendor.proof_residency ? 'bg-green-500' : ''}
+                    >
                       {vendor.proof_residency ? 'Verified' : 'Missing'}
                     </Badge>
                   </div>
@@ -252,25 +274,28 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                     <Heart className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="text-xl font-bold">Available Pets</h3>
-                  <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-none font-bold">
+                  <Badge
+                    variant="secondary"
+                    className="ml-2 bg-primary/10 text-primary border-none font-bold"
+                  >
                     {vendor.pets?.length || 0} Listed
                   </Badge>
                 </div>
               </div>
-              
+
               {vendor.pets && vendor.pets.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {vendor.pets.map((pet) => (
-                    <Card 
-                      key={pet.id} 
+                  {vendor.pets.map(pet => (
+                    <Card
+                      key={pet.id}
                       className="overflow-hidden border-none shadow-md group hover:ring-2 hover:ring-primary/50 transition-all duration-300 cursor-pointer"
                       onClick={() => handlePetClick(pet)}
                     >
                       <div className="aspect-[4/5] relative overflow-hidden bg-muted">
                         {pet.image ? (
-                          <img 
-                            src={pet.image} 
-                            alt={pet.name} 
+                          <img
+                            src={pet.image}
+                            alt={pet.name}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           />
                         ) : (
@@ -279,7 +304,7 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                        
+
                         <div className="absolute top-3 left-3 flex flex-col gap-2">
                           <Badge className="bg-white/90 text-black border-none text-[10px] font-bold shadow-lg">
                             {pet.breed}
@@ -292,8 +317,12 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                         </div>
 
                         <div className="absolute bottom-3 left-3 right-3 text-white">
-                          <h4 className="font-black text-xl leading-none mb-1 group-hover:translate-x-1 transition-transform">{String(pet.name || 'Pet')}</h4>
-                          <p className="text-xs text-white/70 font-medium">{String(pet.gender || 'Unknown')} • {String(pet.age || 'Unknown')}</p>
+                          <h4 className="font-black text-xl leading-none mb-1 group-hover:translate-x-1 transition-transform">
+                            {String(pet.name || 'Pet')}
+                          </h4>
+                          <p className="text-xs text-white/70 font-medium">
+                            {String(pet.gender || 'Unknown')} • {String(pet.age || 'Unknown')}
+                          </p>
                         </div>
 
                         <div className="absolute top-3 right-3">
@@ -304,12 +333,17 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                       </div>
                       <CardContent className="p-4 bg-background">
                         <p className="text-xs text-muted-foreground line-clamp-3 mb-4 min-h-[3rem]">
-                          {String(pet.story || 'This pet is looking for a forever home. Reach out to the vendor to learn more about their personality and needs.')}
+                          {String(
+                            pet.story ||
+                              'This pet is looking for a forever home. Reach out to the vendor to learn more about their personality and needs.'
+                          )}
                         </p>
                         <div className="flex items-center justify-between pt-4 border-t border-border/50">
                           <div className="flex items-center gap-2">
                             <Tag className="w-3.5 h-3.5 text-primary" />
-                            <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">{String(pet.pet_type || 'Pet')}</span>
+                            <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">
+                              {String(pet.pet_type || 'Pet')}
+                            </span>
                           </div>
                           <div className="text-[10px] font-bold text-primary">
                             {pet.quantity_sold}/{pet.quantity} ADOPTED
@@ -322,8 +356,12 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
               ) : (
                 <div className="py-20 text-center border-2 border-dashed rounded-3xl bg-muted/5 border-muted-foreground/20 flex flex-col items-center">
                   <PawPrint className="w-16 h-16 mb-4 text-muted-foreground opacity-20" />
-                  <h4 className="text-lg font-semibold text-muted-foreground">No pets listed yet</h4>
-                  <p className="text-sm text-muted-foreground/60 max-w-xs mt-1">This vendor hasn't added any pets to their inventory for adoption.</p>
+                  <h4 className="text-lg font-semibold text-muted-foreground">
+                    No pets listed yet
+                  </h4>
+                  <p className="text-sm text-muted-foreground/60 max-w-xs mt-1">
+                    This vendor hasn't added any pets to their inventory for adoption.
+                  </p>
                 </div>
               )}
             </div>
@@ -331,11 +369,7 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
         </ScrollArea>
       </div>
 
-      <PetDetailsModal
-        pet={selectedPet}
-        open={isPetModalOpen}
-        onOpenChange={setIsPetModalOpen}
-      />
+      <PetDetailsModal pet={selectedPet} open={isPetModalOpen} onOpenChange={setIsPetModalOpen} />
     </AdminLayout>
   );
 };

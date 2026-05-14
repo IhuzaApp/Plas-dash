@@ -118,7 +118,7 @@ const GroupedOrderRow: React.FC<GroupedOrderRowProps> = ({
                     item.orders
                       .reduce((sum: number, o: any) => sum + parseFloat(o.total || '0'), 0)
                       .toString()
-                   )}
+                  )}
                 </span>
               </div>
               <Badge variant="secondary" className="font-bold">

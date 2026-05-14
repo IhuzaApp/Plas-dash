@@ -1,7 +1,16 @@
 import React from 'react';
 import { useWatch, UseFormReturn } from 'react-hook-form';
 import { format } from 'date-fns';
-import { CalendarIcon, RefreshCw, Loader2, DollarSign, Layers, Truck, PiggyBank, AlertTriangle } from 'lucide-react';
+import {
+  CalendarIcon,
+  RefreshCw,
+  Loader2,
+  DollarSign,
+  Layers,
+  Truck,
+  PiggyBank,
+  AlertTriangle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,7 +89,7 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                           <FormLabel>Business Type</FormLabel>
                           <FormControl>
                             <RadioGroup
-                              onValueChange={(val) => {
+                              onValueChange={val => {
                                 field.onChange(val);
                                 if (val !== 'none') {
                                   // Clear influencer/commission fields when switching to standard promo
@@ -135,15 +144,15 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                               <SelectContent>
                                 {watchAll.business_type === 'restaurant'
                                   ? restaurants?.map(r => (
-                                    <SelectItem key={r.id} value={r.id}>
-                                      {r.name}
-                                    </SelectItem>
-                                  ))
+                                      <SelectItem key={r.id} value={r.id}>
+                                        {r.name}
+                                      </SelectItem>
+                                    ))
                                   : shops?.map(s => (
-                                    <SelectItem key={s.id} value={s.id}>
-                                      {s.name}
-                                    </SelectItem>
-                                  ))}
+                                      <SelectItem key={s.id} value={s.id}>
+                                        {s.name}
+                                      </SelectItem>
+                                    ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -277,8 +286,12 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                                   <Input
                                     type="number"
                                     min="0"
-                                    max={watchAll.commission_type === 'percentage' ? 100 : undefined}
-                                    placeholder={watchAll.commission_type === 'percentage' ? '10' : '500'}
+                                    max={
+                                      watchAll.commission_type === 'percentage' ? 100 : undefined
+                                    }
+                                    placeholder={
+                                      watchAll.commission_type === 'percentage' ? '10' : '500'
+                                    }
                                     {...field}
                                     value={field.value ?? ''}
                                   />
@@ -905,7 +918,9 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                             value={field.value ?? ''}
                           />
                         </FormControl>
-                        <FormDescription>Max discount amount in {systemConfig?.currency || 'currency'}.</FormDescription>
+                        <FormDescription>
+                          Max discount amount in {systemConfig?.currency || 'currency'}.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -1031,7 +1046,8 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                         />
                       </FormControl>
                       <FormDescription>
-                        Promotion pauses automatically when this budget is exhausted. Budget usage is tracked by the backend only.
+                        Promotion pauses automatically when this budget is exhausted. Budget usage
+                        is tracked by the backend only.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -1041,17 +1057,23 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
             </div>
 
             {/* High Risk Warning */}
-            {watchAll.funded_by === 'platform' && watchAll.free_delivery && watchAll.business_type === 'none' && watchAll.commission_type && (
-              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-xl flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-semibold text-sm">High Platform Cost Warning</p>
-                  <p className="text-xs text-yellow-700/90 leading-relaxed">
-                    This promotion is <strong>fully funded by the platform</strong>, includes <strong>free delivery</strong>, AND pays an <strong>influencer commission</strong>. This configuration carries a high risk of negative profitability per order.
-                  </p>
+            {watchAll.funded_by === 'platform' &&
+              watchAll.free_delivery &&
+              watchAll.business_type === 'none' &&
+              watchAll.commission_type && (
+                <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-xl flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-semibold text-sm">High Platform Cost Warning</p>
+                    <p className="text-xs text-yellow-700/90 leading-relaxed">
+                      This promotion is <strong>fully funded by the platform</strong>, includes{' '}
+                      <strong>free delivery</strong>, AND pays an{' '}
+                      <strong>influencer commission</strong>. This configuration carries a high risk
+                      of negative profitability per order.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </form>
         </Form>
       </div>
@@ -1097,7 +1119,7 @@ export const PromotionForm: React.FC<PromotionFormProps> = ({
                 ? `Buy ${watchAll.buy_quantity} Get ${watchAll.get_quantity} `
                 : ''}
               {['rush_hour', 'flash_sale', 'bundle'].includes(watchPromotionType as string) &&
-                watchAll.discount_value
+              watchAll.discount_value
                 ? `${watchAll.discount_value} `
                 : ''}
               {watchAll.code ? (

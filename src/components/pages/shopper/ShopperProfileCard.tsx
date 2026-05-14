@@ -42,9 +42,9 @@ const ShopperProfileCard: React.FC<ShopperProfileCardProps> = ({ shopper, user }
               {shopper.plate_number && (
                 <div className="flex items-center gap-2">
                   <span>Plate:</span>
-                  <img 
-                    src={shopper.plate_number} 
-                    alt="Plate Number" 
+                  <img
+                    src={shopper.plate_number}
+                    alt="Plate Number"
                     className="h-6 w-12 object-contain rounded border bg-white cursor-pointer hover:scale-110 transition-transform"
                     onClick={() => window.open(shopper.plate_number, '_blank')}
                   />
@@ -71,9 +71,7 @@ const ShopperProfileCard: React.FC<ShopperProfileCardProps> = ({ shopper, user }
                   : 'Background Check Pending'}
               </Badge>
               {shopper.face_verified && (
-                <Badge className="bg-blue-100 text-blue-800 border-none">
-                  Face Verified
-                </Badge>
+                <Badge className="bg-blue-100 text-blue-800 border-none">Face Verified</Badge>
               )}
               <Badge variant="outline" className="capitalize">
                 {shopper.transport_mode}

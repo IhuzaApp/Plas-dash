@@ -15,11 +15,11 @@ import { useUserDetails } from '@/hooks/useUsers';
 import { Loader2, User, Mail, Phone, Calendar, MapPin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePrivilege } from '@/hooks/usePrivilege';
-import { 
-  useLogisticsAccount, 
-  usePetVendor, 
-  useCreateLogisticsAccount, 
-  useCreatePetVendor 
+import {
+  useLogisticsAccount,
+  usePetVendor,
+  useCreateLogisticsAccount,
+  useCreatePetVendor,
 } from '@/hooks/useHasuraApi';
 import { LogisticsAccountModal } from '@/components/modals/LogisticsAccountModal';
 import { PetVendorModal } from '@/components/modals/PetVendorModal';
@@ -180,10 +180,10 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
 
           <div className="flex gap-2">
             {!logistics && hasModuleAccess('logistics') && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 gap-2" 
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-2"
                 onClick={handleAssignLogistics}
                 disabled={createLogistics.isPending}
               >
@@ -191,10 +191,10 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
               </Button>
             )}
             {!petVendor && hasModuleAccess('pets') && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 gap-2" 
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-2"
                 onClick={handleAssignPetVendor}
                 disabled={createPetVendor.isPending}
               >
@@ -209,8 +209,16 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
               <TabsTrigger value="orders">Orders</TabsTrigger>
               <TabsTrigger value="invoices">Invoices</TabsTrigger>
               <TabsTrigger value="schedule">Schedule</TabsTrigger>
-              {hasModuleAccess('logistics') && <TabsTrigger value="logistics" disabled={!logistics}>Logistics</TabsTrigger>}
-              {hasModuleAccess('pets') && <TabsTrigger value="pets" disabled={!petVendor}>Pets</TabsTrigger>}
+              {hasModuleAccess('logistics') && (
+                <TabsTrigger value="logistics" disabled={!logistics}>
+                  Logistics
+                </TabsTrigger>
+              )}
+              {hasModuleAccess('pets') && (
+                <TabsTrigger value="pets" disabled={!petVendor}>
+                  Pets
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="details" className="space-y-4">
@@ -550,7 +558,9 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
                   </div>
                   <div>
                     <h3 className="text-xl font-bold">{logistics.businessName}</h3>
-                    <Badge variant="outline" className="mt-1 capitalize">{logistics.status}</Badge>
+                    <Badge variant="outline" className="mt-1 capitalize">
+                      {logistics.status}
+                    </Badge>
                   </div>
                   <Button onClick={() => setIsLogisticsModalOpen(true)} className="gap-2">
                     <ExternalLink className="h-4 w-4" /> View Full Logistics Profile
@@ -571,7 +581,9 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
                   </div>
                   <div>
                     <h3 className="text-xl font-bold">{petVendor.organisationName}</h3>
-                    <Badge variant="outline" className="mt-1 capitalize">{petVendor.status}</Badge>
+                    <Badge variant="outline" className="mt-1 capitalize">
+                      {petVendor.status}
+                    </Badge>
                   </div>
                   <Button onClick={() => setIsPetVendorModalOpen(true)} className="gap-2">
                     <ExternalLink className="h-4 w-4" /> View Full Pet Vendor Profile
@@ -586,15 +598,15 @@ const UserDetailsDrawer: React.FC<UserDetailsDrawerProps> = ({ userId, open, onC
           </Tabs>
         </div>
 
-        <LogisticsAccountModal 
-          open={isLogisticsModalOpen} 
-          onOpenChange={setIsLogisticsModalOpen} 
-          userId={userId} 
+        <LogisticsAccountModal
+          open={isLogisticsModalOpen}
+          onOpenChange={setIsLogisticsModalOpen}
+          userId={userId}
         />
-        <PetVendorModal 
-          open={isPetVendorModalOpen} 
-          onOpenChange={setIsPetVendorModalOpen} 
-          userId={userId} 
+        <PetVendorModal
+          open={isPetVendorModalOpen}
+          onOpenChange={setIsPetVendorModalOpen}
+          userId={userId}
         />
       </SheetContent>
     </Sheet>

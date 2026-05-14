@@ -67,7 +67,7 @@ const RefundDetailsSheet: React.FC<RefundDetailsSheetProps> = ({ refund, open, o
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
-    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,

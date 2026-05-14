@@ -23,17 +23,26 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   const { isLoading } = usePageLoading();
   const { data: nextSession } = useSession();
   const { session: customSession } = useAuth();
-  
+
   const displayUser = customSession || nextSession?.user;
-  const userImage = displayUser?.image || (displayUser as any)?.profile_picture || (displayUser as any)?.profile || (displayUser as any)?.display_image;
-  const userName = displayUser?.name || (displayUser as any)?.username || (displayUser as any)?.fullName || 'User';
-  const userRole = (displayUser as any)?.role || (displayUser as any)?.roleType || (displayUser as any)?.display_role || 'Admin';
+  const userImage =
+    displayUser?.image ||
+    (displayUser as any)?.profile_picture ||
+    (displayUser as any)?.profile ||
+    (displayUser as any)?.display_image;
+  const userName =
+    displayUser?.name || (displayUser as any)?.username || (displayUser as any)?.fullName || 'User';
+  const userRole =
+    (displayUser as any)?.role ||
+    (displayUser as any)?.roleType ||
+    (displayUser as any)?.display_role ||
+    'Admin';
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((open) => !open);
+        setOpen(open => !open);
       }
     };
     document.addEventListener('keydown', down);
@@ -43,23 +52,30 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       {/* Loading Progress Bar */}
-      <div className={cn(
-        "absolute top-0 left-0 h-[3px] bg-primary transition-all duration-500 ease-in-out z-[60]",
-        isLoading ? "w-full opacity-100" : "w-0 opacity-0"
-      )} />
-      
+      <div
+        className={cn(
+          'absolute top-0 left-0 h-[3px] bg-primary transition-all duration-500 ease-in-out z-[60]',
+          isLoading ? 'w-full opacity-100' : 'w-0 opacity-0'
+        )}
+      />
+
       <div className="container flex h-16 items-center px-4 md:px-8">
         <div className="flex flex-1 items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1 md:flex-initial">
-             <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-xl"
-                onClick={toggleSidebar}
-              >
-                <Menu className={cn("h-5 w-5 transition-transform duration-500", isSidebarOpen ? "rotate-90" : "rotate-0")} />
-              </Button>
-            
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-xl"
+              onClick={toggleSidebar}
+            >
+              <Menu
+                className={cn(
+                  'h-5 w-5 transition-transform duration-500',
+                  isSidebarOpen ? 'rotate-90' : 'rotate-0'
+                )}
+              />
+            </Button>
+
             <div className="relative w-full max-w-[400px]">
               <Button
                 variant="outline"
@@ -79,8 +95,10 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
 
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-1 mr-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/10">
-               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-               <span className="text-[10px] font-bold text-primary uppercase tracking-wider">System Live</span>
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                System Live
+              </span>
             </div>
 
             <Button
@@ -94,16 +112,16 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background" />
             </Button>
-            
+
             <div className="w-[1px] h-6 bg-border mx-1" />
-            
+
             <ThemeToggle />
-            
+
             <div className="flex items-center gap-3 pl-2">
               {displayUser ? (
                 <Link href="/settings">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="p-1 pr-3 rounded-2xl border bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-primary/10 hover:border-primary/20 transition-all"
                   >
                     <Avatar className="h-8 w-8 rounded-xl mr-2 shadow-sm border border-border">
@@ -113,15 +131,21 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-start mr-1">
-                      <span className="text-[11px] font-bold leading-tight">{userName.split(' ')[0]}</span>
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-tighter font-medium">{userRole}</span>
+                      <span className="text-[11px] font-bold leading-tight">
+                        {userName.split(' ')[0]}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground uppercase tracking-tighter font-medium">
+                        {userRole}
+                      </span>
                     </div>
                   </Button>
                 </Link>
               ) : (
                 <div className="flex flex-col items-end px-2">
                   <span className="text-xs font-bold leading-none">Admin Portal</span>
-                  <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">v1.2.0</span>
+                  <span className="text-[9px] text-muted-foreground uppercase tracking-tighter">
+                    v1.2.0
+                  </span>
                 </div>
               )}
             </div>

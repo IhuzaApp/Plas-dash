@@ -116,7 +116,11 @@ const OrderOffersTable = ({ offers, isLoading }: OrderOffersTableProps) => {
       )
         .toString()
         .toLowerCase();
-      const shopperName = (offer.shoppers?.full_name || offer.ShopperUser?.shopper?.full_name || '').toLowerCase();
+      const shopperName = (
+        offer.shoppers?.full_name ||
+        offer.ShopperUser?.shopper?.full_name ||
+        ''
+      ).toLowerCase();
       return orderId.includes(lowerQuery) || shopperName.includes(lowerQuery);
     });
   }, [offers, searchQuery]);
@@ -193,7 +197,8 @@ const OrderOffersTable = ({ offers, isLoading }: OrderOffersTableProps) => {
                   offer.restaurant_order_id ||
                   offer.business_order_id ||
                   offer.package_order_id;
-                const shopperName = offer.shoppers?.full_name || offer.ShopperUser?.shopper?.full_name || 'Unknown';
+                const shopperName =
+                  offer.shoppers?.full_name || offer.ShopperUser?.shopper?.full_name || 'Unknown';
 
                 return (
                   <TableRow key={offer.id}>

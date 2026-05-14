@@ -95,9 +95,9 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { data: systemConfig } = useSystemConfig();
-  const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+  const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
   const defaultCommission =
-    systemConfig?.System_configuratioins[0]?.productCommissionPercentage || 0;
+    systemConfig?.System_configuratioins?.[0]?.productCommissionPercentage || 0;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),

@@ -25,7 +25,7 @@ const Pets = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
+
   const router = useRouter();
   const { startLoading } = usePageLoading();
 
@@ -83,7 +83,9 @@ const Pets = () => {
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold text-primary">{vendors.length}</div>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Total Vendors</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">
+              Total Vendors
+            </p>
           </CardContent>
         </Card>
         <Card className="bg-green-500/5 border-green-500/20">
@@ -91,7 +93,9 @@ const Pets = () => {
             <div className="text-3xl font-bold text-green-600">
               {vendors.filter((v: any) => !v.disabled).length}
             </div>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Active Vendors</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">
+              Active Vendors
+            </p>
           </CardContent>
         </Card>
         <Card className="bg-blue-500/5 border-blue-500/20">
@@ -99,7 +103,9 @@ const Pets = () => {
             <div className="text-3xl font-bold text-blue-600">
               {vendors.reduce((acc: number, curr: any) => acc + (curr.pets?.length || 0), 0)}
             </div>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">Total Pets Registered</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mt-1">
+              Total Pets Registered
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -156,17 +162,17 @@ const Pets = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge 
+                        <Badge
                           variant={v.disabled ? 'destructive' : 'default'}
-                          className={!v.disabled ? "bg-green-500 hover:bg-green-600" : ""}
+                          className={!v.disabled ? 'bg-green-500 hover:bg-green-600' : ''}
                         >
                           {v.disabled ? 'Disabled' : 'Active'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="hover:bg-primary hover:text-white transition-all"
                           onClick={() => handleViewDetails(v.id)}
                         >
@@ -193,7 +199,6 @@ const Pets = () => {
           )}
         </Card>
       </div>
-
     </AdminLayout>
   );
 };

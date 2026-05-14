@@ -29,16 +29,16 @@ import {
   DollarSign,
   Receipt,
   Settings,
-  Columns
+  Columns,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  DropdownMenu, 
-  DropdownMenuCheckboxItem, 
-  DropdownMenuContent, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -249,7 +249,7 @@ const Orders = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupedView, setIsGroupedView] = useState(false);
   const [tick, setTick] = useState(0);
-  
+
   // Column visibility logic
   const ALL_COLUMNS = [
     { id: 'id', label: 'Order ID', default: true },
@@ -277,7 +277,7 @@ const Orders = () => {
       }
     }
     const initial: Record<string, boolean> = {};
-    ALL_COLUMNS.forEach(col => initial[col.id] = col.default);
+    ALL_COLUMNS.forEach(col => (initial[col.id] = col.default));
     return initial;
   });
 
@@ -288,7 +288,7 @@ const Orders = () => {
   const toggleColumn = (columnId: string) => {
     setVisibleColumns(prev => ({
       ...prev,
-      [columnId]: !prev[columnId]
+      [columnId]: !prev[columnId],
     }));
   };
 
@@ -403,12 +403,14 @@ const Orders = () => {
       OrderID: pkg.DeliveryCode || pkg.id,
       type: 'package' as const,
       total: pkg.delivery_fee || '0',
-      shopper: pkg.shopper ? {
-        id: pkg.shopper.id || pkg.shopper.user_id,
-        name: pkg.shopper.full_name,
-        phone: pkg.shopper.phone_number || pkg.shopper.phone,
-        email: pkg.shopper.email
-      } : undefined
+      shopper: pkg.shopper
+        ? {
+            id: pkg.shopper.id || pkg.shopper.user_id,
+            name: pkg.shopper.full_name,
+            phone: pkg.shopper.phone_number || pkg.shopper.phone,
+            email: pkg.shopper.email,
+          }
+        : undefined,
     }));
 
     return [
@@ -438,9 +440,15 @@ const Orders = () => {
         if (combinedSearchTerm) {
           const term = combinedSearchTerm.toLowerCase();
           const shopperName = groupOrders.find(o => o.shopper)?.shopper?.name?.toLowerCase() || '';
-          const orderIds = groupOrders.map(o => (o.OrderID || o.id).toString().toLowerCase()).join(' ');
-          
-          if (id.toLowerCase().includes(term) || shopperName.includes(term) || orderIds.includes(term)) {
+          const orderIds = groupOrders
+            .map(o => (o.OrderID || o.id).toString().toLowerCase())
+            .join(' ');
+
+          if (
+            id.toLowerCase().includes(term) ||
+            shopperName.includes(term) ||
+            orderIds.includes(term)
+          ) {
             filteredGroups[id] = groupOrders;
           }
         } else {
@@ -456,17 +464,18 @@ const Orders = () => {
     if (!packagesSearchTerm) return packages;
 
     const term = packagesSearchTerm.toLowerCase();
-    return packages.filter((pkg: any) =>
-      (pkg.DeliveryCode || pkg.id).toString().toLowerCase().includes(term) ||
-      (pkg.receiver_name || '').toLowerCase().includes(term) ||
-      (pkg.shopper?.full_name || '').toLowerCase().includes(term) ||
-      (pkg.status || '').toLowerCase().includes(term)
+    return packages.filter(
+      (pkg: any) =>
+        (pkg.DeliveryCode || pkg.id).toString().toLowerCase().includes(term) ||
+        (pkg.receiver_name || '').toLowerCase().includes(term) ||
+        (pkg.shopper?.full_name || '').toLowerCase().includes(term) ||
+        (pkg.status || '').toLowerCase().includes(term)
     );
   }, [packageData, packagesSearchTerm]);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
-    const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
+    const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -763,7 +772,9 @@ const Orders = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Orders</p>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Total Orders
+                </p>
                 <h3 className="text-3xl font-bold">{allOrders.length}</h3>
               </div>
               <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -784,17 +795,19 @@ const Orders = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Pending Dispatch</p>
-                <h3 className="text-3xl font-bold text-blue-600 dark:text-blue-400">{pendingOrders.length}</h3>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Pending Dispatch
+                </p>
+                <h3 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                  {pendingOrders.length}
+                </h3>
               </div>
               <div className="h-12 w-12 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Clock className="h-6 w-6 text-blue-500" />
               </div>
             </div>
             <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1 italic">
-                Awaiting shopper assignment
-              </span>
+              <span className="flex items-center gap-1 italic">Awaiting shopper assignment</span>
             </div>
           </CardContent>
           <div className="absolute bottom-0 left-0 h-1 w-full bg-blue-500/20" />
@@ -804,8 +817,12 @@ const Orders = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">In Progress</p>
-                <h3 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{inProgressOrders.length}</h3>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  In Progress
+                </p>
+                <h3 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                  {inProgressOrders.length}
+                </h3>
               </div>
               <div className="h-12 w-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <ShoppingBag className="h-6 w-6 text-indigo-500" />
@@ -824,8 +841,12 @@ const Orders = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1 text-red-600 dark:text-red-400">Delayed Alerts</p>
-                <h3 className="text-3xl font-bold text-red-600 dark:text-red-400">{delayedOrders.length}</h3>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1 text-red-600 dark:text-red-400">
+                  Delayed Alerts
+                </p>
+                <h3 className="text-3xl font-bold text-red-600 dark:text-red-400">
+                  {delayedOrders.length}
+                </h3>
               </div>
               <div className="h-12 w-12 bg-red-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <AlertCircle className="h-6 w-6 text-red-500" />
@@ -845,17 +866,19 @@ const Orders = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Delivered Today</p>
-                <h3 className="text-3xl font-bold text-green-600 dark:text-green-400">{deliveredOrders.length}</h3>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Delivered Today
+                </p>
+                <h3 className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  {deliveredOrders.length}
+                </h3>
               </div>
               <div className="h-12 w-12 bg-green-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <CheckCircle2 className="h-6 w-6 text-green-500" />
               </div>
             </div>
             <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1 italic">
-                Successfully completed orders
-              </span>
+              <span className="flex items-center gap-1 italic">Successfully completed orders</span>
             </div>
           </CardContent>
           <div className="absolute bottom-0 left-0 h-1 w-full bg-green-500/20" />
@@ -865,8 +888,12 @@ const Orders = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Sales</p>
-                <h3 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalRevenue.toString())}</h3>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Total Sales
+                </p>
+                <h3 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(totalRevenue.toString())}
+                </h3>
               </div>
               <div className="h-12 w-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <DollarSign className="h-6 w-6 text-emerald-500" />
@@ -1003,87 +1030,94 @@ const Orders = () => {
                 <TableHeader className="bg-muted/50">
                   <TableRow>
                     {visibleColumns.id && <TableHead className="font-bold">Order ID</TableHead>}
-                    {visibleColumns.customer && <TableHead className="font-bold">Customer</TableHead>}
+                    {visibleColumns.customer && (
+                      <TableHead className="font-bold">Customer</TableHead>
+                    )}
                     {visibleColumns.status && <TableHead className="font-bold">Status</TableHead>}
                     {visibleColumns.items && <TableHead className="font-bold">Items</TableHead>}
                     {visibleColumns.total && <TableHead className="font-bold">Total</TableHead>}
-                    {visibleColumns.combined_id && <TableHead className="font-bold">Combined ID</TableHead>}
-                    {visibleColumns.delivery_fee && <TableHead className="font-bold">Del. Fee</TableHead>}
-                    {visibleColumns.service_fee && <TableHead className="font-bold">Svc. Fee</TableHead>}
-                    {visibleColumns.expected_delivery && <TableHead className="font-bold">Expected</TableHead>}
+                    {visibleColumns.combined_id && (
+                      <TableHead className="font-bold">Combined ID</TableHead>
+                    )}
+                    {visibleColumns.delivery_fee && (
+                      <TableHead className="font-bold">Del. Fee</TableHead>
+                    )}
+                    {visibleColumns.service_fee && (
+                      <TableHead className="font-bold">Svc. Fee</TableHead>
+                    )}
+                    {visibleColumns.expected_delivery && (
+                      <TableHead className="font-bold">Expected</TableHead>
+                    )}
                     {visibleColumns.created && <TableHead className="font-bold">Created</TableHead>}
                     {visibleColumns.updated && <TableHead className="font-bold">Updated</TableHead>}
                     <TableHead className="text-right font-bold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-              <TableBody>
-                {currentDisplayItems.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
-                      No orders found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  currentDisplayItems.map(item => {
-                    if (item.type === 'single') {
-                      return (
-                        <SingleOrderRow
-                          key={item.order.id}
-                          order={item.order}
-                          warnings={getOrderWarnings(item.order)}
-                          getStatusColor={getStatusColor}
-                          generateShortId={generateShortId}
-                          formatCurrency={formatCurrency}
-                          formatDateTime={formatDateTime}
-                          getDeliveryCountdown={getDeliveryCountdown}
-                          handleCallShopper={handleCallShopper}
-                          handleViewDetails={handleViewDetails}
-                          visibleColumns={visibleColumns}
-                        />
-                      );
-                    } else {
-                      return (
-                        <GroupedOrderRow
-                          key={item.combinedId}
-                          item={item}
-                          getOrderWarnings={getOrderWarnings}
-                          getStatusColor={getStatusColor}
-                          generateShortId={generateShortId}
-                          formatCurrency={formatCurrency}
-                          getDeliveryCountdown={getDeliveryCountdown}
-                          handleCallShopper={handleCallShopper}
-                          handleViewDetails={handleViewDetails}
-                          visibleColumns={visibleColumns}
-                        />
-                      );
-                    }
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={size => {
-              setPageSize(size);
-              setCurrentPage(1);
-            }}
-            totalItems={totalItems}
-          />
-        </Card>
-      </TabsContent>
+                <TableBody>
+                  {currentDisplayItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
+                        No orders found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    currentDisplayItems.map(item => {
+                      if (item.type === 'single') {
+                        return (
+                          <SingleOrderRow
+                            key={item.order.id}
+                            order={item.order}
+                            warnings={getOrderWarnings(item.order)}
+                            getStatusColor={getStatusColor}
+                            generateShortId={generateShortId}
+                            formatCurrency={formatCurrency}
+                            formatDateTime={formatDateTime}
+                            getDeliveryCountdown={getDeliveryCountdown}
+                            handleCallShopper={handleCallShopper}
+                            handleViewDetails={handleViewDetails}
+                            visibleColumns={visibleColumns}
+                          />
+                        );
+                      } else {
+                        return (
+                          <GroupedOrderRow
+                            key={item.combinedId}
+                            item={item}
+                            getOrderWarnings={getOrderWarnings}
+                            getStatusColor={getStatusColor}
+                            generateShortId={generateShortId}
+                            formatCurrency={formatCurrency}
+                            getDeliveryCountdown={getDeliveryCountdown}
+                            handleCallShopper={handleCallShopper}
+                            handleViewDetails={handleViewDetails}
+                            visibleColumns={visibleColumns}
+                          />
+                        );
+                      }
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={size => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+              totalItems={totalItems}
+            />
+          </Card>
+        </TabsContent>
 
         {isProjectUser && (
           <>
             <TabsContent value="offers" className="space-y-6">
-              <ManualDispatchCenter 
-                allOrders={allOrders} 
-                offers={offersData?.order_offers || []}
-              />
-              
+              <ManualDispatchCenter allOrders={allOrders} offers={offersData?.order_offers || []} />
+
               <Tabs defaultValue="analytics" className="w-full">
                 <TabsList className="grid w-64 grid-cols-2 mb-4">
                   <TabsTrigger value="analytics" className="flex items-center gap-2">
@@ -1167,38 +1201,42 @@ const Orders = () => {
                       ) : filteredPackages.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                            {packagesSearchTerm ? 'No packages match your search.' : 'No package deliveries found.'}
+                            {packagesSearchTerm
+                              ? 'No packages match your search.'
+                              : 'No package deliveries found.'}
                           </TableCell>
                         </TableRow>
                       ) : (
                         filteredPackages.map((pkg: any) => (
-                        <PackageOrderRow
-                          key={pkg.id}
-                          pkg={pkg}
-                          onViewDetails={() => {
-                            const unifiedPkg: UnifiedOrder = {
-                              ...pkg,
-                              OrderID: pkg.DeliveryCode || pkg.id,
-                              type: 'package',
-                              total: pkg.delivery_fee || '0',
-                              shopper: pkg.shopper ? {
-                                id: pkg.shopper.id || pkg.shopper.user_id,
-                                name: pkg.shopper.full_name,
-                                phone: pkg.shopper.phone_number || pkg.shopper.phone,
-                                email: pkg.shopper.email
-                              } : undefined
-                            };
-                            handleViewDetails(unifiedPkg);
-                          }}
-                          formatCurrency={formatCurrency}
-                        />
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </Card>
-          </TabsContent>
+                          <PackageOrderRow
+                            key={pkg.id}
+                            pkg={pkg}
+                            onViewDetails={() => {
+                              const unifiedPkg: UnifiedOrder = {
+                                ...pkg,
+                                OrderID: pkg.DeliveryCode || pkg.id,
+                                type: 'package',
+                                total: pkg.delivery_fee || '0',
+                                shopper: pkg.shopper
+                                  ? {
+                                      id: pkg.shopper.id || pkg.shopper.user_id,
+                                      name: pkg.shopper.full_name,
+                                      phone: pkg.shopper.phone_number || pkg.shopper.phone,
+                                      email: pkg.shopper.email,
+                                    }
+                                  : undefined,
+                              };
+                              handleViewDetails(unifiedPkg);
+                            }}
+                            formatCurrency={formatCurrency}
+                          />
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            </TabsContent>
           </>
         )}
       </Tabs>

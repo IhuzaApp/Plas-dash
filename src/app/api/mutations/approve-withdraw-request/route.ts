@@ -171,11 +171,11 @@ export async function POST(request: Request) {
     }
 
     const amount = parseFloat(req.amount);
-    
+
     // Extract names (handling potential arrays from Hasura)
     const rawShopper = req.shoppers;
     const shopper = Array.isArray(rawShopper) ? rawShopper[0] : rawShopper;
-    
+
     const rawBusiness = req.business_accounts;
     const business = Array.isArray(rawBusiness) ? rawBusiness[0] : rawBusiness;
 
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
     const configData = await hasuraClient.request<{
       System_configuratioins: { withDrawCharges?: string | number; currency?: string }[];
     }>(GET_SYSTEM_CONFIG);
-    const config = configData.System_configuratioins[0] ?? {};
+    const config = configData.System_configuratioins?.[0] ?? {};
     const withdrawChargesPct = parseFloat(String(config.withDrawCharges ?? '0'));
 
     const isBusiness = !!req.business_id;

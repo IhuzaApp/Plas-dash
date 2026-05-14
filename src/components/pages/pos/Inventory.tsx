@@ -331,7 +331,7 @@ const Inventory = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,

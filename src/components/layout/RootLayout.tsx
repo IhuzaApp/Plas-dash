@@ -215,7 +215,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-medium text-muted-foreground animate-pulse">Initializing Plas...</p>
+          <p className="text-sm font-medium text-muted-foreground animate-pulse">
+            Initializing Plas...
+          </p>
         </div>
       </div>
     );

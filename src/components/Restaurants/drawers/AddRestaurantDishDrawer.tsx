@@ -518,8 +518,8 @@ const AddRestaurantDishDrawer: React.FC<AddRestaurantDishDrawerProps> = ({
                                 >
                                   {field.value
                                     ? PREDEFINED_CATEGORIES.find(
-                                      category => category === field.value
-                                    )
+                                        category => category === field.value
+                                      )
                                     : 'Select category'}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>

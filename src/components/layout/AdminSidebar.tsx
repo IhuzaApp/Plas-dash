@@ -441,7 +441,9 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
                 )}
 
                 {isLoading ? (
-                  <Loader2 className={cn('h-5 w-5 animate-spin text-primary', isSidebarOpen ? 'mr-3' : '')} />
+                  <Loader2
+                    className={cn('h-5 w-5 animate-spin text-primary', isSidebarOpen ? 'mr-3' : '')}
+                  />
                 ) : (
                   <item.icon
                     className={cn(
@@ -455,18 +457,20 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
                   <div className="flex items-center justify-between w-full">
                     <span className="truncate">{item.title}</span>
                     {item.badge && !isLoading && (
-                      <span className={cn(
-                        "ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full",
-                        item.badge === 'New' 
-                          ? "bg-primary text-white shadow-[0_0_8px_rgba(34,197,94,0.3)]" 
-                          : "bg-white/10 text-white/70"
-                      )}>
+                      <span
+                        className={cn(
+                          'ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full',
+                          item.badge === 'New'
+                            ? 'bg-primary text-white shadow-[0_0_8px_rgba(34,197,94,0.3)]'
+                            : 'bg-white/10 text-white/70'
+                        )}
+                      >
                         {item.badge}
                       </span>
                     )}
                   </div>
                 )}
-                
+
                 {/* Subtle hover effect for collapsed mode */}
                 {!isSidebarOpen && isActive && (
                   <div className="absolute bottom-1 w-1 h-1 bg-primary rounded-full" />
@@ -476,7 +480,10 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
           </TooltipTrigger>
           <TooltipContent
             side="right"
-            className={cn('bg-sidebar-accent text-white border-sidebar-border shadow-xl backdrop-blur-md', isSidebarOpen ? 'hidden' : 'block')}
+            className={cn(
+              'bg-sidebar-accent text-white border-sidebar-border shadow-xl backdrop-blur-md',
+              isSidebarOpen ? 'hidden' : 'block'
+            )}
           >
             <div className="flex items-center gap-2">
               <span className="font-medium">{item.title}</span>
@@ -522,8 +529,12 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
                   />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-lg font-bold tracking-tight text-white leading-none">PLAS</span>
-                  <span className="text-[10px] uppercase tracking-widest text-primary font-bold">Dashboard</span>
+                  <span className="text-lg font-bold tracking-tight text-white leading-none">
+                    PLAS
+                  </span>
+                  <span className="text-[10px] uppercase tracking-widest text-primary font-bold">
+                    Dashboard
+                  </span>
                 </div>
               </div>
               <Button
@@ -536,7 +547,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
               </Button>
             </>
           ) : (
-            <div 
+            <div
               onClick={toggleSidebar}
               className="w-12 h-12 rounded-xl bg-primary/20 backdrop-blur-sm flex items-center justify-center overflow-hidden hover:bg-primary/30 transition-all duration-300 cursor-pointer"
             >
@@ -553,17 +564,18 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
       {/* Content */}
       <div className="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-none">
         {/* Shop Selector for POS and shop-related users */}
-        {!session?.isProjectUser && (hasModuleAccess('pos_terminal') ||
-          hasModuleAccess('checkout') ||
-          hasModuleAccess('inventory') ||
-          hasModuleAccess('transactions') ||
-          hasModuleAccess('orders') ||
-          hasModuleAccess('discounts') ||
-          hasModuleAccess('shop_dashboard')) && (
-          <div className="mb-6 px-1">
-            <ShopSelector isSidebarOpen={isSidebarOpen} />
-          </div>
-        )}
+        {!session?.isProjectUser &&
+          (hasModuleAccess('pos_terminal') ||
+            hasModuleAccess('checkout') ||
+            hasModuleAccess('inventory') ||
+            hasModuleAccess('transactions') ||
+            hasModuleAccess('orders') ||
+            hasModuleAccess('discounts') ||
+            hasModuleAccess('shop_dashboard')) && (
+            <div className="mb-6 px-1">
+              <ShopSelector isSidebarOpen={isSidebarOpen} />
+            </div>
+          )}
 
         {filteredMenuItems.map((section, idx) => (
           <div key={section.section} className="mb-6">
@@ -572,9 +584,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
                 {section.section}
               </h3>
             )}
-            <div className="space-y-1">
-              {section.items.map(renderMenuItem)}
-            </div>
+            <div className="space-y-1">{section.items.map(renderMenuItem)}</div>
           </div>
         ))}
       </div>
@@ -586,11 +596,15 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
             <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all duration-300 group">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold overflow-hidden border border-primary/20 group-hover:scale-105 transition-transform duration-300">
-                   {session?.username?.charAt(0).toUpperCase() || 'U'}
+                  {session?.username?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div className="flex flex-col">
-                  <p className="text-sm font-semibold text-white truncate max-w-[100px]">{session?.username || 'User'}</p>
-                  <p className="text-[10px] text-sidebar-foreground/50">{session?.role || 'Admin'}</p>
+                  <p className="text-sm font-semibold text-white truncate max-w-[100px]">
+                    {session?.username || 'User'}
+                  </p>
+                  <p className="text-[10px] text-sidebar-foreground/50">
+                    {session?.role || 'Admin'}
+                  </p>
                 </div>
               </div>
               <Button

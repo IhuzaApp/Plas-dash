@@ -126,9 +126,7 @@ export const PromotionRow: React.FC<PromotionRowProps> = ({
           <span
             className={cn(
               'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium',
-              promotion.free_delivery
-                ? 'bg-green-100 text-green-700'
-                : 'bg-gray-100 text-gray-500'
+              promotion.free_delivery ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
             )}
           >
             {promotion.free_delivery ? 'Yes' : 'No'}

@@ -58,7 +58,9 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
                 <TableRow key={ticket.id}>
                   <TableCell className="font-medium">#{ticket.ticket_num}</TableCell>
                   <TableCell>{ticket.subject}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{ticket.description || 'N/A'}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">
+                    {ticket.description || 'N/A'}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       className={

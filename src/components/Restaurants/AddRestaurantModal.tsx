@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, Upload, Image as ImageIcon, X, CreditCard } from 'lucide-react';
+import { Loader2, Upload, Image as ImageIcon, X, CreditCard, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Select,
@@ -31,15 +31,33 @@ interface AddRestaurantModalProps {
 
 import { uploadFileToFirebase } from '@/lib/firebaseStorage';
 import { Textarea } from '@/components/ui/textarea';
-import { GoogleMap, Marker, Autocomplete } from '@react-google-maps/api';
+import { Autocomplete } from '@react-google-maps/api';
 import { useGoogleMap } from '@/contexts/GoogleProvider';
 
-const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({ 
-  isOpen, 
-  onClose, 
+const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
+  isOpen,
+  onClose,
   onSuccess,
-  restaurant 
+  restaurant,
 }) => {
+  // Fix for Google Places Autocomplete dropdown z-index in Dialog
+  React.useEffect(() => {
+    if (isOpen) {
+      const style = document.createElement('style');
+      style.id = 'google-autocomplete-fix';
+      style.innerHTML = `
+        .pac-container {
+          z-index: 9999 !important;
+          pointer-events: auto !important;
+        }
+      `;
+      document.head.appendChild(style);
+      return () => {
+        const existing = document.getElementById('google-autocomplete-fix');
+        if (existing) document.head.removeChild(existing);
+      };
+    }
+  }, [isOpen]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ profile: 0, logo: 0, rdb_cert: 0 });
   const [isUploading, setIsUploading] = useState({ profile: false, logo: false, rdb_cert: false });
@@ -64,15 +82,7 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
 
   const isEditMode = !!restaurant;
   const { isLoaded } = useGoogleMap();
-  const [map, setMap] = useState<google.maps.Map | null>(null);
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
-
-  const defaultCenter = { lat: -1.9441, lng: 30.0619 }; // Kigali
-  const [center, setCenter] = useState(defaultCenter);
-
-  const onMapLoad = React.useCallback((map: google.maps.Map) => {
-    setMap(map);
-  }, []);
 
   const onAutocompleteLoad = (autocomplete: google.maps.places.Autocomplete) => {
     setAutocomplete(autocomplete);
@@ -85,38 +95,47 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
         const address = place.formatted_address || '';
-        
-        setCenter({ lat, lng });
+
         setFormData(prev => ({
           ...prev,
           lat: lat.toString(),
           long: lng.toString(),
-          location: address
+          location: address,
         }));
       }
     }
   };
 
-  const onMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
-    if (e.latLng) {
-      const lat = e.latLng.lat();
-      const lng = e.latLng.lng();
-      setFormData(prev => ({
-        ...prev,
-        lat: lat.toString(),
-        long: lng.toString()
-      }));
-      
-      // Reverse geocode to get address
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-        if (status === "OK" && results?.[0]) {
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const pos = { lat, lng };
+
           setFormData(prev => ({
             ...prev,
-            location: results[0].formatted_address
+            lat: lat.toString(),
+            long: lng.toString(),
           }));
+
+          const geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ location: pos }, (results, status) => {
+            if (status === 'OK' && results?.[0]) {
+              setFormData(prev => ({
+                ...prev,
+                location: results[0].formatted_address,
+              }));
+            }
+          });
+        },
+        () => {
+          toast.error('Error: The Geolocation service failed.');
         }
-      });
+      );
+    } else {
+      toast.error("Error: Your browser doesn't support geolocation.");
     }
   };
 
@@ -136,26 +155,17 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
         rdb_cert: restaurant.rdb_cert || '',
         plan_id: restaurant.shop_subscription?.plan_id || '',
         billing_cycle: restaurant.shop_subscription?.billing_cycle || 'monthly',
-        operating_hours: typeof restaurant.operating_hours === 'object' 
-          ? JSON.stringify(restaurant.operating_hours, null, 2) 
-          : restaurant.operating_hours || '',
+        operating_hours:
+          typeof restaurant.operating_hours === 'object'
+            ? JSON.stringify(restaurant.operating_hours, null, 2)
+            : restaurant.operating_hours || '',
       });
-      
-      if (restaurant.lat && restaurant.long) {
-        setCenter({
-          lat: parseFloat(restaurant.lat.toString()),
-          lng: parseFloat(restaurant.long.toString()),
-        });
-      } else {
-        setCenter(defaultCenter);
-      }
-      
+
       if (restaurant.profile) setProfilePreview(restaurant.profile);
       if (restaurant.logo) setLogoPreview(restaurant.logo);
       if (restaurant.rdb_cert) setRdbCertPreview(restaurant.rdb_cert);
     } else if (!isOpen) {
       // Reset form on close
-      setCenter(defaultCenter);
       setFormData({
         name: '',
         email: '',
@@ -246,7 +256,9 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
 
         setFormData(prev => ({ ...prev, [type]: url }));
         setIsUploading(prev => ({ ...prev, [type]: false }));
-        toast.success(`${type === 'rdb_cert' ? 'RDB Certificate' : type === 'logo' ? 'Logo' : 'Profile image'} uploaded successfully!`);
+        toast.success(
+          `${type === 'rdb_cert' ? 'RDB Certificate' : type === 'logo' ? 'Logo' : 'Profile image'} uploaded successfully!`
+        );
       } catch (error) {
         console.error(`Upload failed for ${type}:`, error);
         toast.error(`Failed to upload ${type}`);
@@ -335,9 +347,9 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
         const response = await fetch('/api/mutations/restaurants/update', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             id: restaurant.id,
-            ...restaurantData
+            ...restaurantData,
           }),
         });
 
@@ -352,10 +364,10 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
         const response = await fetch('/api/mutations/restaurants/create-with-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             restaurant: restaurantData,
             plan: selectedPlan,
-            billing_cycle: formData.billing_cycle
+            billing_cycle: formData.billing_cycle,
           }),
         });
 
@@ -383,12 +395,24 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="sm:max-w-[600px] h-[90vh] overflow-y-auto"
+        onPointerDownOutside={e => {
+          if ((e.target as HTMLElement)?.closest('.pac-container')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={e => {
+          if ((e.target as HTMLElement)?.closest('.pac-container')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{isEditMode ? 'Edit Restaurant' : 'Add New Restaurant'}</DialogTitle>
           <DialogDescription>
-            {isEditMode 
-              ? 'Update the details of the restaurant. Changes will take effect immediately.' 
+            {isEditMode
+              ? 'Update the details of the restaurant. Changes will take effect immediately.'
               : 'Enter the details of the new restaurant. It will require approval before going live.'}
           </DialogDescription>
         </DialogHeader>
@@ -443,22 +467,29 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
                 </div>
                 <h3 className="font-semibold text-sm">Subscription Details</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="plan_id">Select Plan <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="plan_id">
+                    Select Plan <span className="text-red-500">*</span>
+                  </Label>
                   <Select
                     value={formData.plan_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, plan_id: value }))}
+                    onValueChange={value => setFormData(prev => ({ ...prev, plan_id: value }))}
                     disabled={isSubmitting || plansLoading}
                   >
                     <SelectTrigger id="plan_id" className="bg-background">
-                      <SelectValue placeholder={plansLoading ? "Loading plans..." : "Select a plan"} />
+                      <SelectValue
+                        placeholder={plansLoading ? 'Loading plans...' : 'Select a plan'}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {plansData?.plans?.map((plan: any) => (
                         <SelectItem key={plan.id} value={plan.id}>
-                          {plan.name} - RWF {formData.billing_cycle === 'monthly' ? plan.price_monthly : plan.price_yearly}
+                          {plan.name} - RWF{' '}
+                          {formData.billing_cycle === 'monthly'
+                            ? plan.price_monthly
+                            : plan.price_yearly}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -469,7 +500,9 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
                   <Label htmlFor="billing_cycle">Billing Cycle</Label>
                   <Select
                     value={formData.billing_cycle}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, billing_cycle: value }))}
+                    onValueChange={value =>
+                      setFormData(prev => ({ ...prev, billing_cycle: value }))
+                    }
                     disabled={isSubmitting}
                   >
                     <SelectTrigger id="billing_cycle" className="bg-background">
@@ -485,18 +518,35 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="location">Physical Location</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="location">Physical Location</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[10px] flex items-center gap-1 text-primary hover:text-primary/80 p-0"
+                onClick={getCurrentLocation}
+              >
+                <MapPin className="h-3 w-3" /> Use Current Location
+              </Button>
+            </div>
             {isLoaded ? (
               <Autocomplete
                 onLoad={onAutocompleteLoad}
                 onPlaceChanged={onPlaceChanged}
+                options={{
+                  componentRestrictions: { country: 'RW' },
+                }}
               >
                 <Input
                   id="location"
                   name="location"
-                  placeholder="Search for a location..."
+                  placeholder="Search for a location in Rwanda..."
                   value={formData.location}
                   onChange={handleChange}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') e.preventDefault();
+                  }}
                   disabled={isSubmitting}
                 />
               </Autocomplete>
@@ -517,10 +567,11 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
               <Input
                 id="lat"
                 name="lat"
-                placeholder="-1.286389"
+                placeholder="Auto-populated"
                 value={formData.lat}
                 onChange={handleChange}
-                disabled={isSubmitting}
+                disabled={true}
+                className="bg-muted"
               />
             </div>
             <div className="space-y-2">
@@ -528,34 +579,14 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
               <Input
                 id="long"
                 name="long"
-                placeholder="36.817223"
+                placeholder="Auto-populated"
                 value={formData.long}
                 onChange={handleChange}
-                disabled={isSubmitting}
+                disabled={true}
+                className="bg-muted"
               />
             </div>
           </div>
-
-          {isLoaded && (
-            <div className="border rounded-lg overflow-hidden h-[200px] w-full">
-              <GoogleMap
-                mapContainerStyle={{ width: '100%', height: '100%' }}
-                center={center}
-                zoom={15}
-                onLoad={onMapLoad}
-                options={{
-                  streetViewControl: false,
-                  mapTypeControl: false,
-                }}
-              >
-                <Marker
-                  position={center}
-                  draggable={true}
-                  onDragEnd={onMarkerDragEnd}
-                />
-              </GoogleMap>
-            </div>
-          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="ussd">USSD</Label>
@@ -603,7 +634,9 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
                     onClick={() => profileInputRef.current?.click()}
                   >
                     <Upload className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
-                    <span className="text-sm font-medium text-muted-foreground">Upload Profile</span>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Upload Profile
+                    </span>
                     <input
                       ref={profileInputRef}
                       type="file"
@@ -733,7 +766,11 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
                   {rdbCertPreview === 'pdf' ? (
                     <div className="text-primary font-bold text-xs">PDF</div>
                   ) : (
-                    <img src={rdbCertPreview || ''} alt="RDB Cert" className="h-full w-full object-cover" />
+                    <img
+                      src={rdbCertPreview || ''}
+                      alt="RDB Cert"
+                      className="h-full w-full object-cover"
+                    />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -748,10 +785,14 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
                           style={{ width: `${uploadProgress.rdb_cert}%` }}
                         />
                       </div>
-                      <p className="text-[10px] text-muted-foreground">Uploading... {Math.round(uploadProgress.rdb_cert)}%</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Uploading... {Math.round(uploadProgress.rdb_cert)}%
+                      </p>
                     </div>
                   ) : (
-                    <p className="text-xs text-green-600 font-medium mt-1">✓ Ready for submission</p>
+                    <p className="text-xs text-green-600 font-medium mt-1">
+                      ✓ Ready for submission
+                    </p>
                   )}
                 </div>
                 <Button
@@ -773,7 +814,13 @@ const AddRestaurantModal: React.FC<AddRestaurantModalProps> = ({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? (isEditMode ? 'Saving...' : 'Adding...') : (isEditMode ? 'Save Changes' : 'Add Restaurant')}
+              {isSubmitting
+                ? isEditMode
+                  ? 'Saving...'
+                  : 'Adding...'
+                : isEditMode
+                  ? 'Save Changes'
+                  : 'Add Restaurant'}
             </Button>
           </DialogFooter>
         </form>

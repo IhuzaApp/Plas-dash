@@ -27,10 +27,7 @@ import {
 import { PromotionTable } from '@/components/promotions/PromotionTable';
 import { PromotionForm } from '@/components/promotions/PromotionForm';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
-import {
-  PromotionFilters,
-  PromotionFilterState,
-} from '@/components/promotions/PromotionFilters';
+import { PromotionFilters, PromotionFilterState } from '@/components/promotions/PromotionFilters';
 
 const DEFAULT_FILTERS: PromotionFilterState = {
   searchQuery: '',
@@ -167,12 +164,10 @@ const Promotions = () => {
           : null,
         influencer_code: isInfluencerPromo ? values.influencer_code || null : null,
         commission_type: isInfluencerPromo ? values.commission_type || null : null,
-        commission_value: isInfluencerPromo && values.commission_value
-          ? parseFloat(values.commission_value)
-          : null,
-        commission_cap: isInfluencerPromo && values.commission_cap
-          ? parseFloat(values.commission_cap)
-          : null,
+        commission_value:
+          isInfluencerPromo && values.commission_value ? parseFloat(values.commission_value) : null,
+        commission_cap:
+          isInfluencerPromo && values.commission_cap ? parseFloat(values.commission_cap) : null,
 
         // 💰 ECONOMICS
         funded_by: values.funded_by,

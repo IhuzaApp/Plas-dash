@@ -858,8 +858,6 @@ export function useOrders() {
   });
 }
 
-
-
 // Type-safe hook for Order Offers
 export function useOrderOffers() {
   return useQuery<{ order_offers: OrderOffer[] }, Error>({
@@ -918,7 +916,19 @@ export function useInvoices() {
 export function useWallets() {
   return useQuery<{ Wallets: Wallet[] }, Error>({
     queryKey: ['wallets'],
-    queryFn: () => hasuraRequest(GET_ALL_WALLETS, {}),
+    queryFn: async () => {
+      const res = await hasuraRequest<{ Wallets: any[] }>(GET_ALL_WALLETS, {});
+      return {
+        Wallets: (res.Wallets || []).map(w => {
+          const shopper = Array.isArray(w.shoppers) ? w.shoppers[0] : w.shoppers;
+          return {
+            ...w,
+            User: shopper?.User || null,
+            shopper: shopper || null,
+          };
+        }),
+      };
+    },
   });
 }
 
@@ -934,7 +944,23 @@ export function useShopperWallet(shopperId: string) {
 export function useWalletTransactions() {
   return useQuery<{ Wallet_Transactions: WalletTransaction[] }, Error>({
     queryKey: ['wallet-transactions'],
-    queryFn: () => hasuraRequest(GET_ALL_WALLET_TRANSACTIONS, {}),
+    queryFn: async () => {
+      const res = await hasuraRequest<{ Wallet_Transactions: any[] }>(
+        GET_ALL_WALLET_TRANSACTIONS,
+        {}
+      );
+      return {
+        Wallet_Transactions: (res.Wallet_Transactions || []).map(tx => {
+          const wallet = tx.Wallet;
+          if (wallet) {
+            const shopper = Array.isArray(wallet.shoppers) ? wallet.shoppers[0] : wallet.shoppers;
+            wallet.User = shopper?.User || null;
+            wallet.shopper = shopper || null;
+          }
+          return tx;
+        }),
+      };
+    },
   });
 }
 
@@ -2269,11 +2295,7 @@ export function useAssignOrder() {
 export function useCreateOrderOffer() {
   const queryClient = useQueryClient();
 
-  return useMutation<
-    { insert_order_offers_one: { id: string } },
-    Error,
-    { object: any }
-  >({
+  return useMutation<{ insert_order_offers_one: { id: string } }, Error, { object: any }>({
     mutationFn: variables => hasuraRequest(CREATE_ORDER_OFFER, variables),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order-offers'] });
@@ -2304,8 +2326,12 @@ export function useCreatePetVendor() {
 export function useUpdatePetVendor() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (variables: { id: string; disabled: boolean; status: string; updated_at: string }) =>
-      hasuraRequest(UPDATE_PET_VENDOR, variables),
+    mutationFn: (variables: {
+      id: string;
+      disabled: boolean;
+      status: string;
+      updated_at: string;
+    }) => hasuraRequest(UPDATE_PET_VENDOR, variables),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pet-vendor'] });
       queryClient.invalidateQueries({ queryKey: ['pet-vendors'] });
@@ -2317,11 +2343,14 @@ export function useLogisticsAccounts() {
   return useQuery<{ logisticsAccount: LogisticsAccount[] }, Error>({
     queryKey: ['logistics-accounts'],
     queryFn: async () => {
-      const res = await hasuraRequest<{ logisticsAccount: LogisticsAccount[] }>(GET_ALL_LOGISTICS_ACCOUNTS);
+      const res = await hasuraRequest<{ logisticsAccount: LogisticsAccount[] }>(
+        GET_ALL_LOGISTICS_ACCOUNTS
+      );
       cacheSet('logistics_accounts', res);
       return res;
     },
-    initialData: () => cacheGet<{ logisticsAccount: LogisticsAccount[] }>('logistics_accounts') || undefined,
+    initialData: () =>
+      cacheGet<{ logisticsAccount: LogisticsAccount[] }>('logistics_accounts') || undefined,
   });
 }
 
@@ -2340,12 +2369,15 @@ export function usePetVendors() {
 export function useUpdateLogisticsAccount() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (variables: { id: string; disabled: boolean; status: string; updated_at: string }) =>
-      hasuraRequest(UPDATE_LOGISTICS_ACCOUNT, variables),
+    mutationFn: (variables: {
+      id: string;
+      disabled: boolean;
+      status: string;
+      updated_at: string;
+    }) => hasuraRequest(UPDATE_LOGISTICS_ACCOUNT, variables),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['logistics-account'] });
       queryClient.invalidateQueries({ queryKey: ['logistics-accounts'] });
     },
   });
 }
-

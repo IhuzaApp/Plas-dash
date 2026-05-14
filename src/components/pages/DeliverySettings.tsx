@@ -46,7 +46,7 @@ const InputDescription = ({ children }: { children: React.ReactNode }) => {
 
 const DeliverySettings = () => {
   const { data: systemConfig, isLoading } = useSystemConfig();
-  const config = systemConfig?.System_configuratioins[0];
+  const config = systemConfig?.System_configuratioins?.[0];
   const queryClient = useQueryClient();
   const [hasChanges, setHasChanges] = useState(false);
   const [formValues, setFormValues] = useState<Record<string, any>>({});

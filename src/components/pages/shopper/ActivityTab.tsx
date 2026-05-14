@@ -1,6 +1,13 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingBag, Truck, CreditCard, Tag } from 'lucide-react';
 
@@ -93,13 +100,19 @@ const ActivityTab: React.FC<ActivityTabProps> = ({ shopper, formatCurrency }) =>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{delivery.receiverName || 'N/A'}</span>
-                          <span className="text-xs text-muted-foreground">{delivery.receiverPhone}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {delivery.receiverPhone}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                         <div className="flex flex-col max-w-[200px]">
-                          <span className="text-xs font-medium">From: {delivery.pickupLocation || 'N/A'}</span>
-                          <span className="text-xs text-muted-foreground">To: {delivery.dropoffLocation || 'N/A'}</span>
+                        <div className="flex flex-col max-w-[200px]">
+                          <span className="text-xs font-medium">
+                            From: {delivery.pickupLocation || 'N/A'}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            To: {delivery.dropoffLocation || 'N/A'}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>{delivery.distance} km</TableCell>

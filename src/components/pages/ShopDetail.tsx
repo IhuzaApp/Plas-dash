@@ -241,7 +241,7 @@ const ShopDetail = () => {
   const addProductName = useAddProductName();
   const updateProduct = useUpdateProduct();
   const { data: configData } = useSystemConfig();
-  const config = configData?.System_configuratioins[0];
+  const config = configData?.System_configuratioins?.[0];
   const { hasAction } = usePrivilege();
 
   // Staff management hooks
@@ -597,7 +597,11 @@ const ShopDetail = () => {
             <div className="relative group/logo">
               <div className="h-32 w-32 rounded-2xl border-4 border-background overflow-hidden bg-white shadow-xl backdrop-blur-md transition-transform duration-300 group-hover/logo:scale-105">
                 {shop.logo ? (
-                  <img src={shop.logo} alt={shop.name} className="h-full w-full object-contain p-2" />
+                  <img
+                    src={shop.logo}
+                    alt={shop.name}
+                    className="h-full w-full object-contain p-2"
+                  />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center bg-muted">
                     <Store className="h-12 w-12 text-muted-foreground" />
@@ -608,12 +612,21 @@ const ShopDetail = () => {
             <div className="mb-2">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-4xl font-bold text-white tracking-tight">{shop.name}</h1>
-                <Badge className={shop.is_active ? 'bg-green-500/20 text-green-400 border-green-500/30 backdrop-blur-md' : 'bg-gray-500/20 text-gray-400 border-gray-500/30 backdrop-blur-md'}>
+                <Badge
+                  className={
+                    shop.is_active
+                      ? 'bg-green-500/20 text-green-400 border-green-500/30 backdrop-blur-md'
+                      : 'bg-gray-500/20 text-gray-400 border-gray-500/30 backdrop-blur-md'
+                  }
+                >
                   {shop.is_active ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
               <div className="text-gray-300 flex items-center gap-2 text-sm">
-                <Badge variant="outline" className="text-gray-300 border-gray-300/30 bg-white/5 backdrop-blur-md">
+                <Badge
+                  variant="outline"
+                  className="text-gray-300 border-gray-300/30 bg-white/5 backdrop-blur-md"
+                >
                   {shop.category?.name || 'Uncategorized'}
                 </Badge>
                 <span className="text-gray-500">•</span>
@@ -628,24 +641,35 @@ const ShopDetail = () => {
             <Button
               onClick={() => handleToggleStatus(shop.id, shop.is_active)}
               variant="outline"
-              className={`border-white/10 backdrop-blur-md transition-all ${shop.is_active
+              className={`border-white/10 backdrop-blur-md transition-all ${
+                shop.is_active
                   ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/30'
                   : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/30'
-                }`}
+              }`}
             >
               {shop.is_active ? (
-                <><PowerOff className="h-4 w-4 mr-2" /> Deactivate</>
+                <>
+                  <PowerOff className="h-4 w-4 mr-2" /> Deactivate
+                </>
               ) : (
-                <><Power className="h-4 w-4 mr-2" /> Activate</>
+                <>
+                  <Power className="h-4 w-4 mr-2" /> Activate
+                </>
               )}
             </Button>
 
             {hasAction('products', 'add_products') && (
-              <Button onClick={() => setIsAddProductOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
+              <Button
+                onClick={() => setIsAddProductOpen(true)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+              >
                 <Plus className="h-4 w-4 mr-2" /> Add Product
               </Button>
             )}
-            <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-md">
+            <Button
+              variant="outline"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-md"
+            >
               <Edit className="h-4 w-4 mr-2" /> Edit Shop
             </Button>
           </div>
@@ -680,10 +704,11 @@ const ShopDetail = () => {
                       <p className="text-sm font-medium text-muted-foreground">Status:</p>
                       <p>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${shop.is_active
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            shop.is_active
                               ? 'bg-green-100 text-green-800'
                               : 'bg-gray-100 text-gray-800'
-                            }`}
+                          }`}
                         >
                           {shop.is_active ? 'Active' : 'Inactive'}
                         </span>
@@ -740,8 +765,8 @@ const ShopDetail = () => {
                       <p className="text-sm">
                         {String(
                           (shop as unknown as Record<string, unknown>).relatedTo ??
-                          shop.relatedTo ??
-                          ''
+                            shop.relatedTo ??
+                            ''
                         ).trim() || '—'}
                       </p>
                     </div>
@@ -863,10 +888,11 @@ const ShopDetail = () => {
                           <TableCell>{product.measurement_unit}</TableCell>
                           <TableCell>
                             <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.is_active
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                product.is_active
                                   ? 'bg-green-100 text-green-800'
                                   : 'bg-gray-100 text-gray-800'
-                                }`}
+                              }`}
                             >
                               {product.is_active ? 'Active' : 'Inactive'}
                             </span>
@@ -1155,16 +1181,27 @@ const ShopDetail = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Status</span>
-                        <Badge variant={shop.shop_subscription?.status === 'active' ? 'default' : 'secondary'} className={shop.shop_subscription?.status === 'active' ? 'bg-green-500' : ''}>
+                        <Badge
+                          variant={
+                            shop.shop_subscription?.status === 'active' ? 'default' : 'secondary'
+                          }
+                          className={
+                            shop.shop_subscription?.status === 'active' ? 'bg-green-500' : ''
+                          }
+                        >
                           {shop.shop_subscription?.status || 'Unknown'}
                         </Badge>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Billing Cycle</span>
-                        <span className="capitalize">{shop.shop_subscription?.billing_cycle || '—'}</span>
+                        <span className="capitalize">
+                          {shop.shop_subscription?.billing_cycle || '—'}
+                        </span>
                       </div>
                     </div>
-                    <Button className="w-full" variant="outline">Change Plan</Button>
+                    <Button className="w-full" variant="outline">
+                      Change Plan
+                    </Button>
                   </CardContent>
                 </Card>
 
@@ -1177,26 +1214,37 @@ const ShopDetail = () => {
                   </CardHeader>
                   <CardContent className="space-y-4 px-4 pb-4">
                     <div className="space-y-3">
-                      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plan Modules</h4>
+                      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Plan Modules
+                      </h4>
                       <div className="grid gap-2">
                         {shop.shop_subscription?.plan?.plan_modules?.length > 0 ? (
                           shop.shop_subscription.plan.plan_modules.map((pm: any) => (
-                            <div key={pm.id} className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
+                            <div
+                              key={pm.id}
+                              className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10"
+                            >
                               <ShieldCheck className="h-4 w-4 text-primary" />
                               <span className="text-sm font-medium">{pm.module?.name}</span>
                             </div>
                           ))
                         ) : (
-                          <p className="text-xs text-muted-foreground italic">No modules in this plan.</p>
+                          <p className="text-xs text-muted-foreground italic">
+                            No modules in this plan.
+                          </p>
                         )}
                       </div>
                     </div>
 
                     <div className="space-y-3 pt-2">
-                      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Manual Overrides</h4>
+                      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Manual Overrides
+                      </h4>
                       <div className="grid gap-2">
                         {/* Note: shop_modules relationship is not yet available in the database schema */}
-                        <p className="text-xs text-muted-foreground italic">Manual overrides are currently disabled (relationship missing in DB).</p>
+                        <p className="text-xs text-muted-foreground italic">
+                          Manual overrides are currently disabled (relationship missing in DB).
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -1222,8 +1270,12 @@ const ShopDetail = () => {
                       {shop.shop_subscription?.subscription_invoices?.length > 0 ? (
                         shop.shop_subscription.subscription_invoices.map((inv: any) => (
                           <TableRow key={inv.id}>
-                            <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
-                            <TableCell>{format(new Date(inv.created_at), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="font-mono text-xs">
+                              {inv.invoice_number}
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(inv.created_at), 'MMM dd, yyyy')}
+                            </TableCell>
                             <TableCell>{formatCurrency(inv.total_amount)}</TableCell>
                             <TableCell>
                               <Badge variant={inv.status === 'paid' ? 'default' : 'outline'}>
@@ -1231,7 +1283,9 @@ const ShopDetail = () => {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button variant="ghost" size="sm">Download</Button>
+                              <Button variant="ghost" size="sm">
+                                Download
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))
@@ -1284,7 +1338,7 @@ const ShopDetail = () => {
                                 <div
                                   className="bg-primary h-1 rounded-full"
                                   style={{
-                                    width: `${Math.min(100, (parseFloat(promo.budget_used || '0') / parseFloat(promo.budget_limit || '1')) * 100)}%`
+                                    width: `${Math.min(100, (parseFloat(promo.budget_used || '0') / parseFloat(promo.budget_limit || '1')) * 100)}%`,
                                   }}
                                 />
                               </div>
@@ -1299,7 +1353,9 @@ const ShopDetail = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">Edit</Button>
+                            <Button variant="ghost" size="sm">
+                              Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))
@@ -1370,10 +1426,14 @@ function ManageManualModules({ shop, onUpdate }: { shop: any; onUpdate: () => vo
   });
 
   const allModules = modulesData?.modules || [];
-  const planModuleIds = new Set(shop.shop_subscription?.plan?.plan_modules?.map((pm: any) => pm.module_id) || []);
+  const planModuleIds = new Set(
+    shop.shop_subscription?.plan?.plan_modules?.map((pm: any) => pm.module_id) || []
+  );
   const manualModuleIds = new Set(shop.shop_modules?.map((sm: any) => sm.module?.id) || []);
 
-  const availableToAssign = allModules.filter(m => !planModuleIds.has(m.id) && !manualModuleIds.has(m.id));
+  const availableToAssign = allModules.filter(
+    m => !planModuleIds.has(m.id) && !manualModuleIds.has(m.id)
+  );
 
   const handleAssign = async (moduleId: string) => {
     try {
@@ -1410,12 +1470,19 @@ function ManageManualModules({ shop, onUpdate }: { shop: any; onUpdate: () => vo
           ) : availableToAssign.length > 0 ? (
             <div className="grid gap-2">
               {availableToAssign.map(mod => (
-                <div key={mod.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                <div
+                  key={mod.id}
+                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                >
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">{mod.name}</span>
-                    <span className="text-xs text-muted-foreground">{mod.group_name || 'General'}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {mod.group_name || 'General'}
+                    </span>
                   </div>
-                  <Button size="sm" onClick={() => handleAssign(mod.id)}>Assign</Button>
+                  <Button size="sm" onClick={() => handleAssign(mod.id)}>
+                    Assign
+                  </Button>
                 </div>
               ))}
             </div>

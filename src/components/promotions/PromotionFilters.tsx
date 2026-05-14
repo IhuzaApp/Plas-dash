@@ -97,7 +97,12 @@ export const PromotionFilters: React.FC<PromotionFiltersProps> = ({ filters, onF
 
       {/* Clear All */}
       {hasActiveFilters && (
-        <Button variant="ghost" size="sm" onClick={clearAll} className="gap-1.5 text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearAll}
+          className="gap-1.5 text-muted-foreground"
+        >
           <X className="h-4 w-4" /> Clear
         </Button>
       )}

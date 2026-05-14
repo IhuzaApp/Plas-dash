@@ -78,22 +78,27 @@ export async function GET(req: Request) {
     const mappedRequests = (data.withDraweRequest ?? []).map(req => {
       const rawShoppers = req.shopper || req.shoppers;
       const shopper = Array.isArray(rawShoppers) ? rawShoppers[0] : rawShoppers;
-      
+
       const rawWallets = req.Wallet || req.Wallets;
       const wallet = Array.isArray(rawWallets) ? rawWallets[0] : rawWallets;
-      
-      const walletShoppers = wallet?.shopper || wallet?.shoppers;
-      const finalShopper = shopper || (Array.isArray(walletShoppers) ? walletShoppers[0] : walletShoppers);
 
-      const businessAccount = Array.isArray(req.business_accounts) ? req.business_accounts[0] : req.business_accounts;
-      const businessWallet = Array.isArray(req.business_wallets) ? req.business_wallets[0] : req.business_wallets;
+      const walletShoppers = wallet?.shopper || wallet?.shoppers;
+      const finalShopper =
+        shopper || (Array.isArray(walletShoppers) ? walletShoppers[0] : walletShoppers);
+
+      const businessAccount = Array.isArray(req.business_accounts)
+        ? req.business_accounts[0]
+        : req.business_accounts;
+      const businessWallet = Array.isArray(req.business_wallets)
+        ? req.business_wallets[0]
+        : req.business_wallets;
 
       return {
         ...req,
         shoppers: finalShopper || null,
         Wallets: wallet || null,
         business_accounts: businessAccount || null,
-        business_wallets: businessWallet || null
+        business_wallets: businessWallet || null,
       };
     });
 

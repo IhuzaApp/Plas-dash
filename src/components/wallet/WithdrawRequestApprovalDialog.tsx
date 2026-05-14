@@ -132,7 +132,10 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
   const isWithdraw = item?.kind === 'withdraw';
   const isPayout = item?.kind === 'payout';
 
-  const isBusiness = isWithdraw && !!(item as WithdrawRequestData).business_id && (item as WithdrawRequestData).business_id !== '00000000-0000-0000-0000-000000000000';
+  const isBusiness =
+    isWithdraw &&
+    !!(item as WithdrawRequestData).business_id &&
+    (item as WithdrawRequestData).business_id !== '00000000-0000-0000-0000-000000000000';
   const amount = parseFloat(item?.amount ?? '0');
   const fee = isBusiness ? (amount * withdrawChargesPct) / 100 : 0;
   const netPayout = amount - fee;
@@ -157,7 +160,7 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
     const po = item as any;
     const shopper = po.shopper;
     const user = po.User;
-    
+
     name = shopper?.full_name || user?.name || 'Unknown User';
     phone = shopper?.phone_number || user?.phone || '—';
     walletBalance = parseFloat(po.Wallets?.available_balance ?? '0');
@@ -280,12 +283,18 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
                   {(() => {
                     const po = item as any;
                     const wd = item as any;
-                    const img = isPayout 
-                      ? (po.shopper?.profile_photo || po.User?.profile_picture)
-                      : (isBusiness ? null : wd.shoppers?.profile_photo);
-                    
+                    const img = isPayout
+                      ? po.shopper?.profile_photo || po.User?.profile_picture
+                      : isBusiness
+                        ? null
+                        : wd.shoppers?.profile_photo;
+
                     if (img) return <img src={img} alt="" className="h-full w-full object-cover" />;
-                    return isBusiness ? <Building2 className="h-6 w-6 text-primary" /> : <User className="h-6 w-6 text-primary" />;
+                    return isBusiness ? (
+                      <Building2 className="h-6 w-6 text-primary" />
+                    ) : (
+                      <User className="h-6 w-6 text-primary" />
+                    );
                   })()}
                 </div>
                 <div className="flex-1 min-w-0">

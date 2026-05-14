@@ -215,7 +215,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
 
   if (isLoggedIntoShop && shopSession) {
     return (
-      <div className={cn("p-4 space-y-3", !isSidebarOpen && "p-2")}>
+      <div className={cn('p-4 space-y-3', !isSidebarOpen && 'p-2')}>
         {isSidebarOpen ? (
           <>
             <div className="flex items-center justify-between">
@@ -275,7 +275,11 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
   }
 
   return (
-    <div className={cn(variant === 'sidebar' ? (isSidebarOpen ? 'p-4 space-y-3' : 'p-2 space-y-2') : 'space-y-4')}>
+    <div
+      className={cn(
+        variant === 'sidebar' ? (isSidebarOpen ? 'p-4 space-y-3' : 'p-2 space-y-2') : 'space-y-4'
+      )}
+    >
       {isSidebarOpen ? (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -299,8 +303,9 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
               <Card
                 key={orgEmployee.Shops.id}
                 className={cn(
-                  "cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors",
-                  !isSidebarOpen && "p-0 flex items-center justify-center h-12 rounded-xl border-dashed"
+                  'cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors',
+                  !isSidebarOpen &&
+                    'p-0 flex items-center justify-center h-12 rounded-xl border-dashed'
                 )}
                 onClick={() => {
                   const shopData = {
@@ -315,12 +320,16 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
                   handleShopSelect(shopData);
                 }}
               >
-                <CardContent className={cn("p-3", !isSidebarOpen && "p-0 flex items-center justify-center")}>
+                <CardContent
+                  className={cn('p-3', !isSidebarOpen && 'p-0 flex items-center justify-center')}
+                >
                   {isSidebarOpen ? (
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium truncate">{orgEmployee.Shops.name}</h4>
-                        <p className="text-xs text-muted-foreground truncate">{orgEmployee.Position}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {orgEmployee.Position}
+                        </p>
                       </div>
                       <div className="flex items-center gap-1">
                         {orgEmployee.multAuthEnabled ? (

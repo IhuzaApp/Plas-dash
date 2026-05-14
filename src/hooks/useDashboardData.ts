@@ -12,7 +12,7 @@ export const useDashboardData = () => {
     },
     initialData: () => cacheGet<{ shops: any[] }>('dashboard_shops') || undefined,
   });
-  
+
   const { data: usersRes, isLoading: isLoadingUsers } = useQuery({
     queryKey: ['dashboard', 'users'],
     queryFn: async () => {
@@ -22,7 +22,7 @@ export const useDashboardData = () => {
     },
     initialData: () => cacheGet<{ users: any[] }>('dashboard_users') || undefined,
   });
-  
+
   const { data: productsRes, isLoading: isLoadingProducts } = useQuery({
     queryKey: ['dashboard', 'products'],
     queryFn: async () => {
@@ -32,7 +32,7 @@ export const useDashboardData = () => {
     },
     initialData: () => cacheGet<{ products: any[] }>('dashboard_products') || undefined,
   });
-  
+
   const { data: ordersRes, isLoading: isLoadingOrders } = useQuery({
     queryKey: ['dashboard', 'orders'],
     queryFn: async () => {
@@ -42,7 +42,7 @@ export const useDashboardData = () => {
     },
     initialData: () => cacheGet<{ orders: any[] }>('dashboard_orders') || undefined,
   });
-  
+
   const { data: orderStatsRes, isLoading: isLoadingOrderStats } = useQuery({
     queryKey: ['dashboard', 'order-stats'],
     queryFn: async () => {

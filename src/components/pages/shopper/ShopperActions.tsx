@@ -194,7 +194,10 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
         <>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className="text-destructive border-destructive/20 hover:bg-destructive/5">
+              <Button
+                variant="outline"
+                className="text-destructive border-destructive/20 hover:bg-destructive/5"
+              >
                 Reject Application
               </Button>
             </AlertDialogTrigger>
@@ -231,7 +234,10 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleApprove} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <AlertDialogAction
+                  onClick={handleApprove}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
                   Approve Application
                 </AlertDialogAction>
               </AlertDialogFooter>

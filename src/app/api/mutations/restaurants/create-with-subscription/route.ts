@@ -48,7 +48,7 @@ export async function POST(req: Request) {
           year: new Date().getFullYear().toString(),
           upload_count: plan.reel_limit || 10,
           created_at: now,
-        }
+        },
       },
       merchant_wallet: {
         data: {
@@ -56,16 +56,16 @@ export async function POST(req: Request) {
           balance: '0',
           update_at: now,
           created_at: now,
-        }
+        },
       },
       ai_usage: {
         data: {
           month: (new Date().getMonth() + 1).toString(),
-          year: (new Date().getFullYear()).toString(),
+          year: new Date().getFullYear().toString(),
           request_count: plan.ai_request_limit || 10,
           requests_sent: 0,
           user_id: context.userId,
-        }
+        },
       },
       shop_subscription: {
         data: {
@@ -90,10 +90,10 @@ export async function POST(req: Request) {
               invoice_number: invoiceNumber,
               created_at: now,
               updated_at: now,
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     };
 
     const result = await hasuraClient.request(CREATE_RESTAURANT_FULL, {
@@ -103,6 +103,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ result });
   } catch (error) {
     console.error('Error creating restaurant with subscription:', error);
-    return NextResponse.json({ error: 'Failed to create restaurant and subscription' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create restaurant and subscription' },
+      { status: 500 }
+    );
   }
 }

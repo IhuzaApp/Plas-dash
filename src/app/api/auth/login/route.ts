@@ -84,15 +84,21 @@ export async function POST(request: Request) {
 
     if (orgData.orgEmployees?.[0]) {
       const emp = orgData.orgEmployees[0];
-      
+
       if (!emp.active) {
-        return NextResponse.json({ error: 'Your account is deactivated. Please contact IT support to reactivate your account.' }, { status: 403 });
+        return NextResponse.json(
+          {
+            error:
+              'Your account is deactivated. Please contact IT support to reactivate your account.',
+          },
+          { status: 403 }
+        );
       }
 
       if (emp.password && verifyOrgEmployeePassword(password, emp.password)) {
         // Success: reset attempts
         failedAttemptsMap.delete(identifier);
-        
+
         // Update last login and online status
         try {
           await hasuraClient.request(UPDATE_ORG_EMPLOYEE_LAST_LOGIN_AND_ONLINE, {
@@ -116,9 +122,13 @@ export async function POST(request: Request) {
 
         if (newAttempts >= MAX_ATTEMPTS) {
           await hasuraClient.request(DEACTIVATE_ORG_EMPLOYEE, { id: emp.id });
-          return NextResponse.json({ 
-            error: 'Security Alert: Account deactivated due to multiple failed login attempts. Please contact IT support to reactivate your account.' 
-          }, { status: 403 });
+          return NextResponse.json(
+            {
+              error:
+                'Security Alert: Account deactivated due to multiple failed login attempts. Please contact IT support to reactivate your account.',
+            },
+            { status: 403 }
+          );
         }
       }
     }
@@ -153,7 +163,13 @@ export async function POST(request: Request) {
     if (projectUsers.length > 0) {
       for (const user of projectUsers) {
         if (!user.is_active) {
-           return NextResponse.json({ error: 'Your account is deactivated. Please contact IT support to reactivate your account.' }, { status: 403 });
+          return NextResponse.json(
+            {
+              error:
+                'Your account is deactivated. Please contact IT support to reactivate your account.',
+            },
+            { status: 403 }
+          );
         }
 
         if (user.password && (await verifyProjectUserPassword(password, user.password))) {
@@ -182,9 +198,13 @@ export async function POST(request: Request) {
 
           if (newAttempts >= MAX_ATTEMPTS) {
             await hasuraClient.request(DEACTIVATE_PROJECT_USER, { id: user.id });
-            return NextResponse.json({ 
-              error: 'Security Alert: Account deactivated due to multiple failed login attempts. Please contact IT support to reactivate your account.' 
-            }, { status: 403 });
+            return NextResponse.json(
+              {
+                error:
+                  'Security Alert: Account deactivated due to multiple failed login attempts. Please contact IT support to reactivate your account.',
+              },
+              { status: 403 }
+            );
           }
         }
       }

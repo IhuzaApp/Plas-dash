@@ -5,10 +5,10 @@ import { getUserContext } from '@/lib/auth-server';
 
 const CREATE_SHOP_FULL = gql`
   mutation CreateShopFull(
-    $shop: Shops_insert_input!,
-    $subscription: shop_subscriptions_insert_input!,
-    $aiUsage: ai_usage_insert_input!,
-    $reelUsage: reel_usage_insert_input!,
+    $shop: Shops_insert_input!
+    $subscription: shop_subscriptions_insert_input!
+    $aiUsage: ai_usage_insert_input!
+    $reelUsage: reel_usage_insert_input!
     $invoice: subscription_invoices_insert_input!
   ) {
     insert_Shops_one(object: $shop) {
@@ -47,9 +47,12 @@ export async function POST(req: Request) {
         }
       }
     `;
-    const shopResult = await hasuraClient.request<{ insert_Shops_one: { id: string } }>(CREATE_SHOP, {
-      object: shop,
-    });
+    const shopResult = await hasuraClient.request<{ insert_Shops_one: { id: string } }>(
+      CREATE_SHOP,
+      {
+        object: shop,
+      }
+    );
     const shopId = shopResult.insert_Shops_one.id;
 
     // 2. Prepare other records with the new shopId
@@ -93,31 +96,49 @@ export async function POST(req: Request) {
       shopSubscription_id: null, // Will be updated or linked if possible
       shop_id: shopId,
       plan_name: plan.name,
-      plan_price: billing_cycle === 'monthly' ? plan.price_monthly.toString() : plan.price_yearly.toString(),
+      plan_price:
+        billing_cycle === 'monthly' ? plan.price_monthly.toString() : plan.price_yearly.toString(),
       currency: 'RWF',
       status: 'paid', // Assuming initial is paid or pending
       issued_at: now,
       due_date: now,
-      subtotal_amount: billing_cycle === 'monthly' ? plan.price_monthly.toString() : plan.price_yearly.toString(),
+      subtotal_amount:
+        billing_cycle === 'monthly' ? plan.price_monthly.toString() : plan.price_yearly.toString(),
       tax_amount: '0',
       discount_amount: '0',
       invoice_number: `INV-${Date.now()}`,
     };
 
     // Sequential inserts for simplicity (better as a transaction if supported via custom resolver, but here we do it step by step)
-    const subResult = await hasuraClient.request(gql`
-      mutation AddSub($sub: shop_subscriptions_insert_input!, $ai: ai_usage_insert_input!, $reel: reel_usage_insert_input!, $inv: subscription_invoices_insert_input!) {
-        insert_shop_subscriptions_one(object: $sub) { id }
-        insert_ai_usage_one(object: $ai) { id }
-        insert_reel_usage_one(object: $reel) { id }
-        insert_subscription_invoices_one(object: $inv) { id }
+    const subResult = await hasuraClient.request(
+      gql`
+        mutation AddSub(
+          $sub: shop_subscriptions_insert_input!
+          $ai: ai_usage_insert_input!
+          $reel: reel_usage_insert_input!
+          $inv: subscription_invoices_insert_input!
+        ) {
+          insert_shop_subscriptions_one(object: $sub) {
+            id
+          }
+          insert_ai_usage_one(object: $ai) {
+            id
+          }
+          insert_reel_usage_one(object: $reel) {
+            id
+          }
+          insert_subscription_invoices_one(object: $inv) {
+            id
+          }
+        }
+      `,
+      {
+        sub: subscription,
+        ai: aiUsage,
+        reel: reelUsage,
+        inv: invoice,
       }
-    `, {
-      sub: subscription,
-      ai: aiUsage,
-      reel: reelUsage,
-      inv: invoice,
-    });
+    );
 
     return NextResponse.json({ shopId, subResult });
   } catch (error) {

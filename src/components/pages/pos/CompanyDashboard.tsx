@@ -306,8 +306,18 @@ const CompanyDashboard = () => {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip cursor={{ fill: 'transparent' }} />
-                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Revenue" />
-                    <Bar dataKey="target" fill="hsl(var(--muted-foreground) / 0.3)" radius={[4, 4, 0, 0]} name="Target" />
+                    <Bar
+                      dataKey="revenue"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                      name="Revenue"
+                    />
+                    <Bar
+                      dataKey="target"
+                      fill="hsl(var(--muted-foreground) / 0.3)"
+                      radius={[4, 4, 0, 0]}
+                      name="Target"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -468,7 +478,12 @@ const CompanyDashboard = () => {
                     <div key={i} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{p.name}</span>
-                        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">{p.sales} units sold</Badge>
+                        <Badge
+                          variant="outline"
+                          className="bg-primary/5 text-primary border-primary/20"
+                        >
+                          {p.sales} units sold
+                        </Badge>
                       </div>
                     </div>
                   ))}
@@ -516,7 +531,9 @@ const CompanyDashboard = () => {
                       </div>
                       <span>Meat & Poultry</span>
                     </div>
-                    <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 border-none">Delayed</Badge>
+                    <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 border-none">
+                      Delayed
+                    </Badge>
                   </div>
 
                   <div className="flex items-center justify-between p-2 border rounded-md">
@@ -536,7 +553,9 @@ const CompanyDashboard = () => {
                       </div>
                       <span>Imported Goods</span>
                     </div>
-                    <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500 border-none">Disrupted</Badge>
+                    <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500 border-none">
+                      Disrupted
+                    </Badge>
                   </div>
                 </div>
               </CardContent>
@@ -634,7 +653,8 @@ const CompanyDashboard = () => {
                               <div>
                                 <div>
                                   <span className="font-bold">{activity.employeeName}</span>{' '}
-                                  <span className="text-muted-foreground">{activity.action}</span> at <span className="font-medium">{activity.storeName}</span>
+                                  <span className="text-muted-foreground">{activity.action}</span>{' '}
+                                  at <span className="font-medium">{activity.storeName}</span>
                                 </div>
                                 <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                                   <Clock className="h-3 w-3" />

@@ -137,12 +137,12 @@ const WithdrawRequests = () => {
   const rawSession = typeof window !== 'undefined' ? sessionStorage.getItem('userSession') : null;
   const session: { TwoAuth_enabled?: boolean; email?: string } | null = rawSession
     ? (() => {
-      try {
-        return JSON.parse(rawSession);
-      } catch {
-        return null;
-      }
-    })()
+        try {
+          return JSON.parse(rawSession);
+        } catch {
+          return null;
+        }
+      })()
     : null;
 
   // ── Data fetching ─────────────────────────────────────────────────────────
@@ -254,9 +254,11 @@ const WithdrawRequests = () => {
                   <EmptyCell colSpan={8} label="No pending withdraw requests." />
                 ) : (
                   withdrawQuery.data.map(req => {
-                    const isBusiness = !!req.business_id && req.business_id !== '00000000-0000-0000-0000-000000000000';
+                    const isBusiness =
+                      !!req.business_id &&
+                      req.business_id !== '00000000-0000-0000-0000-000000000000';
                     let accountType = isBusiness ? 'Business' : 'Plasa';
-                    
+
                     const businessAccount = req.business_accounts;
                     const businessWallet = req.business_wallets;
                     const shopper = req.shoppers;
@@ -267,19 +269,17 @@ const WithdrawRequests = () => {
                     }
 
                     const name = isBusiness
-                      ? (businessAccount?.business_name || 'Business Account')
-                      : (shopper?.full_name || 'Unknown Shopper');
-                    
+                      ? businessAccount?.business_name || 'Business Account'
+                      : shopper?.full_name || 'Unknown Shopper';
+
                     const phone =
                       req.phoneNumber ||
-                      (isBusiness
-                        ? businessAccount?.business_phone
-                        : shopper?.phone_number) ||
+                      (isBusiness ? businessAccount?.business_phone : shopper?.phone_number) ||
                       'N/A';
-                    
+
                     const balance = isBusiness
-                      ? (businessWallet?.amount || '0')
-                      : (wallet?.available_balance || '0');
+                      ? businessWallet?.amount || '0'
+                      : wallet?.available_balance || '0';
 
                     return (
                       <TableRow key={req.id}>
@@ -367,7 +367,11 @@ const WithdrawRequests = () => {
                           <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full bg-muted overflow-hidden flex-shrink-0 border">
                               {displayImage ? (
-                                <img src={displayImage} alt="" className="h-full w-full object-cover" />
+                                <img
+                                  src={displayImage}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
                               ) : (
                                 <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground uppercase">
                                   {displayName.charAt(0)}

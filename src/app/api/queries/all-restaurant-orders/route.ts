@@ -355,7 +355,9 @@ export async function GET(req: Request) {
                 phone: o.shoppers.phone_number ?? o.shoppers.phone ?? '',
                 email: '',
                 shopper: o.shoppers,
-                vehicle: o.shoppers.plate_number ? { plate_number: o.shoppers.plate_number } : undefined,
+                vehicle: o.shoppers.plate_number
+                  ? { plate_number: o.shoppers.plate_number }
+                  : undefined,
                 updated_at: o.shoppers.updated_at,
               }
             : undefined,

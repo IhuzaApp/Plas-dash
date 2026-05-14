@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    let foundUser: { id: string, name: string, type: 'project_user' | 'employee' } | null = null;
+    let foundUser: { id: string; name: string; type: 'project_user' | 'employee' } | null = null;
 
     // 1. Verify Account
     if (HASURA_GRAPHQL_URL && HASURA_GRAPHQL_ADMIN_SECRET) {
@@ -91,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       const data = await response.json();
-      
+
       if (data.data?.orgEmployees?.[0]) {
         const emp = data.data.orgEmployees[0];
         foundUser = { id: emp.id, name: emp.fullnames, type: 'employee' };
@@ -127,14 +127,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 2. Log to Slack
-    await logErrorToSlack('Login Support (Verified)', new Error(`Verified user support request: ${foundUser.name}`), {
-      type: foundUser.type,
-      email,
-      sharedId,
-      description,
-      userId: foundUser.id,
-      timestamp: new Date().toISOString(),
-    });
+    await logErrorToSlack(
+      'Login Support (Verified)',
+      new Error(`Verified user support request: ${foundUser.name}`),
+      {
+        type: foundUser.type,
+        email,
+        sharedId,
+        description,
+        userId: foundUser.id,
+        timestamp: new Date().toISOString(),
+      }
+    );
 
     // 3. Create Ticket
     if (HASURA_GRAPHQL_URL && HASURA_GRAPHQL_ADMIN_SECRET) {

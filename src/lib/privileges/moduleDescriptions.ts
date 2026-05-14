@@ -772,14 +772,38 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       { key: 'access_products', label: 'Products', description: 'Can access product management' },
       { key: 'access_users', label: 'Customers', description: 'Can access customer management' },
       { key: 'access_shoppers', label: 'Shoppers', description: 'Can access shopper management' },
-      { key: 'access_project_users', label: 'Project Users', description: 'Can access staff/project users' },
-      { key: 'access_logistics', label: 'Logistics', description: 'Can access logistics partner management' },
+      {
+        key: 'access_project_users',
+        label: 'Project Users',
+        description: 'Can access staff/project users',
+      },
+      {
+        key: 'access_logistics',
+        label: 'Logistics',
+        description: 'Can access logistics partner management',
+      },
       { key: 'access_pets', label: 'Pet Vendors', description: 'Can access pet vendor management' },
       { key: 'access_pos', label: 'POS System', description: 'Can access point of sale sections' },
-      { key: 'access_inventory', label: 'Inventory', description: 'Can access inventory management' },
-      { key: 'access_procurement', label: 'Procurement', description: 'Can access procurement module' },
-      { key: 'access_production', label: 'Production', description: 'Can access production module' },
-      { key: 'access_financial_overview', label: 'Finance', description: 'Can access financial reports' },
+      {
+        key: 'access_inventory',
+        label: 'Inventory',
+        description: 'Can access inventory management',
+      },
+      {
+        key: 'access_procurement',
+        label: 'Procurement',
+        description: 'Can access procurement module',
+      },
+      {
+        key: 'access_production',
+        label: 'Production',
+        description: 'Can access production module',
+      },
+      {
+        key: 'access_financial_overview',
+        label: 'Finance',
+        description: 'Can access financial reports',
+      },
       { key: 'access_wallet', label: 'Wallet', description: 'Can access company wallet' },
       { key: 'access_tickets', label: 'Support', description: 'Can access support tickets' },
       { key: 'access_settings', label: 'Settings', description: 'Can access system settings' },
@@ -987,9 +1011,21 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     group: 'Logistics & Suppliers',
     description: 'Manage logistics partners, fleet vehicles, and driver assignments',
     actions: [
-      { key: 'access', label: 'Access Logistics', description: 'Can access logistics partner module' },
-      { key: 'view_accounts', label: 'View Accounts', description: 'Can view logistics partner accounts' },
-      { key: 'manage_vehicles', label: 'Manage Vehicles', description: 'Can manage fleet vehicles' },
+      {
+        key: 'access',
+        label: 'Access Logistics',
+        description: 'Can access logistics partner module',
+      },
+      {
+        key: 'view_accounts',
+        label: 'View Accounts',
+        description: 'Can view logistics partner accounts',
+      },
+      {
+        key: 'manage_vehicles',
+        label: 'Manage Vehicles',
+        description: 'Can manage fleet vehicles',
+      },
       {
         key: 'manage_assignments',
         label: 'Manage Assignments',
@@ -1004,7 +1040,11 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
     actions: [
       { key: 'access', label: 'Access Pets', description: 'Can access pet vendor module' },
       { key: 'view_vendors', label: 'View Vendors', description: 'Can view pet vendor accounts' },
-      { key: 'manage_pets', label: 'Manage Pets', description: 'Can manage pet listings and inventory' },
+      {
+        key: 'manage_pets',
+        label: 'Manage Pets',
+        description: 'Can manage pet listings and inventory',
+      },
       {
         key: 'manage_adoptions',
         label: 'Manage Adoptions',

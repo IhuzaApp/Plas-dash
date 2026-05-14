@@ -91,7 +91,7 @@ const SingleOrderRow: React.FC<SingleOrderRowProps> = ({
           </div>
         </TableCell>
       )}
-      
+
       {visibleColumns.customer && (
         <TableCell>
           <div className="flex flex-col max-w-[120px] sm:max-w-none">
@@ -160,7 +160,11 @@ const SingleOrderRow: React.FC<SingleOrderRowProps> = ({
             if (exact) {
               return (
                 <div className="flex flex-col">
-                  <span className={isOverdue ? 'text-red-600 font-medium text-xs' : 'text-blue-600 text-xs'}>
+                  <span
+                    className={
+                      isOverdue ? 'text-red-600 font-medium text-xs' : 'text-blue-600 text-xs'
+                    }
+                  >
                     {text}
                   </span>
                   <span className="text-[9px] text-muted-foreground">{exact}</span>
@@ -173,11 +177,15 @@ const SingleOrderRow: React.FC<SingleOrderRowProps> = ({
       )}
 
       {visibleColumns.created && (
-        <TableCell className="text-xs whitespace-nowrap">{formatDateTime(order.created_at)}</TableCell>
+        <TableCell className="text-xs whitespace-nowrap">
+          {formatDateTime(order.created_at)}
+        </TableCell>
       )}
 
       {visibleColumns.updated && (
-        <TableCell className="text-xs whitespace-nowrap">{formatDateTime(order.updated_at)}</TableCell>
+        <TableCell className="text-xs whitespace-nowrap">
+          {formatDateTime(order.updated_at)}
+        </TableCell>
       )}
       <TableCell className="text-right space-x-2">
         <div className="flex justify-end gap-1">
@@ -193,7 +201,12 @@ const SingleOrderRow: React.FC<SingleOrderRowProps> = ({
                 <span className="hidden sm:inline">Call</span>
               </Button>
             )}
-          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(order)} className="h-8 px-2 sm:px-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleViewDetails(order)}
+            className="h-8 px-2 sm:px-3"
+          >
             Details
           </Button>
         </div>

@@ -155,7 +155,7 @@ const Shops = () => {
 
   const handleDisableShop = (shop: any) => {
     const newStatus = !shop.is_active;
-    
+
     // Validation: Cannot activate a shop without a subscription
     if (newStatus && (!shop.shop_subscription || shop.shop_subscription.status !== 'active')) {
       toast({
@@ -221,10 +221,11 @@ const Shops = () => {
             Partner Shops
           </h1>
           <p className="text-gray-300 max-w-md text-lg mb-6">
-            Monitor shop performance, manage active subscriptions, and track promotional campaigns across your marketplace.
+            Monitor shop performance, manage active subscriptions, and track promotional campaigns
+            across your marketplace.
           </p>
           {hasAction('shops', 'add_shops') && (
-            <Button 
+            <Button
               onClick={() => setIsAddShopDialogOpen(true)}
               className="w-fit bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
             >
@@ -269,219 +270,226 @@ const Shops = () => {
 
         <TabsContent value="all" className="space-y-4">
           <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead></TableHead>
-                <TableHead>Logo</TableHead>
-                <TableHead>Shop Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Products</TableHead>
-                <TableHead>Orders</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-                  </TableCell>
+                  <TableHead></TableHead>
+                  <TableHead>Logo</TableHead>
+                  <TableHead>Shop Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Products</TableHead>
+                  <TableHead>Orders</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : isError ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    <div className="text-red-500">
-                      Error loading shops. Please try again.
-                      {error && <div className="text-sm mt-2">Error details: {error.message}</div>}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : currentShops.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                    No shops found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                currentShops.map(shop => (
-                  <React.Fragment key={shop.id}>
-                    <TableRow>
-                      <TableCell>
-                        {(shop.Orders?.length ?? 0) > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleShopExpansion(shop.id)}
-                            className="p-1 h-6 w-6"
-                          >
-                            {expandedShops.has(shop.id) ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </Button>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : isError ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      <div className="text-red-500">
+                        Error loading shops. Please try again.
+                        {error && (
+                          <div className="text-sm mt-2">Error details: {error.message}</div>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <div
-                          className="h-10 w-10 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted"
-                          title={shop.name}
-                        >
-                          {shop.logo ? (
-                            <img
-                              src={shop.logo}
-                              alt={`${shop.name} logo`}
-                              className="h-full w-full object-contain"
-                            />
-                          ) : (
-                            <Store className="h-5 w-5 text-muted-foreground" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">{shop.name}</TableCell>
-                      <TableCell>{shop.category?.name || 'Uncategorized'}</TableCell>
-                      <TableCell>{shop.Products_aggregate?.aggregate?.count ?? 0}</TableCell>
-                      <TableCell>{shop.Orders_aggregate?.aggregate?.count ?? 0}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            shop.is_active
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {shop.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Link href={`/shops/${shop.id}`}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          {hasAction('shops', 'edit_shops') && (
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {hasAction('shops', 'delete_shops') && (
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : currentShops.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                      No shops found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  currentShops.map(shop => (
+                    <React.Fragment key={shop.id}>
+                      <TableRow>
+                        <TableCell>
+                          {(shop.Orders?.length ?? 0) > 0 && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDisableShop(shop)}
-                              disabled={disableShopMutation.isPending}
-                              className="h-8 w-8 p-0"
-                              title={shop.is_active ? 'Disable Shop' : 'Enable Shop'}
+                              onClick={() => toggleShopExpansion(shop.id)}
+                              className="p-1 h-6 w-6"
                             >
-                              {disableShopMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : shop.is_active ? (
-                                <PowerOff className="h-4 w-4" />
+                              {expandedShops.has(shop.id) ? (
+                                <ChevronDown className="h-4 w-4" />
                               ) : (
-                                <PowerOff className="h-4 w-4 text-green-600" />
+                                <ChevronRight className="h-4 w-4" />
                               )}
                             </Button>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Expanded Orders Section */}
-                    {expandedShops.has(shop.id) && (shop.Orders?.length ?? 0) > 0 && (
-                      <TableRow>
-                        <TableCell colSpan={8} className="p-0">
-                          <div className="bg-muted/30 p-4">
-                            <h4 className="font-semibold mb-3 text-sm text-muted-foreground">
-                              Recent Orders ({shop.Orders?.length ?? 0})
-                            </h4>
-                            <div className="space-y-3">
-                              {(shop.Orders ?? []).map(order => (
-                                <div key={order.id} className="bg-background rounded-lg p-4 border">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-3">
-                                      <Package className="h-4 w-4 text-muted-foreground" />
-                                      <span className="font-medium text-sm">#{order.OrderID}</span>
-                                      {getStatusBadge(order.status)}
-                                    </div>
-                                    <div className="text-right">
-                                      <div className="font-semibold">
-                                        {formatCurrency(order.total)}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <User className="h-4 w-4 text-muted-foreground" />
-                                      <span>{order.User?.name ?? '—'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                      <span>Delivery: {formatCurrency(order.delivery_fee)}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                                      <span>{order.Order_Items?.length ?? 0} items</span>
-                                    </div>
-                                  </div>
-
-                                  {(order.Order_Items?.length ?? 0) > 0 && (
-                                    <div className="mt-3 pt-3 border-t">
-                                      <div className="text-xs font-medium text-muted-foreground mb-2">
-                                        Items:
-                                      </div>
-                                      <div className="space-y-1">
-                                        {(order.Order_Items ?? []).slice(0, 3).map(item => (
-                                          <div
-                                            key={item.id}
-                                            className="flex justify-between text-xs"
-                                          >
-                                            <span>
-                                              {item.Product?.name ?? 'Unknown Product'} x
-                                              {item.quantity}
-                                            </span>
-                                            <span>{formatCurrency(item.price)}</span>
-                                          </div>
-                                        ))}
-                                        {(order.Order_Items?.length ?? 0) > 3 && (
-                                          <div className="text-xs text-muted-foreground">
-                                            +{(order.Order_Items?.length ?? 0) - 3} more items
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
+                        </TableCell>
+                        <TableCell>
+                          <div
+                            className="h-10 w-10 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted"
+                            title={shop.name}
+                          >
+                            {shop.logo ? (
+                              <img
+                                src={shop.logo}
+                                alt={`${shop.name} logo`}
+                                className="h-full w-full object-contain"
+                              />
+                            ) : (
+                              <Store className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{shop.name}</TableCell>
+                        <TableCell>{shop.category?.name || 'Uncategorized'}</TableCell>
+                        <TableCell>{shop.Products_aggregate?.aggregate?.count ?? 0}</TableCell>
+                        <TableCell>{shop.Orders_aggregate?.aggregate?.count ?? 0}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              shop.is_active
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {shop.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Link href={`/shops/${shop.id}`}>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            {hasAction('shops', 'edit_shops') && (
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {hasAction('shops', 'delete_shops') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDisableShop(shop)}
+                                disabled={disableShopMutation.isPending}
+                                className="h-8 w-8 p-0"
+                                title={shop.is_active ? 'Disable Shop' : 'Enable Shop'}
+                              >
+                                {disableShopMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : shop.is_active ? (
+                                  <PowerOff className="h-4 w-4" />
+                                ) : (
+                                  <PowerOff className="h-4 w-4 text-green-600" />
+                                )}
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
-                    )}
-                  </React.Fragment>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          {!isLoading && !isError && currentShops.length > 0 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={size => {
-                setPageSize(size);
-                setCurrentPage(1); // Reset to first page when changing page size
-              }}
-              totalItems={totalItems}
-            />
-          )}
+
+                      {/* Expanded Orders Section */}
+                      {expandedShops.has(shop.id) && (shop.Orders?.length ?? 0) > 0 && (
+                        <TableRow>
+                          <TableCell colSpan={8} className="p-0">
+                            <div className="bg-muted/30 p-4">
+                              <h4 className="font-semibold mb-3 text-sm text-muted-foreground">
+                                Recent Orders ({shop.Orders?.length ?? 0})
+                              </h4>
+                              <div className="space-y-3">
+                                {(shop.Orders ?? []).map(order => (
+                                  <div
+                                    key={order.id}
+                                    className="bg-background rounded-lg p-4 border"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-3">
+                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-medium text-sm">
+                                          #{order.OrderID}
+                                        </span>
+                                        {getStatusBadge(order.status)}
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="font-semibold">
+                                          {formatCurrency(order.total)}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                      <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4 text-muted-foreground" />
+                                        <span>{order.User?.name ?? '—'}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                        <span>Delivery: {formatCurrency(order.delivery_fee)}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                                        <span>{order.Order_Items?.length ?? 0} items</span>
+                                      </div>
+                                    </div>
+
+                                    {(order.Order_Items?.length ?? 0) > 0 && (
+                                      <div className="mt-3 pt-3 border-t">
+                                        <div className="text-xs font-medium text-muted-foreground mb-2">
+                                          Items:
+                                        </div>
+                                        <div className="space-y-1">
+                                          {(order.Order_Items ?? []).slice(0, 3).map(item => (
+                                            <div
+                                              key={item.id}
+                                              className="flex justify-between text-xs"
+                                            >
+                                              <span>
+                                                {item.Product?.name ?? 'Unknown Product'} x
+                                                {item.quantity}
+                                              </span>
+                                              <span>{formatCurrency(item.price)}</span>
+                                            </div>
+                                          ))}
+                                          {(order.Order_Items?.length ?? 0) > 3 && (
+                                            <div className="text-xs text-muted-foreground">
+                                              +{(order.Order_Items?.length ?? 0) - 3} more items
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            {!isLoading && !isError && currentShops.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={size => {
+                  setPageSize(size);
+                  setCurrentPage(1); // Reset to first page when changing page size
+                }}
+                totalItems={totalItems}
+              />
+            )}
           </Card>
         </TabsContent>
 
@@ -595,8 +603,9 @@ const Shops = () => {
                       <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
                     </TableCell>
                   </TableRow>
-                ) : data?.Shops?.filter(s => (s as any).promotions && (s as any).promotions.length > 0).length ===
-                  0 ? (
+                ) : data?.Shops?.filter(
+                    s => (s as any).promotions && (s as any).promotions.length > 0
+                  ).length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                       No active promotions found.
@@ -604,7 +613,11 @@ const Shops = () => {
                   </TableRow>
                 ) : (
                   data?.Shops?.flatMap(shop =>
-                    ((shop as any).promotions || []).map((promo: any) => ({ ...promo, shopName: shop.name, shopLogo: shop.logo }))
+                    ((shop as any).promotions || []).map((promo: any) => ({
+                      ...promo,
+                      shopName: shop.name,
+                      shopLogo: shop.logo,
+                    }))
                   ).map(promo => (
                     <TableRow key={promo.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="font-medium">
@@ -642,7 +655,8 @@ const Shops = () => {
                           ></div>
                         </div>
                         <span className="text-[10px] text-muted-foreground">
-                          {formatCurrency(promo.budget_used || '0')} / {formatCurrency(promo.budget_limit || '0')}
+                          {formatCurrency(promo.budget_used || '0')} /{' '}
+                          {formatCurrency(promo.budget_limit || '0')}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -674,8 +688,11 @@ const Shops = () => {
               {shopToToggle?.is_active ? 'Disable Shop' : 'Enable Shop'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {shopToToggle?.is_active ? 'disable' : 'enable'} <strong>{shopToToggle?.name}</strong>? 
-              {shopToToggle?.is_active ? ' This will hide the shop and its products from the marketplace.' : ' This will make the shop and its products visible to customers.'}
+              Are you sure you want to {shopToToggle?.is_active ? 'disable' : 'enable'}{' '}
+              <strong>{shopToToggle?.name}</strong>?
+              {shopToToggle?.is_active
+                ? ' This will hide the shop and its products from the marketplace.'
+                : ' This will make the shop and its products visible to customers.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -683,13 +700,17 @@ const Shops = () => {
             <AlertDialogAction
               onClick={() => {
                 if (shopToToggle) {
-                  disableShopMutation.mutate({ 
-                    shopId: shopToToggle.id, 
-                    isActive: !shopToToggle.is_active 
+                  disableShopMutation.mutate({
+                    shopId: shopToToggle.id,
+                    isActive: !shopToToggle.is_active,
                   });
                 }
               }}
-              className={shopToToggle?.is_active ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-green-600 hover:bg-green-700 text-white'}
+              className={
+                shopToToggle?.is_active
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }
             >
               {disableShopMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

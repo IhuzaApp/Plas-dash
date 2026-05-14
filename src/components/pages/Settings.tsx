@@ -24,7 +24,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Settings as SettingsIcon, Store, Building2, User, Mail, Phone, Shield, Smartphone, Fingerprint, Sun, Moon } from 'lucide-react';
+import {
+  Settings as SettingsIcon,
+  Store,
+  Building2,
+  User,
+  Mail,
+  Phone,
+  Shield,
+  Smartphone,
+  Fingerprint,
+  Sun,
+  Moon,
+} from 'lucide-react';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import SupermarketSettings from './SupermarketSettings';
 import { useSession } from 'next-auth/react';
@@ -33,7 +45,11 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { hasuraClient } from '@/lib/hasuraClient';
-import { GET_PROJECT_USER_BY_ID, GET_ORG_EMPLOYEE_BY_ID, GET_USER_BY_ID_SIMPLE } from '@/lib/graphql/queries';
+import {
+  GET_PROJECT_USER_BY_ID,
+  GET_ORG_EMPLOYEE_BY_ID,
+  GET_USER_BY_ID_SIMPLE,
+} from '@/lib/graphql/queries';
 import { useEffect } from 'react';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 
@@ -103,7 +119,7 @@ const Settings = () => {
       }
 
       setIsLoadingUser(true);
-      
+
       if (!hasuraClient) {
         setIsLoadingUser(false);
         return;
@@ -122,7 +138,7 @@ const Settings = () => {
               display_email: pUser.email,
               display_phone: 'N/A',
               display_image: pUser.profile,
-              membership_id: pUser.MembershipId
+              membership_id: pUser.MembershipId,
             });
             setIsTwoFactorEnabled(pUser.TwoAuth_enabled);
           }
@@ -136,7 +152,7 @@ const Settings = () => {
               display_role: eUser.roleType,
               display_email: eUser.email,
               display_phone: eUser.phone,
-              display_image: null
+              display_image: null,
             });
           }
         } else {
@@ -149,7 +165,7 @@ const Settings = () => {
               display_role: uUser.role,
               display_email: uUser.email,
               display_phone: uUser.phone,
-              display_image: uUser.profile_picture
+              display_image: uUser.profile_picture,
             });
           }
         }
@@ -176,19 +192,19 @@ const Settings = () => {
     }
 
     if (!currentUserId) return;
-    
+
     // Optimistic update
     setIsTwoFactorEnabled(enabled);
-    
+
     try {
       const response = await fetch('/api/mutations/update-project-user-2fa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: currentUserId, enabled }),
       });
-      
+
       if (!response.ok) throw new Error('Failed to update 2FA');
-      
+
       toast.success(enabled ? '2FA Enabled' : '2FA Disabled');
     } catch (error) {
       console.error('Error updating 2FA:', error);
@@ -226,13 +242,13 @@ const Settings = () => {
     try {
       const response = await fetch('/api/user/change-password', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUserId}`
+          Authorization: `Bearer ${currentUserId}`,
         },
         body: JSON.stringify({
           currentPassword: passwordState.current,
-          newPassword: passwordState.new
+          newPassword: passwordState.new,
         }),
       });
 
@@ -282,9 +298,9 @@ const Settings = () => {
     try {
       const response = await fetch('/api/user/update-profile-image', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUserId}`
+          Authorization: `Bearer ${currentUserId}`,
         },
         body: JSON.stringify({ profileImage: imageUrl }),
       });
@@ -314,7 +330,6 @@ const Settings = () => {
     reader.readAsDataURL(file);
   };
 
-
   return (
     <AdminLayout isLoading={isLoadingUser || !profileData}>
       <PageHeader
@@ -325,65 +340,99 @@ const Settings = () => {
 
       <Tabs defaultValue="profile">
         <TabsList className="mb-4 bg-zinc-100/80 dark:bg-zinc-800/50 p-1 rounded-xl border">
-          <TabsTrigger value="profile" className="rounded-lg px-6">My Profile</TabsTrigger>
-          {(profileData?.display_role === 'globalAdmin' || profileData?.display_role === 'storeAdministrator') && (
+          <TabsTrigger value="profile" className="rounded-lg px-6">
+            My Profile
+          </TabsTrigger>
+          {(profileData?.display_role === 'globalAdmin' ||
+            profileData?.display_role === 'storeAdministrator') && (
             <>
-              <TabsTrigger value="general" className="rounded-lg px-6">General</TabsTrigger>
-              <TabsTrigger value="supermarket" className="rounded-lg px-6">Supermarket</TabsTrigger>
+              <TabsTrigger value="general" className="rounded-lg px-6">
+                General
+              </TabsTrigger>
+              <TabsTrigger value="supermarket" className="rounded-lg px-6">
+                Supermarket
+              </TabsTrigger>
             </>
           )}
-          <TabsTrigger value="appearance" className="rounded-lg px-6">Appearance</TabsTrigger>
-          {(profileData?.display_role === 'globalAdmin' || profileData?.display_role === 'storeAdministrator') && (
-            <TabsTrigger value="notifications" className="rounded-lg px-6">Notifications</TabsTrigger>
+          <TabsTrigger value="appearance" className="rounded-lg px-6">
+            Appearance
+          </TabsTrigger>
+          {(profileData?.display_role === 'globalAdmin' ||
+            profileData?.display_role === 'storeAdministrator') && (
+            <TabsTrigger value="notifications" className="rounded-lg px-6">
+              Notifications
+            </TabsTrigger>
           )}
-          <TabsTrigger value="security" className="rounded-lg px-6">Security</TabsTrigger>
+          <TabsTrigger value="security" className="rounded-lg px-6">
+            Security
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <TabsContent
+          value="profile"
+          className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-1 border-none shadow-xl bg-gradient-to-br from-primary/5 via-background to-background rounded-3xl overflow-hidden">
               <div className="h-24 bg-primary/10 relative">
-                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 group cursor-pointer" onClick={() => setIsAvatarDialogOpen(true)}>
-                   <Avatar className="h-20 w-20 border-4 border-background shadow-lg transition-transform group-hover:scale-105">
-                      <AvatarImage src={profileData?.display_image || user?.image || user?.profile_picture} />
-                      <AvatarFallback className="text-xl font-bold bg-zinc-100">
-                        {profileData?.display_name?.charAt(0) || user?.name?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                        <Smartphone className="h-5 w-5 text-white" />
-                      </div>
-                   </Avatar>
+                <div
+                  className="absolute -bottom-10 left-1/2 -translate-x-1/2 group cursor-pointer"
+                  onClick={() => setIsAvatarDialogOpen(true)}
+                >
+                  <Avatar className="h-20 w-20 border-4 border-background shadow-lg transition-transform group-hover:scale-105">
+                    <AvatarImage
+                      src={profileData?.display_image || user?.image || user?.profile_picture}
+                    />
+                    <AvatarFallback className="text-xl font-bold bg-zinc-100">
+                      {profileData?.display_name?.charAt(0) || user?.name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                      <Smartphone className="h-5 w-5 text-white" />
+                    </div>
+                  </Avatar>
                 </div>
               </div>
               <CardHeader className="pt-14 text-center">
                 <CardTitle className="text-xl">{profileData?.display_name || user?.name}</CardTitle>
                 <div className="flex items-center justify-center gap-2 pt-1">
-                  <Badge variant="secondary" className="rounded-full px-3">{profileData?.display_role || user?.role || 'Admin'}</Badge>
+                  <Badge variant="secondary" className="rounded-full px-3">
+                    {profileData?.display_role || user?.role || 'Admin'}
+                  </Badge>
                   {profileData?.membership_id && (
-                    <Badge variant="outline" className="rounded-full px-3 text-[10px]">ID: {profileData.membership_id}</Badge>
+                    <Badge variant="outline" className="rounded-full px-3 text-[10px]">
+                      ID: {profileData.membership_id}
+                    </Badge>
                   )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900/50 border space-y-3">
-                   <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                        <Mail className="h-4 w-4" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Email</span>
-                        <span className="text-sm font-medium">{profileData?.display_email || user?.email}</span>
-                      </div>
-                   </div>
-                   <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                        <User className="h-4 w-4" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Gender</span>
-                        <span className="text-sm font-medium capitalize">{profileData?.gender || 'Not specified'}</span>
-                      </div>
-                   </div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+                        Email
+                      </span>
+                      <span className="text-sm font-medium">
+                        {profileData?.display_email || user?.email}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+                        Gender
+                      </span>
+                      <span className="text-sm font-medium capitalize">
+                        {profileData?.gender || 'Not specified'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -392,38 +441,62 @@ const Settings = () => {
               <Card className="border-none shadow-lg rounded-3xl overflow-hidden">
                 <CardHeader className="border-b bg-zinc-50/50 dark:bg-zinc-900/50">
                   <CardTitle>Personal Details</CardTitle>
-                  <CardDescription>View your account identity and contact information.</CardDescription>
+                  <CardDescription>
+                    View your account identity and contact information.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label>Full Name / Username</Label>
-                      <Input defaultValue={profileData?.display_name || user?.name} disabled className="rounded-xl bg-zinc-100/50" />
+                      <Input
+                        defaultValue={profileData?.display_name || user?.name}
+                        disabled
+                        className="rounded-xl bg-zinc-100/50"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Account ID</Label>
-                      <Input defaultValue={profileData?.membership_id || profileData?.id} disabled className="rounded-xl bg-zinc-100/50" />
+                      <Input
+                        defaultValue={profileData?.membership_id || profileData?.id}
+                        disabled
+                        className="rounded-xl bg-zinc-100/50"
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label>Email Address</Label>
-                      <Input defaultValue={profileData?.display_email || user?.email} disabled className="rounded-xl bg-zinc-100/50" />
+                      <Input
+                        defaultValue={profileData?.display_email || user?.email}
+                        disabled
+                        className="rounded-xl bg-zinc-100/50"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Phone Number</Label>
-                      <Input defaultValue={profileData?.display_phone || user?.phone} disabled className="rounded-xl bg-zinc-100/50" />
+                      <Input
+                        defaultValue={profileData?.display_phone || user?.phone}
+                        disabled
+                        className="rounded-xl bg-zinc-100/50"
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label>Position / Role</Label>
-                      <Input defaultValue={profileData?.display_role || 'General User'} disabled className="rounded-xl bg-zinc-100/50 capitalize" />
+                      <Input
+                        defaultValue={profileData?.display_role || 'General User'}
+                        disabled
+                        className="rounded-xl bg-zinc-100/50 capitalize"
+                      />
                     </div>
                   </div>
                   <div className="space-y-4 pt-4 border-t">
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Account Privileges</Label>
+                      <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                        Account Privileges
+                      </Label>
                       <Badge variant="outline" className="rounded-full text-[10px]">
                         {profileData?.display_role || 'General Access'}
                       </Badge>
@@ -431,18 +504,26 @@ const Settings = () => {
                     <div className="flex flex-wrap gap-2">
                       {profileData?.privileges ? (
                         Object.entries(profileData.privileges)
-                          .filter(([_, value]) => value && (typeof value === 'object' ? Object.values(value).some(v => v === true) : value === true))
+                          .filter(
+                            ([_, value]) =>
+                              value &&
+                              (typeof value === 'object'
+                                ? Object.values(value).some(v => v === true)
+                                : value === true)
+                          )
                           .map(([key, _]) => (
-                            <Badge 
-                              key={key} 
-                              variant="secondary" 
+                            <Badge
+                              key={key}
+                              variant="secondary"
                               className="rounded-lg px-3 py-1 bg-primary/5 text-primary border-primary/10 hover:bg-primary/10 transition-colors capitalize text-[11px]"
                             >
                               {key.replace(/_/g, ' ')}
                             </Badge>
                           ))
                       ) : (
-                        <p className="text-xs text-muted-foreground italic">No specific privileges assigned.</p>
+                        <p className="text-xs text-muted-foreground italic">
+                          No specific privileges assigned.
+                        </p>
                       )}
                     </div>
                   </div>
@@ -534,27 +615,36 @@ const Settings = () => {
           </TabsContent>
         )}
 
-        <TabsContent value="appearance" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <TabsContent
+          value="appearance"
+          className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+        >
           <Card className="border-none shadow-lg rounded-3xl overflow-hidden">
             <CardHeader className="border-b bg-zinc-50/50 dark:bg-zinc-900/50">
               <CardTitle>Appearance Settings</CardTitle>
-              <CardDescription>Customize the look and feel of your dashboard experience.</CardDescription>
+              <CardDescription>
+                Customize the look and feel of your dashboard experience.
+              </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-8">
               <div className="space-y-4">
-                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Interface Theme</Label>
+                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Interface Theme
+                </Label>
                 <div className="grid grid-cols-3 gap-4">
                   {[
                     { id: 'light', name: 'Light', icon: <Sun className="h-4 w-4" /> },
                     { id: 'dark', name: 'Dark', icon: <Moon className="h-4 w-4" /> },
                     { id: 'system', name: 'System', icon: <Smartphone className="h-4 w-4" /> },
-                  ].map((t) => (
+                  ].map(t => (
                     <Button
                       key={t.id}
                       variant={theme === t.id ? 'default' : 'outline'}
                       className={cn(
-                        "h-20 flex flex-col gap-2 rounded-2xl transition-all duration-300",
-                        theme === t.id ? "bg-primary shadow-lg shadow-primary/20 scale-105" : "hover:bg-primary/5 hover:border-primary/30"
+                        'h-20 flex flex-col gap-2 rounded-2xl transition-all duration-300',
+                        theme === t.id
+                          ? 'bg-primary shadow-lg shadow-primary/20 scale-105'
+                          : 'hover:bg-primary/5 hover:border-primary/30'
                       )}
                       onClick={() => setTheme(t.id)}
                     >
@@ -566,67 +656,76 @@ const Settings = () => {
               </div>
 
               <div className="space-y-4">
-                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Primary Color Accent</Label>
+                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Primary Color Accent
+                </Label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {themePresets.map((p) => (
+                  {themePresets.map(p => (
                     <Button
                       key={p.name}
                       variant="outline"
                       className={cn(
-                        "h-14 flex items-center justify-start gap-3 rounded-2xl transition-all duration-300 px-3 overflow-hidden",
-                        activeColor.name === p.name 
-                          ? "border-primary bg-primary/5 shadow-md scale-[1.02]" 
-                          : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                        'h-14 flex items-center justify-start gap-3 rounded-2xl transition-all duration-300 px-3 overflow-hidden',
+                        activeColor.name === p.name
+                          ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
+                          : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'
                       )}
                       onClick={() => {
                         setActiveColor(p);
                         toast.success(`Theme updated to ${p.name}`);
                       }}
                     >
-                      <div 
-                        className="h-6 w-6 rounded-lg shadow-inner flex-shrink-0" 
+                      <div
+                        className="h-6 w-6 rounded-lg shadow-inner flex-shrink-0"
                         style={{ backgroundColor: p.primary }}
                       />
-                      <span className={cn(
-                        "text-[10px] font-bold uppercase tracking-tighter truncate",
-                        activeColor.name === p.name ? "text-primary" : "text-zinc-500"
-                      )}>
+                      <span
+                        className={cn(
+                          'text-[10px] font-bold uppercase tracking-tighter truncate',
+                          activeColor.name === p.name ? 'text-primary' : 'text-zinc-500'
+                        )}
+                      >
                         {p.name.split(' ')[0]}
                       </span>
                     </Button>
                   ))}
-                  
+
                   {/* Custom Color Picker */}
                   <div className="relative group">
                     <Button
                       variant="outline"
                       className={cn(
-                        "h-14 w-full flex items-center justify-start gap-3 rounded-2xl transition-all duration-300 px-3 overflow-hidden",
-                        activeColor.name === 'Custom' 
-                          ? "border-primary bg-primary/5 shadow-md scale-[1.02]" 
-                          : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                        'h-14 w-full flex items-center justify-start gap-3 rounded-2xl transition-all duration-300 px-3 overflow-hidden',
+                        activeColor.name === 'Custom'
+                          ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
+                          : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'
                       )}
                       onClick={() => document.getElementById('custom-color-picker')?.click()}
                     >
-                      <div 
-                        className="h-6 w-6 rounded-lg shadow-inner flex-shrink-0 border-2 border-dashed border-zinc-300 flex items-center justify-center text-[10px]" 
-                        style={{ backgroundColor: activeColor.name === 'Custom' ? activeColor.primary : 'transparent' }}
+                      <div
+                        className="h-6 w-6 rounded-lg shadow-inner flex-shrink-0 border-2 border-dashed border-zinc-300 flex items-center justify-center text-[10px]"
+                        style={{
+                          backgroundColor:
+                            activeColor.name === 'Custom' ? activeColor.primary : 'transparent',
+                        }}
                       >
                         {activeColor.name !== 'Custom' && '+'}
                       </div>
-                      <span className={cn(
-                        "text-[10px] font-bold uppercase tracking-tighter truncate",
-                        activeColor.name === 'Custom' ? "text-primary" : "text-zinc-500"
-                      )}>
+                      <span
+                        className={cn(
+                          'text-[10px] font-bold uppercase tracking-tighter truncate',
+                          activeColor.name === 'Custom' ? 'text-primary' : 'text-zinc-500'
+                        )}
+                      >
                         Custom
                       </span>
                     </Button>
-                    <input 
+                    <input
                       id="custom-color-picker"
                       type="color"
                       className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
                       value={activeColor.primary}
-                      onChange={(e) => setCustomColor(e.target.value)}
+                      onChange={e => setCustomColor(e.target.value)}
                     />
                   </div>
                 </div>
@@ -634,8 +733,12 @@ const Settings = () => {
 
               <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-dashed">
                 <div className="space-y-0.5">
-                  <Label htmlFor="compact-mode" className="text-sm font-bold">Compact Interface</Label>
-                  <p className="text-[10px] text-muted-foreground">Reduce spacing and padding for a denser layout.</p>
+                  <Label htmlFor="compact-mode" className="text-sm font-bold">
+                    Compact Interface
+                  </Label>
+                  <p className="text-[10px] text-muted-foreground">
+                    Reduce spacing and padding for a denser layout.
+                  </p>
                 </div>
                 <Switch id="compact-mode" />
               </div>
@@ -702,13 +805,15 @@ const Settings = () => {
           <Card className="border-none shadow-lg rounded-3xl overflow-hidden">
             <CardHeader className="border-b bg-zinc-50/50 dark:bg-zinc-900/50">
               <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Configure security options and access policies for your account.</CardDescription>
+              <CardDescription>
+                Configure security options and access policies for your account.
+              </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-8">
               <div className="space-y-6">
                 <div className="space-y-4">
                   <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                     Security Authentication
+                    Security Authentication
                   </h3>
                   <div className="grid gap-6">
                     <div className="flex items-center justify-between">
@@ -718,17 +823,19 @@ const Settings = () => {
                         </div>
                         <div className="space-y-0.5">
                           <p className="text-sm font-bold">Two-Factor Authentication</p>
-                          <p className="text-[10px] text-muted-foreground">Secure your account with SMS verification</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Secure your account with SMS verification
+                          </p>
                         </div>
                       </div>
-                      <Switch 
-                        id="2fa" 
+                      <Switch
+                        id="2fa"
                         checked={isTwoFactorEnabled}
                         onCheckedChange={handleToggle2FA}
                         disabled={isLoadingUser}
                       />
                     </div>
-                    
+
                     <div className="flex items-center justify-between opacity-50 cursor-not-allowed border-t pt-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
@@ -736,7 +843,9 @@ const Settings = () => {
                         </div>
                         <div className="space-y-0.5">
                           <p className="text-sm font-bold">Biometric Login</p>
-                          <p className="text-[10px] text-muted-foreground">Unlock with FaceID or Fingerprint</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Unlock with FaceID or Fingerprint
+                          </p>
                         </div>
                       </div>
                       <Switch disabled />
@@ -746,44 +855,48 @@ const Settings = () => {
 
                 <div className="pt-6 border-t">
                   <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider mb-4">
-                     Change Password
+                    Change Password
                   </h3>
                   <div className="grid gap-4 max-w-md">
                     <div className="space-y-2">
                       <Label htmlFor="current-password">Current Password</Label>
-                      <Input 
-                        id="current-password" 
-                        type="password" 
-                        placeholder="••••••••" 
+                      <Input
+                        id="current-password"
+                        type="password"
+                        placeholder="••••••••"
                         className="rounded-xl"
                         value={passwordState.current}
-                        onChange={(e) => setPasswordState({...passwordState, current: e.target.value})}
+                        onChange={e =>
+                          setPasswordState({ ...passwordState, current: e.target.value })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="new-password">New Password</Label>
-                      <Input 
-                        id="new-password" 
-                        type="password" 
-                        placeholder="••••••••" 
+                      <Input
+                        id="new-password"
+                        type="password"
+                        placeholder="••••••••"
                         className="rounded-xl"
                         value={passwordState.new}
-                        onChange={(e) => setPasswordState({...passwordState, new: e.target.value})}
+                        onChange={e => setPasswordState({ ...passwordState, new: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confirm-password">Confirm New Password</Label>
-                      <Input 
-                        id="confirm-password" 
-                        type="password" 
-                        placeholder="••••••••" 
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        placeholder="••••••••"
                         className="rounded-xl"
                         value={passwordState.confirm}
-                        onChange={(e) => setPasswordState({...passwordState, confirm: e.target.value})}
+                        onChange={e =>
+                          setPasswordState({ ...passwordState, confirm: e.target.value })
+                        }
                       />
                     </div>
-                    <Button 
-                      onClick={handleChangePassword} 
+                    <Button
+                      onClick={handleChangePassword}
                       disabled={isUpdatingPassword}
                       className="w-full md:w-auto rounded-xl"
                     >
@@ -795,7 +908,6 @@ const Settings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -841,82 +953,98 @@ const Settings = () => {
         <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
           <DialogHeader className="sr-only">
             <DialogTitle>Edit Profile Picture</DialogTitle>
-            <DialogDescription>Choose a character style or upload your own photo.</DialogDescription>
+            <DialogDescription>
+              Choose a character style or upload your own photo.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2">
             <div className="bg-zinc-50 dark:bg-zinc-900/50 p-8 flex flex-col items-center justify-center border-r">
-               <div className="relative group">
-                 <Avatar className="h-40 w-40 border-8 border-background shadow-2xl transition-transform group-hover:scale-105 duration-500">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${avatarSeed}`} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-4xl">
-                      {avatarSeed.charAt(0)}
-                    </AvatarFallback>
-                 </Avatar>
-                 <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-full shadow-lg">
-                   <Smartphone className="h-5 w-5" />
-                 </div>
-               </div>
-               <div className="mt-6 text-center">
-                 <h3 className="font-bold text-lg">Avatar Preview</h3>
-                 <p className="text-xs text-muted-foreground">Generated using {avatarStyle}</p>
-               </div>
-               <Button 
-                 onClick={() => handleUpdateAvatar(`https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${avatarSeed}`)}
-                 disabled={isUpdatingAvatar}
-                 className="mt-8 w-full rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-               >
-                 {isUpdatingAvatar ? 'Saving...' : 'Set as Profile Picture'}
-               </Button>
+              <div className="relative group">
+                <Avatar className="h-40 w-40 border-8 border-background shadow-2xl transition-transform group-hover:scale-105 duration-500">
+                  <AvatarImage
+                    src={`https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${avatarSeed}`}
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary text-4xl">
+                    {avatarSeed.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-full shadow-lg">
+                  <Smartphone className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-6 text-center">
+                <h3 className="font-bold text-lg">Avatar Preview</h3>
+                <p className="text-xs text-muted-foreground">Generated using {avatarStyle}</p>
+              </div>
+              <Button
+                onClick={() =>
+                  handleUpdateAvatar(
+                    `https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${avatarSeed}`
+                  )
+                }
+                disabled={isUpdatingAvatar}
+                className="mt-8 w-full rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+              >
+                {isUpdatingAvatar ? 'Saving...' : 'Set as Profile Picture'}
+              </Button>
             </div>
-            
+
             <div className="p-8 space-y-6 bg-background">
-               <div>
-                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Choose Style</Label>
-                 <Select value={avatarStyle} onValueChange={setAvatarStyle}>
-                    <SelectTrigger className="w-full mt-2 rounded-xl">
-                      <SelectValue placeholder="Select a style" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {avatarStyles.map((style) => (
-                        <SelectItem key={style.id} value={style.id}>
-                          {style.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                 </Select>
-               </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Choose Style
+                </Label>
+                <Select value={avatarStyle} onValueChange={setAvatarStyle}>
+                  <SelectTrigger className="w-full mt-2 rounded-xl">
+                    <SelectValue placeholder="Select a style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {avatarStyles.map(style => (
+                      <SelectItem key={style.id} value={style.id}>
+                        {style.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-               <div className="space-y-2">
-                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Custom Seed</Label>
-                 <Input 
-                   value={avatarSeed}
-                   onChange={(e) => setAvatarSeed(e.target.value)}
-                   placeholder="Type anything to randomize..."
-                   className="rounded-xl"
-                 />
-                 <p className="text-[10px] text-muted-foreground">Changing the text will generate a unique character.</p>
-               </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Custom Seed
+                </Label>
+                <Input
+                  value={avatarSeed}
+                  onChange={e => setAvatarSeed(e.target.value)}
+                  placeholder="Type anything to randomize..."
+                  className="rounded-xl"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Changing the text will generate a unique character.
+                </p>
+              </div>
 
-               <div className="pt-4 border-t">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-3">Or Upload Photo</Label>
-                  <div className="relative">
-                    <input
-                      type="file"
-                      id="avatar-upload"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                    />
-                    <Button 
-                      variant="outline" 
-                      className="w-full rounded-xl border-dashed py-8 h-auto flex flex-col gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all"
-                      onClick={() => document.getElementById('avatar-upload')?.click()}
-                    >
-                      <Smartphone className="h-6 w-6 text-primary" />
-                      <span className="text-xs font-medium">Click to upload image</span>
-                    </Button>
-                  </div>
-               </div>
+              <div className="pt-4 border-t">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-3">
+                  Or Upload Photo
+                </Label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="avatar-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-xl border-dashed py-8 h-auto flex flex-col gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all"
+                    onClick={() => document.getElementById('avatar-upload')?.click()}
+                  >
+                    <Smartphone className="h-6 w-6 text-primary" />
+                    <span className="text-xs font-medium">Click to upload image</span>
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </DialogContent>

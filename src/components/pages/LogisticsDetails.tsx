@@ -6,12 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { 
-  Truck, 
-  User, 
-  MapPin, 
-  Calendar, 
-  FileCheck, 
+import {
+  Truck,
+  User,
+  MapPin,
+  Calendar,
+  FileCheck,
   Building2,
   Info,
   ShieldCheck,
@@ -20,7 +20,7 @@ import {
   Car,
   Settings,
   Fuel,
-  Users
+  Users,
 } from 'lucide-react';
 import { useLogisticsAccount, useUpdateLogisticsAccount } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
@@ -91,11 +91,17 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
         <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] text-center p-4">
           <Info className="w-12 h-12 mb-4 text-muted-foreground opacity-20" />
           <h2 className="text-xl font-bold">Partner Not Found</h2>
-          <p className="text-muted-foreground mt-2">The requested logistics partner details could not be loaded or do not exist.</p>
-          <Button variant="outline" className="mt-6" onClick={() => {
-            startLoading();
-            router.push('/logistics');
-          }}>
+          <p className="text-muted-foreground mt-2">
+            The requested logistics partner details could not be loaded or do not exist.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-6"
+            onClick={() => {
+              startLoading();
+              router.push('/logistics');
+            }}
+          >
             <ChevronLeft className="w-4 h-4 mr-2" /> Back to Partners
           </Button>
         </div>
@@ -108,9 +114,9 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => {
                 startLoading();
                 router.push('/logistics');
@@ -139,7 +145,11 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
               size="sm"
               onClick={handleToggleStatus}
               disabled={updateMutation.isPending}
-              className={account.disabled ? 'text-green-600 border-green-200 hover:bg-green-50' : 'text-destructive border-destructive/20 hover:bg-destructive/10'}
+              className={
+                account.disabled
+                  ? 'text-green-600 border-green-200 hover:bg-green-50'
+                  : 'text-destructive border-destructive/20 hover:bg-destructive/10'
+              }
             >
               {updateMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -150,7 +160,7 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
               )}
               {account.disabled ? 'Enable Account' : 'Disable Account'}
             </Button>
-            <Badge 
+            <Badge
               variant={account.status === 'active' ? 'default' : 'secondary'}
               className={`px-4 py-1 text-sm capitalize ${account.status === 'active' ? 'bg-green-500 hover:bg-green-600' : ''}`}
             >
@@ -174,13 +184,15 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Contact Person</span>
                     <span className="font-medium flex items-center gap-2">
-                      <User className="w-4 h-4 text-emerald-500/60" /> {String(account.fullname || 'N/A')}
+                      <User className="w-4 h-4 text-emerald-500/60" />{' '}
+                      {String(account.fullname || 'N/A')}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Location</span>
                     <span className="font-medium flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-emerald-500/60" /> {String(account.address || 'N/A')}
+                      <MapPin className="w-4 h-4 text-emerald-500/60" />{' '}
+                      {String(account.address || 'N/A')}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
@@ -192,7 +204,8 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">Partner Since</span>
                     <span className="font-medium flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-emerald-500/60" /> {format(new Date(account.created_at), 'MMMM dd, yyyy')}
+                      <Calendar className="w-4 h-4 text-emerald-500/60" />{' '}
+                      {format(new Date(account.created_at), 'MMMM dd, yyyy')}
                     </span>
                   </div>
                 </CardContent>
@@ -213,7 +226,10 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                       </div>
                       <span className="text-sm font-medium">Business Cert</span>
                     </div>
-                    <Badge variant={(account as any).business_cert ? 'default' : 'outline'} className={(account as any).business_cert ? 'bg-green-500' : ''}>
+                    <Badge
+                      variant={(account as any).business_cert ? 'default' : 'outline'}
+                      className={(account as any).business_cert ? 'bg-green-500' : ''}
+                    >
                       {(account as any).business_cert ? 'Verified' : 'Missing'}
                     </Badge>
                   </div>
@@ -224,7 +240,10 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                       </div>
                       <span className="text-sm font-medium">Operating License</span>
                     </div>
-                    <Badge variant={(account as any).license ? 'default' : 'outline'} className={(account as any).license ? 'bg-green-500' : ''}>
+                    <Badge
+                      variant={(account as any).license ? 'default' : 'outline'}
+                      className={(account as any).license ? 'bg-green-500' : ''}
+                    >
                       {(account as any).license ? 'Verified' : 'Missing'}
                     </Badge>
                   </div>
@@ -235,7 +254,10 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                       </div>
                       <span className="text-sm font-medium">Tax Clearance</span>
                     </div>
-                    <Badge variant={(account as any).proof_address ? 'default' : 'outline'} className={(account as any).proof_address ? 'bg-green-500' : ''}>
+                    <Badge
+                      variant={(account as any).proof_address ? 'default' : 'outline'}
+                      className={(account as any).proof_address ? 'bg-green-500' : ''}
+                    >
                       {(account as any).proof_address ? 'Verified' : 'Missing'}
                     </Badge>
                   </div>
@@ -251,25 +273,28 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                     <Truck className="w-5 h-5 text-emerald-500" />
                   </div>
                   <h3 className="text-xl font-bold">Managed Fleet</h3>
-                  <Badge variant="secondary" className="ml-2 bg-emerald-500/10 text-emerald-600 border-none font-bold">
+                  <Badge
+                    variant="secondary"
+                    className="ml-2 bg-emerald-500/10 text-emerald-600 border-none font-bold"
+                  >
                     {account.RentalVehicles?.length || 0} Vehicles
                   </Badge>
                 </div>
               </div>
-              
+
               {account.RentalVehicles && account.RentalVehicles.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {account.RentalVehicles.map((vehicle) => (
-                    <Card 
-                      key={vehicle.id} 
+                  {account.RentalVehicles.map(vehicle => (
+                    <Card
+                      key={vehicle.id}
                       className="overflow-hidden border-none shadow-md group hover:ring-2 hover:ring-blue-500/50 transition-all duration-300 cursor-pointer"
                       onClick={() => handleVehicleClick(vehicle)}
                     >
                       <div className="aspect-[16/10] relative overflow-hidden bg-muted">
                         {(vehicle as any).main_photo ? (
-                          <img 
-                            src={(vehicle as any).main_photo} 
-                            alt={vehicle.name} 
+                          <img
+                            src={(vehicle as any).main_photo}
+                            alt={vehicle.name}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           />
                         ) : (
@@ -278,7 +303,7 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                        
+
                         <div className="absolute top-3 left-3 flex flex-col gap-2">
                           <Badge className="bg-white/90 text-black border-none text-[10px] font-bold shadow-lg">
                             {String((vehicle as any).category || 'Vehicle')}
@@ -289,8 +314,12 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                         </div>
 
                         <div className="absolute bottom-3 left-3 right-3 text-white">
-                          <h4 className="font-black text-xl leading-none mb-1 group-hover:translate-x-1 transition-transform">{String(vehicle.name || 'Vehicle')}</h4>
-                          <p className="text-xs text-white/70 font-medium">{(vehicle as any).fuel_type} • {(vehicle as any).transmission}</p>
+                          <h4 className="font-black text-xl leading-none mb-1 group-hover:translate-x-1 transition-transform">
+                            {String(vehicle.name || 'Vehicle')}
+                          </h4>
+                          <p className="text-xs text-white/70 font-medium">
+                            {(vehicle as any).fuel_type} • {(vehicle as any).transmission}
+                          </p>
                         </div>
 
                         <div className="absolute top-3 right-3">
@@ -304,7 +333,10 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                           <div className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">
                             {(vehicle as any).brand} {(vehicle as any).model}
                           </div>
-                          <Badge variant="outline" className="text-[9px] font-bold border-emerald-500/20 text-emerald-600 bg-emerald-500/5">
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] font-bold border-emerald-500/20 text-emerald-600 bg-emerald-500/5"
+                          >
                             {vehicle.status || 'AVAILABLE'}
                           </Badge>
                         </div>
@@ -315,8 +347,12 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
               ) : (
                 <div className="py-20 text-center border-2 border-dashed rounded-3xl bg-muted/5 border-muted-foreground/20 flex flex-col items-center">
                   <Car className="w-16 h-16 mb-4 text-muted-foreground opacity-20" />
-                  <h4 className="text-lg font-semibold text-muted-foreground">No vehicles in fleet</h4>
-                  <p className="text-sm text-muted-foreground/60 max-w-xs mt-1">This partner hasn't added any vehicles to their fleet inventory yet.</p>
+                  <h4 className="text-lg font-semibold text-muted-foreground">
+                    No vehicles in fleet
+                  </h4>
+                  <p className="text-sm text-muted-foreground/60 max-w-xs mt-1">
+                    This partner hasn't added any vehicles to their fleet inventory yet.
+                  </p>
                 </div>
               )}
             </div>
