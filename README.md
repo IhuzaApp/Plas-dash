@@ -52,6 +52,20 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - **Centralized Dictionary**: The `@/lib/privileges/moduleDescriptions.ts` file acts as the single source of truth for all human-readable module definitions, grouping (e.g., 'Operations', 'Dashboards'), and granular actions (e.g., 'Delete Orders', 'Apply Discount').
   - **Visual Feedback**: The interface renders actionable toggles and read-only badge previews (the `RoleModulePreview` component) natively mapped to these descriptions, grouping privileges organically by their functional domain.
 
+### 🔐 Multi-Factor Authentication (MFA)
+
+- **Dual-Method Support**
+  - **Authenticator App (TOTP)**: Secure, offline code generation compatible with Google Authenticator, Authy, and Microsoft Authenticator.
+  - **SMS OTP (Pindo)**: Direct mobile verification via high-priority SMS delivery through the Pindo gateway.
+- **Intelligent Choice Workflow**
+  - **Dynamic Detection**: The login system automatically identifies which MFA methods a user has configured or which are required by their role.
+  - **Choice Screen**: For users with multiple active methods, a premium selection interface is presented to choose their preferred verification path.
+  - **Auto-Dispatch**: When SMS is selected, the system automatically triggers the OTP dispatch to the user's registered phone number, eliminating redundant clicks.
+- **Security Auditing & Management**
+  - **Administrative Drawer**: A detailed right-side drawer for **Project Users** provides instant visibility into MFA status (Authenticator vs SMS), last login timestamps, and verified device fingerprints.
+  - **Permission Visibility**: Real-time visualization of module-specific permissions (e.g., POS, Inventory, AI Chat) in a clean 2-column grid.
+  - **Audit Logs**: Integrated tracking of "Onboarding Date" and "Last Identity Access" for comprehensive security monitoring.
+
 ### 🏪 Shop & Subscription Management
 
 - **Automated Onboarding**
