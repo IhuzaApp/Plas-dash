@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import StatCard from '@/components/dashboard/StatCard';
-import RecentOrders from '@/components/dashboard/RecentOrders';
 import TopShoppers from '@/components/dashboard/TopShoppers';
 import OrdersChart from '@/components/dashboard/OrdersChart';
 import TopCustomers from '@/components/dashboard/TopCustomers';
@@ -271,8 +270,7 @@ const Index = () => {
 
         <PlatformJoinersChart />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <RecentOrders />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TopCustomers />
           <TopShoppers />
         </div>
