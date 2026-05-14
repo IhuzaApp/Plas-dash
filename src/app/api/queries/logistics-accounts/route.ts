@@ -34,6 +34,9 @@ export async function GET(req: Request) {
   }
 
   try {
+    if (!hasuraClient) {
+      throw new Error('Hasura client is not initialized');
+    }
     const data = await hasuraClient.request<any>(GET_LOGISTICS_ACCOUNTS);
     return NextResponse.json({ accounts: data.logisticsAccount || [] });
   } catch (error) {
