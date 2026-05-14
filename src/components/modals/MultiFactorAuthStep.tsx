@@ -38,13 +38,30 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const [method, setMethod] = useState<'none' | '2fa' | 'sms'>(
-    twoFactorRequired ? '2fa' : smsRequired ? 'sms' : 'none'
-  );
-  const [step, setStep] = useState<'choice' | 'setup' | 'verify'>(
-    (twoFactorRequired && !user.TwoAuth_enabled && !user.multAuthEnabled) || 
-    (smsRequired && !user.sms_auth) ? 'setup' : 'verify'
-  );
+  const is2FAActive = !!(user.TwoAuth_enabled || user.multAuthEnabled);
+  const isSMSActive = !!user.sms_auth;
+
+  const [method, setMethod] = useState<'none' | '2fa' | 'sms'>(() => {
+    if (twoFactorRequired && !smsRequired) return '2fa';
+    if (smsRequired && !twoFactorRequired) return 'sms';
+    // If both are required, start with 'none' to show choice, 
+    // unless only one is actually active/configured
+    if (is2FAActive && !isSMSActive) return '2fa';
+    if (isSMSActive && !is2FAActive) return 'sms';
+    return 'none';
+  });
+
+  const [step, setStep] = useState<'choice' | 'setup' | 'verify'>(() => {
+    // If any required method is NOT set up, force setup
+    if (twoFactorRequired && !is2FAActive) return 'setup';
+    if (smsRequired && !isSMSActive) return 'setup';
+    
+    // If both are active, show choice screen
+    if (is2FAActive && isSMSActive) return 'choice';
+    
+    // Otherwise go to verify
+    return 'verify';
+  });
   
   const [isLoading, setIsLoading] = useState(false);
   const [code, setCode] = useState('');
@@ -67,6 +84,12 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
       QRCode.toDataURL(url).then(setQrCodeUrl).catch(console.error);
     }
   }, [step, method, qrCodeUrl]);
+
+  useEffect(() => {
+    if (step === 'verify' && method === 'sms' && !generatedSmsCode && !isLoading) {
+      handleSendSmsCode();
+    }
+  }, [step, method]);
 
   const handleSendSmsCode = async () => {
     if (!phone) {
@@ -189,11 +212,11 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
   const renderChoice = () => (
     <div className="space-y-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 gap-3">
-        {twoFactorRequired && (
+        {(twoFactorRequired || is2FAActive) && (
           <button
             onClick={() => {
               setMethod('2fa');
-              setStep(user.TwoAuth_enabled || user.multAuthEnabled ? 'verify' : 'setup');
+              setStep(is2FAActive ? 'verify' : 'setup');
             }}
             className="flex items-center gap-4 p-4 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/50 hover:bg-primary/5 transition-all group text-left"
           >
@@ -202,16 +225,19 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-sm">Authenticator App</h4>
-              <p className="text-xs text-zinc-500">Use Google Authenticator or Authy</p>
+              <p className="text-xs text-zinc-500">
+                {is2FAActive ? 'Use Google Authenticator or Authy' : 'Set up mobile authenticator'}
+              </p>
             </div>
+            {is2FAActive && <CheckCircle2 className="w-4 h-4 text-green-500" />}
           </button>
         )}
         
-        {smsRequired && (
+        {(smsRequired || isSMSActive) && (
           <button
             onClick={() => {
               setMethod('sms');
-              setStep(user.sms_auth ? 'verify' : 'setup');
+              setStep(isSMSActive ? 'verify' : 'setup');
             }}
             className="flex items-center gap-4 p-4 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/50 hover:bg-primary/5 transition-all group text-left"
           >
@@ -220,8 +246,11 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-sm">SMS Verification</h4>
-              <p className="text-xs text-zinc-500">Receive a code on your phone</p>
+              <p className="text-xs text-zinc-500">
+                {isSMSActive ? `Receive code on ${phone.replace(/(\d{3})\d+(\d{3})/, '$1***$2')}` : 'Set up phone verification'}
+              </p>
             </div>
+            {isSMSActive && <CheckCircle2 className="w-4 h-4 text-green-500" />}
           </button>
         )}
       </div>
