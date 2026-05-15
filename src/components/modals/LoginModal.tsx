@@ -357,7 +357,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                     onClick={() => setShowHelp(true)}
                     className="text-[10px] font-bold text-primary hover:text-primary/80 hover:bg-primary/10 rounded-lg uppercase tracking-wider"
                   >
-                    Can't sign in? Get Help
+                    Can&apos;t sign in? Get Help
                   </Button>
                 </div>
               </>

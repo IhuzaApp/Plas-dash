@@ -8,6 +8,7 @@ export const CHART_COLORS = {
   red: 'hsl(0, 72%, 52%)',
   yellow: 'hsl(48, 96%, 50%)',
   orange: 'hsl(28, 95%, 54%)',
+  purple: 'hsl(262, 83%, 58%)',
 } as const;
 
 /** Ordered palette for multiple series (e.g. Approved, Pending, Other) */

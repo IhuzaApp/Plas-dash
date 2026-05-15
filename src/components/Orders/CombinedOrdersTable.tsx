@@ -23,6 +23,7 @@ interface CombinedOrdersTableProps {
   };
   handleCallShopper: (phone: string) => void;
   handleViewDetails: (order: any) => void;
+  visibleColumns: Record<string, boolean>;
 }
 
 const CombinedOrdersTable: React.FC<CombinedOrdersTableProps> = ({
@@ -34,6 +35,7 @@ const CombinedOrdersTable: React.FC<CombinedOrdersTableProps> = ({
   getDeliveryCountdown,
   handleCallShopper,
   handleViewDetails,
+  visibleColumns,
 }) => {
   return (
     <Card>
@@ -74,6 +76,7 @@ const CombinedOrdersTable: React.FC<CombinedOrdersTableProps> = ({
                   getDeliveryCountdown={getDeliveryCountdown}
                   handleCallShopper={handleCallShopper}
                   handleViewDetails={handleViewDetails}
+                  visibleColumns={visibleColumns}
                 />
               );
             })

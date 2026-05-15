@@ -87,7 +87,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Send notifications to all users with notifications enabled
     const notificationPromises = notificationUsers.map(async (user: { id: string }) => {
       try {
-        await sendNotificationToUser(user.id, payload);
+        await sendNotificationToUser({
+          recipientId: user.id,
+          title: payload.title,
+          body: payload.body,
+          type: 'batch_notification',
+          data: payload.data,
+        });
         return { userId: user.id, success: true };
       } catch (error) {
         return { userId: user.id, success: false, error };

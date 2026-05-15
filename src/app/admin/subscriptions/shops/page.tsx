@@ -204,7 +204,7 @@ export default function ShopSubscriptionsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedSubscriptions.map(sub => (
+                  paginatedSubscriptions.map((sub: ShopSubscription) => (
                     <TableRow key={sub.id}>
                       <TableCell>
                         <div className="flex flex-col">

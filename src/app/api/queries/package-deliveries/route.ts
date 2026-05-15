@@ -121,6 +121,10 @@ export async function GET(req: Request) {
       where.user_id = { _eq: userContext.userId };
     }
 
+    if (!hasuraClient) {
+      throw new Error('Hasura client is not initialized');
+    }
+
     const data = await hasuraClient.request<{ package_delivery: any[] }>(GET_PACKAGE_DELIVERIES, {
       where,
     });

@@ -360,7 +360,7 @@ const PetVendorDetails: React.FC<PetVendorDetailsProps> = ({ vendorId }) => {
                     No pets listed yet
                   </h4>
                   <p className="text-sm text-muted-foreground/60 max-w-xs mt-1">
-                    This vendor hasn't added any pets to their inventory for adoption.
+                    This vendor hasn&apos;t added any pets to their inventory for adoption.
                   </p>
                 </div>
               )}

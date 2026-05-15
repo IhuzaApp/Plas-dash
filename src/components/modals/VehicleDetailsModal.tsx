@@ -135,12 +135,12 @@ export const VehicleDetailsModal: React.FC<VehicleDetailsModalProps> = ({
                   <Truck className="w-20 h-20 rotate-12" />
                 </div>
                 <p className="text-base leading-relaxed text-slate-600 dark:text-slate-400 font-medium italic relative z-10">
-                  "
+                  &quot;
                   {String(
-                    vehicle.description ||
+                    (vehicle as any).description ||
                       'No detailed description available for this vehicle. Contact the logistics partner for more information regarding performance and features.'
                   )}
-                  "
+                  &quot;
                 </p>
               </div>
             </div>

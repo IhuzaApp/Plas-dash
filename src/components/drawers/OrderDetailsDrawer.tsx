@@ -72,7 +72,7 @@ interface UnifiedOrder {
   shop_id?: string;
   delivery_notes?: string;
   delivery_note?: string;
-  comment?: string;
+  comment?: string | null;
   Order_Items?: any[];
   Wallet_Transactions?: any[];
   order_transactions?: any[];
@@ -101,10 +101,10 @@ interface UnifiedOrder {
   Restaurant?: any;
   business_store?: any;
   shopper?: any;
-  receiverName?: string;
-  receiverPhone?: string;
-  pickupLocation?: string;
-  dropoffLocation?: string;
+  receiverName?: string | null;
+  receiverPhone?: string | null;
+  pickupLocation?: string | null;
+  dropoffLocation?: string | null;
 }
 
 interface OrderDetailsDrawerProps {
@@ -123,8 +123,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
   const [isAssigning, setIsAssigning] = React.useState(false);
 
   const { data: paymentData, isLoading: isLoadingPayments } = useOrderPayments(
-    order?.id || '',
-    order?.type || 'regular'
+    order?.id || ''
   );
 
   React.useEffect(() => {

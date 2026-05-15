@@ -308,6 +308,7 @@ export async function GET(req: Request) {
           plate_number?: string;
           transport_mode?: string;
         } | null;
+        order_transactions?: Array<any>;
       }>;
     }>(GET_ALL_RESTAURANT_ORDERS, { where });
 

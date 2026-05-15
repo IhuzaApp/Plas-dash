@@ -34,6 +34,27 @@ const ProjectUserDetailsDrawer: React.FC<ProjectUserDetailsDrawerProps> = ({
   onOpenChange,
   user,
 }) => {
+  const [showAllModules, setShowAllModules] = React.useState(false);
+
+  // Helper to format privilege keys into readable module names
+  const formatPrivilegeKey = (key: string) => {
+    return key
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Get list of modules user has access to
+  const accessibleModules = React.useMemo(() => {
+    if (!user?.privileges) return [];
+    return Object.entries(user.privileges)
+      .filter(([module, permissions]) => {
+        if (!permissions || typeof permissions !== 'object' || module === 'twoFactorRequired' || module === 'smsAuthRequired') return false;
+        return Object.values(permissions).some(v => v === true);
+      })
+      .map(([module]) => module);
+  }, [user?.privileges]);
+
   if (!user) return null;
 
   const DetailItem = ({ icon: Icon, label, value, color }: { icon: any, label: string, value: string | React.ReactNode, color?: string }) => (
@@ -60,27 +81,6 @@ const ProjectUserDetailsDrawer: React.FC<ProjectUserDetailsDrawerProps> = ({
       return 'Invalid date';
     }
   };
-
-  const [showAllModules, setShowAllModules] = React.useState(false);
-
-  // Helper to format privilege keys into readable module names
-  const formatPrivilegeKey = (key: string) => {
-    return key
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  // Get list of modules user has access to
-  const accessibleModules = React.useMemo(() => {
-    if (!user.privileges) return [];
-    return Object.entries(user.privileges)
-      .filter(([module, permissions]) => {
-        if (typeof permissions !== 'object' || module === 'twoFactorRequired' || module === 'smsAuthRequired') return false;
-        return Object.values(permissions).some(v => v === true);
-      })
-      .map(([module]) => module);
-  }, [user.privileges]);
 
   const displayedModules = showAllModules ? accessibleModules : accessibleModules.slice(0, 12);
 

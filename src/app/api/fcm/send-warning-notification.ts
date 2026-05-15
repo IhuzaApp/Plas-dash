@@ -51,7 +51,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       imageUrl: '/images/warning-notification-icon.png', // Optional: add a warning icon
     };
 
-    await sendNotificationToUser(shopperId, payload);
+    await sendNotificationToUser({
+      recipientId: shopperId,
+      title: payload.title,
+      body: payload.body,
+      type: 'batch_warning',
+      data: payload.data,
+    });
 
     return res.status(200).json({
       success: true,

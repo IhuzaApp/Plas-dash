@@ -301,8 +301,8 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
     });
 
     // Set MFA requirement flags
-    if (values.multAuthEnabled) strictlyFilteredPrivileges.twoFactorRequired = true;
-    if (values.sms_auth) strictlyFilteredPrivileges.smsAuthRequired = true;
+    if (values.multAuthEnabled) (strictlyFilteredPrivileges as any).twoFactorRequired = true;
+    if (values.sms_auth) (strictlyFilteredPrivileges as any).smsAuthRequired = true;
 
     // Hash the password before submitting
     const hashedPassword = bcrypt.hashSync(employeeData.password, 10);
@@ -314,7 +314,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
         Position: position,
         multAuthEnabled: false, // Don't enable until setup is complete
         sms_auth: false,       // Don't enable until setup is complete
-      },
+      } as any,
       privileges: strictlyFilteredPrivileges,
     });
   }

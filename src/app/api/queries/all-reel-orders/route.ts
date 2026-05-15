@@ -218,6 +218,8 @@ export async function GET(req: Request) {
           full_name?: string | null;
           phone_number?: string | null;
         } | null;
+        Wallet_Transactions?: Array<any>;
+        order_transactions?: Array<any>;
       }>;
     }>(GET_ALL_REEL_ORDERS, { where });
 

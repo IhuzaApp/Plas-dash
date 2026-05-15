@@ -341,17 +341,17 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
 
     // Handle MFA requirement logic
     if (values.multAuthEnabled && !employee.multAuthEnabled) {
-      strictlyFilteredPrivileges.twoFactorRequired = true;
+      (strictlyFilteredPrivileges as any).twoFactorRequired = true;
       delete finalChanges.multAuthEnabled;
     } else if (!values.multAuthEnabled) {
-      strictlyFilteredPrivileges.twoFactorRequired = false;
+      (strictlyFilteredPrivileges as any).twoFactorRequired = false;
     }
 
     if (values.sms_auth && !employee.sms_auth) {
-      strictlyFilteredPrivileges.smsAuthRequired = true;
+      (strictlyFilteredPrivileges as any).smsAuthRequired = true;
       delete finalChanges.sms_auth;
     } else if (!values.sms_auth) {
-      strictlyFilteredPrivileges.smsAuthRequired = false;
+      (strictlyFilteredPrivileges as any).smsAuthRequired = false;
     }
 
     onSubmit({

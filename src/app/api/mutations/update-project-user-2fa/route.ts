@@ -10,6 +10,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
+    if (!hasuraClient) {
+      return NextResponse.json({ error: 'Hasura client not initialized' }, { status: 500 });
+    }
+
     const data = await hasuraClient.request(UPDATE_PROJECT_USER_2FA, {
       id,
       enabled,

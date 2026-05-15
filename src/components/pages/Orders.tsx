@@ -307,8 +307,8 @@ const Orders = () => {
       ...order,
       type: 'regular' as const,
       OrderID: order.OrderID || order.id,
-      Wallet_Transactions: order.Wallet_Transactions || [],
-      order_transactions: order.order_transactions || [],
+      Wallet_Transactions: (order as any).Wallet_Transactions || [],
+      order_transactions: (order as any).order_transactions || [],
     }));
 
     const reelOrdersMapped: UnifiedOrder[] = reelOrderItems.map((reelOrder: any) => ({
@@ -1162,6 +1162,7 @@ const Orders = () => {
                 getDeliveryCountdown={getDeliveryCountdown}
                 handleCallShopper={handleCallShopper}
                 handleViewDetails={handleViewDetails}
+                visibleColumns={visibleColumns}
               />
             </TabsContent>
 

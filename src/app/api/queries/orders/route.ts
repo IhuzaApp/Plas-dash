@@ -156,6 +156,8 @@ export async function GET(req: Request) {
           phone_number?: string;
         };
         Shop?: { id?: string; name?: string; address?: string; image?: string } | null;
+        Wallet_Transactions?: Array<any>;
+        order_transactions?: Array<any>;
       }>;
     }>(GET_ORDERS, { where });
     const orders = data.Orders || [];

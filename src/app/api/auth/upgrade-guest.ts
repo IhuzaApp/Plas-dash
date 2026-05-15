@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from './[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { GraphQLClient, gql } from 'graphql-request';
 import bcrypt from 'bcryptjs';
 

@@ -26,12 +26,12 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
 
   const displayUser = customSession || nextSession?.user;
   const userImage =
-    displayUser?.image ||
+    (displayUser as any)?.image ||
     (displayUser as any)?.profile_picture ||
     (displayUser as any)?.profile ||
     (displayUser as any)?.display_image;
   const userName =
-    displayUser?.name || (displayUser as any)?.username || (displayUser as any)?.fullName || 'User';
+    (displayUser as any)?.name || (displayUser as any)?.username || (displayUser as any)?.fullName || 'User';
   const userRole =
     (displayUser as any)?.role ||
     (displayUser as any)?.roleType ||

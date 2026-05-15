@@ -154,12 +154,12 @@ export const PetDetailsModal: React.FC<PetDetailsModalProps> = ({ pet, open, onO
                   <PawPrint className="w-20 h-20 rotate-12" />
                 </div>
                 <p className="text-base leading-relaxed text-slate-600 dark:text-slate-400 font-medium italic relative z-10">
-                  "
+                  &quot;
                   {String(
                     pet.story ||
                       'No story provided for this pet yet. They are waiting for someone to get to know them!'
                   )}
-                  "
+                  &quot;
                 </p>
               </div>
             </div>

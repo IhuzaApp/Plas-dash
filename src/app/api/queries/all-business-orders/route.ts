@@ -228,6 +228,17 @@ export async function GET(req: Request) {
           transport_mode?: string;
           updated_at?: string;
         } | null;
+        order_transactions?: Array<{
+          amount: number;
+          business_order_id?: string;
+          created_at: string;
+          currency: string;
+          id: string;
+          status: string;
+          type: string;
+          user_id: string;
+          wallet_id: string;
+        }>;
       }>;
     }>(GET_ALL_BUSINESS_ORDERS, { where });
 

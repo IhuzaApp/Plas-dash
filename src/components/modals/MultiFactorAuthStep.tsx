@@ -183,7 +183,7 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
 
           const result = await hasuraRequest(mutation, variables);
           console.log('DEBUG: MFA setup mutation result:', result);
-          const updatedUser = isProjectUser ? result.update_ProjectUsers_by_pk : result.update_orgEmployees_by_pk;
+          const updatedUser = isProjectUser ? (result as any).update_ProjectUsers_by_pk : (result as any).update_orgEmployees_by_pk;
           
           if (!updatedUser) {
             console.error('DEBUG: MFA setup mutation returned null result');
@@ -289,7 +289,7 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
             </ol>
           </div>
           <Button className="w-full h-11 rounded-xl font-bold" onClick={() => setStep('verify')}>
-            I've Scanned It
+            I&apos;ve Scanned It
           </Button>
         </div>
       ) : (
@@ -345,7 +345,7 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
 
         {method === 'sms' && (
           <Button variant="link" className="w-full text-xs" onClick={handleSendSmsCode} disabled={isLoading}>
-            Didn't receive a code? Resend
+            Didn&apos;t receive a code? Resend
           </Button>
         )}
         

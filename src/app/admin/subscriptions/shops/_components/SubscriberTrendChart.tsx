@@ -141,7 +141,6 @@ export function SubscriberTrendChart({ subscriptions, isLoading }: SubscriberTre
                 type="monotone" 
                 dataKey="Businesses" 
                 stroke="#F59E0B" 
-                fillOpacity={1} 
                 fill="#F59E0B" 
                 fillOpacity={0.05}
                 strokeWidth={2}

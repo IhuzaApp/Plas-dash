@@ -46,7 +46,6 @@ interface ShopperTabsProps {
   totalRatings: number;
   setRatingsPage: (page: number) => void;
   calculateAverageRating: (ratings: any[]) => string;
-  detailedShopper: any;
 
   // Tickets tab
   paginatedTickets: any[];

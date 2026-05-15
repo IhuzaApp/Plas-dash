@@ -174,7 +174,6 @@ export async function POST(request: Request) {
     }
 
     // 2. Validate wallet and balance
-    const wallet = payout.Wallets;
     if (!wallet) {
       return NextResponse.json({ error: 'Wallet not found for this payout' }, { status: 404 });
     }

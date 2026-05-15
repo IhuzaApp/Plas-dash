@@ -351,7 +351,7 @@ const LogisticsDetails: React.FC<LogisticsDetailsProps> = ({ accountId }) => {
                     No vehicles in fleet
                   </h4>
                   <p className="text-sm text-muted-foreground/60 max-w-xs mt-1">
-                    This partner hasn't added any vehicles to their fleet inventory yet.
+                    This partner hasn&apos;t added any vehicles to their fleet inventory yet.
                   </p>
                 </div>
               )}
