@@ -39,7 +39,7 @@ export default function AppRootLayout({ children }: { children: React.ReactNode 
         <title>Plas Dashboard</title>
         <link rel="icon" href="/favicon.png" />
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <SessionProvider>
           <QueryClientProvider client={queryClient}>
             <ThemeProvider

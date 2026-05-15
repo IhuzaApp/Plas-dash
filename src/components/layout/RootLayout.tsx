@@ -62,7 +62,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
               }
             }
           }
-          if (hasPrivilege(session.privileges, 'company_dashboard', 'access', session.role)) {
+          const isAdmin = session.role === 'globalAdmin' || session.role === 'storeAdministrator';
+          
+          if (isAdmin) {
+            redirectPath = '/pos/company-dashboard';
+          } else if (hasPrivilege(session.privileges, 'company_dashboard', 'access', session.role)) {
             redirectPath = '/pos/company-dashboard';
           } else {
             redirectPath = '/pos/checkout';

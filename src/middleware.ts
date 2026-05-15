@@ -68,6 +68,8 @@ export async function middleware(request: NextRequest) {
     response.cookies.set('business-id', business.id, {
       maxAge: 60 * 60 * 24, // 24 hours
       path: '/',
+      domain: process.env.NODE_ENV === 'development' ? '.lvh.me' : `.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'plas.rw'}`,
+      sameSite: 'lax',
     });
     
     return response;

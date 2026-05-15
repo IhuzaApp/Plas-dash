@@ -85,6 +85,31 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - **Client-Side Caching**: Shops list uses `useQuery` with advanced caching (`staleTime: 5m`) to ensure near-instantaneous page transitions.
   - **Payload Optimization**: GraphQL queries are optimized to fetch only essential data for the list view, with heavy details (like full order histories) loaded only on demand.
 
+### 🌐 Subdomain Multi-Tenant Architecture
+
+- **Subdomain Routing (`middleware.ts`)**
+  - **Production Mapping**: Supports `*.plas.rw`. The system automatically identifies the tenant based on the subdomain (e.g., `shopname.plas.rw`) and normalizes it to a `business-id`.
+  - **Platform Admin**: The central `dash.plas.rw` domain is reserved for **Project Users** (Platform Admins) and is isolated from business-specific data.
+  - **Automatic Redirection**: Employees attempting to log in on the main platform domain are automatically identified and redirected to their specific shop's subdomain.
+- **Local Development (`lvh.me`)**
+  - **Zero-Config Subdomains**: Standardized on `*.lvh.me:3000` for local development. This allows testing dynamic subdomains without manually editing `/etc/hosts`.
+  - **Incognito & Security**: Cookies are configured with `domain: .lvh.me` and `sameSite: lax` to ensure session persistence across subdomains and compatibility with Chrome's Incognito restrictions.
+- **Tenant Validation**
+  - **Lookup API**: A high-performance Edge-compatible API (`/api/business/lookup`) verifies tenants and sets an `x-business-id` header and a secure `business-id` cookie.
+  - **Invalid Tenant Protection**: Requests to unregistered subdomains are automatically caught by the middleware and rewritten to a custom `/not-found` experience.
+
+### 🔐 Authentication & Context Layer
+
+- **Modular Auth Architecture**
+  - **Standalone AuthContext**: Authentication state is entirely decoupled from the UI layer. The `AuthProvider` handles token persistence, session expiration (8-hour window), and global auth state.
+  - **Prioritized Login Flow**: The system uses an "Admin-First" lookup strategy. Project Users are identified immediately, skipping unnecessary business-table queries.
+- **Role-Based Redirection**
+  - **Employee Landing**: After a successful login on a subdomain, employees with `globalAdmin` or `storeAdministrator` roles are automatically routed to the `/pos/company-dashboard`.
+  - **POS Entry**: Standard employees land on the `/pos/checkout` page, optimized for immediate operational access.
+- **Security Isolation**
+  - **Domain Strictness**: Project Users are strictly blocked from logging into business subdomains to prevent data contamination.
+  - **Generic Error Handling**: Failed logins use sanitized error messages ("User not found in the organizations") to prevent user enumeration and account discovery.
+
 ## Features
 
 ### 📊 Real-time Analytics Dashboard
