@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { hasPrivilege } from '@/types/privileges';
 import { apiGet } from '@/lib/api';
 

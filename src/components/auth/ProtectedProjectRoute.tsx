@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useProjectPrivilege } from '@/hooks/useProjectPrivilege';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { ProjectPrivilegeKey } from '@/types/projectPrivileges';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Lock } from 'lucide-react';

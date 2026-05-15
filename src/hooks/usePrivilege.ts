@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { AuthContext } from '@/components/layout/RootLayout';
+import { AuthContext } from '@/contexts/AuthContext';
 import {
   hasPrivilege,
   getModulePrivileges,

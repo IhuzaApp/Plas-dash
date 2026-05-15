@@ -39,7 +39,7 @@ import {
 } from '@/components/shop/ProductNameFormDialog';
 import { ImportProductNamesDialog } from '@/components/shop/ImportProductNamesDialog';
 import { usePrivilege } from '@/hooks/usePrivilege';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 
 const PRODUCT_PLACEHOLDER = '/placeholder.svg';

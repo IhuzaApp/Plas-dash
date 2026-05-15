@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePrivilege } from '@/hooks/usePrivilege';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { useProductsByShop, useShopById } from '@/hooks/useHasuraApi';
 import { Product } from '@/hooks/useGraphql';
 import { AddProductDialog } from '@/components/pages/pos/checkout/AddProductCheckoutDialog';

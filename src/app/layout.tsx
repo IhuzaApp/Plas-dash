@@ -11,8 +11,10 @@ import '@/styles/globals.css';
 import '@/styles/nprogress.css';
 import { useState } from 'react';
 import RootLayout from '@/components/layout/RootLayout';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { SessionProvider } from 'next-auth/react';
 import { GoogleMapProvider } from '@/contexts/GoogleProvider';
+import { ShopSessionProvider } from '@/contexts/ShopSessionContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -48,9 +50,13 @@ export default function AppRootLayout({ children }: { children: React.ReactNode 
             >
               <TooltipProvider>
                 <GoogleMapProvider>
-                  <Suspense fallback={null}>
-                    <RootLayout>{children}</RootLayout>
-                  </Suspense>
+                  <AuthProvider>
+                    <ShopSessionProvider>
+                      <Suspense fallback={null}>
+                        <RootLayout>{children}</RootLayout>
+                      </Suspense>
+                    </ShopSessionProvider>
+                  </AuthProvider>
                 </GoogleMapProvider>
                 <Toaster />
                 <Sonner />

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/command';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { hasPrivilege } from '@/types/privileges';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import {

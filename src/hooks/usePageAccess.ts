@@ -1,5 +1,5 @@
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { usePageLoading } from '@/hooks/usePageLoading';
 import {
   isPageAccessible,

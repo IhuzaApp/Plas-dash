@@ -9,7 +9,7 @@ import { SearchCommand } from './SearchCommand';
 import { usePageLoading } from '@/hooks/usePageLoading';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
-import { useAuth } from './RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 

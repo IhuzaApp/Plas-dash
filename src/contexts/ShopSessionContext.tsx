@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ShopSession {
   shopId: string;
@@ -23,6 +23,7 @@ interface ShopSessionContextType {
   logoutFromShop: () => void;
   getShopSessionExpiry: () => number | null;
   debugSession: () => void;
+  activeBusiness: { id: string; name: string; type: string; logo?: string | null } | null;
 }
 
 const ShopSessionContext = createContext<ShopSessionContextType | undefined>(undefined);
@@ -33,6 +34,53 @@ const SHOP_SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 export function ShopSessionProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const [shopSession, setShopSession] = useState<ShopSession | null>(null);
+  const [activeBusiness, setActiveBusiness] = useState<{ id: string; name: string; type: string; logo?: string | null } | null>(null);
+
+  // Detect business context from cookie or hostname
+  useEffect(() => {
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+      return null;
+    };
+
+    const fetchBusinessDetails = async (params: string) => {
+      try {
+        const response = await fetch(`/api/business/lookup?${params}`);
+        if (response.ok) {
+          const business = await response.json();
+          setActiveBusiness({
+            id: business.id,
+            name: business.name,
+            type: business.type,
+            logo: business.logo,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to fetch business details');
+      }
+    };
+
+    const businessId = getCookie('business-id');
+    if (businessId) {
+      fetchBusinessDetails(`id=${businessId}`);
+    } else {
+      // Fallback: extract subdomain from hostname if cookie is missing
+      const hostname = window.location.hostname;
+      const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'plas.rw';
+      
+      if (!['localhost', 'dash.' + rootDomain, rootDomain].includes(hostname)) {
+        let subdomain = '';
+        if (hostname.endsWith('.' + rootDomain)) subdomain = hostname.replace('.' + rootDomain, '');
+        else if (hostname.endsWith('.lvh.me')) subdomain = hostname.replace('.lvh.me', '');
+        
+        if (subdomain && subdomain !== 'www' && subdomain !== 'dash') {
+          fetchBusinessDetails(`subdomain=${subdomain}`);
+        }
+      }
+    }
+  }, []);
 
   // Load shop session from localStorage on mount (same approach as main session)
   useEffect(() => {
@@ -127,6 +175,7 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
     logoutFromShop,
     getShopSessionExpiry,
     debugSession,
+    activeBusiness,
   };
 
   return <ShopSessionContext.Provider value={value}>{children}</ShopSessionContext.Provider>;

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Store, Clock, Shield, LogOut, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { useShopSession } from '@/contexts/ShopSessionContext';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import ShopAuthModal from '@/components/modals/ShopAuthModal';
 import { cn } from '@/lib/utils';

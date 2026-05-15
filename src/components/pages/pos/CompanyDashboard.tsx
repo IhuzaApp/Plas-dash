@@ -30,7 +30,7 @@ import { useBranchShops } from '@/hooks/useBranchShops';
 
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { usePrivilege } from '@/hooks/usePrivilege';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { useStaffManagement } from '@/hooks/useStaffManagement';
 import { useRatings, useProducts } from '@/hooks/useHasuraApi';
 import AddBranchShopDialog from '@/components/shop/AddBranchShopDialog';

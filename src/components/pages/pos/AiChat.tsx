@@ -17,7 +17,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock data structures - in a real app this would come from an API/Backend
 interface ChatMessage {

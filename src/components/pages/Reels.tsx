@@ -50,7 +50,7 @@ import {
 } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { toast } from 'sonner';
 import AddReelModal from '@/components/Reels/AddReelModal';

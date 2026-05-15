@@ -23,3 +23,11 @@ export function formatCurrencyWithConfig(amount: string | number, systemConfig: 
   const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
   return formatCurrency(amount, currency);
 }
+
+/**
+ * Normalizes a shop or restaurant name to a subdomain-safe string.
+ * Removes spaces and converts to lowercase.
+ */
+export function normalizeSubdomain(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '');
+}

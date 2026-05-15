@@ -1820,6 +1820,12 @@ export const GET_ORG_EMPLOYEE_BY_IDENTITY = `
       restaurant_id
       roleType
       shop_id
+      Shops {
+        name
+      }
+      Restaurants {
+        name
+      }
       updated_on
       online
       twoFactorSecrets

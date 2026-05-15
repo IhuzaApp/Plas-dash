@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAddReel, useShops, useRestaurants, useBusinessAccounts } from '@/hooks/useHasuraApi';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { uploadFileToFirebase } from '@/lib/firebaseStorage';
 import { compressVideo } from '@/lib/videoCompression';

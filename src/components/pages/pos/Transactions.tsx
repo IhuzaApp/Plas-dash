@@ -26,7 +26,7 @@ import OrderDetailDialog, { OrderDetails, OrderItem } from '@/components/order/O
 import { usePOSTransactions } from '@/hooks/useHasuraApi';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Transaction {
   id: string;

@@ -3,7 +3,7 @@
 import React from 'react';
 import ShopSelector from '@/components/layout/ShopSelector';
 import { useShopSession } from '@/contexts/ShopSessionContext';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Store, Shield } from 'lucide-react';
