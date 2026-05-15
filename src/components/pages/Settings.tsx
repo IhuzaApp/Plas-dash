@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import AdminLayout from '@/components/layout/AdminLayout';
-import PageHeader from '@/components/layout/PageHeader';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import AdminLayout from '../layout/AdminLayout';
+import PageHeader from '../layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Label } from '../ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Switch } from '../ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -15,15 +17,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { toast } from '@/components/ui/sonner';
+} from '../ui/dialog';
+import { toast } from '../ui/sonner';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '../ui/select';
 import {
   Settings as SettingsIcon,
   Store,
@@ -36,22 +38,40 @@ import {
   Fingerprint,
   Sun,
   Moon,
+  Zap,
+  Video,
+  CreditCard,
+  ArrowUpCircle,
+  Activity,
+  CheckCircle2,
+  Layers,
+  History,
+  TrendingUp,
+  Edit,
+  Landmark,
 } from 'lucide-react';
+import { Progress } from '../ui/progress';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import SupermarketSettings from './SupermarketSettings';
 import { useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Badge } from '../ui/badge';
 import { hasuraClient } from '@/lib/hasuraClient';
 import {
   GET_PROJECT_USER_BY_ID,
   GET_ORG_EMPLOYEE_BY_ID,
   GET_USER_BY_ID_SIMPLE,
+  GET_SHOP_SUBSCRIPTIONS,
+  GET_LATEST_USAGE,
+  GET_PAYMENT_METHODS,
+  ADD_PAYMENT_METHOD,
+  UPDATE_PAYMENT_METHOD,
 } from '@/lib/graphql/queries';
-import { useEffect } from 'react';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
+import { format } from 'date-fns';
+import { useSystemConfig } from '@/hooks/useSystemConfig';
 
 const themePresets = [
   { name: 'Emerald (Default)', hsl: '142 76% 17%', primary: '#064e3b' },
@@ -71,6 +91,8 @@ const Settings = () => {
 
   const { theme, setTheme } = useTheme();
   const { color: activeColor, setColor: setActiveColor, setCustomColor } = useThemeColor();
+  const { data: systemConfig } = useSystemConfig();
+  const currencySymbol = systemConfig?.currency || '$';
 
   const handleSaveChanges = () => {
     toast.success('Settings saved successfully');
@@ -94,6 +116,105 @@ const Settings = () => {
   const [isTwoFactorEnabled, setIsTwoFactorEnabled] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
+
+  const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [usageData, setUsageData] = useState<any>(null);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [selectedPayoutType, setSelectedPayoutType] = useState<'momo' | 'bank'>('momo');
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [isSavingPayout, setIsSavingPayout] = useState(false);
+  const [isEditingPayout, setIsEditingPayout] = useState(false);
+
+  // Payout Form State
+  const [payoutForm, setPayoutForm] = useState({
+    id: '', // Track existing ID for updates
+    names: '',
+    number: '',
+    provider: 'mtn',
+    bankName: '',
+    bankBranch: '',
+    bankSwift: '',
+  });
+
+  useEffect(() => {
+    const fetchSubscriptionData = async () => {
+      if (!profileData || !hasuraClient) return;
+
+      const shopId = profileData.shop_id;
+      const restaurantId = profileData.restaurant_id;
+
+      if (!shopId && !restaurantId) return;
+
+      setIsLoadingSubscription(true);
+      try {
+        const where: any = {};
+        if (shopId) where.shop_id = { _eq: shopId };
+        else if (restaurantId) where.restaurant_id = { _eq: restaurantId };
+
+
+        const subData = await hasuraClient.request<any>(GET_SHOP_SUBSCRIPTIONS, { where });
+        if (subData.shop_subscriptions?.[0]) {
+          setSubscriptionData(subData.shop_subscriptions[0]);
+        }
+
+        // Fetch usage data separately
+        const businessId = subData.shop_subscriptions?.[0]?.business_id || profileData.business_id;
+        const usageWhere: any = { _or: [] };
+        if (shopId) usageWhere._or.push({ shop_id: { _eq: shopId } });
+        if (restaurantId) usageWhere._or.push({ restaurant_id: { _eq: restaurantId } });
+        if (businessId) usageWhere._or.push({ business_id: { _eq: businessId } });
+
+
+        if (usageWhere._or.length > 0) {
+          const usageResponse = await hasuraClient.request<any>(GET_LATEST_USAGE, {
+            aiWhere: usageWhere,
+            reelWhere: usageWhere,
+          });
+          setUsageData(usageResponse);
+        }
+
+        // Fetch payment methods
+        if (shopId) {
+          const pmData = await hasuraClient.request<any>(GET_PAYMENT_METHODS, { _eq: shopId });
+          if (pmData.Payment_Methods && pmData.Payment_Methods.length > 0) {
+            setPaymentMethods(pmData.Payment_Methods);
+            // Pre-fill with the first method (usually default)
+            const firstMethod = pmData.Payment_Methods[0];
+            setSelectedPayoutType(firstMethod.method as 'momo' | 'bank');
+            
+            let bankName = '';
+            let accNumber = firstMethod.number;
+            if (firstMethod.method === 'bank') {
+              const parts = firstMethod.number.split(' - ');
+              if (parts.length > 1) {
+                bankName = parts[0];
+                accNumber = parts[1];
+              }
+            }
+
+            setPayoutForm({
+              id: firstMethod.id,
+              names: firstMethod.names,
+              number: accNumber,
+              provider: 'mtn', // Default for now
+              bankName: bankName,
+              bankBranch: '', // Not in DB yet but UI shows it
+              bankSwift: '',
+            });
+            setIsEditingPayout(false); // Start in read-only mode if data exists
+          } else {
+            setIsEditingPayout(true); // Allow adding if none exist
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching subscription data:', error);
+      } finally {
+        setIsLoadingSubscription(false);
+      }
+    };
+
+    fetchSubscriptionData();
+  }, [profileData?.shop_id, profileData?.restaurant_id]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -152,7 +273,8 @@ const Settings = () => {
               display_role: eUser.roleType,
               display_email: eUser.email,
               display_phone: eUser.phone,
-              display_image: null,
+              display_image: eUser.profile,
+              membership_id: eUser.MembershipId,
             });
           }
         } else {
@@ -314,7 +436,66 @@ const Settings = () => {
       console.error('Error updating avatar:', error);
       toast.error('Failed to update profile picture');
     } finally {
-      setIsUpdatingAvatar(false);
+      setIsLoadingUser(false);
+    }
+  };
+
+  const handleSavePayoutMethod = async () => {
+    if (!payoutForm.names || !payoutForm.number) {
+      toast.error('Please fill in the required fields');
+      return;
+    }
+
+    setIsSavingPayout(true);
+    try {
+      const shopId = profileData.shop_id || profileData.id;
+      const restaurantId = profileData.restaurant_id;
+
+      const formattedNumber = selectedPayoutType === 'bank' ? `${payoutForm.bankName} - ${payoutForm.number}` : payoutForm.number;
+
+      if (payoutForm.id) {
+        // Update existing
+        await hasuraClient.request(UPDATE_PAYMENT_METHOD, {
+          id: payoutForm.id,
+          set: {
+            method: selectedPayoutType,
+            names: payoutForm.names,
+            number: formattedNumber,
+            user_id: null,
+          }
+        });
+        toast.success('Payout method updated successfully');
+      } else {
+        // Add new
+        const object: any = {
+          method: selectedPayoutType,
+          names: payoutForm.names,
+          number: formattedNumber,
+          shop_id: shopId,
+          restaurant_id: restaurantId,
+          user_id: null,
+          is_default: paymentMethods.length === 0,
+        };
+        await hasuraClient.request(ADD_PAYMENT_METHOD, { object });
+        toast.success('Payout method added successfully');
+      }
+      
+      // Refresh list
+      const pmData = await hasuraClient.request<any>(GET_PAYMENT_METHODS, { _eq: shopId });
+      if (pmData.Payment_Methods) {
+        setPaymentMethods(pmData.Payment_Methods);
+        // Pre-fill again with the first one
+        if (pmData.Payment_Methods.length > 0) {
+          const firstMethod = pmData.Payment_Methods[0];
+          setPayoutForm(prev => ({ ...prev, id: firstMethod.id }));
+        }
+      }
+      setIsEditingPayout(false);
+    } catch (error) {
+      console.error('Error saving payout method:', error);
+      toast.error('Failed to save payout method');
+    } finally {
+      setIsSavingPayout(false);
     }
   };
 
@@ -325,9 +506,17 @@ const Settings = () => {
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result as string;
-      handleUpdateAvatar(base64String);
+            handleUpdateAvatar(base64String);
     };
     reader.readAsDataURL(file);
+  };
+
+  const maskAccountNumber = (number: string) => {
+    if (!number) return '';
+    if (number.length <= 4) return number;
+    const visible = number.slice(-4);
+    const masked = '*'.repeat(number.length - 4);
+    return `${masked}${visible}`;
   };
 
   return (
@@ -339,7 +528,7 @@ const Settings = () => {
       />
 
       <Tabs defaultValue="profile">
-        <TabsList className="mb-4 bg-zinc-100/80 dark:bg-zinc-800/50 p-1 rounded-xl border">
+        <TabsList className="mb-4 bg-muted/40 backdrop-blur-md p-1 rounded-2xl border border-muted-foreground/10">
           <TabsTrigger value="profile" className="rounded-lg px-6">
             My Profile
           </TabsTrigger>
@@ -347,7 +536,7 @@ const Settings = () => {
             profileData?.display_role === 'storeAdministrator') && (
             <>
               <TabsTrigger value="general" className="rounded-lg px-6">
-                General
+                Billing & Usage
               </TabsTrigger>
               <TabsTrigger value="supermarket" className="rounded-lg px-6">
                 Supermarket
@@ -359,9 +548,17 @@ const Settings = () => {
           </TabsTrigger>
           {(profileData?.display_role === 'globalAdmin' ||
             profileData?.display_role === 'storeAdministrator') && (
-            <TabsTrigger value="notifications" className="rounded-lg px-6">
-              Notifications
-            </TabsTrigger>
+            <>
+              <TabsTrigger value="notifications" className="rounded-lg px-6">
+                Notifications
+              </TabsTrigger>
+              {(profileData?.display_role === 'globalAdmin' ||
+                profileData?.display_role === 'storeAdministrator') && (
+                <TabsTrigger value="payment-methods" className="rounded-lg px-6">
+                  Payment Methods
+                </TabsTrigger>
+              )}
+            </>
           )}
           <TabsTrigger value="security" className="rounded-lg px-6">
             Security
@@ -439,46 +636,46 @@ const Settings = () => {
 
             <div className="lg:col-span-2 space-y-6">
               <Card className="border-none shadow-lg rounded-3xl overflow-hidden">
-                <CardHeader className="border-b bg-zinc-50/50 dark:bg-zinc-900/50">
-                  <CardTitle>Personal Details</CardTitle>
-                  <CardDescription>
+                <CardHeader className="border-b border-muted-foreground/10 bg-zinc-50/50 dark:bg-zinc-900/50">
+                  <CardTitle className="text-lg font-bold">Personal Details</CardTitle>
+                  <CardDescription className="text-xs">
                     View your account identity and contact information.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label>Full Name / Username</Label>
+                      <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Full Name / Username</Label>
                       <Input
                         defaultValue={profileData?.display_name || user?.name}
                         disabled
-                        className="rounded-xl bg-zinc-100/50"
+                        className="rounded-xl bg-muted/30 border-muted-foreground/10 text-foreground font-semibold opacity-100 disabled:opacity-100 disabled:cursor-default"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Account ID</Label>
+                      <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Account ID</Label>
                       <Input
                         defaultValue={profileData?.membership_id || profileData?.id}
                         disabled
-                        className="rounded-xl bg-zinc-100/50"
+                        className="rounded-xl bg-muted/30 border-muted-foreground/10 text-foreground font-mono text-xs opacity-100 disabled:opacity-100 disabled:cursor-default"
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label>Email Address</Label>
+                      <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</Label>
                       <Input
                         defaultValue={profileData?.display_email || user?.email}
                         disabled
-                        className="rounded-xl bg-zinc-100/50"
+                        className="rounded-xl bg-muted/30 border-muted-foreground/10 text-foreground font-semibold opacity-100 disabled:opacity-100 disabled:cursor-default"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Phone Number</Label>
+                      <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Phone Number</Label>
                       <Input
                         defaultValue={profileData?.display_phone || user?.phone}
                         disabled
-                        className="rounded-xl bg-zinc-100/50"
+                        className="rounded-xl bg-muted/30 border-muted-foreground/10 text-foreground font-semibold opacity-100 disabled:opacity-100 disabled:cursor-default"
                       />
                     </div>
                   </div>
@@ -488,7 +685,7 @@ const Settings = () => {
                       <Input
                         defaultValue={profileData?.display_role || 'General User'}
                         disabled
-                        className="rounded-xl bg-zinc-100/50 capitalize"
+                        className="rounded-xl bg-muted/30 border-muted-foreground/10 text-foreground font-medium capitalize"
                       />
                     </div>
                   </div>
@@ -534,76 +731,352 @@ const Settings = () => {
         </TabsContent>
 
         <TabsContent value="general" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Information</CardTitle>
-              <CardDescription>
-                Update your company details and contact information.
-              </CardDescription>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Current Plan Card - Made Smaller (1 column) */}
+            <Card className="border-none shadow-xl bg-gradient-to-br from-primary/10 via-background to-background rounded-3xl overflow-hidden">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-xl font-bold flex flex-wrap items-center gap-2">
+                      {subscriptionData?.plan?.name || 'Standard Plan'}
+                      <Badge className={cn(
+                        "border-none text-[10px] h-5",
+                        subscriptionData?.status === 'active' ? "bg-primary/20 text-primary" : "bg-zinc-500/20 text-zinc-500"
+                      )}>
+                        {subscriptionData?.status?.toUpperCase() || 'INACTIVE'}
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription className="text-xs line-clamp-1">
+                      {subscriptionData?.plan?.description || 'Managed subscription'}
+                    </CardDescription>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Zap className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-4">
+                <div className="space-y-3">
+                  <div className="p-3 rounded-2xl bg-muted/30 border border-muted-foreground/5 flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Renewal</p>
+                    <div className="flex items-center gap-2">
+                      <History className="h-3 w-3 text-primary" />
+                      <span className="font-semibold text-sm">
+                        {subscriptionData?.end_date ? format(new Date(subscriptionData.end_date), 'MMM dd, yyyy') : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-muted/30 border border-muted-foreground/5 flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Pricing</p>
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-3 w-3 text-primary" />
+                      <span className="font-semibold text-sm">
+                        {currencySymbol}{subscriptionData?.billing_cycle === 'yearly' ? subscriptionData?.plan?.price_yearly : subscriptionData?.plan?.price_monthly || '0.00'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button size="sm" className="w-full rounded-xl h-10 shadow-lg shadow-primary/20 bg-primary hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
+                    <ArrowUpCircle className="h-4 w-4" />
+                    Upgrade
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Payment Method Card (Merchant Wallet) - Made Bigger (2 columns) */}
+            <Card className="md:col-span-2 border-none shadow-xl rounded-3xl overflow-hidden bg-muted/10">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl font-bold">Merchant Wallet</CardTitle>
+                    <CardDescription>Primary funding source for your business operations</CardDescription>
+                  </div>
+                  <Badge className="bg-primary/10 text-primary border-none hover:bg-primary/20 transition-colors">
+                    ACTIVE WALLET
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6 pt-4">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
+                  <div className="lg:col-span-3 p-6 rounded-[2rem] bg-zinc-950 dark:bg-zinc-900 text-white shadow-2xl relative overflow-hidden group min-h-[220px] flex flex-col justify-between">
+                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-all duration-700 scale-150 group-hover:rotate-12">
+                      <Layers className="h-32 w-32" />
+                    </div>
+                    
+                    <div className="relative z-10 space-y-8">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <p className="text-[10px] text-white/40 font-mono tracking-widest uppercase">Available Balance</p>
+                          <p className="text-4xl font-mono tracking-tighter font-bold text-primary">
+                            {currencySymbol}{(subscriptionData?.Shop?.merchant_wallet?.balance || subscriptionData?.Restaurant?.merchant_wallet?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div className="h-10 w-16 bg-zinc-800/50 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10">
+                          <div className="h-6 w-10 bg-primary/60 rounded-lg shadow-[0_0_15px_rgba(34,197,94,0.3)]" />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-end">
+                        <div className="space-y-1">
+                          <p className="text-[10px] text-white/40 uppercase tracking-widest">Wallet Holder</p>
+                          <p className="text-sm font-semibold uppercase tracking-wider">
+                            {subscriptionData?.Shop?.name || subscriptionData?.Restaurant?.name || 'Admin User'}
+                          </p>
+                        </div>
+                        <div className="flex -space-x-3">
+                          <div className="h-10 w-10 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <Zap className="h-5 w-5 text-white/20" />
+                          </div>
+                          <div className="h-10 w-10 rounded-full bg-primary/40 border border-white/20 backdrop-blur-sm shadow-xl flex items-center justify-center">
+                            <TrendingUp className="h-5 w-5 text-white" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-2 space-y-4">
+                    <div className="p-4 rounded-2xl bg-background border border-primary/10 space-y-1">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">Linked Business</p>
+                      <p className="text-sm font-semibold truncate">
+                        {subscriptionData?.Shop?.name || subscriptionData?.Restaurant?.name || 'Main Entity'}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-background border border-primary/10 space-y-1">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">Last Transaction</p>
+                      <p className="text-sm font-semibold">
+                        {subscriptionData?.Shop?.merchant_wallet?.update_at ? format(new Date(subscriptionData.Shop.merchant_wallet.update_at), 'MMM dd, HH:mm') : 'Recently'}
+                      </p>
+                    </div>
+                    <Button className="w-full rounded-2xl h-12 shadow-lg shadow-primary/20 bg-primary hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2">
+                      <ArrowUpCircle className="h-5 w-5" />
+                      Top Up Wallet
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* AI Usage Tracker */}
+            {(() => {
+              const aiData = usageData?.ai_usage?.[0];
+              const aiLimit = aiData?.request_count !== undefined ? aiData.request_count : (subscriptionData?.plan?.ai_request_limit || 0);
+              const aiUsed = aiData?.requests_sent || 0;
+              const isUnlimited = aiLimit === -1;
+              const aiPercentage = isUnlimited ? 0 : (aiLimit > 0 ? Math.min(Math.round((aiUsed / aiLimit) * 100), 100) : 0);
+              const hasNoSubscription = !aiData && aiLimit <= 5;
+
+              return (
+                <Card className="border-none shadow-lg rounded-3xl overflow-hidden bg-muted/5">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-primary" />
+                          AI Intelligence Usage
+                        </CardTitle>
+                        <CardDescription>
+                          {hasNoSubscription ? 'Unlock AI-powered content generation' : 'Consumption of AI credits for content generation'}
+                        </CardDescription>
+                      </div>
+                      <TrendingUp className="h-5 w-5 text-primary opacity-50" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {hasNoSubscription ? (
+                      <div className="flex flex-col items-center justify-center py-4 space-y-4 text-center">
+                        <div className="p-4 rounded-full bg-primary/10">
+                          <Zap className="h-8 w-8 text-primary" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-bold">No AI Subscription</p>
+                          <p className="text-xs text-muted-foreground max-w-[200px]">Upgrade your plan to start using AI for your business content.</p>
+                        </div>
+                        <Button className="w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors gap-2 shadow-lg shadow-primary/20">
+                          <ArrowUpCircle className="h-4 w-4" />
+                          Subscribe to AI
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="font-semibold">
+                              {isUnlimited ? 'Unlimited' : `${aiUsed.toLocaleString()} / ${aiLimit.toLocaleString()}`} Credits
+                            </span>
+                            {!isUnlimited && <span className="text-primary font-bold">{aiPercentage}%</span>}
+                          </div>
+                          <Progress value={isUnlimited ? 0 : aiPercentage} className="h-3 rounded-full bg-muted shadow-inner" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div className="space-y-1">
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground">Monthly Cap</p>
+                            <p className="text-sm font-bold">{isUnlimited ? '∞' : aiLimit.toLocaleString()}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground">Remaining</p>
+                            <p className="text-sm font-bold text-primary">{isUnlimited ? '∞' : Math.max(0, aiLimit - aiUsed).toLocaleString()}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground">Reset In</p>
+                            <p className="text-sm font-bold">
+                              {subscriptionData?.end_date ? Math.max(0, Math.ceil((new Date(subscriptionData.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0} Days
+                            </p>
+                          </div>
+                        </div>
+                        <Button className="w-full rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary border-none transition-colors gap-2">
+                          <ArrowUpCircle className="h-4 w-4" />
+                          Purchase More Credits
+                        </Button>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
+            {/* Reel Production Usage */}
+            {(() => {
+              const reelData = usageData?.reel_usage?.[0];
+              const reelLimit = subscriptionData?.plan?.reel_limit || 0;
+              const reelUsed = reelData?.upload_count || 0;
+              const reelPercentage = reelLimit > 0 ? Math.min(Math.round((reelUsed / reelLimit) * 100), 100) : 0;
+              const hasNoReelSubscription = !reelData && reelLimit <= 0;
+
+              return (
+                <Card className="border-none shadow-lg rounded-3xl overflow-hidden bg-muted/5">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Video className="h-4 w-4 text-primary" />
+                          Reel Production Limits
+                        </CardTitle>
+                        <CardDescription>
+                          {hasNoReelSubscription ? 'Create stunning video marketing reels' : 'Monthly video marketing generation quota'}
+                        </CardDescription>
+                      </div>
+                      <Activity className="h-5 w-5 text-primary opacity-50" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {hasNoReelSubscription ? (
+                      <div className="flex flex-col items-center justify-center py-4 space-y-4 text-center">
+                        <div className="p-4 rounded-full bg-primary/10">
+                          <Video className="h-8 w-8 text-primary" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-bold">No Reel Quota</p>
+                          <p className="text-xs text-muted-foreground max-w-[200px]">Activate your reel production quota to start generating video content.</p>
+                        </div>
+                        <Button className="w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors gap-2 shadow-lg shadow-primary/20">
+                          <Layers className="h-4 w-4" />
+                          Activate Reel Plan
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="font-semibold">{reelUsed.toLocaleString()} / {reelLimit.toLocaleString()} Reels</span>
+                            <span className="text-primary font-bold">{reelPercentage}%</span>
+                          </div>
+                          <Progress value={reelPercentage} className="h-3 rounded-full bg-muted shadow-inner" />
+                        </div>
+                        <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-center gap-4">
+                          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <CheckCircle2 className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold">Standard Resolution (1080p)</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {reelLimit - reelUsed} productions remaining this cycle
+                            </p>
+                          </div>
+                        </div>
+                        <Button className="w-full rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary border-none transition-colors gap-2">
+                          <Layers className="h-4 w-4" />
+                          Manage Quota Settings
+                        </Button>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
+          </div>
+
+          {/* Subscription Invoices Table */}
+          <Card className="border-none shadow-xl rounded-3xl overflow-hidden bg-muted/10">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="space-y-1">
+                <CardTitle className="text-lg">Subscription Invoices</CardTitle>
+                <CardDescription>Review and download your billing history</CardDescription>
+              </div>
+              <Button variant="outline" className="rounded-xl border-primary/10 hover:bg-primary/5 text-primary gap-2">
+                <History className="h-4 w-4" />
+                View Full History
+              </Button>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="company-name">Company Name</Label>
-                  <Input id="company-name" defaultValue="DeliveryAdmin Inc." />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contact-email">Contact Email</Label>
-                  <Input id="contact-email" type="email" defaultValue="support@deliveryadmin.com" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" defaultValue="+1 (555) 123-4567" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input id="website" defaultValue="https://deliveryadmin.com" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Textarea
-                  id="address"
-                  defaultValue="123 Delivery Street, Suite 100, San Francisco, CA 94107"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Platform Settings</CardTitle>
-              <CardDescription>Configure general platform settings and defaults.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="timezone">Default Timezone</Label>
-                  <Input id="timezone" defaultValue="America/Los_Angeles" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Default Currency</Label>
-                  <Input id="currency" defaultValue="USD ($)" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="date-format">Date Format</Label>
-                <Input id="date-format" defaultValue="MM/DD/YYYY" />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch id="maintenance" />
-                <Label htmlFor="maintenance">Enable Maintenance Mode</Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch id="new-registrations" defaultChecked />
-                <Label htmlFor="new-registrations">Allow New User Registrations</Label>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-muted-foreground/10">
+                      <th className="py-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Invoice</th>
+                      <th className="py-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Date</th>
+                      <th className="py-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Amount</th>
+                      <th className="py-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Status</th>
+                      <th className="py-4"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscriptionData?.subscription_invoices?.length > 0 ? (
+                      subscriptionData.subscription_invoices.map((invoice: any) => (
+                        <tr key={invoice.id} className="border-b border-muted-foreground/5 hover:bg-muted/5 transition-colors">
+                          <td className="py-4">
+                            <p className="font-semibold text-foreground">#{invoice.invoice_number || invoice.id.slice(0, 8)}</p>
+                            <p className="text-[10px] text-muted-foreground">{invoice.plan_name}</p>
+                          </td>
+                          <td className="py-4">
+                            <span className="text-muted-foreground">
+                              {invoice.created_at ? format(new Date(invoice.created_at), 'MMM dd, yyyy') : 'N/A'}
+                            </span>
+                          </td>
+                          <td className="py-4">
+                            <span className="font-bold">
+                              {currencySymbol}{invoice.plan_price?.toLocaleString()}
+                            </span>
+                          </td>
+                          <td className="py-4">
+                            <Badge className={cn(
+                              "rounded-full px-2 py-0 h-5 text-[10px] border-none font-bold",
+                              invoice.status === 'paid' ? "bg-primary/20 text-primary" : "bg-zinc-500/20 text-zinc-500"
+                            )}>
+                              {invoice.status?.toUpperCase() || 'PENDING'}
+                            </Badge>
+                          </td>
+                          <td className="py-4 text-right">
+                            <Button variant="ghost" size="sm" className="rounded-lg h-8 text-primary hover:bg-primary/10">
+                              Download
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="py-12 text-center text-muted-foreground italic">
+                          No invoices found for this subscription.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </CardContent>
           </Card>
@@ -690,7 +1163,6 @@ const Settings = () => {
                     </Button>
                   ))}
 
-                  {/* Custom Color Picker */}
                   <div className="relative group">
                     <Button
                       variant="outline"
@@ -779,130 +1251,334 @@ const Settings = () => {
                     <Switch id="push-orders" defaultChecked />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="push-refunds">Refund Requests</Label>
-                    <Switch id="push-refunds" />
+                    <Label htmlFor="push-offers">New Offers</Label>
+                    <Switch id="push-offers" defaultChecked />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="push-support">Support Tickets</Label>
-                    <Switch id="push-support" defaultChecked />
+                    <Label htmlFor="push-messages">Direct Messages</Label>
+                    <Switch id="push-messages" defaultChecked />
                   </div>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notification-email">Notification Email</Label>
-                <Input
-                  id="notification-email"
-                  type="email"
-                  defaultValue="alerts@deliveryadmin.com"
-                />
-              </div>
             </CardContent>
+            <CardFooter className="border-t bg-zinc-50/50 dark:bg-zinc-900/50 pt-6">
+              <Button onClick={handleSaveChanges} className="rounded-xl px-8">
+                Save Preferences
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="payment-methods" className="space-y-6">
+          <Card className="border-none shadow-xl bg-gradient-to-br from-background to-muted/20 rounded-3xl overflow-hidden">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10">
+                    <CreditCard className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>Payout Management</CardTitle>
+                    <CardDescription>Configure and manage your payout destinations.</CardDescription>
+                  </div>
+                </div>
+                {profileData?.display_role === 'storeAdministrator' && (
+                  <Badge variant="outline" className="rounded-lg bg-yellow-500/10 text-yellow-600 border-yellow-500/20 gap-1">
+                    <Shield className="h-3 w-3" />
+                    View Only
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              {/* Existing Methods Table */}
+              {paymentMethods.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Registered Payout Methods</h3>
+                  <div className="rounded-2xl border border-muted-foreground/10 overflow-hidden bg-background">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-muted/50 text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Method</th>
+                          <th className="px-4 py-3 font-semibold">Account Name</th>
+                          <th className="px-4 py-3 font-semibold">Account Number</th>
+                          <th className="px-4 py-3 font-semibold text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-muted-foreground/10">
+                        {paymentMethods.map((pm) => (
+                          <tr key={pm.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-2">
+                                {pm.method === 'momo' ? <Smartphone className="h-4 w-4 text-primary" /> : <Landmark className="h-4 w-4 text-primary" />}
+                                <span className="capitalize">{pm.method === 'momo' ? 'Mobile Money' : 'Bank Transfer'}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 font-medium">{pm.names}</td>
+                            <td className="px-4 py-4 font-mono text-xs">{maskAccountNumber(pm.number)}</td>
+                            <td className="px-4 py-4 text-center">
+                              {pm.is_default ? (
+                                <Badge className="bg-primary/10 text-primary border-none">Default</Badge>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">Secondary</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {profileData?.display_role === 'globalAdmin' && (
+                <div className="space-y-6">
+                  <div className="h-px bg-muted-foreground/10" />
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Add New Payout Method</h3>
+                    <div className="flex gap-4 p-1 bg-muted rounded-2xl w-fit">
+                      <button
+                        onClick={() => {
+                          if (!isEditingPayout) return;
+                          setSelectedPayoutType('momo');
+                        }}
+                        disabled={!isEditingPayout}
+                        className={cn(
+                          "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-medium transition-all",
+                          selectedPayoutType === 'momo' ? "bg-background shadow-md text-primary" : "text-muted-foreground hover:text-foreground",
+                          !isEditingPayout && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        <Smartphone className="h-4 w-4" />
+                        Mobile Money
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!isEditingPayout) return;
+                          setSelectedPayoutType('bank');
+                        }}
+                        disabled={!isEditingPayout}
+                        className={cn(
+                          "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-medium transition-all",
+                          selectedPayoutType === 'bank' ? "bg-background shadow-md text-primary" : "text-muted-foreground hover:text-foreground",
+                          !isEditingPayout && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        <Landmark className="h-4 w-4" />
+                        Bank Account
+                      </button>
+                    </div>
+
+                    {selectedPayoutType === 'momo' ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="space-y-2">
+                          <Label htmlFor="momo-provider">Network Provider</Label>
+                          <Select 
+                            value={payoutForm.provider} 
+                            onValueChange={(v) => setPayoutForm(prev => ({ ...prev, provider: v }))}
+                            disabled={!isEditingPayout}
+                          >
+                            <SelectTrigger id="momo-provider" className="rounded-xl border-muted-foreground/20">
+                              <SelectValue placeholder="Select provider" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="mtn">MTN Mobile Money</SelectItem>
+                              <SelectItem value="airtel">Airtel Money</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="momo-number">Phone Number</Label>
+                          <Input 
+                            id="momo-number" 
+                            placeholder="e.g. 078XXXXXXX" 
+                            className="rounded-xl border-muted-foreground/20" 
+                            value={payoutForm.number}
+                            onChange={(e) => setPayoutForm(prev => ({ ...prev, number: e.target.value }))}
+                            readOnly={!isEditingPayout}
+                          />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="momo-name">Account Name</Label>
+                          <Input 
+                            id="momo-name" 
+                            placeholder="Full name as it appears on account" 
+                            className="rounded-xl border-muted-foreground/20" 
+                            value={payoutForm.names}
+                            onChange={(e) => setPayoutForm(prev => ({ ...prev, names: e.target.value }))}
+                            readOnly={!isEditingPayout}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="space-y-2">
+                          <Label htmlFor="bank-name">Bank Name</Label>
+                          <Input 
+                            id="bank-name" 
+                            placeholder="Enter bank name" 
+                            className="rounded-xl border-muted-foreground/20" 
+                            value={payoutForm.bankName}
+                            onChange={(e) => setPayoutForm(prev => ({ ...prev, bankName: e.target.value }))}
+                            readOnly={!isEditingPayout}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="bank-account">Account Number</Label>
+                          <Input 
+                            id="bank-account" 
+                            placeholder="Enter account number" 
+                            className="rounded-xl border-muted-foreground/20" 
+                            value={payoutForm.number}
+                            onChange={(e) => setPayoutForm(prev => ({ ...prev, number: e.target.value }))}
+                            readOnly={!isEditingPayout}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="bank-branch">Branch Name</Label>
+                          <Input 
+                            id="bank-branch" 
+                            placeholder="Enter branch name" 
+                            className="rounded-xl border-muted-foreground/20" 
+                            value={payoutForm.bankBranch}
+                            onChange={(e) => setPayoutForm(prev => ({ ...prev, bankBranch: e.target.value }))}
+                            readOnly={!isEditingPayout}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="bank-swift">SWIFT / BIC Code</Label>
+                          <Input 
+                            id="bank-swift" 
+                            placeholder="Enter SWIFT code" 
+                            className="rounded-xl border-muted-foreground/20" 
+                            value={payoutForm.bankSwift}
+                            onChange={(e) => setPayoutForm(prev => ({ ...prev, bankSwift: e.target.value }))}
+                            readOnly={!isEditingPayout}
+                          />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="bank-holder">Account Holder Name</Label>
+                          <Input 
+                            id="bank-holder" 
+                            placeholder="Full name as it appears on bank statement" 
+                            className="rounded-xl border-muted-foreground/20" 
+                            value={payoutForm.names}
+                            onChange={(e) => setPayoutForm(prev => ({ ...prev, names: e.target.value }))}
+                            readOnly={!isEditingPayout}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+            {profileData?.display_role === 'globalAdmin' && (
+              <CardFooter className="border-t bg-zinc-50/50 dark:bg-zinc-900/50 pt-6 flex justify-between items-center">
+                {!isEditingPayout ? (
+                  <Button 
+                    onClick={() => setIsEditingPayout(true)} 
+                    variant="outline"
+                    className="rounded-xl px-8 border-primary text-primary hover:bg-primary/10 transition-colors gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Modify Payout Method
+                  </Button>
+                ) : (
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={handleSavePayoutMethod} 
+                      className="rounded-xl px-8 shadow-lg shadow-primary/20"
+                      disabled={isSavingPayout}
+                    >
+                      {isSavingPayout ? 'Saving...' : payoutForm.id ? 'Update Method' : 'Add Method'}
+                    </Button>
+                    {payoutForm.id && (
+                      <Button 
+                        onClick={() => setIsEditingPayout(false)} 
+                        variant="ghost"
+                        className="rounded-xl px-6"
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardFooter>
+            )}
           </Card>
         </TabsContent>
 
         <TabsContent value="security" className="space-y-6">
-          <Card className="border-none shadow-lg rounded-3xl overflow-hidden">
-            <CardHeader className="border-b bg-zinc-50/50 dark:bg-zinc-900/50">
+          <Card>
+            <CardHeader>
               <CardTitle>Security Settings</CardTitle>
               <CardDescription>
-                Configure security options and access policies for your account.
+                Manage your password and account security options.
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6 space-y-8">
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                    Security Authentication
-                  </h3>
-                  <div className="grid gap-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                          <Shield className="h-5 w-5" />
-                        </div>
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-bold">Two-Factor Authentication</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            Secure your account with SMS verification
-                          </p>
-                        </div>
-                      </div>
-                      <Switch
-                        id="2fa"
-                        checked={isTwoFactorEnabled}
-                        onCheckedChange={handleToggle2FA}
-                        disabled={isLoadingUser}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between opacity-50 cursor-not-allowed border-t pt-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
-                          <Fingerprint className="h-5 w-5" />
-                        </div>
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-bold">Biometric Login</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            Unlock with FaceID or Fingerprint
-                          </p>
-                        </div>
-                      </div>
-                      <Switch disabled />
-                    </div>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Change Password</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Current Password</Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      className="rounded-xl"
+                      value={passwordState.current}
+                      onChange={e =>
+                        setPasswordState(prev => ({ ...prev, current: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      className="rounded-xl"
+                      value={passwordState.new}
+                      onChange={e => setPasswordState(prev => ({ ...prev, new: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm New Password</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      className="rounded-xl"
+                      value={passwordState.confirm}
+                      onChange={e =>
+                        setPasswordState(prev => ({ ...prev, confirm: e.target.value }))
+                      }
+                    />
                   </div>
                 </div>
+                <Button
+                  onClick={handleChangePassword}
+                  disabled={isUpdatingPassword}
+                  className="rounded-xl"
+                >
+                  {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                </Button>
+              </div>
 
-                <div className="pt-6 border-t">
-                  <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider mb-4">
-                    Change Password
-                  </h3>
-                  <div className="grid gap-4 max-w-md">
-                    <div className="space-y-2">
-                      <Label htmlFor="current-password">Current Password</Label>
-                      <Input
-                        id="current-password"
-                        type="password"
-                        placeholder="••••••••"
-                        className="rounded-xl"
-                        value={passwordState.current}
-                        onChange={e =>
-                          setPasswordState({ ...passwordState, current: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="new-password">New Password</Label>
-                      <Input
-                        id="new-password"
-                        type="password"
-                        placeholder="••••••••"
-                        className="rounded-xl"
-                        value={passwordState.new}
-                        onChange={e => setPasswordState({ ...passwordState, new: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirm New Password</Label>
-                      <Input
-                        id="confirm-password"
-                        type="password"
-                        placeholder="••••••••"
-                        className="rounded-xl"
-                        value={passwordState.confirm}
-                        onChange={e =>
-                          setPasswordState({ ...passwordState, confirm: e.target.value })
-                        }
-                      />
-                    </div>
-                    <Button
-                      onClick={handleChangePassword}
-                      disabled={isUpdatingPassword}
-                      className="w-full md:w-auto rounded-xl"
-                    >
-                      {isUpdatingPassword ? 'Updating...' : 'Update Password'}
-                    </Button>
+              <div className="pt-6 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-medium">Two-Factor Authentication</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Add an extra layer of security to your account.
+                    </p>
                   </div>
+                  <Switch
+                    checked={isTwoFactorEnabled}
+                    onCheckedChange={handleToggle2FA}
+                    className="data-[state=checked]:bg-primary"
+                  />
                 </div>
               </div>
             </CardContent>
@@ -910,67 +1586,20 @@ const Settings = () => {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Store Branches</DialogTitle>
-            <DialogDescription>
-              Configure multiple store locations for your supermarket chain.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Branch Name</Label>
-              <Input placeholder="Main Branch" />
-            </div>
-            <div className="space-y-2">
-              <Label>Branch Address</Label>
-              <Textarea placeholder="123 Main St, City, State" />
-            </div>
-            <div className="space-y-2">
-              <Label>Branch Manager</Label>
-              <Input placeholder="John Doe" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            {hasAction('settings', 'edit_settings') && (
-              <Button
-                onClick={() => {
-                  toast.success('Branch added successfully');
-                  setDialogOpen(false);
-                }}
-              >
-                Add Branch
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
-        <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Edit Profile Picture</DialogTitle>
-            <DialogDescription>
-              Choose a character style or upload your own photo.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-[2rem] border-none shadow-2xl">
           <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="bg-zinc-50 dark:bg-zinc-900/50 p-8 flex flex-col items-center justify-center border-r">
+            <div className="p-8 bg-muted/30 flex flex-col items-center justify-center border-r">
               <div className="relative group">
-                <Avatar className="h-40 w-40 border-8 border-background shadow-2xl transition-transform group-hover:scale-105 duration-500">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-all duration-500" />
+                <Avatar className="h-48 w-48 border-8 border-background shadow-2xl relative z-10 transition-transform duration-500 group-hover:scale-105">
                   <AvatarImage
                     src={`https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${avatarSeed}`}
                   />
-                  <AvatarFallback className="bg-primary/10 text-primary text-4xl">
-                    {avatarSeed.charAt(0)}
+                  <AvatarFallback className="text-4xl font-bold bg-zinc-100">
+                    {profileData?.display_name?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-full shadow-lg">
-                  <Smartphone className="h-5 w-5" />
-                </div>
               </div>
               <div className="mt-6 text-center">
                 <h3 className="font-bold text-lg">Avatar Preview</h3>

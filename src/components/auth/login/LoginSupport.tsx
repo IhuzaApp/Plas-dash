@@ -53,7 +53,7 @@ const LoginSupport: React.FC<LoginSupportProps> = ({
             <ShieldCheck className="h-6 w-6 text-green-500" />
           </div>
           <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-            Ticket submitted successfully! We'll contact you shortly.
+            Ticket submitted successfully! We&apos;ll contact you shortly.
           </p>
           <Button
             variant="outline"
@@ -96,7 +96,7 @@ const LoginSupport: React.FC<LoginSupportProps> = ({
             </label>
             <Textarea
               required
-              placeholder="Tell us what's happening..."
+              placeholder="Tell us what&apos;s happening..."
               className="min-h-[100px] bg-muted/30 border-muted-foreground/20 rounded-xl resize-none"
               value={supportData.description}
               onChange={(e) => setSupportData({ ...supportData, description: e.target.value })}

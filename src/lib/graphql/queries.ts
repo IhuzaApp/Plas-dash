@@ -2637,3 +2637,244 @@ export const GET_SUBSCRIPTIONS_ANALYTICS = `
     }
   }
 `;
+
+export const GET_SHOP_SUBSCRIPTIONS = `
+  query GetShopSubscriptions($where: shop_subscriptions_bool_exp!) {
+    shop_subscriptions(where: $where) {
+      billing_cycle
+      business_id
+      created_at
+      end_date
+      id
+      plan_id
+      restaurant_id
+      shop_id
+      start_date
+      status
+      updated_at
+      Shop {
+        address
+        category_id
+        created_at
+        description
+        has_wallet
+        id
+        image
+        is_active
+        latitude
+        logo
+        longitude
+        name
+        operating_hours
+        phone
+        rdb_certificate
+        relatedTo
+        ssd
+        tin
+        updated_at
+        use_wallet
+        merchant_wallet {
+          active
+          balance
+          created_at
+          id
+          restaurant_id
+          shop_id
+          update_at
+        }
+      }
+      Restaurant {
+        created_at
+        email
+        id
+        is_active
+        lat
+        location
+        logo
+        long
+        name
+        operating_hours
+        phone
+        profile
+        rdb_cert
+        relatedTo
+        tin
+        updated_at
+        ussd
+        verified
+        merchant_wallet {
+          active
+          balance
+          created_at
+          id
+          restaurant_id
+          shop_id
+          update_at
+        }
+      }
+      plan {
+        ai_request_limit
+        created_at
+        description
+        id
+        name
+        price_monthly
+        price_yearly
+        reel_limit
+        plan_modules {
+          id
+          plan_id
+          module_id
+          plan {
+            ai_request_limit
+            created_at
+            description
+            id
+            name
+            price_monthly
+            price_yearly
+            reel_limit
+          }
+          module {
+            created_at
+            group_name
+            id
+            name
+            slug
+          }
+        }
+      }
+      subscription_invoices {
+        aiUsage_id
+        created_at
+        currency
+        deleted
+        deleted_at
+        discount_amount
+        due_date
+        id
+        invoice_number
+        is_overdue
+        issued_at
+        paid_at
+        payment_method
+        plan_name
+        plan_price
+        reelUsage_id
+        shopSubscription_id
+        status
+        subtotal_amount
+        tax_amount
+        updated_at
+      }
+      Restaurant {
+        created_at
+        email
+        id
+        is_active
+        lat
+        location
+        logo
+        long
+        name
+        operating_hours
+        phone
+        profile
+        rdb_cert
+        relatedTo
+        tin
+        updated_at
+        ussd
+        verified
+        merchant_wallet {
+          active
+          balance
+          created_at
+          id
+          restaurant_id
+          shop_id
+          update_at
+        }
+      }
+    }
+  }
+`;
+
+export const GET_LATEST_USAGE = `
+  query GetLatestUsage($aiWhere: ai_usage_bool_exp!, $reelWhere: reel_usage_bool_exp!) {
+    ai_usage(
+      where: $aiWhere,
+      order_by: { year: desc, month: desc },
+      limit: 1
+    ) {
+      id
+      month
+      request_count
+      requests_sent
+      year
+    }
+    reel_usage(
+      where: $reelWhere,
+      order_by: { year: desc, month: desc },
+      limit: 1
+    ) {
+      id
+      month
+      upload_count
+      year
+    }
+  }
+`;
+
+export const GET_PAYMENT_METHODS = `
+  query GetPaymentMethods($_eq: uuid = "") {
+    Payment_Methods(where: {shop_id: {_eq: $_eq}}) {
+      CCV
+      create_at
+      id
+      is_default
+      method
+      names
+      number
+      restaurant_id
+      shop_id
+      update_on
+      user_id
+      validity
+      Shop {
+        id
+        phone
+        name
+        rdb_certificate
+      }
+      Restaurant {
+        email
+        id
+        logo
+        name
+      }
+    }
+  }
+`;
+
+export const ADD_PAYMENT_METHOD = `
+  mutation AddPaymentMethod($object: Payment_Methods_insert_input!) {
+    insert_Payment_Methods_one(object: $object) {
+      id
+      method
+      names
+      number
+    }
+  }
+`;
+
+export const UPDATE_PAYMENT_METHOD = `
+  mutation UpdatePaymentMethod($id: uuid!, $set: Payment_Methods_set_input!) {
+    update_Payment_Methods_by_pk(pk_columns: {id: $id}, _set: $set) {
+      id
+      method
+      names
+      number
+    }
+  }
+`;

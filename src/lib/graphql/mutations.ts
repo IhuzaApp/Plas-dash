@@ -587,6 +587,8 @@ export const UPDATE_SHOP_SETTINGS = `
     $logo: String
     $tin: String
     $ssd: String
+    $latitude: String
+    $longitude: String
   ) {
     update_Shops_by_pk(
       pk_columns: { id: $id }
@@ -600,6 +602,8 @@ export const UPDATE_SHOP_SETTINGS = `
         logo: $logo
         tin: $tin
         ssd: $ssd
+        latitude: $latitude
+        longitude: $longitude
         updated_at: "now()"
       }
     ) {
@@ -613,6 +617,8 @@ export const UPDATE_SHOP_SETTINGS = `
       logo
       tin
       ssd
+      latitude
+      longitude
       updated_at
     }
   }

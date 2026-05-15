@@ -41,7 +41,6 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   'Help Center': { module: 'help', isProjectUser: true },
   'Delivery Settings': { module: 'delivery_settings', isProjectUser: true },
   Promotions: { module: 'promotions' },
-  'System Settings': { module: 'settings', isProjectUser: true },
   Referrals: { module: 'referrals', isProjectUser: true },
   PlasMarket: { module: 'plasmarket', isProjectUser: true },
   'Withdraw Requests': { module: 'withdraw_requests', isProjectUser: true },
@@ -69,7 +68,8 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   'Tax Summary': { module: 'tax' },
   Optimization: { module: 'tax' },
   Reports: { module: 'tax' },
-  Settings: { module: 'tax' },
+  'Tax Settings': { module: 'tax' },
+  'Account Settings': { module: 'settings' },
   'AI Chat': { module: 'ai_chat' },
 
   // Subscriptions (Project Users only)

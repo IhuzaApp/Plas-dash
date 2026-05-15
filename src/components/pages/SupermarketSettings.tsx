@@ -29,6 +29,8 @@ import {
   Building2,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { Autocomplete } from '@react-google-maps/api';
+import { useGoogleMap } from '@/contexts/GoogleProvider';
 
 // Helper function to format operating hours JSON to readable string
 const formatOperatingHours = (operatingHours: any): string => {
@@ -99,6 +101,8 @@ export default function SupermarketSettings() {
       logo?: string | null;
       tin?: string | null;
       ssd?: string | null;
+      latitude?: string | null;
+      longitude?: string | null;
     }) => {
       return hasuraRequest(UPDATE_SHOP_SETTINGS, variables);
     },
@@ -116,7 +120,12 @@ export default function SupermarketSettings() {
     is_active: true,
     tin: '',
     ssd: '',
+    latitude: '',
+    longitude: '',
   });
+
+  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const { isLoaded: isMapLoaded } = useGoogleMap();
 
   const shop = data?.Shops?.[0];
 
@@ -135,6 +144,8 @@ export default function SupermarketSettings() {
         is_active: shop.is_active ?? true,
         tin: shop.tin || '',
         ssd: shop.ssd || '',
+        latitude: String(shop.latitude || ''),
+        longitude: String(shop.longitude || ''),
       });
       // Set logo preview if shop has a logo
       if (shop.logo) {
@@ -159,6 +170,28 @@ export default function SupermarketSettings() {
         setLogoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const onLoad = (auto: google.maps.places.Autocomplete) => {
+    setAutocomplete(auto);
+  };
+
+  const onPlaceChanged = () => {
+    if (autocomplete !== null) {
+      const place = autocomplete.getPlace();
+      const lat = place.geometry?.location?.lat();
+      const lng = place.geometry?.location?.lng();
+      const address = place.formatted_address;
+
+      if (lat && lng) {
+        setFormData(prev => ({
+          ...prev,
+          latitude: lat.toString(),
+          longitude: lng.toString(),
+          address: address || prev.address,
+        }));
+      }
     }
   };
 
@@ -194,6 +227,8 @@ export default function SupermarketSettings() {
         logo: logoData,
         tin: formData.tin,
         ssd: formData.ssd,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
       });
 
       toast({
@@ -226,6 +261,8 @@ export default function SupermarketSettings() {
         is_active: shop.is_active ?? true,
         tin: shop.tin || '',
         ssd: shop.ssd || '',
+        latitude: String(shop.latitude || ''),
+        longitude: String(shop.longitude || ''),
       });
       // Reset logo preview
       setLogoPreview(shop.logo || null);
@@ -319,8 +356,9 @@ export default function SupermarketSettings() {
         {/* Supermarket Logo */}
         <div className="space-y-4">
           <Label>Supermarket Logo</Label>
-          <div className="flex items-center gap-4">
-            <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
+          <div className="flex items-center gap-6">
+            <div className="h-28 w-28 rounded-2xl border-2 border-dashed border-primary/20 flex items-center justify-center overflow-hidden bg-primary/5 group relative cursor-pointer"
+                 onClick={() => isEditing && document.getElementById('logo-upload')?.click()}>
               {logoPreview ? (
                 <img
                   src={logoPreview}
@@ -333,12 +371,23 @@ export default function SupermarketSettings() {
             </div>
             <div className="space-y-2">
               <Input
-                id="logo"
+                id="logo-upload"
                 type="file"
+                className="hidden"
                 accept="image/*"
                 onChange={handleLogoChange}
                 disabled={!isEditing}
               />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-xl border-primary/20 hover:bg-primary/5"
+                onClick={() => document.getElementById('logo-upload')?.click()}
+                disabled={!isEditing}
+              >
+                <ImageIcon className="h-4 w-4 mr-2 text-primary" />
+                Change Logo
+              </Button>
               <p className="text-xs text-muted-foreground">
                 Recommended size: 512x512px. Max file size: 2MB.
               </p>
@@ -358,7 +407,7 @@ export default function SupermarketSettings() {
                 placeholder="Enter supermarket name"
               />
             ) : (
-              <div className="p-3 bg-gray-50 rounded-md border">
+              <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 transition-colors">
                 <span className="font-medium">{shop.name}</span>
               </div>
             )}
@@ -373,7 +422,7 @@ export default function SupermarketSettings() {
                 placeholder="Enter description or slogan"
               />
             ) : (
-              <div className="p-3 bg-gray-50 rounded-md border">
+              <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 transition-colors">
                 <span className="text-sm">{shop.description || 'No description available'}</span>
               </div>
             )}
@@ -392,7 +441,7 @@ export default function SupermarketSettings() {
                 placeholder="Enter TIN number"
               />
             ) : (
-              <div className="p-3 bg-gray-50 rounded-md border">
+              <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 transition-colors">
                 <span className="text-sm">{shop.tin || 'No TIN available'}</span>
               </div>
             )}
@@ -407,7 +456,7 @@ export default function SupermarketSettings() {
                 placeholder="Enter SSD number"
               />
             ) : (
-              <div className="p-3 bg-gray-50 rounded-md border">
+              <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 transition-colors">
                 <span className="text-sm">{shop.ssd || 'No SSD available'}</span>
               </div>
             )}
@@ -434,7 +483,7 @@ export default function SupermarketSettings() {
                 placeholder="Enter phone number"
               />
             ) : (
-              <div className="p-3 bg-gray-50 rounded-md border flex items-center gap-2">
+              <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 flex items-center gap-2 transition-colors">
                 <Phone className="h-4 w-4 text-gray-500" />
                 <span>{shop.phone || 'No phone number'}</span>
               </div>
@@ -444,19 +493,68 @@ export default function SupermarketSettings() {
 
         {/* Address */}
         <div className="space-y-2">
-          <Label htmlFor="address">Address</Label>
+          <Label htmlFor="address">Address & Location</Label>
           {isEditing ? (
-            <Textarea
-              id="address"
-              value={formData.address}
-              onChange={e => handleInputChange('address', e.target.value)}
-              placeholder="Enter supermarket address"
-              rows={3}
-            />
+            <div className="space-y-4">
+              {isMapLoaded ? (
+                <Autocomplete onLoad={onLoad} onPlaceChanged={onPlaceChanged}>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={e => handleInputChange('address', e.target.value)}
+                    placeholder="Search for supermarket location..."
+                    className="rounded-xl"
+                  />
+                </Autocomplete>
+              ) : (
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={e => handleInputChange('address', e.target.value)}
+                  placeholder="Enter supermarket address"
+                  className="rounded-xl"
+                />
+              )}
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="latitude" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Latitude</Label>
+                  <Input
+                    id="latitude"
+                    value={formData.latitude}
+                    onChange={e => handleInputChange('latitude', e.target.value)}
+                    placeholder="e.g. -1.9441"
+                    className="rounded-xl font-mono text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="longitude" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Longitude</Label>
+                  <Input
+                    id="longitude"
+                    value={formData.longitude}
+                    onChange={e => handleInputChange('longitude', e.target.value)}
+                    placeholder="e.g. 30.0619"
+                    className="rounded-xl font-mono text-sm"
+                  />
+                </div>
+              </div>
+            </div>
           ) : (
-            <div className="p-3 bg-gray-50 rounded-md border flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-gray-500" />
-              <span>{shop.address || 'No address available'}</span>
+            <div className="space-y-4">
+              <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 flex items-center gap-2 transition-colors">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span className="font-medium">{shop.address || 'No address available'}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 flex items-center gap-2 transition-colors">
+                  <Globe className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-mono">Lat: {shop.latitude || 'N/A'}</span>
+                </div>
+                <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 flex items-center gap-2 transition-colors">
+                  <Globe className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-mono">Lng: {shop.longitude || 'N/A'}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -473,7 +571,7 @@ export default function SupermarketSettings() {
               rows={6}
             />
           ) : (
-            <div className="p-3 bg-gray-50 rounded-md border flex items-center gap-2">
+            <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 flex items-center gap-2 transition-colors">
               <Clock className="h-4 w-4 text-gray-500" />
               <span>{formatOperatingHours(shop.operating_hours)}</span>
             </div>
@@ -505,41 +603,25 @@ export default function SupermarketSettings() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Shop ID</Label>
-              <div className="p-3 bg-gray-50 rounded-md border">
+              <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 transition-colors">
                 <code className="text-sm">{shop.id}</code>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Created</Label>
-              <div className="p-3 bg-gray-50 rounded-md border">
+              <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 transition-colors">
                 <span className="text-sm">{format(new Date(shop.created_at), 'MMM dd, yyyy')}</span>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Last Updated</Label>
-              <div className="p-3 bg-gray-50 rounded-md border">
+              <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 transition-colors">
                 <span className="text-sm">{format(new Date(shop.updated_at), 'MMM dd, yyyy')}</span>
               </div>
             </div>
           </div>
 
-          {shop.latitude && shop.longitude && (
-            <div className="space-y-2">
-              <Label>Location Coordinates</Label>
-              <div className="p-3 bg-gray-50 rounded-md border">
-                <span className="text-sm">
-                  {shop.latitude}, {shop.longitude}
-                </span>
-              </div>
-            </div>
-          )}
 
-          <div className="space-y-2">
-            <Label>Address</Label>
-            <div className="p-3 bg-gray-50 rounded-md border">
-              <span className="text-sm">{shop.address || 'No address available'}</span>
-            </div>
-          </div>
         </div>
       </CardContent>
     </Card>

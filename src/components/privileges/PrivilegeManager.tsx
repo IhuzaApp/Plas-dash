@@ -417,7 +417,7 @@ const MODULE_DESCRIPTIONS: Record<
     ],
   },
   settings: {
-    title: 'System Settings',
+    title: 'Account Settings',
     description: 'Manage system configuration and preferences',
     actions: [
       { key: 'access', label: 'Access Settings', description: 'Can access settings page' },

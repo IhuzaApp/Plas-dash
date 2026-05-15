@@ -267,7 +267,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
               { title: 'Tax Summary', icon: LayoutDashboard, path: '/tax/summary' },
               { title: 'Optimization', icon: Tag, path: '/tax/optimization' },
               { title: 'Reports', icon: BarChart, path: '/tax/reports' },
-              { title: 'Settings', icon: Settings, path: '/tax/settings' },
+              { title: 'Tax Settings', icon: Settings, path: '/tax/settings' },
             ]
           : []),
       ],
@@ -305,7 +305,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
       items: [
         { title: 'Delivery Settings', icon: Clock, path: '/delivery-settings' },
         { title: 'Promotions', icon: Percent, path: '/promotions' },
-        { title: 'System Settings', icon: Settings, path: '/settings' },
+        { title: 'Account Settings', icon: Settings, path: '/settings' },
       ],
     },
   ];

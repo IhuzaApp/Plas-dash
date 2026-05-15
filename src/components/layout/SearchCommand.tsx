@@ -122,7 +122,7 @@ const ALL_MODULES = [
   { title: 'Refund Claims', icon: Receipt, path: '/refunds', module: 'refunds' },
   { title: 'Support Tickets', icon: MessageSquare, path: '/tickets', module: 'tickets' },
   { title: 'Tax & Compliance', icon: FileText, path: '/tax', module: 'tax' },
-  { title: 'System Settings', icon: Settings, path: '/settings', module: 'settings' },
+  { title: 'Account Settings', icon: Settings, path: '/settings', module: 'settings' },
 ];
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
