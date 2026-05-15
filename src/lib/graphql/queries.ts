@@ -2529,6 +2529,10 @@ export const GET_ORG_EMPLOYEE_BY_ID = `
       Position
       shop_id
       restaurant_id
+      multAuthEnabled
+      twoFactorSecrets
+      sms_auth
+      employeeID
     }
   }
 `;

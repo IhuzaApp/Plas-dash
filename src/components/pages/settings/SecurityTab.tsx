@@ -12,6 +12,7 @@ interface SecurityTabProps {
   isUpdatingPassword: boolean;
   isTwoFactorEnabled: boolean;
   handleToggle2FA: (enabled: boolean) => Promise<void>;
+  handleReset2FA: () => Promise<void>;
 }
 
 const SecurityTab: React.FC<SecurityTabProps> = ({
@@ -21,6 +22,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
   isUpdatingPassword,
   isTwoFactorEnabled,
   handleToggle2FA,
+  handleReset2FA,
 }) => {
   return (
     <Card>
@@ -81,16 +83,35 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
         <div className="pt-6 border-t">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <h3 className="text-sm font-medium">Two-Factor Authentication</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium">Two-Factor Authentication</h3>
+                {isTwoFactorEnabled && (
+                  <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold uppercase tracking-wider">
+                    Enabled
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Add an extra layer of security to your account.
               </p>
             </div>
-            <Switch
-              checked={isTwoFactorEnabled}
-              onCheckedChange={handleToggle2FA}
-              className="data-[state=checked]:bg-primary"
-            />
+            <div className="flex items-center gap-4">
+              {isTwoFactorEnabled && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-lg text-xs h-8 border-red-500/20 text-red-600 hover:bg-red-500/10"
+                  onClick={handleReset2FA}
+                >
+                  Reset & Setup New
+                </Button>
+              )}
+              <Switch
+                checked={isTwoFactorEnabled}
+                onCheckedChange={handleToggle2FA}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
           </div>
         </div>
       </CardContent>

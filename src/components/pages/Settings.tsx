@@ -65,8 +65,9 @@ const Settings = () => {
   const { data: session } = useSession();
   const user = session?.user as any;
   const [isTwoFactorEnabled, setIsTwoFactorEnabled] = useState(false);
+  const [twoFactorSecret, setTwoFactorSecret] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<any>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(false);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [usageData, setUsageData] = useState<any>(null);
@@ -172,21 +173,21 @@ const Settings = () => {
       let currentUserId = user?.id;
       let currentUserType = user?.type;
 
-      // Fallback to custom localStorage session if NextAuth session is missing
-      if (!currentUserId && typeof window !== 'undefined') {
+      // Prioritize local session for organization employees
+      if (typeof window !== 'undefined') {
         const localSession = localStorage.getItem('orgEmployeeSession');
         if (localSession) {
           try {
             const parsed = JSON.parse(localSession);
+            // If we have a local session, prefer it as it's more specific for this dashboard
             currentUserId = parsed.id;
             currentUserType = parsed.isProjectUser ? 'project_user' : 'employee';
-          } catch (e) {
-            // Silently fail
-          }
+          } catch (e) {}
         }
       }
 
       if (!currentUserId) {
+        setIsLoadingUser(false);
         return;
       }
 
@@ -209,7 +210,7 @@ const Settings = () => {
               display_role: pUser.role,
               display_email: pUser.email,
               display_phone: 'N/A',
-              display_image: pUser.profile,
+              display_image: (pUser as any).profile || (pUser as any).profile_picture || (pUser as any).profile_photo,
               membership_id: pUser.MembershipId,
             });
             setIsTwoFactorEnabled(pUser.TwoAuth_enabled);
@@ -224,9 +225,11 @@ const Settings = () => {
               display_role: eUser.roleType,
               display_email: eUser.email,
               display_phone: eUser.phone,
-              display_image: eUser.profile,
-              membership_id: eUser.MembershipId,
+              display_image: (eUser as any).profile_photo || (eUser as any).profile_picture || (eUser as any).profile,
+              membership_id: eUser.employeeID,
             });
+            setIsTwoFactorEnabled(eUser.multAuthEnabled || !!eUser.twoFactorSecrets);
+            setTwoFactorSecret(eUser.twoFactorSecrets);
           }
         } else {
           data = await hasuraClient.request<any>(GET_USER_BY_ID_SIMPLE, { id: currentUserId });
@@ -269,8 +272,12 @@ const Settings = () => {
     // Optimistic update
     setIsTwoFactorEnabled(enabled);
 
+    const endpoint = currentUserType === 'employee' 
+      ? '/api/mutations/update-employee-2fa' 
+      : '/api/mutations/update-project-user-2fa';
+
     try {
-      const response = await fetch('/api/mutations/update-project-user-2fa', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: currentUserId, enabled }),
@@ -283,6 +290,42 @@ const Settings = () => {
       console.error('Error updating 2FA:', error);
       setIsTwoFactorEnabled(!enabled); // Rollback
       toast.error('Failed to update 2FA status');
+    }
+  };
+
+  const handleReset2FA = async () => {
+    let currentUserId = user?.id;
+    let currentUserType = user?.type;
+    if (!currentUserId && typeof window !== 'undefined') {
+      const localSession = localStorage.getItem('orgEmployeeSession');
+      if (localSession) {
+        const parsed = JSON.parse(localSession);
+        currentUserId = parsed.id;
+        currentUserType = parsed.isProjectUser ? 'project_user' : 'employee';
+      }
+    }
+
+    if (!currentUserId) return;
+
+    try {
+      const endpoint = currentUserType === 'employee' 
+        ? '/api/mutations/update-employee-2fa-secret' 
+        : '/api/mutations/update-project-user-2fa-secret';
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: currentUserId, secret: null }),
+      });
+
+      if (!response.ok) throw new Error('Failed to reset 2FA');
+
+      setTwoFactorSecret(null);
+      setIsTwoFactorEnabled(false);
+      toast.success('2FA has been reset. You can now set it up again.');
+    } catch (error) {
+      console.error('Error resetting 2FA:', error);
+      toast.error('Failed to reset 2FA');
     }
   };
 
@@ -471,7 +514,18 @@ const Settings = () => {
   };
 
   return (
-    <AdminLayout isLoading={isLoadingUser || !profileData}>
+    <AdminLayout isLoading={isLoadingUser}>
+      {!profileData && !isLoadingUser ? (
+        <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
+          <div className="p-4 rounded-full bg-red-500/10 text-red-600">
+            <SettingsIcon className="h-12 w-12" />
+          </div>
+          <h2 className="text-2xl font-bold">Profile Not Found</h2>
+          <p className="text-muted-foreground">We couldn't load your profile information. Please try logging in again.</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      ) : (
+        <>
       <PageHeader
         title="Settings"
         description="Manage your account preferences and security settings."
@@ -584,6 +638,7 @@ const Settings = () => {
             isUpdatingPassword={isUpdatingPassword}
             isTwoFactorEnabled={isTwoFactorEnabled}
             handleToggle2FA={handleToggle2FA}
+            handleReset2FA={handleReset2FA}
           />
         </TabsContent>
       </Tabs>
@@ -642,6 +697,8 @@ const Settings = () => {
           </div>
         </DialogContent>
       </Dialog>
+        </>
+      )}
     </AdminLayout>
   );
 };
