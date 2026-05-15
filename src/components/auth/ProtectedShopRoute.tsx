@@ -80,30 +80,7 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
   }
 
   // Show shop session info if they have one (unassigned users won't see this banner)
-  return (
-    <div className="space-y-4">
-      {/* Shop Session Banner */}
-      {isLoggedIntoShop && shopSession && (
-        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Store className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-sm font-medium">{shopSession.shopName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {shopSession.employeeName} - {shopSession.position}
-                </p>
-              </div>
-            </div>
-            <div className="text-xs text-muted-foreground">POS Session Active</div>
-          </div>
-        </div>
-      )}
-
-      {/* Page Content */}
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 };
 
 export default ProtectedShopRoute;

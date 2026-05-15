@@ -10,7 +10,9 @@ import { usePageLoading } from '@/hooks/usePageLoading';
 import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useShopSession } from '@/contexts/ShopSessionContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Store } from 'lucide-react';
 import Link from 'next/link';
 
 interface AdminHeaderProps {
@@ -23,6 +25,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   const { isLoading } = usePageLoading();
   const { data: nextSession } = useSession();
   const { session: customSession } = useAuth();
+  const { isLoggedIntoShop, shopSession } = useShopSession();
 
   const displayUser = customSession || nextSession?.user;
   const userImage =
@@ -94,12 +97,29 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1 mr-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/10">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                System Live
-              </span>
-            </div>
+            {isLoggedIntoShop && shopSession ? (
+              <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-2xl bg-green-500/10 border border-green-500/20 shadow-sm animate-in fade-in zoom-in duration-500">
+                <div className="flex items-center gap-2 pr-3 border-r border-green-500/20">
+                  <Store className="h-3 w-3 text-green-600 dark:text-green-400" />
+                  <span className="text-[10px] font-black uppercase tracking-tight text-green-700 dark:text-green-300">
+                    {shopSession.shopName}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[9px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wider">
+                    POS Session Active
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center gap-1 mr-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/10">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                  System Live
+                </span>
+              </div>
+            )}
 
             <Button
               variant="ghost"
