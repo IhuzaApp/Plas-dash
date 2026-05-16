@@ -14,6 +14,7 @@ import { useShopSession } from '@/contexts/ShopSessionContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Store } from 'lucide-react';
 import Link from 'next/link';
+import ShopSelector from './ShopSelector';
 
 interface AdminHeaderProps {
   toggleSidebar: () => void;
@@ -120,13 +121,15 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
                   Logout
                 </Button>
               </div>
-            ) : (
+            ) : displayUser && (displayUser as any).isProjectUser ? (
               <div className="hidden sm:flex items-center gap-1 mr-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/10">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                   System Live
                 </span>
               </div>
+            ) : (
+              <ShopSelector isSidebarOpen={true} variant="header" />
             )}
 
             <Button

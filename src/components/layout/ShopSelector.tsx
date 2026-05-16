@@ -15,7 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 interface ShopSelectorProps {
   isSidebarOpen: boolean;
-  variant?: 'sidebar' | 'inline';
+  variant?: 'sidebar' | 'inline' | 'header';
 }
 
 const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 'sidebar' }) => {
@@ -271,6 +271,48 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
           </TooltipProvider>
         )}
       </div>
+    );
+  }
+
+  if (variant === 'header') {
+    return (
+      <>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="hidden sm:flex items-center gap-2 h-8 mr-2 border-primary/20 hover:bg-primary/10 transition-colors"
+          onClick={() => {
+            const shopData = {
+              shop: orgEmployee.Shops,
+              position: orgEmployee.Position,
+              roleType: orgEmployee.roleType,
+              multAuthEnabled: orgEmployee.multAuthEnabled,
+              employeeId: orgEmployee.employeeID,
+              employeeName: orgEmployee.fullnames,
+              userId: orgEmployee.id,
+            };
+            handleShopSelect(shopData);
+          }}
+        >
+          <Store className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-semibold">{orgEmployee.Shops.name}</span>
+        </Button>
+        {selectedShop && (
+          <ShopAuthModal
+            open={showAuthModal}
+            onOpenChange={setShowAuthModal}
+            shopId={selectedShop.shopId}
+            shopName={selectedShop.shopName}
+            employeeId={selectedShop.employeeId}
+            employeeName={selectedShop.employeeName}
+            position={selectedShop.position}
+            multAuthEnabled={selectedShop.multAuthEnabled}
+            userId={selectedShop.userId}
+            storedTwoFactorSecrets={orgEmployee?.twoFactorSecrets || null}
+            onAuthSuccess={handleAuthSuccess}
+          />
+        )}
+      </>
     );
   }
 
