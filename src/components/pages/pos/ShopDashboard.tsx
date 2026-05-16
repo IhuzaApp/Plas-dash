@@ -313,7 +313,11 @@ const ShopDashboard = () => {
                 <div>
                   <div className="font-medium">Operating Hours</div>
                   <div className="text-sm text-muted-foreground">
-                    {shopData?.operating_hours || 'Not set'}
+                    {typeof shopData?.operating_hours === 'object' && shopData?.operating_hours !== null
+                      ? Object.entries(shopData.operating_hours)
+                          .map(([day, hours]) => `${day.charAt(0).toUpperCase() + day.slice(1)}: ${hours}`)
+                          .join(', ')
+                      : shopData?.operating_hours || 'Not set'}
                   </div>
                 </div>
               </div>

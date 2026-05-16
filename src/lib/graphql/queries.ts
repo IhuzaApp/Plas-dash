@@ -2533,6 +2533,7 @@ export const GET_ORG_EMPLOYEE_BY_ID = `
       twoFactorSecrets
       sms_auth
       employeeID
+      profile_image
     }
   }
 `;

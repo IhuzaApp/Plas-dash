@@ -31,6 +31,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   const displayUser = customSession || nextSession?.user;
   const userImage =
     (displayUser as any)?.image ||
+    (displayUser as any)?.profile_image ||
     (displayUser as any)?.profile_picture ||
     (displayUser as any)?.profile ||
     (displayUser as any)?.display_image;

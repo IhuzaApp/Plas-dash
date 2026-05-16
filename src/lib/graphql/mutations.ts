@@ -1251,8 +1251,8 @@ export const UPDATE_USER_PROFILE_IMAGE = `
 `;
 
 export const UPDATE_EMPLOYEE_PROFILE_IMAGE = `
-  mutation UpdateEmployeeProfileImage($id: uuid!, $profile_photo: String!) {
-    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { profile_photo: $profile_photo }) { id profile_photo }
+  mutation UpdateEmployeeProfileImage($id: uuid!, $profile_image: String!) {
+    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { profile_image: $profile_image }) { id profile_image }
   }
 `;
 

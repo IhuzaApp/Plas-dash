@@ -191,6 +191,7 @@ export const authOptions: NextAuthOptions = {
                 password
                 roleType
                 gender
+                profile_image
               }
             }
           `;
@@ -210,6 +211,7 @@ export const authOptions: NextAuthOptions = {
               phone: eUser.phone,
               role: eUser.roleType,
               gender: eUser.gender,
+              image: eUser.profile_image,
               type: 'employee',
             };
           }
@@ -225,7 +227,14 @@ export const authOptions: NextAuthOptions = {
   jwt: { secret: NEXTAUTH_SECRET },
   secret: NEXTAUTH_SECRET,
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === 'update' && session) {
+        if (session.image) token.picture = session.image;
+        if (session.profile_image) token.picture = session.profile_image;
+        if (session.name) token.name = session.name;
+        return token;
+      }
+
       if (user) {
         token.id = user.id;
         token.phone = (user as any).phone;
@@ -233,6 +242,8 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role;
         token.type = (user as any).type;
         token.is_guest = (user as any).is_guest || false;
+        if ((user as any).image) token.picture = (user as any).image;
+        if ((user as any).profile_image) token.picture = (user as any).profile_image;
       }
       return token;
     },
@@ -244,6 +255,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).type = token.type;
         (session.user as any).is_guest = token.is_guest;
+        if (token.picture) session.user.image = token.picture;
       }
       return session;
     },

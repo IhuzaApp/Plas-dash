@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     } else if (userType === 'employee') {
       await hasuraClient.request(UPDATE_EMPLOYEE_PROFILE_IMAGE, {
         id: userId,
-        profile_photo: profileImage,
+        profile_image: profileImage,
       });
     } else {
       await hasuraClient.request(UPDATE_USER_PROFILE_IMAGE, {

@@ -13,6 +13,7 @@ import { Settings as SettingsIcon, CreditCard, Landmark, Smartphone, Edit } from
 import { usePrivilege } from '@/hooks/usePrivilege';
 import SupermarketSettings from './SupermarketSettings';
 import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { Switch } from '../ui/switch';
@@ -61,7 +62,8 @@ const Settings = () => {
   };
 
   const { hasAction } = usePrivilege();
-  const { data: session } = useSession();
+  const { data: session, update: updateNextAuthSession } = useSession();
+  const { login: updateAuthSession, session: currentAuthSession } = useAuth();
   const user = session?.user as any;
   const [isTwoFactorEnabled, setIsTwoFactorEnabled] = useState(false);
   const [twoFactorSecret, setTwoFactorSecret] = useState<string | null>(null);
@@ -224,7 +226,7 @@ const Settings = () => {
               display_role: eUser.roleType,
               display_email: eUser.email,
               display_phone: eUser.phone,
-              display_image: (eUser as any).profile_photo || (eUser as any).profile_picture || (eUser as any).profile,
+              display_image: (eUser as any).profile_image || (eUser as any).profile_photo || (eUser as any).profile_picture || (eUser as any).profile,
               membership_id: eUser.employeeID,
             });
             setIsTwoFactorEnabled(eUser.multAuthEnabled || !!eUser.twoFactorSecrets);
@@ -384,22 +386,37 @@ const Settings = () => {
   const [avatarStyle, setAvatarStyle] = useState('fun-emoji');
   const [avatarSeed, setAvatarSeed] = useState(user?.name || 'default');
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+  const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAvatarDialogOpen) {
+      setPreviewAvatar(profileData?.display_image || null);
+    }
+  }, [isAvatarDialogOpen, profileData?.display_image]);
 
   const avatarStyles = [
     { id: 'fun-emoji', name: 'Fun Emojis' },
-    { id: 'superhero', name: 'Superheroes' },
-    { id: 'icons', name: 'System Icons' },
-    { id: 'notionists', name: 'Notion Style' },
+    { id: 'adventurer-neutral', name: 'Grocery Staff' },
+    { id: 'lorelei-neutral', name: 'Store Clerks' },
+    { id: 'miniavs', name: 'Mini Heroes' },
+    { id: 'personas', name: 'Comic Personas' },
+    { id: 'bottts', name: 'Sci-Fi Robots' },
+    { id: 'bottts-neutral', name: 'Friendly Robots' },
+    { id: 'adventurer', name: 'Action Heroes' },
+    { id: 'micah', name: 'Modern Characters' },
+    { id: 'avataaars', name: 'Classic Avatars' },
+    { id: 'lorelei', name: 'Cute Characters' },
     { id: 'open-peeps', name: 'Hand Drawn' },
-    { id: 'adventurer', name: 'Adventurer' },
+    { id: 'notionists', name: 'Notion Style' },
+    { id: 'croodles', name: 'Sketch Art' },
     { id: 'big-smile', name: 'Big Smile' },
-    { id: 'bottts', name: 'Robots' },
-    { id: 'lorelei', name: 'Lorelei' },
-    { id: 'pixel-art', name: 'Pixel Art' },
-    { id: 'avataaars', name: 'Avatars' },
+    { id: 'big-ears', name: 'Big Ears' },
+    { id: 'pixel-art', name: 'Retro 8-bit' },
+    { id: 'identicon', name: 'Tech Patterns' },
+    { id: 'rings', name: 'Magic Rings' },
     { id: 'shapes', name: 'Geometric' },
     { id: 'thumbs', name: 'Abstract' },
-    { id: 'micah', name: 'Characters' },
+    { id: 'icons', name: 'System Icons' },
   ];
 
   const handleUpdateAvatar = async (imageUrl: string) => {
@@ -423,6 +440,20 @@ const Settings = () => {
       if (!response.ok) throw new Error('Failed to update avatar');
 
       setProfileData((prev: any) => ({ ...prev, display_image: imageUrl }));
+      
+      // Update global session so header re-renders
+      if (currentAuthSession) {
+        updateAuthSession({
+          ...currentAuthSession,
+          profile_image: imageUrl,
+          profile_photo: imageUrl,
+        });
+      }
+
+      if (session && updateNextAuthSession) {
+        updateNextAuthSession({ profile_image: imageUrl, image: imageUrl });
+      }
+      
       toast.success('Profile picture updated');
       setIsAvatarDialogOpen(false);
     } catch (error) {
@@ -642,7 +673,7 @@ const Settings = () => {
             <div className="space-y-8">
               <div className="flex flex-col items-center justify-center p-8 rounded-3xl bg-background/50 border-2 border-dashed border-primary/20 group hover:border-primary/50 transition-all">
                 <Avatar className="h-32 w-32 border-4 border-background shadow-2xl mb-4 group-hover:scale-105 transition-transform">
-                  <AvatarImage src={profileData?.display_image} />
+                  <AvatarImage src={previewAvatar || profileData?.display_image} />
                   <AvatarFallback className="text-3xl font-black bg-primary/10 text-primary">
                     {profileData?.display_name?.charAt(0)}
                   </AvatarFallback>
@@ -658,19 +689,32 @@ const Settings = () => {
                   <Button variant="outline" className="rounded-xl border-primary text-primary hover:bg-primary/10 font-bold" asChild>
                     <label htmlFor="avatar-upload" className="cursor-pointer">Upload Photo</label>
                   </Button>
-                  <Button variant="ghost" className="rounded-xl font-bold" onClick={() => handleUpdateAvatar(`https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${Math.random()}`)}>
+                  <Button variant="ghost" className="rounded-xl font-bold" onClick={() => setPreviewAvatar(`https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${Math.random()}`)}>
                     Randomize
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Avatar Styles</Label>
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Avatar Styles</Label>
+                  <Button 
+                    onClick={() => previewAvatar && handleUpdateAvatar(previewAvatar)} 
+                    disabled={!previewAvatar || previewAvatar === profileData?.display_image || isUpdatingAvatar}
+                    className="rounded-xl font-bold shadow-lg shadow-primary/20"
+                  >
+                    {isUpdatingAvatar ? 'Saving...' : 'Save Avatar'}
+                  </Button>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
                   {avatarStyles.map((style) => (
                     <button
                       key={style.id}
-                      onClick={() => setAvatarStyle(style.id)}
+                      onClick={() => {
+                        setAvatarStyle(style.id);
+                        const seed = encodeURIComponent(profileData?.display_name || user?.name || 'default');
+                        setPreviewAvatar(`https://api.dicebear.com/7.x/${style.id}/svg?seed=${seed}`);
+                      }}
                       className={cn(
                         "p-2 rounded-xl text-[10px] font-bold border-2 transition-all text-center",
                         avatarStyle === style.id ? "border-primary bg-primary/5 text-primary" : "border-muted-foreground/10 hover:border-primary/30"
