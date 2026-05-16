@@ -237,10 +237,10 @@ export default function SupermarketSettings() {
       });
       setIsEditing(false);
       refetch();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to update settings. Please try again.',
+        description: error.message || 'Failed to update settings. Please try again.',
         variant: 'destructive',
       });
     }

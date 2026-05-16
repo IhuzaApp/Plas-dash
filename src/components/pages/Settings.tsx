@@ -21,7 +21,6 @@ import { Badge } from '../ui/badge';
 import ProfileTab from './settings/ProfileTab';
 import BillingUsageTab from './settings/BillingUsageTab';
 import AppearanceTab from './settings/AppearanceTab';
-import NotificationsTab from './settings/NotificationsTab';
 import PaymentMethodsTab from './settings/PaymentMethodsTab';
 import SecurityTab from './settings/SecurityTab';
 import { hasuraClient } from '@/lib/hasuraClient';
@@ -551,20 +550,12 @@ const Settings = () => {
           <TabsTrigger value="appearance" className="rounded-lg px-6">
             Appearance
           </TabsTrigger>
-          {(profileData?.display_role === 'globalAdmin' ||
-            profileData?.display_role === 'storeAdministrator') && (
-            <>
-              <TabsTrigger value="notifications" className="rounded-lg px-6">
-                Notifications
-              </TabsTrigger>
               {(profileData?.display_role === 'globalAdmin' ||
                 profileData?.display_role === 'storeAdministrator') && (
                 <TabsTrigger value="payment-methods" className="rounded-lg px-6">
                   Payment Methods
                 </TabsTrigger>
               )}
-            </>
-          )}
           <TabsTrigger value="security" className="rounded-lg px-6">
             Security
           </TabsTrigger>
@@ -610,9 +601,6 @@ const Settings = () => {
           />
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
-          <NotificationsTab handleSaveChanges={handleSaveChanges} />
-        </TabsContent>
 
         <TabsContent value="payment-methods" className="space-y-6">
           <PaymentMethodsTab 

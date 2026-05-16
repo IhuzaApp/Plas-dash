@@ -582,7 +582,7 @@ export const UPDATE_SHOP_SETTINGS = `
     $description: String
     $address: String
     $phone: String
-    $operating_hours: String
+    $operating_hours: json
     $is_active: Boolean
     $logo: String
     $tin: String
