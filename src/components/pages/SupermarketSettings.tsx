@@ -32,41 +32,83 @@ import { format } from 'date-fns';
 import { Autocomplete } from '@react-google-maps/api';
 import { useGoogleMap } from '@/contexts/GoogleProvider';
 
-// Helper function to format operating hours JSON to readable string
-const formatOperatingHours = (operatingHours: any): string => {
-  if (!operatingHours) return 'No operating hours set';
+// Component to display operating hours in a beautiful calendar-like grid
+const OperatingHoursDisplay = ({ operatingHours }: { operatingHours: any }) => {
+  if (!operatingHours) return <span className="text-sm text-muted-foreground">No operating hours set</span>;
 
+  let parsedHours = operatingHours;
   if (typeof operatingHours === 'string') {
     try {
-      const parsed = JSON.parse(operatingHours);
-      return formatOperatingHours(parsed);
+      parsedHours = JSON.parse(operatingHours);
     } catch {
-      return operatingHours;
+      return <span className="text-sm">{operatingHours}</span>;
     }
   }
 
-  if (typeof operatingHours === 'object') {
+  if (typeof parsedHours === 'object') {
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    const formattedDays = days
-      .map(day => {
-        const dayData = operatingHours[day];
-        if (!dayData) return null;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+        {days.map(day => {
+          const dayData = parsedHours[day];
+          const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+          
+          let openTime = '';
+          let closeTime = '';
+          let isClosed = false;
 
-        const dayName = day.charAt(0).toUpperCase() + day.slice(1);
-        if (dayData.closed) {
-          return `${dayName}: Closed`;
-        }
-
-        const openTime = dayData.open || '';
-        const closeTime = dayData.close || '';
-        return `${dayName}: ${openTime}-${closeTime}`;
-      })
-      .filter(Boolean);
-
-    return formattedDays.join(', ');
+          if (typeof dayData === 'string') {
+            if (dayData.toLowerCase() === 'closed' || dayData.trim() === '') {
+              isClosed = true;
+            } else {
+              // Handle string formats like "08:00 - 17:00" or "08:00-17:00"
+              const parts = dayData.includes('-') ? dayData.split('-') : [dayData];
+              openTime = parts[0]?.trim() || '';
+              closeTime = parts[1]?.trim() || '';
+            }
+          } else if (typeof dayData === 'object') {
+            isClosed = dayData.closed === true || dayData.closed === 'true';
+            openTime = dayData.open || '';
+            closeTime = dayData.close || '';
+            
+            // If it's not explicitly marked closed but has no times, consider it closed or '-'
+            if (!isClosed && !openTime && !closeTime) {
+              isClosed = true;
+            }
+          } else {
+            isClosed = true;
+          }
+          
+          return (
+            <div key={day} className="flex items-center justify-between p-3 bg-background rounded-xl border border-muted-foreground/10 shadow-sm transition-colors hover:border-primary/20">
+              <span className="font-semibold text-sm w-24">{dayName}</span>
+              <div className="flex items-center">
+                {isClosed ? (
+                  <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal rounded-md">Closed</Badge>
+                ) : (
+                  <div className="flex items-center text-sm font-medium gap-1.5">
+                    <span className="bg-primary/10 text-primary px-2.5 py-1 rounded-md text-xs tracking-wide">{openTime || '-'}</span>
+                    {closeTime && <span className="text-muted-foreground text-xs">-</span>}
+                    {closeTime && <span className="bg-primary/10 text-primary px-2.5 py-1 rounded-md text-xs tracking-wide">{closeTime}</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
-  return 'Invalid operating hours format';
+  return <span className="text-sm text-destructive">Invalid operating hours format</span>;
+};
+
+// Helper function to safely format dates
+const safeFormatDate = (dateString: any): string => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'Invalid Date';
+  return format(date, 'MMM dd, yyyy');
 };
 
 // Helper function to parse operating hours string back to JSON
@@ -571,9 +613,8 @@ export default function SupermarketSettings() {
               rows={6}
             />
           ) : (
-            <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 flex items-center gap-2 transition-colors">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span>{formatOperatingHours(shop.operating_hours)}</span>
+            <div className="p-4 bg-muted/20 dark:bg-zinc-900/40 rounded-xl border border-muted-foreground/10 transition-colors">
+              <OperatingHoursDisplay operatingHours={shop.operating_hours} />
             </div>
           )}
         </div>
@@ -610,13 +651,13 @@ export default function SupermarketSettings() {
             <div className="space-y-2">
               <Label>Created</Label>
               <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 transition-colors">
-                <span className="text-sm">{format(new Date(shop.created_at), 'MMM dd, yyyy')}</span>
+                <span className="text-sm">{safeFormatDate(shop.created_at)}</span>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Last Updated</Label>
               <div className="p-3 bg-muted/30 dark:bg-zinc-900/50 rounded-xl border border-muted-foreground/10 transition-colors">
-                <span className="text-sm">{format(new Date(shop.updated_at), 'MMM dd, yyyy')}</span>
+                <span className="text-sm">{safeFormatDate(shop.updated_at)}</span>
               </div>
             </div>
           </div>
