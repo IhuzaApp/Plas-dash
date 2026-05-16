@@ -171,7 +171,9 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
       section: 'Operations',
       icon: ShoppingCart,
       items: [
-        { title: 'Orders', icon: Package, path: '/orders', badge: '5' },
+        ...(showShopGuardedItems
+          ? [{ title: 'Orders', icon: Package, path: '/orders', badge: '5' }]
+          : []),
         { title: 'Plasas', icon: User, path: '/shoppers' },
         { title: 'Customers', icon: Users, path: '/users' },
         { title: 'Project Users', icon: Users, path: '/project-users' },
@@ -305,7 +307,9 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
       items: [
         { title: 'Delivery Settings', icon: Clock, path: '/delivery-settings' },
         { title: 'Promotions', icon: Percent, path: '/promotions' },
-        { title: 'Account Settings', icon: Settings, path: '/settings' },
+        ...(showShopGuardedItems
+          ? [{ title: 'Account Settings', icon: Settings, path: '/settings' }]
+          : []),
       ],
     },
   ];
@@ -379,6 +383,11 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
 
     return pagesHasAccess || moduleHasAccess || pathname?.startsWith('/tax');
   })();
+
+  // Hide the sidebar entirely until the user logs into their assigned shop
+  if (!isLoggedIntoShop && session?.shop_id && !session?.isProjectUser) {
+    return null;
+  }
 
   if (!hasAnyModuleAccess) {
     return (
@@ -563,20 +572,6 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
 
       {/* Content */}
       <div className="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-none">
-        {/* Shop Selector for POS and shop-related users */}
-        {!session?.isProjectUser &&
-          (hasModuleAccess('pos_terminal') ||
-            hasModuleAccess('checkout') ||
-            hasModuleAccess('inventory') ||
-            hasModuleAccess('transactions') ||
-            hasModuleAccess('orders') ||
-            hasModuleAccess('discounts') ||
-            hasModuleAccess('shop_dashboard')) && (
-            <div className="mb-6 px-1">
-              <ShopSelector isSidebarOpen={isSidebarOpen} />
-            </div>
-          )}
-
         {filteredMenuItems.map((section, idx) => (
           <div key={section.section} className="mb-6">
             {isSidebarOpen && (

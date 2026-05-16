@@ -7,6 +7,7 @@ import LoadingProvider from './LoadingProvider';
 import { cn } from '@/lib/utils';
 
 import { PageSkeleton } from '@/components/ui/PageSkeleton';
+import ProtectedShopRoute from '@/components/auth/ProtectedShopRoute';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -28,7 +29,13 @@ const AdminLayout = ({ children, isLoading }: AdminLayoutProps) => {
         <LoadingProvider>
           <main className="flex-1 p-4 md:p-8 overflow-auto min-h-0 bg-muted/5">
             <div className="max-w-[1600px] mx-auto w-full">
-              {isLoading ? <PageSkeleton /> : children}
+              {isLoading ? (
+                <PageSkeleton />
+              ) : (
+                <ProtectedShopRoute>
+                  {children}
+                </ProtectedShopRoute>
+              )}
             </div>
           </main>
         </LoadingProvider>

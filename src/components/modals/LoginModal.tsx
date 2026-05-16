@@ -77,9 +77,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
 
       // Check for MFA requirements (Only for Project Users in this modal)
       const twoFactorRequired = !!(session.privileges?.twoFactorRequired || session.TwoAuth_enabled || session.multAuthEnabled);
-      const smsRequired = !!(session.privileges?.smsAuthRequired || session.sms_auth);
-
-      if (isProjectUser && (twoFactorRequired || smsRequired)) {
+      if (twoFactorRequired || smsRequired) {
         setMfaUser({ session, isProjectUser, twoFactorRequired, smsRequired });
         setAuthStep('mfa');
         setLoading(false);

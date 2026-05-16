@@ -25,7 +25,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
   const { isLoading } = usePageLoading();
   const { data: nextSession } = useSession();
   const { session: customSession } = useAuth();
-  const { isLoggedIntoShop, shopSession } = useShopSession();
+  const { isLoggedIntoShop, shopSession, logoutFromShop } = useShopSession();
 
   const displayUser = customSession || nextSession?.user;
   const userImage =
@@ -105,12 +105,20 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
                     {shopSession.shopName}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pr-2 border-r border-green-500/20">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                   <span className="text-[9px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wider">
                     POS Session Active
                   </span>
                 </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={logoutFromShop}
+                  className="h-6 px-2 text-[9px] font-bold text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  Logout
+                </Button>
               </div>
             ) : (
               <div className="hidden sm:flex items-center gap-1 mr-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/10">
