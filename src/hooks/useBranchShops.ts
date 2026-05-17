@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { useAuth } from '@/contexts/AuthContext';
+import { useReelOrders, useOrders } from '@/hooks/useHasuraApi';
 
 interface BranchShop {
   id: string;
@@ -62,6 +63,10 @@ export function useBranchShops(): UseBranchShopsReturn {
         updated_at
         relatedTo
         has_branch
+        Category {
+          id
+          name
+        }
         Orders {
           id
           total
@@ -84,8 +89,19 @@ export function useBranchShops(): UseBranchShopsReturn {
               profile_picture
             }
           }
+          Order_Items {
+            id
+            quantity
+            price
+            Product {
+              ProductName {
+                name
+                image
+              }
+            }
+          }
         }
-        orgEmployees(where: { active: { _eq: true } }) {
+        orgEmployees {
           id
           fullnames
           email
@@ -130,19 +146,34 @@ export function useBranchShops(): UseBranchShopsReturn {
           created_at
           OrderID
           delivery_fee
+          discount
           delivery_notes
           Ratings {
             id
             rating
             review
             reviewed_at
+            delivery_experience
+            packaging_quality
+            professionalism
             User {
               name
               profile_picture
             }
           }
+          Order_Items: restaurant_order_items {
+            id
+            quantity
+            price
+            Product: restaurant_dishes {
+              ProductName: dishes {
+                name
+                image
+              }
+            }
+          }
         }
-        orgEmployees(where: { active: { _eq: true } }) {
+        orgEmployees {
           id
           fullnames
           email
@@ -159,6 +190,7 @@ export function useBranchShops(): UseBranchShopsReturn {
         Products: restaurant_dishes {
           id
           quantity
+          is_active
           ProductName: dishes {
             name
           }
@@ -180,6 +212,10 @@ export function useBranchShops(): UseBranchShopsReturn {
         updated_at
         relatedTo
         has_branch
+        Category {
+          id
+          name
+        }
         Orders {
           id
           total
@@ -202,8 +238,19 @@ export function useBranchShops(): UseBranchShopsReturn {
               profile_picture
             }
           }
+          Order_Items {
+            id
+            quantity
+            price
+            Product {
+              ProductName {
+                name
+                image
+              }
+            }
+          }
         }
-        orgEmployees(where: { active: { _eq: true } }) {
+        orgEmployees {
           id
           fullnames
           email
@@ -248,19 +295,34 @@ export function useBranchShops(): UseBranchShopsReturn {
           created_at
           OrderID
           delivery_fee
+          discount
           delivery_notes
           Ratings {
             id
             rating
             review
             reviewed_at
+            delivery_experience
+            packaging_quality
+            professionalism
             User {
               name
               profile_picture
             }
           }
+          Order_Items: restaurant_order_items {
+            id
+            quantity
+            price
+            Product: restaurant_dishes {
+              ProductName: dishes {
+                name
+                image
+              }
+            }
+          }
         }
-        orgEmployees(where: { active: { _eq: true } }) {
+        orgEmployees {
           id
           fullnames
           email
@@ -277,6 +339,7 @@ export function useBranchShops(): UseBranchShopsReturn {
         Products: restaurant_dishes {
           id
           quantity
+          is_active
           ProductName: dishes {
             name
           }
@@ -310,8 +373,11 @@ export function useBranchShops(): UseBranchShopsReturn {
   } = useQuery({
     queryKey: ['branchShops', mainBusinessName, isRestaurant],
     queryFn: () => hasuraRequest(branchQuery, { businessName: mainBusinessName }),
-    enabled: !!mainBusinessName,
+    enabled: !!mainBusinessName && hasBranch,
   });
+
+  const { data: reelOrdersData } = useReelOrders();
+  const { data: regularOrdersData } = useOrders();
 
   useEffect(() => {
     if (mainShopLoading || queryLoading) {
@@ -334,7 +400,7 @@ export function useBranchShops(): UseBranchShopsReturn {
     }
 
     const branchList = data && typeof data === 'object' ? (isRestaurant ? (data as any).Restaurants : (data as any).Shops) : null;
-    if (Array.isArray(branchList)) {
+    if (hasBranch && Array.isArray(branchList)) {
       allShops.push(...branchList);
     }
 
@@ -342,21 +408,34 @@ export function useBranchShops(): UseBranchShopsReturn {
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0];
       const currentMonthStr = todayStr.substring(0, 7);
+      const reelOrdersList = reelOrdersData?.reel_orders || [];
+      const regularOrdersList = regularOrdersData?.Orders || [];
 
       const shops = allShops.map((shop: any) => {
-        const orders = shop.Orders || [];
+        const baseOrders = shop.Orders || [];
+        const baseOrderIds = new Set(baseOrders.map((o: any) => o.id));
+
+        const matchingReelOrders = reelOrdersList.filter((ro: any) => {
+          const reelShopId = ro.Reel?.shop_id || ro.Reel?.restaurant_id || ro.Shops?.[0]?.id;
+          return reelShopId === shop.id && !baseOrderIds.has(ro.id);
+        });
+        matchingReelOrders.forEach((ro: any) => baseOrderIds.add(ro.id));
+
+        const matchingRegularOrders = regularOrdersList.filter((ro: any) => {
+          return (ro.shop_id === shop.id || ro.restaurant_id === shop.id || ro.Shop?.id === shop.id) && !baseOrderIds.has(ro.id);
+        });
+
+        const allCombinedOrders = [...baseOrders, ...matchingReelOrders, ...matchingRegularOrders];
+
         let shopTotalRevenue = 0;
         let shopMonthlyRevenue = 0;
         let shopTotalOrders = 0;
         let shopMonthlyOrders = 0;
         let shopTodaySales = 0;
 
-        orders.forEach((order: any) => {
-          if (isRestaurant) {
-            if (order.status === 'pending' || order.status === 'PENDING') return;
-          } else {
-            if (order.status === 'accepted' || order.status === 'shopping' || order.status === 'pending' || order.status === 'PENDING') return;
-          }
+        allCombinedOrders.forEach((order: any) => {
+          const status = (order.status || '').toLowerCase();
+          if (status === 'pending' || status === 'accepted' || status === 'shopping' || status === 'cancelled' || status === 'canceled') return;
 
           const dateStr = order.created_at || order.created_on;
           if (!dateStr) return;
@@ -377,7 +456,7 @@ export function useBranchShops(): UseBranchShopsReturn {
           }
         });
 
-        const ratings = orders.flatMap((order: any) => order.Ratings || []);
+        const ratings = allCombinedOrders.flatMap((order: any) => order.Ratings || []);
         const averageRating =
           ratings.length > 0
             ? ratings.reduce(
@@ -387,7 +466,7 @@ export function useBranchShops(): UseBranchShopsReturn {
             : 0;
 
         const target = 50000;
-        const performance = target > 0 ? (shopMonthlyRevenue / target) * 100 : 0;
+        const performance = target > 0 ? (shopTotalRevenue / target) * 100 : 0;
 
         const trend: 'up' | 'down' | 'neutral' =
           performance > 100 ? 'up' : performance < 90 ? 'down' : 'neutral';
@@ -403,6 +482,7 @@ export function useBranchShops(): UseBranchShopsReturn {
           updated_at: shop.updated_at,
           relatedTo: shop.relatedTo,
           has_branch: shop.has_branch,
+          categoryName: shop.Category?.name || (isRestaurant ? 'Restaurant' : 'Supermarket'),
           totalRevenue: shopTotalRevenue,
           monthlyRevenue: shopMonthlyRevenue,
           totalOrders: shopTotalOrders,
@@ -411,7 +491,7 @@ export function useBranchShops(): UseBranchShopsReturn {
           averageRating,
           performance,
           trend,
-          Orders: shop.Orders || [],
+          Orders: allCombinedOrders,
           orgEmployees: shop.orgEmployees || [],
           Products: shop.Products || [],
         };
@@ -419,7 +499,7 @@ export function useBranchShops(): UseBranchShopsReturn {
 
       setBranchShops(shops);
     }
-  }, [data, queryLoading, queryError, mainShopData, mainShopLoading, mainShopError, mainShop, isRestaurant]);
+  }, [data, queryLoading, queryError, mainShopData, mainShopLoading, mainShopError, mainShop, isRestaurant, hasBranch, reelOrdersData, regularOrdersData]);
 
   const totalRevenue = branchShops.reduce((sum, shop) => sum + shop.totalRevenue, 0);
   const monthlyRevenue = branchShops.reduce((sum, shop) => sum + shop.monthlyRevenue, 0);
@@ -432,6 +512,8 @@ export function useBranchShops(): UseBranchShopsReturn {
       : 0;
 
   return {
+    mainShop,
+    hasBranch,
     branchShops,
     isLoading,
     error,

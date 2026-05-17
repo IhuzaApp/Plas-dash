@@ -52,7 +52,18 @@ export const RatingCard = ({ rating }: { rating: Rating }) => {
 
             {/* User Info */}
             <div className="mb-3">
-              <p className="font-medium text-sm">{rating.User?.name || 'Anonymous User'}</p>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <p className="font-medium text-sm">{rating.User?.name || 'Anonymous User'}</p>
+                {rating.Order?.Shop?.name && (
+                  <>
+                    <span className="text-muted-foreground text-xs">•</span>
+                    <Badge variant="secondary" className="text-xs font-normal">
+                      {rating.Order.Shop.name}
+                      {rating.Order.Shop.categoryName ? ` (${rating.Order.Shop.categoryName})` : ''}
+                    </Badge>
+                  </>
+                )}
+              </div>
               {rating.review && (
                 <p className="text-sm text-muted-foreground mt-2 italic">
                   &quot;{rating.review}&quot;

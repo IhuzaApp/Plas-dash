@@ -26,6 +26,7 @@ const GET_SHOP_SUBSCRIPTIONS = gql`
         price_yearly
         price_monthly
         reel_limit
+        num_of_branch
         plan_modules {
           id
           module_id
@@ -128,6 +129,7 @@ export async function GET(req: Request) {
               price_yearly
               price_monthly
               reel_limit
+              num_of_branch
               plan_modules {
                 id
                 module_id

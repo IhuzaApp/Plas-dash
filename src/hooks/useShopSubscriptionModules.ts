@@ -21,6 +21,7 @@ interface ShopSubscription {
   plan: {
     id: string;
     name: string;
+    num_of_branch?: number;
     plan_modules: SubscriptionModule[];
   };
 }
@@ -58,5 +59,6 @@ export function useShopSubscriptionModules(shopId?: string, restaurantId?: strin
     error,
     hasSubscription: !!activeSubscription,
     planName: activeSubscription?.plan?.name,
+    plan: activeSubscription?.plan ?? null,
   };
 }

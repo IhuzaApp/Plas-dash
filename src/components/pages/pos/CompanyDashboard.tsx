@@ -35,6 +35,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import AddBranchShopDialog from '@/components/shop/AddBranchShopDialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { useShopSubscriptionModules } from '@/hooks/useShopSubscriptionModules';
 import { RatingCard } from './RatingCard';
 import {
   BarChart,
@@ -49,12 +51,16 @@ import {
   AreaChart,
   Area,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 
 interface StorePerformance {
   id: string;
   name: string;
+  categoryName?: string;
   location: string;
   revenue: number;
   target: number;
@@ -84,6 +90,10 @@ const CompanyDashboard = () => {
     todaySalesTotal,
     averagePerformance,
   } = useBranchShops();
+
+  const { plan } = useShopSubscriptionModules(session?.shop_id, session?.restaurant_id);
+  const allowedBranches = plan?.num_of_branch || 0;
+  const currentBranchCount = branchShops.length > 0 ? branchShops.length - 1 : 0;
 
   // State for Add Branch Dialog
   const [isAddBranchDialogOpen, setIsAddBranchDialogOpen] = useState(false);
@@ -164,8 +174,9 @@ const CompanyDashboard = () => {
     branchShops?.map(shop => ({
       id: shop.id,
       name: shop.name,
+      categoryName: shop.categoryName,
       location: shop.address,
-      revenue: shop.monthlyRevenue || 0,
+      revenue: shop.totalRevenue || 0,
       target: 50000, // Mock target for now
       performance: shop.performance || 0,
       trend: shop.trend || 'neutral',
@@ -178,43 +189,146 @@ const CompanyDashboard = () => {
   const totalTarget = storePerformance.reduce((sum, store) => sum + store.target, 0);
   const overallPerformance = totalTarget > 0 ? (monthlyRevenue / totalTarget) * 100 : 0;
 
-  // Use Memo to compute Inventory Stats and Top Selling Products
-  const { topProducts, totalInStock } = useMemo(() => {
-    let topProducts: { name: string; sales: number; quantity: number }[] = [];
+  // Use Memo to compute Inventory Stats, Top Selling Products, and Branch Inventory Distribution
+  const { topProducts, totalInStock, branchInventoryStats } = useMemo(() => {
+    let topProducts: { name: string; sales: number; quantity: number; storeName: string }[] = [];
     let totalInStock = 0;
 
-    const allProducts = branchShops.flatMap(shop => shop.Products || []);
+    const allProducts = branchShops.flatMap(shop => (shop.Products || []).map(p => ({ ...p, shopName: shop.name, shopId: shop.id })));
 
-    if (allProducts.length > 0) {
-      // Calculate Total items with quantity > 0
-      totalInStock = allProducts.filter(p => (p.quantity || 0) > 0).length;
+    // Calculate Total items with quantity > 0 across all branches
+    totalInStock = allProducts.filter(p => (p.quantity || 0) > 0).length;
 
-      // Mock "sales" based on data available
-      const sortedProducts = [...allProducts]
-        .sort((a, b) => (b.quantity || 0) - (a.quantity || 0))
-        .slice(0, 5);
+    // 1. Calculate Top Selling Products based on actual order items across branches
+    const productSalesMap = new Map<string, { name: string; sales: number; quantity: number; storeName: string }>();
 
-      topProducts = sortedProducts.map(p => ({
-        name: p.ProductName?.name || 'Unknown',
-        sales: Math.floor(Math.random() * 500) + 50, // Mock sales count for chart
-        quantity: p.quantity,
-      }));
+    // First populate map with available products to get their current stock and store attribution
+    allProducts.forEach(p => {
+      const name = p.ProductName?.name || 'Unknown';
+      const key = `${p.shopId}-${name}`;
+      if (!productSalesMap.has(key)) {
+        productSalesMap.set(key, {
+          name,
+          sales: 0,
+          quantity: p.quantity || 0,
+          storeName: p.shopName || 'Main Location',
+        });
+      }
+    });
+
+    // Then aggregate actual sales from orders
+    branchShops.forEach(shop => {
+      const storeName = shop.name || 'Main Location';
+      const shopId = shop.id;
+      (shop.Orders || []).forEach((order: any) => {
+        if (session?.restaurant_id) {
+          if (order.status === 'pending' || order.status === 'PENDING') return;
+        } else {
+          if (order.status === 'accepted' || order.status === 'shopping' || order.status === 'pending' || order.status === 'PENDING') return;
+        }
+
+        (order.Order_Items || []).forEach((item: any) => {
+          const name = item.Product?.ProductName?.name || 'Unknown';
+          const qty = parseInt(item.quantity) || 0;
+          const key = `${shopId}-${name}`;
+
+          if (productSalesMap.has(key)) {
+            productSalesMap.get(key)!.sales += qty;
+          } else {
+            productSalesMap.set(key, {
+              name,
+              sales: qty,
+              quantity: 0,
+              storeName,
+            });
+          }
+        });
+      });
+    });
+
+    // Filter out products/dishes with 0 sales unless there are no sales at all across the business
+    let activeProducts = Array.from(productSalesMap.values());
+    const hasAnySales = activeProducts.some(p => p.sales > 0);
+    if (hasAnySales) {
+      activeProducts = activeProducts.filter(p => p.sales > 0);
     }
 
-    return { topProducts, totalInStock };
-  }, [branchShops]);
+    // Sort by actual sales, fallback to quantity if no sales yet
+    const sortedProducts = activeProducts
+      .sort((a, b) => {
+        if (b.sales !== a.sales) return b.sales - a.sales;
+        return b.quantity - a.quantity;
+      })
+      .slice(0, 6);
+
+    topProducts = sortedProducts;
+
+    // 2. Calculate Branch Inventory Health & Distribution Stats
+    const branchInventoryStats = branchShops.map(shop => {
+      const products = shop.Products || [];
+      const totalItems = products.length;
+      const isRest = session?.restaurant_id || shop.categoryName?.toLowerCase().includes('restaurant');
+
+      let inStock = 0;
+      let lowStock = 0;
+      let outOfStock = 0;
+      let totalVolume = 0;
+
+      if (isRest) {
+        // For restaurants, evaluate dish availability using is_active and quantity
+        inStock = products.filter(p => p.is_active !== false && (p.quantity === undefined || p.quantity === null || p.quantity > 5)).length;
+        lowStock = products.filter(p => p.is_active !== false && p.quantity !== undefined && p.quantity !== null && p.quantity > 0 && p.quantity <= 5).length;
+        outOfStock = products.filter(p => p.is_active === false || p.quantity === 0).length;
+        totalVolume = products.reduce((sum, p) => sum + (p.quantity || 1), 0);
+      } else {
+        // For supermarkets/shops, evaluate using stock quantity
+        inStock = products.filter(p => (p.quantity || 0) > 10).length;
+        lowStock = products.filter(p => (p.quantity || 0) > 0 && (p.quantity || 0) <= 10).length;
+        outOfStock = products.filter(p => (p.quantity || 0) === 0).length;
+        totalVolume = products.reduce((sum, p) => sum + (p.quantity || 0), 0);
+      }
+
+      return {
+        name: shop.name || 'Main Location',
+        categoryName: shop.categoryName || (session?.restaurant_id ? 'Restaurant' : 'Supermarket'),
+        totalItems,
+        inStock,
+        lowStock,
+        outOfStock,
+        totalVolume,
+      };
+    });
+
+    return { topProducts, totalInStock, branchInventoryStats };
+  }, [branchShops, session?.restaurant_id]);
 
   // Use Memo to compute Staff Stats
   const { staffDistribution, recentActivity, totalStaff, activeStaff, activeInLast30Days } =
     useMemo(() => {
-      const allStaff = branchShops.flatMap(shop => shop.orgEmployees || []);
+      const allStaff = branchShops.flatMap(shop => (shop.orgEmployees || []).map(emp => ({ ...emp, shopName: shop.name, shopId: shop.id })));
       const totalStaff = allStaff.length;
-      const activeStaff = allStaff.filter(s => s.active).length;
+      const activeStaff = allStaff.filter(s => s.active !== false).length;
 
       const distributionMap = new Map<string, any>();
+
+      // Pre-populate with all main and branch shops so every location appears in the table
+      (branchShops || []).forEach(shop => {
+        if (shop.id) {
+          distributionMap.set(shop.id, {
+            storeName: shop.name || 'Unknown Store',
+            storeId: shop.id,
+            manager: 0,
+            cashier: 0,
+            stockClerk: 0,
+            other: 0,
+            total: 0,
+          });
+        }
+      });
+
       allStaff.forEach(member => {
-        const storeName = member.Shops?.name || 'Unknown Store';
-        const storeId = member.Shops?.id || 'unknown';
+        const storeName = member.Shops?.name || member.shopName || 'Unknown Store';
+        const storeId = member.Shops?.id || member.shopId || 'unknown';
 
         if (!distributionMap.has(storeId)) {
           distributionMap.set(storeId, {
@@ -273,7 +387,7 @@ const CompanyDashboard = () => {
         return {
           id: member.id,
           employeeName: member.fullnames,
-          storeName: member.Shops?.name || 'Unknown Store',
+          storeName: member.Shops?.name || member.shopName || 'Unknown Store',
           action: 'Logged in',
           timestamp: member.last_login,
           timeAgo,
@@ -303,6 +417,7 @@ const CompanyDashboard = () => {
                 Shop: {
                   name: shop.name,
                   address: shop.address,
+                  categoryName: shop.categoryName,
                 },
               },
             });
@@ -376,8 +491,18 @@ const CompanyDashboard = () => {
         }
         icon={<LayoutDashboard className="h-6 w-6" />}
         actions={
-          hasAction('shops', 'add_shops') && (
-            <Button onClick={() => setIsAddBranchDialogOpen(true)}>
+          hasAction('shops', 'add_shops') && allowedBranches > 0 && (
+            <Button
+              onClick={() => {
+                if (currentBranchCount >= allowedBranches) {
+                  toast.error('Branch Limit Reached', {
+                    description: `Your subscription plan allows a maximum of ${allowedBranches} branch ${session?.restaurant_id ? 'restaurants' : 'stores'}. Please upgrade your plan to add more.`,
+                  });
+                  return;
+                }
+                setIsAddBranchDialogOpen(true);
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Branch {session?.restaurant_id ? 'Restaurant' : 'Store'}
             </Button>
@@ -455,9 +580,14 @@ const CompanyDashboard = () => {
         {branchShops.map((shop, index) => (
           <Card key={shop.id || index}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground truncate" title={shop.name}>
-                {shop.name} {index === 0 ? '(Main Location)' : '(Branch)'}
-              </CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground truncate" title={shop.name}>
+                  {shop.name} {index === 0 ? '(Main Location)' : '(Branch)'}
+                </CardTitle>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 font-normal">
+                  {shop.categoryName || 'N/A'}
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{currency} {(shop.todaySales || 0).toLocaleString()}</div>
@@ -616,6 +746,7 @@ const CompanyDashboard = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Branch Store</TableHead>
+                      <TableHead>Category</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead className="text-right">Revenue</TableHead>
                       <TableHead className="text-right">Orders</TableHead>
@@ -634,6 +765,11 @@ const CompanyDashboard = () => {
                               <Phone className="h-3 w-3 mr-1" />
                               {store.phone}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="font-normal">
+                              {store.categoryName || 'N/A'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center">
@@ -679,7 +815,7 @@ const CompanyDashboard = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
+                        <TableCell colSpan={8} className="h-24 text-center">
                           <div className="flex flex-col items-center">
                             <Store className="h-8 w-8 text-muted-foreground mb-2" />
                             <p className="text-muted-foreground">No branch stores found</p>
@@ -699,117 +835,180 @@ const CompanyDashboard = () => {
 
         <TabsContent value="inventory">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="flex flex-col shadow-lg border-none bg-background/60 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Top Selling Products</CardTitle>
-                <CardDescription>Best performing products across all stores</CardDescription>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5 text-primary" />
+                  Top Selling Products
+                </CardTitle>
+                <CardDescription>Best performing products across all branch locations</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="h-80 mb-4">
+              <CardContent className="flex-1 flex flex-col justify-start space-y-3">
+                <div className="h-48 mb-0 flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={topProducts}
-                      layout="vertical"
-                      margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                      <XAxis type="number" />
-                      <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
-                      <Tooltip cursor={{ fill: 'transparent' }} />
-                      <Bar
+                    <PieChart>
+                      <Pie
+                        data={topProducts}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={75}
+                        paddingAngle={4}
                         dataKey="sales"
-                        fill="hsl(var(--primary))"
-                        radius={[0, 4, 4, 0]}
-                        name="Sales"
-                        barSize={20}
+                        nameKey="name"
+                        label={({ name, percent }) => percent > 0.05 ? `${name.length > 14 ? name.substring(0, 14) + '...' : name} (${(percent * 100).toFixed(0)}%)` : ''}
+                        labelLine={true}
+                      >
+                        {topProducts.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        cursor={{ fill: 'transparent' }}
+                        content={({ active, payload }: any) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-background border rounded-xl shadow-xl p-3.5 text-sm space-y-1 z-50">
+                                <p className="font-bold text-foreground" style={{ color: payload[0].payload.fill }}>{data.name}</p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-primary" /> {data.storeName}
+                                </p>
+                                <div className="pt-2 flex items-center gap-2">
+                                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: payload[0].payload.fill }} />
+                                  <span className="font-bold text-foreground">{data.sales} units sold</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5">Current Stock: {data.quantity} units</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
                       />
-                    </BarChart>
+                      <Legend verticalAlign="bottom" height={24} wrapperStyle={{ paddingTop: '0px', fontSize: '11px', fontWeight: 500 }} />
+                    </PieChart>
                   </ResponsiveContainer>
                 </div>
 
-                <div className="space-y-4">
-                  {topProducts.map((p, i) => (
-                    <div key={i} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{p.name}</span>
-                        <Badge
-                          variant="outline"
-                          className="bg-primary/5 text-primary border-primary/20"
-                        >
-                          {p.sales} units sold
+                <div className="space-y-1.5 pt-1.5 border-t">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Product Performance Attribution</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {topProducts.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-muted/40 border border-muted-foreground/10 hover:bg-muted/60 transition-colors">
+                        <div className="space-y-0.5 truncate pr-2">
+                          <p className="text-xs font-semibold truncate">{p.name}</p>
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Store className="w-3 h-3 text-primary" /> {p.storeName}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-xs font-bold px-2 py-0.5">
+                          {p.sales} sold
                         </Badge>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                   {topProducts.length === 0 && (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No product data available
+                    <div className="text-center py-4 text-muted-foreground italic bg-muted/20 rounded-xl border border-dashed">
+                      No sales data available yet across branches
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="flex flex-col shadow-lg border-none bg-background/60 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Supply Chain Status</CardTitle>
-                <CardDescription>Current status for key product categories</CardDescription>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  <Store className="h-5 w-5 text-primary" />
+                  Branch Stock Health & Distribution
+                </CardTitle>
+                <CardDescription>Inventory volume and status breakdown across all branch locations</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Mock Categories since actual mapping might vary */}
-                  <div className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4 text-primary" />
-                      </div>
-                      <span>Dairy Products</span>
-                    </div>
-                    <Badge className="bg-primary/10 text-primary border-none">Normal</Badge>
-                  </div>
+              <CardContent className="flex-1 flex flex-col justify-start space-y-3">
+                <div className="h-48 mb-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={branchInventoryStats}
+                      margin={{ top: 10, right: 15, left: -15, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 11, fontWeight: 500 }}
+                        angle={0}
+                        textAnchor="middle"
+                        height={16}
+                        tickFormatter={(val) => {
+                          const short = val.replace('Super Fresh Market', 'SFM').replace('Restaurant', 'Rest.');
+                          return short.length > 15 ? short.substring(0, 15) + '...' : short;
+                        }}
+                      />
+                      <YAxis tick={{ fontSize: 11 }} width={40} />
+                      <Tooltip
+                        cursor={{ fill: 'transparent' }}
+                        content={({ active, payload }: any) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-background border rounded-xl shadow-xl p-4 text-sm space-y-1.5 z-50">
+                                <p className="font-bold text-foreground flex items-center gap-1.5">
+                                  <Store className="w-4 h-4 text-primary" /> {data.name} <span className="text-xs font-normal text-muted-foreground">({data.categoryName})</span>
+                                </p>
+                                <div className="space-y-1 pt-1">
+                                  <p className="text-xs font-medium flex items-center justify-between gap-4" style={{ color: color.primary }}>
+                                    <span>Optimal Stock (&gt;10):</span> <span className="font-bold">{data.inStock} items</span>
+                                  </p>
+                                  <p className="text-xs font-medium flex items-center justify-between gap-4" style={{ color: 'hsl(var(--chart-2))' }}>
+                                    <span>Low Stock (≤10):</span> <span className="font-bold">{data.lowStock} items</span>
+                                  </p>
+                                  <p className="text-xs font-medium flex items-center justify-between gap-4" style={{ color: 'hsl(var(--chart-4))' }}>
+                                    <span>Out of Stock (0):</span> <span className="font-bold">{data.outOfStock} items</span>
+                                  </p>
+                                </div>
+                                <div className="border-t pt-2 mt-2 flex items-center justify-between">
+                                  <span className="text-xs text-muted-foreground font-semibold">Total Stock Volume:</span>
+                                  <span className="text-xs font-bold text-foreground">{data.totalVolume.toLocaleString()} units</span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend verticalAlign="top" height={24} wrapperStyle={{ paddingBottom: '0px', fontSize: '11px', fontWeight: 500 }} />
+                      <Bar dataKey="inStock" name="Optimal Stock" fill={color.primary} radius={[8, 8, 0, 0]} barSize={16} />
+                      <Bar dataKey="lowStock" name="Low Stock" fill="hsl(var(--chart-2))" radius={[8, 8, 0, 0]} barSize={16} />
+                      <Bar dataKey="outOfStock" name="Out of Stock" fill="hsl(var(--chart-4))" radius={[8, 8, 0, 0]} barSize={16} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
 
-                  <div className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4 text-primary" />
+                <div className="space-y-1.5 pt-1.5 border-t">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Branch Inventory Alerts</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {branchInventoryStats.map((stat, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-muted/40 border border-muted-foreground/10 hover:bg-muted/60 transition-colors">
+                        <div className="space-y-0.5 truncate pr-2">
+                          <p className="text-xs font-semibold truncate">{stat.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{stat.totalItems} product lines</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {stat.outOfStock > 0 ? (
+                            <Badge className="text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-sm border-none" style={{ backgroundColor: 'hsl(var(--chart-4))', color: '#fff' }}>
+                              {stat.outOfStock} Out
+                            </Badge>
+                          ) : stat.lowStock > 0 ? (
+                            <Badge className="text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-sm border" style={{ backgroundColor: 'hsl(var(--chart-2) / 0.15)', color: 'hsl(var(--chart-2))', borderColor: 'hsl(var(--chart-2) / 0.3)' }}>
+                              {stat.lowStock} Low
+                            </Badge>
+                          ) : (
+                            <Badge className="text-[10px] font-bold px-2 py-0.5 rounded-lg shadow-sm border" style={{ backgroundColor: 'hsl(var(--primary) / 0.15)', color: color.primary, borderColor: 'hsl(var(--primary) / 0.3)' }}>
+                              Optimal
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <span>Bakery</span>
-                    </div>
-                    <Badge className="bg-primary/10 text-primary border-none">Normal</Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center dark:bg-yellow-900/30">
-                        <ShoppingBag className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
-                      </div>
-                      <span>Meat & Poultry</span>
-                    </div>
-                    <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 border-none">
-                      Delayed
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4 text-primary" />
-                      </div>
-                      <span>Fresh Produce</span>
-                    </div>
-                    <Badge className="bg-primary/10 text-primary border-none">Normal</Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center dark:bg-red-900/30">
-                        <ShoppingBag className="h-4 w-4 text-red-600 dark:text-red-500" />
-                      </div>
-                      <span>Imported Goods</span>
-                    </div>
-                    <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500 border-none">
-                      Disrupted
-                    </Badge>
+                    ))}
                   </div>
                 </div>
               </CardContent>
