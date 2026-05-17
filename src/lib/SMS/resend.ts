@@ -25,18 +25,16 @@ const logger = {
 export const resend = resendApiKey
   ? new Resend(resendApiKey)
   : ({
-    emails: {
-      send: async (payload: any) => {
-        console.log('[MOCK] Email sending disabled', 'ResendLib', {
-          subject: payload.subject,
-          to: payload.to,
-        });
-        return { data: { id: 'mock_email_id' }, error: null };
+      emails: {
+        send: async (payload: any) => {
+          console.log('[MOCK] Email sending disabled', 'ResendLib', {
+            subject: payload.subject,
+            to: payload.to,
+          });
+          return { data: { id: 'mock_email_id' }, error: null };
+        },
       },
-    },
-  } as unknown as Resend);
-
-
+    } as unknown as Resend);
 
 export async function sendTwoFactorEnabledEmail({
   to,
@@ -90,7 +88,10 @@ export async function sendTwoFactorEnabledEmail({
 
     return result;
   } catch (error) {
-    logger.error('Failed to send 2FA enabled email', 'ResendLib:sendTwoFactorEnabledEmail', { error, to });
+    logger.error('Failed to send 2FA enabled email', 'ResendLib:sendTwoFactorEnabledEmail', {
+      error,
+      to,
+    });
     return null;
   }
 }
@@ -140,7 +141,10 @@ export async function sendTwoFactorCodeEmail({
 
     return result;
   } catch (error) {
-    logger.error('Failed to send 2FA code email', 'ResendLib:sendTwoFactorCodeEmail', { error, to });
+    logger.error('Failed to send 2FA code email', 'ResendLib:sendTwoFactorCodeEmail', {
+      error,
+      to,
+    });
     return null;
   }
 }

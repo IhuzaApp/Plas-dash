@@ -76,7 +76,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
       }
 
       // Check for MFA requirements - only required for project users
-      const twoFactorRequired = isProjectUser ? !!(session.privileges?.twoFactorRequired || session.TwoAuth_enabled || session.multAuthEnabled) : false;
+      const twoFactorRequired = isProjectUser
+        ? !!(
+            session.privileges?.twoFactorRequired ||
+            session.TwoAuth_enabled ||
+            session.multAuthEnabled
+          )
+        : false;
       const smsRequired = isProjectUser ? !!session.sms_auth : false;
       if (twoFactorRequired || smsRequired) {
         setMfaUser({ session, isProjectUser, twoFactorRequired, smsRequired });
@@ -157,11 +163,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
     <Dialog open={true}>
       <DialogContent
         className={cn(
-          "sm:max-w-[440px] p-8 border-none bg-background/80 backdrop-blur-2xl shadow-2xl rounded-[2rem] overflow-hidden transition-all duration-500",
-          authStep === 'mfa' ? "sm:max-w-[480px]" : ""
+          'sm:max-w-[440px] p-8 border-none bg-background/80 backdrop-blur-2xl shadow-2xl rounded-[2rem] overflow-hidden transition-all duration-500',
+          authStep === 'mfa' ? 'sm:max-w-[480px]' : ''
         )}
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
+        onPointerDownOutside={e => e.preventDefault()}
+        onEscapeKeyDown={e => e.preventDefault()}
       >
         <div className="relative z-10">
           {authStep === 'mfa' ? (
@@ -170,7 +176,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
               isProjectUser={mfaUser.isProjectUser}
               twoFactorRequired={mfaUser.twoFactorRequired}
               smsRequired={mfaUser.smsRequired}
-              onSuccess={(updatedSession) => {
+              onSuccess={updatedSession => {
                 startLoading();
                 completeLogin(updatedSession, mfaUser.isProjectUser);
               }}
@@ -183,13 +189,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                 businessLogo={activeBusiness?.logo}
               />
 
-              {!showHelp ? (
-                <LoginForm
-                  form={form}
-                  onSubmit={onSubmit}
-                  loading={loading}
-                />
-              ) : null}
+              {!showHelp ? <LoginForm form={form} onSubmit={onSubmit} loading={loading} /> : null}
 
               <LoginSupport
                 showHelp={showHelp}

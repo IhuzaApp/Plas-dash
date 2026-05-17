@@ -36,7 +36,12 @@ const SHOP_SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 export function ShopSessionProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const [shopSession, setShopSession] = useState<ShopSession | null>(null);
-  const [activeBusiness, setActiveBusiness] = useState<{ id: string; name: string; type: string; logo?: string | null } | null>(null);
+  const [activeBusiness, setActiveBusiness] = useState<{
+    id: string;
+    name: string;
+    type: string;
+    logo?: string | null;
+  } | null>(null);
 
   // Detect business context from cookie or hostname
   useEffect(() => {
@@ -71,12 +76,12 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
       // Fallback: extract subdomain from hostname if cookie is missing
       const hostname = window.location.hostname;
       const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'plas.rw';
-      
+
       if (!['localhost', 'dash.' + rootDomain, rootDomain].includes(hostname)) {
         let subdomain = '';
         if (hostname.endsWith('.' + rootDomain)) subdomain = hostname.replace('.' + rootDomain, '');
         else if (hostname.endsWith('.lvh.me')) subdomain = hostname.replace('.lvh.me', '');
-        
+
         if (subdomain && subdomain !== 'www' && subdomain !== 'dash') {
           fetchBusinessDetails(`subdomain=${subdomain}`);
         }

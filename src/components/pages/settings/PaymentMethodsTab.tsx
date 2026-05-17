@@ -1,10 +1,23 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { CreditCard, Smartphone, Landmark, Shield, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,7 +62,10 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
             </div>
           </div>
           {profileData?.display_role === 'storeAdministrator' && (
-            <Badge variant="outline" className="rounded-lg bg-yellow-500/10 text-yellow-600 border-yellow-500/20 gap-1">
+            <Badge
+              variant="outline"
+              className="rounded-lg bg-yellow-500/10 text-yellow-600 border-yellow-500/20 gap-1"
+            >
               <Shield className="h-3 w-3" />
               View Only
             </Badge>
@@ -60,7 +76,9 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
         {/* Existing Methods Table */}
         {paymentMethods.length > 0 && (
           <div className="space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Registered Payout Methods</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              Registered Payout Methods
+            </h3>
             <div className="rounded-2xl border border-muted-foreground/10 overflow-hidden bg-background">
               <table className="w-full text-sm text-left">
                 <thead className="bg-muted/50 text-muted-foreground">
@@ -72,16 +90,24 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-muted-foreground/10">
-                  {paymentMethods.map((pm) => (
+                  {paymentMethods.map(pm => (
                     <tr key={pm.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          {pm.method === 'momo' ? <Smartphone className="h-4 w-4 text-primary" /> : <Landmark className="h-4 w-4 text-primary" />}
-                          <span className="capitalize">{pm.method === 'momo' ? 'Mobile Money' : 'Bank Transfer'}</span>
+                          {pm.method === 'momo' ? (
+                            <Smartphone className="h-4 w-4 text-primary" />
+                          ) : (
+                            <Landmark className="h-4 w-4 text-primary" />
+                          )}
+                          <span className="capitalize">
+                            {pm.method === 'momo' ? 'Mobile Money' : 'Bank Transfer'}
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-4 font-medium">{pm.names}</td>
-                      <td className="px-4 py-4 font-mono text-xs">{maskAccountNumber(pm.number)}</td>
+                      <td className="px-4 py-4 font-mono text-xs">
+                        {maskAccountNumber(pm.number)}
+                      </td>
                       <td className="px-4 py-4 text-center">
                         {pm.is_default ? (
                           <Badge className="bg-primary/10 text-primary border-none">Default</Badge>
@@ -102,7 +128,9 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
             <div className="h-px bg-muted-foreground/10" />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Add New Payout Method</h3>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                Add New Payout Method
+              </h3>
               <div className="flex gap-4 p-1 bg-muted rounded-2xl w-fit">
                 <button
                   onClick={() => {
@@ -111,9 +139,11 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                   }}
                   disabled={!isEditingPayout}
                   className={cn(
-                    "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-medium transition-all",
-                    selectedPayoutType === 'momo' ? "bg-background shadow-md text-primary" : "text-muted-foreground hover:text-foreground",
-                    !isEditingPayout && "opacity-50 cursor-not-allowed"
+                    'flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-medium transition-all',
+                    selectedPayoutType === 'momo'
+                      ? 'bg-background shadow-md text-primary'
+                      : 'text-muted-foreground hover:text-foreground',
+                    !isEditingPayout && 'opacity-50 cursor-not-allowed'
                   )}
                 >
                   <Smartphone className="h-4 w-4" />
@@ -126,9 +156,11 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                   }}
                   disabled={!isEditingPayout}
                   className={cn(
-                    "flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-medium transition-all",
-                    selectedPayoutType === 'bank' ? "bg-background shadow-md text-primary" : "text-muted-foreground hover:text-foreground",
-                    !isEditingPayout && "opacity-50 cursor-not-allowed"
+                    'flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-medium transition-all',
+                    selectedPayoutType === 'bank'
+                      ? 'bg-background shadow-md text-primary'
+                      : 'text-muted-foreground hover:text-foreground',
+                    !isEditingPayout && 'opacity-50 cursor-not-allowed'
                   )}
                 >
                   <Landmark className="h-4 w-4" />
@@ -142,10 +174,13 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                     <Label htmlFor="momo-provider">Network Provider</Label>
                     <Select
                       value={payoutForm.provider}
-                      onValueChange={(v) => setPayoutForm((prev: any) => ({ ...prev, provider: v }))}
+                      onValueChange={v => setPayoutForm((prev: any) => ({ ...prev, provider: v }))}
                       disabled={!isEditingPayout}
                     >
-                      <SelectTrigger id="momo-provider" className="rounded-xl border-muted-foreground/20">
+                      <SelectTrigger
+                        id="momo-provider"
+                        className="rounded-xl border-muted-foreground/20"
+                      >
                         <SelectValue placeholder="Select provider" />
                       </SelectTrigger>
                       <SelectContent>
@@ -161,7 +196,9 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                       placeholder="e.g. 078XXXXXXX"
                       className="rounded-xl border-muted-foreground/20"
                       value={payoutForm.number}
-                      onChange={(e) => setPayoutForm((prev: any) => ({ ...prev, number: e.target.value }))}
+                      onChange={e =>
+                        setPayoutForm((prev: any) => ({ ...prev, number: e.target.value }))
+                      }
                       readOnly={!isEditingPayout}
                     />
                   </div>
@@ -172,7 +209,9 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                       placeholder="Full name as it appears on account"
                       className="rounded-xl border-muted-foreground/20"
                       value={payoutForm.names}
-                      onChange={(e) => setPayoutForm((prev: any) => ({ ...prev, names: e.target.value }))}
+                      onChange={e =>
+                        setPayoutForm((prev: any) => ({ ...prev, names: e.target.value }))
+                      }
                       readOnly={!isEditingPayout}
                     />
                   </div>
@@ -186,7 +225,9 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                       placeholder="Enter bank name"
                       className="rounded-xl border-muted-foreground/20"
                       value={payoutForm.bankName}
-                      onChange={(e) => setPayoutForm((prev: any) => ({ ...prev, bankName: e.target.value }))}
+                      onChange={e =>
+                        setPayoutForm((prev: any) => ({ ...prev, bankName: e.target.value }))
+                      }
                       readOnly={!isEditingPayout}
                     />
                   </div>
@@ -197,7 +238,9 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                       placeholder="Enter account number"
                       className="rounded-xl border-muted-foreground/20"
                       value={payoutForm.number}
-                      onChange={(e) => setPayoutForm((prev: any) => ({ ...prev, number: e.target.value }))}
+                      onChange={e =>
+                        setPayoutForm((prev: any) => ({ ...prev, number: e.target.value }))
+                      }
                       readOnly={!isEditingPayout}
                     />
                   </div>
@@ -208,7 +251,9 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                       placeholder="Enter branch name"
                       className="rounded-xl border-muted-foreground/20"
                       value={payoutForm.bankBranch}
-                      onChange={(e) => setPayoutForm((prev: any) => ({ ...prev, bankBranch: e.target.value }))}
+                      onChange={e =>
+                        setPayoutForm((prev: any) => ({ ...prev, bankBranch: e.target.value }))
+                      }
                       readOnly={!isEditingPayout}
                     />
                   </div>
@@ -219,7 +264,9 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                       placeholder="Enter SWIFT code"
                       className="rounded-xl border-muted-foreground/20"
                       value={payoutForm.bankSwift}
-                      onChange={(e) => setPayoutForm((prev: any) => ({ ...prev, bankSwift: e.target.value }))}
+                      onChange={e =>
+                        setPayoutForm((prev: any) => ({ ...prev, bankSwift: e.target.value }))
+                      }
                       readOnly={!isEditingPayout}
                     />
                   </div>
@@ -230,7 +277,9 @@ const PaymentMethodsTab: React.FC<PaymentMethodsTabProps> = ({
                       placeholder="Full name as it appears on bank statement"
                       className="rounded-xl border-muted-foreground/20"
                       value={payoutForm.names}
-                      onChange={(e) => setPayoutForm((prev: any) => ({ ...prev, names: e.target.value }))}
+                      onChange={e =>
+                        setPayoutForm((prev: any) => ({ ...prev, names: e.target.value }))
+                      }
                       readOnly={!isEditingPayout}
                     />
                   </div>

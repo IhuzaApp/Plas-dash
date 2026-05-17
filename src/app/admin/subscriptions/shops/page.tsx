@@ -258,7 +258,7 @@ export default function ShopSubscriptionsPage() {
             )}
           </div>
         </TabsContent>
-        
+
         <TabsContent value="trends" className="space-y-4">
           <SubscriberTrendChart subscriptions={subscriptions || []} isLoading={isSubsLoading} />
         </TabsContent>

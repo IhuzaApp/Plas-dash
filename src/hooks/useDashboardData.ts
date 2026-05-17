@@ -244,7 +244,7 @@ export const useDashboardData = () => {
       let subSum = 0;
       (sub.subscription_invoices || []).forEach((inv: any) => {
         (inv.ai_usage || []).forEach((ai: any) => {
-          subSum += (ai.requests_sent || 0);
+          subSum += ai.requests_sent || 0;
         });
       });
       return sum + subSum;

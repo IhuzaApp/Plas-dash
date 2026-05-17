@@ -313,7 +313,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
         password: hashedPassword,
         Position: position,
         multAuthEnabled: false, // Don't enable until setup is complete
-        sms_auth: false,       // Don't enable until setup is complete
+        sms_auth: false, // Don't enable until setup is complete
       } as any,
       privileges: strictlyFilteredPrivileges,
     });
@@ -470,9 +470,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
                           <FormLabel className="text-base">Two-Factor Auth</FormLabel>
-                          <FormDescription>
-                            Enable app-based 2FA
-                          </FormDescription>
+                          <FormDescription>Enable app-based 2FA</FormDescription>
                         </div>
                         <FormControl>
                           <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -488,9 +486,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
                           <FormLabel className="text-base">SMS Auth</FormLabel>
-                          <FormDescription>
-                            Enable SMS-based auth
-                          </FormDescription>
+                          <FormDescription>Enable SMS-based auth</FormDescription>
                         </div>
                         <FormControl>
                           <Switch checked={field.value} onCheckedChange={field.onChange} />

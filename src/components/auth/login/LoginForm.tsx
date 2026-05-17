@@ -1,6 +1,13 @@
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { User, Lock, Loader2 } from 'lucide-react';
@@ -76,7 +83,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ form, onSubmit, loading }) => {
               <span>Verifying...</span>
             </div>
           ) : (
-            "Continue to Dashboard"
+            'Continue to Dashboard'
           )}
         </Button>
       </form>

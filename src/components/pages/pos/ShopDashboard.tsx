@@ -3,7 +3,23 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Store, ShoppingBag, Users, AlertTriangle, Zap, Loader2, DollarSign, Star, Package, ChevronDown, ChevronUp, TrendingUp, Calendar, Globe, Tag } from 'lucide-react';
+import {
+  Store,
+  ShoppingBag,
+  Users,
+  AlertTriangle,
+  Zap,
+  Loader2,
+  DollarSign,
+  Star,
+  Package,
+  ChevronDown,
+  ChevronUp,
+  TrendingUp,
+  Calendar,
+  Globe,
+  Tag,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useShopSession } from '@/contexts/ShopSessionContext';
@@ -22,7 +38,7 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from 'recharts';
 
 const ShopDashboard = () => {
@@ -52,9 +68,13 @@ const ShopDashboard = () => {
       try {
         const isRestaurant = !!shopSession.isRestaurant;
         const [shopRes, restRes, reelRes] = await Promise.all([
-          !isRestaurant ? apiGet<any>(`/api/queries/shops/${shopSession.shopId}`).catch(() => null) : Promise.resolve(null),
-          isRestaurant ? apiGet<any>(`/api/queries/restaurants/${shopSession.shopId}`).catch(() => null) : Promise.resolve(null),
-          apiGet<any>(`/api/queries/all-reel-orders`).catch(() => null)
+          !isRestaurant
+            ? apiGet<any>(`/api/queries/shops/${shopSession.shopId}`).catch(() => null)
+            : Promise.resolve(null),
+          isRestaurant
+            ? apiGet<any>(`/api/queries/restaurants/${shopSession.shopId}`).catch(() => null)
+            : Promise.resolve(null),
+          apiGet<any>(`/api/queries/all-reel-orders`).catch(() => null),
         ]);
 
         const shopDataObj = shopRes?.shop || restRes?.restaurant;
@@ -100,27 +120,37 @@ const ShopDashboard = () => {
 
     const productSalesThisMonth: Record<string, { name: string; quantity: number }> = {};
 
-    const salesByTimeframe: Record<string, { orders: number; pos: number; reel: number; restaurant: number }> = {};
+    const salesByTimeframe: Record<
+      string,
+      { orders: number; pos: number; reel: number; restaurant: number }
+    > = {};
     const ordersByDay: Record<string, number> = {};
-    const ordersAndCustomersByMonth: Record<string, { orders: number; customers: Set<string> }> = {};
+    const ordersAndCustomersByMonth: Record<string, { orders: number; customers: Set<string> }> =
+      {};
 
     const allItems = [
       ...(shopData.Orders || []),
       ...(shopData.shopCheckouts || []),
       ...(shopData.restaurant_orders || []),
-      ...(shopData.reel_orders || [])
+      ...(shopData.reel_orders || []),
     ];
 
     allItems.forEach((item: any) => {
       const isCheckout = !!item.cartItems;
       const isReel = !!item.reel_id || item.type === 'reel';
       const isRestaurant = !!item.restaurant_order_items;
-      
+
       // Filter out non-finished orders based on business type
       if (isRestaurant) {
         if (item.status === 'pending' || item.status === 'PENDING') return;
       } else if (!isCheckout && !isReel) {
-        if (item.status === 'accepted' || item.status === 'shopping' || item.status === 'pending' || item.status === 'PENDING') return;
+        if (
+          item.status === 'accepted' ||
+          item.status === 'shopping' ||
+          item.status === 'pending' ||
+          item.status === 'PENDING'
+        )
+          return;
       }
 
       const dateStr = item.created_at || item.created_on;
@@ -152,11 +182,13 @@ const ShopDashboard = () => {
             productSalesThisMonth[prodId].quantity += Number(orderItem.quantity || 1);
           });
         }
-        
+
         if (isCheckout && item.cartItems) {
           let cItems = item.cartItems;
           if (typeof cItems === 'string') {
-            try { cItems = JSON.parse(cItems); } catch (e) {}
+            try {
+              cItems = JSON.parse(cItems);
+            } catch (e) {}
           }
           if (Array.isArray(cItems)) {
             cItems.forEach((cItem: any) => {
@@ -169,7 +201,7 @@ const ShopDashboard = () => {
             });
           }
         }
-        
+
         if (isRestaurant && item.restaurant_order_items) {
           item.restaurant_order_items.forEach((rItem: any) => {
             const dishName = rItem.restaurant_dishes?.dishes?.name || 'Unknown Dish';
@@ -214,11 +246,13 @@ const ShopDashboard = () => {
       } else {
         salesByTimeframe[timeKey].orders += total;
       }
-      
+
       ordersByDay[itemDate] = (ordersByDay[itemDate] || 0) + 1;
 
-      const customerId = isCheckout ? (item.Processed_By || 'guest') : (item.user_id || item.orderedBy?.id || 'guest');
-      
+      const customerId = isCheckout
+        ? item.Processed_By || 'guest'
+        : item.user_id || item.orderedBy?.id || 'guest';
+
       if (!ordersAndCustomersByMonth[itemMonth]) {
         ordersAndCustomersByMonth[itemMonth] = { orders: 0, customers: new Set() };
       }
@@ -235,39 +269,52 @@ const ShopDashboard = () => {
       orders: salesByTimeframe[tf].orders,
       pos: salesByTimeframe[tf].pos,
       reel: salesByTimeframe[tf].reel,
-      restaurant: salesByTimeframe[tf].restaurant
+      restaurant: salesByTimeframe[tf].restaurant,
     }));
 
     const sortedDays = Object.keys(ordersByDay).sort().slice(-30);
     const orderTrendDaily = sortedDays.map(day => ({
       name: day.substring(5), // MM-DD
-      orders: ordersByDay[day]
+      orders: ordersByDay[day],
     }));
 
-    const ordersVsCustomers = Object.keys(ordersAndCustomersByMonth).sort().slice(-12).map(month => ({
-      name: month,
-      orders: ordersAndCustomersByMonth[month].orders,
-      customers: ordersAndCustomersByMonth[month].customers.size
-    }));
+    const ordersVsCustomers = Object.keys(ordersAndCustomersByMonth)
+      .sort()
+      .slice(-12)
+      .map(month => ({
+        name: month,
+        orders: ordersAndCustomersByMonth[month].orders,
+        customers: ordersAndCustomersByMonth[month].customers.size,
+      }));
 
     const lowStockItems = (shopData.Products || []).filter(
       (product: any) => product.quantity <= (product.reorder_point || 0)
     );
 
-    const productCount = shopData.isRestaurant ? (shopData.restaurant_dishes?.length || 0) : (shopData.Products?.length || 0);
+    const productCount = shopData.isRestaurant
+      ? shopData.restaurant_dishes?.length || 0
+      : shopData.Products?.length || 0;
 
     return {
       metrics: {
-        ordersToday, ordersMonth, ordersYear, ordersTotal,
-        salesToday, salesMonth, salesYear, salesTotal,
-        avgRating, ratingCount, productCount,
-        lowStockItems: lowStockItems.slice(0, 5)
+        ordersToday,
+        ordersMonth,
+        ordersYear,
+        ordersTotal,
+        salesToday,
+        salesMonth,
+        salesYear,
+        salesTotal,
+        avgRating,
+        ratingCount,
+        productCount,
+        lowStockItems: lowStockItems.slice(0, 5),
       },
       chartsData: {
         salesTrend,
         orderTrendDaily,
-        ordersVsCustomers
-      }
+        ordersVsCustomers,
+      },
     };
   }, [shopData, salesTimeframe]);
 
@@ -304,7 +351,13 @@ const ShopDashboard = () => {
 
   const allPromotions = useMemo(() => {
     if (!shopData) return [];
-    return Array.isArray(shopData?.promotions) ? shopData.promotions : (Array.isArray(shopData?.promotion) ? shopData.promotion : (shopData?.promotion ? [shopData.promotion] : []));
+    return Array.isArray(shopData?.promotions)
+      ? shopData.promotions
+      : Array.isArray(shopData?.promotion)
+        ? shopData.promotion
+        : shopData?.promotion
+          ? [shopData.promotion]
+          : [];
   }, [shopData]);
 
   const activePromotions = useMemo(() => {
@@ -384,7 +437,9 @@ const ShopDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.avgRating || 'N/A'}</div>
-            <p className="text-xs text-muted-foreground mt-1">From {metrics?.ratingCount || 0} reviews</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              From {metrics?.ratingCount || 0} reviews
+            </p>
             <div className="h-2 mt-3 pt-3 border-t w-full"></div>
           </CardContent>
         </Card>
@@ -426,7 +481,11 @@ const ShopDashboard = () => {
           className="flex items-center gap-2 border-primary/20 hover:bg-primary/5 transition-all"
         >
           {isRevenueExpanded ? 'Hide Extended Revenue Stats' : 'Expand to see more stats'}
-          {isRevenueExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          {isRevenueExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
@@ -466,7 +525,9 @@ const ShopDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">{formatCurrency(metrics?.salesTotal || 0)}</div>
+              <div className="text-2xl font-bold text-primary">
+                {formatCurrency(metrics?.salesTotal || 0)}
+              </div>
               <p className="text-xs text-muted-foreground mt-1">Lifetime Earnings (All)</p>
             </CardContent>
           </Card>
@@ -481,7 +542,7 @@ const ShopDashboard = () => {
               <CardDescription>Sales revenue over time ({salesTimeframe})</CardDescription>
             </div>
             <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-lg border">
-              {(['year', 'month', 'week', 'day'] as const).map((tf) => (
+              {(['year', 'month', 'week', 'day'] as const).map(tf => (
                 <Button
                   key={tf}
                   variant={salesTimeframe === tf ? 'default' : 'ghost'}
@@ -497,43 +558,80 @@ const ShopDashboard = () => {
           <CardContent>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartsData?.salesTrend || []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <AreaChart
+                  data={chartsData?.salesTrend || []}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
                   <defs>
                     {!shopData?.isRestaurant && (
                       <>
                         <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={color.primary} stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor={color.primary} stopOpacity={0}/>
+                          <stop offset="5%" stopColor={color.primary} stopOpacity={0.8} />
+                          <stop offset="95%" stopColor={color.primary} stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="colorPOS" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
                         </linearGradient>
                       </>
                     )}
                     <linearGradient id="colorReel" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-3))" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="hsl(var(--chart-3))" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="hsl(var(--chart-3))" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
                     </linearGradient>
                     {shopData?.isRestaurant && (
                       <linearGradient id="colorRestaurant" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={color.primary} stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor={color.primary} stopOpacity={0}/>
+                        <stop offset="5%" stopColor={color.primary} stopOpacity={0.8} />
+                        <stop offset="95%" stopColor={color.primary} stopOpacity={0} />
                       </linearGradient>
                     )}
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" />
-                  <YAxis tickFormatter={(val) => `$${val}`} />
-                  <RechartsTooltip formatter={(val) => formatCurrency(val as number)} />
+                  <YAxis tickFormatter={val => `$${val}`} />
+                  <RechartsTooltip formatter={val => formatCurrency(val as number)} />
                   <Legend />
-                  
-                  {!shopData?.isRestaurant && <Area type="monotone" dataKey="orders" name="Online Orders" stroke={color.primary} fillOpacity={1} fill="url(#colorOrders)" />}
-                  {!shopData?.isRestaurant && <Area type="monotone" dataKey="pos" name="POS Sales" stroke="hsl(var(--chart-2))" fillOpacity={1} fill="url(#colorPOS)" />}
-                  
-                  <Area type="monotone" dataKey="reel" name="Reel Orders" stroke="hsl(var(--chart-3))" fillOpacity={1} fill="url(#colorReel)" />
-                  
-                  {shopData?.isRestaurant && <Area type="monotone" dataKey="restaurant" name="Restaurant Orders" stroke={color.primary} fillOpacity={1} fill="url(#colorRestaurant)" />}
+
+                  {!shopData?.isRestaurant && (
+                    <Area
+                      type="monotone"
+                      dataKey="orders"
+                      name="Online Orders"
+                      stroke={color.primary}
+                      fillOpacity={1}
+                      fill="url(#colorOrders)"
+                    />
+                  )}
+                  {!shopData?.isRestaurant && (
+                    <Area
+                      type="monotone"
+                      dataKey="pos"
+                      name="POS Sales"
+                      stroke="hsl(var(--chart-2))"
+                      fillOpacity={1}
+                      fill="url(#colorPOS)"
+                    />
+                  )}
+
+                  <Area
+                    type="monotone"
+                    dataKey="reel"
+                    name="Reel Orders"
+                    stroke="hsl(var(--chart-3))"
+                    fillOpacity={1}
+                    fill="url(#colorReel)"
+                  />
+
+                  {shopData?.isRestaurant && (
+                    <Area
+                      type="monotone"
+                      dataKey="restaurant"
+                      name="Restaurant Orders"
+                      stroke={color.primary}
+                      fillOpacity={1}
+                      fill="url(#colorRestaurant)"
+                    />
+                  )}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -543,19 +641,34 @@ const ShopDashboard = () => {
         <Card className="col-span-1 lg:col-span-12">
           <CardHeader>
             <CardTitle>Orders vs Customers</CardTitle>
-            <CardDescription>Monthly comparison of total orders vs unique customers</CardDescription>
+            <CardDescription>
+              Monthly comparison of total orders vs unique customers
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartsData?.ordersVsCustomers || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart
+                  data={chartsData?.ordersVsCustomers || []}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <RechartsTooltip />
                   <Legend />
-                  <Bar dataKey="orders" name="Total Orders" fill={color.primary} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="customers" name="Unique Customers" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="orders"
+                    name="Total Orders"
+                    fill={color.primary}
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="customers"
+                    name="Unique Customers"
+                    fill="hsl(var(--chart-2))"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -570,12 +683,23 @@ const ShopDashboard = () => {
           <CardContent>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartsData?.orderTrendDaily || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <LineChart
+                  data={chartsData?.orderTrendDaily || []}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <RechartsTooltip />
-                  <Line type="monotone" dataKey="orders" name="Orders" stroke={color.primary} strokeWidth={3} dot={{ r: 2 }} activeDot={{ r: 6 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="orders"
+                    name="Orders"
+                    stroke={color.primary}
+                    strokeWidth={3}
+                    dot={{ r: 2 }}
+                    activeDot={{ r: 6 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -676,7 +800,9 @@ const ShopDashboard = () => {
                 <div className="text-sm font-medium">Total Promotions</div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">{allPromotions.length} Total</Badge>
-                  <Badge className="bg-green-500 hover:bg-green-600">{activePromotions.length} Active</Badge>
+                  <Badge className="bg-green-500 hover:bg-green-600">
+                    {activePromotions.length} Active
+                  </Badge>
                 </div>
               </div>
 
@@ -690,13 +816,22 @@ const ShopDashboard = () => {
                         className={`flex flex-col p-3 rounded-lg border transition-all ${isActive ? 'bg-green-50/50 border-green-200' : 'bg-secondary/20 border-border'}`}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold text-sm">{promo.name || promo.code || 'Campaign'}</span>
-                          <Badge variant={isActive ? 'default' : 'outline'} className={isActive ? 'bg-green-500 hover:bg-green-600' : ''}>
+                          <span className="font-semibold text-sm">
+                            {promo.name || promo.code || 'Campaign'}
+                          </span>
+                          <Badge
+                            variant={isActive ? 'default' : 'outline'}
+                            className={isActive ? 'bg-green-500 hover:bg-green-600' : ''}
+                          >
                             {promo.status || 'Inactive'}
                           </Badge>
                         </div>
                         <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
-                          <span>{promo.discount_type === 'percentage' ? `${promo.customer_discount_percent || promo.discount_value || 0}% OFF` : `RWF ${promo.discount_value || 0} OFF`}</span>
+                          <span>
+                            {promo.discount_type === 'percentage'
+                              ? `${promo.customer_discount_percent || promo.discount_value || 0}% OFF`
+                              : `RWF ${promo.discount_value || 0} OFF`}
+                          </span>
                           <span>{promo.end_date ? `Ends ${promo.end_date}` : 'No end date'}</span>
                         </div>
                       </div>

@@ -4,7 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Store, Utensils, Clock, Shield, LogOut, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import {
+  Store,
+  Utensils,
+  Clock,
+  Shield,
+  LogOut,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+} from 'lucide-react';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -170,14 +179,18 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
                 : 'flex flex-col items-center gap-2 mb-4'
             )}
           >
-            <BusinessIcon className={cn(variant === 'sidebar' ? 'h-4 w-4' : 'h-8 w-8 text-primary')} />
+            <BusinessIcon
+              className={cn(variant === 'sidebar' ? 'h-4 w-4' : 'h-8 w-8 text-primary')}
+            />
             <h3
               className={cn(
                 'font-medium',
                 isSidebarOpen || variant === 'inline' ? 'text-sm' : 'sr-only'
               )}
             >
-              {variant === 'sidebar' ? `Select ${session.restaurant_id ? 'Restaurant' : 'Shop'} for POS` : `Available ${session.restaurant_id ? 'Restaurants' : 'Shops'}`}
+              {variant === 'sidebar'
+                ? `Select ${session.restaurant_id ? 'Restaurant' : 'Shop'} for POS`
+                : `Available ${session.restaurant_id ? 'Restaurants' : 'Shops'}`}
             </h3>
           </div>
 
@@ -283,9 +296,9 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
   if (variant === 'header') {
     return (
       <>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="hidden sm:flex items-center gap-2 h-8 mr-2 border-primary/20 hover:bg-primary/10 transition-colors"
           onClick={() => {
             const shopData = {
@@ -333,7 +346,9 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
       {isSidebarOpen ? (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BusinessIcon className={cn(variant === 'sidebar' ? 'h-4 w-4' : 'h-6 w-6 text-primary')} />
+            <BusinessIcon
+              className={cn(variant === 'sidebar' ? 'h-4 w-4' : 'h-6 w-6 text-primary')}
+            />
             <h3 className="font-medium text-sm">
               {variant === 'sidebar'
                 ? `Select ${isRestaurant ? 'Restaurant' : 'Shop'}`

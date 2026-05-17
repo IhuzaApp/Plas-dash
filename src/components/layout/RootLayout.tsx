@@ -23,7 +23,10 @@ const getPageTitle = (pathname: string | null) => {
   const title = segments
     .map(segment => {
       if (segment.toLowerCase() === 'pos') return 'POS';
-      return segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      return segment
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
     })
     .join(' › ');
   return `${title} | Plas Admin`;
@@ -34,8 +37,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
   const router = useRouter();
   const { activeBusiness } = useShopSession();
   const { session, isAuthenticated, isInitializing, login } = useAuth();
-  
-  const pageTitle = activeBusiness 
+
+  const pageTitle = activeBusiness
     ? `${getPageTitle(pathname).split(' | ')[0]} | ${activeBusiness.name}`
     : getPageTitle(pathname);
 
@@ -63,10 +66,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
             }
           }
           const isAdmin = session.role === 'globalAdmin' || session.role === 'storeAdministrator';
-          
+
           if (isAdmin) {
             redirectPath = '/pos/company-dashboard';
-          } else if (hasPrivilege(session.privileges, 'company_dashboard', 'access', session.role)) {
+          } else if (
+            hasPrivilege(session.privileges, 'company_dashboard', 'access', session.role)
+          ) {
             redirectPath = '/pos/company-dashboard';
           } else {
             redirectPath = '/pos/checkout';

@@ -4,7 +4,7 @@ import { normalizeSubdomain } from './lib/utils';
 
 export async function middleware(request: NextRequest) {
   const hostname = request.nextUrl.hostname;
-  
+
   // Define root domains
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'plas.rw';
   const localDomain = 'localhost';
@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
   try {
     const lookupUrl = new URL(`/api/business/lookup?subdomain=${subdomain}`, request.url);
     const lookupResponse = await fetch(lookupUrl);
-    
+
     if (!lookupResponse.ok) {
       // Invalid tenant - redirect to 404 or a dedicated "not found" page
       return NextResponse.rewrite(new URL('/not-found', request.url));
@@ -60,18 +60,21 @@ export async function middleware(request: NextRequest) {
     }
 
     const response = NextResponse.next();
-    
+
     // Set headers for the current request
     response.headers.set('x-business-id', business.id);
-    
+
     // Set persistent cookie for subsequent requests
     response.cookies.set('business-id', business.id, {
       maxAge: 60 * 60 * 24, // 24 hours
       path: '/',
-      domain: process.env.NODE_ENV === 'development' ? '.lvh.me' : `.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'plas.rw'}`,
+      domain:
+        process.env.NODE_ENV === 'development'
+          ? '.lvh.me'
+          : `.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'plas.rw'}`,
       sameSite: 'lax',
     });
-    
+
     return response;
   } catch (error) {
     console.error('Middleware lookup error:', error);

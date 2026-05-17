@@ -12,17 +12,23 @@ const LoginHeader: React.FC<LoginHeaderProps> = ({ businessName, businessLogo })
       <div className="flex flex-col items-center gap-4">
         <div className="p-3 rounded-2xl bg-primary/10 border border-primary/20 shadow-inner group transition-all duration-500 hover:scale-110 overflow-hidden">
           <img
-            src={businessLogo ? (businessLogo.startsWith('http') || businessLogo.startsWith('data:') ? businessLogo : `data:image/png;base64,${businessLogo}`) : "/Assets/logo/Plas Icon.png"}
-            alt={businessName || "Plas Logo"}
+            src={
+              businessLogo
+                ? businessLogo.startsWith('http') || businessLogo.startsWith('data:')
+                  ? businessLogo
+                  : `data:image/png;base64,${businessLogo}`
+                : '/Assets/logo/Plas Icon.png'
+            }
+            alt={businessName || 'Plas Logo'}
             className="w-10 h-10 object-contain"
           />
         </div>
         <div className="space-y-1.5 text-center">
           <DialogTitle className="text-2xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">
-            {businessName || "Welcome back"}
+            {businessName || 'Welcome back'}
           </DialogTitle>
           <p className="text-sm text-muted-foreground font-medium">
-            {businessName ? `Log in to your ${businessName} portal` : "Log in to your account"}
+            {businessName ? `Log in to your ${businessName} portal` : 'Log in to your account'}
           </p>
         </div>
       </div>

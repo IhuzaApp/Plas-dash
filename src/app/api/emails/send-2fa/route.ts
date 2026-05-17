@@ -30,10 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, id: result.data.id });
     } else {
       console.error('DEBUG: Email sending failed. Data:', result?.data, 'Error:', result?.error);
-      return NextResponse.json(
-        { error: result?.error || 'Failed to send email' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: result?.error || 'Failed to send email' }, { status: 500 });
     }
   } catch (error: any) {
     console.error('Error in send-2fa API route:', error);

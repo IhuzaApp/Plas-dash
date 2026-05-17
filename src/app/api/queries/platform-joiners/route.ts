@@ -13,7 +13,10 @@ const GET_PLATFORM_JOINERS = gql`
     Users(where: { created_at: { _gte: $start, _lte: $end } }, order_by: { created_at: asc }) {
       created_at
     }
-    Restaurants(where: { created_at: { _gte: $start, _lte: $end } }, order_by: { created_at: asc }) {
+    Restaurants(
+      where: { created_at: { _gte: $start, _lte: $end } }
+      order_by: { created_at: asc }
+    ) {
       created_at
     }
     business_accounts(

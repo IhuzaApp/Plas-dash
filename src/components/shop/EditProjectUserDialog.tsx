@@ -363,10 +363,10 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
       const updatedPrivileges = {
         ...(privileges || user.privileges || {}),
         twoFactorRequired: data.TwoAuth_enabled,
-        smsAuthRequired: data.sms_auth
+        smsAuthRequired: data.sms_auth,
       };
       updateData.privileges = updatedPrivileges;
-      
+
       // If Admin is disabling 2FA, we flip the DB flag to false immediately
       if (!data.TwoAuth_enabled) {
         updateData.TwoAuth_enabled = false;
@@ -390,7 +390,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
       // Call the mutation
       console.log('DEBUG: Final updateData for mutation:');
       console.dir(updateData);
-      
+
       try {
         console.log('DEBUG: Calling mutation...');
         const mutationResult = await updateProjectUserMutation.mutateAsync(updateData);
@@ -412,10 +412,12 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
             to: data.email,
             customerName: data.username,
           }),
-        }).then(res => {
-          if (!res.ok) console.error('Failed to send 2FA email: Server returned error');
-          else console.log('DEBUG: 2FA email API call successful');
-        }).catch(err => console.error('Failed to send 2FA email:', err));
+        })
+          .then(res => {
+            if (!res.ok) console.error('Failed to send 2FA email: Server returned error');
+            else console.log('DEBUG: 2FA email API call successful');
+          })
+          .catch(err => console.error('Failed to send 2FA email:', err));
       }
 
       toast.success('Project user updated successfully');
@@ -693,9 +695,7 @@ const EditProjectUserDialog: React.FC<EditProjectUserDialogProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="sms_auth">SMS Authentication</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enable SMS-based authentication
-                    </p>
+                    <p className="text-sm text-muted-foreground">Enable SMS-based authentication</p>
                   </div>
                   <Switch
                     id="sms_auth"

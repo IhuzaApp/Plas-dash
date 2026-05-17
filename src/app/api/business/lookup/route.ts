@@ -32,9 +32,11 @@ export async function GET(request: Request) {
     }
 
     // Fetch all businesses to match
-    const data = await hasuraClient.request<{ Shops: any[]; Restaurants: any[] }>(GET_ALL_BUSINESSES);
+    const data = await hasuraClient.request<{ Shops: any[]; Restaurants: any[] }>(
+      GET_ALL_BUSINESSES
+    );
 
-    const matchedShop = data.Shops.find(s => 
+    const matchedShop = data.Shops.find(s =>
       id ? s.id === id : normalizeSubdomain(s.name) === subdomain
     );
     if (matchedShop) {
@@ -42,11 +44,11 @@ export async function GET(request: Request) {
         id: matchedShop.id,
         name: matchedShop.name,
         logo: matchedShop.logo,
-        type: 'shop'
+        type: 'shop',
       });
     }
 
-    const matchedRestaurant = data.Restaurants.find(r => 
+    const matchedRestaurant = data.Restaurants.find(r =>
       id ? r.id === id : normalizeSubdomain(r.name) === subdomain
     );
     if (matchedRestaurant) {
@@ -54,7 +56,7 @@ export async function GET(request: Request) {
         id: matchedRestaurant.id,
         name: matchedRestaurant.name,
         logo: matchedRestaurant.logo,
-        type: 'restaurant'
+        type: 'restaurant',
       });
     }
 

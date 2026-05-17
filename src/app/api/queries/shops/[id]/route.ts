@@ -385,7 +385,7 @@ const GET_SHOP_BY_ID = gql`
         phone
       }
     }
-    shopCheckouts(where: {shop_id: {_eq: $id}}) {
+    shopCheckouts(where: { shop_id: { _eq: $id } }) {
       total
       tin
       tax

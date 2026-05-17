@@ -306,7 +306,8 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
     if (values.position !== employee.Position) changes.Position = values.position;
     if (values.active !== employee.active) changes.active = values.active;
     if (values.roleType !== employee.roleType) changes.roleType = values.roleType;
-    if (values.multAuthEnabled !== employee.multAuthEnabled) changes.multAuthEnabled = values.multAuthEnabled;
+    if (values.multAuthEnabled !== employee.multAuthEnabled)
+      changes.multAuthEnabled = values.multAuthEnabled;
     if (values.sms_auth !== employee.sms_auth) changes.sms_auth = values.sms_auth;
 
     const finalChanges = Object.fromEntries(

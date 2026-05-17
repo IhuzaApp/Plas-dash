@@ -5,21 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { 
-  Loader2, 
-  Smartphone, 
-  ShieldCheck, 
-  Shield, 
-  ArrowLeft, 
+import {
+  Loader2,
+  Smartphone,
+  ShieldCheck,
+  Shield,
+  ArrowLeft,
   MessageSquare,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { useDatabaseTwoFactorAuth } from '@/hooks/useDatabaseTwoFactorAuth';
 import { useUpdateMultAuth } from '@/hooks/useUpdateMultAuth';
 import QRCode from 'qrcode';
 import { hasuraRequest } from '@/lib/hasura';
-import { UPDATE_PROJECT_USER_AUTH_SETTINGS, UPDATE_ORG_EMPLOYEE_AUTH_SETTINGS } from '@/lib/graphql/mutations';
+import {
+  UPDATE_PROJECT_USER_AUTH_SETTINGS,
+  UPDATE_ORG_EMPLOYEE_AUTH_SETTINGS,
+} from '@/lib/graphql/mutations';
 
 interface MultiFactorAuthStepProps {
   user: any;
@@ -44,7 +47,7 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
   const [method, setMethod] = useState<'none' | '2fa' | 'sms'>(() => {
     if (twoFactorRequired && !smsRequired) return '2fa';
     if (smsRequired && !twoFactorRequired) return 'sms';
-    // If both are required, start with 'none' to show choice, 
+    // If both are required, start with 'none' to show choice,
     // unless only one is actually active/configured
     if (is2FAActive && !isSMSActive) return '2fa';
     if (isSMSActive && !is2FAActive) return 'sms';
@@ -55,21 +58,21 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
     // If any required method is NOT set up, force setup
     if (twoFactorRequired && !is2FAActive) return 'setup';
     if (smsRequired && !isSMSActive) return 'setup';
-    
+
     // If both are active, show choice screen
     if (is2FAActive && isSMSActive) return 'choice';
-    
+
     // Otherwise go to verify
     return 'verify';
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [code, setCode] = useState('');
-  
+
   // 2FA Setup state
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [secretKey, setSecretKey] = useState('');
-  
+
   // SMS Setup state
   const [phone, setPhone] = useState(user.phone || user.phoneNumber || '');
   const [generatedSmsCode, setGeneratedSmsCode] = useState('');
@@ -96,11 +99,11 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
       toast.error('Please enter a phone number');
       return;
     }
-    
+
     setIsLoading(true);
     const mfaCode = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedSmsCode(mfaCode);
-    
+
     try {
       const response = await fetch('/api/auth/send-sms-code', {
         method: 'POST',
@@ -108,10 +111,10 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
         body: JSON.stringify({
           phone,
           code: mfaCode,
-          type: step === 'setup' ? 'setup' : 'verify'
+          type: step === 'setup' ? 'setup' : 'verify',
         }),
       });
-      
+
       const result = await response.json();
       if (response.ok) {
         toast.success('Verification code sent via SMS');
@@ -137,33 +140,39 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
       let isValid = false;
       if (method === '2fa') {
         // Use secretKey from state if we are in setup mode, otherwise use the stored one from user data
-        const key = secretKey || (user.twoFactorSecrets ? JSON.parse(user.twoFactorSecrets)['default']?.secretKey : null);
-        
-        console.log('DEBUG: Verifying 2FA code', { 
-          hasSecretKeyState: !!secretKey, 
-          hasStoredSecrets: !!user.twoFactorSecrets 
+        const key =
+          secretKey ||
+          (user.twoFactorSecrets ? JSON.parse(user.twoFactorSecrets)['default']?.secretKey : null);
+
+        console.log('DEBUG: Verifying 2FA code', {
+          hasSecretKeyState: !!secretKey,
+          hasStoredSecrets: !!user.twoFactorSecrets,
         });
         if (!key) {
-           toast.error('2FA not configured properly');
-           setIsLoading(false);
-           return;
+          toast.error('2FA not configured properly');
+          setIsLoading(false);
+          return;
         }
         isValid = verifyToken(code, key);
       } else {
-        isValid = code === generatedSmsCode || (process.env.NODE_ENV === 'development' && code === '123456');
+        isValid =
+          code === generatedSmsCode ||
+          (process.env.NODE_ENV === 'development' && code === '123456');
       }
 
       if (isValid) {
         // Update database if it was setup (we check secretKey to see if we just generated a new one)
         if (step === 'setup' || secretKey) {
           console.log('DEBUG: Setup verification successful, updating database...');
-          const mutation = isProjectUser ? UPDATE_PROJECT_USER_AUTH_SETTINGS : UPDATE_ORG_EMPLOYEE_AUTH_SETTINGS;
-          
+          const mutation = isProjectUser
+            ? UPDATE_PROJECT_USER_AUTH_SETTINGS
+            : UPDATE_ORG_EMPLOYEE_AUTH_SETTINGS;
+
           // Explicitly initialize variables to avoid 'null' for required Boolean types
-          const variables: any = { 
+          const variables: any = {
             id: user.id,
             sms_auth: !!user.sms_auth,
-            twoFactorSecrets: user.twoFactorSecrets || null
+            twoFactorSecrets: user.twoFactorSecrets || null,
           };
 
           if (isProjectUser) {
@@ -171,9 +180,11 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
           } else {
             variables.multAuthEnabled = !!user.multAuthEnabled;
           }
-          
+
           if (method === '2fa') {
-            const secrets = JSON.stringify({ default: { secretKey, employeeId: user.id, shopId: 'global' } });
+            const secrets = JSON.stringify({
+              default: { secretKey, employeeId: user.id, shopId: 'global' },
+            });
             variables.twoFactorSecrets = secrets;
             if (isProjectUser) variables.TwoAuth_enabled = true;
             else variables.multAuthEnabled = true;
@@ -183,8 +194,10 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
 
           const result = await hasuraRequest(mutation, variables);
           console.log('DEBUG: MFA setup mutation result:', result);
-          const updatedUser = isProjectUser ? (result as any).update_ProjectUsers_by_pk : (result as any).update_orgEmployees_by_pk;
-          
+          const updatedUser = isProjectUser
+            ? (result as any).update_ProjectUsers_by_pk
+            : (result as any).update_orgEmployees_by_pk;
+
           if (!updatedUser) {
             console.error('DEBUG: MFA setup mutation returned null result');
             throw new Error('Failed to update MFA settings in database');
@@ -232,7 +245,7 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
             {is2FAActive && <CheckCircle2 className="w-4 h-4 text-green-500" />}
           </button>
         )}
-        
+
         {(smsRequired || isSMSActive) && (
           <button
             onClick={() => {
@@ -247,15 +260,21 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
             <div className="flex-1">
               <h4 className="font-bold text-sm">SMS Verification</h4>
               <p className="text-xs text-zinc-500">
-                {isSMSActive ? `Receive code on ${phone.replace(/(\d{3})\d+(\d{3})/, '$1***$2')}` : 'Set up phone verification'}
+                {isSMSActive
+                  ? `Receive code on ${phone.replace(/(\d{3})\d+(\d{3})/, '$1***$2')}`
+                  : 'Set up phone verification'}
               </p>
             </div>
             {isSMSActive && <CheckCircle2 className="w-4 h-4 text-green-500" />}
           </button>
         )}
       </div>
-      
-      <Button variant="ghost" className="w-full text-xs font-bold uppercase tracking-wider" onClick={onCancel}>
+
+      <Button
+        variant="ghost"
+        className="w-full text-xs font-bold uppercase tracking-wider"
+        onClick={onCancel}
+      >
         <ArrowLeft className="w-3 h-3 mr-2" /> Back to Login
       </Button>
     </div>
@@ -295,24 +314,34 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
       ) : (
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Phone Number</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+              Phone Number
+            </Label>
             <div className="relative group">
               <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
-              <Input 
+              <Input
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+250..." 
+                onChange={e => setPhone(e.target.value)}
+                placeholder="+250..."
                 className="h-11 pl-11 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none font-medium"
               />
             </div>
           </div>
-          <Button className="w-full h-11 rounded-xl font-bold" onClick={handleSendSmsCode} disabled={isLoading}>
+          <Button
+            className="w-full h-11 rounded-xl font-bold"
+            onClick={handleSendSmsCode}
+            disabled={isLoading}
+          >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Send Setup Code'}
           </Button>
         </div>
       )}
 
-      <Button variant="ghost" className="w-full text-xs font-bold" onClick={() => setStep('choice')}>
+      <Button
+        variant="ghost"
+        className="w-full text-xs font-bold"
+        onClick={() => setStep('choice')}
+      >
         Choose another method
       </Button>
     </div>
@@ -331,25 +360,38 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
       </div>
 
       <div className="space-y-4">
-        <Input 
+        <Input
           value={code}
-          onChange={(e) => setCode(e.target.value)}
+          onChange={e => setCode(e.target.value)}
           maxLength={6}
           placeholder="000000"
           className="h-14 text-center text-2xl font-black tracking-[0.5em] rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 focus:border-primary transition-all"
         />
-        
-        <Button className="w-full h-12 rounded-xl font-bold text-base shadow-lg shadow-primary/20" onClick={handleVerify} disabled={isLoading}>
+
+        <Button
+          className="w-full h-12 rounded-xl font-bold text-base shadow-lg shadow-primary/20"
+          onClick={handleVerify}
+          disabled={isLoading}
+        >
           {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify Code'}
         </Button>
 
         {method === 'sms' && (
-          <Button variant="link" className="w-full text-xs" onClick={handleSendSmsCode} disabled={isLoading}>
+          <Button
+            variant="link"
+            className="w-full text-xs"
+            onClick={handleSendSmsCode}
+            disabled={isLoading}
+          >
             Didn&apos;t receive a code? Resend
           </Button>
         )}
-        
-        <Button variant="ghost" className="w-full text-xs font-bold" onClick={() => setStep('choice')}>
+
+        <Button
+          variant="ghost"
+          className="w-full text-xs font-bold"
+          onClick={() => setStep('choice')}
+        >
           Change Method
         </Button>
       </div>

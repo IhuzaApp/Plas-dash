@@ -7,7 +7,9 @@ import { Switch } from '@/components/ui/switch';
 
 interface SecurityTabProps {
   passwordState: { current: string; new: string; confirm: string };
-  setPasswordState: React.Dispatch<React.SetStateAction<{ current: string; new: string; confirm: string }>>;
+  setPasswordState: React.Dispatch<
+    React.SetStateAction<{ current: string; new: string; confirm: string }>
+  >;
   handleChangePassword: () => Promise<void>;
   isUpdatingPassword: boolean;
   isTwoFactorEnabled: boolean;
@@ -28,9 +30,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
     <Card>
       <CardHeader>
         <CardTitle>Security Settings</CardTitle>
-        <CardDescription>
-          Manage your password and account security options.
-        </CardDescription>
+        <CardDescription>Manage your password and account security options.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
@@ -43,9 +43,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
                 type="password"
                 className="rounded-xl"
                 value={passwordState.current}
-                onChange={e =>
-                  setPasswordState(prev => ({ ...prev, current: e.target.value }))
-                }
+                onChange={e => setPasswordState(prev => ({ ...prev, current: e.target.value }))}
               />
             </div>
             <div className="space-y-2">
@@ -65,9 +63,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
                 type="password"
                 className="rounded-xl"
                 value={passwordState.confirm}
-                onChange={e =>
-                  setPasswordState(prev => ({ ...prev, confirm: e.target.value }))
-                }
+                onChange={e => setPasswordState(prev => ({ ...prev, confirm: e.target.value }))}
               />
             </div>
           </div>
@@ -97,9 +93,9 @@ const SecurityTab: React.FC<SecurityTabProps> = ({
             </div>
             <div className="flex items-center gap-4">
               {isTwoFactorEnabled && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="rounded-lg text-xs h-8 border-red-500/20 text-red-600 hover:bg-red-500/10"
                   onClick={handleReset2FA}
                 >

@@ -36,7 +36,10 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
     (displayUser as any)?.profile ||
     (displayUser as any)?.display_image;
   const userName =
-    (displayUser as any)?.name || (displayUser as any)?.username || (displayUser as any)?.fullName || 'User';
+    (displayUser as any)?.name ||
+    (displayUser as any)?.username ||
+    (displayUser as any)?.fullName ||
+    'User';
   const userRole =
     (displayUser as any)?.role ||
     (displayUser as any)?.roleType ||
@@ -113,9 +116,9 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
                     POS Session Active
                   </span>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={logoutFromShop}
                   className="h-6 px-2 text-[9px] font-bold text-destructive hover:bg-destructive/10 hover:text-destructive"
                 >

@@ -6,43 +6,27 @@ import { gql } from 'graphql-request';
 
 const GET_ALL_ORDERS_FOR_CUSTOMERS = gql`
   query GetAllOrdersForCustomers($start: timestamptz!, $end: timestamptz!) {
-    Orders(
-      where: {
-        status: { _eq: "delivered" }
-        created_at: { _gte: $start, _lte: $end }
-      }
-    ) {
+    Orders(where: { status: { _eq: "delivered" }, created_at: { _gte: $start, _lte: $end } }) {
       user_id
       total
       delivery_fee
       service_fee
     }
-    reel_orders(
-      where: {
-        status: { _eq: "delivered" }
-        created_at: { _gte: $start, _lte: $end }
-      }
-    ) {
+    reel_orders(where: { status: { _eq: "delivered" }, created_at: { _gte: $start, _lte: $end } }) {
       user_id
       total
       delivery_fee
       service_fee
     }
     restaurant_orders(
-      where: {
-        status: { _eq: "delivered" }
-        created_at: { _gte: $start, _lte: $end }
-      }
+      where: { status: { _eq: "delivered" }, created_at: { _gte: $start, _lte: $end } }
     ) {
       user_id
       total
       delivery_fee
     }
     businessProductOrders(
-      where: {
-        status: { _eq: "delivered" }
-        created_at: { _gte: $start, _lte: $end }
-      }
+      where: { status: { _eq: "delivered" }, created_at: { _gte: $start, _lte: $end } }
     ) {
       ordered_by
       total
@@ -50,10 +34,7 @@ const GET_ALL_ORDERS_FOR_CUSTOMERS = gql`
       service_fee
     }
     package_delivery(
-      where: {
-        status: { _eq: "delivered" }
-        created_at: { _gte: $start, _lte: $end }
-      }
+      where: { status: { _eq: "delivered" }, created_at: { _gte: $start, _lte: $end } }
     ) {
       user_id
       delivery_fee
@@ -125,11 +106,11 @@ export async function GET(request: Request) {
         }
         const c = byCustomer[uid];
         c.orders += 1;
-        
+
         const total = parseFloat(String(row.total || '0'));
         const delivery = parseFloat(String(row.delivery_fee || row.transportation_fee || '0'));
         const service = parseFloat(String(row.service_fee || '0'));
-        
+
         c.spend += total + delivery + service;
       });
     };
@@ -160,23 +141,23 @@ export async function GET(request: Request) {
       }>;
     }>(GET_USERS_BY_IDS, { ids: sortedIds });
 
-    const userMap = new Map(
-      (usersData.Users || []).map(u => [u.id, u])
-    );
+    const userMap = new Map((usersData.Users || []).map(u => [u.id, u]));
 
-    const result = sortedIds.map(id => {
-      const stats = byCustomer[id];
-      const user = userMap.get(id);
-      return {
-        user_id: id,
-        name: user?.name || 'Unknown Customer',
-        email: user?.email,
-        profile_picture: user?.profile_picture,
-        phone_number: user?.phone_number,
-        totalOrders: stats.orders,
-        totalSpend: stats.spend,
-      };
-    }).filter(c => c.totalOrders > 0);
+    const result = sortedIds
+      .map(id => {
+        const stats = byCustomer[id];
+        const user = userMap.get(id);
+        return {
+          user_id: id,
+          name: user?.name || 'Unknown Customer',
+          email: user?.email,
+          profile_picture: user?.profile_picture,
+          phone_number: user?.phone_number,
+          totalOrders: stats.orders,
+          totalSpend: stats.spend,
+        };
+      })
+      .filter(c => c.totalOrders > 0);
 
     return NextResponse.json({ customers: result });
   } catch (error) {

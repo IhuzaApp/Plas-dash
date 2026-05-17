@@ -51,7 +51,6 @@ const themePresets = [
 ];
 
 const Settings = () => {
-
   const { theme, setTheme } = useTheme();
   const { color: activeColor, setColor: setActiveColor, setCustomColor } = useThemeColor();
   const { data: systemConfig } = useSystemConfig();
@@ -104,7 +103,6 @@ const Settings = () => {
         if (shopId) where.shop_id = { _eq: shopId };
         else if (restaurantId) where.restaurant_id = { _eq: restaurantId };
 
-
         const subData = await hasuraClient.request<any>(GET_SHOP_SUBSCRIPTIONS, { where });
         if (subData.shop_subscriptions?.[0]) {
           setSubscriptionData(subData.shop_subscriptions[0]);
@@ -116,7 +114,6 @@ const Settings = () => {
         if (shopId) usageWhere._or.push({ shop_id: { _eq: shopId } });
         if (restaurantId) usageWhere._or.push({ restaurant_id: { _eq: restaurantId } });
         if (businessId) usageWhere._or.push({ business_id: { _eq: businessId } });
-
 
         if (usageWhere._or.length > 0) {
           const usageResponse = await hasuraClient.request<any>(GET_LATEST_USAGE, {
@@ -134,7 +131,7 @@ const Settings = () => {
             // Pre-fill with the first method (usually default)
             const firstMethod = pmData.Payment_Methods[0];
             setSelectedPayoutType(firstMethod.method as 'momo' | 'bank');
-            
+
             let bankName = '';
             let accNumber = firstMethod.number;
             if (firstMethod.method === 'bank') {
@@ -211,7 +208,10 @@ const Settings = () => {
               display_role: pUser.role,
               display_email: pUser.email,
               display_phone: 'N/A',
-              display_image: (pUser as any).profile || (pUser as any).profile_picture || (pUser as any).profile_photo,
+              display_image:
+                (pUser as any).profile ||
+                (pUser as any).profile_picture ||
+                (pUser as any).profile_photo,
               membership_id: pUser.MembershipId,
             });
             setIsTwoFactorEnabled(pUser.TwoAuth_enabled);
@@ -226,7 +226,11 @@ const Settings = () => {
               display_role: eUser.roleType,
               display_email: eUser.email,
               display_phone: eUser.phone,
-              display_image: (eUser as any).profile_image || (eUser as any).profile_photo || (eUser as any).profile_picture || (eUser as any).profile,
+              display_image:
+                (eUser as any).profile_image ||
+                (eUser as any).profile_photo ||
+                (eUser as any).profile_picture ||
+                (eUser as any).profile,
               membership_id: eUser.employeeID,
             });
             setIsTwoFactorEnabled(eUser.multAuthEnabled || !!eUser.twoFactorSecrets);
@@ -273,9 +277,10 @@ const Settings = () => {
     // Optimistic update
     setIsTwoFactorEnabled(enabled);
 
-    const endpoint = currentUserType === 'employee' 
-      ? '/api/mutations/update-employee-2fa' 
-      : '/api/mutations/update-project-user-2fa';
+    const endpoint =
+      currentUserType === 'employee'
+        ? '/api/mutations/update-employee-2fa'
+        : '/api/mutations/update-project-user-2fa';
 
     try {
       const response = await fetch(endpoint, {
@@ -309,9 +314,10 @@ const Settings = () => {
     if (!currentUserId) return;
 
     try {
-      const endpoint = currentUserType === 'employee' 
-        ? '/api/mutations/update-employee-2fa-secret' 
-        : '/api/mutations/update-project-user-2fa-secret';
+      const endpoint =
+        currentUserType === 'employee'
+          ? '/api/mutations/update-employee-2fa-secret'
+          : '/api/mutations/update-project-user-2fa-secret';
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -440,7 +446,7 @@ const Settings = () => {
       if (!response.ok) throw new Error('Failed to update avatar');
 
       setProfileData((prev: any) => ({ ...prev, display_image: imageUrl }));
-      
+
       // Update global session so header re-renders
       if (currentAuthSession) {
         updateAuthSession({
@@ -453,7 +459,7 @@ const Settings = () => {
       if (session && updateNextAuthSession) {
         updateNextAuthSession({ profile_image: imageUrl, image: imageUrl });
       }
-      
+
       toast.success('Profile picture updated');
       setIsAvatarDialogOpen(false);
     } catch (error) {
@@ -475,7 +481,10 @@ const Settings = () => {
       const shopId = profileData.shop_id || profileData.id;
       const restaurantId = profileData.restaurant_id;
 
-      const formattedNumber = selectedPayoutType === 'bank' ? `${payoutForm.bankName} - ${payoutForm.number}` : payoutForm.number;
+      const formattedNumber =
+        selectedPayoutType === 'bank'
+          ? `${payoutForm.bankName} - ${payoutForm.number}`
+          : payoutForm.number;
 
       if (payoutForm.id) {
         // Update existing
@@ -486,7 +495,7 @@ const Settings = () => {
             names: payoutForm.names,
             number: formattedNumber,
             user_id: null,
-          }
+          },
         });
         toast.success('Payout method updated successfully');
       } else {
@@ -503,7 +512,7 @@ const Settings = () => {
         await hasuraClient.request(ADD_PAYMENT_METHOD, { object });
         toast.success('Payout method added successfully');
       }
-      
+
       // Refresh list
       const pmData = await hasuraClient.request<any>(GET_PAYMENT_METHODS, { _eq: shopId });
       if (pmData.Payment_Methods) {
@@ -530,7 +539,7 @@ const Settings = () => {
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result as string;
-            handleUpdateAvatar(base64String);
+      handleUpdateAvatar(base64String);
     };
     reader.readAsDataURL(file);
   };
@@ -551,184 +560,215 @@ const Settings = () => {
             <SettingsIcon className="h-12 w-12" />
           </div>
           <h2 className="text-2xl font-bold">Profile Not Found</h2>
-          <p className="text-muted-foreground">We couldn't load your profile information. Please try logging in again.</p>
+          <p className="text-muted-foreground">
+            We couldn't load your profile information. Please try logging in again.
+          </p>
           <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       ) : (
         <>
-      <PageHeader
-        title="Settings"
-        description="Manage your account preferences and security settings."
-        icon={<SettingsIcon className="h-8 w-8" />}
-      />
+          <PageHeader
+            title="Settings"
+            description="Manage your account preferences and security settings."
+            icon={<SettingsIcon className="h-8 w-8" />}
+          />
 
-      <Tabs defaultValue="profile">
-        <TabsList className="mb-4 bg-muted/40 backdrop-blur-md p-1 rounded-2xl border border-muted-foreground/10">
-          <TabsTrigger value="profile" className="rounded-lg px-6">
-            My Profile
-          </TabsTrigger>
-          {(profileData?.display_role === 'globalAdmin' ||
-            profileData?.display_role === 'storeAdministrator') && (
-            <>
-              <TabsTrigger value="general" className="rounded-lg px-6">
-                Billing & Usage
+          <Tabs defaultValue="profile">
+            <TabsList className="mb-4 bg-muted/40 backdrop-blur-md p-1 rounded-2xl border border-muted-foreground/10">
+              <TabsTrigger value="profile" className="rounded-lg px-6">
+                My Profile
               </TabsTrigger>
-              <TabsTrigger value="supermarket" className="rounded-lg px-6">
-                Supermarket
+              {(profileData?.display_role === 'globalAdmin' ||
+                profileData?.display_role === 'storeAdministrator') && (
+                <>
+                  <TabsTrigger value="general" className="rounded-lg px-6">
+                    Billing & Usage
+                  </TabsTrigger>
+                  <TabsTrigger value="supermarket" className="rounded-lg px-6">
+                    Supermarket
+                  </TabsTrigger>
+                </>
+              )}
+              <TabsTrigger value="appearance" className="rounded-lg px-6">
+                Appearance
               </TabsTrigger>
-            </>
-          )}
-          <TabsTrigger value="appearance" className="rounded-lg px-6">
-            Appearance
-          </TabsTrigger>
               {(profileData?.display_role === 'globalAdmin' ||
                 profileData?.display_role === 'storeAdministrator') && (
                 <TabsTrigger value="payment-methods" className="rounded-lg px-6">
                   Payment Methods
                 </TabsTrigger>
               )}
-          <TabsTrigger value="security" className="rounded-lg px-6">
-            Security
-          </TabsTrigger>
-        </TabsList>
+              <TabsTrigger value="security" className="rounded-lg px-6">
+                Security
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent
-          value="profile"
-          className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
-        >
-          <ProfileTab 
-            profileData={profileData} 
-            setIsAvatarDialogOpen={setIsAvatarDialogOpen} 
-            handleSaveChanges={handleSaveChanges} 
-          />
-        </TabsContent>
+            <TabsContent
+              value="profile"
+              className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
+              <ProfileTab
+                profileData={profileData}
+                setIsAvatarDialogOpen={setIsAvatarDialogOpen}
+                handleSaveChanges={handleSaveChanges}
+              />
+            </TabsContent>
 
-        <TabsContent value="general" className="space-y-6">
-          <BillingUsageTab 
-            subscriptionData={subscriptionData} 
-            usageData={usageData} 
-            isLoadingSubscription={isLoadingSubscription} 
-            currencySymbol={currencySymbol}
-          />
-        </TabsContent>
+            <TabsContent value="general" className="space-y-6">
+              <BillingUsageTab
+                subscriptionData={subscriptionData}
+                usageData={usageData}
+                isLoadingSubscription={isLoadingSubscription}
+                currencySymbol={currencySymbol}
+              />
+            </TabsContent>
 
-        {hasAction('settings', 'view_settings') && (
-          <TabsContent value="supermarket" className="space-y-6">
-            <SupermarketSettings />
-          </TabsContent>
-        )}
+            {hasAction('settings', 'view_settings') && (
+              <TabsContent value="supermarket" className="space-y-6">
+                <SupermarketSettings />
+              </TabsContent>
+            )}
 
-        <TabsContent
-          value="appearance"
-          className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
-        >
-          <AppearanceTab 
-            theme={theme} 
-            setTheme={setTheme} 
-            activeColor={activeColor} 
-            setActiveColor={setActiveColor}
-            setCustomColor={setCustomColor} 
-            handleSaveChanges={handleSaveChanges} 
-          />
-        </TabsContent>
+            <TabsContent
+              value="appearance"
+              className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
+              <AppearanceTab
+                theme={theme}
+                setTheme={setTheme}
+                activeColor={activeColor}
+                setActiveColor={setActiveColor}
+                setCustomColor={setCustomColor}
+                handleSaveChanges={handleSaveChanges}
+              />
+            </TabsContent>
 
+            <TabsContent value="payment-methods" className="space-y-6">
+              <PaymentMethodsTab
+                profileData={profileData}
+                paymentMethods={paymentMethods}
+                selectedPayoutType={selectedPayoutType}
+                setSelectedPayoutType={setSelectedPayoutType}
+                isEditingPayout={isEditingPayout}
+                setIsEditingPayout={setIsEditingPayout}
+                isSavingPayout={isSavingPayout}
+                payoutForm={payoutForm}
+                setPayoutForm={setPayoutForm}
+                handleSavePayoutMethod={handleSavePayoutMethod}
+                maskAccountNumber={maskAccountNumber}
+              />
+            </TabsContent>
 
-        <TabsContent value="payment-methods" className="space-y-6">
-          <PaymentMethodsTab 
-            profileData={profileData}
-            paymentMethods={paymentMethods}
-            selectedPayoutType={selectedPayoutType}
-            setSelectedPayoutType={setSelectedPayoutType}
-            isEditingPayout={isEditingPayout}
-            setIsEditingPayout={setIsEditingPayout}
-            isSavingPayout={isSavingPayout}
-            payoutForm={payoutForm}
-            setPayoutForm={setPayoutForm}
-            handleSavePayoutMethod={handleSavePayoutMethod}
-            maskAccountNumber={maskAccountNumber}
-          />
-        </TabsContent>
+            <TabsContent value="security" className="space-y-6">
+              <SecurityTab
+                passwordState={passwordState}
+                setPasswordState={setPasswordState}
+                handleChangePassword={handleChangePassword}
+                isUpdatingPassword={isUpdatingPassword}
+                isTwoFactorEnabled={isTwoFactorEnabled}
+                handleToggle2FA={handleToggle2FA}
+                handleReset2FA={handleReset2FA}
+              />
+            </TabsContent>
+          </Tabs>
 
-        <TabsContent value="security" className="space-y-6">
-          <SecurityTab 
-            passwordState={passwordState}
-            setPasswordState={setPasswordState}
-            handleChangePassword={handleChangePassword}
-            isUpdatingPassword={isUpdatingPassword}
-            isTwoFactorEnabled={isTwoFactorEnabled}
-            handleToggle2FA={handleToggle2FA}
-            handleReset2FA={handleReset2FA}
-          />
-        </TabsContent>
-      </Tabs>
+          <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
+            <DialogContent className="max-w-3xl rounded-3xl overflow-hidden border-none shadow-2xl p-0">
+              <div className="bg-gradient-to-br from-primary/20 via-background to-background p-8">
+                <DialogHeader className="mb-8">
+                  <DialogTitle className="text-3xl font-black tracking-tight">
+                    Personalize Your Identity
+                  </DialogTitle>
+                  <p className="text-muted-foreground mt-2">
+                    Choose an avatar that represents you or upload your own.
+                  </p>
+                </DialogHeader>
 
-      <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
-        <DialogContent className="max-w-3xl rounded-3xl overflow-hidden border-none shadow-2xl p-0">
-          <div className="bg-gradient-to-br from-primary/20 via-background to-background p-8">
-            <DialogHeader className="mb-8">
-              <DialogTitle className="text-3xl font-black tracking-tight">Personalize Your Identity</DialogTitle>
-              <p className="text-muted-foreground mt-2">Choose an avatar that represents you or upload your own.</p>
-            </DialogHeader>
+                <div className="space-y-8">
+                  <div className="flex flex-col items-center justify-center p-8 rounded-3xl bg-background/50 border-2 border-dashed border-primary/20 group hover:border-primary/50 transition-all">
+                    <Avatar className="h-32 w-32 border-4 border-background shadow-2xl mb-4 group-hover:scale-105 transition-transform">
+                      <AvatarImage src={previewAvatar || profileData?.display_image} />
+                      <AvatarFallback className="text-3xl font-black bg-primary/10 text-primary">
+                        {profileData?.display_name?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex gap-3">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        id="avatar-upload"
+                        onChange={handleFileUpload}
+                      />
+                      <Button
+                        variant="outline"
+                        className="rounded-xl border-primary text-primary hover:bg-primary/10 font-bold"
+                        asChild
+                      >
+                        <label htmlFor="avatar-upload" className="cursor-pointer">
+                          Upload Photo
+                        </label>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="rounded-xl font-bold"
+                        onClick={() =>
+                          setPreviewAvatar(
+                            `https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${Math.random()}`
+                          )
+                        }
+                      >
+                        Randomize
+                      </Button>
+                    </div>
+                  </div>
 
-            <div className="space-y-8">
-              <div className="flex flex-col items-center justify-center p-8 rounded-3xl bg-background/50 border-2 border-dashed border-primary/20 group hover:border-primary/50 transition-all">
-                <Avatar className="h-32 w-32 border-4 border-background shadow-2xl mb-4 group-hover:scale-105 transition-transform">
-                  <AvatarImage src={previewAvatar || profileData?.display_image} />
-                  <AvatarFallback className="text-3xl font-black bg-primary/10 text-primary">
-                    {profileData?.display_name?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex gap-3">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    id="avatar-upload"
-                    onChange={handleFileUpload}
-                  />
-                  <Button variant="outline" className="rounded-xl border-primary text-primary hover:bg-primary/10 font-bold" asChild>
-                    <label htmlFor="avatar-upload" className="cursor-pointer">Upload Photo</label>
-                  </Button>
-                  <Button variant="ghost" className="rounded-xl font-bold" onClick={() => setPreviewAvatar(`https://api.dicebear.com/7.x/${avatarStyle}/svg?seed=${Math.random()}`)}>
-                    Randomize
-                  </Button>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                        Avatar Styles
+                      </Label>
+                      <Button
+                        onClick={() => previewAvatar && handleUpdateAvatar(previewAvatar)}
+                        disabled={
+                          !previewAvatar ||
+                          previewAvatar === profileData?.display_image ||
+                          isUpdatingAvatar
+                        }
+                        className="rounded-xl font-bold shadow-lg shadow-primary/20"
+                      >
+                        {isUpdatingAvatar ? 'Saving...' : 'Save Avatar'}
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+                      {avatarStyles.map(style => (
+                        <button
+                          key={style.id}
+                          onClick={() => {
+                            setAvatarStyle(style.id);
+                            const seed = encodeURIComponent(
+                              profileData?.display_name || user?.name || 'default'
+                            );
+                            setPreviewAvatar(
+                              `https://api.dicebear.com/7.x/${style.id}/svg?seed=${seed}`
+                            );
+                          }}
+                          className={cn(
+                            'p-2 rounded-xl text-[10px] font-bold border-2 transition-all text-center',
+                            avatarStyle === style.id
+                              ? 'border-primary bg-primary/5 text-primary'
+                              : 'border-muted-foreground/10 hover:border-primary/30'
+                          )}
+                        >
+                          {style.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Avatar Styles</Label>
-                  <Button 
-                    onClick={() => previewAvatar && handleUpdateAvatar(previewAvatar)} 
-                    disabled={!previewAvatar || previewAvatar === profileData?.display_image || isUpdatingAvatar}
-                    className="rounded-xl font-bold shadow-lg shadow-primary/20"
-                  >
-                    {isUpdatingAvatar ? 'Saving...' : 'Save Avatar'}
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
-                  {avatarStyles.map((style) => (
-                    <button
-                      key={style.id}
-                      onClick={() => {
-                        setAvatarStyle(style.id);
-                        const seed = encodeURIComponent(profileData?.display_name || user?.name || 'default');
-                        setPreviewAvatar(`https://api.dicebear.com/7.x/${style.id}/svg?seed=${seed}`);
-                      }}
-                      className={cn(
-                        "p-2 rounded-xl text-[10px] font-bold border-2 transition-all text-center",
-                        avatarStyle === style.id ? "border-primary bg-primary/5 text-primary" : "border-muted-foreground/10 hover:border-primary/30"
-                      )}
-                    >
-                      {style.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </AdminLayout>

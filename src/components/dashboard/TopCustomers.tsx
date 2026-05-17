@@ -176,9 +176,9 @@ const TopCustomers = () => {
                         )}
                       </Avatar>
                       <div className="absolute -top-1 -left-1 bg-background rounded-full p-0.5 shadow-sm">
-                         <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] text-primary-foreground font-bold">
-                           {index + 1}
-                         </span>
+                        <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] text-primary-foreground font-bold">
+                          {index + 1}
+                        </span>
                       </div>
                     </div>
                     <div>

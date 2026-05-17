@@ -122,9 +122,7 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
   const [selectedShopperId, setSelectedShopperId] = React.useState<string>('');
   const [isAssigning, setIsAssigning] = React.useState(false);
 
-  const { data: paymentData, isLoading: isLoadingPayments } = useOrderPayments(
-    order?.id || ''
-  );
+  const { data: paymentData, isLoading: isLoadingPayments } = useOrderPayments(order?.id || '');
 
   React.useEffect(() => {
     if (order?.shopper_id) {

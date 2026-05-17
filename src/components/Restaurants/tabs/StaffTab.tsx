@@ -57,33 +57,45 @@ const StaffTab: React.FC<StaffTabProps> = ({ staff }) => {
                       <div className="flex flex-col gap-1">
                         {/* 2FA Status */}
                         {emp.multAuthEnabled ? (
-                          <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-blue-50 text-blue-700 border-blue-200"
+                          >
                             2FA Active
                           </Badge>
                         ) : emp.orgEmployeeRoles?.[0]?.privillages?.twoFactorRequired ? (
-                          <Badge variant="outline" className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse"
+                          >
                             2FA Setup Required
                           </Badge>
                         ) : null}
 
                         {/* SMS Status */}
                         {emp.sms_auth ? (
-                          <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-orange-50 text-orange-700 border-orange-200"
+                          >
                             SMS Active
                           </Badge>
                         ) : emp.orgEmployeeRoles?.[0]?.privillages?.smsAuthRequired ? (
-                          <Badge variant="outline" className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse"
+                          >
                             SMS Setup Required
                           </Badge>
                         ) : null}
 
                         {/* Standard Status */}
-                        {!emp.multAuthEnabled && 
-                         !emp.sms_auth && 
-                         !emp.orgEmployeeRoles?.[0]?.privillages?.twoFactorRequired && 
-                         !emp.orgEmployeeRoles?.[0]?.privillages?.smsAuthRequired && (
-                          <span className="text-xs text-muted-foreground italic">Standard</span>
-                        )}
+                        {!emp.multAuthEnabled &&
+                          !emp.sms_auth &&
+                          !emp.orgEmployeeRoles?.[0]?.privillages?.twoFactorRequired &&
+                          !emp.orgEmployeeRoles?.[0]?.privillages?.smsAuthRequired && (
+                            <span className="text-xs text-muted-foreground italic">Standard</span>
+                          )}
                       </div>
                     </TableCell>
                     <TableCell>

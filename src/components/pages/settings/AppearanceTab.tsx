@@ -39,9 +39,7 @@ const AppearanceTab: React.FC<AppearanceTabProps> = ({
     <Card className="border-none shadow-lg rounded-3xl overflow-hidden">
       <CardHeader className="border-b bg-zinc-50/50 dark:bg-zinc-900/50">
         <CardTitle>Appearance Settings</CardTitle>
-        <CardDescription>
-          Customize the look and feel of your dashboard experience.
-        </CardDescription>
+        <CardDescription>Customize the look and feel of your dashboard experience.</CardDescription>
       </CardHeader>
       <CardContent className="pt-6 space-y-8">
         <div className="space-y-4">

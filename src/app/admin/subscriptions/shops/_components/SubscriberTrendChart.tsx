@@ -12,7 +12,15 @@ import {
   Legend,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { format, subMonths, startOfMonth, isSameMonth, isWithinInterval, startOfYear, endOfYear } from 'date-fns';
+import {
+  format,
+  subMonths,
+  startOfMonth,
+  isSameMonth,
+  isWithinInterval,
+  startOfYear,
+  endOfYear,
+} from 'date-fns';
 
 interface SubscriberTrendChartProps {
   subscriptions: any[];
@@ -23,7 +31,20 @@ export function SubscriberTrendChart({ subscriptions, isLoading }: SubscriberTre
   const trendData = useMemo(() => {
     if (!subscriptions) return [];
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     const currentYear = new Date().getFullYear();
 
     return months.map((month, index) => {
@@ -75,27 +96,23 @@ export function SubscriberTrendChart({ subscriptions, isLoading }: SubscriberTre
             <AreaChart data={trendData}>
               <defs>
                 <linearGradient id="colorShops" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorRest" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fontSize: 11, fill: '#64748B' }} 
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 11, fill: '#64748B' }}
               />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fontSize: 11, fill: '#64748B' }} 
-              />
-              <Tooltip 
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748B' }} />
+              <Tooltip
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
@@ -105,7 +122,9 @@ export function SubscriberTrendChart({ subscriptions, isLoading }: SubscriberTre
                         </p>
                         {payload.map((p: any, i: number) => (
                           <div key={i} className="flex items-center justify-between gap-4">
-                            <span style={{ color: p.color }} className="font-medium">{p.name}:</span>
+                            <span style={{ color: p.color }} className="font-medium">
+                              {p.name}:
+                            </span>
                             <span className="font-mono font-bold">{p.value}</span>
                           </div>
                         ))}
@@ -115,33 +134,35 @@ export function SubscriberTrendChart({ subscriptions, isLoading }: SubscriberTre
                   return null;
                 }}
               />
-              <Legend 
-                verticalAlign="top" 
-                height={36} 
+              <Legend
+                verticalAlign="top"
+                height={36}
                 iconType="circle"
-                formatter={(value) => <span className="text-[10px] text-slate-500 uppercase font-medium">{value}</span>}
+                formatter={value => (
+                  <span className="text-[10px] text-slate-500 uppercase font-medium">{value}</span>
+                )}
               />
-              <Area 
-                type="monotone" 
-                dataKey="Shops" 
-                stroke="#3B82F6" 
-                fillOpacity={1} 
-                fill="url(#colorShops)" 
+              <Area
+                type="monotone"
+                dataKey="Shops"
+                stroke="#3B82F6"
+                fillOpacity={1}
+                fill="url(#colorShops)"
                 strokeWidth={2}
               />
-              <Area 
-                type="monotone" 
-                dataKey="Restaurants" 
-                stroke="#10B981" 
-                fillOpacity={1} 
-                fill="url(#colorRest)" 
+              <Area
+                type="monotone"
+                dataKey="Restaurants"
+                stroke="#10B981"
+                fillOpacity={1}
+                fill="url(#colorRest)"
                 strokeWidth={2}
               />
-              <Area 
-                type="monotone" 
-                dataKey="Businesses" 
-                stroke="#F59E0B" 
-                fill="#F59E0B" 
+              <Area
+                type="monotone"
+                dataKey="Businesses"
+                stroke="#F59E0B"
+                fill="#F59E0B"
                 fillOpacity={0.05}
                 strokeWidth={2}
               />

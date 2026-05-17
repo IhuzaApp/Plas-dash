@@ -123,81 +123,86 @@ const CompanyDashboard = () => {
   }, [branchShops]);
 
   // Use Memo to compute Staff Stats
-  const { staffDistribution, recentActivity, totalStaff, activeStaff, activeInLast30Days } = useMemo(() => {
-    const allStaff = branchShops.flatMap(shop => shop.orgEmployees || []);
-    const totalStaff = allStaff.length;
-    const activeStaff = allStaff.filter(s => s.active).length;
+  const { staffDistribution, recentActivity, totalStaff, activeStaff, activeInLast30Days } =
+    useMemo(() => {
+      const allStaff = branchShops.flatMap(shop => shop.orgEmployees || []);
+      const totalStaff = allStaff.length;
+      const activeStaff = allStaff.filter(s => s.active).length;
 
-    const distributionMap = new Map<string, any>();
-    allStaff.forEach(member => {
-      const storeName = member.Shops?.name || 'Unknown Store';
-      const storeId = member.Shops?.id || 'unknown';
+      const distributionMap = new Map<string, any>();
+      allStaff.forEach(member => {
+        const storeName = member.Shops?.name || 'Unknown Store';
+        const storeId = member.Shops?.id || 'unknown';
 
-      if (!distributionMap.has(storeId)) {
-        distributionMap.set(storeId, {
-          storeName,
-          storeId,
-          manager: 0,
-          cashier: 0,
-          stockClerk: 0,
-          other: 0,
-          total: 0,
-        });
-      }
+        if (!distributionMap.has(storeId)) {
+          distributionMap.set(storeId, {
+            storeName,
+            storeId,
+            manager: 0,
+            cashier: 0,
+            stockClerk: 0,
+            other: 0,
+            total: 0,
+          });
+        }
 
-      const store = distributionMap.get(storeId)!;
-      store.total++;
+        const store = distributionMap.get(storeId)!;
+        store.total++;
 
-      const position = (member.Position || member.roleType || '').toLowerCase();
-      if (position.includes('manager') || position.includes('supervisor')) {
-        store.manager++;
-      } else if (position.includes('cashier') || position.includes('cash')) {
-        store.cashier++;
-      } else if (position.includes('stock') || position.includes('inventory') || position.includes('clerk')) {
-        store.stockClerk++;
-      } else {
-        store.other++;
-      }
-    });
-    const staffDistribution = Array.from(distributionMap.values());
+        const position = (member.Position || member.roleType || '').toLowerCase();
+        if (position.includes('manager') || position.includes('supervisor')) {
+          store.manager++;
+        } else if (position.includes('cashier') || position.includes('cash')) {
+          store.cashier++;
+        } else if (
+          position.includes('stock') ||
+          position.includes('inventory') ||
+          position.includes('clerk')
+        ) {
+          store.stockClerk++;
+        } else {
+          store.other++;
+        }
+      });
+      const staffDistribution = Array.from(distributionMap.values());
 
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const activeInLast30Days = allStaff.filter(member => {
-      if (!member.last_login) return false;
-      return new Date(member.last_login) >= thirtyDaysAgo;
-    }).length;
+      const activeInLast30Days = allStaff.filter(member => {
+        if (!member.last_login) return false;
+        return new Date(member.last_login) >= thirtyDaysAgo;
+      }).length;
 
-    const recentStaff = allStaff.filter(member => {
-      if (!member.last_login) return false;
-      return new Date(member.last_login) >= twentyFourHoursAgo;
-    });
+      const recentStaff = allStaff.filter(member => {
+        if (!member.last_login) return false;
+        return new Date(member.last_login) >= twentyFourHoursAgo;
+      });
 
-    const activity = recentStaff.map(member => {
-      const lastLogin = new Date(member.last_login);
-      const timeDiff = now.getTime() - lastLogin.getTime();
-      const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60));
-      const minutesAgo = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+      const activity = recentStaff.map(member => {
+        const lastLogin = new Date(member.last_login);
+        const timeDiff = now.getTime() - lastLogin.getTime();
+        const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60));
+        const minutesAgo = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
 
-      let timeAgo = hoursAgo > 0 ? `${hoursAgo}h ${minutesAgo}m ago` : `${minutesAgo}m ago`;
+        let timeAgo = hoursAgo > 0 ? `${hoursAgo}h ${minutesAgo}m ago` : `${minutesAgo}m ago`;
 
-      return {
-        id: member.id,
-        employeeName: member.fullnames,
-        storeName: member.Shops?.name || 'Unknown Store',
-        action: 'Logged in',
-        timestamp: member.last_login,
-        timeAgo,
-      };
-    });
+        return {
+          id: member.id,
+          employeeName: member.fullnames,
+          storeName: member.Shops?.name || 'Unknown Store',
+          action: 'Logged in',
+          timestamp: member.last_login,
+          timeAgo,
+        };
+      });
 
-    activity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    const recentActivity = activity.slice(0, 10);
+      activity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const recentActivity = activity.slice(0, 10);
 
-    return { staffDistribution, recentActivity, totalStaff, activeStaff, activeInLast30Days };
-  }, [branchShops]);
+      return { staffDistribution, recentActivity, totalStaff, activeStaff, activeInLast30Days };
+    }, [branchShops]);
 
   // Use Memo to compute aggregated Ratings
   const ratingsData = useMemo(() => {
@@ -216,15 +221,19 @@ const CompanyDashboard = () => {
                 Shop: {
                   name: shop.name,
                   address: shop.address,
-                }
-              }
+                },
+              },
             });
           });
         }
       });
     });
 
-    allRatings.sort((a, b) => new Date(b.reviewed_at || b.created_at || 0).getTime() - new Date(a.reviewed_at || a.created_at || 0).getTime());
+    allRatings.sort(
+      (a, b) =>
+        new Date(b.reviewed_at || b.created_at || 0).getTime() -
+        new Date(a.reviewed_at || a.created_at || 0).getTime()
+    );
     return { Ratings: allRatings };
   }, [branchShops]);
 

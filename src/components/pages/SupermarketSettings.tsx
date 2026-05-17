@@ -34,7 +34,8 @@ import { useGoogleMap } from '@/contexts/GoogleProvider';
 
 // Component to display operating hours in a beautiful calendar-like grid
 const OperatingHoursDisplay = ({ operatingHours }: { operatingHours: any }) => {
-  if (!operatingHours) return <span className="text-sm text-muted-foreground">No operating hours set</span>;
+  if (!operatingHours)
+    return <span className="text-sm text-muted-foreground">No operating hours set</span>;
 
   let parsedHours = operatingHours;
   if (typeof operatingHours === 'string') {
@@ -52,7 +53,7 @@ const OperatingHoursDisplay = ({ operatingHours }: { operatingHours: any }) => {
         {days.map(day => {
           const dayData = parsedHours[day];
           const dayName = day.charAt(0).toUpperCase() + day.slice(1);
-          
+
           let openTime = '';
           let closeTime = '';
           let isClosed = false;
@@ -70,7 +71,7 @@ const OperatingHoursDisplay = ({ operatingHours }: { operatingHours: any }) => {
             isClosed = dayData.closed === true || dayData.closed === 'true';
             openTime = dayData.open || '';
             closeTime = dayData.close || '';
-            
+
             // If it's not explicitly marked closed but has no times, consider it closed or '-'
             if (!isClosed && !openTime && !closeTime) {
               isClosed = true;
@@ -78,18 +79,32 @@ const OperatingHoursDisplay = ({ operatingHours }: { operatingHours: any }) => {
           } else {
             isClosed = true;
           }
-          
+
           return (
-            <div key={day} className="flex items-center justify-between p-3 bg-background rounded-xl border border-muted-foreground/10 shadow-sm transition-colors hover:border-primary/20">
+            <div
+              key={day}
+              className="flex items-center justify-between p-3 bg-background rounded-xl border border-muted-foreground/10 shadow-sm transition-colors hover:border-primary/20"
+            >
               <span className="font-semibold text-sm w-24">{dayName}</span>
               <div className="flex items-center">
                 {isClosed ? (
-                  <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal rounded-md">Closed</Badge>
+                  <Badge
+                    variant="secondary"
+                    className="bg-muted text-muted-foreground font-normal rounded-md"
+                  >
+                    Closed
+                  </Badge>
                 ) : (
                   <div className="flex items-center text-sm font-medium gap-1.5">
-                    <span className="bg-primary/10 text-primary px-2.5 py-1 rounded-md text-xs tracking-wide">{openTime || '-'}</span>
+                    <span className="bg-primary/10 text-primary px-2.5 py-1 rounded-md text-xs tracking-wide">
+                      {openTime || '-'}
+                    </span>
                     {closeTime && <span className="text-muted-foreground text-xs">-</span>}
-                    {closeTime && <span className="bg-primary/10 text-primary px-2.5 py-1 rounded-md text-xs tracking-wide">{closeTime}</span>}
+                    {closeTime && (
+                      <span className="bg-primary/10 text-primary px-2.5 py-1 rounded-md text-xs tracking-wide">
+                        {closeTime}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -399,8 +414,10 @@ export default function SupermarketSettings() {
         <div className="space-y-4">
           <Label>Supermarket Logo</Label>
           <div className="flex items-center gap-6">
-            <div className="h-28 w-28 rounded-2xl border-2 border-dashed border-primary/20 flex items-center justify-center overflow-hidden bg-primary/5 group relative cursor-pointer"
-                 onClick={() => isEditing && document.getElementById('logo-upload')?.click()}>
+            <div
+              className="h-28 w-28 rounded-2xl border-2 border-dashed border-primary/20 flex items-center justify-center overflow-hidden bg-primary/5 group relative cursor-pointer"
+              onClick={() => isEditing && document.getElementById('logo-upload')?.click()}
+            >
               {logoPreview ? (
                 <img
                   src={logoPreview}
@@ -420,9 +437,9 @@ export default function SupermarketSettings() {
                 onChange={handleLogoChange}
                 disabled={!isEditing}
               />
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="rounded-xl border-primary/20 hover:bg-primary/5"
                 onClick={() => document.getElementById('logo-upload')?.click()}
                 disabled={!isEditing}
@@ -557,10 +574,15 @@ export default function SupermarketSettings() {
                   className="rounded-xl"
                 />
               )}
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="latitude" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Latitude</Label>
+                  <Label
+                    htmlFor="latitude"
+                    className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Latitude
+                  </Label>
                   <Input
                     id="latitude"
                     value={formData.latitude}
@@ -570,7 +592,12 @@ export default function SupermarketSettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="longitude" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Longitude</Label>
+                  <Label
+                    htmlFor="longitude"
+                    className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Longitude
+                  </Label>
                   <Input
                     id="longitude"
                     value={formData.longitude}
@@ -661,8 +688,6 @@ export default function SupermarketSettings() {
               </div>
             </div>
           </div>
-
-
         </div>
       </CardContent>
     </Card>

@@ -409,7 +409,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
       const updatedPrivileges = {
         ...finalPrivileges,
         twoFactorRequired: data.TwoAuth_enabled,
-        smsAuthRequired: data.sms_auth
+        smsAuthRequired: data.sms_auth,
       };
 
       // Prepare the mutation data
@@ -420,7 +420,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
         role: data.role,
         is_active: data.is_active,
         TwoAuth_enabled: false, // Don't enable until setup is complete
-        sms_auth: false,       // Don't enable until setup is complete
+        sms_auth: false, // Don't enable until setup is complete
         gender: data.gender || '',
         device_details: '',
         profile: profileImage || '',
@@ -447,9 +447,11 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
             to: data.email,
             customerName: data.username,
           }),
-        }).then(res => {
-          if (!res.ok) console.error('Failed to send 2FA email: Server returned error');
-        }).catch(err => console.error('Failed to send 2FA email:', err));
+        })
+          .then(res => {
+            if (!res.ok) console.error('Failed to send 2FA email: Server returned error');
+          })
+          .catch(err => console.error('Failed to send 2FA email:', err));
       }
 
       // Show success dialog instead of closing immediately
@@ -952,9 +954,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="sms_auth">SMS Authentication</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enable SMS-based authentication
-                    </p>
+                    <p className="text-sm text-muted-foreground">Enable SMS-based authentication</p>
                   </div>
                   <Switch
                     id="sms_auth"

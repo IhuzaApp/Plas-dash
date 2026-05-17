@@ -75,7 +75,7 @@ const LoginSupport: React.FC<LoginSupportProps> = ({
               placeholder="name@example.com"
               className="h-11 bg-muted/30 border-muted-foreground/20 rounded-xl"
               value={supportData.email}
-              onChange={(e) => setSupportData({ ...supportData, email: e.target.value })}
+              onChange={e => setSupportData({ ...supportData, email: e.target.value })}
             />
           </div>
           <div className="space-y-1.5">
@@ -87,7 +87,7 @@ const LoginSupport: React.FC<LoginSupportProps> = ({
               placeholder="e.g. SHOP-123"
               className="h-11 bg-muted/30 border-muted-foreground/20 rounded-xl"
               value={supportData.sharedId}
-              onChange={(e) => setSupportData({ ...supportData, sharedId: e.target.value })}
+              onChange={e => setSupportData({ ...supportData, sharedId: e.target.value })}
             />
           </div>
           <div className="space-y-1.5">
@@ -96,10 +96,10 @@ const LoginSupport: React.FC<LoginSupportProps> = ({
             </label>
             <Textarea
               required
-              placeholder="Tell us what&apos;s happening..."
+              placeholder="Tell us what's happening..."
               className="min-h-[100px] bg-muted/30 border-muted-foreground/20 rounded-xl resize-none"
               value={supportData.description}
-              onChange={(e) => setSupportData({ ...supportData, description: e.target.value })}
+              onChange={e => setSupportData({ ...supportData, description: e.target.value })}
             />
           </div>
 
@@ -129,7 +129,7 @@ const LoginSupport: React.FC<LoginSupportProps> = ({
                   <span>Submitting...</span>
                 </div>
               ) : (
-                "Submit Ticket"
+                'Submit Ticket'
               )}
             </Button>
           </div>
