@@ -110,6 +110,7 @@ interface AddStaffDialogProps {
   shopId: string;
   /** Module slugs from the shop's active subscription plan — passed directly to avoid extra API calls */
   planModuleSlugs?: string[];
+  loading?: boolean;
 }
 
 // Generate random password
@@ -175,6 +176,7 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
   onSubmit,
   shopId,
   planModuleSlugs,
+  loading,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   // Only use hook when planModuleSlugs isn't provided directly
@@ -875,7 +877,16 @@ const AddStaffDialog: React.FC<AddStaffDialogProps> = ({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Add Staff Member</Button>
+              <Button type="submit" disabled={loading || form.formState.isSubmitting}>
+                {loading || form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  'Add Staff Member'
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

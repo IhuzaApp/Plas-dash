@@ -104,6 +104,7 @@ export interface EditStaffDialogProps {
   employee: any;
   /** Module slugs from the shop's active subscription plan — passed directly to avoid extra API calls */
   planModuleSlugs?: string[];
+  loading?: boolean;
 }
 
 const PermissionDisplay = ({
@@ -174,6 +175,7 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
   onSubmit,
   employee,
   planModuleSlugs,
+  loading,
 }) => {
   const [customPrivileges, setCustomPrivileges] = useState<UserPrivileges>({
     ...DEFAULT_PRIVILEGES,
@@ -746,7 +748,16 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Update Staff Member</Button>
+              <Button type="submit" disabled={loading || form.formState.isSubmitting}>
+                {loading || form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Staff Member'
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

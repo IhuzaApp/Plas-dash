@@ -1756,6 +1756,7 @@ export function useAddEmployee() {
       password: string;
       roleType: string;
       shop_id: string;
+      restaurant_id?: string | null;
       dob?: string;
       gender?: string;
     }

@@ -54,6 +54,18 @@ const ORG_EMPLOYEES_QUERY = gql`
         tin
         updated_at
       }
+      Restaurants {
+        id
+        name
+        location
+        phone
+        is_active
+        created_at
+        logo
+        relatedTo
+        tin
+        ussd
+      }
     }
   }
 `;
