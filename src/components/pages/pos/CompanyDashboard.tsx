@@ -31,8 +31,6 @@ import { useBranchShops } from '@/hooks/useBranchShops';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useAuth } from '@/contexts/AuthContext';
-import { useStaffManagement } from '@/hooks/useStaffManagement';
-import { useRatings, useProducts } from '@/hooks/useHasuraApi';
 import AddBranchShopDialog from '@/components/shop/AddBranchShopDialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -76,19 +74,6 @@ const CompanyDashboard = () => {
     averagePerformance,
   } = useBranchShops();
 
-  const {
-    staffDistribution,
-    recentActivity,
-    totalStaff,
-    activeStaff,
-    activeInLast30Days,
-    isLoading: staffLoading,
-    error: staffError,
-  } = useStaffManagement();
-
-  const { data: ratingsData, isLoading: ratingsLoading, error: ratingsError } = useRatings();
-  const { data: productsData, isLoading: productsLoading } = useProducts(true);
-
   // State for Add Branch Dialog
   const [isAddBranchDialogOpen, setIsAddBranchDialogOpen] = useState(false);
 
@@ -116,14 +101,14 @@ const CompanyDashboard = () => {
     let topProducts: { name: string; sales: number; quantity: number }[] = [];
     let totalInStock = 0;
 
-    if (productsData?.Products) {
-      // Calculate Total items with quantity > 0
-      totalInStock = productsData.Products.filter(p => (p.quantity || 0) > 0).length;
+    const allProducts = branchShops.flatMap(shop => shop.Products || []);
 
-      // Mock "sales" based on data available (could use past orders, but here we just show an example derived from sorting)
-      // Since actual sales isn't directly on Product type in the query, we will use quantity as a proxy for "popular" items
-      // or mock it if needed for the chart. Let's create a sorted list for the chart.
-      const sortedProducts = [...productsData.Products]
+    if (allProducts.length > 0) {
+      // Calculate Total items with quantity > 0
+      totalInStock = allProducts.filter(p => (p.quantity || 0) > 0).length;
+
+      // Mock "sales" based on data available
+      const sortedProducts = [...allProducts]
         .sort((a, b) => (b.quantity || 0) - (a.quantity || 0))
         .slice(0, 5);
 
@@ -135,10 +120,116 @@ const CompanyDashboard = () => {
     }
 
     return { topProducts, totalInStock };
-  }, [productsData]);
+  }, [branchShops]);
 
-  const isLoading = branchLoading || staffLoading || ratingsLoading || productsLoading;
-  const error = branchError || staffError || (ratingsError as Error)?.message;
+  // Use Memo to compute Staff Stats
+  const { staffDistribution, recentActivity, totalStaff, activeStaff, activeInLast30Days } = useMemo(() => {
+    const allStaff = branchShops.flatMap(shop => shop.orgEmployees || []);
+    const totalStaff = allStaff.length;
+    const activeStaff = allStaff.filter(s => s.active).length;
+
+    const distributionMap = new Map<string, any>();
+    allStaff.forEach(member => {
+      const storeName = member.Shops?.name || 'Unknown Store';
+      const storeId = member.Shops?.id || 'unknown';
+
+      if (!distributionMap.has(storeId)) {
+        distributionMap.set(storeId, {
+          storeName,
+          storeId,
+          manager: 0,
+          cashier: 0,
+          stockClerk: 0,
+          other: 0,
+          total: 0,
+        });
+      }
+
+      const store = distributionMap.get(storeId)!;
+      store.total++;
+
+      const position = (member.Position || member.roleType || '').toLowerCase();
+      if (position.includes('manager') || position.includes('supervisor')) {
+        store.manager++;
+      } else if (position.includes('cashier') || position.includes('cash')) {
+        store.cashier++;
+      } else if (position.includes('stock') || position.includes('inventory') || position.includes('clerk')) {
+        store.stockClerk++;
+      } else {
+        store.other++;
+      }
+    });
+    const staffDistribution = Array.from(distributionMap.values());
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const activeInLast30Days = allStaff.filter(member => {
+      if (!member.last_login) return false;
+      return new Date(member.last_login) >= thirtyDaysAgo;
+    }).length;
+
+    const recentStaff = allStaff.filter(member => {
+      if (!member.last_login) return false;
+      return new Date(member.last_login) >= twentyFourHoursAgo;
+    });
+
+    const activity = recentStaff.map(member => {
+      const lastLogin = new Date(member.last_login);
+      const timeDiff = now.getTime() - lastLogin.getTime();
+      const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60));
+      const minutesAgo = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+      let timeAgo = hoursAgo > 0 ? `${hoursAgo}h ${minutesAgo}m ago` : `${minutesAgo}m ago`;
+
+      return {
+        id: member.id,
+        employeeName: member.fullnames,
+        storeName: member.Shops?.name || 'Unknown Store',
+        action: 'Logged in',
+        timestamp: member.last_login,
+        timeAgo,
+      };
+    });
+
+    activity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const recentActivity = activity.slice(0, 10);
+
+    return { staffDistribution, recentActivity, totalStaff, activeStaff, activeInLast30Days };
+  }, [branchShops]);
+
+  // Use Memo to compute aggregated Ratings
+  const ratingsData = useMemo(() => {
+    const allRatings: any[] = [];
+    branchShops.forEach(shop => {
+      shop.Orders?.forEach((order: any) => {
+        if (order.Ratings && order.Ratings.length > 0) {
+          order.Ratings.forEach((rating: any) => {
+            allRatings.push({
+              ...rating,
+              Order: {
+                OrderID: order.OrderID,
+                delivery_fee: order.delivery_fee,
+                discount: order.discount,
+                delivery_notes: order.delivery_notes,
+                Shop: {
+                  name: shop.name,
+                  address: shop.address,
+                }
+              }
+            });
+          });
+        }
+      });
+    });
+
+    allRatings.sort((a, b) => new Date(b.reviewed_at || b.created_at || 0).getTime() - new Date(a.reviewed_at || a.created_at || 0).getTime());
+    return { Ratings: allRatings };
+  }, [branchShops]);
+
+  const isLoading = branchLoading;
+  const error = branchError;
 
   // Show loading state
   if (isLoading) {
@@ -570,7 +661,7 @@ const CompanyDashboard = () => {
               <CardDescription>Staff distribution by store and position</CardDescription>
             </CardHeader>
             <CardContent>
-              {staffLoading ? (
+              {isLoading ? (
                 <div className="animate-pulse space-y-4">
                   <div className="h-64 bg-muted rounded"></div>
                   <div className="space-y-3">
@@ -579,11 +670,11 @@ const CompanyDashboard = () => {
                     ))}
                   </div>
                 </div>
-              ) : staffError ? (
+              ) : error ? (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium mb-2">Error Loading Staff Data</h3>
-                  <p className="text-muted-foreground">{staffError}</p>
+                  <p className="text-muted-foreground">{error}</p>
                 </div>
               ) : (
                 <>

@@ -19,6 +19,9 @@ interface BranchShop {
   averageRating: number;
   performance: number;
   trend: 'up' | 'down' | 'neutral';
+  Orders: any[];
+  orgEmployees: any[];
+  Products: any[];
 }
 
 interface UseBranchShopsReturn {
@@ -57,8 +60,43 @@ export function useBranchShops(): UseBranchShopsReturn {
           total
           status
           created_at
+          OrderID
+          delivery_fee
+          discount
+          delivery_notes
           Ratings {
+            id
             rating
+            review
+            reviewed_at
+            delivery_experience
+            packaging_quality
+            professionalism
+            User {
+              name
+              profile_picture
+            }
+          }
+        }
+        orgEmployees(where: { active: { _eq: true } }) {
+          id
+          fullnames
+          email
+          phone
+          active
+          Position
+          roleType
+          last_login
+          Shops {
+            id
+            name
+          }
+        }
+        Products {
+          id
+          quantity
+          ProductName {
+            name
           }
         }
       }
@@ -104,8 +142,43 @@ export function useBranchShops(): UseBranchShopsReturn {
           total
           status
           created_at
+          OrderID
+          delivery_fee
+          discount
+          delivery_notes
           Ratings {
+            id
             rating
+            review
+            reviewed_at
+            delivery_experience
+            packaging_quality
+            professionalism
+            User {
+              name
+              profile_picture
+            }
+          }
+        }
+        orgEmployees(where: { active: { _eq: true } }) {
+          id
+          fullnames
+          email
+          phone
+          active
+          Position
+          roleType
+          last_login
+          Shops {
+            id
+            name
+          }
+        }
+        Products {
+          id
+          quantity
+          ProductName {
+            name
           }
         }
       }
@@ -191,6 +264,9 @@ export function useBranchShops(): UseBranchShopsReturn {
           averageRating,
           performance,
           trend,
+          Orders: shop.Orders || [],
+          orgEmployees: shop.orgEmployees || [],
+          Products: shop.Products || [],
         };
       });
 

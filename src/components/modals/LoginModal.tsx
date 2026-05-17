@@ -68,15 +68,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
           setLoading(false);
           return;
         }
-        
+
         const userBusinessId = session.shop_id || session.restaurant_id;
         if (userBusinessId !== activeBusiness.id) {
           throw new Error(`Access denied: You are not authorized to access ${activeBusiness.name}`);
         }
       }
 
-      // Check for MFA requirements (Only for Project Users in this modal)
-      const twoFactorRequired = !!(session.privileges?.twoFactorRequired || session.TwoAuth_enabled || session.multAuthEnabled);
+      // Check for MFA requirements - only required for project users
+      const twoFactorRequired = isProjectUser ? !!(session.privileges?.twoFactorRequired || session.TwoAuth_enabled || session.multAuthEnabled) : false;
+      const smsRequired = isProjectUser ? !!session.sms_auth : false;
       if (twoFactorRequired || smsRequired) {
         setMfaUser({ session, isProjectUser, twoFactorRequired, smsRequired });
         setAuthStep('mfa');
@@ -152,7 +153,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
 
   return (
     <Dialog open={true}>
-      <DialogContent 
+      <DialogContent
         className={cn(
           "sm:max-w-[440px] p-8 border-none bg-background/80 backdrop-blur-2xl shadow-2xl rounded-[2rem] overflow-hidden transition-all duration-500",
           authStep === 'mfa' ? "sm:max-w-[480px]" : ""
@@ -175,16 +176,16 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
             />
           ) : (
             <>
-              <LoginHeader 
-                businessName={activeBusiness?.name} 
-                businessLogo={activeBusiness?.logo} 
+              <LoginHeader
+                businessName={activeBusiness?.name}
+                businessLogo={activeBusiness?.logo}
               />
-              
+
               {!showHelp ? (
-                <LoginForm 
-                  form={form} 
-                  onSubmit={onSubmit} 
-                  loading={loading} 
+                <LoginForm
+                  form={form}
+                  onSubmit={onSubmit}
+                  loading={loading}
                 />
               ) : null}
 
@@ -202,7 +203,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
           )}
         </div>
 
-        {/* Dynamic Background Elements */}
         <div className="absolute top-0 left-0 w-full h-full -z-10 pointer-events-none opacity-20">
           <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-primary/20 rounded-full blur-[80px] animate-pulse" />
           <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-primary/10 rounded-full blur-[80px] animate-pulse delay-700" />
