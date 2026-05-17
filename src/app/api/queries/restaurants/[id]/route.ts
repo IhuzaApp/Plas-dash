@@ -22,6 +22,48 @@ const GET_RESTAURANT_BY_ID = gql`
       tin
       ussd
       created_at
+      promotion {
+        affects
+        applies_to_id
+        applies_to_type
+        budget_limit
+        budget_used
+        buy_quantity
+        code
+        commission_cap
+        commission_type
+        commission_value
+        created_at
+        customer_discount_percent
+        delivery_paid_by
+        discount_type
+        discount_value
+        end_date
+        end_time
+        free_delivery
+        funded_by
+        id
+        influencer_code
+        influencer_id
+        max_discount
+        max_platform_loss
+        min_order_value
+        min_profit_required
+        min_purchase_amount
+        name
+        priority
+        promotion_scope
+        promotion_type
+        restaurant_id
+        shop_id
+        stacking_type
+        start_date
+        start_time
+        status
+        update_on
+        usage_limit
+        usage_per_customer
+      }
       ai_usages {
         business_id
         id

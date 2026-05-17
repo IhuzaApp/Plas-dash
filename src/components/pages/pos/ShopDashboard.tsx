@@ -2,10 +2,12 @@ import React, { useEffect, useState, useMemo } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Store, ShoppingBag, Users, AlertTriangle, Zap, Loader2, DollarSign, Star, Package } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Store, ShoppingBag, Users, AlertTriangle, Zap, Loader2, DollarSign, Star, Package, ChevronDown, ChevronUp, TrendingUp, Calendar, Globe, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useShopSession } from '@/contexts/ShopSessionContext';
+import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import { apiGet } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -25,10 +27,21 @@ import {
 
 const ShopDashboard = () => {
   const { shopSession } = useShopSession();
+  const { color } = useThemeColor();
   const [loading, setLoading] = useState(true);
   const [shopData, setShopData] = useState<any>(null);
   const [staffData, setStaffData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isRevenueExpanded, setIsRevenueExpanded] = useState(false);
+  const [salesTimeframe, setSalesTimeframe] = useState<'year' | 'month' | 'week' | 'day'>('month');
+
+  const getWeekString = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const startDate = new Date(d.getFullYear(), 0, 1);
+    const days = Math.floor((d.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+    const weekNumber = Math.ceil((days + startDate.getDay() + 1) / 7);
+    return `${d.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,15 +50,16 @@ const ShopDashboard = () => {
       setLoading(true);
       setError(null);
       try {
+        const isRestaurant = !!shopSession.isRestaurant;
         const [shopRes, restRes, reelRes] = await Promise.all([
-          apiGet<any>(`/api/queries/shops/${shopSession.shopId}`).catch(() => null),
-          apiGet<any>(`/api/queries/restaurants/${shopSession.shopId}`).catch(() => null),
+          !isRestaurant ? apiGet<any>(`/api/queries/shops/${shopSession.shopId}`).catch(() => null) : Promise.resolve(null),
+          isRestaurant ? apiGet<any>(`/api/queries/restaurants/${shopSession.shopId}`).catch(() => null) : Promise.resolve(null),
           apiGet<any>(`/api/queries/all-reel-orders`).catch(() => null)
         ]);
 
         const shopDataObj = shopRes?.shop || restRes?.restaurant;
         if (shopDataObj) {
-          shopDataObj.isRestaurant = !!restRes?.restaurant;
+          shopDataObj.isRestaurant = isRestaurant;
           shopDataObj.reel_orders = reelRes?.orders || [];
           setShopData(shopDataObj);
           setStaffData(shopDataObj.orgEmployees || []);
@@ -61,7 +75,7 @@ const ShopDashboard = () => {
     };
 
     fetchData();
-  }, [shopSession?.shopId]);
+  }, [shopSession?.shopId, shopSession?.isRestaurant]);
 
   const { metrics, chartsData } = useMemo(() => {
     if (!shopData) return { metrics: null, chartsData: null };
@@ -86,7 +100,7 @@ const ShopDashboard = () => {
 
     const productSalesThisMonth: Record<string, { name: string; quantity: number }> = {};
 
-    const salesByMonth: Record<string, { orders: number; pos: number; reel: number; restaurant: number }> = {};
+    const salesByTimeframe: Record<string, { orders: number; pos: number; reel: number; restaurant: number }> = {};
     const ordersByDay: Record<string, number> = {};
     const ordersAndCustomersByMonth: Record<string, { orders: number; customers: Set<string> }> = {};
 
@@ -102,6 +116,13 @@ const ShopDashboard = () => {
       const isReel = !!item.reel_id || item.type === 'reel';
       const isRestaurant = !!item.restaurant_order_items;
       
+      // Filter out non-finished orders based on business type
+      if (isRestaurant) {
+        if (item.status === 'pending' || item.status === 'PENDING') return;
+      } else if (!isCheckout && !isReel) {
+        if (item.status === 'accepted' || item.status === 'shopping' || item.status === 'pending' || item.status === 'PENDING') return;
+      }
+
       const dateStr = item.created_at || item.created_on;
       if (!dateStr) return;
       const itemDate = dateStr.split('T')[0];
@@ -176,17 +197,22 @@ const ShopDashboard = () => {
       }
 
       // Charts data
-      if (!salesByMonth[itemMonth]) {
-        salesByMonth[itemMonth] = { orders: 0, pos: 0, reel: 0, restaurant: 0 };
+      let timeKey = itemMonth;
+      if (salesTimeframe === 'year') timeKey = itemYear;
+      else if (salesTimeframe === 'day') timeKey = itemDate;
+      else if (salesTimeframe === 'week') timeKey = getWeekString(itemDate);
+
+      if (!salesByTimeframe[timeKey]) {
+        salesByTimeframe[timeKey] = { orders: 0, pos: 0, reel: 0, restaurant: 0 };
       }
       if (isCheckout) {
-        salesByMonth[itemMonth].pos += total;
+        salesByTimeframe[timeKey].pos += total;
       } else if (isReel) {
-        salesByMonth[itemMonth].reel += total;
+        salesByTimeframe[timeKey].reel += total;
       } else if (isRestaurant) {
-        salesByMonth[itemMonth].restaurant += total;
+        salesByTimeframe[timeKey].restaurant += total;
       } else {
-        salesByMonth[itemMonth].orders += total;
+        salesByTimeframe[timeKey].orders += total;
       }
       
       ordersByDay[itemDate] = (ordersByDay[itemDate] || 0) + 1;
@@ -203,13 +229,13 @@ const ShopDashboard = () => {
     const avgRating = ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : 'N/A';
 
     // Format chart data
-    const sortedMonths = Object.keys(salesByMonth).sort();
-    const salesTrend = sortedMonths.map(month => ({
-      name: month,
-      orders: salesByMonth[month].orders,
-      pos: salesByMonth[month].pos,
-      reel: salesByMonth[month].reel,
-      restaurant: salesByMonth[month].restaurant
+    const sortedTimeframes = Object.keys(salesByTimeframe).sort();
+    const salesTrend = sortedTimeframes.map(tf => ({
+      name: tf,
+      orders: salesByTimeframe[tf].orders,
+      pos: salesByTimeframe[tf].pos,
+      reel: salesByTimeframe[tf].reel,
+      restaurant: salesByTimeframe[tf].restaurant
     }));
 
     const sortedDays = Object.keys(ordersByDay).sort().slice(-30);
@@ -228,11 +254,13 @@ const ShopDashboard = () => {
       (product: any) => product.quantity <= (product.reorder_point || 0)
     );
 
+    const productCount = shopData.isRestaurant ? (shopData.restaurant_dishes?.length || 0) : (shopData.Products?.length || 0);
+
     return {
       metrics: {
         ordersToday, ordersMonth, ordersYear, ordersTotal,
         salesToday, salesMonth, salesYear, salesTotal,
-        avgRating, ratingCount,
+        avgRating, ratingCount, productCount,
         lowStockItems: lowStockItems.slice(0, 5)
       },
       chartsData: {
@@ -241,7 +269,7 @@ const ShopDashboard = () => {
         ordersVsCustomers
       }
     };
-  }, [shopData]);
+  }, [shopData, salesTimeframe]);
 
   const inventorySummary = useMemo(() => {
     if (!shopData?.Products) return [];
@@ -274,6 +302,15 @@ const ShopDashboard = () => {
       .sort((a, b) => a.percentage - b.percentage); // Sort by lowest stock first
   }, [shopData]);
 
+  const allPromotions = useMemo(() => {
+    if (!shopData) return [];
+    return Array.isArray(shopData?.promotions) ? shopData.promotions : (Array.isArray(shopData?.promotion) ? shopData.promotion : (shopData?.promotion ? [shopData.promotion] : []));
+  }, [shopData]);
+
+  const activePromotions = useMemo(() => {
+    return allPromotions.filter((p: any) => p.status === 'active' || p.status === 'ACTIVE');
+  }, [allPromotions]);
+
   if (loading) {
     return (
       <AdminLayout>
@@ -305,7 +342,7 @@ const ShopDashboard = () => {
         icon={<Store className="h-6 w-6" />}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
@@ -316,11 +353,7 @@ const ShopDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics?.salesToday || 0)}</div>
             <p className="text-xs text-muted-foreground mt-1">Today</p>
-            <div className="flex justify-between text-xs mt-3 pt-3 border-t text-muted-foreground">
-              <span>Mo: {formatCurrency(metrics?.salesMonth || 0)}</span>
-              <span>Yr: {formatCurrency(metrics?.salesYear || 0)}</span>
-              <span className="font-semibold text-primary">All: {formatCurrency(metrics?.salesTotal || 0)}</span>
-            </div>
+            <div className="h-2 mt-3 pt-3 border-t w-full"></div>
           </CardContent>
         </Card>
 
@@ -369,13 +402,97 @@ const ShopDashboard = () => {
             <div className="h-2 mt-3 pt-3 border-t w-full"></div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+              {shopData?.isRestaurant ? 'Restaurant Dishes' : 'Products'}
+              <Package className="h-4 w-4 text-primary" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.productCount || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">Available in catalog</p>
+            <div className="h-2 mt-3 pt-3 border-t w-full"></div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card className="col-span-1 lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Sales Trend (POS & Orders)</CardTitle>
-            <CardDescription>Monthly sales revenue over time</CardDescription>
+      <div className="flex justify-end mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsRevenueExpanded(!isRevenueExpanded)}
+          className="flex items-center gap-2 border-primary/20 hover:bg-primary/5 transition-all"
+        >
+          {isRevenueExpanded ? 'Hide Extended Revenue Stats' : 'Expand to see more stats'}
+          {isRevenueExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      {isRevenueExpanded && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-primary/5 border border-primary/20 rounded-xl animate-in fade-in-50 duration-300">
+          <Card className="bg-background/80 backdrop-blur border-primary/10 hover:border-primary/30 transition-all">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                Monthly Revenue
+                <Calendar className="h-4 w-4 text-primary" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(metrics?.salesMonth || 0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Current Month (Mo)</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-background/80 backdrop-blur border-primary/10 hover:border-primary/30 transition-all">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                Yearly Revenue
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(metrics?.salesYear || 0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Current Year (Yr)</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-background/80 backdrop-blur border-primary/10 hover:border-primary/30 transition-all">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                All-Time Revenue
+                <Globe className="h-4 w-4 text-primary" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{formatCurrency(metrics?.salesTotal || 0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Lifetime Earnings (All)</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <Card className="col-span-1 lg:col-span-12">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle>Sales Trend (POS & Orders)</CardTitle>
+              <CardDescription>Sales revenue over time ({salesTimeframe})</CardDescription>
+            </div>
+            <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-lg border">
+              {(['year', 'month', 'week', 'day'] as const).map((tf) => (
+                <Button
+                  key={tf}
+                  variant={salesTimeframe === tf ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setSalesTimeframe(tf)}
+                  className={`text-xs h-7 px-2.5 capitalize ${salesTimeframe === tf ? 'shadow-sm' : ''}`}
+                >
+                  {tf}
+                </Button>
+              ))}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
@@ -385,23 +502,23 @@ const ShopDashboard = () => {
                     {!shopData?.isRestaurant && (
                       <>
                         <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          <stop offset="5%" stopColor={color.primary} stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor={color.primary} stopOpacity={0}/>
                         </linearGradient>
                         <linearGradient id="colorPOS" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
                         </linearGradient>
                       </>
                     )}
                     <linearGradient id="colorReel" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="hsl(var(--chart-3))" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-3))" stopOpacity={0}/>
                     </linearGradient>
                     {shopData?.isRestaurant && (
                       <linearGradient id="colorRestaurant" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                        <stop offset="5%" stopColor={color.primary} stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor={color.primary} stopOpacity={0}/>
                       </linearGradient>
                     )}
                   </defs>
@@ -411,19 +528,19 @@ const ShopDashboard = () => {
                   <RechartsTooltip formatter={(val) => formatCurrency(val as number)} />
                   <Legend />
                   
-                  {!shopData?.isRestaurant && <Area type="monotone" dataKey="orders" name="Online Orders" stroke="#3b82f6" fillOpacity={1} fill="url(#colorOrders)" />}
-                  {!shopData?.isRestaurant && <Area type="monotone" dataKey="pos" name="POS Sales" stroke="#10b981" fillOpacity={1} fill="url(#colorPOS)" />}
+                  {!shopData?.isRestaurant && <Area type="monotone" dataKey="orders" name="Online Orders" stroke={color.primary} fillOpacity={1} fill="url(#colorOrders)" />}
+                  {!shopData?.isRestaurant && <Area type="monotone" dataKey="pos" name="POS Sales" stroke="hsl(var(--chart-2))" fillOpacity={1} fill="url(#colorPOS)" />}
                   
-                  <Area type="monotone" dataKey="reel" name="Reel Orders" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorReel)" />
+                  <Area type="monotone" dataKey="reel" name="Reel Orders" stroke="hsl(var(--chart-3))" fillOpacity={1} fill="url(#colorReel)" />
                   
-                  {shopData?.isRestaurant && <Area type="monotone" dataKey="restaurant" name="Restaurant Orders" stroke="#f59e0b" fillOpacity={1} fill="url(#colorRestaurant)" />}
+                  {shopData?.isRestaurant && <Area type="monotone" dataKey="restaurant" name="Restaurant Orders" stroke={color.primary} fillOpacity={1} fill="url(#colorRestaurant)" />}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="col-span-1 lg:col-span-12">
           <CardHeader>
             <CardTitle>Orders vs Customers</CardTitle>
             <CardDescription>Monthly comparison of total orders vs unique customers</CardDescription>
@@ -437,15 +554,15 @@ const ShopDashboard = () => {
                   <YAxis />
                   <RechartsTooltip />
                   <Legend />
-                  <Bar dataKey="orders" name="Total Orders" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="customers" name="Unique Customers" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="orders" name="Total Orders" fill={color.primary} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="customers" name="Unique Customers" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="col-span-1 lg:col-span-12">
           <CardHeader>
             <CardTitle>Daily Order Trend</CardTitle>
             <CardDescription>Number of orders over the last 30 days</CardDescription>
@@ -458,7 +575,7 @@ const ShopDashboard = () => {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <RechartsTooltip />
-                  <Line type="monotone" dataKey="orders" name="Orders" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 2 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="orders" name="Orders" stroke={color.primary} strokeWidth={3} dot={{ r: 2 }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -466,7 +583,7 @@ const ShopDashboard = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Items Requiring Attention</CardTitle>
@@ -541,6 +658,56 @@ const ShopDashboard = () => {
                   No inventory data available
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Promotions & Discounts</span>
+              <Tag className="h-4 w-4 text-primary" />
+            </CardTitle>
+            <CardDescription>Active and available store campaigns</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-primary/5 p-3 rounded-lg border border-primary/10">
+                <div className="text-sm font-medium">Total Promotions</div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{allPromotions.length} Total</Badge>
+                  <Badge className="bg-green-500 hover:bg-green-600">{activePromotions.length} Active</Badge>
+                </div>
+              </div>
+
+              <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                {allPromotions.length > 0 ? (
+                  allPromotions.map((promo: any) => {
+                    const isActive = promo.status === 'active' || promo.status === 'ACTIVE';
+                    return (
+                      <div
+                        key={promo.id || promo.code}
+                        className={`flex flex-col p-3 rounded-lg border transition-all ${isActive ? 'bg-green-50/50 border-green-200' : 'bg-secondary/20 border-border'}`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-semibold text-sm">{promo.name || promo.code || 'Campaign'}</span>
+                          <Badge variant={isActive ? 'default' : 'outline'} className={isActive ? 'bg-green-500 hover:bg-green-600' : ''}>
+                            {promo.status || 'Inactive'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                          <span>{promo.discount_type === 'percentage' ? `${promo.customer_discount_percent || promo.discount_value || 0}% OFF` : `RWF ${promo.discount_value || 0} OFF`}</span>
+                          <span>{promo.end_date ? `Ends ${promo.end_date}` : 'No end date'}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No promotions available
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

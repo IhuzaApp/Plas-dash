@@ -70,6 +70,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
     position: string;
     multAuthEnabled: boolean;
     userId: string;
+    isRestaurant?: boolean;
   } | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
@@ -83,6 +84,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
       position: shop.position,
       multAuthEnabled: shop.multAuthEnabled || false,
       userId: shop.userId || '',
+      isRestaurant: shop.isRestaurant || false,
     };
     setSelectedShop(selectedShopData);
     setShowAuthModal(true);
@@ -184,7 +186,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
               key={fallbackShopData.shop.id}
               className="cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
               onClick={() => {
-                handleShopSelect(fallbackShopData);
+                handleShopSelect({ ...fallbackShopData, isRestaurant: !!session?.restaurant_id });
               }}
             >
               <CardContent className="p-3">
@@ -294,6 +296,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
               employeeId: orgEmployee.employeeID,
               employeeName: orgEmployee.fullnames,
               userId: orgEmployee.id,
+              isRestaurant: isRestaurant,
             };
             handleShopSelect(shopData);
           }}
@@ -314,6 +317,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
             userId={selectedShop.userId}
             storedTwoFactorSecrets={orgEmployee?.twoFactorSecrets || null}
             onAuthSuccess={handleAuthSuccess}
+            isRestaurant={selectedShop.isRestaurant}
           />
         )}
       </>
@@ -362,6 +366,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
                     employeeId: orgEmployee.employeeID,
                     employeeName: orgEmployee.fullnames,
                     userId: orgEmployee.id,
+                    isRestaurant: isRestaurant,
                   };
                   handleShopSelect(shopData);
                 }}
@@ -413,6 +418,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
           userId={selectedShop.userId}
           storedTwoFactorSecrets={orgEmployee?.twoFactorSecrets || null}
           onAuthSuccess={handleAuthSuccess}
+          isRestaurant={selectedShop.isRestaurant}
         />
       )}
     </div>
