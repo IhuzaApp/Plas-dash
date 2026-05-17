@@ -106,6 +106,11 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 - **Role-Based Redirection**
   - **Employee Landing**: After a successful login on a subdomain, employees with `globalAdmin` or `storeAdministrator` roles are automatically routed to the `/pos/company-dashboard`.
   - **POS Entry**: Standard employees land on the `/pos/checkout` page, optimized for immediate operational access.
+- **Dual-Business Architecture (Shops & Restaurants)**
+  - **Interchangeable Session Context**: The `AuthContext` and `LoginModal` natively capture both `shop_id` and `restaurant_id` upon authentication. The platform dynamically routes employees based on their assigned business entity.
+  - **Unified Employee Hook**: The `useCurrentOrgEmployee` hook fetches both `Shops` and `Restaurants` relationships from Hasura simultaneously, allowing the application to instantly identify whether an employee belongs to a retail store or a restaurant.
+  - **Smart Business Selector**: The `ShopSelector` component dynamically detects the active business type, automatically adjusting UI elements (e.g., displaying `Utensils` icon and "Select Restaurant" labels for restaurant staff, or `Store` icon and "Select Shop" for retail staff).
+  - **Dynamic 2FA Verification**: The `ShopAuthModal` adapts its security headers and verification prompts to match the active business name (`${shopName} Authentication`), providing a seamless 2FA experience across both business models without duplicating component logic.
 - **Security Isolation**
   - **Domain Strictness**: Project Users are strictly blocked from logging into business subdomains to prevent data contamination.
   - **Generic Error Handling**: Failed logins use sanitized error messages ("User not found in the organizations") to prevent user enumeration and account discovery.
