@@ -3020,3 +3020,98 @@ This comprehensive documentation covers all aspects of the Reels component, from
   - Tracking the cost of production and margin realization.
 - **Role-Based Protection**
   - Protected routes requiring 'inventory' privilege on a specific shop.
+
+---
+
+## 🏢 Multi-Branch Architecture & Analytics Engine
+
+The Plas Dashboard features a state-of-the-art **Multi-Branch Operations & Analytics Engine** designed to unify multi-channel sales data, enforce subscription-based branch limits, and deliver stunning executive insights across both retail shops and restaurant chains.
+
+```mermaid
+graph TD
+    subgraph Subscription Gating
+        Plan[Subscription Plan] -->|num_of_branch| Gate[Add Branch UI Gate]
+        CurrentBranches[Existing Branches] --> Gate
+        Gate -->|Limit Exceeded| Toast[Sonner Alert]
+        Gate -->|Within Limit| Modal[Open Branch Modal]
+    end
+
+    subgraph Multi-Channel Order Engine
+        RegOrders[Regular Orders] --> Dedup[Deduplication Set]
+        RestOrders[Restaurant Orders] --> Dedup
+        ReelOrders[Reel Orders] --> Dedup
+        Dedup --> Branch[Branch Performance Object]
+        Branch --> TotRev[Total Revenue]
+        Branch --> TotOrd[Total Orders]
+        Branch --> Perf[Performance %]
+    end
+
+    subgraph Themed UI Layer
+        Theme[ThemeColorProvider] --> Charts[Recharts: Pie & Bar]
+        TotRev --> CompanyDash[Company Dashboard]
+        TotOrd --> CompanyDash
+        Charts --> CompanyDash
+        Charts --> ShopDash[Shop Dashboard]
+    end
+```
+
+### 🏛️ 1. Multi-Branch Architecture & Gating (`src/app/pos/company-dashboard`)
+
+#### **`has_branch` Data Isolation**
+- **Single-Location Optimization**: The system inspects the `has_branch` boolean attribute on the primary business account (`Shops` or `Restaurants`). If `false`, secondary branch queries are entirely bypassed at the GraphQL layer. E.g., this prevents unnecessary database lookups, enhances client-side query performance, and guarantees strict data isolation for single-location businesses.
+- **Dynamic Branch Expansion**: When `has_branch` is `true`, the `useBranchShops` hook automatically fetches all child branches related to the parent business (`relatedTo` attribute), structuring them into a unified operational tree.
+
+#### **Subscription Limit Enforcement (`num_of_branch`)**
+- **Plan-Aware Quotas**: Subscription queries (`shop-subscriptions/route.ts`) actively fetch the `num_of_branch` limit defined in the company's active marketplace plan.
+- **Client-Side Capacity Checking**: The `CompanyDashboard` utilizes the `useShopSubscriptionModules` hook to evaluate active subscription tiers against the current branch count.
+- **Action Gating & Toast Alerts**: The "Add Branch" action button is dynamically gated:
+  - If `num_of_branch` is `0` (e.g., basic tier), the button is completely hidden from the UI.
+  - If the user attempts to add a branch that exceeds their allowed quota, a premium `sonner` toast notification alerts them to upgrade their subscription plan, preventing unauthorized branch creation before any database mutation occurs.
+
+### 🔄 2. Multi-Channel Revenue & Order Aggregation (`useBranchShops.ts`)
+
+To resolve historical revenue discrepancies and provide true executive visibility, the data layer implements a unified aggregation engine across all sales channels:
+
+#### **Unified Order Engine**
+- **Regular Retail Orders (`Orders`)**: Standard POS and e-commerce checkouts for supermarket locations.
+- **Restaurant Orders (`restaurant_orders`)**: Table-side, delivery, and pickup orders containing specific dish relationships and kitchen status flows.
+- **Video Marketplace Orders (`reel_orders`)**: Sales originating from shoppable video reels and promotional feeds.
+
+#### **Deduplication Strategy**
+```typescript
+// useBranchShops.ts - Order deduplication and aggregation
+const baseOrders = shop.Orders || [];
+const baseOrderIds = new Set(baseOrders.map((o: any) => o.id));
+
+const matchingReelOrders = reelOrdersList.filter((ro: any) => {
+  const reelShopId = ro.Reel?.shop_id || ro.Reel?.restaurant_id || ro.Shops?.[0]?.id;
+  return reelShopId === shop.id && !baseOrderIds.has(ro.id);
+});
+matchingReelOrders.forEach((ro: any) => baseOrderIds.add(ro.id));
+
+const matchingRegularOrders = regularOrdersList.filter((ro: any) => {
+  return (ro.shop_id === shop.id || ro.restaurant_id === shop.id || ro.Shop?.id === shop.id) && !baseOrderIds.has(ro.id);
+});
+
+const allCombinedOrders = [...baseOrders, ...matchingReelOrders, ...matchingRegularOrders];
+```
+
+#### **Historical Revenue Alignment**
+- **Discrepancy Resolution**: Previously, branch order counts reflected all-time history while revenue defaulted strictly to the current calendar month, causing active branches to display `Orders: 1, Revenue: RWF 0`.
+- **Metric Parity**: The `storePerformance` mapping now aligns `shop.totalRevenue` directly with `shop.totalOrders`. E.g., if a branch has accumulated orders from previous months or years, the total financial value is perfectly preserved and reflected in the Branch Store list and Performance calculation (`(totalRevenue / target) * 100`).
+
+### 🎨 3. Advanced UI Aesthetics & Theming (`src/app/pos/shop-dashboard` & `src/app/pos/company-dashboard`)
+
+The dashboard interfaces have been overhauled to meet premium, enterprise-grade design standards:
+
+#### **`ThemeColorProvider` Integration**
+- **Curated HSL Palettes**: Recharts visual containers (`PieChart` for Top Selling Products, `BarChart` for Branch Stock Health & Distribution) dynamically consume HSL color tokens injected by the global `ThemeColorProvider`.
+- **Harmonious Visuals**: Eliminates generic primary colors in favor of sleek, brand-aligned palettes that adapt flawlessly across light and dark modes.
+
+#### **Layout Density Optimization**
+- **Executive Vertical Rhythm**: Replaced loose flex containers (`justify-between`) with structured vertical rhythms (`justify-start space-y-3`), eliminating awkward whitespace gaps around charts and inventory alert cards.
+- **Responsive Container Scaling**: All charts are wrapped in `ResponsiveContainer` components with strict `max-height` constraints (`h-48`, `h-64`) to ensure compact, high-density presentation on desktop displays without clipping legends or labels.
+
+#### **Entity-Aware Analytics**
+- **Shop vs Restaurant Detection**: The dashboard dynamically adapts its analytics cards depending on the active business entity.
+- **Contextual Insights**: For restaurants, "Top Selling Products" maps directly to kitchen dishes and order items, whereas retail shops display inventory products and SKU performance, providing a fully customized executive experience.
