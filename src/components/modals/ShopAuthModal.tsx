@@ -392,11 +392,11 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store className="h-5 w-5" />
-            {isSetupMode ? '2FA Setup Required' : 'Shop Authentication'}
+            {isSetupMode ? '2FA Setup Required' : `${shopName} Authentication`}
           </DialogTitle>
           <DialogDescription>
             {isSetupMode
-              ? 'You need to set up two-factor authentication before accessing shop features.'
+              ? 'You need to set up two-factor authentication before accessing business features.'
               : `Enter your 2FA code to access ${shopName}`}
           </DialogDescription>
         </DialogHeader>

@@ -22,7 +22,14 @@ interface OrgEmployee {
     address: string;
     phone: string;
     is_active: boolean;
-  };
+  } | null;
+  Restaurants: {
+    id: string;
+    name: string;
+    location: string;
+    phone: string;
+    is_active: boolean;
+  } | null;
 }
 
 export function useCurrentOrgEmployee() {
@@ -48,6 +55,13 @@ export function useCurrentOrgEmployee() {
           id
           name
           address
+          phone
+          is_active
+        }
+        Restaurants {
+          id
+          name
+          location
           phone
           is_active
         }

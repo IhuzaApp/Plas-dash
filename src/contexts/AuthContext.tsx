@@ -10,6 +10,7 @@ export interface SessionData {
   email: string;
   phoneNumber: string;
   shop_id: string | null;
+  restaurant_id?: string | null;
   shop_name?: string;
   restaurant_name?: string;
   privileges: UserPrivileges;

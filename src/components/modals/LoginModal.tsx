@@ -109,6 +109,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
         fullName: session.username,
         phoneNumber: session.phone || '',
         shop_id: null,
+        restaurant_id: null,
         orgEmployeeRoles: null,
       };
     } else {
@@ -120,6 +121,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
         email: session.email,
         phoneNumber: session.phone || session.phoneNumber,
         shop_id: session.shop_id,
+        restaurant_id: session.restaurant_id,
         shop_name: session.Shops?.[0]?.name,
         restaurant_name: session.Restaurants?.[0]?.name,
         privileges: privileges,

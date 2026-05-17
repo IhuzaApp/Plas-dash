@@ -385,6 +385,45 @@ const GET_SHOP_BY_ID = gql`
         phone
       }
     }
+    shopCheckouts(where: {shop_id: {_eq: $id}}) {
+      total
+      tin
+      tax
+      subtotal
+      shop_id
+      payment_method
+      number
+      id
+      created_on
+      cartItems
+      Processed_By
+      ProcessedBy {
+        Address
+        Position
+        active
+        created_on
+        dob
+        email
+        employeeID
+        fullnames
+        gender
+        phone
+      }
+      Shops {
+        address
+        created_at
+        description
+        has_wallet
+        logo
+        longitude
+        name
+        operating_hours
+        phone
+        rdb_certificate
+        tin
+        ssd
+      }
+    }
   }
 `;
 
@@ -414,6 +453,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     }
     const data = await hasuraClient.request<{
       Shops_by_pk: Record<string, unknown> | null;
+      shopCheckouts: any[];
     }>(GET_SHOP_BY_ID, { id });
     const raw = data.Shops_by_pk;
     if (!raw) {
@@ -427,6 +467,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       tin: r.tin ?? null,
       ssd: r.ssd ?? null,
       relatedTo: r.relatedTo ?? null,
+      shopCheckouts: data.shopCheckouts ?? [],
     };
     return NextResponse.json({ shop });
   } catch (error) {

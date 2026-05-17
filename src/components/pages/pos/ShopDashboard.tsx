@@ -37,11 +37,21 @@ const ShopDashboard = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await apiGet<any>(`/api/queries/shops/${shopSession.shopId}`);
-        const shop = response.shop;
+        const [shopRes, restRes, reelRes] = await Promise.all([
+          apiGet<any>(`/api/queries/shops/${shopSession.shopId}`).catch(() => null),
+          apiGet<any>(`/api/queries/restaurants/${shopSession.shopId}`).catch(() => null),
+          apiGet<any>(`/api/queries/all-reel-orders`).catch(() => null)
+        ]);
 
-        setShopData(shop);
-        setStaffData(shop?.orgEmployees || []);
+        const shopDataObj = shopRes?.shop || restRes?.restaurant;
+        if (shopDataObj) {
+          shopDataObj.isRestaurant = !!restRes?.restaurant;
+          shopDataObj.reel_orders = reelRes?.orders || [];
+          setShopData(shopDataObj);
+          setStaffData(shopDataObj.orgEmployees || []);
+        } else {
+          setError('Failed to load dashboard data. Please try again.');
+        }
       } catch (err: any) {
         console.error('Error fetching dashboard data:', err);
         setError('Failed to load dashboard data. Please try again.');
@@ -64,87 +74,142 @@ const ShopDashboard = () => {
     let ordersToday = 0;
     let ordersMonth = 0;
     let ordersYear = 0;
+    let ordersTotal = 0;
 
     let salesToday = 0;
     let salesMonth = 0;
     let salesYear = 0;
+    let salesTotal = 0;
 
     let totalRating = 0;
     let ratingCount = 0;
 
     const productSalesThisMonth: Record<string, { name: string; quantity: number }> = {};
 
-    const salesByMonth: Record<string, number> = {};
+    const salesByMonth: Record<string, { orders: number; pos: number; reel: number; restaurant: number }> = {};
     const ordersByDay: Record<string, number> = {};
     const ordersAndCustomersByMonth: Record<string, { orders: number; customers: Set<string> }> = {};
 
-    (shopData.Orders || []).forEach((order: any) => {
-      const orderDate = order.created_at.split('T')[0];
-      const orderMonth = orderDate.substring(0, 7);
-      const orderYear = orderDate.substring(0, 4);
-      const total = order.total || 0;
+    const allItems = [
+      ...(shopData.Orders || []),
+      ...(shopData.shopCheckouts || []),
+      ...(shopData.restaurant_orders || []),
+      ...(shopData.reel_orders || [])
+    ];
+
+    allItems.forEach((item: any) => {
+      const isCheckout = !!item.cartItems;
+      const isReel = !!item.reel_id || item.type === 'reel';
+      const isRestaurant = !!item.restaurant_order_items;
+      
+      const dateStr = item.created_at || item.created_on;
+      if (!dateStr) return;
+      const itemDate = dateStr.split('T')[0];
+      const itemMonth = itemDate.substring(0, 7);
+      const itemYear = itemDate.substring(0, 4);
+      const total = parseFloat(item.total) || 0;
 
       // basic stats
-      if (orderDate === todayStr) {
+      ordersTotal++;
+      salesTotal += total;
+
+      if (itemDate === todayStr) {
         ordersToday++;
         salesToday += total;
       }
-      if (orderMonth === currentMonthStr) {
+      if (itemMonth === currentMonthStr) {
         ordersMonth++;
         salesMonth += total;
 
-        order.Order_Items?.forEach((item: any) => {
-          const prodId = item.product_id || item.Product?.id || 'unknown';
-          const prodName = item.Product?.ProductName?.name || 'Unknown Product';
-          if (!productSalesThisMonth[prodId]) {
-            productSalesThisMonth[prodId] = { name: prodName, quantity: 0 };
+        if (item.Order_Items) {
+          item.Order_Items.forEach((orderItem: any) => {
+            const prodId = orderItem.product_id || orderItem.Product?.id || 'unknown';
+            const prodName = orderItem.Product?.ProductName?.name || 'Unknown Product';
+            if (!productSalesThisMonth[prodId]) {
+              productSalesThisMonth[prodId] = { name: prodName, quantity: 0 };
+            }
+            productSalesThisMonth[prodId].quantity += Number(orderItem.quantity || 1);
+          });
+        }
+        
+        if (isCheckout && item.cartItems) {
+          let cItems = item.cartItems;
+          if (typeof cItems === 'string') {
+            try { cItems = JSON.parse(cItems); } catch (e) {}
           }
-          productSalesThisMonth[prodId].quantity += item.quantity || 1;
-        });
+          if (Array.isArray(cItems)) {
+            cItems.forEach((cItem: any) => {
+              const prodName = cItem.name || cItem.productName || cItem.title || 'Unknown Product';
+              const prodId = cItem.id || cItem.productId || prodName;
+              if (!productSalesThisMonth[prodId]) {
+                productSalesThisMonth[prodId] = { name: prodName, quantity: 0 };
+              }
+              productSalesThisMonth[prodId].quantity += Number(cItem.quantity || 1);
+            });
+          }
+        }
+        
+        if (isRestaurant && item.restaurant_order_items) {
+          item.restaurant_order_items.forEach((rItem: any) => {
+            const dishName = rItem.restaurant_dishes?.dishes?.name || 'Unknown Dish';
+            const dishId = rItem.id || dishName;
+            if (!productSalesThisMonth[dishId]) {
+              productSalesThisMonth[dishId] = { name: dishName, quantity: 0 };
+            }
+            productSalesThisMonth[dishId].quantity += Number(rItem.quantity || 1);
+          });
+        }
       }
-      if (orderYear === currentYearStr) {
+      if (itemYear === currentYearStr) {
         ordersYear++;
         salesYear += total;
       }
 
       // Ratings
-      if (order.Ratings && order.Ratings.length > 0) {
-        order.Ratings.forEach((r: any) => {
-          if (r.rating) {
-            totalRating += r.rating;
+      if (item.Ratings && item.Ratings.length > 0) {
+        item.Ratings.forEach((r: any) => {
+          if (r.rating != null) {
+            totalRating += Number(r.rating);
             ratingCount++;
           }
         });
       }
 
       // Charts data
-      salesByMonth[orderMonth] = (salesByMonth[orderMonth] || 0) + total;
-      
-      ordersByDay[orderDate] = (ordersByDay[orderDate] || 0) + 1;
-
-      const customerId = order.user_id || order.orderedBy?.id || 'guest';
-      
-      if (!ordersAndCustomersByMonth[orderMonth]) {
-        ordersAndCustomersByMonth[orderMonth] = { orders: 0, customers: new Set() };
+      if (!salesByMonth[itemMonth]) {
+        salesByMonth[itemMonth] = { orders: 0, pos: 0, reel: 0, restaurant: 0 };
       }
-      ordersAndCustomersByMonth[orderMonth].orders++;
-      ordersAndCustomersByMonth[orderMonth].customers.add(customerId);
+      if (isCheckout) {
+        salesByMonth[itemMonth].pos += total;
+      } else if (isReel) {
+        salesByMonth[itemMonth].reel += total;
+      } else if (isRestaurant) {
+        salesByMonth[itemMonth].restaurant += total;
+      } else {
+        salesByMonth[itemMonth].orders += total;
+      }
+      
+      ordersByDay[itemDate] = (ordersByDay[itemDate] || 0) + 1;
+
+      const customerId = isCheckout ? (item.Processed_By || 'guest') : (item.user_id || item.orderedBy?.id || 'guest');
+      
+      if (!ordersAndCustomersByMonth[itemMonth]) {
+        ordersAndCustomersByMonth[itemMonth] = { orders: 0, customers: new Set() };
+      }
+      ordersAndCustomersByMonth[itemMonth].orders++;
+      ordersAndCustomersByMonth[itemMonth].customers.add(customerId);
     });
 
     const avgRating = ratingCount > 0 ? (totalRating / ratingCount).toFixed(1) : 'N/A';
-
-    let topProduct = { name: 'None', quantity: 0 };
-    Object.values(productSalesThisMonth).forEach(p => {
-      if (p.quantity > topProduct.quantity) {
-        topProduct = p;
-      }
-    });
 
     // Format chart data
     const sortedMonths = Object.keys(salesByMonth).sort();
     const salesTrend = sortedMonths.map(month => ({
       name: month,
-      sales: salesByMonth[month]
+      orders: salesByMonth[month].orders,
+      pos: salesByMonth[month].pos,
+      reel: salesByMonth[month].reel,
+      restaurant: salesByMonth[month].restaurant
     }));
 
     const sortedDays = Object.keys(ordersByDay).sort().slice(-30);
@@ -165,10 +230,9 @@ const ShopDashboard = () => {
 
     return {
       metrics: {
-        ordersToday, ordersMonth, ordersYear,
-        salesToday, salesMonth, salesYear,
+        ordersToday, ordersMonth, ordersYear, ordersTotal,
+        salesToday, salesMonth, salesYear, salesTotal,
         avgRating, ratingCount,
-        topProduct,
         lowStockItems: lowStockItems.slice(0, 5)
       },
       chartsData: {
@@ -255,6 +319,7 @@ const ShopDashboard = () => {
             <div className="flex justify-between text-xs mt-3 pt-3 border-t text-muted-foreground">
               <span>Mo: {formatCurrency(metrics?.salesMonth || 0)}</span>
               <span>Yr: {formatCurrency(metrics?.salesYear || 0)}</span>
+              <span className="font-semibold text-primary">All: {formatCurrency(metrics?.salesTotal || 0)}</span>
             </div>
           </CardContent>
         </Card>
@@ -272,6 +337,7 @@ const ShopDashboard = () => {
             <div className="flex justify-between text-xs mt-3 pt-3 border-t text-muted-foreground">
               <span>Mo: {metrics?.ordersMonth || 0}</span>
               <span>Yr: {metrics?.ordersYear || 0}</span>
+              <span className="font-semibold text-primary">All: {metrics?.ordersTotal || 0}</span>
             </div>
           </CardContent>
         </Card>
@@ -293,15 +359,13 @@ const ShopDashboard = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              Top Product (Month)
-              <Package className="h-4 w-4 text-primary" />
+              Staff Members
+              <Users className="h-4 w-4 text-primary" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold truncate" title={metrics?.topProduct?.name || 'N/A'}>
-              {metrics?.topProduct?.name || 'N/A'}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">{metrics?.topProduct?.quantity || 0} units sold</p>
+            <div className="text-2xl font-bold">{staffData?.length || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">Active team members</p>
             <div className="h-2 mt-3 pt-3 border-t w-full"></div>
           </CardContent>
         </Card>
@@ -318,16 +382,41 @@ const ShopDashboard = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartsData?.salesTrend || []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    {!shopData?.isRestaurant && (
+                      <>
+                        <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorPOS" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        </linearGradient>
+                      </>
+                    )}
+                    <linearGradient id="colorReel" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                     </linearGradient>
+                    {shopData?.isRestaurant && (
+                      <linearGradient id="colorRestaurant" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                      </linearGradient>
+                    )}
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" />
                   <YAxis tickFormatter={(val) => `$${val}`} />
                   <RechartsTooltip formatter={(val) => formatCurrency(val as number)} />
-                  <Area type="monotone" dataKey="sales" name="Sales" stroke="#3b82f6" fillOpacity={1} fill="url(#colorSales)" />
+                  <Legend />
+                  
+                  {!shopData?.isRestaurant && <Area type="monotone" dataKey="orders" name="Online Orders" stroke="#3b82f6" fillOpacity={1} fill="url(#colorOrders)" />}
+                  {!shopData?.isRestaurant && <Area type="monotone" dataKey="pos" name="POS Sales" stroke="#10b981" fillOpacity={1} fill="url(#colorPOS)" />}
+                  
+                  <Area type="monotone" dataKey="reel" name="Reel Orders" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorReel)" />
+                  
+                  {shopData?.isRestaurant && <Area type="monotone" dataKey="restaurant" name="Restaurant Orders" stroke="#f59e0b" fillOpacity={1} fill="url(#colorRestaurant)" />}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
