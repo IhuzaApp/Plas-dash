@@ -13,9 +13,13 @@ interface BranchShop {
   created_at: string;
   updated_at: string;
   relatedTo: string;
+  has_branch?: boolean;
   // Performance metrics
   totalRevenue: number;
+  monthlyRevenue: number;
   totalOrders: number;
+  monthlyOrders: number;
+  todaySales: number;
   averageRating: number;
   performance: number;
   trend: 'up' | 'down' | 'neutral';
@@ -29,7 +33,10 @@ interface UseBranchShopsReturn {
   isLoading: boolean;
   error: string | null;
   totalRevenue: number;
+  monthlyRevenue: number;
   totalOrders: number;
+  monthlyOrders: number;
+  todaySalesTotal: number;
   averagePerformance: number;
 }
 
@@ -39,13 +46,12 @@ export function useBranchShops(): UseBranchShopsReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get the current shop ID from the main session
-  const currentShopId = session?.shop_id;
+  const isRestaurant = !!session?.restaurant_id;
+  const currentBusinessId = isRestaurant ? session?.restaurant_id : session?.shop_id;
 
-  // First, get the main shop to get its name
   const GET_MAIN_SHOP = `
-    query GetMainShop($shopId: uuid!) {
-      Shops(where: { id: { _eq: $shopId } }) {
+    query GetMainShop($businessId: uuid!) {
+      Shops(where: { id: { _eq: $businessId } }) {
         id
         name
         description
@@ -55,6 +61,7 @@ export function useBranchShops(): UseBranchShopsReturn {
         created_at
         updated_at
         relatedTo
+        has_branch
         Orders {
           id
           total
@@ -103,96 +110,207 @@ export function useBranchShops(): UseBranchShopsReturn {
     }
   `;
 
-  // Query to get the main shop
+  const GET_MAIN_RESTAURANT = `
+    query GetMainRestaurant($businessId: uuid!) {
+      Restaurants(where: { id: { _eq: $businessId } }) {
+        id
+        name
+        description: location
+        address: location
+        phone
+        is_active
+        created_at
+        updated_at
+        relatedTo
+        has_branch
+        Orders: restaurant_orders {
+          id
+          total
+          status
+          created_at
+          OrderID
+          delivery_fee
+          delivery_notes
+          Ratings {
+            id
+            rating
+            review
+            reviewed_at
+            User {
+              name
+              profile_picture
+            }
+          }
+        }
+        orgEmployees(where: { active: { _eq: true } }) {
+          id
+          fullnames
+          email
+          phone
+          active
+          Position
+          roleType
+          last_login
+          Shops: Restaurants {
+            id
+            name
+          }
+        }
+        Products: restaurant_dishes {
+          id
+          quantity
+          ProductName: dishes {
+            name
+          }
+        }
+      }
+    }
+  `;
+
+  const GET_BRANCH_SHOPS = `
+    query getBranchwhereName($businessName: String = "") {
+      Shops(where: { relatedTo: { _eq: $businessName } }) {
+        id
+        name
+        description
+        address
+        phone
+        is_active
+        created_at
+        updated_at
+        relatedTo
+        has_branch
+        Orders {
+          id
+          total
+          status
+          created_at
+          OrderID
+          delivery_fee
+          discount
+          delivery_notes
+          Ratings {
+            id
+            rating
+            review
+            reviewed_at
+            delivery_experience
+            packaging_quality
+            professionalism
+            User {
+              name
+              profile_picture
+            }
+          }
+        }
+        orgEmployees(where: { active: { _eq: true } }) {
+          id
+          fullnames
+          email
+          phone
+          active
+          Position
+          roleType
+          last_login
+          Shops {
+            id
+            name
+          }
+        }
+        Products {
+          id
+          quantity
+          ProductName {
+            name
+          }
+        }
+      }
+    }
+  `;
+
+  const GET_BRANCH_RESTAURANTS = `
+    query getBranchwhereName($businessName: String = "") {
+      Restaurants(where: { relatedTo: { _eq: $businessName } }) {
+        id
+        name
+        description: location
+        address: location
+        phone
+        is_active
+        created_at
+        updated_at
+        relatedTo
+        has_branch
+        Orders: restaurant_orders {
+          id
+          total
+          status
+          created_at
+          OrderID
+          delivery_fee
+          delivery_notes
+          Ratings {
+            id
+            rating
+            review
+            reviewed_at
+            User {
+              name
+              profile_picture
+            }
+          }
+        }
+        orgEmployees(where: { active: { _eq: true } }) {
+          id
+          fullnames
+          email
+          phone
+          active
+          Position
+          roleType
+          last_login
+          Shops: Restaurants {
+            id
+            name
+          }
+        }
+        Products: restaurant_dishes {
+          id
+          quantity
+          ProductName: dishes {
+            name
+          }
+        }
+      }
+    }
+  `;
+
+  const mainQuery = isRestaurant ? GET_MAIN_RESTAURANT : GET_MAIN_SHOP;
+  const branchQuery = isRestaurant ? GET_BRANCH_RESTAURANTS : GET_BRANCH_SHOPS;
+
   const {
     data: mainShopData,
     isLoading: mainShopLoading,
     error: mainShopError,
   } = useQuery({
-    queryKey: ['mainShop', currentShopId],
-    queryFn: () => hasuraRequest(GET_MAIN_SHOP, { shopId: currentShopId }),
-    enabled: !!currentShopId,
+    queryKey: ['mainShop', currentBusinessId, isRestaurant],
+    queryFn: () => hasuraRequest(mainQuery, { businessId: currentBusinessId }),
+    enabled: !!currentBusinessId,
   });
 
-  // Get the main shop name
-  const mainShop =
-    mainShopData &&
-    typeof mainShopData === 'object' &&
-    'Shops' in mainShopData &&
-    Array.isArray((mainShopData as any).Shops)
-      ? (mainShopData as any).Shops[0]
-      : null;
-  const mainShopName = mainShop?.name;
-
-  // GraphQL query to get branch shops by relatedTo (shop name)
-  const GET_BRANCH_SHOPS = `
-    query getBranchwhereName($shopName: String = "") {
-      Shops(where: { relatedTo: { _eq: $shopName } }) {
-        id
-        name
-        description
-        address
-        phone
-        is_active
-        created_at
-        updated_at
-        relatedTo
-        Orders {
-          id
-          total
-          status
-          created_at
-          OrderID
-          delivery_fee
-          discount
-          delivery_notes
-          Ratings {
-            id
-            rating
-            review
-            reviewed_at
-            delivery_experience
-            packaging_quality
-            professionalism
-            User {
-              name
-              profile_picture
-            }
-          }
-        }
-        orgEmployees(where: { active: { _eq: true } }) {
-          id
-          fullnames
-          email
-          phone
-          active
-          Position
-          roleType
-          last_login
-          Shops {
-            id
-            name
-          }
-        }
-        Products {
-          id
-          quantity
-          ProductName {
-            name
-          }
-        }
-      }
-    }
-  `;
+  const mainShopList = mainShopData && typeof mainShopData === 'object' ? (isRestaurant ? (mainShopData as any).Restaurants : (mainShopData as any).Shops) : null;
+  const mainShop = Array.isArray(mainShopList) ? mainShopList[0] : null;
+  const mainBusinessName = mainShop?.name;
+  const hasBranch = !!mainShop?.has_branch;
 
   const {
     data,
     isLoading: queryLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ['branchShops', mainShopName],
-    queryFn: () => hasuraRequest(GET_BRANCH_SHOPS, { shopName: mainShopName }),
-    enabled: !!mainShopName,
+    queryKey: ['branchShops', mainBusinessName, isRestaurant],
+    queryFn: () => hasuraRequest(branchQuery, { businessName: mainBusinessName }),
+    enabled: !!mainBusinessName,
   });
 
   useEffect(() => {
@@ -209,28 +327,55 @@ export function useBranchShops(): UseBranchShopsReturn {
       setError(queryError.message);
     }
 
-    // Combine main shop and branch shops
     const allShops = [];
 
-    // Add main shop if it exists
     if (mainShop) {
       allShops.push(mainShop);
     }
 
-    // Add branch shops if they exist
-    if (data && typeof data === 'object' && 'Shops' in data && Array.isArray((data as any).Shops)) {
-      allShops.push(...(data as any).Shops);
+    const branchList = data && typeof data === 'object' ? (isRestaurant ? (data as any).Restaurants : (data as any).Shops) : null;
+    if (Array.isArray(branchList)) {
+      allShops.push(...branchList);
     }
 
     if (allShops.length > 0) {
-      const shops = allShops.map((shop: any) => {
-        // Calculate performance metrics
-        const orders = shop.Orders || [];
-        const totalRevenue = orders.reduce((sum: number, order: any) => {
-          return sum + parseFloat(order.total || '0');
-        }, 0);
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const currentMonthStr = todayStr.substring(0, 7);
 
-        const totalOrders = orders.length;
+      const shops = allShops.map((shop: any) => {
+        const orders = shop.Orders || [];
+        let shopTotalRevenue = 0;
+        let shopMonthlyRevenue = 0;
+        let shopTotalOrders = 0;
+        let shopMonthlyOrders = 0;
+        let shopTodaySales = 0;
+
+        orders.forEach((order: any) => {
+          if (isRestaurant) {
+            if (order.status === 'pending' || order.status === 'PENDING') return;
+          } else {
+            if (order.status === 'accepted' || order.status === 'shopping' || order.status === 'pending' || order.status === 'PENDING') return;
+          }
+
+          const dateStr = order.created_at || order.created_on;
+          if (!dateStr) return;
+          const orderDate = dateStr.split('T')[0];
+          const orderMonth = orderDate.substring(0, 7);
+          const amt = parseFloat(order.total) || 0;
+
+          shopTotalRevenue += amt;
+          shopTotalOrders++;
+
+          if (orderMonth === currentMonthStr) {
+            shopMonthlyRevenue += amt;
+            shopMonthlyOrders++;
+          }
+
+          if (orderDate === todayStr) {
+            shopTodaySales += amt;
+          }
+        });
 
         const ratings = orders.flatMap((order: any) => order.Ratings || []);
         const averageRating =
@@ -241,11 +386,9 @@ export function useBranchShops(): UseBranchShopsReturn {
               ) / ratings.length
             : 0;
 
-        // Calculate performance (mock target for now)
-        const target = 50000; // Mock target
-        const performance = target > 0 ? (totalRevenue / target) * 100 : 0;
+        const target = 50000;
+        const performance = target > 0 ? (shopMonthlyRevenue / target) * 100 : 0;
 
-        // Determine trend (mock for now)
         const trend: 'up' | 'down' | 'neutral' =
           performance > 100 ? 'up' : performance < 90 ? 'down' : 'neutral';
 
@@ -259,8 +402,12 @@ export function useBranchShops(): UseBranchShopsReturn {
           created_at: shop.created_at,
           updated_at: shop.updated_at,
           relatedTo: shop.relatedTo,
-          totalRevenue,
-          totalOrders,
+          has_branch: shop.has_branch,
+          totalRevenue: shopTotalRevenue,
+          monthlyRevenue: shopMonthlyRevenue,
+          totalOrders: shopTotalOrders,
+          monthlyOrders: shopMonthlyOrders,
+          todaySales: shopTodaySales,
           averageRating,
           performance,
           trend,
@@ -272,11 +419,13 @@ export function useBranchShops(): UseBranchShopsReturn {
 
       setBranchShops(shops);
     }
-  }, [data, queryLoading, queryError, mainShopData, mainShopLoading, mainShopError, mainShop]);
+  }, [data, queryLoading, queryError, mainShopData, mainShopLoading, mainShopError, mainShop, isRestaurant]);
 
-  // Calculate totals
   const totalRevenue = branchShops.reduce((sum, shop) => sum + shop.totalRevenue, 0);
+  const monthlyRevenue = branchShops.reduce((sum, shop) => sum + shop.monthlyRevenue, 0);
   const totalOrders = branchShops.reduce((sum, shop) => sum + shop.totalOrders, 0);
+  const monthlyOrders = branchShops.reduce((sum, shop) => sum + shop.monthlyOrders, 0);
+  const todaySalesTotal = branchShops.reduce((sum, shop) => sum + shop.todaySales, 0);
   const averagePerformance =
     branchShops.length > 0
       ? branchShops.reduce((sum, shop) => sum + shop.performance, 0) / branchShops.length
@@ -287,7 +436,10 @@ export function useBranchShops(): UseBranchShopsReturn {
     isLoading,
     error,
     totalRevenue,
+    monthlyRevenue,
     totalOrders,
+    monthlyOrders,
+    todaySalesTotal,
     averagePerformance,
   };
 }

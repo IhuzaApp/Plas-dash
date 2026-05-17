@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
-import { CREATE_SHOP } from '@/lib/graphql/mutations';
+import { CREATE_SHOP, ADD_RESTAURANT } from '@/lib/graphql/mutations';
 import { useCategories } from '@/hooks/useHasuraApi';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Store, Upload, X } from 'lucide-react';
@@ -80,6 +80,7 @@ interface AddBranchShopDialogProps {
   isOpen: boolean;
   onClose: () => void;
   parentShopName: string;
+  isRestaurant?: boolean;
 }
 
 interface Category {
@@ -128,6 +129,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
   isOpen,
   onClose,
   parentShopName,
+  isRestaurant,
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -179,13 +181,28 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
 
   // Create shop mutation
   const createShopMutation = useMutation({
-    mutationFn: async (data: CreateShopMutationData) => {
+    mutationFn: async (data: any) => {
       console.log('=== ADD BRANCH SHOP DIALOG: MUTATION FUNCTION CALLED ===');
       console.log('Mutation data:', data);
-      console.log('CREATE_SHOP mutation:', CREATE_SHOP);
+
+      const mutationQuery = isRestaurant ? ADD_RESTAURANT : CREATE_SHOP;
+      const payload = isRestaurant ? {
+        name: data.name,
+        email: `${data.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
+        is_active: data.is_active,
+        lat: data.latitude || "",
+        long: data.longitude || "",
+        location: data.address || "",
+        logo: data.logo || "",
+        phone: data.phone || "",
+        profile: data.image || "",
+        tin: data.tin || "",
+        ussd: data.ssd || "",
+        relatedTo: data.relatedTo
+      } : data;
 
       try {
-        const result = await hasuraRequest(CREATE_SHOP, data);
+        const result = await hasuraRequest(mutationQuery, payload);
         console.log('=== ADD BRANCH SHOP DIALOG: MUTATION SUCCESS ===');
         console.log('Mutation result:', result);
         return result;
@@ -456,11 +473,10 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store className="h-5 w-5" />
-            Add New Branch Store
+            Add New Branch {isRestaurant ? 'Restaurant' : 'Store'}
           </DialogTitle>
           <DialogDescription>
-            Create a new branch store under {parentShopName}. This branch will be linked to the
-            parent store.
+            Create a new branch {isRestaurant ? 'restaurant' : 'store'} under {parentShopName}. This branch will be linked to the parent {isRestaurant ? 'restaurant' : 'store'}.
           </DialogDescription>
         </DialogHeader>
 
@@ -476,7 +492,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
 
           {/* Shop Logo */}
           <div className="space-y-4">
-            <Label>Branch Store Logo</Label>
+            <Label>Branch {isRestaurant ? 'Restaurant' : 'Store'} Logo</Label>
             <div className="flex items-start gap-4">
               <div className="relative">
                 <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
@@ -569,17 +585,17 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Branch Store Name *</Label>
+              <Label htmlFor="name">Branch {isRestaurant ? 'Restaurant' : 'Store'} Name *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={e => handleInputChange('name', e.target.value)}
-                placeholder="Enter branch store name"
+                placeholder={`Enter branch ${isRestaurant ? 'restaurant' : 'store'} name`}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
+              <Label htmlFor="category">Category {isRestaurant ? '' : '*'}</Label>
               <Select
                 value={formData.category_id}
                 onValueChange={value => handleInputChange('category_id', value)}
@@ -615,7 +631,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
               id="description"
               value={formData.description}
               onChange={e => handleInputChange('description', e.target.value)}
-              placeholder="Enter branch store description"
+              placeholder={`Enter branch ${isRestaurant ? 'restaurant' : 'store'} description`}
               rows={3}
             />
           </div>
@@ -637,7 +653,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
                 id="address"
                 value={formData.address}
                 onChange={e => handleInputChange('address', e.target.value)}
-                placeholder="Enter branch store address"
+                placeholder={`Enter branch ${isRestaurant ? 'restaurant' : 'store'} address`}
               />
             </div>
           </div>
@@ -727,8 +743,8 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
           {/* Status */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium">Branch Store Status</h3>
-              <p className="text-sm text-muted-foreground">Enable or disable the branch store</p>
+              <h3 className="text-sm font-medium">Branch {isRestaurant ? 'Restaurant' : 'Store'} Status</h3>
+              <p className="text-sm text-muted-foreground">Enable or disable the branch {isRestaurant ? 'restaurant' : 'store'}</p>
             </div>
             <Switch
               checked={formData.is_active}
@@ -740,14 +756,14 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createShopMutation.isPending || categoriesLoading}>
+            <Button type="submit" disabled={createShopMutation.isPending || (!isRestaurant && categoriesLoading)}>
               {createShopMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating Branch...
                 </>
               ) : (
-                'Create Branch Store'
+                `Create Branch ${isRestaurant ? 'Restaurant' : 'Store'}`
               )}
             </Button>
           </DialogFooter>

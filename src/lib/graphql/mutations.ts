@@ -729,6 +729,7 @@ export const ADD_RESTAURANT = `
     $profile: String = ""
     $tin: String = ""
     $ussd: String = ""
+    $relatedTo: String = ""
   ) {
     insert_Restaurants(
       objects: {
@@ -743,6 +744,7 @@ export const ADD_RESTAURANT = `
         profile: $profile
         tin: $tin
         ussd: $ussd
+        relatedTo: $relatedTo
         verified: true
       }
     ) {

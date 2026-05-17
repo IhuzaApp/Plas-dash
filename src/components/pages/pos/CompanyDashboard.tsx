@@ -27,6 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useBranchShops } from '@/hooks/useBranchShops';
+import { useSystemConfig } from '@/hooks/useSystemConfig';
 
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { usePrivilege } from '@/hooks/usePrivilege';
@@ -45,7 +46,11 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  AreaChart,
+  Area,
+  Legend,
 } from 'recharts';
+import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 
 interface StorePerformance {
   id: string;
@@ -65,17 +70,94 @@ const CompanyDashboard = () => {
   const { orgEmployee } = useCurrentOrgEmployee();
   const { hasAction } = usePrivilege();
   const { session } = useAuth();
+  const { color } = useThemeColor();
+  const { data: systemConfig } = useSystemConfig();
+  const currency = systemConfig?.currency || 'RWF';
   const {
     branchShops,
     isLoading: branchLoading,
     error: branchError,
     totalRevenue,
+    monthlyRevenue,
     totalOrders,
+    monthlyOrders,
+    todaySalesTotal,
     averagePerformance,
   } = useBranchShops();
 
   // State for Add Branch Dialog
   const [isAddBranchDialogOpen, setIsAddBranchDialogOpen] = useState(false);
+  const [salesTimeframe, setSalesTimeframe] = useState<'year' | 'month' | 'week' | 'day'>('month');
+
+  const getWeekString = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const startDate = new Date(d.getFullYear(), 0, 1);
+    const days = Math.floor((d.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+    const weekNumber = Math.ceil((days + startDate.getDay() + 1) / 7);
+    return `${d.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`;
+  };
+
+  const salesTrendData = useMemo(() => {
+    const timeframesMap: Record<string, Record<string, number>> = {};
+
+    (branchShops || []).forEach((shop, index) => {
+      const displayName = shop.name || `Store ${index + 1}`;
+      const orders = shop.Orders || [];
+
+      orders.forEach((order: any) => {
+        if (session?.restaurant_id) {
+          if (order.status === 'pending' || order.status === 'PENDING') return;
+        } else {
+          if (
+            order.status === 'accepted' ||
+            order.status === 'shopping' ||
+            order.status === 'pending' ||
+            order.status === 'PENDING'
+          ) return;
+        }
+
+        const dateStr = order.created_at || order.created_on;
+        if (!dateStr) return;
+        const itemDate = dateStr.split('T')[0];
+        const itemMonth = itemDate.substring(0, 7);
+        const itemYear = itemDate.substring(0, 4);
+        const total = parseFloat(order.total) || 0;
+
+        let timeKey = itemMonth;
+        if (salesTimeframe === 'year') timeKey = itemYear;
+        else if (salesTimeframe === 'day') timeKey = itemDate;
+        else if (salesTimeframe === 'week') timeKey = getWeekString(itemDate);
+
+        if (!timeframesMap[timeKey]) {
+          timeframesMap[timeKey] = {};
+        }
+
+        timeframesMap[timeKey][displayName] = (timeframesMap[timeKey][displayName] || 0) + total;
+      });
+    });
+
+    return Object.keys(timeframesMap).sort().map((tf) => {
+      const entry: any = { name: tf };
+      (branchShops || []).forEach((shop, index) => {
+        const displayName = shop.name || `Store ${index + 1}`;
+        entry[displayName] = timeframesMap[tf][displayName] || 0;
+      });
+      return entry;
+    });
+  }, [branchShops, salesTimeframe, session?.restaurant_id]);
+
+  const chartColors = useMemo(() => [
+    color.primary,
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    '#ec4899',
+    '#8b5cf6',
+    '#3b82f6',
+    '#10b981',
+  ], [color.primary]);
 
   // Transform branch shops to store performance format
   const storePerformance: StorePerformance[] =
@@ -83,7 +165,7 @@ const CompanyDashboard = () => {
       id: shop.id,
       name: shop.name,
       location: shop.address,
-      revenue: shop.totalRevenue || 0,
+      revenue: shop.monthlyRevenue || 0,
       target: 50000, // Mock target for now
       performance: shop.performance || 0,
       trend: shop.trend || 'neutral',
@@ -94,7 +176,7 @@ const CompanyDashboard = () => {
     })) || [];
 
   const totalTarget = storePerformance.reduce((sum, store) => sum + store.target, 0);
-  const overallPerformance = totalTarget > 0 ? (totalRevenue / totalTarget) * 100 : 0;
+  const overallPerformance = totalTarget > 0 ? (monthlyRevenue / totalTarget) * 100 : 0;
 
   // Use Memo to compute Inventory Stats and Top Selling Products
   const { topProducts, totalInStock } = useMemo(() => {
@@ -286,10 +368,10 @@ const CompanyDashboard = () => {
   return (
     <AdminLayout>
       <PageHeader
-        title={`${session?.shop_id ? 'Branch Stores Dashboard' : 'Company Admin Dashboard'}`}
+        title={`${(session?.shop_id || session?.restaurant_id) ? (session?.restaurant_id ? 'Branch Restaurants Dashboard' : 'Branch Stores Dashboard') : 'Company Admin Dashboard'}`}
         description={
-          session?.shop_id
-            ? 'Overview of your branch stores and performance metrics'
+          (session?.shop_id || session?.restaurant_id)
+            ? `Overview of your branch ${session?.restaurant_id ? 'restaurants' : 'stores'} and performance metrics`
             : 'Overview of all stores and company-wide metrics'
         }
         icon={<LayoutDashboard className="h-6 w-6" />}
@@ -297,31 +379,29 @@ const CompanyDashboard = () => {
           hasAction('shops', 'add_shops') && (
             <Button onClick={() => setIsAddBranchDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Branch Store
+              Add Branch {session?.restaurant_id ? 'Restaurant' : 'Store'}
             </Button>
           )
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
               Total Monthly Revenue
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
-            <div className="flex items-center mt-1">
+            <div className="text-2xl font-bold">{currency} {monthlyRevenue.toLocaleString()}</div>
+            <div className="flex items-center mt-1 truncate">
               {overallPerformance > 100 ? (
                 <div className="text-xs text-green-500 flex items-center">
-                  <TrendingUp className="h-3 w-3 mr-1" /> {(overallPerformance - 100).toFixed(1)}%
-                  above target
+                  <TrendingUp className="h-3 w-3 mr-1 flex-shrink-0" /> {(overallPerformance - 100).toFixed(1)}% above target
                 </div>
               ) : (
                 <div className="text-xs text-red-500 flex items-center">
-                  <TrendingDown className="h-3 w-3 mr-1" /> {(100 - overallPerformance).toFixed(1)}%
-                  below target
+                  <TrendingDown className="h-3 w-3 mr-1 flex-shrink-0" /> {(100 - overallPerformance).toFixed(1)}% below target
                 </div>
               )}
             </div>
@@ -330,55 +410,63 @@ const CompanyDashboard = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Branch Stores
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
+              Branch {session?.restaurant_id ? 'Restaurants' : 'Stores'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{branchShops.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {branchShops.length === 1 ? 'Branch store' : 'Branch stores'} active
+            <div className="text-2xl font-bold">{Math.max(0, branchShops.length - 1)}</div>
+            <p className="text-xs text-muted-foreground mt-1 truncate">
+              {Math.max(0, branchShops.length - 1)} active branches
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
               Total Orders
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalOrders}</div>
-            <p className="text-xs text-muted-foreground mt-1">Across all branches</p>
+            <p className="text-xs text-muted-foreground mt-1 truncate">Across all locations</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
               Staff Logins (30 Days)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeInLast30Days || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1 truncate">
               Active out of {totalStaff || 0} total staff
             </p>
           </CardContent>
         </Card>
+      </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              In-Stock Items
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalInStock}</div>
-            <p className="text-xs text-muted-foreground mt-1">Items with quantity &gt; 0</p>
-          </CardContent>
-        </Card>
+      {/* Dynamic Today's Sales per Shop / Branch */}
+      <h3 className="text-lg font-medium mb-3">Today&apos;s Sales per Location</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {branchShops.map((shop, index) => (
+          <Card key={shop.id || index}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground truncate" title={shop.name}>
+                {shop.name} {index === 0 ? '(Main Location)' : '(Branch)'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{currency} {(shop.todaySales || 0).toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground mt-1 truncate" title={shop.address || 'Main Location'}>
+                {shop.address || 'Main Location'}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Tabs defaultValue="stores">
@@ -390,6 +478,72 @@ const CompanyDashboard = () => {
         </TabsList>
 
         <TabsContent value="stores">
+          {/* Company-Wide Sales Trend Card */}
+          <Card className="mb-6">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle>Sales Trend per Location Comparison</CardTitle>
+                <CardDescription>Compare sales performance across main location and branches ({salesTimeframe})</CardDescription>
+              </div>
+              <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-lg border">
+                {(['year', 'month', 'week', 'day'] as const).map(tf => (
+                  <Button
+                    key={tf}
+                    variant={salesTimeframe === tf ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSalesTimeframe(tf)}
+                    className={`text-xs h-7 px-2.5 capitalize ${salesTimeframe === tf ? 'shadow-sm' : ''}`}
+                  >
+                    {tf}
+                  </Button>
+                ))}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={salesTrendData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <defs>
+                      {branchShops.map((shop, index) => {
+                        const c = chartColors[index % chartColors.length];
+                        return (
+                          <linearGradient key={shop.id || index} id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={c} stopOpacity={0.4} />
+                            <stop offset="95%" stopColor={c} stopOpacity={0} />
+                          </linearGradient>
+                        );
+                      })}
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend verticalAlign="top" height={36} />
+                    {branchShops.map((shop, index) => {
+                      const displayName = shop.name || `Store ${index + 1}`;
+                      const c = chartColors[index % chartColors.length];
+                      return (
+                        <Area
+                          key={shop.id || index}
+                          type="monotone"
+                          dataKey={displayName}
+                          stroke={c}
+                          strokeWidth={2}
+                          fillOpacity={1}
+                          fill={`url(#gradient-${index})`}
+                          name={displayName}
+                        />
+                      );
+                    })}
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -488,7 +642,7 @@ const CompanyDashboard = () => {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            ${store.revenue.toLocaleString()}
+                            {currency} {store.revenue.toLocaleString()}
                           </TableCell>
                           <TableCell className="text-right">{store.totalOrders}</TableCell>
                           <TableCell className="text-right">
@@ -812,7 +966,8 @@ const CompanyDashboard = () => {
       <AddBranchShopDialog
         isOpen={isAddBranchDialogOpen}
         onClose={() => setIsAddBranchDialogOpen(false)}
-        parentShopName=""
+        parentShopName={session?.restaurant_name || session?.shop_name || branchShops[0]?.name || ''}
+        isRestaurant={!!session?.restaurant_id}
       />
     </AdminLayout>
   );
