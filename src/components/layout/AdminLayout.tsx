@@ -12,14 +12,27 @@ import ProtectedShopRoute from '@/components/auth/ProtectedShopRoute';
 interface AdminLayoutProps {
   children: React.ReactNode;
   isLoading?: boolean;
+  kioskMode?: boolean;
 }
 
-const AdminLayout = ({ children, isLoading }: AdminLayoutProps) => {
+const AdminLayout = ({ children, isLoading, kioskMode = false }: AdminLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  if (kioskMode) {
+    return (
+      <div className="min-h-screen flex w-full bg-background min-h-0">
+        <LoadingProvider>
+          <main className="flex-1 overflow-auto min-h-0 bg-background w-full">
+            {isLoading ? <PageSkeleton /> : <ProtectedShopRoute>{children}</ProtectedShopRoute>}
+          </main>
+        </LoadingProvider>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex w-full bg-background">

@@ -70,9 +70,15 @@ export function usePrivilege() {
       'shoppers',
     ];
 
-    return majorModules.every(module =>
-      hasPrivilege(session.privileges, module, undefined, session.role)
-    );
+    return majorModules.every(module => {
+      if (module === 'shops') {
+        return (
+          hasPrivilege(session.privileges, 'shops', undefined, session.role) ||
+          hasPrivilege(session.privileges, 'restaurants', undefined, session.role)
+        );
+      }
+      return hasPrivilege(session.privileges, module, undefined, session.role);
+    });
   };
 
   return {

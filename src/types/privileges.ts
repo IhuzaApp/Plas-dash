@@ -315,6 +315,7 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     access_reels: false,
     access_logistics: false,
     access_pets: false,
+    access_restaurants: false,
   },
   referrals: {
     access: false,

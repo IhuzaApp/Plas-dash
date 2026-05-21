@@ -39,12 +39,12 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
     return <>{children}</>;
   }
 
-  // Determine if user has a shop assigned at all
-  const hasAssignedShop = !!session?.shop_id;
+  // Determine if user has a shop or restaurant assigned at all
+  const hasAssignedBusiness = !!session?.shop_id || !!session?.restaurant_id;
 
-  // If not logged into a shop, show shop selection ONLY IF they have an assigned shop.
+  // If not logged into a shop/restaurant, show selection ONLY IF they have an assigned business.
   // Unassigned users (like global admins) bypass this check.
-  if (!isLoggedIntoShop && hasAssignedShop) {
+  if (!isLoggedIntoShop && hasAssignedBusiness) {
     if (fallback) {
       return <>{fallback}</>;
     }
@@ -56,9 +56,11 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
               <Store className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Shop Authentication Required</CardTitle>
+            <CardTitle className="text-2xl">
+              {session?.restaurant_id ? 'Restaurant' : 'Shop'} Authentication Required
+            </CardTitle>
             <CardDescription>
-              Select an assigned shop and authenticate with your 2FA code to proceed.
+              Select an assigned {session?.restaurant_id ? 'restaurant' : 'shop'} and authenticate with your 2FA code to proceed.
             </CardDescription>
           </CardHeader>
           <CardContent>

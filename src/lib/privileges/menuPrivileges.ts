@@ -25,6 +25,7 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   Products: { module: 'products', isProjectUser: true },
   'Company Dashboard': { module: 'company_dashboard', isOrgEmployeeOnly: true },
   'Shop Dashboard': { module: 'shop_dashboard' },
+  'Restaurant Dashboard': { module: 'shop_dashboard' },
   Checkout: { module: 'checkout' },
   Inventory: { module: 'inventory' },
   Transactions: { module: 'transactions' },

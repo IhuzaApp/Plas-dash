@@ -105,6 +105,75 @@ const GET_ORDERS = gql`
   }
 `;
 
+// Restaurant: fetches restaurant orders using the specific fields requested by the user
+const GET_RESTAURANT_ORDERS = gql`
+  query GetRestaurantOrders($where: restaurant_orders_bool_exp = {}) {
+    restaurant_orders(where: $where, order_by: { created_at: desc }) {
+      OrderID
+      assigned_at
+      combined_order_id
+      created_at
+      delivery_address_id
+      delivery_fee
+      delivery_notes
+      delivery_photo_url
+      delivery_time
+      discount
+      found
+      id
+      pin
+      restaurant_id
+      shopper_id
+      status
+      total
+      updated_at
+      user_id
+      voucher_code
+      orderedBy {
+        email
+        name
+        phone
+      }
+      restaurant_order_items {
+        created_at
+        dish_id
+        id
+        order_id
+        price
+        quantity
+        restaurant_dishes {
+          SKU
+          created_at
+          discount
+          dish_id
+          id
+          image
+          is_active
+          preparingTime
+          price
+          product_id
+          promo
+          promo_type
+          promotion_id
+          quantity
+          restaurant_id
+          updated_at
+          dishes {
+            category
+            created_at
+            description
+            id
+            image
+            ingredients
+            name
+            update_at
+          }
+        }
+      }
+    }
+  }
+`;
+
 export async function GET(req: Request) {
   const context = await getUserContext(req);
 
@@ -117,6 +186,109 @@ export async function GET(req: Request) {
       throw new Error('Hasura client is not initialized');
     }
 
+    // Check if the user is a restaurant employee, and route accordingly
+    if (!context.isProjectUser && context.restaurant_id) {
+      const where = { restaurant_id: { _eq: context.restaurant_id } };
+      
+      const data = await hasuraClient.request<{
+        restaurant_orders: Array<{
+          id: string;
+          OrderID: string | number | null;
+          user_id: string;
+          status: string;
+          created_at: string;
+          updated_at: string | null;
+          total: string;
+          delivery_fee: string;
+          restaurant_id: string;
+          shopper_id: string | null;
+          delivery_time: string | null;
+          delivery_notes: string | null;
+          pin: string | null;
+          discount?: string | null;
+          found?: boolean | null;
+          delivery_address_id?: string | null;
+          combined_order_id?: string | null;
+          assigned_at?: string | null;
+          delivery_photo_url?: string | null;
+          voucher_code?: string | null;
+          orderedBy: {
+            name: string;
+            email: string;
+            phone: string;
+          } | null;
+          restaurant_order_items: Array<{
+            id: string;
+            quantity: number;
+            price: string;
+            dish_id: string;
+            created_at?: string;
+            order_id?: string;
+            restaurant_dishes?: {
+              SKU?: string;
+              created_at?: string;
+              discount?: string;
+              dish_id?: string;
+              id: string;
+              is_active?: boolean;
+              product_id?: string;
+              price?: string;
+              preparingTime?: number;
+              promo?: string;
+              promo_type?: string;
+              quantity?: number;
+              restaurant_id?: string;
+              updated_at?: string;
+              dishes?: {
+                category?: string;
+                created_at?: string;
+                description?: string;
+                id: string;
+                image?: string;
+                ingredients?: string;
+                name?: string;
+                update_at?: string;
+              } | null;
+            } | null;
+          }>;
+        }>;
+      }>(GET_RESTAURANT_ORDERS, { where });
+
+      const orders = (data.restaurant_orders || []).map(o => {
+        const itemsCount = o.restaurant_order_items?.length ?? 0;
+        const unitsCount = o.restaurant_order_items?.reduce((s, i) => s + (Number(i.quantity) || 0), 0) ?? 0;
+        return {
+          id: o.id,
+          OrderID: o.OrderID != null ? String(o.OrderID) : o.id,
+          type: 'restaurant' as const,
+          status: o.status,
+          total: o.total,
+          created_at: o.created_at,
+          updated_at: o.updated_at ?? o.created_at,
+          user_id: o.user_id,
+          delivery_fee: o.delivery_fee,
+          delivery_time: o.delivery_time,
+          delivery_notes: o.delivery_notes,
+          pin: o.pin,
+          discount: o.discount ?? undefined,
+          found: o.found ?? undefined,
+          delivery_address_id: o.delivery_address_id ?? undefined,
+          combined_order_id: o.combined_order_id ?? undefined,
+          assigned_at: o.assigned_at ?? undefined,
+          delivery_photo_url: o.delivery_photo_url ?? undefined,
+          voucher_code: o.voucher_code ?? undefined,
+          orderedBy: o.orderedBy,
+          restaurant_order_items: o.restaurant_order_items,
+          itemsCount,
+          unitsCount,
+          shopper_id: o.shopper_id,
+        };
+      });
+
+      return NextResponse.json({ orders });
+    }
+
+    // Default: Retail shop orders query
     let where: any = {};
     if (!context.isProjectUser && context.shop_id) {
       where = { shop_id: { _eq: context.shop_id } };

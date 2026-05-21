@@ -159,7 +159,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
     window.location.reload();
   };
 
-  const showShopGuardedItems = isLoggedIntoShop || !session?.shop_id;
+  const showShopGuardedItems = isLoggedIntoShop || (!session?.shop_id && !session?.restaurant_id);
 
   const menuItems = [
     {
@@ -215,7 +215,11 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
         ...(isLoggedIntoShop
           ? [
               // Shop-specific POS items when logged into a shop
-              { title: 'Shop Dashboard', icon: Store, path: '/pos/shop-dashboard' },
+              {
+                title: shopSession?.isRestaurant ? 'Restaurant Dashboard' : 'Shop Dashboard',
+                icon: Store,
+                path: '/pos/shop-dashboard',
+              },
               { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
               { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
               { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
@@ -384,8 +388,8 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
     return pagesHasAccess || moduleHasAccess || pathname?.startsWith('/tax');
   })();
 
-  // Hide the sidebar entirely until the user logs into their assigned shop
-  if (!isLoggedIntoShop && session?.shop_id && !session?.isProjectUser) {
+  // Hide the sidebar entirely until the user logs into their assigned shop or restaurant
+  if (!isLoggedIntoShop && (session?.shop_id || session?.restaurant_id) && !session?.isProjectUser) {
     return null;
   }
 
