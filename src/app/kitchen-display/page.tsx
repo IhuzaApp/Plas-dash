@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useShopSession } from '@/contexts/ShopSessionContext';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import {
   Clock,
   Volume2,
@@ -48,6 +52,24 @@ export default function KitchenDisplay() {
   const [restaurantName, setRestaurantName] = useState('Dreams Restaurant');
   const prevTicketsLength = useRef(0);
 
+  const { session } = useAuth();
+  const { shopSession } = useShopSession();
+
+  // Fallback to localStorage if hooks don't have it yet
+  let localRestId = '';
+  try {
+    const storedShop = localStorage.getItem('currentShopSession');
+    if (storedShop) {
+      const parsed = JSON.parse(storedShop);
+      localRestId = parsed?.restaurant_id || parsed?.shopId || '';
+    }
+  } catch (e) {}
+
+  const restaurantId =
+    session?.restaurant_id ||
+    (shopSession?.isRestaurant ? shopSession?.shopId : null) ||
+    localRestId;
+
   // Update clock every second
   useEffect(() => {
     const updateTime = () => {
@@ -76,42 +98,41 @@ export default function KitchenDisplay() {
     }
   }, []);
 
-  // Load and sync from localStorage
+  // Subscribe to Firebase Firestore for kitchen tickets
   useEffect(() => {
-    const loadTickets = () => {
+    if (!restaurantId) return;
+
+    const ticketsCollectionRef = collection(db, 'kitchen_tickets', restaurantId, 'tickets');
+    const unsubscribe = onSnapshot(ticketsCollectionRef, (snapshot) => {
       try {
-        const stored = localStorage.getItem('restaurantKitchenOrders');
-        if (stored) {
-          const parsed = JSON.parse(stored) as KitchenTicket[];
-          setTickets(parsed);
+        const ticketsList: KitchenTicket[] = [];
+        snapshot.forEach((docSnap) => {
+          ticketsList.push(docSnap.data() as KitchenTicket);
+        });
+        // Sort by timestamp ascending (oldest first)
+        ticketsList.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-          // Audio notification if new ticket arrives
-          if (soundEnabled && parsed.length > prevTicketsLength.current) {
-            playAlertSound();
-          }
-          prevTicketsLength.current = parsed.length;
+        // Audio notification if new ticket arrives
+        if (soundEnabled && ticketsList.length > prevTicketsLength.current) {
+          playAlertSound();
         }
+        prevTicketsLength.current = ticketsList.length;
+
+        setTickets(ticketsList);
+        localStorage.setItem('restaurantKitchenOrders', JSON.stringify(ticketsList));
+        // Trigger local storage sync event
+        window.dispatchEvent(new Event('storage'));
       } catch (e) {
-        console.error('Failed to load kitchen tickets:', e);
+        console.error('Failed to parse kitchen tickets:', e);
       }
-    };
-
-    loadTickets();
-
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'restaurantKitchenOrders') {
-        loadTickets();
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    // Poll localstorage every 2 seconds for active tab changes
-    const pollInterval = setInterval(loadTickets, 2000);
+    }, (error) => {
+      console.error('Error subscribing to kitchen tickets in KDS:', error);
+    });
 
     return () => {
-      window.removeEventListener('storage', handleStorage);
-      clearInterval(pollInterval);
+      unsubscribe();
     };
-  }, [soundEnabled]);
+  }, [restaurantId, soundEnabled]);
 
   // Audio alert using Web Audio API
   const playAlertSound = () => {
@@ -123,12 +144,12 @@ export default function KitchenDisplay() {
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
 
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-      gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      oscillator.type = 'triangle'; // Triangle is louder and buzzier like a kitchen timer/buzzer
+      oscillator.frequency.setValueAtTime(987.77, audioCtx.currentTime); // High B5 note
+      gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime); // Louder volume
 
       oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.15);
+      oscillator.stop(audioCtx.currentTime + 0.25);
 
       // Play second beep shortly after
       setTimeout(() => {
@@ -136,21 +157,27 @@ export default function KitchenDisplay() {
         const gain2 = audioCtx.createGain();
         osc2.connect(gain2);
         gain2.connect(audioCtx.destination);
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(1109.73, audioCtx.currentTime); // C#6 note
-        gain2.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(987.77, audioCtx.currentTime);
+        gain2.gain.setValueAtTime(0.8, audioCtx.currentTime);
         osc2.start();
-        osc2.stop(audioCtx.currentTime + 0.2);
-      }, 180);
+        osc2.stop(audioCtx.currentTime + 0.25);
+      }, 150);
     } catch (err) {
       console.log('Audio contextual beep blocked or not supported');
     }
   };
 
-  const updateTicketStatus = (ticketId: string, newStatus: 'Pending' | 'Preparing' | 'Ready' | 'Served') => {
-    const updated = tickets.map(t => (t.id === ticketId ? { ...t, status: newStatus } : t));
-    setTickets(updated);
-    localStorage.setItem('restaurantKitchenOrders', JSON.stringify(updated));
+  const updateTicketStatus = async (ticketId: string, newStatus: 'Pending' | 'Preparing' | 'Ready' | 'Served') => {
+    if (restaurantId) {
+      try {
+        await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticketId), {
+          status: newStatus,
+        });
+      } catch (err) {
+        console.error('Error updating status in Firestore:', err);
+      }
+    }
 
     // Clear active table occupancy if served
     const ticket = tickets.find(t => t.id === ticketId);
@@ -170,9 +197,6 @@ export default function KitchenDisplay() {
         console.error(e);
       }
     }
-
-    // Trigger localstorage sync event manually
-    window.dispatchEvent(new Event('storage'));
   };
 
   const serveTicket = (ticket: KitchenTicket) => {
@@ -184,15 +208,16 @@ export default function KitchenDisplay() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            const stored = localStorage.getItem('restaurantKitchenOrders');
-            if (stored) {
-              const parsed = JSON.parse(stored) as KitchenTicket[];
-              const restored = parsed.map(t => t.id === ticket.id ? { ...t, status: 'Ready' as const } : t);
-              setTickets(restored);
-              localStorage.setItem('restaurantKitchenOrders', JSON.stringify(restored));
-              window.dispatchEvent(new Event('storage'));
-              toast({ title: 'Restored', description: `Order #${ticket.id} moved back to active list.` });
+          onClick={async () => {
+            if (restaurantId) {
+              try {
+                await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticket.id), {
+                  status: 'Ready',
+                });
+                toast({ title: 'Restored', description: `Order #${ticket.id} moved back to active list.` });
+              } catch (err) {
+                console.error('Error restoring ticket status:', err);
+              }
             }
           }}
           className="border-primary text-primary hover:bg-primary/10 text-xs font-bold"

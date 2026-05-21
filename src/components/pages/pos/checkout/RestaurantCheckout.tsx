@@ -7,6 +7,8 @@ import { useRestaurantById, useSystemConfig, useRestaurantOrders, useAssignOrder
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, doc, setDoc, updateDoc } from 'firebase/firestore';
 import {
   Utensils,
   Search,
@@ -365,46 +367,65 @@ const RestaurantCheckout = () => {
   const [activeTables, setActiveTables] = useState<ActiveTable[]>([]);
 
   // Load state from localStorage on mount
+  // Subscribe to Firestore for real-time kitchen tickets sync, and load tables from localStorage
   useEffect(() => {
-    const loadState = () => {
-      try {
-        const storedTickets = localStorage.getItem('restaurantKitchenOrders');
-        if (storedTickets) {
-          setKitchenTickets(JSON.parse(storedTickets));
-        }
-
-        const storedTables = localStorage.getItem('restaurantActiveTables');
-        if (storedTables) {
-          setActiveTables(JSON.parse(storedTables));
-        } else {
-          // Initialize active tables as empty array
-          setActiveTables([]);
-          localStorage.setItem('restaurantActiveTables', JSON.stringify([]));
-        }
-      } catch (e) {
-        console.error('Error loading restaurant states:', e);
+    // 1. Load active tables from localStorage
+    try {
+      const storedTables = localStorage.getItem('restaurantActiveTables');
+      if (storedTables) {
+        setActiveTables(JSON.parse(storedTables));
+      } else {
+        setActiveTables([]);
+        localStorage.setItem('restaurantActiveTables', JSON.stringify([]));
       }
-    };
-    loadState();
+    } catch (e) {
+      console.error('Error loading tables:', e);
+    }
 
-    // Listen to localStorage changes for real-time synchronization
-    const handleStorageChange = (e: any) => {
+    if (!restaurantId) return;
+
+    // 2. Subscribe to kitchen tickets for this restaurant
+    const ticketsCollectionRef = collection(db, 'kitchen_tickets', restaurantId, 'tickets');
+    const unsubscribe = onSnapshot(ticketsCollectionRef, (snapshot) => {
       try {
-        const storedOrders = localStorage.getItem('restaurantKitchenOrders');
-        if (storedOrders) {
-          setKitchenTickets(JSON.parse(storedOrders));
-        }
-        const storedTables = localStorage.getItem('restaurantActiveTables');
-        if (storedTables) {
-          setActiveTables(JSON.parse(storedTables));
-        }
+        const ticketsList: KitchenTicket[] = [];
+        snapshot.forEach((docSnap) => {
+          ticketsList.push(docSnap.data() as KitchenTicket);
+        });
+        // Sort by timestamp ascending (oldest first)
+        ticketsList.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        
+        setKitchenTickets(ticketsList);
+        localStorage.setItem('restaurantKitchenOrders', JSON.stringify(ticketsList));
+        // Trigger local storage sync event
+        window.dispatchEvent(new Event('storage'));
       } catch (err) {
-        console.error('Error syncing localStorage states:', err);
+        console.error('Error handling tickets snapshot:', err);
+      }
+    }, (error) => {
+      console.error('Error subscribing to kitchen tickets:', error);
+    });
+
+    // 3. Listen to local storage changes for active tables updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'restaurantActiveTables') {
+        try {
+          const storedTables = localStorage.getItem('restaurantActiveTables');
+          if (storedTables) {
+            setActiveTables(JSON.parse(storedTables));
+          }
+        } catch (err) {
+          console.error('Error syncing tables:', err);
+        }
       }
     };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [restaurantId]);
 
   // Update customer display cart data in localStorage
   useEffect(() => {
@@ -739,8 +760,10 @@ const RestaurantCheckout = () => {
         type: 'restaurant',
       });
 
-      // Create kitchen ticket
-      const tokenNumber = `TK-${Math.floor(Math.random() * 900 + 100)}`;
+      // Use order.OrderID or order.id as the token number
+      const orderTokenId = order.OrderID != null ? String(order.OrderID) : order.id;
+      const tokenNumber = `TK-${orderTokenId}`;
+      
       const itemsMapped = order.restaurant_order_items?.map((item: any) => ({
         id: item.id || item.dish_id,
         name: item.restaurant_dishes?.dishes?.name || 'Unknown Dish',
@@ -760,15 +783,13 @@ const RestaurantCheckout = () => {
         status: 'Pending',
       };
 
-      const updatedTickets = [...kitchenTickets, newTicket];
-      setKitchenTickets(updatedTickets);
-      localStorage.setItem('restaurantKitchenOrders', JSON.stringify(updatedTickets));
+      // Save ticket to Firestore
+      if (restaurantId) {
+        await setDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', newTicket.id), newTicket);
+      }
 
       // Trigger print popup for the Kitchen Ticket (KOT)
       printKitchenTicket(newTicket);
-
-      // Trigger storage sync event
-      window.dispatchEvent(new Event('storage'));
 
       toast({
         title: 'Order Accepted',
@@ -818,14 +839,11 @@ const RestaurantCheckout = () => {
         tokenNumber
       );
 
-      // Remove from kitchenTickets in localStorage (mark as Served/Collected)
-      if (matchedTicket) {
-        const updated = kitchenTickets.map(t =>
-          t.id === matchedTicket.id ? { ...t, status: 'Served' as const } : t
-        );
-        setKitchenTickets(updated);
-        localStorage.setItem('restaurantKitchenOrders', JSON.stringify(updated));
-        window.dispatchEvent(new Event('storage'));
+      // Remove from kitchenTickets in KDS/Firestore (mark as Served/Collected)
+      if (matchedTicket && restaurantId) {
+        await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', matchedTicket.id), {
+          status: 'Served',
+        });
       }
 
       toast({
@@ -843,7 +861,7 @@ const RestaurantCheckout = () => {
   };
 
   // Place Order flow (sends ticket to kitchen)
-  const placeKitchenOrder = () => {
+  const placeKitchenOrder = async () => {
     if (cart.length === 0) {
       toast({ title: 'Cart Empty', description: 'Please add items to place order.' });
       return;
@@ -876,10 +894,14 @@ const RestaurantCheckout = () => {
       status: 'Pending',
     };
 
-    // Save ticket to kitchenOrders
-    const updatedTickets = [...kitchenTickets, newTicket];
-    setKitchenTickets(updatedTickets);
-    localStorage.setItem('restaurantKitchenOrders', JSON.stringify(updatedTickets));
+    // Save ticket to Firestore
+    if (restaurantId) {
+      try {
+        await setDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', newTicket.id), newTicket);
+      } catch (err) {
+        console.error('Error saving ticket to Firestore:', err);
+      }
+    }
 
     // Update active table state if table was selected
     if (selectedOrderType === 'Table' || selectedOrderType === 'Dine In') {
@@ -1039,15 +1061,13 @@ const RestaurantCheckout = () => {
     setActiveTables(updatedTables);
     localStorage.setItem('restaurantActiveTables', JSON.stringify(updatedTables));
 
-    // Update KDS ticket associated with this order to Served
-    const updatedTickets = kitchenTickets.map(ticket => {
-      if (ticket.orderId === activeCheckoutTable.orderId) {
-        return { ...ticket, status: 'Served' as const };
-      }
-      return ticket;
-    });
-    setKitchenTickets(updatedTickets);
-    localStorage.setItem('restaurantKitchenOrders', JSON.stringify(updatedTickets));
+    // Update KDS ticket associated with this order to Served in Firestore
+    const ticketToServe = kitchenTickets.find(t => t.orderId === activeCheckoutTable.orderId);
+    if (ticketToServe && restaurantId) {
+      updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticketToServe.id), {
+        status: 'Served'
+      }).catch(err => console.error('Error serving ticket on table payment:', err));
+    }
 
     toast({
       title: 'Payment Completed',
@@ -2029,12 +2049,16 @@ const RestaurantCheckout = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => {
-                        const updated = kitchenTickets.map(t =>
-                          t.id === ticket.id ? { ...t, status: 'Preparing' as const } : t
-                        );
-                        setKitchenTickets(updated);
-                        localStorage.setItem('restaurantKitchenOrders', JSON.stringify(updated));
+                      onClick={async () => {
+                        if (restaurantId) {
+                          try {
+                            await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticket.id), {
+                              status: 'Preparing',
+                            });
+                          } catch (err) {
+                            console.error('Error preparing ticket:', err);
+                          }
+                        }
                       }}
                       disabled={ticket.status !== 'Pending'}
                       className="text-[10px] font-extrabold border-slate-200"
@@ -2044,12 +2068,16 @@ const RestaurantCheckout = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => {
-                        const updated = kitchenTickets.map(t =>
-                          t.id === ticket.id ? { ...t, status: 'Ready' as const } : t
-                        );
-                        setKitchenTickets(updated);
-                        localStorage.setItem('restaurantKitchenOrders', JSON.stringify(updated));
+                      onClick={async () => {
+                        if (restaurantId) {
+                          try {
+                            await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticket.id), {
+                              status: 'Ready',
+                            });
+                          } catch (err) {
+                            console.error('Error marking ticket ready:', err);
+                          }
+                        }
                       }}
                       disabled={ticket.status !== 'Preparing'}
                       className="text-[10px] font-extrabold border-slate-200"
@@ -2059,11 +2087,15 @@ const RestaurantCheckout = () => {
                     <Button
                       size="sm"
                       onClick={async () => {
-                        const updated = kitchenTickets.map(t =>
-                          t.id === ticket.id ? { ...t, status: 'Served' as const } : t
-                        );
-                        setKitchenTickets(updated);
-                        localStorage.setItem('restaurantKitchenOrders', JSON.stringify(updated));
+                        if (restaurantId) {
+                          try {
+                            await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticket.id), {
+                              status: 'Served',
+                            });
+                          } catch (err) {
+                            console.error('Error serving ticket:', err);
+                          }
+                        }
 
                         // Clear table occupied state
                         if (ticket.tableId) {
