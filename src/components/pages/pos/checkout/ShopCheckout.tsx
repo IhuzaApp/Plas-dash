@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PageHeader from '@/components/layout/PageHeader';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -44,7 +44,12 @@ interface PendingCheckout {
   total: number;
 }
 
-const ShopCheckout = () => {
+interface ShopCheckoutProps {
+  activeEmployee: any;
+  onLock: () => void;
+}
+
+const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) => {
   const { color } = useThemeColor();
   const { toast } = useToast();
   const { session } = useAuth();
@@ -289,6 +294,26 @@ const ShopCheckout = () => {
         title="POS Checkout"
         description="Process customer purchases quickly and efficiently"
         icon={<ShoppingBag className="h-6 w-6" />}
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="text-right mr-2 hidden md:block">
+              <div className="flex items-center gap-1.5 justify-end">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Session Active</p>
+              </div>
+              <p className="text-sm font-black text-slate-800">{activeEmployee?.fullnames || activeEmployee?.name}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onLock}
+              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold text-xs"
+            >
+              <Lock className="mr-1.5 h-3.5 w-3.5" />
+              Lock Terminal
+            </Button>
+          </div>
+        }
       />
 
       <Tabs defaultValue="current" value={activeTab} onValueChange={setActiveTab}>
@@ -314,10 +339,10 @@ const ShopCheckout = () => {
               onSaveToPending={saveToPending}
               shopId={session?.shop_id || undefined}
               currentUser={{
-                id: session?.id || '',
-                name: session?.fullName || 'Unknown User',
-                email: session?.email || 'N/A',
-                role: 'Cashier', // Default role for POS users
+                id: activeEmployee?.id || session?.id || '',
+                name: activeEmployee?.fullnames || session?.fullName || 'Unknown User',
+                email: activeEmployee?.email || session?.email || 'N/A',
+                role: activeEmployee?.Position || activeEmployee?.roleType || 'Cashier',
               }}
               shopDetails={{
                 name: shop?.name || 'Shop Name',

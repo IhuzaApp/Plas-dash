@@ -23,6 +23,7 @@ const ORG_EMPLOYEES_QUERY = gql`
       online
       password
       phone
+      pos_pin
       restaurant_id
       roleType
       shop_id

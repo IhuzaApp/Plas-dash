@@ -6,6 +6,7 @@ import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useRestaurantById, useSystemConfig, useRestaurantOrders, useAssignOrder } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { apiGet } from '@/lib/api';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -45,13 +46,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-// Mock waiters for servant performance tracking with default security PINs
-const WAITERS = [
-  { id: 'w1', name: 'Waiter Jean', pin: '1234' },
-  { id: 'w2', name: 'Waiter Marie', pin: '1111' },
-  { id: 'w3', name: 'Waiter David', pin: '2222' },
-  { id: 'w4', name: 'Waiter Alice', pin: '3333' },
-];
+
 
 // Mock tables for dine-in tracking
 const TABLES = Array.from({ length: 12 }, (_, i) => ({
@@ -231,7 +226,12 @@ interface ActiveTable {
   timestamp?: string;
 }
 
-const RestaurantCheckout = () => {
+interface RestaurantCheckoutProps {
+  activeEmployee: any;
+  onLock: () => void;
+}
+
+const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee, onLock }) => {
   const { color } = useThemeColor();
   const { toast } = useToast();
   const { session } = useAuth();
@@ -247,9 +247,7 @@ const RestaurantCheckout = () => {
   );
   const restaurant = restaurantData?.Restaurants_by_pk;
 
-  // Waiter Active Session State (Security)
-  const [activeServer, setActiveServer] = useState<{ name: string } | null>(null);
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(120);
+  const activeServer = activeEmployee;
 
   // Active top tab (matches header)
   const [activeTab, setActiveTab] = useState<'POS' | 'Orders' | 'Kitchen' | 'Table' | 'Delivery'>('POS');
@@ -270,72 +268,12 @@ const RestaurantCheckout = () => {
     });
   }, [incomingOrders, restaurantId]);
 
-  const loginServer = (name: string) => {
-    const sessionObj = { name, loggedInAt: new Date().toISOString() };
-    setActiveServer(sessionObj);
-    setSelectedWaiter(name);
-    localStorage.setItem('posActiveServer', JSON.stringify(sessionObj));
-    setSecondsRemaining(120);
-    toast({
-      title: 'Access Granted',
-      description: `Welcome back, ${name}. Session active.`,
-    });
-  };
-
-  const logoutServer = () => {
-    setActiveServer(null);
-    localStorage.removeItem('posActiveServer');
-    toast({
-      title: 'Terminal Locked',
-      description: 'Server session logged out for security.',
-    });
-  };
-
-  // Initialize active server from localstorage on mount
+  // Set default selected waiter to the logged in employee name
   useEffect(() => {
-    try {
-      const savedServer = localStorage.getItem('posActiveServer');
-      if (savedServer) {
-        const parsed = JSON.parse(savedServer);
-        setActiveServer(parsed);
-        setSelectedWaiter(parsed.name);
-      }
-    } catch (e) {
-      console.error('Error loading active server session:', e);
+    if (activeEmployee?.fullnames) {
+      setSelectedWaiter(activeEmployee.fullnames);
     }
-  }, []);
-
-  // Activity timeout listener (2 mins / 120s)
-  useEffect(() => {
-    if (!activeServer) return;
-
-    const timer = setInterval(() => {
-      setSecondsRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          logoutServer();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    const resetTimer = () => {
-      setSecondsRemaining(120);
-    };
-
-    const events = ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'];
-    events.forEach(event => {
-      window.addEventListener(event, resetTimer);
-    });
-
-    return () => {
-      clearInterval(timer);
-      events.forEach(event => {
-        window.removeEventListener(event, resetTimer);
-      });
-    };
-  }, [activeServer]);
+  }, [activeEmployee]);
 
   // Food filter states
   const [selectedCategory, setSelectedCategory] = useState<string>('All Menus');
@@ -348,7 +286,27 @@ const RestaurantCheckout = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedOrderType, setSelectedOrderType] = useState<'Dine In' | 'Take Away' | 'Delivery' | 'Table'>('Dine In');
   const [selectedTable, setSelectedTable] = useState<string>('');
-  const [selectedWaiter, setSelectedWaiter] = useState<string>(WAITERS[0].name);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [selectedWaiter, setSelectedWaiter] = useState<string>('');
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      if (!restaurantId) return;
+      try {
+        const data = await apiGet<{ orgEmployees: any[] }>('/api/queries/org-employees');
+        const allEmployees = data.orgEmployees || [];
+        const filtered = allEmployees.filter(emp => 
+          emp.shop_id === restaurantId || 
+          emp.restaurant_id === restaurantId
+        );
+        setEmployees(filtered);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchEmployees();
+  }, [restaurantId]);
+
   const [customerName, setCustomerName] = useState('Walk-in Customer');
 
   // Dynamic custom tables
@@ -1103,165 +1061,7 @@ const RestaurantCheckout = () => {
     });
   };
 
-  // Lock Screen States
-  const [selectedLockWaiter, setSelectedLockWaiter] = useState<any>(null);
-  const [pinCode, setPinCode] = useState<string>('');
-  const [pinError, setPinError] = useState<string | null>(null);
 
-  const handleKeypadPress = (val: string) => {
-    setPinError(null);
-    if (val === 'C') {
-      setPinCode('');
-    } else if (val === 'B') {
-      setPinCode(prev => prev.slice(0, -1));
-    } else {
-      if (pinCode.length < 4) {
-        const nextPin = pinCode + val;
-        setPinCode(nextPin);
-        
-        if (nextPin.length === 4 && selectedLockWaiter) {
-          if (selectedLockWaiter.pin === nextPin) {
-            loginServer(selectedLockWaiter.name);
-            setSelectedLockWaiter(null);
-            setPinCode('');
-          } else {
-            setPinError('Incorrect PIN code. Try again.');
-            setPinCode('');
-          }
-        }
-      }
-    }
-  };
-
-  const renderLockScreen = () => {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-955 text-white font-sans overflow-hidden bg-slate-950">
-        {/* Decorative light blobs in background */}
-        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-primary/10 blur-[120px]"></div>
-        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-orange-600/10 blur-[120px]"></div>
-
-        <div className="w-full max-w-md p-8 bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col items-center">
-          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mb-6 shadow-lg shadow-primary/25 animate-pulse">
-            <Utensils className="h-7 w-7 text-white" />
-          </div>
-
-          <h2 className="text-2xl font-black tracking-tight text-center">
-            TERMINAL <span className="text-primary">LOCKED</span>
-          </h2>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1 mb-8">
-            Identify yourself to unlock the POS
-          </p>
-
-          {!selectedLockWaiter ? (
-            <div className="w-full space-y-4">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block text-center mb-2">
-                Select Your Name
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                {WAITERS.map(waiter => {
-                  const initials = waiter.name.split(' ').map(n => n[0]).join('');
-                  return (
-                    <button
-                      key={waiter.id}
-                      onClick={() => {
-                        setSelectedLockWaiter(waiter);
-                        setPinCode('');
-                        setPinError(null);
-                      }}
-                      className="flex flex-col items-center p-4 rounded-2xl bg-slate-800/40 border border-slate-800 hover:border-primary/50 hover:bg-slate-800/80 transition-all duration-200 group"
-                    >
-                      <div className="w-12 h-12 rounded-full bg-slate-700/50 border border-slate-600 flex items-center justify-center text-sm font-black text-slate-300 group-hover:bg-primary group-hover:border-primary group-hover:text-primary-foreground transition-all duration-200 mb-2">
-                        {initials}
-                      </div>
-                      <span className="font-extrabold text-sm text-slate-200 group-hover:text-white">
-                        {waiter.name}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="w-full flex flex-col items-center">
-              <button
-                onClick={() => setSelectedLockWaiter(null)}
-                className="text-xs font-bold text-slate-400 hover:text-white mb-4 flex items-center gap-1.5 self-start"
-              >
-                ← Back to profile list
-              </button>
-
-              <div className="text-center mb-6">
-                <span className="text-xs text-slate-400 font-bold uppercase">Enter Security PIN for</span>
-                <h3 className="text-lg font-black text-primary mt-0.5">{selectedLockWaiter.name}</h3>
-              </div>
-
-              {/* PIN Code Circles */}
-              <div className="flex gap-4 mb-6">
-                {Array.from({ length: 4 }).map((_, idx) => {
-                  const isActive = pinCode.length > idx;
-                  return (
-                    <div
-                      key={idx}
-                      className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
-                        isActive
-                          ? 'bg-primary border-primary scale-110 shadow-md shadow-primary/35'
-                          : 'border-slate-700 bg-transparent'
-                      }`}
-                    ></div>
-                  );
-                })}
-              </div>
-
-              {pinError && (
-                <div className="text-xs font-bold text-red-400 mb-4 text-center">
-                  {pinError}
-                </div>
-              )}
-
-              {/* Keypad */}
-              <div className="grid grid-cols-3 gap-3 w-full max-w-[280px]">
-                {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(val => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => handleKeypadPress(val)}
-                    className="h-14 rounded-2xl bg-slate-800/40 border border-slate-800 text-lg font-black hover:bg-slate-800 hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-white"
-                  >
-                    {val}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => handleKeypadPress('C')}
-                  className="h-14 rounded-2xl bg-red-600/10 border border-red-500/20 text-red-400 text-sm font-black hover:bg-red-600/20 transition-colors flex items-center justify-center active:scale-95"
-                >
-                  Clear
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleKeypadPress('0')}
-                  className="h-14 rounded-2xl bg-slate-800/40 border border-slate-800 text-lg font-black hover:bg-slate-800 hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-white"
-                >
-                  0
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleKeypadPress('B')}
-                  className="h-14 rounded-2xl bg-slate-800/40 border border-slate-800 text-base font-black hover:bg-slate-800 hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-white"
-                >
-                  Del
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  if (!activeServer) {
-    return renderLockScreen();
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
@@ -1340,14 +1140,14 @@ const RestaurantCheckout = () => {
             <div className="text-right">
               <div className="flex items-center gap-1.5 justify-end">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lock in {secondsRemaining}s</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Session Active</p>
               </div>
-              <p className="text-sm font-black text-slate-800">{activeServer?.name || selectedWaiter}</p>
+              <p className="text-sm font-black text-slate-800">{activeServer?.fullnames || selectedWaiter}</p>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={logoutServer}
+              onClick={onLock}
               className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold text-xs"
             >
               Lock Terminal
@@ -1564,9 +1364,9 @@ const RestaurantCheckout = () => {
                   value={selectedWaiter}
                   onChange={e => setSelectedWaiter(e.target.value)}
                 >
-                  {WAITERS.map(w => (
-                    <option key={w.id} value={w.name}>
-                      {w.name}
+                  {employees.map(w => (
+                    <option key={w.id} value={w.fullnames}>
+                      {w.fullnames} ({w.Position || w.roleType || 'Staff'})
                     </option>
                   ))}
                 </select>
