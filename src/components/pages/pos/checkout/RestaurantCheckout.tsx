@@ -6,7 +6,7 @@ import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useRestaurantById, useSystemConfig, useRestaurantOrders, useAssignOrder } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -746,6 +746,27 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
         await setDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', newTicket.id), newTicket);
       }
 
+      // Persist to database (kitchenQueue table)
+      try {
+        await apiPost('/api/mutations/kitchen-queue', {
+          dishesOrdered: itemsMapped.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+          restaurant_id: restaurantId,
+          restaurant_order_id: order.id,
+          status: 'Pending',
+          table_number: '',
+          token_number: tokenNumber,
+          updated_at: new Date().toISOString(),
+          waiter_id: null,
+        });
+      } catch (dbErr) {
+        console.error('[Kitchen Queue] Failed to save online order ticket to DB:', dbErr);
+      }
+
       // Trigger print popup for the Kitchen Ticket (KOT)
       printKitchenTicket(newTicket);
 
@@ -859,6 +880,30 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       } catch (err) {
         console.error('Error saving ticket to Firestore:', err);
       }
+    }
+
+    // Persist to database (kitchenQueue table)
+    try {
+      await apiPost('/api/mutations/kitchen-queue', {
+        dishesOrdered: cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          note: item.note || '',
+        })),
+        restaurant_id: restaurantId,
+        restaurant_order_id: null,
+        status: 'Pending',
+        table_number: (selectedOrderType === 'Table' || selectedOrderType === 'Dine In')
+          ? (activeTables.find(t => t.id === tableId)?.name || tableId || '')
+          : '',
+        token_number: tokenNumber,
+        updated_at: new Date().toISOString(),
+        waiter_id: activeEmployee?.id || null,
+      });
+    } catch (dbErr) {
+      console.error('[Kitchen Queue] Failed to save POS ticket to DB:', dbErr);
     }
 
     // Update active table state if table was selected
