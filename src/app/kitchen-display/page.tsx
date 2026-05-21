@@ -3,20 +3,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useShopSession } from '@/contexts/ShopSessionContext';
+import { useRestaurantById, useShopById } from '@/hooks/useHasuraApi';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import {
   Clock,
   Volume2,
   VolumeX,
-  Coffee,
   Check,
   UtensilsCrossed,
-  Tv,
+  Store,
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import ThemeToggle from '@/components/layout/ThemeToggle';
 import { useToast } from '@/hooks/use-toast';
@@ -49,26 +47,43 @@ export default function KitchenDisplay() {
   const [tickets, setTickets] = useState<KitchenTicket[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentTime, setCurrentTime] = useState('');
-  const [restaurantName, setRestaurantName] = useState('Dreams Restaurant');
   const prevTicketsLength = useRef(0);
 
   const { session } = useAuth();
   const { shopSession } = useShopSession();
 
-  // Fallback to localStorage if hooks don't have it yet
-  let localRestId = '';
+  // Resolve restaurant vs shop ID from session
+  const isRestaurant = !!(session?.restaurant_id || shopSession?.isRestaurant);
+
+  let localId = '';
   try {
     const storedShop = localStorage.getItem('currentShopSession');
     if (storedShop) {
       const parsed = JSON.parse(storedShop);
-      localRestId = parsed?.restaurant_id || parsed?.shopId || '';
+      localId = parsed?.restaurant_id || parsed?.shopId || '';
     }
   } catch (e) {}
 
   const restaurantId =
     session?.restaurant_id ||
     (shopSession?.isRestaurant ? shopSession?.shopId : null) ||
-    localRestId;
+    (isRestaurant ? localId : null);
+
+  const shopId =
+    session?.shop_id ||
+    (!shopSession?.isRestaurant ? shopSession?.shopId : null) ||
+    (!isRestaurant ? localId : null);
+
+  // Fetch business data
+  const { data: restaurantData } = useRestaurantById(restaurantId || '');
+  const { data: shopData } = useShopById(shopId || '');
+
+  const restaurant = restaurantData?.Restaurants_by_pk;
+  const shop = shopData?.Shops_by_pk;
+
+  // Resolve display name and logo from whichever branch is active
+  const businessName = restaurant?.name || shop?.name || session?.shop_name || session?.restaurant_name || '';
+  const businessLogo = restaurant?.logo || shop?.logo || shop?.image || null;
 
   // Update clock every second
   useEffect(() => {
@@ -83,36 +98,20 @@ export default function KitchenDisplay() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch restaurant details
+  // Subscribe to Firebase Firestore for real-time kitchen tickets
+  const activeId = restaurantId || shopId;
   useEffect(() => {
-    try {
-      const storedShop = localStorage.getItem('currentShopSession');
-      if (storedShop) {
-        const parsed = JSON.parse(storedShop);
-        if (parsed?.shop?.name) {
-          setRestaurantName(parsed.shop.name);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+    if (!activeId) return;
 
-  // Subscribe to Firebase Firestore for kitchen tickets
-  useEffect(() => {
-    if (!restaurantId) return;
-
-    const ticketsCollectionRef = collection(db, 'kitchen_tickets', restaurantId, 'tickets');
+    const ticketsCollectionRef = collection(db, 'kitchen_tickets', activeId, 'tickets');
     const unsubscribe = onSnapshot(ticketsCollectionRef, (snapshot) => {
       try {
         const ticketsList: KitchenTicket[] = [];
         snapshot.forEach((docSnap) => {
           ticketsList.push(docSnap.data() as KitchenTicket);
         });
-        // Sort by timestamp ascending (oldest first)
         ticketsList.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-        // Audio notification if new ticket arrives
         if (soundEnabled && ticketsList.length > prevTicketsLength.current) {
           playAlertSound();
         }
@@ -120,7 +119,6 @@ export default function KitchenDisplay() {
 
         setTickets(ticketsList);
         localStorage.setItem('restaurantKitchenOrders', JSON.stringify(ticketsList));
-        // Trigger local storage sync event
         window.dispatchEvent(new Event('storage'));
       } catch (e) {
         console.error('Failed to parse kitchen tickets:', e);
@@ -129,49 +127,35 @@ export default function KitchenDisplay() {
       console.error('Error subscribing to kitchen tickets in KDS:', error);
     });
 
-    return () => {
-      unsubscribe();
-    };
-  }, [restaurantId, soundEnabled]);
+    return () => unsubscribe();
+  }, [activeId, soundEnabled]);
 
-  // Audio alert using Web Audio API
+  // Audio alert — loud double-beep using Web Audio API
   const playAlertSound = () => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-
-      oscillator.type = 'triangle'; // Triangle is louder and buzzier like a kitchen timer/buzzer
-      oscillator.frequency.setValueAtTime(987.77, audioCtx.currentTime); // High B5 note
-      gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime); // Louder volume
-
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.25);
-
-      // Play second beep shortly after
-      setTimeout(() => {
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.type = 'triangle';
-        osc2.frequency.setValueAtTime(987.77, audioCtx.currentTime);
-        gain2.gain.setValueAtTime(0.8, audioCtx.currentTime);
-        osc2.start();
-        osc2.stop(audioCtx.currentTime + 0.25);
-      }, 150);
+      const beep = (delay = 0) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(987.77, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(0.8, audioCtx.currentTime + delay);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.25);
+      };
+      beep(0);
+      beep(0.3);
     } catch (err) {
-      console.log('Audio contextual beep blocked or not supported');
+      console.log('Audio alert blocked or not supported');
     }
   };
 
   const updateTicketStatus = async (ticketId: string, newStatus: 'Pending' | 'Preparing' | 'Ready' | 'Served') => {
-    if (restaurantId) {
+    if (activeId) {
       try {
-        await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticketId), {
+        await updateDoc(doc(db, 'kitchen_tickets', activeId, 'tickets', ticketId), {
           status: newStatus,
         });
       } catch (err) {
@@ -179,22 +163,21 @@ export default function KitchenDisplay() {
       }
     }
 
-    // Clear active table occupancy if served
-    const ticket = tickets.find(t => t.id === ticketId);
-    if (newStatus === 'Served' && ticket?.tableId) {
-      try {
-        const tablesStored = localStorage.getItem('restaurantActiveTables');
-        if (tablesStored) {
-          const tables = JSON.parse(tablesStored);
-          const updatedTables = tables.map((t: any) =>
-            t.id === ticket.tableId
-              ? { ...t, status: 'empty', cart: [] }
-              : t
-          );
-          localStorage.setItem('restaurantActiveTables', JSON.stringify(updatedTables));
+    if (newStatus === 'Served') {
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (ticket?.tableId) {
+        try {
+          const tablesStored = localStorage.getItem('restaurantActiveTables');
+          if (tablesStored) {
+            const tables = JSON.parse(tablesStored);
+            const updatedTables = tables.map((t: any) =>
+              t.id === ticket.tableId ? { ...t, status: 'empty', cart: [] } : t
+            );
+            localStorage.setItem('restaurantActiveTables', JSON.stringify(updatedTables));
+          }
+        } catch (e) {
+          console.error(e);
         }
-      } catch (e) {
-        console.error(e);
       }
     }
   };
@@ -203,18 +186,18 @@ export default function KitchenDisplay() {
     updateTicketStatus(ticket.id, 'Served');
     toast({
       title: 'Order Completed',
-      description: `Order #${ticket.id} has been served.`,
+      description: `Token ${ticket.id} has been served.`,
       action: (
         <Button
           variant="outline"
           size="sm"
           onClick={async () => {
-            if (restaurantId) {
+            if (activeId) {
               try {
-                await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticket.id), {
+                await updateDoc(doc(db, 'kitchen_tickets', activeId, 'tickets', ticket.id), {
                   status: 'Ready',
                 });
-                toast({ title: 'Restored', description: `Order #${ticket.id} moved back to active list.` });
+                toast({ title: 'Restored', description: `Token ${ticket.id} moved back to active queue.` });
               } catch (err) {
                 console.error('Error restoring ticket status:', err);
               }
@@ -233,99 +216,148 @@ export default function KitchenDisplay() {
   return (
     <div className="flex flex-col h-screen bg-background text-foreground select-none transition-colors duration-300">
       {/* Header Bar */}
-      <header className="flex justify-between items-center bg-card border-b border-border px-6 py-4">
+      <header className="flex justify-between items-center bg-card border-b border-border px-6 py-3 shrink-0">
+        {/* Left: Logo + Name */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-extrabold shadow-md">
-            <Tv className="h-5 w-5 text-primary-foreground" />
-          </div>
+          {businessLogo ? (
+            <img
+              src={businessLogo}
+              alt={businessName}
+              className="w-11 h-11 rounded-xl object-cover border border-border shadow-sm"
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center shadow-md shrink-0">
+              <Store className="h-5 w-5 text-primary-foreground" />
+            </div>
+          )}
           <div>
-            <h1 className="text-xl font-black tracking-tight flex items-center gap-2 uppercase">
-              {restaurantName} <span className="text-primary font-bold">DISPLAY BOARD</span>
+            <h1 className="text-lg font-black tracking-tight uppercase leading-tight">
+              {businessName || 'Kitchen Display'}
+              <span className="text-primary font-bold ml-2">BOARD</span>
             </h1>
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
-              Live Order Queue
+              Live Order Queue • {isRestaurant ? 'Restaurant POS' : 'Retail POS'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        {/* Right: Controls */}
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className={`border-border text-xs font-bold ${soundEnabled ? 'bg-primary/5 text-primary' : 'text-muted-foreground'}`}
+            className={`border-border text-xs font-bold gap-1.5 ${soundEnabled ? 'bg-primary/5 text-primary border-primary/30' : 'text-muted-foreground'}`}
           >
-            Beep Alert: {soundEnabled ? 'ON' : 'OFF'}
+            {soundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+            Beep: {soundEnabled ? 'ON' : 'OFF'}
           </Button>
 
           <ThemeToggle />
 
-          <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-xl border border-border/50">
+          <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-xl border border-border/50">
             <Clock className="h-4 w-4 text-primary" />
-            <span className="font-mono text-base font-bold text-foreground">{currentTime}</span>
+            <span className="font-mono text-sm font-bold text-foreground">{currentTime}</span>
           </div>
         </div>
       </header>
 
-      {/* Main Grid View */}
-      <div className="flex-1 p-8 min-h-0">
-        <ScrollArea className="h-full">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 pr-3">
-            {activeTickets.map(t => {
-              const isReady = t.status === 'Ready';
-              return (
+      {/* Ticket Grid */}
+      <div className="flex-1 p-6 min-h-0 overflow-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {activeTickets.map(t => {
+            const isReady = t.status === 'Ready';
+
+            const tableLabel = t.tableId
+              ? t.tableId.startsWith('tbl-') ? `Table #${t.tableId.replace('tbl-', '')}` : t.tableId
+              : null;
+
+            return (
+              <div
+                key={t.id}
+                onClick={() => serveTicket(t)}
+                className={`group relative rounded-2xl border-2 overflow-hidden cursor-pointer transition-all duration-300 shadow-sm hover:shadow-lg active:scale-[0.97] ${
+                  isReady
+                    ? 'border-primary bg-primary/5 hover:bg-primary/10'
+                    : 'border-border bg-card hover:border-primary/40'
+                }`}
+              >
+                {/* Left accent bar */}
                 <div
-                  key={t.id}
-                  onClick={() => serveTicket(t)}
-                  className={`relative overflow-hidden aspect-square rounded-3xl border-2 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 group shadow-sm ${
-                    isReady
-                      ? 'bg-primary border-primary text-primary-foreground hover:scale-[1.03] hover:shadow-lg'
-                      : 'bg-muted/40 border-border text-foreground hover:border-primary/50'
-                  }`}
-                >
-                  {isReady && (
-                    <span className="absolute top-4 right-4 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-                    </span>
-                  )}
-                  
-                  <span className={`text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter ${isReady ? 'text-primary-foreground' : 'text-foreground'}`}>
-                    #{t.id}
+                  className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl bg-primary"
+                  style={{ opacity: isReady ? 1 : 0.35 }}
+                />
+
+                {/* Ready pulse dot */}
+                {isReady && (
+                  <span className="absolute top-3 right-3 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
                   </span>
-                  
-                  <span className={`text-[10px] font-bold uppercase mt-2.5 tracking-wider px-2 py-0.5 rounded-full ${
-                    isReady 
-                      ? 'bg-white/20 text-white' 
-                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-500'
+                )}
+
+                {/* Card body — single row */}
+                <div className="flex items-center gap-4 px-5 pl-6 py-4">
+                  {/* Token Number */}
+                  <span className={`text-4xl font-black tracking-tighter leading-none tabular-nums shrink-0 ${
+                    isReady ? 'text-primary' : 'text-foreground'
                   }`}>
-                    {isReady ? 'Ready' : 'Preparing'}
+                    {t.id}
                   </span>
 
-                  {t.tableId && (
-                    <span className={`text-[9px] font-semibold mt-1 opacity-70 ${isReady ? 'text-white' : 'text-muted-foreground'}`}>
-                      Table {t.tableId.replace('tbl-', '')}
-                    </span>
-                  )}
+                  {/* Divider */}
+                  <div className={`h-10 w-px shrink-0 ${isReady ? 'bg-primary/30' : 'bg-border'}`} />
 
-                  {/* Tap to Settle/Dismiss Hover Overlay */}
-                  <div className="absolute inset-0 bg-emerald-500 flex flex-col items-center justify-center text-white font-black text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <Check className="h-8 w-8 mb-1.5 animate-bounce text-white" />
-                    TAP TO SERVE
+                  {/* Right info column */}
+                  <div className="flex flex-col gap-1 min-w-0">
+                    {/* Status badge */}
+                    <span className={`inline-flex items-center gap-1 self-start text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                      isReady
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-primary/15 text-primary'
+                    }`}>
+                      {isReady ? '✓ READY' : '⏳ PREPARING'}
+                    </span>
+
+                    {/* Order type + Table */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">
+                        {t.orderType}
+                      </span>
+                      {tableLabel && (
+                        <>
+                          <span className="text-muted-foreground/40 text-[10px]">•</span>
+                          <span className="text-[10px] font-bold text-muted-foreground">{tableLabel}</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Waiter if set */}
+                    {t.waiterName && t.waiterName !== 'Online Order' && (
+                      <span className="text-[9px] text-muted-foreground/60 truncate">
+                        {t.waiterName}
+                      </span>
+                    )}
                   </div>
                 </div>
-              );
-            })}
 
-            {activeTickets.length === 0 && (
-              <div className="col-span-full flex flex-col items-center justify-center py-32 text-center text-muted-foreground">
-                <UtensilsCrossed className="h-16 w-16 text-muted-foreground/30 mb-4 animate-pulse" />
-                <h2 className="text-lg font-bold">All Orders Served</h2>
-                <p className="text-xs mt-1 text-muted-foreground/80">Waiting for new orders from the POS checkout...</p>
+                {/* Hover serve overlay */}
+                <div className="absolute inset-0 bg-emerald-500/95 flex items-center justify-center text-white font-black text-sm gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-2xl">
+                  <Check className="h-5 w-5" />
+                  TAP TO SERVE
+                </div>
               </div>
-            )}
-          </div>
-        </ScrollArea>
+            );
+          })}
+
+          {activeTickets.length === 0 && (
+            <div className="col-span-full flex flex-col items-center justify-center py-32 text-center text-muted-foreground">
+              <UtensilsCrossed className="h-16 w-16 text-muted-foreground/30 mb-4 animate-pulse" />
+              <h2 className="text-lg font-bold">All Orders Served</h2>
+              <p className="text-xs mt-1 text-muted-foreground/80">Waiting for new orders from the POS terminal...</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

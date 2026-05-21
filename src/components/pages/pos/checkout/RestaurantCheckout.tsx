@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiGet, apiPost } from '@/lib/api';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import {
   Utensils,
   Search,
@@ -741,10 +741,6 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
         status: 'Pending',
       };
 
-      // Save ticket to Firestore
-      if (restaurantId) {
-        await setDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', newTicket.id), newTicket);
-      }
 
       // Persist to database (kitchenQueue table)
       try {
@@ -873,14 +869,6 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       status: 'Pending',
     };
 
-    // Save ticket to Firestore
-    if (restaurantId) {
-      try {
-        await setDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', newTicket.id), newTicket);
-      } catch (err) {
-        console.error('Error saving ticket to Firestore:', err);
-      }
-    }
 
     // Persist to database (kitchenQueue table)
     try {
@@ -1110,16 +1098,24 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
-      {/* Dreams POS Header Nav */}
+      {/* Restaurant POS Header Nav */}
       <header className="sticky top-0 z-40 bg-white border-b shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-white font-bold shadow-md">
-              <Utensils className="h-5 w-5" />
-            </div>
+            {restaurant?.logo ? (
+              <img
+                src={restaurant.logo}
+                alt={restaurant.name}
+                className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm"
+              />
+            ) : (
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-white font-bold shadow-md shrink-0">
+                <Utensils className="h-5 w-5" />
+              </div>
+            )}
             <div>
               <h1 className="font-extrabold text-lg tracking-tight text-slate-800 flex items-center gap-1.5">
-                Dreams <span className="text-primary">POS</span>
+                {restaurant?.name || 'Restaurant'} <span className="text-primary">POS</span>
                 <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full font-bold">Restaurant</span>
               </h1>
             </div>

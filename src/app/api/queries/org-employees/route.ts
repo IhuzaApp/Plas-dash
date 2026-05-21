@@ -24,6 +24,7 @@ const ORG_EMPLOYEES_QUERY = gql`
       password
       phone
       pos_pin
+      profile_image
       restaurant_id
       roleType
       shop_id
