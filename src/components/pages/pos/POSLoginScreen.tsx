@@ -70,10 +70,10 @@ function EmployeeAvatar({ emp, size = 'md' }: { emp: Employee; size?: 'sm' | 'md
     <img
       src={emp.profile_image}
       alt={emp.fullnames}
-      className={`${sizeClass} rounded-full object-cover border-2 border-slate-600`}
+      className={`${sizeClass} rounded-full object-cover border-2 border-border dark:border-slate-600`}
     />
   ) : (
-    <div className={`${sizeClass} rounded-full bg-slate-700/60 border-2 border-slate-600 flex items-center justify-center font-black text-slate-300`}>
+    <div className={`${sizeClass} rounded-full bg-muted dark:bg-slate-700/60 border-2 border-border dark:border-slate-600 flex items-center justify-center font-black text-muted-foreground dark:text-slate-300`}>
       {initials}
     </div>
   );
@@ -275,7 +275,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
   const EmployeeGridCard = ({ emp, isRecent = false }: { emp: Employee; isRecent?: boolean }) => (
     <button
       onClick={() => handleSelectEmployee(emp)}
-      className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-slate-800/40 border border-slate-800/60 hover:border-primary/50 hover:bg-slate-800/80 transition-all duration-200 group w-full"
+      className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-muted/40 dark:bg-slate-800/40 border border-border dark:border-slate-800/60 hover:border-primary/50 hover:bg-accent dark:hover:bg-slate-800/80 transition-all duration-200 group w-full"
     >
       <div className="relative">
         <EmployeeAvatar emp={emp} size="md" />
@@ -289,8 +289,8 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
         )}
       </div>
       <div className="min-w-0 w-full text-center">
-        <p className="text-xs font-extrabold text-slate-200 group-hover:text-white truncate leading-tight">{emp.fullnames}</p>
-        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-slate-400 truncate mt-0.5">
+        <p className="text-xs font-extrabold text-foreground dark:text-slate-200 group-hover:text-primary dark:group-hover:text-white truncate leading-tight">{emp.fullnames}</p>
+        <p className="text-[9px] text-muted-foreground dark:text-slate-500 font-bold uppercase tracking-wider group-hover:text-foreground dark:group-hover:text-slate-400 truncate mt-0.5">
           {emp.Position || emp.roleType || 'Staff'}
         </p>
       </div>
@@ -301,7 +301,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
   const EmployeeRowCard = ({ emp }: { emp: Employee }) => (
     <button
       onClick={() => handleSelectEmployee(emp)}
-      className="flex items-center gap-3 w-full p-3 rounded-2xl bg-slate-800/40 border border-slate-800/60 hover:border-primary/50 hover:bg-slate-800/80 transition-all duration-200 group text-left"
+      className="flex items-center gap-3 w-full p-3 rounded-2xl bg-muted/40 dark:bg-slate-800/40 border border-border dark:border-slate-800/60 hover:border-primary/50 hover:bg-accent dark:hover:bg-slate-800/80 transition-all duration-200 group text-left"
     >
       <div className="relative shrink-0">
         <EmployeeAvatar emp={emp} size="sm" />
@@ -310,8 +310,8 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-extrabold text-slate-200 group-hover:text-white truncate">{emp.fullnames}</p>
-        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-slate-400 truncate">
+        <p className="text-sm font-extrabold text-foreground dark:text-slate-200 group-hover:text-primary dark:group-hover:text-white truncate">{emp.fullnames}</p>
+        <p className="text-[9px] text-muted-foreground dark:text-slate-500 font-bold uppercase tracking-wider group-hover:text-foreground dark:group-hover:text-slate-400 truncate">
           {emp.Position || emp.roleType || 'Staff'}
         </p>
       </div>
@@ -320,12 +320,12 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
 
   /* ─────────── Render ─────────── */
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 text-white font-sans overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground dark:bg-slate-950 dark:text-white font-sans overflow-hidden">
       {/* Theme-colored background blobs */}
       <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-primary/10 blur-[120px]" />
       <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[120px]" />
 
-      <div className="w-full max-w-2xl p-7 bg-slate-900/70 border border-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col items-center relative z-10">
+      <div className="w-full max-w-2xl p-7 bg-card/95 dark:bg-slate-900/70 border border-border dark:border-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col items-center relative z-10">
 
         {/* ── Business identity header ── */}
         <div className="flex flex-col items-center mb-6">
@@ -333,7 +333,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
             <img
               src={businessLogo}
               alt={businessName}
-              className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-700 shadow-lg mb-3"
+              className="w-16 h-16 rounded-2xl object-cover border-2 border-border dark:border-slate-700 shadow-lg mb-3"
             />
           ) : (
             <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-3 shadow-lg shadow-primary/25">
@@ -346,8 +346,8 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
           <h2 className="text-xl font-black tracking-tight text-center">
             {businessName || 'POS'} <span className="text-primary">TERMINAL</span>
           </h2>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-            TERMINAL <span className="text-slate-500 mx-1">•</span> LOCKED
+          <p className="text-[10px] text-muted-foreground dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+            TERMINAL <span className="text-muted-foreground/60 dark:text-slate-500 mx-1">•</span> LOCKED
           </p>
         </div>
 
@@ -355,7 +355,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-10">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-            <p className="text-sm text-slate-400 font-medium">Loading staff profiles...</p>
+            <p className="text-sm text-muted-foreground dark:text-slate-400 font-medium">Loading staff profiles...</p>
           </div>
         ) : error ? (
           <div className="text-center py-8">
@@ -378,7 +378,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
 
               if (gridEmployees.length === 0) {
                 return (
-                  <p className="text-center text-xs text-slate-500 py-4 font-bold">
+                  <p className="text-center text-xs text-muted-foreground/80 dark:text-slate-500 py-4 font-bold">
                     No active staff found for this branch.
                   </p>
                 );
@@ -387,7 +387,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
               return (
                 <div>
                   {recentSlots.length > 0 && (
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-3">
+                    <label className="text-[10px] font-black text-muted-foreground/80 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-3">
                       <Clock className="h-3 w-3" /> Select Your Profile
                     </label>
                   )}
@@ -408,13 +408,13 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
             {employees.length > 8 && (
               <div>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/80 dark:text-slate-500" />
                   <Input
                     type="text"
                     placeholder="Search more staff..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white placeholder-slate-500 pl-8 text-sm h-9"
+                    className="bg-background dark:bg-slate-800 border-border dark:border-slate-700 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder-slate-500 pl-8 text-sm h-9"
                   />
                 </div>
 
@@ -422,7 +422,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
                   <ScrollArea className="max-h-[200px] w-full mt-2">
                     <div className="space-y-1.5 pr-1">
                       {searchResults.length === 0 ? (
-                        <p className="text-center text-xs text-slate-500 py-3 font-bold">No staff matching "{searchQuery}"</p>
+                        <p className="text-center text-xs text-muted-foreground/80 dark:text-slate-500 py-3 font-bold">No staff matching "{searchQuery}"</p>
                       ) : (
                         searchResults.map(emp => <EmployeeRowCard key={emp.id} emp={emp} />)
                       )}
@@ -438,7 +438,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
           <div className="w-full flex flex-col items-center">
             <button
               onClick={handleBack}
-              className="text-xs font-bold text-slate-400 hover:text-white mb-4 flex items-center gap-1.5 self-start"
+              className="text-xs font-bold text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white mb-4 flex items-center gap-1.5 self-start"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Back
             </button>
@@ -448,8 +448,8 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
               <div className="relative">
                 <EmployeeAvatar emp={selectedEmp} size="lg" />
               </div>
-              <p className="text-base font-black text-white mt-2">{selectedEmp.fullnames}</p>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+              <p className="text-base font-black text-foreground dark:text-white mt-2">{selectedEmp.fullnames}</p>
+              <p className="text-[10px] text-muted-foreground dark:text-slate-500 font-bold uppercase tracking-wider">
                 {selectedEmp.Position || selectedEmp.roleType || 'Staff'}
               </p>
             </div>
@@ -459,23 +459,23 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
               {setupStep === 'verify_password' && (
                 <>
                   <span className="text-xs text-primary font-bold uppercase tracking-wide">Authentication Required</span>
-                  <p className="text-[10px] text-slate-400 mt-1 max-w-[260px]">Enter your account password to set up a security PIN.</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-slate-400 mt-1 max-w-[260px]">Enter your account password to set up a security PIN.</p>
                 </>
               )}
               {setupStep === 'setup_pin' && (
                 <>
                   <span className="text-xs text-primary font-bold uppercase tracking-wide">PIN Setup</span>
-                  <p className="text-[10px] text-slate-400 mt-1">Enter a new 5-digit PIN</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-slate-400 mt-1">Enter a new 5-digit PIN</p>
                 </>
               )}
               {setupStep === 'confirm_pin' && (
                 <>
                   <span className="text-xs text-primary font-bold uppercase tracking-wide">Confirm PIN</span>
-                  <p className="text-[10px] text-slate-400 mt-1">Re-enter your 5-digit PIN</p>
+                  <p className="text-[10px] text-muted-foreground dark:text-slate-400 mt-1">Re-enter your 5-digit PIN</p>
                 </>
               )}
               {setupStep === 'enter_pin' && (
-                <span className="text-xs text-slate-400 font-bold uppercase tracking-wide">Enter your 5-digit PIN</span>
+                <span className="text-xs text-muted-foreground dark:text-slate-400 font-bold uppercase tracking-wide">Enter your 5-digit PIN</span>
               )}
             </div>
 
@@ -486,7 +486,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
                   placeholder="Account Password"
                   value={authPassword}
                   onChange={e => { setAuthPassword(e.target.value); setAuthError(null); }}
-                  className="bg-slate-800 border-slate-700 text-white placeholder-slate-500 text-center"
+                  className="bg-background dark:bg-slate-800 border-border dark:border-slate-700 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder-slate-500 text-center"
                   onKeyDown={e => { if (e.key === 'Enter') verifyPasswordAndProceed(); }}
                 />
                 {authError && <p className="text-[10px] font-bold text-red-400 text-center">{authError}</p>}
@@ -507,7 +507,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
                       className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
                         pinCode.length > idx
                           ? 'bg-primary border-primary scale-110 shadow-md shadow-primary/35'
-                          : 'border-slate-700 bg-transparent'
+                          : 'border-border dark:border-slate-700 bg-transparent'
                       }`}
                     />
                   ))}
@@ -515,7 +515,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
 
                 {pinError && <div className="text-xs font-bold text-red-400 mb-3 text-center">{pinError}</div>}
                 {savingPin && (
-                  <div className="flex items-center gap-2 mb-3 text-slate-400 text-xs font-medium">
+                  <div className="flex items-center gap-2 mb-3 text-muted-foreground dark:text-slate-400 text-xs font-medium">
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" /> Saving PIN...
                   </div>
                 )}
@@ -528,7 +528,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
                       type="button"
                       onClick={() => handleKeypadPress(val)}
                       disabled={savingPin}
-                      className="h-13 rounded-2xl bg-slate-800/40 border border-slate-800 text-lg font-black hover:bg-slate-800 hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-white py-3"
+                      className="h-13 rounded-2xl bg-muted/60 dark:bg-slate-800/40 border border-border dark:border-slate-800 text-lg font-black hover:bg-accent dark:hover:bg-slate-800 hover:border-primary/50 dark:hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-foreground dark:text-white py-3"
                     >
                       {val}
                     </button>
@@ -538,11 +538,11 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
                     Clear
                   </button>
                   <button type="button" onClick={() => handleKeypadPress('0')} disabled={savingPin}
-                    className="h-13 rounded-2xl bg-slate-800/40 border border-slate-800 text-lg font-black hover:bg-slate-800 hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-white py-3">
+                    className="h-13 rounded-2xl bg-muted/60 dark:bg-slate-800/40 border border-border dark:border-slate-800 text-lg font-black hover:bg-accent dark:hover:bg-slate-800 hover:border-primary/50 dark:hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-foreground dark:text-white py-3">
                     0
                   </button>
                   <button type="button" onClick={() => handleKeypadPress('B')} disabled={savingPin}
-                    className="h-13 rounded-2xl bg-slate-800/40 border border-slate-800 text-base font-black hover:bg-slate-800 hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-white py-3">
+                    className="h-13 rounded-2xl bg-muted/60 dark:bg-slate-800/40 border border-border dark:border-slate-800 text-base font-black hover:bg-accent dark:hover:bg-slate-800 hover:border-primary/50 dark:hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-foreground dark:text-white py-3">
                     Del
                   </button>
                 </div>
