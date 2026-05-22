@@ -1080,14 +1080,6 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     setActiveTables(updatedTables);
     localStorage.setItem('restaurantActiveTables', JSON.stringify(updatedTables));
 
-    // Update KDS ticket associated with this order to Served in Firestore
-    const ticketToServe = kitchenTickets.find(t => t.orderId === activeCheckoutTable.orderId);
-    if (ticketToServe && restaurantId) {
-      updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticketToServe.id), {
-        status: 'Served'
-      }).catch(err => console.error('Error serving ticket on table payment:', err));
-    }
-
     toast({
       title: 'Payment Completed',
       description: `${activeCheckoutTable.name || 'Table'} bill paid. Receipt printed.`,
