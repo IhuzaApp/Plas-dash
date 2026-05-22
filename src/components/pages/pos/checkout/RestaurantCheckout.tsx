@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiGet, apiPost } from '@/lib/api';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
 import {
   Utensils,
   Search,
@@ -741,6 +741,18 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
         status: 'Pending',
       };
 
+      // Sync to Firebase for real-time Kitchen Display Board
+      try {
+        const ticketPayload = { ...newTicket };
+        if (ticketPayload.tableId === undefined) delete ticketPayload.tableId;
+        
+        if (restaurantId) {
+          await setDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', tokenNumber), ticketPayload);
+        }
+      } catch (err) {
+        console.error('Error syncing online order to Firebase KDS:', err);
+      }
+
 
       // Persist to database (kitchenQueue table)
       try {
@@ -868,6 +880,18 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       timestamp: new Date().toISOString(),
       status: 'Pending',
     };
+
+    // Sync to Firebase for real-time Kitchen Display Board
+    try {
+      const ticketPayload = { ...newTicket };
+      if (ticketPayload.tableId === undefined) delete ticketPayload.tableId;
+
+      if (restaurantId) {
+        await setDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', tokenNumber), ticketPayload);
+      }
+    } catch (err) {
+      console.error('Error syncing order to Firebase KDS:', err);
+    }
 
 
     // Persist to database (kitchenQueue table)

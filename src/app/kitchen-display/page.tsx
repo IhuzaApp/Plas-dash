@@ -6,6 +6,7 @@ import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useRestaurantById, useShopById } from '@/hooks/useHasuraApi';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { apiGet } from '@/lib/api';
 import {
   Clock,
   Volume2,
@@ -44,7 +45,15 @@ interface KitchenTicket {
 export default function KitchenDisplay() {
   const { color } = useThemeColor();
   const { toast } = useToast();
-  const [tickets, setTickets] = useState<KitchenTicket[]>([]);
+  const [tickets, setTickets] = useState<KitchenTicket[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('restaurantKitchenOrders');
+        if (stored) return JSON.parse(stored);
+      } catch (e) { }
+    }
+    return [];
+  });
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentTime, setCurrentTime] = useState('');
   const prevTicketsLength = useRef(0);
@@ -129,6 +138,55 @@ export default function KitchenDisplay() {
 
     return () => unsubscribe();
   }, [activeId, soundEnabled]);
+
+  // DB Fallback: Poll Postgres every 10 seconds to catch any missed tickets if Firebase is down
+  useEffect(() => {
+    if (!activeId) return;
+
+    const fetchBackup = async () => {
+      try {
+        const response = await apiGet<{ kitchenQueue: any[] }>(`/api/queries/kitchen-queue?restaurantId=${activeId}`);
+        if (response && response.kitchenQueue) {
+          const dbTickets: KitchenTicket[] = response.kitchenQueue.map(q => ({
+            id: q.token_number,
+            orderId: q.restaurant_order_id || q.token_number,
+            tableId: q.table_number || undefined,
+            orderType: q.table_number ? 'Table' : 'Take Away',
+            items: q.dishesOrdered || [],
+            waiterName: 'Waiter',
+            timestamp: q.updated_at,
+            status: q.status as any,
+          }));
+
+          setTickets(prev => {
+            const merged = [...prev];
+            let changed = false;
+
+            dbTickets.forEach(dbT => {
+              // Only merge tickets that don't exist in Firebase yet
+              if (!merged.find(t => t.id === dbT.id)) {
+                merged.push(dbT);
+                changed = true;
+              }
+            });
+
+            if (changed) {
+              merged.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+              localStorage.setItem('restaurantKitchenOrders', JSON.stringify(merged));
+              return merged;
+            }
+            return prev;
+          });
+        }
+      } catch (e) {
+        // Silently fail backup polling
+      }
+    };
+
+    fetchBackup();
+    const interval = setInterval(fetchBackup, 10000);
+    return () => clearInterval(interval);
+  }, [activeId]);
 
   // Audio alert — loud double-beep using Web Audio API
   const playAlertSound = () => {
