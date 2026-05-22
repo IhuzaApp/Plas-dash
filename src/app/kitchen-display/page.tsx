@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useShopSession } from '@/contexts/ShopSessionContext';
-import { useRestaurantById, useShopById } from '@/hooks/useHasuraApi';
+import { useRestaurantById, useShopById, useAssignOrder } from '@/hooks/useHasuraApi';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { apiGet } from '@/lib/api';
@@ -45,6 +45,7 @@ interface KitchenTicket {
 export default function KitchenDisplay() {
   const { color } = useThemeColor();
   const { toast } = useToast();
+  const assignOrder = useAssignOrder();
   const [tickets, setTickets] = useState<KitchenTicket[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -224,20 +225,19 @@ export default function KitchenDisplay() {
       }
     }
 
+    // Auto-deliver online orders since they are already paid
     if (newStatus === 'Served') {
       const ticket = tickets.find(t => t.id === ticketId);
-      if (ticket?.tableId) {
+      if (ticket?.orderType === 'Delivery' && ticket.orderId) {
         try {
-          const tablesStored = localStorage.getItem('restaurantActiveTables');
-          if (tablesStored) {
-            const tables = JSON.parse(tablesStored);
-            const updatedTables = tables.map((t: any) =>
-              t.id === ticket.tableId ? { ...t, status: 'empty', cart: [] } : t
-            );
-            localStorage.setItem('restaurantActiveTables', JSON.stringify(updatedTables));
-          }
+          await assignOrder.mutateAsync({
+            id: ticket.orderId,
+            shopper_id: null,
+            status: 'delivered',
+            type: 'restaurant',
+          });
         } catch (e) {
-          console.error(e);
+          console.error('Failed to auto-deliver online order:', e);
         }
       }
     }
