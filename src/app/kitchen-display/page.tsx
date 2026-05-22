@@ -45,15 +45,18 @@ interface KitchenTicket {
 export default function KitchenDisplay() {
   const { color } = useThemeColor();
   const { toast } = useToast();
-  const [tickets, setTickets] = useState<KitchenTicket[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('restaurantKitchenOrders');
-        if (stored) return JSON.parse(stored);
-      } catch (e) { }
-    }
-    return [];
-  });
+  const [tickets, setTickets] = useState<KitchenTicket[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    try {
+      const stored = localStorage.getItem('restaurantKitchenOrders');
+      if (stored) {
+        setTickets(JSON.parse(stored));
+      }
+    } catch (e) { }
+  }, []);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentTime, setCurrentTime] = useState('');
   const prevTicketsLength = useRef(0);
@@ -270,6 +273,10 @@ export default function KitchenDisplay() {
   };
 
   const activeTickets = tickets.filter(t => t.status !== 'Served');
+
+  if (!isMounted) {
+    return null; // Prevent hydration mismatch
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground select-none transition-colors duration-300">

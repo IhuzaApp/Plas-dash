@@ -598,13 +598,15 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       </html>
     `;
 
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('', 'PRINT', 'width=400,height=600,left=100,top=100');
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
       printWindow.onload = () => {
-        printWindow.print();
-        printWindow.close();
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 250);
       };
     }
   };
@@ -698,13 +700,15 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       </html>
     `;
 
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('', 'PRINT', 'width=400,height=600,left=100,top=100');
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
       printWindow.onload = () => {
-        printWindow.print();
-        printWindow.close();
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 250);
       };
     }
   };
