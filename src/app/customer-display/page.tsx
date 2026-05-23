@@ -245,6 +245,7 @@ export default function CustomerDisplayPage() {
           }}
           total={total}
           transactionId={'TXN-' + Date.now().toString().slice(-6)}
+          shopSsd={displayData.shopDetails?.ssd}
         />
       )}
     </>

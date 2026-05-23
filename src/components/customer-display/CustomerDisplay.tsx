@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Store, CreditCard, QrCode, Wifi, Percent, Receipt, Sparkles, ShieldCheck, Loader2 } from 'lucide-react';
+import { ShoppingCart, Store, CreditCard, QrCode, Wifi, Percent, Receipt, Sparkles, ShieldCheck, Loader2, Smartphone } from 'lucide-react';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import ThemeToggle from '@/components/layout/ThemeToggle';
@@ -321,74 +321,62 @@ export default function CustomerDisplay({
                 </div>
 
                 {/* Custom Payment Details / Instructions */}
-                {cart.length > 0 && (
+                {cart.length > 0 && paymentMethod && paymentMethod !== 'Not Selected' && (
                   <div className="space-y-4 pt-2">
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      Payment Details
-                    </h4>
-                    <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30 space-y-3 text-xs font-semibold">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Method</span>
-                        <Badge className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border-0 text-[10px] font-bold px-2 py-0.5">
-                          {paymentMethod
-                            ? paymentMethod === 'cash'
-                              ? 'Cash'
-                              : paymentMethod === 'card'
-                                ? 'Credit/Debit Card'
-                                : paymentMethod === 'momo'
-                                  ? 'Mobile Money'
-                                  : 'Not Selected'
-                            : 'Pending Selection'}
-                        </Badge>
+                    {paymentMethod === 'momo' ? (
+                      <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm text-center space-y-2">
+                        <span className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wider block">Quick Dial Code</span>
+                        <div className="font-mono text-sm font-bold tracking-wider text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 py-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                          {shopDetails?.ssd || `*182*8*1*1426640*${Math.round(total)}#`}
+                        </div>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-normal">
+                          Dial the code above to pay {formatCurrencyWithConfig(total, systemConfig)} instantly.
+                          {!shopDetails?.ssd && (
+                            <span className="block mt-1 text-[9px] text-slate-400 font-normal italic">
+                              Using standard Plasa merchant channel
+                            </span>
+                          )}
+                        </p>
                       </div>
+                    ) : (
+                      <>
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          Payment Details
+                        </h4>
+                        <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30 space-y-3 text-xs font-semibold">
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400">Method</span>
+                            <Badge className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border-0 text-[10px] font-bold px-2 py-0.5">
+                              {paymentMethod === 'cash' ? 'Cash' : 'Credit/Debit Card'}
+                            </Badge>
+                          </div>
 
-                      {paymentMethod === 'momo' && (
-                        <div className="flex flex-col items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
-                          {shopDetails?.ssd ? (
-                            <div className="w-full text-center space-y-1.5">
-                              <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">Quick Dial Code</span>
-                              <div className="font-mono text-sm font-bold tracking-wider text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 py-2.5 rounded-xl">
-                                {shopDetails.ssd}
-                              </div>
-                              <p className="text-[9px] text-slate-400 leading-normal">
-                                Dial the code above to pay {formatCurrencyWithConfig(total, systemConfig)} instantly.
+                          {paymentMethod === 'card' && (
+                            <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                              <CreditCard className="h-10 w-10 text-primary animate-bounce" />
+                              <p className="text-[10px] text-center text-slate-400">
+                                Please insert or tap your card on the payment terminal.
                               </p>
                             </div>
-                          ) : (
-                            <>
-                              <QrCode className="h-16 w-16 text-slate-800 dark:text-slate-200 animate-pulse" />
-                              <p className="text-[10px] text-center text-slate-400 max-w-xs leading-relaxed">
-                                Scan the QR code or approve the MoMo prompt on your phone.
-                              </p>
-                            </>
                           )}
-                        </div>
-                      )}
 
-                      {paymentMethod === 'card' && (
-                        <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                          <CreditCard className="h-10 w-10 text-primary animate-bounce" />
-                          <p className="text-[10px] text-center text-slate-400">
-                            Please insert or tap your card on the payment terminal.
-                          </p>
-                        </div>
-                      )}
+                          {paymentMethod === 'cash' && (
+                            <div className="flex flex-col items-center gap-1 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                              <p className="text-[10px] text-center text-slate-400">
+                                Please hand over the cash to the cashier.
+                              </p>
+                            </div>
+                          )}
 
-                      {paymentMethod === 'cash' && (
-                        <div className="flex flex-col items-center gap-1 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                          <p className="text-[10px] text-center text-slate-400">
-                            Please hand over the cash to the cashier.
-                          </p>
+                          <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                            <span className="text-slate-400">Reference ID</span>
+                            <span className="font-mono text-slate-500 text-[10px]">
+                              TXN-{Date.now().toString().slice(-6)}
+                            </span>
+                          </div>
                         </div>
-                      )}
-
-                      <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                        <span className="text-slate-400">Reference ID</span>
-                        <span className="font-mono text-slate-500 text-[10px]">
-                          TXN-{Date.now().toString().slice(-6)}
-                        </span>
-                      </div>
-                    </div>
+                      </>
+                    )}
                   </div>
                 )}
               </CardContent>

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Phone, Check, Smartphone, Loader2, Copy } from 'lucide-react';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
+import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import QRCode from 'qrcode';
 
 interface MomoPaymentDialogProps {
@@ -15,6 +16,7 @@ interface MomoPaymentDialogProps {
   onPaymentConfirmed: () => void;
   total: number;
   transactionId: string;
+  shopSsd?: string;
 }
 
 export default function MomoPaymentDialog({
@@ -23,16 +25,19 @@ export default function MomoPaymentDialog({
   onPaymentConfirmed,
   total,
   transactionId,
+  shopSsd,
 }: MomoPaymentDialogProps) {
   const { data: systemConfig } = useSystemConfig();
+  const { color: themeColor } = useThemeColor();
   const [copied, setCopied] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
 
   // Generate USSD code for MOMO payment
   const generateUssdCode = () => {
-    // Format: *182*8*1*0000*amount#
+    // Format: *182*8*1*merchantId*amount#
     const amount = Math.round(total); // Remove decimals for USSD
-    return `*182*8*1*1426640*${amount}#`;
+    const merchantId = shopSsd || "";
+    return `*182*8*1*${merchantId}*${amount}#`;
   };
 
   const ussdCode = generateUssdCode();
@@ -41,11 +46,13 @@ export default function MomoPaymentDialog({
   useEffect(() => {
     if (isOpen && ussdCode) {
       // Use the raw USSD code string directly for the QR code to ensure compatibility with all mobile scanners
+      // Use the active primary hex color from ThemeColorProvider
+      const qrColor = themeColor?.primary || '#0f172a';
       QRCode.toDataURL(ussdCode, {
         width: 250,
         margin: 2,
         color: {
-          dark: '#0f172a',
+          dark: qrColor,
           light: '#ffffff',
         },
         errorCorrectionLevel: 'M',
@@ -57,7 +64,7 @@ export default function MomoPaymentDialog({
           console.error('Error generating QR code:', err);
         });
     }
-  }, [isOpen, ussdCode]);
+  }, [isOpen, ussdCode, themeColor]);
 
   const copyToClipboard = async () => {
     try {
@@ -70,10 +77,10 @@ export default function MomoPaymentDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={() => { }}>
       <DialogContent className="max-w-md rounded-3xl border-0 p-6 shadow-2xl bg-white dark:bg-slate-900">
         <DialogHeader className="pb-2 text-center">
-          <div className="mx-auto w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mb-3">
+          <div className="mx-auto w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-3">
             <Smartphone className="h-6 w-6 animate-pulse" />
           </div>
           <DialogTitle className="text-xl font-black text-slate-900 dark:text-white">
@@ -85,8 +92,8 @@ export default function MomoPaymentDialog({
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
-          {/* Amount Card */}
-          <div className="bg-gradient-to-br from-amber-500 to-yellow-500 text-white rounded-2xl p-5 text-center shadow-lg relative overflow-hidden">
+          {/* Amount Card using custom primary theme */}
+          <div className="bg-primary text-primary-foreground rounded-2xl p-5 text-center shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl translate-x-8 -translate-y-8"></div>
             <div className="text-[10px] font-bold uppercase tracking-wider text-white/80 mb-1">
               Amount Due
@@ -105,10 +112,10 @@ export default function MomoPaymentDialog({
               <div className="space-y-3 flex flex-col items-center">
                 <div className="relative p-3 bg-white dark:bg-white rounded-xl shadow-sm border border-slate-100">
                   {/* Viewfinder Corners */}
-                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-500 rounded-tl-lg"></div>
-                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-500 rounded-tr-lg"></div>
-                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-500 rounded-bl-lg"></div>
-                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-500 rounded-br-lg"></div>
+                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary rounded-tl-lg"></div>
+                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary rounded-tr-lg"></div>
+                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary rounded-bl-lg"></div>
+                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary rounded-br-lg"></div>
 
                   <img
                     src={qrCodeDataUrl}
@@ -122,7 +129,7 @@ export default function MomoPaymentDialog({
               </div>
             ) : (
               <div className="py-10 flex flex-col items-center gap-2">
-                <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
+                <Loader2 className="h-8 w-8 text-primary animate-spin" />
                 <span className="text-xs text-slate-400 font-semibold">Generating QR Code...</span>
               </div>
             )}
@@ -132,23 +139,23 @@ export default function MomoPaymentDialog({
           <div className="bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-4 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                <Phone className="h-4 w-4 text-amber-500" />
+                <Phone className="h-4 w-4 text-primary" />
                 <span className="text-xs font-bold">Or dial USSD Code:</span>
               </div>
-              <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-0 text-[10px] font-bold px-2 py-0.5 rounded-full">
+              <Badge className="bg-primary/10 text-primary border-0 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 MTN MoMo
               </Badge>
             </div>
 
             <div className="flex items-center gap-2 pt-1">
-              <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl text-center font-mono font-bold text-base text-slate-850 dark:text-slate-200 tracking-wider">
+              <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl text-center font-mono font-bold text-base text-slate-800 dark:text-slate-200 tracking-wider">
                 {ussdCode}
               </div>
               <Button
                 type="button"
                 onClick={copyToClipboard}
                 size="icon"
-                className="h-[42px] w-[42px] shrink-0 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-md border-0"
+                className="h-[42px] w-[42px] shrink-0 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md border-0"
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
@@ -157,7 +164,7 @@ export default function MomoPaymentDialog({
 
           {/* Awaiting network validation message */}
           <div className="flex items-center justify-center gap-2 py-1 text-[11px] text-slate-400 font-bold">
-            <Loader2 className="h-3.5 w-3.5 text-amber-500 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 text-primary animate-spin" />
             <span>Waiting for payment confirmation...</span>
           </div>
         </div>

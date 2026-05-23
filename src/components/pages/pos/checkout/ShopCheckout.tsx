@@ -465,6 +465,7 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
               address: shop?.address || 'Shop Address',
               phone: session?.phoneNumber || '',
               email: session?.email || '',
+              ssd: shop?.ssd || '',
             }}
           />
         </div>

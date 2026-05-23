@@ -55,6 +55,7 @@ interface CartSummaryCardProps {
     address: string;
     phone?: string;
     email?: string;
+    ssd?: string;
   };
   currentUser?: {
     id: string; // Add user ID
@@ -861,7 +862,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
             </div>
 
             {/* MOMO Payment Button */}
-            {selectedPaymentMethod === 'momo' && (
+            {selectedPaymentMethod === 'momo' && shopDetails?.ssd && (
               <div className="pt-1">
                 <Button
                   type="button"
