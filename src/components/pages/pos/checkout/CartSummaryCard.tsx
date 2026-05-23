@@ -39,6 +39,9 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  description?: string;
+  measurement_unit?: string;
+  image?: string;
 }
 
 interface CartSummaryCardProps {
@@ -459,126 +462,153 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
 
   return (
     <>
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>Cart & Summary</CardTitle>
+      <Card className="lg:col-span-2 flex flex-col h-[780px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl">
+        <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-900">
+          <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Cart & Summary
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium mb-2">Cart Items</h3>
-              <ScrollArea className="h-[300px]">
-                <div className="space-y-2">
+        <CardContent className="flex-1 flex flex-col p-6 min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 space-y-4">
+            
+            {/* Scrollable Cart Items */}
+            <div className="flex-1 min-h-0">
+              <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2">Cart Items</h4>
+              <ScrollArea className="h-[380px] pr-2">
+                <div className="space-y-3">
                   {cart.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between p-2 bg-accent/20 rounded-lg"
+                      className="flex gap-3 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80"
                     >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrencyWithConfig(item.price, systemConfig)} × {item.quantity}
-                        </p>
+                      <div className="w-12 h-12 bg-slate-200 dark:bg-slate-950 rounded-lg overflow-hidden shrink-0">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-slate-150 dark:bg-slate-900 flex items-center justify-center text-slate-400">
+                            <ShoppingBag className="h-5 w-5" />
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onUpdateQuantity(item.id, -1)}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-6 text-center text-sm">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onUpdateQuantity(item.id, 1)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => onRemoveItem(item.id)}
-                        >
-                          <Trash className="h-3 w-3" />
-                        </Button>
+                      
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex justify-between items-start">
+                          <h5 className="font-extrabold text-xs text-slate-800 dark:text-slate-100 truncate pr-1">
+                            {item.name}
+                          </h5>
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                            {formatCurrencyWithConfig(item.price * item.quantity, systemConfig)}
+                          </span>
+                        </div>
+                        
+                        <p className="text-[10px] text-slate-400 font-semibold">
+                          {formatCurrencyWithConfig(item.price, systemConfig)}
+                          {item.measurement_unit && ` / ${item.measurement_unit}`}
+                        </p>
+
+                        {/* Quantity change & Remove row */}
+                        <div className="flex justify-between items-center pt-1.5 border-t border-slate-100 dark:border-slate-800/50">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => onUpdateQuantity(item.id, -1)}
+                              className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black hover:bg-slate-350 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                            >
+                              <Minus className="h-2.5 w-2.5" />
+                            </button>
+                            <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">{item.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateQuantity(item.id, 1)}
+                              className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black hover:bg-slate-350 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                            >
+                              <Plus className="h-2.5 w-2.5" />
+                            </button>
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => onRemoveItem(item.id)} 
+                            className="text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
                   {cart.length === 0 && (
-                    <div className="p-4 text-center text-muted-foreground">
-                      <ShoppingBag className="mx-auto h-6 w-6 mb-1 opacity-50" />
-                      <p className="text-sm">Cart is empty</p>
+                    <div className="text-center py-16 text-xs text-slate-400">
+                      <ShoppingBag className="mx-auto h-8 w-8 mb-2 opacity-30" />
+                      Cart is empty. Select products to begin.
                     </div>
                   )}
                 </div>
               </ScrollArea>
             </div>
 
-            {/* Customer Display Button */}
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                onClick={openCustomerDisplay}
-                className="w-full"
-                disabled={cart.length === 0}
-              >
-                <Monitor className="mr-2 h-4 w-4" />
-                Show Customer Display
-              </Button>
-            </div>
-            <Separator />
-            <div>
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => setIsOrderSummaryCollapsed(!isOrderSummaryCollapsed)}
-              >
-                <h3 className="font-medium">Order Summary</h3>
-                {isOrderSummaryCollapsed ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                )}
+            {/* Financial summary */}
+            <div className="border-t border-slate-100 dark:border-slate-900 pt-3 space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <div className="flex justify-between">
+                <span>Sub Total</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
               </div>
-              <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${isOrderSummaryCollapsed ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'}`}
-              >
-                <div className="space-y-2 text-sm pt-2">
-                  <div className="flex justify-between">
-                    <span>Items ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
-                    <span>{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax</span>
-                    <span>{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between font-bold text-base">
-                    <span>Total</span>
-                    <span>{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
-                  </div>
-                </div>
+              <div className="flex justify-between">
+                <span>Tax (8%)</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
+              </div>
+              <div className="flex justify-between text-sm font-extrabold text-slate-800 dark:text-slate-100 pt-1.5 border-t border-slate-100 dark:border-slate-900">
+                <span>Amount to be Paid</span>
+                <span className="text-primary text-lg">{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
               </div>
             </div>
-            <div className="space-y-2">
+
+            {/* Actions Grid */}
+            <div className="mt-4 space-y-2">
               <Button
-                className="w-full"
+                type="button"
                 onClick={() => setIsPaymentDialogOpen(true)}
+                className="w-full bg-primary hover:bg-primary/90 text-white font-extrabold shadow-md flex items-center justify-center gap-2 h-11"
                 disabled={cart.length === 0 || checkoutMutation.isPending}
               >
                 {checkoutMutation.isPending ? 'Processing...' : 'Confirm Payment'}
               </Button>
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={onSaveToPending}
-                disabled={cart.length === 0}
-              >
-                <Clock className="mr-2 h-4 w-4" /> Save for Later
-              </Button>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={openCustomerDisplay}
+                  disabled={cart.length === 0}
+                  className="text-xs font-bold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 h-9"
+                >
+                  <Monitor className="h-3.5 w-3.5 mr-1" /> Display
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onSaveToPending}
+                  disabled={cart.length === 0}
+                  className="text-xs font-bold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 h-9"
+                >
+                  <Clock className="h-3.5 w-3.5 mr-1" /> Hold
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    cart.forEach(item => onRemoveItem(item.id));
+                  }}
+                  disabled={cart.length === 0}
+                  className="text-xs font-bold border-slate-200 dark:border-slate-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 h-9"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
+
           </div>
         </CardContent>
       </Card>
@@ -726,7 +756,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                       description: 'MOMO payment dialog opened on customer display screen.',
                     });
                   }}
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-primary hover:bg-primary/90 text-white"
                 >
                   <Smartphone className="mr-2 h-4 w-4" />
                   Open MOMO Payment on Customer Display
@@ -809,7 +839,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle className="h-5 w-5 text-primary" />
               Payment Successful!
             </DialogTitle>
             <DialogDescription>
@@ -818,7 +848,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           </DialogHeader>
 
           {lastPaymentDetails && (
-            <div className="border rounded-lg p-3 bg-green-50">
+            <div className="border rounded-lg p-3 bg-primary/10 border-primary/20">
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Payment Method:</span>

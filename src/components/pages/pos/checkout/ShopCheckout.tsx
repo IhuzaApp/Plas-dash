@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PageHeader from '@/components/layout/PageHeader';
-import { ShoppingBag, Lock } from 'lucide-react';
+import { ShoppingBag, Lock, Store, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -186,6 +186,14 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
   };
 
   const addProductToCart = (product: Product) => {
+    // Play scanner beep sound
+    try {
+      const audio = new Audio('/Assets/sound/storescannerbeep.mp3');
+      audio.play().catch(err => console.log('Audio playback prevented or failed:', err));
+    } catch (e) {
+      console.warn('Failed to initialize scanner audio:', e);
+    }
+
     const existingItem = cart.find(item => item.id === product.id);
 
     if (existingItem) {
@@ -290,22 +298,89 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
     });
   };
 
+  // Get initials for active employee
+  const getInitials = (name: string) => {
+    return name
+      ? name
+          .split(' ')
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase()
+      : 'POS';
+  };
+
+  const employeeName = activeEmployee?.fullnames || activeEmployee?.name || session?.fullName || 'Cashier Terminal';
+  const employeeInitials = getInitials(employeeName);
+  const employeeRole = activeEmployee?.Position || activeEmployee?.roleType || 'Terminal Cashier';
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="POS Checkout"
-        description="Process customer purchases quickly and efficiently"
-        icon={<ShoppingBag className="h-6 w-6" />}
-        actions={
+      <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b dark:border-slate-800 shadow-sm rounded-xl">
+        <div className="flex flex-col md:flex-row items-center justify-between px-6 py-3 gap-4">
           <div className="flex items-center gap-3">
-            <div className="text-right mr-2 hidden md:block">
+            {shop?.image ? (
+              <img
+                src={shop.image}
+                alt={shop.name}
+                className="w-10 h-10 rounded-xl object-cover border border-slate-205 dark:border-slate-800 shadow-sm shrink-0"
+              />
+            ) : (
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-white font-bold shadow-md shrink-0">
+                <Store className="h-5 w-5" />
+              </div>
+            )}
+            <div>
+              <h1 className="font-extrabold text-lg tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                {shop?.name || 'Retail'} <span className="text-primary">POS</span>
+                <span className="text-[10px] bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground px-2 py-0.5 rounded-full font-bold">Shop</span>
+              </h1>
+            </div>
+          </div>
+
+          {/* Navigation Tabs */}
+          <nav className="flex items-center space-x-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('current')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                activeTab === 'current'
+                  ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              POS Catalogue
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors relative ${
+                activeTab === 'pending'
+                  ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              Pending Invoices
+              {pendingCheckouts.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
+                  {pendingCheckouts.length}
+                </span>
+              )}
+            </button>
+          </nav>
+
+          {/* Quick Access Actions */}
+          <div className="flex items-center gap-4">
+            <div className="text-right">
               <div className="flex items-center gap-1.5 justify-end">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Session Active</p>
               </div>
-              <p className="text-sm font-black text-slate-800">{activeEmployee?.fullnames || activeEmployee?.name}</p>
+              <p className="text-sm font-black text-slate-800 dark:text-slate-200 leading-tight">{employeeName}</p>
+              <p className="text-[10px] text-slate-400 font-medium capitalize mt-0.5">{employeeRole}</p>
             </div>
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={onLock}
@@ -315,48 +390,43 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
               Lock Terminal
             </Button>
           </div>
-        }
-      />
+        </div>
+      </header>
 
-      <Tabs defaultValue="current" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="current">Current Checkout</TabsTrigger>
-          <TabsTrigger value="pending">Pending Checkouts ({pendingCheckouts.length})</TabsTrigger>
-        </TabsList>
+      {activeTab === 'current' && (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <ProductSelectionCard
+            products={products}
+            isLoading={productsLoading}
+            onAddProductToCart={addProductToCart}
+            onAddProductManually={() => setIsAddProductDialogOpen(true)}
+            onScanProduct={() => setIsBarcodeScannerOpen(true)}
+          />
+          <CartSummaryCard
+            cart={cart}
+            onUpdateQuantity={updateQuantity}
+            onRemoveItem={removeItem}
+            onCheckout={processFinalCheckout}
+            onSaveToPending={saveToPending}
+            shopId={session?.shop_id || undefined}
+            currentUser={{
+              id: activeEmployee?.id || session?.id || '',
+              name: employeeName,
+              email: activeEmployee?.email || session?.email || 'N/A',
+              role: employeeRole,
+            }}
+            shopDetails={{
+              name: shop?.name || 'Shop Name',
+              address: shop?.address || 'Shop Address',
+              phone: session?.phoneNumber || '',
+              email: session?.email || '',
+            }}
+          />
+        </div>
+      )}
 
-        <TabsContent value="current" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <ProductSelectionCard
-              products={products}
-              isLoading={productsLoading}
-              onAddProductToCart={addProductToCart}
-              onAddProductManually={() => setIsAddProductDialogOpen(true)}
-              onScanProduct={() => setIsBarcodeScannerOpen(true)}
-            />
-            <CartSummaryCard
-              cart={cart}
-              onUpdateQuantity={updateQuantity}
-              onRemoveItem={removeItem}
-              onCheckout={processFinalCheckout}
-              onSaveToPending={saveToPending}
-              shopId={session?.shop_id || undefined}
-              currentUser={{
-                id: activeEmployee?.id || session?.id || '',
-                name: activeEmployee?.fullnames || session?.fullName || 'Unknown User',
-                email: activeEmployee?.email || session?.email || 'N/A',
-                role: activeEmployee?.Position || activeEmployee?.roleType || 'Cashier',
-              }}
-              shopDetails={{
-                name: shop?.name || 'Shop Name',
-                address: shop?.address || 'Shop Address',
-                phone: session?.phoneNumber || '',
-                email: session?.email || '',
-              }}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="pending">
+      {activeTab === 'pending' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
           <PendingCheckoutsTab
             pendingCheckouts={pendingCheckouts}
             onViewDetails={setSelectedPendingCheckout}
@@ -365,8 +435,8 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
             onLoadCheckout={loadPendingCheckout}
             hasDeleteAction={hasAction('orders', 'delete_orders')}
           />
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       <Dialog open={isTINDialogOpen} onOpenChange={setIsTINDialogOpen}>
         <DialogContent>
