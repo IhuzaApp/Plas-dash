@@ -239,6 +239,26 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Staff performance metrics
   - Category-wise sales analysis
 
+- **POS Performance Board (`POSBoard.tsx`)**
+  - **Role-Based Access Guard**: Restricts page access to authorized personnel (e.g. `storeadministrator`, `storemanager`, `assistantmanager`, `cashier`, `globaladmin`, `systemadmin`). Unauthorized access displays a clean, user-friendly "Access Denied" barrier.
+  - **Multi-Tenant Branch Switcher**: Administrators (`globaladmin`, `systemadmin`, `storeadministrator`) can toggle between their active branch, specific sibling branches, or view cumulative analytics across "All Branches".
+  - **UUID Relationship Mapping**: Resolves parent-child hierarchies using the store's `relatedTo` field. Ensures that managers can only access and aggregate data for sibling branches belonging to the same parent store/restaurant business group.
+  - **Dynamic Parallel Data Fetching**: Fetches and aggregates employee logs, sales checkouts, retail orders, restaurant orders, and live kitchen queues in parallel when switching branch context.
+  - **Top Waiter Spotlight**: Highlights the highest-grossing staff member using a rich themed gradient (`bg-gradient-to-br from-primary/5 via-card to-primary/15`), high-contrast text, and gold borders.
+  - **Client Traffic & Revenue Composed Chart**: Renders a dual-axis composed chart:
+    - **Sales Revenue** plotted as an Area layout filled with the active brand primary color.
+    - **Client/Ticket Volume** plotted as a Bar layout displaying client throughput per timeframe.
+    - Automatically calculates and lists the peak customer volume day.
+  - **Live stats**: Computes cumulative POS revenue, total transaction counts, average ticket sizes, and active staff counts.
+  - **Waiter & Employee Performance Leaderboard**: Tracks staff sales quantity, average ticket size, and total sales revenue contribution. Shows their percentage share of cumulative revenue rather than absolute values to protect wage details.
+  - **Today-Only Kitchen Queue Filter**: Displays live kitchen orders updated on the current calendar day. Automatically falls back to today's simulated tickets if no active live records are retrieved.
+  - **Inline Search Filters**: Real-time text search inputs filter both the Waiter Leaderboard and the Kitchen Live Queue independently.
+  - **Themed Layouts**: Reads colors dynamically from `ThemeColorProvider` to style charts, and adapts lines, grid borders, and tooltips automatically to dark and light modes.
+  - **Dashboard Skeleton Loader**: Renders a pulsing layout of cards, statistic gauges, chart containers, and tables during the initial loading phase.
+
+- **POS Login Lock Screen (`POSLoginScreen.tsx`)**
+  - **Loading Skeleton Grid**: Replaced the default spinner with an 8-slot employee profile card skeleton grid. Each item details avatar circles and name placeholders to prevent page layout shifting during data loading.
+
 - **POS Checkout System**
   - Real-time cart management
   - Product search by SKU/barcode
@@ -247,6 +267,18 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - TIN number support for invoices
   - Pending checkout management (24-hour storage)
   - Real-time customer display screen
+
+- **POS System-Wide Currency Localization**
+  - **Dynamic Formatting**: Replaced all hardcoded currency symbols (`$`) across the entire POS module with the dynamic `formatCurrencyWithConfig` utility.
+  - **System Configurations**: Integrated the `useSystemConfig` hook in checkout flows (`RestaurantCheckout.tsx`, `ShopCheckout.tsx`), inventory tables, discount management, and performance charts to read the active store's real currency settings directly from the Hasura database.
+  - **Receipts & Invoices**: Ensures all KOTs (Kitchen Order Tickets), pre-bills, and customer receipts print with the correct multi-tenant currency standard without duplicating prefixes.
+
+- **Kitchen Tickets & Queue Enhancements**
+  - **Live Table Status**: Enhanced the "Clients Still Eating" tracking interface for restaurants to manage ongoing orders before settlement.
+  - **Kitchen Search & Pagination**: Added client-side real-time search filtering (by token number, table, waiter, or status) and 10-item pagination to the Kitchen Tickets Queue (`RestaurantCheckout.tsx`) for performance and ease of use under high load.
+  - **Smart Token Generation**: Upgraded order ticketing to use unique sequential identifiers (e.g., `#TK-123`). Prevented duplicate tokens from mixing in the kitchen and ensured new tokens are only generated for distinct, unpaid orders.
+  - **Incremental Order Dispatch**: Modified the POS logic to ensure that if a waiter adds new items to a ticket that has already been sent to the kitchen (or served), *only the newly added items* are dispatched to the kitchen. This prevents the kitchen from recreating items that were already prepared.
+  - **Database Synchronization**: Fully connected the Kitchen Queue UI to the Hasura database. Action buttons now trigger GraphQL mutations (`update_kitchenQueue`) to persist the ticket status in real-time, ensuring seamless communication between the POS frontend and the dedicated Kitchen Display Screen.
 
 - **Customer Display Screen**
   - Second screen functionality for customer visibility
