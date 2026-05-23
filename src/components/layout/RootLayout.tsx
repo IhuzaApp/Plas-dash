@@ -106,6 +106,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
           )}
           {isAuthenticated &&
             pathname !== '/pos/ai-chat' &&
+            pathname !== '/pos/checkout' &&
+            pathname !== '/customer-display' &&
             session?.privileges?.ai_chat?.access && <FloatingChatButton />}
           <Toaster />
         </div>

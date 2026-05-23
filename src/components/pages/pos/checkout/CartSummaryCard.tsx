@@ -870,6 +870,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                     const paymentInfo = {
                       paymentMethod: selectedPaymentMethod,
                       discount: 0,
+                      momoTrigger: Date.now(),
                     };
                     localStorage.setItem('customerDisplayPayment', JSON.stringify(paymentInfo));
 

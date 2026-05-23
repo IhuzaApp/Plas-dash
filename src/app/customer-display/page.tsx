@@ -45,6 +45,7 @@ export default function CustomerDisplayPage() {
 
   const [isMomoPaymentDialogOpen, setIsMomoPaymentDialogOpen] = useState(false);
   const [previousPaymentMethod, setPreviousPaymentMethod] = useState<string>('pending');
+  const [lastMomoTrigger, setLastMomoTrigger] = useState<number>(0);
   const [posSessionActive, setPosSessionActive] = useState<boolean>(true);
 
   // Function to manually open MOMO dialog
@@ -82,9 +83,10 @@ export default function CustomerDisplayPage() {
         const shopDetails = shopData ? JSON.parse(shopData) : displayData.shopDetails;
         const paymentInfo = paymentData
           ? JSON.parse(paymentData)
-          : { paymentMethod: 'pending', discount: 0 };
+          : { paymentMethod: 'pending', discount: 0, momoTrigger: 0 };
 
         const newPaymentMethod = paymentInfo.paymentMethod;
+        const currentMomoTrigger = paymentInfo.momoTrigger || 0;
 
         setDisplayData({
           cart,
@@ -94,9 +96,20 @@ export default function CustomerDisplayPage() {
           discount: paymentInfo.discount || 0,
         });
 
-        // Check if payment method changed to MOMO and show dialog
-        if (newPaymentMethod === 'momo' && previousPaymentMethod !== 'momo') {
+        // Check if payment method changed to MOMO or the explicit trigger was activated
+        const isNewMomoMethod = newPaymentMethod === 'momo' && previousPaymentMethod !== 'momo';
+        const isExplicitTrigger = newPaymentMethod === 'momo' && currentMomoTrigger !== 0 && currentMomoTrigger !== lastMomoTrigger;
+
+        if (isNewMomoMethod || isExplicitTrigger) {
           setIsMomoPaymentDialogOpen(true);
+          if (currentMomoTrigger !== 0) {
+            setLastMomoTrigger(currentMomoTrigger);
+          }
+        }
+
+        // Close if cashier switched payment method away from MOMO
+        if (newPaymentMethod !== 'momo' && isMomoPaymentDialogOpen) {
+          setIsMomoPaymentDialogOpen(false);
         }
 
         // Update previous payment method
