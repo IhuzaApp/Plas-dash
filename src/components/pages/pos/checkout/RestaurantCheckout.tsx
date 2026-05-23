@@ -1059,7 +1059,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     setIsPaymentDialogOpen(true);
   };
 
-  const confirmTablePayment = () => {
+  const confirmTablePayment = async () => {
     if (!activeCheckoutTable) return;
 
     const txnId = `TRX-${Date.now().toString().slice(-6)}`;
@@ -1079,6 +1079,18 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     const updatedTables = activeTables.filter(t => t.id !== activeCheckoutTable.id);
     setActiveTables(updatedTables);
     localStorage.setItem('restaurantActiveTables', JSON.stringify(updatedTables));
+
+    // Update paid status in Postgres DB
+    if (activeCheckoutTable.tokenId) {
+      try {
+        await apiPost('/api/mutations/update-kitchen-queue', {
+          token_number: activeCheckoutTable.tokenId,
+          paid: true
+        });
+      } catch (dbErr) {
+        console.error('[Kitchen Queue] Failed to update paid status in DB:', dbErr);
+      }
+    }
 
     toast({
       title: 'Payment Completed',

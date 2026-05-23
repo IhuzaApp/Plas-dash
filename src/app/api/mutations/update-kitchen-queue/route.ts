@@ -5,10 +5,10 @@ import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
 const UPDATE_KITCHEN_QUEUE = gql`
-  mutation UpdateKitchenQueue($token_number: String!, $status: String!, $updated_at: timestamptz!) {
+  mutation UpdateKitchenQueue($token_number: String!, $set: kitchenQueue_set_input!) {
     update_kitchenQueue(
       where: { token_number: { _eq: $token_number } },
-      _set: { status: $status, updated_at: $updated_at }
+      _set: $set
     ) {
       affected_rows
     }
@@ -18,20 +18,25 @@ const UPDATE_KITCHEN_QUEUE = gql`
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { token_number, status } = body;
+    const { token_number, status, paid } = body;
 
-    if (!token_number || !status) {
-      return NextResponse.json({ error: 'Missing token_number or status' }, { status: 400 });
+    if (!token_number) {
+      return NextResponse.json({ error: 'Missing token_number' }, { status: 400 });
     }
 
     if (!hasuraClient) {
       throw new Error('Hasura client is not initialized');
     }
 
+    const setObj: any = {
+      updated_at: new Date().toISOString()
+    };
+    if (status !== undefined) setObj.status = status;
+    if (paid !== undefined) setObj.paid = paid;
+
     const data = await hasuraClient.request(UPDATE_KITCHEN_QUEUE, {
       token_number,
-      status,
-      updated_at: new Date().toISOString()
+      set: setObj
     });
 
     return NextResponse.json({ success: true, data });

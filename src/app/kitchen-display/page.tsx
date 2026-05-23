@@ -225,6 +225,16 @@ export default function KitchenDisplay() {
       }
     }
 
+    // Sync status to Postgres DB
+    try {
+      await apiPost('/api/mutations/update-kitchen-queue', {
+        token_number: ticketId,
+        status: newStatus,
+      });
+    } catch (e) {
+      console.error('Failed to sync status to Postgres:', e);
+    }
+
     // Auto-deliver online orders since they are already paid
     if (newStatus === 'Served') {
       const ticket = tickets.find(t => t.id === ticketId);

@@ -13,7 +13,8 @@ const INSERT_KITCHEN_QUEUE = gql`
     $table_number: String = "",
     $token_number: String = "",
     $updated_at: timestamptz = "",
-    $waiter_id: uuid = ""
+    $waiter_id: uuid = "",
+    $paid: Boolean = false
   ) {
     insert_kitchenQueue(objects: {
       dishesOrdered: $dishesOrdered,
@@ -23,7 +24,8 @@ const INSERT_KITCHEN_QUEUE = gql`
       table_number: $table_number,
       token_number: $token_number,
       updated_at: $updated_at,
-      waiter_id: $waiter_id
+      waiter_id: $waiter_id,
+      paid: $paid
     }) {
       affected_rows
     }
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
       token_number,
       updated_at,
       waiter_id,
+      paid,
     } = body;
 
     if (!restaurant_id || !token_number) {
@@ -76,6 +79,7 @@ export async function POST(request: Request) {
       token_number,
       updated_at: updated_at || new Date().toISOString(),
       waiter_id: waiter_id || null,
+      paid: paid || false,
     });
 
     return NextResponse.json({ success: true, data });
