@@ -32,6 +32,28 @@ const INSERT_KITCHEN_QUEUE = gql`
   }
 `;
 
+const UPDATE_KITCHEN_QUEUE = gql`
+  mutation UpdateKitchenQueue(
+    $dishesOrdered: jsonb = "",
+    $status: String = "",
+    $token_number: String = "",
+    $updated_at: timestamptz = "",
+    $paid: Boolean = false
+  ) {
+    update_kitchenQueue(
+      where: { token_number: { _eq: $token_number } },
+      _set: {
+        dishesOrdered: $dishesOrdered,
+        status: $status,
+        updated_at: $updated_at,
+        paid: $paid
+      }
+    ) {
+      affected_rows
+    }
+  }
+`;
+
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   let userId = (session as any)?.user?.id;
@@ -70,7 +92,7 @@ export async function POST(request: Request) {
       throw new Error('Hasura client is not initialized');
     }
 
-    const data = await hasuraClient.request(INSERT_KITCHEN_QUEUE, {
+    const variables = {
       dishesOrdered: dishesOrdered || [],
       restaurant_id,
       restaurant_order_id: restaurant_order_id || null,
@@ -80,9 +102,25 @@ export async function POST(request: Request) {
       updated_at: updated_at || new Date().toISOString(),
       waiter_id: waiter_id || null,
       paid: paid || false,
+    };
+
+    // First try to update
+    const updateRes: any = await hasuraClient.request(UPDATE_KITCHEN_QUEUE, {
+      dishesOrdered: variables.dishesOrdered,
+      status: variables.status,
+      token_number: variables.token_number,
+      updated_at: variables.updated_at,
+      paid: variables.paid
     });
 
-    return NextResponse.json({ success: true, data });
+    if (updateRes?.update_kitchenQueue?.affected_rows > 0) {
+      return NextResponse.json({ success: true, data: updateRes, action: 'updated' });
+    }
+
+    // If no rows were affected, it means the ticket doesn't exist yet, so insert it
+    const data = await hasuraClient.request(INSERT_KITCHEN_QUEUE, variables);
+
+    return NextResponse.json({ success: true, data, action: 'inserted' });
   } catch (error: any) {
     console.error('[Kitchen Queue] Error inserting kitchen queue entry:', error);
     return NextResponse.json(

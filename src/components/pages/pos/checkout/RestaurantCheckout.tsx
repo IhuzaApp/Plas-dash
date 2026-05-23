@@ -66,6 +66,7 @@ interface CartItem {
   note: string;
   image?: string;
   category?: string;
+  sentQuantity?: number;
 }
 
 interface KitchenTicket {
@@ -348,6 +349,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
           note: '',
           image: dish.image,
           category: dish.category,
+          sentQuantity: 0,
         },
       ]);
     }
@@ -716,16 +718,22 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
   // Place Order flow (sends ticket to kitchen)
   const placeKitchenOrder = async () => {
-    if (cart.length === 0) {
-      toast({ title: 'Cart Empty', description: 'Please add items to place order.' });
+    // 1. Identify unsent items
+    const newItemsToOrder = cart
+      .filter(item => item.quantity > (item.sentQuantity || 0))
+      .map(item => ({
+        ...item,
+        quantity: item.quantity - (item.sentQuantity || 0),
+      }));
+
+    if (newItemsToOrder.length === 0) {
+      toast({ title: 'No New Items', description: 'All items have already been sent to the kitchen.' });
       return;
     }
 
-    const tokenNumber = `#TK-${Math.floor(Math.random() * 90 + 10)}`;
-    const orderId = `ORD-${Date.now().toString().slice(-6)}`;
-
     let tableId = selectedTable;
     let tableName = '';
+    let tokenNumber = `#TK-${Math.floor(Math.random() * 90 + 10)}`;
 
     if (selectedOrderType === 'Table' || selectedOrderType === 'Dine In') {
       if (isNewTable) {
@@ -734,15 +742,20 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       } else {
         const existing = activeTables.find(t => t.id === selectedTable);
         tableName = (existing && existing.name) ? existing.name : `Table #${Math.floor(Math.random() * 900 + 100)}`;
+        if (existing && existing.tokenId) {
+          tokenNumber = existing.tokenId; // Reuse the existing ticket number!
+        }
       }
     }
+
+    const orderId = `ORD-${Date.now().toString().slice(-6)}`;
 
     const newTicket: KitchenTicket = {
       id: tokenNumber,
       orderId,
       tableId: selectedOrderType === 'Table' || selectedOrderType === 'Dine In' ? tableId : undefined,
       orderType: selectedOrderType,
-      items: [...cart],
+      items: newItemsToOrder, // ONLY send the newly added items to the kitchen!
       waiterName: selectedWaiter,
       timestamp: new Date().toISOString(),
       status: 'Pending',
@@ -764,7 +777,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     // Persist to database (kitchenQueue table)
     try {
       await apiPost('/api/mutations/kitchen-queue', {
-        dishesOrdered: cart.map(item => ({
+        dishesOrdered: newItemsToOrder.map(item => ({
           id: item.id,
           name: item.name,
           price: item.price,
@@ -785,6 +798,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       console.error('[Kitchen Queue] Failed to save POS ticket to DB:', dbErr);
     }
 
+    // Update cart to mark all current items as sent
+    const updatedCart = cart.map(item => ({ ...item, sentQuantity: item.quantity }));
+
     // Update active table state if table was selected
     if (selectedOrderType === 'Table' || selectedOrderType === 'Dine In') {
       const tableExists = activeTables.some(t => t.id === tableId);
@@ -797,9 +813,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
               status: 'eating' as const,
               waiterName: selectedWaiter,
               customerName: customerName,
-              cart: [...cart],
+              cart: updatedCart,
               orderId,
-              tokenId: tokenNumber,
+              tokenId: tokenNumber, // The latest token for reference
               timestamp: new Date().toISOString(),
             };
           }
@@ -813,7 +829,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
           status: 'eating' as const,
           waiterName: selectedWaiter,
           customerName: customerName,
-          cart: [...cart],
+          cart: updatedCart,
           orderId,
           tokenId: tokenNumber,
           timestamp: new Date().toISOString(),
