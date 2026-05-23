@@ -106,7 +106,7 @@ const GET_RESTAURANT_BY_ID = gql`
           updated_at
         }
       }
-      orgEmployees {
+      orgEmployees(where: { restaurant_id: { _eq: $id } }) {
         Address
         Position
         active

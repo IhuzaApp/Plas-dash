@@ -375,7 +375,7 @@ const GET_SHOP_BY_ID = gql`
           updated_at
         }
       }
-      orgEmployees {
+      orgEmployees(where: { shop_id: { _eq: $id } }) {
         id
         fullnames
         Position
