@@ -149,6 +149,11 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
   const [filterNonVeg, setFilterNonVeg] = useState(false);
   const [filterEgg, setFilterEgg] = useState(false);
 
+  // Kitchen Queue Table states
+  const [kitchenSearchQuery, setKitchenSearchQuery] = useState('');
+  const [kitchenCurrentPage, setKitchenCurrentPage] = useState(1);
+  const KITCHEN_ITEMS_PER_PAGE = 10;
+
   // Cart & Order Options
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedOrderType, setSelectedOrderType] = useState<'Dine In' | 'Take Away' | 'Delivery' | 'Table'>('Dine In');
@@ -189,6 +194,33 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
   // Sync state for kitchen tickets & active tables
   const [kitchenTickets, setKitchenTickets] = useState<KitchenTicket[]>([]);
+
+  // Kitchen Queue Table Pagination & Search Logic
+  const filteredKitchenTickets = useMemo(() => {
+    return kitchenTickets.filter(ticket => {
+      if (!kitchenSearchQuery) return true;
+      const q = kitchenSearchQuery.toLowerCase();
+      const tokenMatch = ticket.id.toLowerCase().includes(q);
+      const tableMatch = (ticket.tableId || '').toLowerCase().includes(q);
+      const waiterMatch = (ticket.waiterName || '').toLowerCase().includes(q);
+      const statusMatch = ticket.status.toLowerCase().includes(q);
+      return tokenMatch || tableMatch || waiterMatch || statusMatch;
+    });
+  }, [kitchenTickets, kitchenSearchQuery]);
+
+  const totalKitchenPages = Math.max(1, Math.ceil(filteredKitchenTickets.length / KITCHEN_ITEMS_PER_PAGE));
+  const paginatedKitchenTickets = useMemo(() => {
+    const start = (kitchenCurrentPage - 1) * KITCHEN_ITEMS_PER_PAGE;
+    return filteredKitchenTickets.slice(start, start + KITCHEN_ITEMS_PER_PAGE);
+  }, [filteredKitchenTickets, kitchenCurrentPage]);
+
+  // Ensure current page is valid when filtering changes
+  useEffect(() => {
+    if (kitchenCurrentPage > totalKitchenPages) {
+      setKitchenCurrentPage(1);
+    }
+  }, [totalKitchenPages, kitchenCurrentPage]);
+
   const [activeTables, setActiveTables] = useState<ActiveTable[]>([]);
 
   // Load state from localStorage on mount
@@ -1710,9 +1742,20 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
           {/* Kitchen Orders List inside POS tab */}
           <div>
-            <h2 className="text-lg font-extrabold text-slate-800 mb-4 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" /> Kitchen Tickets Queue (Live Status)
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <h2 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" /> Kitchen Tickets Queue (Live Status)
+              </h2>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search tokens, tables..."
+                  value={kitchenSearchQuery}
+                  onChange={e => setKitchenSearchQuery(e.target.value)}
+                  className="pl-9 h-9 text-xs w-[250px] bg-white border-slate-200"
+                />
+              </div>
+            </div>
             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -1727,7 +1770,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                   </tr>
                 </thead>
                 <tbody className="divide-y font-semibold text-slate-700">
-                  {kitchenTickets.map(ticket => (
+                  {paginatedKitchenTickets.map(ticket => (
                     <tr key={ticket.id} className="hover:bg-slate-50/50">
                       <td className="p-4 font-black text-slate-800">{ticket.id}</td>
                       <td className="p-4">
@@ -1771,15 +1814,48 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                       </td>
                     </tr>
                   ))}
-                  {kitchenTickets.length === 0 && (
+                  {paginatedKitchenTickets.length === 0 && (
                     <tr>
                       <td colSpan={7} className="p-10 text-center text-slate-400">
-                        No orders sent to kitchen yet.
+                        {kitchenSearchQuery ? 'No orders match your search.' : 'No orders sent to kitchen yet.'}
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
+              {/* Pagination Controls */}
+              {totalKitchenPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t bg-slate-50/50">
+                  <div className="text-[10px] font-bold text-slate-500">
+                    Showing {(kitchenCurrentPage - 1) * KITCHEN_ITEMS_PER_PAGE + 1} -{' '}
+                    {Math.min(kitchenCurrentPage * KITCHEN_ITEMS_PER_PAGE, filteredKitchenTickets.length)} of{' '}
+                    {filteredKitchenTickets.length} orders
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setKitchenCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={kitchenCurrentPage === 1}
+                      className="h-7 w-7 p-0"
+                    >
+                      {'<'}
+                    </Button>
+                    <span className="text-xs font-bold text-slate-700 px-2">
+                      {kitchenCurrentPage} / {totalKitchenPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setKitchenCurrentPage(prev => Math.min(totalKitchenPages, prev + 1))}
+                      disabled={kitchenCurrentPage === totalKitchenPages}
+                      className="h-7 w-7 p-0"
+                    >
+                      {'>'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
