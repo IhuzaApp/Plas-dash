@@ -40,18 +40,19 @@ export default function CheckoutBarcodeScanner({
   const [hasScanned, setHasScanned] = useState(false);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [containerMounted, setContainerMounted] = useState(false);
 
   const videoRef = useRef<HTMLDivElement>(null);
   const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load Quagga dynamically
   useEffect(() => {
-    if (open && !window.Quagga) {
+    if (open && containerMounted && !window.Quagga) {
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js';
       script.onload = () => {
         console.log('Quagga loaded successfully');
-        if (open) {
+        if (open && containerMounted) {
           initializeScanner();
         }
       };
@@ -60,7 +61,7 @@ export default function CheckoutBarcodeScanner({
         setScanError('Failed to load scanner library');
       };
       document.head.appendChild(script);
-    } else if (open && window.Quagga) {
+    } else if (open && containerMounted && window.Quagga) {
       initializeScanner();
     }
 
@@ -73,7 +74,7 @@ export default function CheckoutBarcodeScanner({
         }
       }
     };
-  }, [open]);
+  }, [open, containerMounted]);
 
   const initializeScanner = useCallback(async () => {
     try {
@@ -344,7 +345,14 @@ export default function CheckoutBarcodeScanner({
           {/* Video / Camera Container */}
           <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-md">
             <div
-              ref={videoRef}
+              ref={el => {
+                (videoRef as any).current = el;
+                if (el && !containerMounted) {
+                  setContainerMounted(true);
+                } else if (!el && containerMounted) {
+                  setContainerMounted(false);
+                }
+              }}
               className="quagga-video-container w-full h-72 bg-slate-950 relative flex items-center justify-center"
             >
               {/* Corner target brackets */}

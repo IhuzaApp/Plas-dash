@@ -185,6 +185,49 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
     }
   };
 
+  // Hardware barcode scanner support (USB / HID Keyboard scanners)
+  const barcodeBufferRef = React.useRef<string>('');
+  const lastKeyTimeRef = React.useRef<number>(0);
+  const addProductByCodeRef = React.useRef(addProductByCode);
+
+  React.useEffect(() => {
+    addProductByCodeRef.current = addProductByCode;
+  });
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const now = Date.now();
+      const delay = now - lastKeyTimeRef.current;
+      lastKeyTimeRef.current = now;
+
+      // If the delay is more than 50ms, assume it is manual typing and reset the buffer
+      if (delay > 50) {
+        barcodeBufferRef.current = '';
+      }
+
+      if (e.key === 'Enter') {
+        const finalCode = barcodeBufferRef.current.trim();
+        if (finalCode.length >= 3) {
+          e.preventDefault();
+          e.stopPropagation();
+          addProductByCodeRef.current(finalCode);
+          barcodeBufferRef.current = '';
+        }
+        return;
+      }
+
+      // Collect alphanumeric characters or symbols (length 1)
+      if (e.key.length === 1) {
+        barcodeBufferRef.current += e.key;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, []);
+
   const addProductToCart = (product: Product) => {
     // Play scanner beep sound
     try {
