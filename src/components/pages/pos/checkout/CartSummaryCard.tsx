@@ -280,11 +280,11 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           title: 'Payment Successful',
           description: 'Payment has been processed and saved to database.',
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error saving checkout:', error);
         toast({
           title: 'Payment Error',
-          description: 'Failed to save payment to database. Please try again.',
+          description: error?.message || 'Failed to save payment to database. Please try again.',
           variant: 'destructive',
         });
       }
@@ -308,102 +308,259 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
     console.log('Printing timestamp:', new Date().toISOString());
 
     // Create print content
+    // Create print content
     const printContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <title>Receipt - ${lastPaymentDetails?.transactionId}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-          .receipt { max-width: 300px; margin: 0 auto; }
-          .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-          .company-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-          .company-address { font-size: 12px; color: #666; margin-bottom: 5px; }
-          .transaction-id { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
-          .items { margin-bottom: 20px; }
-          .item { display: flex; justify-content: space-between; margin-bottom: 5px; }
-          .item-name { flex: 1; }
-          .item-price { text-align: right; }
-          .totals { border-top: 1px solid #000; padding-top: 10px; }
-          .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-          .payment-info { margin-top: 20px; border-top: 1px solid #000; padding-top: 10px; }
-          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+          @page {
+            size: 80mm auto;
+            margin: 0;
+          }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 15px;
+            width: 80mm;
+            box-sizing: border-box;
+          }
+          .receipt {
+            width: 100%;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 15px;
+          }
+          .company-name {
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+          }
+          .company-address, .company-phone {
+            font-size: 10px;
+            color: #333;
+            margin-bottom: 2px;
+          }
+          .separator {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+          }
+          .title {
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 8px 0;
+            text-transform: uppercase;
+          }
+          .meta-info {
+            font-size: 10px;
+            margin-bottom: 10px;
+          }
+          .meta-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+          }
+          .table-header {
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            font-size: 10px;
+          }
+          .items {
+            margin-bottom: 10px;
+          }
+          .item-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 6px;
+          }
+          .item-main {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+          }
+          .item-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #444;
+            padding-left: 10px;
+          }
+          .totals {
+            margin-top: 10px;
+            font-size: 11px;
+          }
+          .totals-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+          }
+          .grand-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: bold;
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
+            padding: 6px 0;
+            margin: 6px 0;
+          }
+          .payment-method {
+            font-size: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 9px;
+            line-height: 1.5;
+          }
+          .barcode-placeholder {
+            text-align: center;
+            margin-top: 15px;
+            letter-spacing: 4px;
+            font-size: 10px;
+          }
+          .barcode-lines {
+            width: 150px;
+            height: 30px;
+            border-left: 1px solid #000;
+            border-right: 1px solid #000;
+            margin: 4px auto;
+            background: repeating-linear-gradient(
+              90deg,
+              #000,
+              #000 2px,
+              #fff 2px,
+              #fff 4px,
+              #000 4px,
+              #000 5px,
+              #fff 5px,
+              #fff 8px
+            );
+          }
           @media print {
-            body { margin: 0; }
-            .receipt { max-width: none; }
+            body {
+              padding: 0;
+              margin: 0;
+            }
           }
         </style>
       </head>
       <body>
         <div class="receipt">
           <div class="header">
-            <div class="company-name">${lastPaymentDetails?.shopDetails?.name || 'Company Name'}</div>
-            <div class="company-address">${lastPaymentDetails?.shopDetails?.address || 'Company Address'}</div>
-            <div class="company-address">${lastPaymentDetails?.shopDetails?.phone || 'Phone'}</div>
+            <div class="company-name">${lastPaymentDetails?.shopDetails?.name || 'SUPERMARKET'}</div>
+            <div class="company-address">${lastPaymentDetails?.shopDetails?.address || ''}</div>
+            <div class="company-phone">TEL: ${lastPaymentDetails?.shopDetails?.phone || ''}</div>
+            ${lastPaymentDetails?.shopDetails?.email ? `<div class="company-phone">EMAIL: ${lastPaymentDetails.shopDetails.email}</div>` : ''}
           </div>
-          
-          <div class="transaction-id">
-            Transaction ID: ${lastPaymentDetails?.transactionId || 'N/A'}
+
+          <div class="separator"></div>
+          <div class="title">Sales Receipt</div>
+          <div class="separator"></div>
+
+          <div class="meta-info">
+            <div class="meta-row">
+              <span>Receipt ID:</span>
+              <span style="font-weight: bold;">${lastPaymentDetails?.transactionId || 'N/A'}</span>
+            </div>
+            <div class="meta-row">
+              <span>Cashier:</span>
+              <span>${lastPaymentDetails?.processedBy?.name || 'N/A'}</span>
+            </div>
+            <div class="meta-row">
+              <span>Date:</span>
+              <span>${new Date(lastPaymentDetails?.timestamp || Date.now()).toLocaleString()}</span>
+            </div>
           </div>
-          
+
+          <div class="table-header">
+            <span style="width: 50%;">ITEM</span>
+            <span style="width: 15%; text-align: center;">QTY</span>
+            <span style="width: 35%; text-align: right;">TOTAL</span>
+          </div>
+
           <div class="items">
             ${
               lastPaymentDetails?.items
                 ?.map(
                   item => `
-              <div class="item">
-                <span class="item-name">${item.name} x${item.quantity}</span>
-                <span class="item-price">${formatCurrencyWithConfig(item.price * item.quantity, systemConfig)}</span>
+              <div class="item-row">
+                <div class="item-main">
+                  <span style="width: 50%;">${item.name}</span>
+                  <span style="width: 15%; text-align: center;">${item.quantity}</span>
+                  <span style="width: 35%; text-align: right;">${formatCurrencyWithConfig(item.price * item.quantity, systemConfig)}</span>
+                </div>
+                <div class="item-details">
+                  <span>(${formatCurrencyWithConfig(item.price, systemConfig)} each)</span>
+                </div>
               </div>
             `
                 )
                 .join('') || ''
             }
           </div>
-          
+
+          <div class="separator"></div>
+
           <div class="totals">
-            <div class="total-row">
+            <div class="totals-row">
               <span>Subtotal:</span>
               <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) / 1.08, systemConfig)}</span>
             </div>
-            <div class="total-row">
-              <span>Tax (8%):</span>
+            <div class="totals-row">
+              <span>VAT / Tax (8%):</span>
               <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) - (lastPaymentDetails?.amount || 0) / 1.08, systemConfig)}</span>
             </div>
-            <div class="total-row" style="font-weight: bold; font-size: 16px;">
-              <span>Total:</span>
+            <div class="grand-total">
+              <span>TOTAL DUE:</span>
               <span>${formatCurrencyWithConfig(lastPaymentDetails?.amount || 0, systemConfig)}</span>
             </div>
           </div>
-          
-          <div class="payment-info">
-            <div class="total-row">
+
+          <div class="payment-method">
+            <div class="meta-row">
               <span>Payment Method:</span>
               <span>${lastPaymentDetails?.paymentMethod?.toUpperCase() || 'N/A'}</span>
             </div>
             ${
               lastPaymentDetails?.tinNumber
                 ? `
-              <div class="total-row">
+              <div class="meta-row" style="margin-top: 3px;">
                 <span>TIN Number:</span>
                 <span>${lastPaymentDetails.tinNumber}</span>
               </div>
             `
                 : ''
             }
-            <div class="total-row">
-              <span>Processed By:</span>
-              <span>${lastPaymentDetails?.processedBy?.name || 'N/A'}</span>
-            </div>
-            <div class="total-row">
-              <span>Date:</span>
-              <span>${new Date(lastPaymentDetails?.timestamp || Date.now()).toLocaleString()}</span>
-            </div>
           </div>
-          
+
+          <div class="separator"></div>
+
+          <div class="barcode-placeholder">
+            <div class="barcode-lines"></div>
+            <div>${lastPaymentDetails?.transactionId || ''}</div>
+          </div>
+
           <div class="footer">
-            Thank you for your purchase!<br>
-            Please keep this receipt for your records.
+            Thank you for shopping at ${lastPaymentDetails?.shopDetails?.name || 'our store'}!<br>
+            Please check and verify all items before leaving.<br>
+            Exchange allowed within 7 days with original receipt.<br>
+            Have a wonderful day!
           </div>
         </div>
       </body>
@@ -631,115 +788,83 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Payment Method</DialogTitle>
-            <DialogDescription>
-              Select your preferred payment method and complete the transaction.
+        <DialogContent className="sm:max-w-lg rounded-2xl border-0 p-6">
+          <DialogHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-800 dark:text-slate-100">
+              <Banknote className="h-5 w-5 text-primary animate-pulse" />
+              Complete Payment
+            </DialogTitle>
+            <DialogDescription className="text-xs font-semibold text-slate-400">
+              Choose your preferred payment method and click confirm to complete checkout.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2">
             {/* Payment Method Selection */}
             <div className="space-y-2">
-              <h4 className="font-medium">Select Payment Method</h4>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">Select Payment Method</label>
               <div className="grid grid-cols-3 gap-3">
+                {/* Cash Method */}
                 <div
-                  className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+                  className={`relative cursor-pointer rounded-2xl border-2 p-4 transition-all hover:shadow-sm flex flex-col items-center justify-center gap-2 ${
                     selectedPaymentMethod === 'cash'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-slate-100 dark:border-slate-850/80 text-slate-500 hover:border-slate-200 dark:hover:border-slate-800'
                   }`}
                   onClick={() => setSelectedPaymentMethod('cash')}
                 >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div
-                      className={`p-3 rounded-full ${
-                        selectedPaymentMethod === 'cash' ? 'bg-primary/10' : 'bg-muted'
-                      }`}
-                    >
-                      <Banknote className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium">Cash</p>
-                      <p className="text-xs text-muted-foreground">Physical payment</p>
-                    </div>
+                  <div className={`p-2.5 rounded-full ${selectedPaymentMethod === 'cash' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                    <Banknote className="h-5 w-5" />
                   </div>
-                  {selectedPaymentMethod === 'cash' && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-center">
+                    <p className="text-xs font-extrabold">Cash</p>
+                    <p className="text-[10px] opacity-75 font-medium mt-0.5">Physical Cash</p>
+                  </div>
                 </div>
 
+                {/* Card Method */}
                 <div
-                  className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+                  className={`relative cursor-pointer rounded-2xl border-2 p-4 transition-all hover:shadow-sm flex flex-col items-center justify-center gap-2 ${
                     selectedPaymentMethod === 'card'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-slate-100 dark:border-slate-850/80 text-slate-505 hover:border-slate-200 dark:hover:border-slate-800'
                   }`}
                   onClick={() => setSelectedPaymentMethod('card')}
                 >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div
-                      className={`p-3 rounded-full ${
-                        selectedPaymentMethod === 'card' ? 'bg-primary/10' : 'bg-muted'
-                      }`}
-                    >
-                      <CreditCard className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium">Card</p>
-                      <p className="text-xs text-muted-foreground">Credit/Debit card</p>
-                    </div>
+                  <div className={`p-2.5 rounded-full ${selectedPaymentMethod === 'card' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                    <CreditCard className="h-5 w-5" />
                   </div>
-                  {selectedPaymentMethod === 'card' && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-center">
+                    <p className="text-xs font-extrabold">Card</p>
+                    <p className="text-[10px] opacity-75 font-medium mt-0.5">Credit/Debit</p>
+                  </div>
                 </div>
 
+                {/* MOMO Method */}
                 <div
-                  className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+                  className={`relative cursor-pointer rounded-2xl border-2 p-4 transition-all hover:shadow-sm flex flex-col items-center justify-center gap-2 ${
                     selectedPaymentMethod === 'momo'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-slate-100 dark:border-slate-850/80 text-slate-500 hover:border-slate-200 dark:hover:border-slate-800'
                   }`}
                   onClick={() => setSelectedPaymentMethod('momo')}
                 >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div
-                      className={`p-3 rounded-full ${
-                        selectedPaymentMethod === 'momo' ? 'bg-primary/10' : 'bg-muted'
-                      }`}
-                    >
-                      <Smartphone className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium">MOMO</p>
-                      <p className="text-xs text-muted-foreground">Mobile money</p>
-                    </div>
+                  <div className={`p-2.5 rounded-full ${selectedPaymentMethod === 'momo' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                    <Smartphone className="h-5 w-5" />
                   </div>
-                  {selectedPaymentMethod === 'momo' && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-center">
+                    <p className="text-xs font-extrabold">MOMO</p>
+                    <p className="text-[10px] opacity-75 font-medium mt-0.5">Mobile Money</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* MOMO Payment Button */}
             {selectedPaymentMethod === 'momo' && (
-              <div className="space-y-2">
+              <div className="pt-1">
                 <Button
+                  type="button"
                   onClick={() => {
                     // Update localStorage to trigger MOMO dialog in customer display
                     const paymentInfo = {
@@ -756,79 +881,96 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                       description: 'MOMO payment dialog opened on customer display screen.',
                     });
                   }}
-                  className="w-full bg-primary hover:bg-primary/90 text-white"
+                  className="w-full bg-primary hover:bg-primary/90 text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-2 h-10 rounded-xl"
                 >
-                  <Smartphone className="mr-2 h-4 w-4" />
+                  <Smartphone className="h-4 w-4" />
                   Open MOMO Payment on Customer Display
                 </Button>
               </div>
             )}
 
             {/* TIN Number Section */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800/80 space-y-3">
+              <div className="flex items-center space-x-2.5">
                 <Checkbox
                   id="include-tin"
                   checked={needsTIN}
                   onCheckedChange={checked => setNeedsTIN(checked === true)}
+                  className="rounded-md border-slate-300 dark:border-slate-800"
                 />
                 <label
                   htmlFor="include-tin"
-                  className="text-sm font-medium leading-none cursor-pointer"
+                  className="text-xs font-bold leading-none cursor-pointer text-slate-600 dark:text-slate-350"
                 >
-                  Include TIN Number
+                  Include Customer TIN Number
                 </label>
               </div>
               {needsTIN && (
                 <Input
-                  placeholder="Enter TIN Number"
+                  placeholder="Enter Customer TIN Number"
                   value={tinNumber}
                   onChange={e => setTinNumber(e.target.value)}
-                  className="text-sm"
+                  className="text-xs h-9 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl"
                 />
               )}
             </div>
 
             {/* Order Summary in Dialog */}
-            <div className="border rounded-lg p-3 bg-muted/20">
-              <h4 className="font-medium mb-2">Order Summary</h4>
-              <div className="space-y-1 text-sm">
+            <div className="border border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-4 space-y-2.5 text-xs font-semibold text-slate-550 dark:text-slate-400">
+              <h4 className="font-bold text-[10px] uppercase text-slate-400 tracking-wide">Order Totals</h4>
+              <div className="space-y-1.5">
                 <div className="flex justify-between">
-                  <span>Items ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
-                  <span>{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
+                  <span>Sub Total</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {formatCurrencyWithConfig(calculateTotal(), systemConfig)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Tax (8%)</span>
-                  <span>{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
+                  <span>VAT / Tax (8%)</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}
+                  </span>
                 </div>
-                <Separator />
-                <div className="flex justify-between font-bold">
-                  <span>Total</span>
-                  <span>{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
+                <Separator className="bg-slate-100 dark:bg-slate-800" />
+                <div className="flex justify-between text-sm font-extrabold text-slate-850 dark:text-slate-150">
+                  <span>Total Amount Due</span>
+                  <span className="text-primary font-black">
+                    {formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPaymentDialogOpen(false)}
+              className="text-xs font-bold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 h-10 rounded-xl"
+            >
               Cancel
             </Button>
             <Button
+              type="button"
+              variant="outline"
+              onClick={handlePrintInvoice}
+              className="text-xs font-bold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 h-10 rounded-xl flex items-center justify-center gap-1.5"
+            >
+              <Printer className="h-4 w-4 text-slate-500" />
+              Print Invoice
+            </Button>
+            <Button
+              type="button"
               onClick={handleConfirmPayment}
               disabled={
                 !selectedPaymentMethod ||
                 (needsTIN && !tinNumber.trim()) ||
                 checkoutMutation.isPending
               }
+              className="bg-primary hover:bg-primary/90 text-white font-extrabold shadow-md text-xs px-5 h-10 rounded-xl flex-1 flex items-center justify-center gap-1.5"
             >
-              {checkoutMutation.isPending
-                ? 'Processing...'
-                : `Pay ${formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}`}
-            </Button>
-            <Button variant="secondary" onClick={handlePrintInvoice}>
-              <Printer className="mr-2 h-4 w-4" />
-              Print Invoice
+              {checkoutMutation.isPending ? 'Processing...' : 'Confirm & Pay'}
             </Button>
           </DialogFooter>
         </DialogContent>
