@@ -17,7 +17,10 @@ const Checkout = () => {
     setActiveEmployee(null);
   };
 
-  // Inactivity session timer: locks terminal after 120s of no action
+  // Detect session type (shop employee vs restaurant employee)
+  const isRestaurant = !!(session?.restaurant_id || shopSession?.isRestaurant);
+
+  // Inactivity session timer: locks terminal after inactivity (24 hours for shop, 2 minutes for restaurant)
   useEffect(() => {
     if (!activeEmployee) return;
 
@@ -25,9 +28,10 @@ const Checkout = () => {
 
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
+      const timeoutDuration = isRestaurant ? 120000 : 24 * 60 * 60 * 1000;
       timeoutId = setTimeout(() => {
         setActiveEmployee(null);
-      }, 120000); // 120 seconds
+      }, timeoutDuration);
     };
 
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
@@ -39,10 +43,7 @@ const Checkout = () => {
       if (timeoutId) clearTimeout(timeoutId);
       events.forEach(event => window.removeEventListener(event, resetTimer));
     };
-  }, [activeEmployee]);
-
-  // Detect session type (shop employee vs restaurant employee)
-  const isRestaurant = !!(session?.restaurant_id || shopSession?.isRestaurant);
+  }, [activeEmployee, isRestaurant]);
 
   if (!activeEmployee) {
     return (

@@ -40,9 +40,8 @@ export default function MomoPaymentDialog({
   // Generate QR code when component mounts or USSD code changes
   useEffect(() => {
     if (isOpen && ussdCode) {
-      // Use tel: protocol with URL encoding to ensure complete USSD code is dialed
-      const telUrl = `tel:${encodeURIComponent(ussdCode)}`;
-      QRCode.toDataURL(telUrl, {
+      // Use the raw USSD code string directly for the QR code to ensure compatibility with all mobile scanners
+      QRCode.toDataURL(ussdCode, {
         width: 250,
         margin: 2,
         color: {
