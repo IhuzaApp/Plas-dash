@@ -20,6 +20,15 @@ const Checkout = () => {
   // Detect session type (shop employee vs restaurant employee)
   const isRestaurant = !!(session?.restaurant_id || shopSession?.isRestaurant);
 
+  // Sync session state to localStorage for customer display
+  useEffect(() => {
+    if (activeEmployee) {
+      localStorage.setItem('posSessionActive', 'true');
+    } else {
+      localStorage.setItem('posSessionActive', 'false');
+    }
+  }, [activeEmployee]);
+
   // Inactivity session timer: locks terminal after inactivity (24 hours for shop, 2 minutes for restaurant)
   useEffect(() => {
     if (!activeEmployee) return;

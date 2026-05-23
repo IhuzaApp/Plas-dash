@@ -19,6 +19,8 @@ interface CustomerDisplayData {
     address: string;
     phone?: string;
     email?: string;
+    logo?: string;
+    ssd?: string;
   };
   timestamp: string;
   paymentMethod?: string;
@@ -33,6 +35,8 @@ export default function CustomerDisplayPage() {
       address: 'Shop Address',
       phone: 'Phone',
       email: 'Email',
+      logo: '',
+      ssd: '',
     },
     timestamp: new Date().toISOString(),
     paymentMethod: 'pending',
@@ -41,6 +45,7 @@ export default function CustomerDisplayPage() {
 
   const [isMomoPaymentDialogOpen, setIsMomoPaymentDialogOpen] = useState(false);
   const [previousPaymentMethod, setPreviousPaymentMethod] = useState<string>('pending');
+  const [posSessionActive, setPosSessionActive] = useState<boolean>(true);
 
   // Function to manually open MOMO dialog
   const openMomoDialog = () => {
@@ -67,6 +72,10 @@ export default function CustomerDisplayPage() {
       const shopData = localStorage.getItem('customerDisplayShop');
       const paymentData = localStorage.getItem('customerDisplayPayment');
       const momoDialogState = localStorage.getItem('momoDialogState');
+      const sessionActive = localStorage.getItem('posSessionActive');
+
+      // Sync active state
+      setPosSessionActive(sessionActive !== 'false');
 
       if (cartData) {
         const cart = JSON.parse(cartData);
@@ -207,20 +216,24 @@ export default function CustomerDisplayPage() {
         total={total}
         discount={displayData.discount || 0}
         paymentMethod={displayData.paymentMethod || 'pending'}
+        shopDetails={displayData.shopDetails}
+        posSessionActive={posSessionActive}
       />
 
       {/* MOMO Payment Dialog */}
-      <MomoPaymentDialog
-        isOpen={isMomoPaymentDialogOpen}
-        onClose={() => {
-          setIsMomoPaymentDialogOpen(false);
-        }}
-        onPaymentConfirmed={() => {
-          setIsMomoPaymentDialogOpen(false);
-        }}
-        total={total}
-        transactionId={'TXN-' + Date.now().toString().slice(-6)}
-      />
+      {posSessionActive && (
+        <MomoPaymentDialog
+          isOpen={isMomoPaymentDialogOpen}
+          onClose={() => {
+            setIsMomoPaymentDialogOpen(false);
+          }}
+          onPaymentConfirmed={() => {
+            setIsMomoPaymentDialogOpen(false);
+          }}
+          total={total}
+          transactionId={'TXN-' + Date.now().toString().slice(-6)}
+        />
+      )}
     </>
   );
 }

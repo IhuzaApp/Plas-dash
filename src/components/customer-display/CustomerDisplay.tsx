@@ -4,9 +4,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Store, CreditCard, QrCode, Wifi, Percent, Receipt, Sparkles, ShieldCheck } from 'lucide-react';
+import { ShoppingCart, Store, CreditCard, QrCode, Wifi, Percent, Receipt, Sparkles, ShieldCheck, Loader2 } from 'lucide-react';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 interface CartItem {
   id: string;
@@ -25,6 +26,15 @@ interface CustomerDisplayProps {
   total: number;
   discount: number;
   paymentMethod: string;
+  shopDetails?: {
+    name: string;
+    address: string;
+    phone?: string;
+    email?: string;
+    logo?: string;
+    ssd?: string;
+  };
+  posSessionActive?: boolean;
 }
 
 export default function CustomerDisplay({
@@ -35,8 +45,86 @@ export default function CustomerDisplay({
   total,
   discount,
   paymentMethod,
+  shopDetails,
+  posSessionActive = true,
 }: CustomerDisplayProps) {
   const { data: systemConfig } = useSystemConfig();
+
+  // If POS session is locked/inactive, show the waiting screen
+  if (posSessionActive === false) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-white flex flex-col justify-between p-8 font-sans relative overflow-hidden transition-colors duration-300">
+        {/* Ambient background glows */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 dark:bg-primary/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '8s' }}></div>
+
+        {/* Top bar */}
+        <div className="flex justify-between items-center z-10">
+          <div className="flex items-center gap-2">
+            {shopDetails?.logo ? (
+              <img src={shopDetails.logo} alt={shopDetails.name} className="h-8 w-8 rounded-lg object-cover" />
+            ) : (
+              <Store className="h-6 w-6 text-primary animate-pulse" />
+            )}
+            <span className="text-sm font-black tracking-widest text-slate-600 dark:text-slate-300 uppercase">{shopDetails?.name || 'Plas Store'}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              <Wifi className="h-3.5 w-3.5 animate-pulse" />
+              <span>Terminal Connected</span>
+            </div>
+            <ThemeToggle />
+          </div>
+        </div>
+
+        {/* Center content */}
+        <div className="flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-8 z-10 py-12">
+          {/* Logo container */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-xl animate-ping scale-75 opacity-75"></div>
+            <div className="w-28 h-28 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl flex items-center justify-center shadow-2xl relative overflow-hidden">
+              {shopDetails?.logo ? (
+                <img src={shopDetails.logo} alt={shopDetails.name} className="w-24 h-24 rounded-2xl object-cover" />
+              ) : (
+                <Store className="w-12 h-12 text-primary" />
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-950 dark:text-white">
+              Next Customer Please
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold max-w-md mx-auto leading-relaxed">
+              We are ready to serve you. Please present your shopping items to the cashier to begin scanning.
+            </p>
+          </div>
+
+          {/* Quick Pay Info if SSD is present */}
+          {shopDetails?.ssd && (
+            <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl max-w-sm w-full space-y-2 shadow-sm">
+              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Quick Mobile Money Pay</span>
+              <div className="font-mono text-base font-bold tracking-wider text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 py-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                {shopDetails.ssd}
+              </div>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">Dial the code above to pay instantly</span>
+            </div>
+          )}
+
+          {/* Scanning status banner */}
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900/30 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-900 shadow-sm">
+            <Loader2 className="h-3.5 w-3.5 text-primary animate-spin" />
+            <span>Awaiting cashier session...</span>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center text-[10px] text-slate-400 dark:text-slate-500 font-bold z-10 uppercase tracking-wider">
+          © {new Date().getFullYear()} {shopDetails?.name || 'Plas'}. Powered by Plasa POS.
+        </div>
+      </div>
+    );
+  }
 
   // Dynamic status based on cart and payment method
   const getStatusDetails = () => {
@@ -68,26 +156,42 @@ export default function CustomerDisplay({
       {/* Top Banner showing connection status */}
       <div className="bg-slate-900 dark:bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between text-slate-400 text-xs font-semibold">
         <div className="flex items-center gap-2">
-          <Store className="h-4 w-4 text-primary" />
-          <span className="text-slate-200 uppercase tracking-wider font-extrabold text-[10px]">Plas Store POS Terminal</span>
+          {shopDetails?.logo ? (
+            <img src={shopDetails.logo} alt={shopDetails.name} className="h-5 w-5 rounded object-cover" />
+          ) : (
+            <Store className="h-4 w-4 text-primary" />
+          )}
+          <span className="text-slate-200 uppercase tracking-wider font-extrabold text-[10px]">
+            {shopDetails?.name || 'Plas Store'} POS Terminal
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/25">
-          <Wifi className="h-3 w-3 animate-pulse" />
-          <span>Connected</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/25">
+            <Wifi className="h-3 w-3 animate-pulse" />
+            <span>Connected</span>
+          </div>
+          <ThemeToggle />
         </div>
       </div>
 
       <div className="mx-auto max-w-[1400px] p-6 lg:p-8 space-y-6">
         {/* Welcome Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800/60 shadow-sm">
-          <div className="space-y-1">
-            <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-              Welcome to Our Store
-              <Sparkles className="h-5 w-5 text-amber-500 animate-spin" style={{ animationDuration: '6s' }} />
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-              Real-time customer display terminal
-            </p>
+          <div className="flex items-center gap-4">
+            {shopDetails?.logo && (
+              <div className="w-12 h-12 bg-slate-50 dark:bg-slate-955 rounded-xl flex items-center justify-center border border-slate-100 dark:border-slate-800/80 overflow-hidden shrink-0">
+                <img src={shopDetails.logo} alt={shopDetails.name} className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div className="space-y-1">
+              <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                Welcome to {shopDetails?.name || 'Our Store'}
+                <Sparkles className="h-5 w-5 text-amber-500 animate-spin animate-pulse" style={{ animationDuration: '6s' }} />
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                {shopDetails?.address || 'Real-time customer display terminal'}
+              </p>
+            </div>
           </div>
           <div className={`px-4 py-2 rounded-xl border font-bold text-xs flex flex-col items-start gap-0.5 ${status.color}`}>
             <span className="uppercase tracking-wider text-[10px] opacity-75 font-extrabold">Current Status</span>
@@ -113,7 +217,7 @@ export default function CustomerDisplay({
                 {cart.length === 0 ? (
                   <div className="text-center py-20 space-y-3">
                     <div className="w-16 h-16 bg-slate-50 dark:bg-slate-950 rounded-full flex items-center justify-center mx-auto border border-slate-100 dark:border-slate-800/80">
-                      <ShoppingCart className="h-8 w-8 text-slate-300 dark:text-slate-750" />
+                      <ShoppingCart className="h-8 w-8 text-slate-300 dark:text-slate-700" />
                     </div>
                     <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">Your shopping cart is empty</h3>
                     <p className="text-xs text-slate-400 max-w-xs mx-auto">
@@ -125,9 +229,9 @@ export default function CustomerDisplay({
                     {cart.map((item, index) => (
                       <div
                         key={`${item.id}-${index}`}
-                        className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-100 dark:border-slate-850/60 transition-all hover:shadow-sm"
+                        className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-100 dark:border-slate-800/60 transition-all hover:shadow-sm"
                       >
-                        <div className="w-12 h-12 rounded-xl bg-slate-205 dark:bg-slate-900 flex items-center justify-center shrink-0 text-slate-400 overflow-hidden font-extrabold text-xs">
+                        <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-900 flex items-center justify-center shrink-0 text-slate-400 overflow-hidden font-extrabold text-xs">
                           {item.image ? (
                             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                           ) : (
@@ -154,7 +258,7 @@ export default function CustomerDisplay({
                                 {item.category || 'General'}
                               </Badge>
                             </div>
-                            <span className="font-bold text-slate-600 dark:text-slate-400 bg-slate-150 dark:bg-slate-900 px-2 py-0.5 rounded">
+                            <span className="font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded">
                               Qty: {item.quantity}
                             </span>
                           </div>
@@ -182,7 +286,7 @@ export default function CustomerDisplay({
                 <div className="space-y-3.5 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   <div className="flex justify-between items-center">
                     <span>Subtotal</span>
-                    <span className="font-bold text-slate-955 dark:text-slate-100">
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
                       {formatCurrencyWithConfig(subtotal, systemConfig)}
                     </span>
                   </div>
@@ -201,7 +305,7 @@ export default function CustomerDisplay({
 
                   <div className="flex justify-between items-center">
                     <span>VAT / Tax (8%)</span>
-                    <span className="font-bold text-slate-955 dark:text-slate-100">
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
                       {formatCurrencyWithConfig(tax, systemConfig)}
                     </span>
                   </div>
@@ -225,7 +329,7 @@ export default function CustomerDisplay({
                     <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30 space-y-3 text-xs font-semibold">
                       <div className="flex justify-between items-center">
                         <span className="text-slate-400">Method</span>
-                        <Badge className="bg-slate-205 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border-0 text-[10px] font-bold px-2 py-0.5">
+                        <Badge className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border-0 text-[10px] font-bold px-2 py-0.5">
                           {paymentMethod
                             ? paymentMethod === 'cash'
                               ? 'Cash'
@@ -239,11 +343,25 @@ export default function CustomerDisplay({
                       </div>
 
                       {paymentMethod === 'momo' && (
-                        <div className="flex flex-col items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                          <QrCode className="h-20 w-20 text-slate-800 dark:text-slate-200 animate-pulse" />
-                          <p className="text-[10px] text-center text-slate-400 max-w-xs leading-relaxed">
-                            Scan the QR code or approve the MoMo prompt on your phone.
-                          </p>
+                        <div className="flex flex-col items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                          {shopDetails?.ssd ? (
+                            <div className="w-full text-center space-y-1.5">
+                              <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">Quick Dial Code</span>
+                              <div className="font-mono text-sm font-bold tracking-wider text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 py-2.5 rounded-xl">
+                                {shopDetails.ssd}
+                              </div>
+                              <p className="text-[9px] text-slate-400 leading-normal">
+                                Dial the code above to pay {formatCurrencyWithConfig(total, systemConfig)} instantly.
+                              </p>
+                            </div>
+                          ) : (
+                            <>
+                              <QrCode className="h-16 w-16 text-slate-800 dark:text-slate-200 animate-pulse" />
+                              <p className="text-[10px] text-center text-slate-400 max-w-xs leading-relaxed">
+                                Scan the QR code or approve the MoMo prompt on your phone.
+                              </p>
+                            </>
+                          )}
                         </div>
                       )}
 

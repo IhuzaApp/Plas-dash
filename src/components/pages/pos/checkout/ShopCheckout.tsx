@@ -82,8 +82,10 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
     const shopData = JSON.stringify({
       name: shop?.name || 'Shop Name',
       address: shop?.address || 'Shop Address',
-      phone: session?.phoneNumber || '',
+      phone: session?.phoneNumber || shop?.phone || '',
       email: session?.email || '',
+      logo: shop?.logo || shop?.image || '',
+      ssd: shop?.ssd || '',
     });
 
     localStorage.setItem('customerDisplayCart', cartData);

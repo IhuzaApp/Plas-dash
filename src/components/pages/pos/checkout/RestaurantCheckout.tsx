@@ -294,6 +294,8 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
         address: restaurant?.location || 'Restaurant Address',
         phone: restaurant?.phone || session?.phoneNumber || '',
         email: restaurant?.email || session?.email || '',
+        logo: restaurant?.logo || '',
+        ssd: '', // Restaurants don't typically have SSD fields but adding to match shape
       })
     );
   }, [cart, restaurant, session]);
