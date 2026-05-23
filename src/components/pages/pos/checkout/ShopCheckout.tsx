@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProductsByShop, useShopById } from '@/hooks/useHasuraApi';
+import { useProductsByShop, useShopById, useSystemConfig } from '@/hooks/useHasuraApi';
+import { formatCurrencyWithConfig } from '@/lib/utils';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import { Product } from '@/hooks/useGraphql';
 import { AddProductDialog } from './AddProductCheckoutDialog';
@@ -54,6 +55,7 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
   const { toast } = useToast();
   const { session } = useAuth();
   const { hasAction } = usePrivilege();
+  const { data: systemConfig } = useSystemConfig();
 
   const { data: productsData, isLoading: productsLoading } = useProductsByShop(
     session?.shop_id || ''
@@ -224,9 +226,9 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
     const tinInfo = tinNumber ? ` with TIN: ${tinNumber}` : '';
     toast({
       title: 'Payment processed',
-      description: `Order completed with ${paymentMethod}${tinInfo}. Total: $${(
-        cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * 1.08
-      ).toFixed(2)}`,
+      description: `Order completed with ${paymentMethod}${tinInfo}. Total: ${formatCurrencyWithConfig(
+        cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * 1.08, systemConfig
+      )}`,
     });
 
     setCart([]);

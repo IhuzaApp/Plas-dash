@@ -660,7 +660,7 @@ const Inventory = () => {
 
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="price" className="text-right">
-                Price ($)
+                Price ({systemConfig?.System_configuratioins?.[0]?.currency || 'RWF'})
               </label>
               <Input
                 id="price"

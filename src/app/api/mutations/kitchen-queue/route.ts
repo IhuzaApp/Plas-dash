@@ -37,11 +37,15 @@ const UPDATE_KITCHEN_QUEUE = gql`
     $dishesOrdered: jsonb = "",
     $status: String = "",
     $token_number: String = "",
+    $restaurant_id: uuid = "",
     $updated_at: timestamptz = "",
     $paid: Boolean = false
   ) {
     update_kitchenQueue(
-      where: { token_number: { _eq: $token_number } },
+      where: { 
+        token_number: { _eq: $token_number },
+        restaurant_id: { _eq: $restaurant_id }
+      },
       _set: {
         dishesOrdered: $dishesOrdered,
         status: $status,
@@ -109,6 +113,7 @@ export async function POST(request: Request) {
       dishesOrdered: variables.dishesOrdered,
       status: variables.status,
       token_number: variables.token_number,
+      restaurant_id: variables.restaurant_id,
       updated_at: variables.updated_at,
       paid: variables.paid
     });

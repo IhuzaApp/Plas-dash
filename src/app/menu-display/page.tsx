@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useShopSession } from '@/contexts/ShopSessionContext';
-import { useRestaurantById } from '@/hooks/useHasuraApi';
+import { useRestaurantById, useSystemConfig } from '@/hooks/useHasuraApi';
+import { formatCurrencyWithConfig } from '@/lib/utils';
 import { Sparkles, Utensils, Flame, Leaf, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 export default function MenuDisplay() {
   const { session } = useAuth();
   const { shopSession } = useShopSession();
+  const { data: systemConfig } = useSystemConfig();
 
   const restaurantId =
     session?.restaurant_id ||
@@ -167,7 +169,7 @@ export default function MenuDisplay() {
                   <div className="p-8 space-y-4 bg-slate-950/95 border-t border-slate-900/50">
                     <div className="flex justify-between items-center">
                       <h3 className="text-2xl font-black text-white tracking-tight">{item.name}</h3>
-                      <span className="text-3xl font-black text-blue-500">${item.price.toFixed(2)}</span>
+                      <span className="text-3xl font-black text-blue-500">{formatCurrencyWithConfig(item.price, systemConfig)}</span>
                     </div>
                     <p className="text-sm text-slate-400 font-semibold leading-relaxed">
                       {item.description}
@@ -227,7 +229,7 @@ export default function MenuDisplay() {
                               {dish.name}
                             </h4>
                             <span className="font-black text-sm text-blue-500 shrink-0 ml-1">
-                              ${dish.price.toFixed(2)}
+                              {formatCurrencyWithConfig(dish.price, systemConfig)}
                             </span>
                           </div>
                           <p className="text-[11px] text-slate-400 font-medium line-clamp-2 mt-0.5 leading-snug">

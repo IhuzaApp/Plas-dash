@@ -5,9 +5,12 @@ import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
 const UPDATE_KITCHEN_QUEUE = gql`
-  mutation UpdateKitchenQueue($token_number: String!, $set: kitchenQueue_set_input!) {
+  mutation UpdateKitchenQueue($token_number: String!, $restaurant_id: uuid!, $set: kitchenQueue_set_input!) {
     update_kitchenQueue(
-      where: { token_number: { _eq: $token_number } },
+      where: { 
+        token_number: { _eq: $token_number },
+        restaurant_id: { _eq: $restaurant_id }
+      },
       _set: $set
     ) {
       affected_rows
@@ -18,10 +21,10 @@ const UPDATE_KITCHEN_QUEUE = gql`
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { token_number, status, paid } = body;
+    const { token_number, restaurant_id, status, paid } = body;
 
-    if (!token_number) {
-      return NextResponse.json({ error: 'Missing token_number' }, { status: 400 });
+    if (!token_number || !restaurant_id) {
+      return NextResponse.json({ error: 'Missing token_number or restaurant_id' }, { status: 400 });
     }
 
     if (!hasuraClient) {
@@ -36,6 +39,7 @@ export async function POST(request: Request) {
 
     const data = await hasuraClient.request(UPDATE_KITCHEN_QUEUE, {
       token_number,
+      restaurant_id,
       set: setObj
     });
 

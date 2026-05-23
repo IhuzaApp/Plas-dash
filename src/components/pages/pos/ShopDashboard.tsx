@@ -26,6 +26,7 @@ import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import { apiGet } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
 import {
   AreaChart,
   Area,
@@ -44,6 +45,7 @@ import {
 const ShopDashboard = () => {
   const { shopSession } = useShopSession();
   const { color } = useThemeColor();
+  const { data: systemConfig } = useSystemConfig();
   const [loading, setLoading] = useState(true);
   const [shopData, setShopData] = useState<any>(null);
   const [staffData, setStaffData] = useState<any[]>([]);
@@ -588,7 +590,7 @@ const ShopDashboard = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" />
-                  <YAxis tickFormatter={val => `$${val}`} />
+                  <YAxis tickFormatter={val => `${systemConfig?.System_configuratioins?.[0]?.currency || 'RWF'} ${val}`} />
                   <RechartsTooltip formatter={val => formatCurrency(val as number)} />
                   <Legend />
 

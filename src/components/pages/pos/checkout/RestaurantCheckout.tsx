@@ -733,7 +733,18 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
     let tableId = selectedTable;
     let tableName = '';
-    let tokenNumber = `#TK-${Math.floor(Math.random() * 90 + 10)}`;
+    
+    let tokenNumber = '';
+    let isUnique = false;
+    // Generate a token number that is not currently active on the kitchen board
+    while (!isUnique) {
+      const randomNum = Math.floor(Math.random() * 900 + 100); // 100-999
+      tokenNumber = `#TK-${randomNum}`;
+      const exists = kitchenTickets.some(t => t.id === tokenNumber);
+      if (!exists) {
+        isUnique = true;
+      }
+    }
 
     if (selectedOrderType === 'Table' || selectedOrderType === 'Dine In') {
       if (isNewTable) {
@@ -964,6 +975,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       try {
         await apiPost('/api/mutations/update-kitchen-queue', {
           token_number: activeCheckoutTable.tokenId,
+          restaurant_id: restaurantId,
           paid: true
         });
       } catch (dbErr) {
@@ -1005,6 +1017,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     try {
       await apiPost('/api/mutations/update-kitchen-queue', {
         token_number: ticketId,
+        restaurant_id: restaurantId,
         status: newStatus,
       });
       toast({
@@ -1279,7 +1292,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                       </Badge>
                     )}
                     <span className="absolute bottom-2 right-2 bg-slate-900/85 text-white font-bold text-xs px-2.5 py-1 rounded-lg">
-                      ${dish.price.toFixed(2)}
+                      {formatCurrencyWithConfig(dish.price, systemConfig)}
                     </span>
                   </div>
                   <CardContent className="p-4 space-y-1">
@@ -1443,7 +1456,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                           .filter(t => t.status === 'eating')
                           .map(t => (
                             <option key={t.id} value={t.id}>
-                              {t.name} (Waiter: {t.waiterName?.split(' ')[1] || 'N/A'}) - ${t.cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
+                              {t.name} (Waiter: {t.waiterName?.split(' ')[1] || 'N/A'}) - {formatCurrencyWithConfig(t.cart.reduce((sum, item) => sum + item.price * item.quantity, 0), systemConfig)}
                             </option>
                           ))}
                       </select>
@@ -1479,7 +1492,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                             {item.name}
                           </h5>
                           <span className="font-bold text-xs text-slate-800">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            {formatCurrencyWithConfig(item.price * item.quantity, systemConfig)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-[10px]">
@@ -1544,15 +1557,15 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
             <div className="border-t pt-3 space-y-2 text-xs font-semibold text-slate-600">
               <div className="flex justify-between">
                 <span>Sub Total</span>
-                <span className="font-bold text-slate-800">${getSubtotal().toFixed(2)}</span>
+                <span className="font-bold text-slate-800">{formatCurrencyWithConfig(getSubtotal(), systemConfig)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Tax (${taxRate}%)</span>
-                <span className="font-bold text-slate-800">${getTax().toFixed(2)}</span>
+                <span>Tax ({taxRate}%)</span>
+                <span className="font-bold text-slate-800">{formatCurrencyWithConfig(getTax(), systemConfig)}</span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-slate-800 pt-1.5 border-t">
                 <span>Amount to be Paid</span>
-                <span className="text-primary text-lg">${getTotal().toFixed(2)}</span>
+                <span className="text-primary text-lg">{formatCurrencyWithConfig(getTotal(), systemConfig)}</span>
               </div>
             </div>
 
@@ -1660,7 +1673,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                           <p className="font-bold text-slate-800 truncate">Customer: {table.customerName || 'Walk-in'}</p>
                           <p className="font-semibold text-slate-500">Waiter: {table.waiterName || 'N/A'}</p>
                           <p className="font-extrabold text-slate-800 pt-1 border-t text-[13px]">
-                            Bill: <span className="text-orange-600">${totalBill.toFixed(2)}</span>
+                            Bill: <span className="text-orange-600">{formatCurrencyWithConfig(totalBill, systemConfig)}</span>
                           </p>
                           <div className="grid grid-cols-2 gap-2 pt-2" onClick={e => e.stopPropagation()}>
                             <Button
@@ -2078,19 +2091,19 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span className="font-bold text-slate-800">
-                  ${(activeCheckoutTable?.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0).toFixed(2)}
+                  {formatCurrencyWithConfig(activeCheckoutTable?.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0, systemConfig)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Tax (18%)</span>
                 <span className="font-bold text-slate-800">
-                  ${((activeCheckoutTable?.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0) * 0.18).toFixed(2)}
+                  {formatCurrencyWithConfig((activeCheckoutTable?.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0) * 0.18, systemConfig)}
                 </span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-slate-800 border-t pt-2 mt-2">
                 <span>Total Settle Due</span>
                 <span className="text-primary text-base">
-                  ${((activeCheckoutTable?.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0) * 1.18).toFixed(2)}
+                  {formatCurrencyWithConfig((activeCheckoutTable?.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0) * 1.18, systemConfig)}
                 </span>
               </div>
             </div>
