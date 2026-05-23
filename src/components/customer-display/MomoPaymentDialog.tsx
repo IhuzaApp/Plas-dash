@@ -31,12 +31,22 @@ export default function MomoPaymentDialog({
   const { color: themeColor } = useThemeColor();
   const [copied, setCopied] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  
+  // Clean merchant ID input from any formatting (e.g. *44603#, 44603, or *182*8*1*44603#)
+  const cleanMerchantId = (ssd: string) => {
+    if (!ssd) return '';
+    const cleaned = ssd.replace(/[^0-9]/g, '');
+    if (cleaned.startsWith('18281')) {
+      return cleaned.slice(5);
+    }
+    return cleaned;
+  };
 
   // Generate USSD code for MOMO payment
   const generateUssdCode = () => {
     // Format: *182*8*1*merchantId*amount#
     const amount = Math.round(total); // Remove decimals for USSD
-    const merchantId = shopSsd || "";
+    const merchantId = cleanMerchantId(shopSsd || '');
     return `*182*8*1*${merchantId}*${amount}#`;
   };
 
@@ -45,10 +55,14 @@ export default function MomoPaymentDialog({
   // Generate QR code when component mounts or USSD code changes
   useEffect(() => {
     if (isOpen && ussdCode) {
-      // Use the raw USSD code string directly for the QR code to ensure compatibility with all mobile scanners
+      const amount = Math.round(total);
+      const merchantId = cleanMerchantId(shopSsd || '');
+      // Format as tel link with URL-encoded hash (%23) to trigger dialer prompt on phone scan
+      const dialableCode = `tel:*182*8*1*${merchantId}*${amount}%23`;
+      
       // Use the active primary hex color from ThemeColorProvider
       const qrColor = themeColor?.primary || '#0f172a';
-      QRCode.toDataURL(ussdCode, {
+      QRCode.toDataURL(dialableCode, {
         width: 250,
         margin: 2,
         color: {
@@ -64,7 +78,7 @@ export default function MomoPaymentDialog({
           console.error('Error generating QR code:', err);
         });
     }
-  }, [isOpen, ussdCode, themeColor]);
+  }, [isOpen, ussdCode, themeColor, shopSsd, total]);
 
   const copyToClipboard = async () => {
     try {

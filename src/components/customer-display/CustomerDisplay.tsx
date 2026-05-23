@@ -50,6 +50,19 @@ export default function CustomerDisplay({
 }: CustomerDisplayProps) {
   const { data: systemConfig } = useSystemConfig();
 
+  // Clean merchant ID input from any formatting (e.g. *44603#, 44603, or *182*8*1*44603#)
+  const cleanMerchantId = (ssd: string) => {
+    if (!ssd) return '';
+    const cleaned = ssd.replace(/[^0-9]/g, '');
+    if (cleaned.startsWith('18281')) {
+      return cleaned.slice(5);
+    }
+    return cleaned;
+  };
+
+  const merchantId = cleanMerchantId(shopDetails?.ssd || '');
+  const formattedSsd = `*182*8*1*${merchantId}*${Math.round(total)}#`;
+
   // If POS session is locked/inactive, show the waiting screen
   if (posSessionActive === false) {
     return (
@@ -327,15 +340,10 @@ export default function CustomerDisplay({
                       <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm text-center space-y-2">
                         <span className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wider block">Quick Dial Code</span>
                         <div className="font-mono text-sm font-bold tracking-wider text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 py-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                          {shopDetails?.ssd || `*182*8*1*1426640*${Math.round(total)}#`}
+                          {formattedSsd}
                         </div>
                         <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-normal">
                           Dial the code above to pay {formatCurrencyWithConfig(total, systemConfig)} instantly.
-                          {!shopDetails?.ssd && (
-                            <span className="block mt-1 text-[9px] text-slate-400 font-normal italic">
-                              Using standard Plasa merchant channel
-                            </span>
-                          )}
                         </p>
                       </div>
                     ) : (
