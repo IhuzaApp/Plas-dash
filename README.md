@@ -281,19 +281,21 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - **Database Synchronization**: Fully connected the Kitchen Queue UI to the Hasura database. Action buttons now trigger GraphQL mutations (`update_kitchenQueue`) to persist the ticket status in real-time, ensuring seamless communication between the POS frontend and the dedicated Kitchen Display Screen.
 
 - **Customer Display Screen**
-  - Second screen functionality for customer visibility
-  - Real-time order updates via localStorage synchronization
-  - Professional 2-column layout (Order Details + Transaction Details)
-  - Currency formatting based on system configuration
-  - Responsive design optimized for device displays
-  - MOMO payment integration with QR code scanning
+  - **Second-Screen Sync**: Real-time order cart state, discount values, and checkout details synchronized via `localStorage` triggers.
+  - **Premium Theme System**: Integrated with `ThemeColorProvider` to align layouts dynamically with the custom shop brand colors.
+  - **MOMO Quick Dial Display**: Automatically pulls the custom merchant USSD code configured in the `Shops` database. If empty, the dialog falls back to the standard dynamic Plasa merchant code (`*182*8*1*${merchantId}*${amount}#`).
+  - **QR Code Visibility Guard**: The QR code is kept hidden on the primary customer display screen, showing up only inside the dedicated Momo payment modal to keep the layout clean.
+  - **Theme-Aware Styling**: The customer display and dialog match the brand colors and support dark/light theme shifts.
 
-- **MOMO Payment Integration**
-  - USSD code generation for mobile money payments
-  - QR code generation with tel: protocol for direct dialing
-  - Customer display popup for payment instructions
-  - Real-time payment status updates
-  - Professional black and white design theme
+- **MOMO Payment Integration & Cashier Sync**
+  - **Cashier Control Toggle**: The cashier/POS checkout screen features a smart toggle button to open or close the MOMO dialog on the Customer Display.
+  - **Cross-Window Sync**: Utilizes a synchronized `momoDialogOpen` `localStorage` listener and storage events to instantly align both windows when either side triggers an open or close action.
+  - **Presence Check**: The "Open MOMO Payment on Customer Display" button only renders if a merchant SSD is configured, preventing confusion for shops without mobile money configured.
+  - **Dialable QR Code**: Generates a dynamic QR code embedded with the `tel:` protocol containing URL-encoded USSD dial instructions to allow customers scanning the screen to dial directly on their phones.
+
+- **Dynamic System Tax Calculations**
+  - **Config-Driven Calculations**: Tax is computed using the dynamic `tax` value fetched from the Hasura system configuration database query (`GET_SYSTEM_CONFIG`), completely deprecating the hardcoded 8% rate.
+  - **End-to-End Alignment**: Dynamic tax rates are implemented across POS Checkout screens (`ShopCheckout`), Cart Summary layouts (`CartSummaryCard`), printed receipts, and POS Transaction views (`Transactions.tsx`).
 
 ### 📱 **Real Barcode & QR Code Scanning System**
 
