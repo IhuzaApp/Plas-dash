@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const RECENT_LOGINS_KEY = 'pos_recent_logins';
 const MAX_RECENT = 4;
@@ -353,9 +354,21 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
 
         {/* ── Loading / Error / Employee Selection / Keypad ── */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-            <p className="text-sm text-muted-foreground dark:text-slate-400 font-medium">Loading staff profiles...</p>
+          <div className="w-full space-y-5 animate-pulse">
+            <div className="flex items-center gap-2 mb-2">
+              <Skeleton className="h-3 w-32 rounded bg-muted/80 dark:bg-slate-800" />
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-3 p-3 rounded-2xl bg-muted/20 dark:bg-slate-800/20 border border-border/50 dark:border-slate-800/40 w-full">
+                  <Skeleton className="w-12 h-12 rounded-full bg-muted dark:bg-slate-800" />
+                  <div className="space-y-1.5 w-full flex flex-col items-center">
+                    <Skeleton className="h-2.5 w-16 rounded bg-muted dark:bg-slate-800" />
+                    <Skeleton className="h-2 w-10 rounded bg-muted dark:bg-slate-800" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : error ? (
           <div className="text-center py-8">

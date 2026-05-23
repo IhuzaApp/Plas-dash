@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback } from 'react';
@@ -220,7 +221,16 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
                 icon: Store,
                 path: '/pos/shop-dashboard',
               },
-              { title: 'Checkout', icon: CreditCard, path: '/pos/checkout' },
+              {
+                title: 'Checkout',
+                icon: CreditCard,
+                path: '/pos/checkout',
+                newTab: true,
+                submenu: [
+                  { title: 'POS Board', path: '/pos/board' },
+                  { title: 'POS', path: '/pos/checkout', newTab: true },
+                ],
+              },
               { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory' },
               { title: 'Transactions', icon: Receipt, path: '/pos/transactions' },
               { title: 'Discounts', icon: Tag, path: '/pos/discounts' },
@@ -432,64 +442,107 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
     const isActive = pathname === item.path;
     const isLoading = isNavigating && navigatingTo === item.path;
 
+    const buttonElement = (
+      <button
+        onClick={() => {
+          if (item.newTab) {
+            window.open(item.path, '_blank');
+          } else {
+            handleNavigation(item.path);
+          }
+        }}
+        className={cn(
+          'flex items-center w-full relative group transition-all duration-300 ease-out',
+          isSidebarOpen ? 'px-4 py-2.5' : 'justify-center py-3',
+          isActive
+            ? 'bg-primary text-white font-semibold shadow-lg shadow-primary/20'
+            : 'text-white/60 hover:text-white hover:bg-white/10',
+          'rounded-xl'
+        )}
+      >
+        {/* Active Indicator Dot */}
+        {isActive && isSidebarOpen && (
+          <div className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+        )}
+
+        {isLoading ? (
+          <Loader2
+            className={cn('h-5 w-5 animate-spin text-primary', isSidebarOpen ? 'mr-3' : '')}
+          />
+        ) : (
+          <item.icon
+            className={cn(
+              'h-5 w-5 transition-transform duration-300 group-hover:scale-110',
+              isSidebarOpen ? 'mr-3' : '',
+              isActive ? 'text-white' : 'group-hover:text-primary'
+            )}
+          />
+        )}
+        {isSidebarOpen && (
+          <div className="flex items-center justify-between w-full">
+            <span className="truncate">{item.title}</span>
+            {item.badge && !isLoading && (
+              <span
+                className={cn(
+                  'ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full',
+                  item.badge === 'New'
+                    ? 'bg-primary text-white shadow-[0_0_8px_rgba(34,197,94,0.3)]'
+                    : 'bg-white/10 text-white/70'
+                )}
+              >
+                {item.badge}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Subtle hover effect for collapsed mode */}
+        {!isSidebarOpen && isActive && (
+          <div className="absolute bottom-1 w-1 h-1 bg-primary rounded-full" />
+        )}
+      </button>
+    );
+
+    if (item.submenu) {
+      return (
+        <HoverCard key={item.path} openDelay={50} closeDelay={150}>
+          <HoverCardTrigger asChild>
+            <div className="px-1">{buttonElement}</div>
+          </HoverCardTrigger>
+          <HoverCardContent
+            side="right"
+            align="start"
+            sideOffset={10}
+            className="w-48 bg-sidebar border border-sidebar-border/50 text-white shadow-2xl rounded-xl p-2 backdrop-blur-md z-[60]"
+          >
+            <div className="flex flex-col space-y-1">
+              {item.submenu.map((sub: any) => (
+                <button
+                  key={sub.path}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (sub.newTab) {
+                      window.open(sub.path, '_blank');
+                    } else {
+                      handleNavigation(sub.path);
+                    }
+                  }}
+                  className="flex items-center w-full px-3 py-2 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded-lg text-left transition-colors font-semibold"
+                >
+                  {sub.title}
+                </button>
+              ))}
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+      );
+    }
+
     return (
       <TooltipProvider key={item.path} delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="px-1">
-              <button
-                onClick={() => handleNavigation(item.path)}
-                className={cn(
-                  'flex items-center w-full relative group transition-all duration-300 ease-out',
-                  isSidebarOpen ? 'px-4 py-2.5' : 'justify-center py-3',
-                  isActive
-                    ? 'bg-primary text-white font-semibold shadow-lg shadow-primary/20'
-                    : 'text-white/60 hover:text-white hover:bg-white/10',
-                  'rounded-xl'
-                )}
-              >
-                {/* Active Indicator Dot */}
-                {isActive && isSidebarOpen && (
-                  <div className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-                )}
-
-                {isLoading ? (
-                  <Loader2
-                    className={cn('h-5 w-5 animate-spin text-primary', isSidebarOpen ? 'mr-3' : '')}
-                  />
-                ) : (
-                  <item.icon
-                    className={cn(
-                      'h-5 w-5 transition-transform duration-300 group-hover:scale-110',
-                      isSidebarOpen ? 'mr-3' : '',
-                      isActive ? 'text-white' : 'group-hover:text-primary'
-                    )}
-                  />
-                )}
-                {isSidebarOpen && (
-                  <div className="flex items-center justify-between w-full">
-                    <span className="truncate">{item.title}</span>
-                    {item.badge && !isLoading && (
-                      <span
-                        className={cn(
-                          'ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full',
-                          item.badge === 'New'
-                            ? 'bg-primary text-white shadow-[0_0_8px_rgba(34,197,94,0.3)]'
-                            : 'bg-white/10 text-white/70'
-                        )}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Subtle hover effect for collapsed mode */}
-                {!isSidebarOpen && isActive && (
-                  <div className="absolute bottom-1 w-1 h-1 bg-primary rounded-full" />
-                )}
-              </button>
-            </div>
+            <div className="px-1">{buttonElement}</div>
           </TooltipTrigger>
           <TooltipContent
             side="right"
