@@ -55,141 +55,7 @@ const TABLES = Array.from({ length: 12 }, (_, i) => ({
   capacity: i % 2 === 0 ? 4 : 2,
 }));
 
-// Fallback high-quality restaurant dishes in case DB is empty
-const MOCK_DISHES = [
-  {
-    id: 'mock-1',
-    name: 'Grilled Salmon Steak',
-    price: 80,
-    category: 'Sea Food',
-    image: 'https://images.unsplash.com/photo-1485921325833-c519f76c4927?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Fresh Atlantic salmon grilled with garlic butter and herbs',
-    isVeg: false,
-    isEgg: false,
-    isTrending: true,
-  },
-  {
-    id: 'mock-2',
-    name: 'Cheese Burst Pizza',
-    price: 66,
-    category: 'Pizza',
-    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Double cheese pizza with rich herb tomato sauce',
-    isVeg: true,
-    isEgg: false,
-    isTrending: false,
-  },
-  {
-    id: 'mock-3',
-    name: 'Garlic Butter Shrimp',
-    price: 25,
-    category: 'Sea Food',
-    image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Sautéed prawns in velvety garlic white wine butter sauce',
-    isVeg: false,
-    isEgg: false,
-    isTrending: false,
-  },
-  {
-    id: 'mock-4',
-    name: 'Chicken Taco',
-    price: 33,
-    category: 'Tacos',
-    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Crispy corn shells stuffed with seasoned shredded chicken',
-    isVeg: false,
-    isEgg: false,
-    isTrending: true,
-  },
-  {
-    id: 'mock-5',
-    name: 'Tomato Basil Soup',
-    price: 44,
-    category: 'Soups',
-    image: 'https://images.unsplash.com/photo-1547592165-e1d17fed6005?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Creamy roasted tomato soup garnished with fresh basil oil',
-    isVeg: true,
-    isEgg: false,
-    isTrending: false,
-  },
-  {
-    id: 'mock-6',
-    name: 'Grilled Chicken Salad',
-    price: 49,
-    category: 'Salads',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Tossed greens, avocado, cherry tomatoes with vinaigrette',
-    isVeg: true,
-    isEgg: false,
-    isTrending: true,
-  },
-  {
-    id: 'mock-7',
-    name: 'Vegetable Roll',
-    price: 66,
-    category: 'Sushi',
-    image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Fresh cucumber, avocado, and pickled radish sushi roll',
-    isVeg: true,
-    isEgg: false,
-    isTrending: false,
-  },
-  {
-    id: 'mock-8',
-    name: 'Lemon Mint Juice',
-    price: 96,
-    category: 'Beverages',
-    image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Ice-blended sweet lemonade with fresh mint leaves',
-    isVeg: true,
-    isEgg: false,
-    isTrending: false,
-  },
-  {
-    id: 'mock-9',
-    name: 'Grilled Veggie Taco',
-    price: 69,
-    category: 'Tacos',
-    image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Charred zucchini, bell peppers, corn salsa, and lime crema',
-    isVeg: true,
-    isEgg: false,
-    isTrending: false,
-  },
-  {
-    id: 'mock-10',
-    name: 'Shrimp Tom Yum',
-    price: 25,
-    category: 'Soups',
-    image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Spicy lemongrass broth with prawns and oyster mushrooms',
-    isVeg: false,
-    isEgg: false,
-    isTrending: false,
-  },
-  {
-    id: 'mock-11',
-    name: 'Corn Pizza',
-    price: 96,
-    category: 'Pizza',
-    image: 'https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Sweet corn, green chilies, mozzarella, and marinara',
-    isVeg: true,
-    isEgg: false,
-    isTrending: false,
-  },
-  {
-    id: 'mock-12',
-    name: 'Chicken Noodle Soup',
-    price: 45,
-    category: 'Soups',
-    image: 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?q=80&w=300&h=200&auto=format&fit=crop',
-    description: 'Shredded chicken, egg noodles, carrots, and celery',
-    isVeg: false,
-    isEgg: true,
-    isTrending: false,
-  },
-];
+
 
 interface CartItem {
   id: string;
@@ -427,9 +293,6 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       };
     });
 
-    if (dbDishes.length === 0) {
-      return MOCK_DISHES;
-    }
     return dbDishes;
   }, [restaurant]);
 
@@ -1108,6 +971,38 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     setIsNewTable(true);
     setNewTableName('');
     setCustomerName('Walk-in Customer');
+  };
+
+  // Allow POS to manually update kitchen ticket status
+  const updateKitchenTicketStatus = async (ticketId: string, newStatus: 'Pending' | 'Preparing' | 'Ready' | 'Served') => {
+    if (restaurantId) {
+      try {
+        await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticketId), {
+          status: newStatus,
+        });
+      } catch (err) {
+        console.error('Error updating status in Firestore:', err);
+      }
+    }
+
+    // Sync status to Postgres DB
+    try {
+      await apiPost('/api/mutations/update-kitchen-queue', {
+        token_number: ticketId,
+        status: newStatus,
+      });
+      toast({
+        title: 'Status Updated',
+        description: `Ticket ${ticketId} is now ${newStatus}.`,
+      });
+    } catch (e) {
+      console.error('Failed to sync status to Postgres:', e);
+      toast({
+        title: 'Sync Failed',
+        description: `Could not sync status for ticket ${ticketId}.`,
+        variant: 'destructive',
+      });
+    }
   };
 
   // Load a table's bill back into active POS cart
@@ -1922,17 +1817,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={async () => {
-                        if (restaurantId) {
-                          try {
-                            await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticket.id), {
-                              status: 'Preparing',
-                            });
-                          } catch (err) {
-                            console.error('Error preparing ticket:', err);
-                          }
-                        }
-                      }}
+                      onClick={() => updateKitchenTicketStatus(ticket.id, 'Preparing')}
                       disabled={ticket.status !== 'Pending'}
                       className="text-[10px] font-extrabold border-slate-200"
                     >
@@ -1941,17 +1826,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={async () => {
-                        if (restaurantId) {
-                          try {
-                            await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticket.id), {
-                              status: 'Ready',
-                            });
-                          } catch (err) {
-                            console.error('Error marking ticket ready:', err);
-                          }
-                        }
-                      }}
+                      onClick={() => updateKitchenTicketStatus(ticket.id, 'Ready')}
                       disabled={ticket.status !== 'Preparing'}
                       className="text-[10px] font-extrabold border-slate-200"
                     >
@@ -1960,15 +1835,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                     <Button
                       size="sm"
                       onClick={async () => {
-                        if (restaurantId) {
-                          try {
-                            await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticket.id), {
-                              status: 'Served',
-                            });
-                          } catch (err) {
-                            console.error('Error serving ticket:', err);
-                          }
-                        }
+                        await updateKitchenTicketStatus(ticket.id, 'Served');
 
                         // Clear table occupied state
                         if (ticket.tableId) {

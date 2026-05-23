@@ -8,75 +8,7 @@ import { Sparkles, Utensils, Flame, Leaf, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 
-// Curated beautiful menu items with stunning Unsplash photography
-const DISPLAY_MOCK_DISHES = [
-  {
-    id: 'd-1',
-    name: 'Grilled Salmon Steak',
-    price: 80,
-    category: 'Sea Food',
-    image: 'https://images.unsplash.com/photo-1485921325833-c519f76c4927?q=80&w=600&h=400&auto=format&fit=crop',
-    description: 'Fresh Atlantic salmon grilled with garlic herbs butter, grilled asparagus, and mashed potatoes.',
-    tag: 'Chef\'s Special',
-    spicy: false,
-    veg: false,
-  },
-  {
-    id: 'd-2',
-    name: 'Cheese Burst Pepperoni Pizza',
-    price: 66,
-    category: 'Pizza',
-    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=600&h=400&auto=format&fit=crop',
-    description: 'Double cheese pizza with fresh mozzarella, spicy beef pepperoni, and fresh oregano leaves.',
-    tag: 'Trending',
-    spicy: true,
-    veg: false,
-  },
-  {
-    id: 'd-3',
-    name: 'Garlic Butter Shrimp Pasta',
-    price: 25,
-    category: 'Pasta',
-    image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?q=80&w=600&h=400&auto=format&fit=crop',
-    description: 'Sautéed prawns in velvety garlic white wine butter sauce tossed with spaghetti noodles.',
-    tag: 'Must Try',
-    spicy: false,
-    veg: false,
-  },
-  {
-    id: 'd-4',
-    name: 'Avocado Green Salad',
-    price: 49,
-    category: 'Salads',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=600&h=400&auto=format&fit=crop',
-    description: 'Tossed fresh field greens, ripe avocado, heirloom cherry tomatoes, with honey-mustard vinaigrette.',
-    tag: 'Healthy choice',
-    spicy: false,
-    veg: true,
-  },
-  {
-    id: 'd-5',
-    name: 'Mexican Street Chicken Tacos',
-    price: 33,
-    category: 'Tacos',
-    image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=600&h=400&auto=format&fit=crop',
-    description: 'Crispy corn shells stuffed with seasoned shredded chicken, pico de gallo, and fresh lime juice.',
-    tag: 'Hot Item',
-    spicy: true,
-    veg: false,
-  },
-  {
-    id: 'd-6',
-    name: 'Creamy Tomato Basil Soup',
-    price: 44,
-    category: 'Soups',
-    image: 'https://images.unsplash.com/photo-1547592165-e1d17fed6005?q=80&w=600&h=400&auto=format&fit=crop',
-    description: 'Rich slow-roasted tomato broth served with garlic croutons and a drizzle of premium basil oil.',
-    tag: 'Cozy Bowl',
-    spicy: false,
-    veg: true,
-  },
-];
+
 
 export default function MenuDisplay() {
   const { session } = useAuth();
@@ -131,9 +63,6 @@ export default function MenuDisplay() {
       };
     });
 
-    if (dbDishes.length === 0) {
-      return DISPLAY_MOCK_DISHES;
-    }
     return dbDishes;
   }, [restaurant]);
 
