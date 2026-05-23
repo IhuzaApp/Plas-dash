@@ -1335,6 +1335,7 @@ export const GET_SYSTEM_CONFIG = `
       withDrawCharges
       enableRush
       allowScheduledDeliveries
+      tax
     }
   }
 `;

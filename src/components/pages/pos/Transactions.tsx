@@ -155,9 +155,13 @@ const Transactions = () => {
       (sum: number, item: any) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 0),
       0
     );
-    const tax = subtotal * 0.08;
+    const tax = Number(transaction.originalData.tax) !== undefined && transaction.originalData.tax !== null
+      ? Number(transaction.originalData.tax)
+      : subtotal * 0.08;
     const deliveryFee = Number(transaction.originalData.delivery_fee || 0);
-    const total = subtotal + tax + deliveryFee;
+    const total = Number(transaction.originalData.total) !== undefined && transaction.originalData.total !== null
+      ? Number(transaction.originalData.total)
+      : subtotal + tax + deliveryFee;
 
     return {
       id: transaction.transactionId,

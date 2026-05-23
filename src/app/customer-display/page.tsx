@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import CustomerDisplay from '@/components/customer-display/CustomerDisplay';
 import MomoPaymentDialog from '@/components/customer-display/MomoPaymentDialog';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
 
 interface CartItem {
   id: string;
@@ -28,6 +29,14 @@ interface CustomerDisplayData {
 }
 
 export default function CustomerDisplayPage() {
+  const { data: systemConfig } = useSystemConfig();
+
+  const getTaxRate = () => {
+    const taxStr = systemConfig?.System_configuratioins?.[0]?.tax;
+    if (taxStr === undefined || taxStr === null) return 0.08;
+    return parseFloat(taxStr) / 100;
+  };
+
   const [displayData, setDisplayData] = useState<CustomerDisplayData>({
     cart: [],
     shopDetails: {
@@ -117,12 +126,20 @@ export default function CustomerDisplayPage() {
       }
 
       // Check MOMO dialog state from localStorage
+      const momoOpen = localStorage.getItem('momoDialogOpen');
+      if (momoOpen === 'false' && isMomoPaymentDialogOpen) {
+        setIsMomoPaymentDialogOpen(false);
+      } else if (momoOpen === 'true' && !isMomoPaymentDialogOpen) {
+        setIsMomoPaymentDialogOpen(true);
+      }
+
       if (momoDialogState) {
         try {
           const dialogState = JSON.parse(momoDialogState);
           if (dialogState.shouldClose && isMomoPaymentDialogOpen) {
             setIsMomoPaymentDialogOpen(false);
             localStorage.removeItem('momoDialogState');
+            localStorage.setItem('momoDialogOpen', 'false');
           }
         } catch (error) {
           console.error('Error parsing momoDialogState:', error);
@@ -204,7 +221,7 @@ export default function CustomerDisplayPage() {
   const calculateTax = () => {
     const subtotal = calculateSubtotal();
     const discountAmount = calculateDiscountAmount();
-    return (subtotal - discountAmount) * 0.08;
+    return (subtotal - discountAmount) * getTaxRate();
   };
 
   const calculateTotal = () => {
@@ -239,9 +256,11 @@ export default function CustomerDisplayPage() {
           isOpen={isMomoPaymentDialogOpen}
           onClose={() => {
             setIsMomoPaymentDialogOpen(false);
+            localStorage.setItem('momoDialogOpen', 'false');
           }}
           onPaymentConfirmed={() => {
             setIsMomoPaymentDialogOpen(false);
+            localStorage.setItem('momoDialogOpen', 'false');
           }}
           total={total}
           transactionId={'TXN-' + Date.now().toString().slice(-6)}

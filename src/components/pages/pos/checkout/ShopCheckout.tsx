@@ -57,6 +57,12 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
   const { hasAction } = usePrivilege();
   const { data: systemConfig } = useSystemConfig();
 
+  const getTaxRate = () => {
+    const taxStr = systemConfig?.System_configuratioins?.[0]?.tax;
+    if (taxStr === undefined || taxStr === null) return 0.08;
+    return parseFloat(taxStr) / 100;
+  };
+
   const { data: productsData, isLoading: productsLoading } = useProductsByShop(
     session?.shop_id || ''
   );
@@ -280,7 +286,7 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
     toast({
       title: 'Payment processed',
       description: `Order completed with ${paymentMethod}${tinInfo}. Total: ${formatCurrencyWithConfig(
-        cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * 1.08, systemConfig
+        cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * (1 + getTaxRate()), systemConfig
       )}`,
     });
 

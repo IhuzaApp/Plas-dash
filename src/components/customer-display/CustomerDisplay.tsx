@@ -50,6 +50,12 @@ export default function CustomerDisplay({
 }: CustomerDisplayProps) {
   const { data: systemConfig } = useSystemConfig();
 
+  const getTaxRate = () => {
+    const taxStr = systemConfig?.System_configuratioins?.[0]?.tax;
+    if (taxStr === undefined || taxStr === null) return 0.08;
+    return parseFloat(taxStr) / 100;
+  };
+
   // Clean merchant ID input from any formatting (e.g. *44603#, 44603, or *182*8*1*44603#)
   const cleanMerchantId = (ssd: string) => {
     if (!ssd) return '';
@@ -317,7 +323,7 @@ export default function CustomerDisplay({
                   )}
 
                   <div className="flex justify-between items-center">
-                    <span>VAT / Tax (8%)</span>
+                    <span>VAT / Tax ({Math.round(getTaxRate() * 100)}%)</span>
                     <span className="font-bold text-slate-900 dark:text-slate-100">
                       {formatCurrencyWithConfig(tax, systemConfig)}
                     </span>

@@ -83,6 +83,22 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     'card' | 'cash' | 'momo' | null
   >(null);
+  const [isMomoOpenOnDisplay, setIsMomoOpenOnDisplay] = useState(false);
+
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      const open = localStorage.getItem('momoDialogOpen') === 'true';
+      setIsMomoOpenOnDisplay(open);
+    };
+    handleStorageChange();
+    window.addEventListener('storage', handleStorageChange);
+    // Set up a short interval as fallback for immediate local updates
+    const interval = setInterval(handleStorageChange, 1000);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
   const [needsTIN, setNeedsTIN] = useState(false);
   const [tinNumber, setTinNumber] = useState('');
   const [lastPaymentDetails, setLastPaymentDetails] = useState<{
@@ -128,6 +144,12 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
     return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
+  const getTaxRate = () => {
+    const taxStr = systemConfig?.System_configuratioins?.[0]?.tax;
+    if (taxStr === undefined || taxStr === null) return 0.08;
+    return parseFloat(taxStr) / 100;
+  };
+
   const handleConfirmPayment = async () => {
     if (needsTIN && !tinNumber.trim()) {
       console.error('TIN Number is required but not provided');
@@ -141,7 +163,8 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
 
     if (selectedPaymentMethod) {
       const subtotal = calculateTotal();
-      const tax = subtotal * 0.08;
+      const taxRate = getTaxRate();
+      const tax = subtotal * taxRate;
       const totalAmount = subtotal + tax;
 
       // Console logs showing payment saving details
@@ -521,11 +544,11 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           <div class="totals">
             <div class="totals-row">
               <span>Subtotal:</span>
-              <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) / 1.08, systemConfig)}</span>
+              <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) / (1 + getTaxRate()), systemConfig)}</span>
             </div>
             <div class="totals-row">
-              <span>VAT / Tax (8%):</span>
-              <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) - (lastPaymentDetails?.amount || 0) / 1.08, systemConfig)}</span>
+              <span>VAT / Tax (${Math.round(getTaxRate() * 100)}%):</span>
+              <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) - (lastPaymentDetails?.amount || 0) / (1 + getTaxRate()), systemConfig)}</span>
             </div>
             <div class="grand-total">
               <span>TOTAL DUE:</span>
@@ -715,12 +738,12 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                 <span className="font-bold text-slate-800 dark:text-slate-200">{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Tax (8%)</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
+                <span>Tax ({Math.round(getTaxRate() * 100)}%)</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{formatCurrencyWithConfig(calculateTotal() * getTaxRate(), systemConfig)}</span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-slate-800 dark:text-slate-100 pt-1.5 border-t border-slate-100 dark:border-slate-900">
                 <span>Amount to be Paid</span>
-                <span className="text-primary text-lg">{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
+                <span className="text-primary text-lg">{formatCurrencyWithConfig(calculateTotal() * (1 + getTaxRate()), systemConfig)}</span>
               </div>
             </div>
 
@@ -867,26 +890,44 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                 <Button
                   type="button"
                   onClick={() => {
-                    // Update localStorage to trigger MOMO dialog in customer display
-                    const paymentInfo = {
-                      paymentMethod: selectedPaymentMethod,
-                      discount: 0,
-                      momoTrigger: Date.now(),
-                    };
-                    localStorage.setItem('customerDisplayPayment', JSON.stringify(paymentInfo));
+                    if (isMomoOpenOnDisplay) {
+                      // Close MoMo dialog on customer display
+                      localStorage.setItem('momoDialogOpen', 'false');
+                      localStorage.setItem('momoDialogState', JSON.stringify({ shouldClose: true }));
+                      setIsMomoOpenOnDisplay(false);
 
-                    console.log('=== OPENING MOMO DIALOG ON CUSTOMER DISPLAY ===');
-                    console.log('Updated localStorage with:', paymentInfo);
+                      toast({
+                        title: 'MOMO Payment Closed',
+                        description: 'MOMO payment dialog closed on customer display screen.',
+                      });
+                    } else {
+                      // Update localStorage to trigger MOMO dialog in customer display
+                      const paymentInfo = {
+                        paymentMethod: selectedPaymentMethod,
+                        discount: 0,
+                        momoTrigger: Date.now(),
+                      };
+                      localStorage.setItem('customerDisplayPayment', JSON.stringify(paymentInfo));
+                      localStorage.setItem('momoDialogOpen', 'true');
+                      localStorage.removeItem('momoDialogState');
+                      setIsMomoOpenOnDisplay(true);
 
-                    toast({
-                      title: 'MOMO Payment',
-                      description: 'MOMO payment dialog opened on customer display screen.',
-                    });
+                      toast({
+                        title: 'MOMO Payment',
+                        description: 'MOMO payment dialog opened on customer display screen.',
+                      });
+                    }
                   }}
-                  className="w-full bg-primary hover:bg-primary/90 text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-2 h-10 rounded-xl"
+                  className={`w-full font-extrabold text-xs shadow-sm flex items-center justify-center gap-2 h-10 rounded-xl border-0 text-white ${
+                    isMomoOpenOnDisplay 
+                      ? 'bg-rose-500 hover:bg-rose-600' 
+                      : 'bg-primary hover:bg-primary/90'
+                  }`}
                 >
                   <Smartphone className="h-4 w-4" />
-                  Open MOMO Payment on Customer Display
+                  {isMomoOpenOnDisplay 
+                    ? 'Close MOMO Payment on Customer Display' 
+                    : 'Open MOMO Payment on Customer Display'}
                 </Button>
               </div>
             )}
@@ -928,16 +969,16 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>VAT / Tax (8%)</span>
+                  <span>VAT / Tax ({Math.round(getTaxRate() * 100)}%)</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}
+                    {formatCurrencyWithConfig(calculateTotal() * getTaxRate(), systemConfig)}
                   </span>
                 </div>
                 <Separator className="bg-slate-100 dark:bg-slate-800" />
                 <div className="flex justify-between text-sm font-extrabold text-slate-850 dark:text-slate-150">
                   <span>Total Amount Due</span>
                   <span className="text-primary font-black">
-                    {formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}
+                    {formatCurrencyWithConfig(calculateTotal() * (1 + getTaxRate()), systemConfig)}
                   </span>
                 </div>
               </div>

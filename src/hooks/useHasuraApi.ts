@@ -703,6 +703,7 @@ export interface SystemConfig {
   enableRush: boolean;
   withDrawCharges: number;
   allowScheduledDeliveries: boolean;
+  tax?: string;
 }
 
 // Type-safe hook for Users (data from API)
