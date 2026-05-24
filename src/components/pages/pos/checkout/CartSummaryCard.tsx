@@ -149,6 +149,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
 
   const [scaleCodeInput, setScaleCodeInput] = useState('');
   const [loadingScaleCode, setLoadingScaleCode] = useState(false);
+  const [isScaleModalOpen, setIsScaleModalOpen] = useState(false);
 
   const handleRedeemScaleCode = async () => {
     if (scaleCodeInput.length !== 6 || !shopId) return;
@@ -185,6 +186,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
             description: `${data.productName} (${data.weight.toFixed(3)} kg) added to cart.`,
           });
           setScaleCodeInput('');
+          setIsScaleModalOpen(false);
         }
       } else {
         toast({
@@ -723,40 +725,25 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   return (
     <>
       <Card className="lg:col-span-2 flex flex-col h-[780px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl">
-        <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-900">
+        <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-900 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Cart & Summary
           </CardTitle>
+          {shopId && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsScaleModalOpen(true)}
+              className="h-7 text-[10px] font-bold border-primary/40 text-primary hover:bg-primary/5 px-2.5"
+            >
+              Redeem Scale Code
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="flex-1 flex flex-col p-6 min-h-0">
           <div className="flex-1 flex flex-col min-h-0 space-y-4">
             
-            {/* Scale Code Redemption Input */}
-            {shopId && (
-              <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-150 dark:border-slate-800/80 space-y-2 shrink-0">
-                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                  Redeem Scale Code (Weighed Items)
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter 6-digit scale code"
-                    value={scaleCodeInput}
-                    onChange={e => setScaleCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="h-9 text-xs font-mono font-bold tracking-widest text-center border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleRedeemScaleCode}
-                    disabled={scaleCodeInput.length !== 6 || loadingScaleCode}
-                    className="bg-primary hover:bg-primary/90 text-white font-bold text-xs shrink-0 px-3 h-9"
-                  >
-                    {loadingScaleCode ? '...' : 'Redeem'}
-                  </Button>
-                </div>
-              </div>
-            )}
-
             {/* Scrollable Cart Items */}
             <div className="flex-1 min-h-0">
               <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2">Cart Items</h4>
@@ -1211,6 +1198,46 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
             <Button onClick={handlePrintInvoice}>
               <Printer className="mr-2 h-4 w-4" />
               Print Invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Redeem Scale Code Modal */}
+      <Dialog open={isScaleModalOpen} onOpenChange={setIsScaleModalOpen}>
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle>Redeem Scale Code</DialogTitle>
+            <DialogDescription>
+              Enter the 6-digit code printed from the weighing station.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2 space-y-4">
+            <Input
+              placeholder="Enter 6-digit code"
+              value={scaleCodeInput}
+              onChange={e => setScaleCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && scaleCodeInput.length === 6 && !loadingScaleCode) {
+                  e.preventDefault();
+                  handleRedeemScaleCode();
+                }
+              }}
+              className="h-12 text-lg font-mono font-black tracking-[0.3em] text-center"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsScaleModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleRedeemScaleCode}
+              disabled={scaleCodeInput.length !== 6 || loadingScaleCode}
+              className="bg-primary hover:bg-primary/90 text-white font-bold"
+            >
+              {loadingScaleCode ? 'Redeeming...' : 'Redeem Code'}
             </Button>
           </DialogFooter>
         </DialogContent>
