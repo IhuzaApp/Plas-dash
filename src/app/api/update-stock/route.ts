@@ -6,7 +6,7 @@ import { gql } from 'graphql-request';
 
 // We use two mutations: one for retail (Products) and one for restaurant (restaurant_menu)
 const DECREMENT_PRODUCT_STOCK = gql`
-  mutation DecrementProductStock($id: uuid!, $qty: numeric!) {
+  mutation DecrementProductStock($id: uuid!, $qty: Int!) {
     update_Products_by_pk(
       pk_columns: { id: $id }
       _inc: { quantity: $qty }
@@ -18,7 +18,7 @@ const DECREMENT_PRODUCT_STOCK = gql`
 `;
 
 const DECREMENT_MENU_STOCK = gql`
-  mutation DecrementMenuStock($id: uuid!, $qty: numeric!) {
+  mutation DecrementMenuStock($id: uuid!, $qty: Int!) {
     update_restaurant_menu_by_pk(
       pk_columns: { id: $id }
       _inc: { quantity: $qty }
