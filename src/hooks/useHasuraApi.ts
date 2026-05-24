@@ -4,6 +4,7 @@ import { apiGet } from '../lib/api';
 import { cacheGet, cacheSet } from '../lib/cache';
 import {
   GET_PRODUCTS_BY_SHOP,
+  GET_MENU_BY_RESTAURANT,
   GET_RESTAURANTS,
   GET_REELS,
   GET_ADDRESSES,
@@ -764,6 +765,15 @@ export function useProductsByShop(shopId: string) {
     queryKey: ['products', 'shop', shopId],
     queryFn: () => hasuraRequest(GET_PRODUCTS_BY_SHOP, { shop_id: shopId }),
     enabled: !!shopId,
+  });
+}
+
+// Type-safe hook for Menu by Restaurant
+export function useMenuByRestaurant(restaurantId: string) {
+  return useQuery<{ restaurant_menu: any[] }, Error>({
+    queryKey: ['menu', 'restaurant', restaurantId],
+    queryFn: () => hasuraRequest(GET_MENU_BY_RESTAURANT, { restaurant_id: restaurantId }),
+    enabled: !!restaurantId,
   });
 }
 

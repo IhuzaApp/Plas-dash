@@ -36,6 +36,7 @@ import {
   useGetProductNameByBarcode,
   useGetProductNameBySku,
   useSearchProductNames,
+  useDishesByName,
 } from '@/hooks/useHasuraApi';
 import { Switch } from '@/components/ui/switch';
 import BarcodeScanner from './BarcodeScanner';
@@ -68,6 +69,7 @@ interface AddProductDialogProps {
   shopId?: string;
   isLoading?: boolean;
   hideCommission?: boolean; // New prop to hide commission fields
+  isRestaurant?: boolean; // New prop to handle restaurant dishes
 }
 
 const AddProductDialog: React.FC<AddProductDialogProps> = ({
@@ -77,6 +79,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   shopId,
   isLoading = false,
   hideCommission = false,
+  isRestaurant = false,
 }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -98,6 +101,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const getProductBySku = useGetProductNameBySku();
   const { data: searchProductNamesData, isLoading: isSearchingNames } =
     useSearchProductNames(searchTerm);
+  const { data: searchDishesData, isLoading: isSearchingDishes } = 
+    useDishesByName(searchTerm);
+
+  const searchResultsData = isRestaurant ? searchDishesData?.dishes : searchProductNamesData?.productNames;
+  const isSearching = isRestaurant ? isSearchingDishes : isSearchingNames;
 
   // Dynamic form schema based on hideCommission prop
   const formSchema = z
@@ -215,14 +223,13 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   // Auto-search as user types
   useEffect(() => {
     if (searchTerm.trim() && searchMode === 'name') {
-      // The useSearchProductNames hook will automatically handle the search
-      setSearchResults(searchProductNamesData?.productNames || []);
+      setSearchResults(searchResultsData || []);
       setShowSearchResults(true);
     } else if (!searchTerm.trim()) {
       setSearchResults([]);
       setShowSearchResults(false);
     }
-  }, [searchTerm, searchMode, searchProductNamesData]);
+  }, [searchTerm, searchMode, searchResultsData]);
 
   const resetForm = () => {
     form.reset();
@@ -365,7 +372,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Product</DialogTitle>
+          <DialogTitle>{isRestaurant ? 'Add New Dish' : 'Add New Product'}</DialogTitle>
           <DialogDescription>
             Enter the details of the new inventory item. Click save when you&apos;re done.
           </DialogDescription>
@@ -449,10 +456,10 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
             {/* Search Results */}
             {showSearchResults && (
               <div className="border rounded-md p-2 max-h-40 overflow-y-auto">
-                {isSearchingNames ? (
+                {isSearching ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    <span className="text-sm text-muted-foreground">Searching products...</span>
+                    <span className="text-sm text-muted-foreground">Searching...</span>
                   </div>
                 ) : searchResults.length > 0 ? (
                   <div className="space-y-2">

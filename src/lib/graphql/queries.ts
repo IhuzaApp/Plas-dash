@@ -349,6 +349,38 @@ export const GET_PRODUCTS_BY_SHOP = `
   }
 `;
 
+export const GET_MENU_BY_RESTAURANT = `
+  query GetMenuByRestaurant($restaurant_id: uuid!) {
+    restaurant_menu(where: { restaurant_id: { _eq: $restaurant_id } }) {
+      id
+      dish_id
+      restaurant_id
+      price
+      quantity
+      preparingTime
+      discount
+      created_at
+      updated_at
+      is_active
+      SKU
+      dish {
+        id
+        name
+        description
+        category
+        image
+        ingredients
+        created_at
+        update_at
+      }
+      Restaurant {
+        id
+        name
+      }
+    }
+  }
+`;
+
 // Categories queries
 export const GET_CATEGORIES = `
   query GetCategories {

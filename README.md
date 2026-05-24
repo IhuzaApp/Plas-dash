@@ -227,6 +227,11 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
 
 ### 🏪 Point of Sale (POS)
 
+- **Dual-Business Inventory Management**
+  - **Unified Interface**: The POS inventory interface seamlessly supports both standard retail Shops and Restaurant businesses without redundant logic.
+  - **Context-Aware Handling**: Dynamically fetches and manages either standard retail `products` or `restaurant_menu` items based on the active session context (`isRestaurant`).
+  - **Smart Item Creation**: When manually adding or importing inventory, if a product/dish doesn't already exist, the system automatically creates the underlying record in the master `productNames` or `dishes` table. It then seamlessly assigns the newly generated ID to the shop's specific inventory or restaurant's menu to ensure a smooth, uninterrupted workflow.
+
 - **Company Dashboard**
   - Multi-store performance tracking
   - Revenue vs target monitoring
