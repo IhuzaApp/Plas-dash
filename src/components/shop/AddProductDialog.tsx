@@ -242,7 +242,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
             const data = await res.json();
             if (data.meals) {
               suggestions = data.meals.map((m: any) => ({
-                id: `ext_${m.idMeal}`,
+                id: `ext_meal_${m.idMeal}`,
                 name: m.strMeal,
                 description: m.strInstructions?.substring(0, 100) + '...',
                 category: m.strCategory,
@@ -255,7 +255,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
             const data = await res.json();
             if (data.products) {
               suggestions = data.products.map((p: any) => ({
-                id: `ext_${p.id}`,
+                id: `ext_prod_${p.id}`,
                 name: p.title,
                 description: p.description,
                 category: p.category,
@@ -265,6 +265,26 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
               }));
             }
           }
+
+          // Always fetch drinks/alcohol for both retail and restaurants
+          try {
+            const drinksRes = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`);
+            const drinksData = await drinksRes.json();
+            if (drinksData.drinks) {
+              const drinkSuggestions = drinksData.drinks.map((d: any) => ({
+                id: `ext_drink_${d.idDrink}`,
+                name: d.strDrink,
+                description: d.strInstructions?.substring(0, 100) + '...',
+                category: d.strAlcoholic === 'Alcoholic' ? 'Alcohol' : 'Drinks & Beverages',
+                image: d.strDrinkThumb,
+                isExternal: true,
+              }));
+              suggestions = [...suggestions, ...drinkSuggestions];
+            }
+          } catch (drinkErr) {
+            console.error('Error fetching drinks:', drinkErr);
+          }
+
           if (isMounted) setExternalSuggestions(suggestions);
         } catch (e) {
           console.error('Error fetching external suggestions:', e);
@@ -409,6 +429,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       if (product.image) {
         setImagePreview(product.image);
         form.setValue('image', product.image);
+      }
+      if (product.barcode) {
+        form.setValue('barcode', product.barcode);
       }
       setSearchResults([]);
       setExternalSuggestions([]);
@@ -774,6 +797,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="groceries">Groceries</SelectItem>
+                        <SelectItem value="alcohol">Alcohol</SelectItem>
+                        <SelectItem value="drinks">Drinks & Beverages</SelectItem>
                         <SelectItem value="electronics">Electronics</SelectItem>
                         <SelectItem value="clothing">Clothing</SelectItem>
                         <SelectItem value="home">Home & Garden</SelectItem>
