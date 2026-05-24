@@ -58,12 +58,47 @@ export default function POSBoard() {
   const [kitchenQueue, setKitchenQueue] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   
-  const [salesTimeframe, setSalesTimeframe] = useState<'month' | 'week' | 'day'>('month');
+  const [salesTimeframe, setSalesTimeframe] = useState<'day' | 'week' | 'month'>('day');
+  const [localPendingCheckouts, setLocalPendingCheckouts] = useState<any[]>([]);
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [queueSearch, setQueueSearch] = useState('');
 
   const [branches, setBranches] = useState<any[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<string>('active');
+
+  // Load pending checkouts from localStorage for Retail Shops
+  useEffect(() => {
+    const loadLocalPending = () => {
+      try {
+        const stored = localStorage.getItem('pendingCheckouts');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const validCheckouts = parsed.filter((checkout: any) => {
+            const checkoutTime = new Date(checkout.timestamp).getTime();
+            const hoursDiff = (Date.now() - checkoutTime) / (1000 * 60 * 60);
+            return hoursDiff < 24; // Keep only valid active checkouts
+          });
+          setLocalPendingCheckouts(validCheckouts);
+        } else {
+          setLocalPendingCheckouts([]);
+        }
+      } catch (error) {
+        console.error('Error parsing pendingCheckouts for POSBoard:', error);
+      }
+    };
+
+    // Load initially
+    loadLocalPending();
+
+    // Listen to storage events from ShopCheckout
+    window.addEventListener('storage', loadLocalPending);
+    // Also use interval just in case they are in the same tab but React state didn't trigger storage event across windows
+    const interval = setInterval(loadLocalPending, 2000);
+    return () => {
+      window.removeEventListener('storage', loadLocalPending);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Role Guard validation
   const isAllowed = useMemo(() => {
@@ -394,22 +429,38 @@ export default function POSBoard() {
       });
     } else {
       const orders = shopData?.Orders || [];
-      return orders
+      const onlinePending = orders
         .filter((ord: any) => ord.status === 'pending' || ord.status === 'accepted' || ord.status === 'shopping')
         .map((ord: any) => {
           const itemCount = ord.Order_Items?.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0) || 0;
           return {
             id: ord.OrderID || `TK-${ord.id.slice(0, 4).toUpperCase()}`,
-            title: ord.orderedBy?.name || 'Walk-in Client',
-            description: `Awaiting checkout dispatch`,
+            title: ord.orderedBy?.name || 'Online Client',
+            description: `Awaiting delivery checkout dispatch`,
             count: itemCount,
             elapsed: new Date(ord.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             status: ord.status,
             statusColor: 'bg-emerald-500 text-white'
           };
         });
+
+      const localPending = localPendingCheckouts.map((chk: any) => {
+        const itemCount = chk.items?.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0) || 0;
+        const timeDiff = Math.max(0, Math.floor((Date.now() - new Date(chk.timestamp).getTime()) / (60 * 1000)));
+        return {
+          id: chk.id,
+          title: chk.customerName || 'Walk-in Customer',
+          description: `Paused Terminal Checkout (${formatCurrency(chk.total)})`,
+          count: itemCount,
+          elapsed: formatElapsedTime(timeDiff),
+          status: 'Terminal Hold',
+          statusColor: 'bg-indigo-500 text-white'
+        };
+      });
+
+      return [...localPending, ...onlinePending];
     }
-  }, [shopData, todayKitchenQueue, shopSession?.isRestaurant]);
+  }, [shopData, todayKitchenQueue, shopSession?.isRestaurant, localPendingCheckouts]);
 
   // Combined client traffic volume and sales revenue data
   const combinedAnalytics = useMemo(() => {
@@ -1057,8 +1108,12 @@ export default function POSBoard() {
             <CardHeader className="flex flex-col gap-3 pb-3">
               <div className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg font-extrabold tracking-tight text-foreground">Kitchen Live Queue</CardTitle>
-                  <CardDescription className="text-muted-foreground">Today's active preparation items</CardDescription>
+                  <CardTitle className="text-lg font-extrabold tracking-tight text-foreground">
+                    {shopSession?.isRestaurant ? 'Kitchen Live Queue' : 'Pending Checkouts & Online Orders'}
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    {shopSession?.isRestaurant ? "Today's active preparation items" : "Active invoices and online deliveries"}
+                  </CardDescription>
                 </div>
                 <Badge className="bg-primary/10 border-primary/20 text-primary">
                   {filteredQueue.length} Active
@@ -1103,7 +1158,11 @@ export default function POSBoard() {
 
                 {filteredQueue.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 text-center bg-slate-55 dark:bg-slate-800/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-                    <ChefHat className="h-10 w-10 text-muted-foreground mb-3" />
+                    {shopSession?.isRestaurant ? (
+                      <ChefHat className="h-10 w-10 text-muted-foreground mb-3" />
+                    ) : (
+                      <ShoppingBag className="h-10 w-10 text-muted-foreground mb-3" />
+                    )}
                     <p className="text-sm font-bold text-muted-foreground">No matching queue items</p>
                     <p className="text-xs text-slate-500 mt-0.5">Adjust search criteria or check again later.</p>
                   </div>
