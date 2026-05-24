@@ -731,10 +731,21 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
       // Remove from kitchenTickets in KDS/Firestore (mark as Served/Collected)
       if (matchedTicket && restaurantId) {
-        await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', matchedTicket.id), {
+        updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', matchedTicket.id), {
           status: 'Served',
-        });
+        }).catch(err => console.error('Failed to update Firestore status in background:', err));
       }
+
+      // Fire and forget stock updates in the background
+      apiPost('/api/update-stock', { items: cartItems, isRestaurant: true })
+        .catch(err => {
+          console.error('Failed to dispatch background stock update:', err);
+          toast({
+            title: 'Stock Sync Failed',
+            description: 'Order collected, but background stock deduction failed.',
+            variant: 'destructive',
+          });
+        });
 
       toast({
         title: 'Order Collected',
@@ -1004,18 +1015,25 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     setActiveTables(updatedTables);
     localStorage.setItem('restaurantActiveTables', JSON.stringify(updatedTables));
 
-    // Update paid status in Postgres DB
+    // Update paid status in Postgres DB in background
     if (activeCheckoutTable.tokenId) {
-      try {
-        await apiPost('/api/mutations/update-kitchen-queue', {
-          token_number: activeCheckoutTable.tokenId,
-          restaurant_id: restaurantId,
-          paid: true
-        });
-      } catch (dbErr) {
-        console.error('[Kitchen Queue] Failed to update paid status in DB:', dbErr);
-      }
+      apiPost('/api/mutations/update-kitchen-queue', {
+        token_number: activeCheckoutTable.tokenId,
+        restaurant_id: restaurantId,
+        paid: true
+      }).catch(dbErr => console.error('[Kitchen Queue] Failed to update paid status in DB:', dbErr));
     }
+
+    // Fire and forget stock updates in the background
+    apiPost('/api/update-stock', { items: activeCheckoutTable.cart, isRestaurant: true })
+      .catch(err => {
+        console.error('Failed to dispatch background stock update:', err);
+        toast({
+          title: 'Stock Sync Failed',
+          description: 'Payment completed, but background stock deduction failed.',
+          variant: 'destructive',
+        });
+      });
 
     toast({
       title: 'Payment Completed',
