@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PageHeader from '@/components/layout/PageHeader';
-import { ShoppingBag, Lock, Store, Sparkles } from 'lucide-react';
+import { ShoppingBag, Lock, Store, Sparkles, Scale } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -24,6 +24,7 @@ import CheckoutBarcodeScanner from './CheckoutBarcodeScanner';
 import { ProductSelectionCard } from './ProductSelectionCard';
 import { CartSummaryCard } from './CartSummaryCard';
 import { PendingCheckoutsTab } from './PendingCheckoutsTab';
+import { WeighingStation } from './WeighingStation';
 
 interface CartItem {
   id: string;
@@ -34,6 +35,8 @@ interface CartItem {
   description?: string;
   measurement_unit?: string;
   image?: string;
+  isWeighed?: boolean;
+  scaleCode?: string;
 }
 
 interface PendingCheckout {
@@ -281,6 +284,43 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
     setCart(cart.filter(item => item.id !== id));
   };
 
+  // Adds a weighed product (redeemed via scale code) to the cart
+  const addWeighedProductToCart = (weighedItem: {
+    id: string;
+    productId: string;
+    name: string;
+    price: number;
+    weight: number;
+    scaleCode: string;
+    image?: string;
+  }) => {
+    // Prevent double-adding the same scale code
+    if (cart.some(item => item.scaleCode === weighedItem.scaleCode)) {
+      toast({
+        title: 'Already in Cart',
+        description: `Scale code ${weighedItem.scaleCode} is already in the current cart.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const cartItem: CartItem = {
+      id: weighedItem.id,
+      name: weighedItem.name,
+      price: weighedItem.price,
+      quantity: weighedItem.weight,
+      image: weighedItem.image || '',
+      measurement_unit: 'kg',
+      isWeighed: true,
+      scaleCode: weighedItem.scaleCode,
+    };
+
+    setCart(prev => [...prev, cartItem]);
+
+    // Switch to current tab so cashier can see the cart immediately
+    setActiveTab('current');
+  };
+
   const processFinalCheckout = (paymentMethod: 'card' | 'cash' | 'momo', tinNumber?: string) => {
     const tinInfo = tinNumber ? ` with TIN: ${tinNumber}` : '';
     toast({
@@ -404,6 +444,18 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
             </button>
             <button
               type="button"
+              onClick={() => setActiveTab('weighing')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors flex items-center gap-1.5 ${
+                activeTab === 'weighing'
+                  ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Scale className="h-3.5 w-3.5" />
+              Weighing Station
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('pending')}
               className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors relative ${
                 activeTab === 'pending'
@@ -459,6 +511,7 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
             onRemoveItem={removeItem}
             onCheckout={processFinalCheckout}
             onSaveToPending={saveToPending}
+            onRedeemScaleCode={addWeighedProductToCart}
             shopId={session?.shop_id || undefined}
             currentUser={{
               id: activeEmployee?.id || session?.id || '',
@@ -473,6 +526,27 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
               email: session?.email || '',
               ssd: shop?.ssd || '',
             }}
+          />
+        </div>
+      )}
+
+      {activeTab === 'weighing' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <Scale className="h-5 w-5 text-primary" />
+            <div>
+              <h2 className="font-extrabold text-base text-slate-800 dark:text-slate-100">
+                Weighing Station
+              </h2>
+              <p className="text-xs text-muted-foreground font-medium">
+                Generate scale labels for bakery, butcher, produce & other departments. Cashiers can redeem codes at the POS checkout.
+              </p>
+            </div>
+          </div>
+          <WeighingStation
+            products={products}
+            shopId={session?.shop_id || ''}
+            shopName={shop?.name || 'Supermarket'}
           />
         </div>
       )}

@@ -33,6 +33,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import { apiGet, apiPost } from '@/lib/api';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { Scale } from 'lucide-react';
 
 interface CartItem {
   id: string;
@@ -42,6 +45,8 @@ interface CartItem {
   description?: string;
   measurement_unit?: string;
   image?: string;
+  isWeighed?: boolean;
+  scaleCode?: string;
 }
 
 interface CartSummaryCardProps {
@@ -64,6 +69,7 @@ interface CartSummaryCardProps {
     role: string;
   };
   shopId?: string;
+  onRedeemScaleCode?: (weighedItem: any) => void;
 }
 
 export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
@@ -75,6 +81,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   shopDetails,
   currentUser,
   shopId,
+  onRedeemScaleCode,
 }) => {
   const [isOrderSummaryCollapsed, setIsOrderSummaryCollapsed] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -140,6 +147,64 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   });
   const { data: systemConfig } = useSystemConfig();
 
+  const [scaleCodeInput, setScaleCodeInput] = useState('');
+  const [loadingScaleCode, setLoadingScaleCode] = useState(false);
+
+  const handleRedeemScaleCode = async () => {
+    if (scaleCodeInput.length !== 6 || !shopId) return;
+    setLoadingScaleCode(true);
+    try {
+      const docRef = doc(db, 'weighed_items', shopId, 'items', scaleCodeInput);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.status === 'redeemed') {
+          toast({
+            title: 'Code already redeemed',
+            description: `This code (${scaleCodeInput}) was already processed.`,
+            variant: 'destructive',
+          });
+          setLoadingScaleCode(false);
+          return;
+        }
+
+        if (onRedeemScaleCode) {
+          onRedeemScaleCode({
+            id: `${data.productId}_${data.code}`,
+            productId: data.productId,
+            name: `${data.productName} (Scale #${data.code})`,
+            price: data.price,
+            weight: data.weight,
+            scaleCode: data.code,
+            image: data.image || '',
+          });
+          
+          toast({
+            title: 'Weighed Item Added',
+            description: `${data.productName} (${data.weight.toFixed(3)} kg) added to cart.`,
+          });
+          setScaleCodeInput('');
+        }
+      } else {
+        toast({
+          title: 'Code not found',
+          description: `No active weighed item found for code ${scaleCodeInput}.`,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error redeeming scale code:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to redeem scale code. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingScaleCode(false);
+    }
+  };
+
   const calculateTotal = () => {
     return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
@@ -162,10 +227,10 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
     }
 
     if (selectedPaymentMethod) {
-      const subtotal = calculateTotal();
+      const totalAmount = calculateTotal();
       const taxRate = getTaxRate();
-      const tax = subtotal * taxRate;
-      const totalAmount = subtotal + tax;
+      const tax = totalAmount * taxRate / (1 + taxRate);
+      const subtotal = totalAmount - tax;
 
       // Console logs showing payment saving details
       const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
@@ -209,6 +274,20 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
 
         const result = await checkoutMutation.mutateAsync(checkoutData);
         console.log('Checkout saved successfully:', result);
+
+        // Delete any weighed items from Firestore to prevent double redemption and allow reuse
+        const weighedItems = cart.filter(item => item.isWeighed && item.scaleCode);
+        for (const item of weighedItems) {
+          if (item.scaleCode && shopId) {
+            try {
+              const docRef = doc(db, 'weighed_items', shopId, 'items', item.scaleCode);
+              await deleteDoc(docRef);
+              console.log(`Weighed item code ${item.scaleCode} deleted from Firestore for reuse.`);
+            } catch (err) {
+              console.error(`Failed to delete weighed item code ${item.scaleCode} from Firestore:`, err);
+            }
+          }
+        }
 
         // Generate transaction ID using the auto-generated number from database
         const savedCheckout = result.insert_shopCheckouts?.returning?.[0];
@@ -526,11 +605,11 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
               <div class="item-row">
                 <div class="item-main">
                   <span style="width: 50%;">${item.name}</span>
-                  <span style="width: 15%; text-align: center;">${item.quantity}</span>
+                  <span style="width: 15%; text-align: center;">${item.isWeighed ? item.quantity.toFixed(3) + ' kg' : item.quantity}</span>
                   <span style="width: 35%; text-align: right;">${formatCurrencyWithConfig(item.price * item.quantity, systemConfig)}</span>
                 </div>
                 <div class="item-details">
-                  <span>(${formatCurrencyWithConfig(item.price, systemConfig)} each)</span>
+                  <span>(${formatCurrencyWithConfig(item.price, systemConfig)} ${item.isWeighed ? 'per kg' : 'each'})</span>
                 </div>
               </div>
             `
@@ -652,10 +731,36 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
         <CardContent className="flex-1 flex flex-col p-6 min-h-0">
           <div className="flex-1 flex flex-col min-h-0 space-y-4">
             
+            {/* Scale Code Redemption Input */}
+            {shopId && (
+              <div className="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-150 dark:border-slate-800/80 space-y-2 shrink-0">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                  Redeem Scale Code (Weighed Items)
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter 6-digit scale code"
+                    value={scaleCodeInput}
+                    onChange={e => setScaleCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="h-9 text-xs font-mono font-bold tracking-widest text-center border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleRedeemScaleCode}
+                    disabled={scaleCodeInput.length !== 6 || loadingScaleCode}
+                    className="bg-primary hover:bg-primary/90 text-white font-bold text-xs shrink-0 px-3 h-9"
+                  >
+                    {loadingScaleCode ? '...' : 'Redeem'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Scrollable Cart Items */}
             <div className="flex-1 min-h-0">
               <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2">Cart Items</h4>
-              <ScrollArea className="h-[380px] pr-2">
+              <ScrollArea className="h-[310px] pr-2">
                 <div className="space-y-3">
                   {cart.map(item => (
                     <div
@@ -694,21 +799,30 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                         {/* Quantity change & Remove row */}
                         <div className="flex justify-between items-center pt-1.5 border-t border-slate-100 dark:border-slate-800/50">
                           <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => onUpdateQuantity(item.id, -1)}
-                              className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black hover:bg-slate-350 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
-                            >
-                              <Minus className="h-2.5 w-2.5" />
-                            </button>
-                            <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">{item.quantity}</span>
-                            <button
-                              type="button"
-                              onClick={() => onUpdateQuantity(item.id, 1)}
-                              className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black hover:bg-slate-350 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
-                            >
-                              <Plus className="h-2.5 w-2.5" />
-                            </button>
+                            {!item.isWeighed ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdateQuantity(item.id, -1)}
+                                  className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black hover:bg-slate-350 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                >
+                                  <Minus className="h-2.5 w-2.5" />
+                                </button>
+                                <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">{item.quantity}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdateQuantity(item.id, 1)}
+                                  className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black hover:bg-slate-350 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                >
+                                  <Plus className="h-2.5 w-2.5" />
+                                </button>
+                              </>
+                            ) : (
+                              <div className="flex items-center gap-1 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground px-2 py-0.5 rounded-full font-bold text-[9px]">
+                                <Scale className="h-2.5 w-2.5" />
+                                Weighed: {item.quantity.toFixed(3)} kg
+                              </div>
+                            )}
                           </div>
                           <button 
                             type="button"
@@ -734,16 +848,26 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
             {/* Financial summary */}
             <div className="border-t border-slate-100 dark:border-slate-900 pt-3 space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
               <div className="flex justify-between">
-                <span>Sub Total</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
+                <span>Sub Total (excl. tax)</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {formatCurrencyWithConfig(
+                    calculateTotal() / (1 + getTaxRate()),
+                    systemConfig
+                  )}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Tax ({Math.round(getTaxRate() * 100)}%)</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{formatCurrencyWithConfig(calculateTotal() * getTaxRate(), systemConfig)}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {formatCurrencyWithConfig(
+                    calculateTotal() * getTaxRate() / (1 + getTaxRate()),
+                    systemConfig
+                  )}
+                </span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-slate-800 dark:text-slate-100 pt-1.5 border-t border-slate-100 dark:border-slate-900">
                 <span>Amount to be Paid</span>
-                <span className="text-primary text-lg">{formatCurrencyWithConfig(calculateTotal() * (1 + getTaxRate()), systemConfig)}</span>
+                <span className="text-primary text-lg">{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
               </div>
             </div>
 
@@ -963,22 +1087,22 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
               <h4 className="font-bold text-[10px] uppercase text-slate-400 tracking-wide">Order Totals</h4>
               <div className="space-y-1.5">
                 <div className="flex justify-between">
-                  <span>Sub Total</span>
+                  <span>Sub Total (excl. tax)</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {formatCurrencyWithConfig(calculateTotal(), systemConfig)}
+                    {formatCurrencyWithConfig(calculateTotal() / (1 + getTaxRate()), systemConfig)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>VAT / Tax ({Math.round(getTaxRate() * 100)}%)</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {formatCurrencyWithConfig(calculateTotal() * getTaxRate(), systemConfig)}
+                    {formatCurrencyWithConfig(calculateTotal() * getTaxRate() / (1 + getTaxRate()), systemConfig)}
                   </span>
                 </div>
                 <Separator className="bg-slate-100 dark:bg-slate-800" />
                 <div className="flex justify-between text-sm font-extrabold text-slate-850 dark:text-slate-150">
                   <span>Total Amount Due</span>
                   <span className="text-primary font-black">
-                    {formatCurrencyWithConfig(calculateTotal() * (1 + getTaxRate()), systemConfig)}
+                    {formatCurrencyWithConfig(calculateTotal(), systemConfig)}
                   </span>
                 </div>
               </div>
