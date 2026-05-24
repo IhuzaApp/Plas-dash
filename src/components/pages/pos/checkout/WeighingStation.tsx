@@ -471,12 +471,38 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                     <div
                       key={product.id}
                       onClick={() => handleSelectProduct(product)}
-                      className={`p-3 border rounded-xl cursor-pointer transition-all hover:shadow-md flex flex-col justify-between h-32 ${
+                      className={`p-3 border rounded-xl cursor-pointer transition-all hover:shadow-md flex flex-col justify-between ${
                         isSelected
                           ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-md ring-1 ring-primary'
                           : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-350 dark:hover:border-slate-700'
                       }`}
                     >
+                      {/* Product image with fallback icon */}
+                      <div className="relative w-full h-20 mb-2 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-950 flex items-center justify-center shrink-0">
+                        {product.ProductName?.image ? (
+                          <img
+                            src={product.ProductName.image}
+                            alt={product.ProductName?.name}
+                            className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+                            onError={e => {
+                              const target = e.currentTarget;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling as HTMLElement | null;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-slate-600"
+                          style={{ display: product.ProductName?.image ? 'none' : 'flex' }}
+                        >
+                          <div className="flex flex-col items-center gap-1 opacity-50">
+                            {getCategoryIcon(product.category || '')}
+                            <span className="text-[8px] font-bold uppercase tracking-wider">No Image</span>
+                          </div>
+                        </div>
+                      </div>
+
                       <div>
                         <div className="flex justify-between items-start gap-1">
                           <p className="font-extrabold text-xs text-slate-800 dark:text-slate-100 line-clamp-2">
@@ -550,13 +576,28 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                         Base Price: {formatCurrencyWithConfig(pricePerKg, systemConfig)} / {selectedProduct.measurement_unit || 'kg'}
                       </p>
                     </div>
-                    {selectedProduct.ProductName?.image && (
-                      <img
-                        src={selectedProduct.ProductName.image}
-                        alt="Product"
-                        className="w-10 h-10 object-cover rounded-lg border border-slate-200 dark:border-slate-850"
-                      />
-                    )}
+                    {/* Product thumbnail with icon fallback */}
+                    <div className="w-12 h-12 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 relative">
+                      {selectedProduct.ProductName?.image ? (
+                        <img
+                          src={selectedProduct.ProductName.image}
+                          alt="Product"
+                          className="w-full h-full object-cover"
+                          onError={e => {
+                            const target = e.currentTarget;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLElement | null;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-slate-500"
+                        style={{ display: selectedProduct.ProductName?.image ? 'none' : 'flex' }}
+                      >
+                        {getCategoryIcon(selectedProduct.category || '')}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-xs font-semibold text-slate-400 py-1.5 flex items-center gap-2">

@@ -72,71 +72,36 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
     });
   }, [products, productSearch, selectedCategory]);
 
-  const renderProductDetails = (product: Product) => {
-    const categoryLower = (product.category || '').toLowerCase();
-    const isBakery = categoryLower.includes('bakery') || categoryLower.includes('bread') || categoryLower.includes('cake') || categoryLower.includes('pastry');
-    const isElectronics = categoryLower.includes('electro') || categoryLower.includes('appliance') || categoryLower.includes('tech') || categoryLower.includes('phone') || categoryLower.includes('tv');
-    const isFurniture = categoryLower.includes('furniture') || categoryLower.includes('interior') || categoryLower.includes('decor') || categoryLower.includes('home') || categoryLower.includes('chair') || categoryLower.includes('sofa');
+  // Returns a compact stock / promotion badge element for a product card
+  const getStockBadge = (product: Product) => {
+    const qty = product.quantity;
+    const isPromo = !!(product as any).on_promotion || !!(product as any).promotion_price;
 
-    let specText = '';
-    let specIcon = null;
-
-    if (isElectronics) {
-      specText = '1 Year Warranty';
-      specIcon = <ShieldCheck className="h-3.5 w-3.5 text-blue-500 mr-1 inline-block" />;
-    } else if (isFurniture) {
-      specText = 'Interior / Decor Spec';
-      specIcon = <Warehouse className="h-3.5 w-3.5 text-violet-500 mr-1 inline-block" />;
-    } else if (isBakery) {
-      specText = 'Freshly Baked';
-      specIcon = <ShoppingBag className="h-3.5 w-3.5 text-amber-500 mr-1 inline-block" />;
+    if (qty !== undefined && qty <= 0) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wide bg-red-500 text-white">
+          <XCircle className="h-2.5 w-2.5" /> Out of Stock
+        </span>
+      );
     }
-
+    if (qty !== undefined && qty <= 5) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wide bg-amber-400 text-white">
+          <AlertTriangle className="h-2.5 w-2.5" /> Low Stock
+        </span>
+      );
+    }
+    if (isPromo) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wide bg-emerald-500 text-white">
+          <Tag className="h-2.5 w-2.5" /> Promotion
+        </span>
+      );
+    }
     return (
-      <div className="flex flex-col gap-1 text-[11px] mt-2 border-t border-slate-100 dark:border-slate-800 pt-2">
-        {/* Stock Indicator */}
-        <div className="flex items-center justify-between">
-          <span className="text-slate-400">Inventory:</span>
-          {product.quantity !== undefined ? (
-            product.quantity <= 0 ? (
-              <span className="font-bold text-red-500 flex items-center">
-                <XCircle className="h-3 w-3 mr-0.5" /> Out of stock
-              </span>
-            ) : product.quantity <= 5 ? (
-              <span className="font-bold text-amber-500 flex items-center">
-                <AlertTriangle className="h-3 w-3 mr-0.5" /> Low Stock ({product.quantity})
-              </span>
-            ) : (
-              <span className="font-bold text-emerald-500 flex items-center">
-                <CheckCircle className="h-3 w-3 mr-0.5" /> {product.quantity} available
-              </span>
-            )
-          ) : (
-            <span className="font-semibold text-slate-500">In Stock</span>
-          )}
-        </div>
-
-        {/* Dynamic Vertical Specs */}
-        {specText && (
-          <div className="flex items-center justify-between">
-            <span className="text-slate-400">Class:</span>
-            <span className="font-medium text-slate-700 dark:text-slate-300 flex items-center">
-              {specIcon}
-              {specText}
-            </span>
-          </div>
-        )}
-
-        {/* Code representation */}
-        {(product.ProductName?.sku || product.ProductName?.barcode) && (
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-0.5">
-            <span>SKU/Barcode:</span>
-            <span className="font-mono truncate max-w-[100px]" title={product.ProductName.sku || product.ProductName.barcode}>
-              {product.ProductName.sku || product.ProductName.barcode}
-            </span>
-          </div>
-        )}
-      </div>
+      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wide bg-emerald-500 text-white">
+        <CheckCircle className="h-2.5 w-2.5" /> In Stock
+      </span>
     );
   };
 
@@ -241,7 +206,7 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
           <ScrollArea className="h-[620px] pr-2">
             {viewMode === 'grid' ? (
               /* Grid Layout Mode */
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {filteredProducts.map(product => {
                   const isOutOfStock = product.quantity !== undefined && product.quantity <= 0;
                   return (
@@ -255,36 +220,43 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                       onClick={() => !isOutOfStock && onAddProductToCart(product)}
                     >
                       <div>
-                        {/* Image banner */}
-                        {product.ProductName?.image ? (
-                          <div className="relative w-full h-28 mb-3 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-950">
+                        {/* Image banner — shows image if available, falls back to SVG icon on null or load error */}
+                        <div className="relative w-full h-28 mb-3 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-950 flex items-center justify-center">
+                          {product.ProductName?.image ? (
                             <img
                               src={product.ProductName.image}
                               alt={product.ProductName.name}
                               className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
+                              onError={e => {
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement | null;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
                             />
-                            <Badge className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-white border-none font-bold text-[9px] uppercase">
-                              {product.category || 'Retail'}
-                            </Badge>
+                          ) : null}
+                          {/* SVG fallback — visible when image is null or broken */}
+                          <div
+                            className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400 dark:text-slate-600"
+                            style={{ display: product.ProductName?.image ? 'none' : 'flex' }}
+                          >
+                            <ShoppingBag className="h-8 w-8 opacity-50" />
+                            <span className="text-[9px] font-bold uppercase tracking-wider opacity-50">No Image</span>
                           </div>
-                        ) : (
-                          <div className="w-full h-12 mb-2 rounded-lg bg-slate-50 dark:bg-slate-950/55 flex items-center justify-between px-3 border border-slate-100 dark:border-slate-900">
-                            <Badge className="bg-slate-900/80 backdrop-blur-sm text-white border-none font-bold text-[9px] uppercase">
-                              {product.category || 'General'}
-                            </Badge>
+                          {/* Category badge top-left */}
+                          <Badge className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-white border-none font-bold text-[9px] uppercase">
+                            {product.category || 'Retail'}
+                          </Badge>
+                          {/* Stock badge bottom-right */}
+                          <div className="absolute bottom-2 right-2">
+                            {getStockBadge(product)}
                           </div>
-                        )}
+                        </div>
 
-                        <p className="font-extrabold text-sm text-slate-800 dark:text-slate-100 line-clamp-1">
+                        <p className="font-extrabold text-xs text-slate-800 dark:text-slate-100 line-clamp-2">
                           {product.ProductName?.name || 'Unknown Product'}
                         </p>
-                        {product.ProductName?.description && (
-                          <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                            {product.ProductName.description}
-                          </p>
-                        )}
 
-                        {renderProductDetails(product)}
                       </div>
 
                       {/* Add button & price */}
@@ -322,17 +294,28 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                       onClick={() => !isOutOfStock && onAddProductToCart(product)}
                     >
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        {product.ProductName?.image ? (
-                          <img
-                            src={product.ProductName.image}
-                            alt={product.ProductName.name}
-                            className="w-12 h-12 object-cover rounded-md bg-slate-100 dark:bg-slate-950 flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-slate-100 dark:bg-slate-950 rounded-md flex items-center justify-center flex-shrink-0 text-slate-400">
+                        {/* Product thumbnail — shows image, falls back to icon on null or error */}
+                        <div className="w-12 h-12 rounded-md overflow-hidden bg-slate-100 dark:bg-slate-950 flex items-center justify-center flex-shrink-0 relative">
+                          {product.ProductName?.image ? (
+                            <img
+                              src={product.ProductName.image}
+                              alt={product.ProductName.name}
+                              className="w-full h-full object-cover"
+                              onError={e => {
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement | null;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className="absolute inset-0 flex items-center justify-center text-slate-400"
+                            style={{ display: product.ProductName?.image ? 'none' : 'flex' }}
+                          >
                             <ShoppingBag className="h-5 w-5" />
                           </div>
-                        )}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-extrabold text-sm text-slate-850 dark:text-slate-100 truncate">
