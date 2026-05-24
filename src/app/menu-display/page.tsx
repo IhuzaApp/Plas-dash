@@ -9,16 +9,13 @@ import { Sparkles, Utensils, Flame, Leaf, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 
-
-
 export default function MenuDisplay() {
   const { session } = useAuth();
   const { shopSession } = useShopSession();
   const { data: systemConfig } = useSystemConfig();
 
   const restaurantId =
-    session?.restaurant_id ||
-    (shopSession?.isRestaurant ? shopSession?.shopId : null);
+    session?.restaurant_id || (shopSession?.isRestaurant ? shopSession?.shopId : null);
 
   const { data: restaurantData } = useRestaurantById(restaurantId || '');
   const restaurant = restaurantData?.Restaurants_by_pk;
@@ -49,7 +46,9 @@ export default function MenuDisplay() {
       if (typeof ingredients === 'string') {
         spicy = ingredients.toLowerCase().includes('spicy');
       } else if (Array.isArray(ingredients)) {
-        spicy = ingredients.some((i: any) => typeof i === 'string' && i.toLowerCase().includes('spicy'));
+        spicy = ingredients.some(
+          (i: any) => typeof i === 'string' && i.toLowerCase().includes('spicy')
+        );
       }
 
       return {
@@ -57,7 +56,10 @@ export default function MenuDisplay() {
         name: rd.dishes?.name || rd.ProductNames?.name || 'Unnamed Dish',
         price: parseFloat(rd.price) || 0,
         category: category || 'General',
-        image: rd.image || rd.dishes?.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
+        image:
+          rd.image ||
+          rd.dishes?.image ||
+          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
         description: rd.dishes?.description || 'Delicious freshly prepared recipe.',
         tag: rd.promo ? 'Promotion' : 'Popular',
         spicy,
@@ -140,11 +142,7 @@ export default function MenuDisplay() {
                 >
                   {/* Big Hero Image */}
                   <div className="flex-1 relative">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
 
                     {/* Floating badges */}
@@ -169,7 +167,9 @@ export default function MenuDisplay() {
                   <div className="p-8 space-y-4 bg-slate-950/95 border-t border-slate-900/50">
                     <div className="flex justify-between items-center">
                       <h3 className="text-2xl font-black text-white tracking-tight">{item.name}</h3>
-                      <span className="text-3xl font-black text-blue-500">{formatCurrencyWithConfig(item.price, systemConfig)}</span>
+                      <span className="text-3xl font-black text-blue-500">
+                        {formatCurrencyWithConfig(item.price, systemConfig)}
+                      </span>
                     </div>
                     <p className="text-sm text-slate-400 font-semibold leading-relaxed">
                       {item.description}

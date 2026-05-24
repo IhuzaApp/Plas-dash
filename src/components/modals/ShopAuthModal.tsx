@@ -234,7 +234,15 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
 
       if (isValidCode) {
         // Success - log into shop
-        loginToShop(shopId, shopName, employeeId, employeeName, position, isRestaurant, employeeImage);
+        loginToShop(
+          shopId,
+          shopName,
+          employeeId,
+          employeeName,
+          position,
+          isRestaurant,
+          employeeImage
+        );
         toast.success(`Successfully logged into ${shopName}`);
         onOpenChange(false);
         form.reset();

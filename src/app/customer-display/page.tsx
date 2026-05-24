@@ -107,7 +107,10 @@ export default function CustomerDisplayPage() {
 
         // Check if payment method changed to MOMO or the explicit trigger was activated
         const isNewMomoMethod = newPaymentMethod === 'momo' && previousPaymentMethod !== 'momo';
-        const isExplicitTrigger = newPaymentMethod === 'momo' && currentMomoTrigger !== 0 && currentMomoTrigger !== lastMomoTrigger;
+        const isExplicitTrigger =
+          newPaymentMethod === 'momo' &&
+          currentMomoTrigger !== 0 &&
+          currentMomoTrigger !== lastMomoTrigger;
 
         if (isNewMomoMethod || isExplicitTrigger) {
           setIsMomoPaymentDialogOpen(true);

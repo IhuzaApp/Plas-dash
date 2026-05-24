@@ -288,7 +288,9 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
     <div className="space-y-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="text-center mb-4">
         <h3 className="font-bold text-lg">Set up {method === '2fa' ? 'Authenticator' : 'SMS'}</h3>
-        <p className="text-sm text-muted-foreground">Follow the steps below to secure your account</p>
+        <p className="text-sm text-muted-foreground">
+          Follow the steps below to secure your account
+        </p>
       </div>
 
       {method === '2fa' ? (
@@ -420,9 +422,7 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
           />
         </div>
         <div className="text-center space-y-0.5">
-          <p className="text-lg font-bold tracking-tight">
-            {businessName || 'Plas'}
-          </p>
+          <p className="text-lg font-bold tracking-tight">{businessName || 'Plas'}</p>
           <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-[0.2em]">
             Two-Factor Authentication
           </p>

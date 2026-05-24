@@ -590,7 +590,11 @@ const ShopDashboard = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" />
-                  <YAxis tickFormatter={val => `${systemConfig?.System_configuratioins?.[0]?.currency || 'RWF'} ${val}`} />
+                  <YAxis
+                    tickFormatter={val =>
+                      `${systemConfig?.System_configuratioins?.[0]?.currency || 'RWF'} ${val}`
+                    }
+                  />
                   <RechartsTooltip formatter={val => formatCurrency(val as number)} />
                   <Legend />
 

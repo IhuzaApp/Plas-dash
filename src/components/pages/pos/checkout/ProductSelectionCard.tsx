@@ -4,19 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { 
-  ShoppingBag, 
-  Search, 
-  Plus, 
-  ScanBarcode, 
-  LayoutGrid, 
-  List, 
-  Tag, 
-  ShieldCheck, 
+import {
+  ShoppingBag,
+  Search,
+  Plus,
+  ScanBarcode,
+  LayoutGrid,
+  List,
+  Tag,
+  ShieldCheck,
   Warehouse,
   CheckCircle,
   AlertTriangle,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import { Product } from '@/hooks/useGraphql';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
@@ -64,9 +64,7 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
         barcode.toLowerCase().includes(productSearch.toLowerCase()) ||
         category.toLowerCase().includes(productSearch.toLowerCase());
 
-      const matchesCategory =
-        selectedCategory === 'All' ||
-        category === selectedCategory;
+      const matchesCategory = selectedCategory === 'All' || category === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });
@@ -139,7 +137,7 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {/* Controls block */}
         <div className="flex flex-col md:flex-row gap-3">
@@ -153,16 +151,16 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
             />
           </div>
           <div className="flex items-center gap-2">
-            <Button 
+            <Button
               type="button"
-              variant="outline" 
+              variant="outline"
               onClick={onScanProduct}
               className="h-10 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 font-bold"
             >
               <ScanBarcode className="h-4 w-4 mr-2 text-primary" />
               Scan Barcode
             </Button>
-            <Button 
+            <Button
               type="button"
               onClick={onAddProductManually}
               className="h-10 bg-primary hover:bg-primary/90 text-white font-bold"
@@ -213,7 +211,7 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                     <div
                       key={product.id}
                       className={`relative flex flex-col justify-between p-4 border rounded-xl bg-white dark:bg-slate-900 transition-all hover:shadow-lg group ${
-                        isOutOfStock 
+                        isOutOfStock
                           ? 'border-slate-100 dark:border-slate-900 opacity-60 pointer-events-none'
                           : 'border-slate-200 dark:border-slate-800 hover:border-primary dark:hover:border-primary cursor-pointer'
                       }`}
@@ -241,22 +239,21 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                             style={{ display: product.ProductName?.image ? 'none' : 'flex' }}
                           >
                             <ShoppingBag className="h-8 w-8 opacity-50" />
-                            <span className="text-[9px] font-bold uppercase tracking-wider opacity-50">No Image</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider opacity-50">
+                              No Image
+                            </span>
                           </div>
                           {/* Category badge top-left */}
                           <Badge className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-white border-none font-bold text-[9px] uppercase">
                             {product.category || 'Retail'}
                           </Badge>
                           {/* Stock badge bottom-right */}
-                          <div className="absolute bottom-2 right-2">
-                            {getStockBadge(product)}
-                          </div>
+                          <div className="absolute bottom-2 right-2">{getStockBadge(product)}</div>
                         </div>
 
                         <p className="font-extrabold text-xs text-slate-800 dark:text-slate-100 line-clamp-2">
                           {product.ProductName?.name || 'Unknown Product'}
                         </p>
-
                       </div>
 
                       {/* Add button & price */}
@@ -264,9 +261,9 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                         <span className="text-sm font-black text-primary">
                           {formatCurrencyWithConfig(parseFloat(product.price || '0'), systemConfig)}
                         </span>
-                        <Button 
+                        <Button
                           type="button"
-                          size="sm" 
+                          size="sm"
                           disabled={isOutOfStock}
                           className="bg-primary text-white hover:bg-primary/90 font-bold text-xs px-2.5 h-8 gap-1 shadow-md shadow-primary/10"
                         >
@@ -287,7 +284,7 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                     <div
                       key={product.id}
                       className={`flex items-center justify-between p-3 border rounded-lg bg-white dark:bg-slate-900 hover:shadow-md transition-all group ${
-                        isOutOfStock 
+                        isOutOfStock
                           ? 'border-slate-100 dark:border-slate-900 opacity-60 pointer-events-none'
                           : 'border-slate-200 dark:border-slate-800 hover:border-primary dark:hover:border-primary cursor-pointer'
                       }`}
@@ -325,10 +322,13 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                               {product.category || 'Retail'}
                             </Badge>
                           </div>
-                          
+
                           {/* Subtitles & specs in linear fashion */}
                           <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                            SKU/Barcode: <span className="font-mono text-slate-600 dark:text-slate-350">{product.ProductName?.sku || product.ProductName?.barcode || 'N/A'}</span>
+                            SKU/Barcode:{' '}
+                            <span className="font-mono text-slate-600 dark:text-slate-350">
+                              {product.ProductName?.sku || product.ProductName?.barcode || 'N/A'}
+                            </span>
                             {product.measurement_unit && ` • Unit: ${product.measurement_unit}`}
                           </p>
                         </div>
@@ -339,11 +339,17 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
                         <div className="text-right hidden sm:block">
                           {product.quantity !== undefined ? (
                             product.quantity <= 0 ? (
-                              <span className="text-[10px] font-bold text-red-500">Out of Stock</span>
+                              <span className="text-[10px] font-bold text-red-500">
+                                Out of Stock
+                              </span>
                             ) : product.quantity <= 5 ? (
-                              <span className="text-[10px] font-bold text-amber-500">Low ({product.quantity})</span>
+                              <span className="text-[10px] font-bold text-amber-500">
+                                Low ({product.quantity})
+                              </span>
                             ) : (
-                              <span className="text-[10px] font-semibold text-emerald-500">{product.quantity} units</span>
+                              <span className="text-[10px] font-semibold text-emerald-500">
+                                {product.quantity} units
+                              </span>
                             )
                           ) : (
                             <span className="text-[10px] text-slate-400">Available</span>
@@ -352,13 +358,16 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
 
                         <div className="text-right">
                           <p className="text-sm font-black text-slate-800 dark:text-white">
-                            {formatCurrencyWithConfig(parseFloat(product.price || '0'), systemConfig)}
+                            {formatCurrencyWithConfig(
+                              parseFloat(product.price || '0'),
+                              systemConfig
+                            )}
                           </p>
                         </div>
 
-                        <Button 
+                        <Button
                           type="button"
-                          size="sm" 
+                          size="sm"
                           disabled={isOutOfStock}
                           className="bg-primary hover:bg-primary/90 text-white font-bold text-xs h-8"
                         >
@@ -375,7 +384,9 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
           <div className="p-16 text-center text-muted-foreground border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
             <ShoppingBag className="mx-auto h-12 w-12 mb-3 text-slate-350 dark:text-slate-700" />
             <p className="font-bold text-sm">No products found matching your search</p>
-            <p className="text-xs text-muted-foreground mt-1">Try refining your keyword query or changing category filters</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Try refining your keyword query or changing category filters
+            </p>
           </div>
         )}
       </CardContent>

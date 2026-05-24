@@ -326,7 +326,8 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
     toast({
       title: 'Payment processed',
       description: `Order completed with ${paymentMethod}${tinInfo}. Total: ${formatCurrencyWithConfig(
-        cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * (1 + getTaxRate()), systemConfig
+        cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * (1 + getTaxRate()),
+        systemConfig
       )}`,
     });
 
@@ -394,14 +395,15 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
     return name
       ? name
           .split(' ')
-          .map((n) => n[0])
+          .map(n => n[0])
           .slice(0, 2)
           .join('')
           .toUpperCase()
       : 'POS';
   };
 
-  const employeeName = activeEmployee?.fullnames || activeEmployee?.name || session?.fullName || 'Cashier Terminal';
+  const employeeName =
+    activeEmployee?.fullnames || activeEmployee?.name || session?.fullName || 'Cashier Terminal';
   const employeeInitials = getInitials(employeeName);
   const employeeRole = activeEmployee?.Position || activeEmployee?.roleType || 'Terminal Cashier';
 
@@ -424,7 +426,9 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
             <div>
               <h1 className="font-extrabold text-lg tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                 {shop?.name || 'Retail'} <span className="text-primary">POS</span>
-                <span className="text-[10px] bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground px-2 py-0.5 rounded-full font-bold">Shop</span>
+                <span className="text-[10px] bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground px-2 py-0.5 rounded-full font-bold">
+                  Shop
+                </span>
               </h1>
             </div>
           </div>
@@ -477,10 +481,16 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
             <div className="text-right">
               <div className="flex items-center gap-1.5 justify-end">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Session Active</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Session Active
+                </p>
               </div>
-              <p className="text-sm font-black text-slate-800 dark:text-slate-200 leading-tight">{employeeName}</p>
-              <p className="text-[10px] text-slate-400 font-medium capitalize mt-0.5">{employeeRole}</p>
+              <p className="text-sm font-black text-slate-800 dark:text-slate-200 leading-tight">
+                {employeeName}
+              </p>
+              <p className="text-[10px] text-slate-400 font-medium capitalize mt-0.5">
+                {employeeRole}
+              </p>
             </div>
             <Button
               type="button"
@@ -539,7 +549,8 @@ const ShopCheckout: React.FC<ShopCheckoutProps> = ({ activeEmployee, onLock }) =
                 Weighing Station
               </h2>
               <p className="text-xs text-muted-foreground font-medium">
-                Generate scale labels for bakery, butcher, produce & other departments. Cashiers can redeem codes at the POS checkout.
+                Generate scale labels for bakery, butcher, produce & other departments. Cashiers can
+                redeem codes at the POS checkout.
               </p>
             </div>
           </div>

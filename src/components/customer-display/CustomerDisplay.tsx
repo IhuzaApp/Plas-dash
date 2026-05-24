@@ -4,7 +4,19 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Store, CreditCard, QrCode, Wifi, Percent, Receipt, Sparkles, ShieldCheck, Loader2, Smartphone } from 'lucide-react';
+import {
+  ShoppingCart,
+  Store,
+  CreditCard,
+  QrCode,
+  Wifi,
+  Percent,
+  Receipt,
+  Sparkles,
+  ShieldCheck,
+  Loader2,
+  Smartphone,
+} from 'lucide-react';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import ThemeToggle from '@/components/layout/ThemeToggle';
@@ -75,17 +87,26 @@ export default function CustomerDisplay({
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-white flex flex-col justify-between p-8 font-sans relative overflow-hidden transition-colors duration-300">
         {/* Ambient background glows */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 dark:bg-primary/20 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '8s' }}></div>
+        <div
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[120px] animate-pulse"
+          style={{ animationDuration: '8s' }}
+        ></div>
 
         {/* Top bar */}
         <div className="flex justify-between items-center z-10">
           <div className="flex items-center gap-2">
             {shopDetails?.logo ? (
-              <img src={shopDetails.logo} alt={shopDetails.name} className="h-8 w-8 rounded-lg object-cover" />
+              <img
+                src={shopDetails.logo}
+                alt={shopDetails.name}
+                className="h-8 w-8 rounded-lg object-cover"
+              />
             ) : (
               <Store className="h-6 w-6 text-primary animate-pulse" />
             )}
-            <span className="text-sm font-black tracking-widest text-slate-600 dark:text-slate-300 uppercase">{shopDetails?.name || 'Plas Store'}</span>
+            <span className="text-sm font-black tracking-widest text-slate-600 dark:text-slate-300 uppercase">
+              {shopDetails?.name || 'Plas Store'}
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -103,7 +124,11 @@ export default function CustomerDisplay({
             <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-xl animate-ping scale-75 opacity-75"></div>
             <div className="w-28 h-28 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl flex items-center justify-center shadow-2xl relative overflow-hidden">
               {shopDetails?.logo ? (
-                <img src={shopDetails.logo} alt={shopDetails.name} className="w-24 h-24 rounded-2xl object-cover" />
+                <img
+                  src={shopDetails.logo}
+                  alt={shopDetails.name}
+                  className="w-24 h-24 rounded-2xl object-cover"
+                />
               ) : (
                 <Store className="w-12 h-12 text-primary" />
               )}
@@ -115,18 +140,23 @@ export default function CustomerDisplay({
               Next Customer Please
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold max-w-md mx-auto leading-relaxed">
-              We are ready to serve you. Please present your shopping items to the cashier to begin scanning.
+              We are ready to serve you. Please present your shopping items to the cashier to begin
+              scanning.
             </p>
           </div>
 
           {/* Quick Pay Info if SSD is present */}
           {shopDetails?.ssd && (
             <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl max-w-sm w-full space-y-2 shadow-sm">
-              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Quick Mobile Money Pay</span>
+              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">
+                Quick Mobile Money Pay
+              </span>
               <div className="font-mono text-base font-bold tracking-wider text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 py-2 rounded-xl border border-slate-200 dark:border-slate-800">
                 {shopDetails.ssd}
               </div>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">Dial the code above to pay instantly</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">
+                Dial the code above to pay instantly
+              </span>
             </div>
           )}
 
@@ -150,21 +180,24 @@ export default function CustomerDisplay({
     if (cart.length === 0) {
       return {
         label: 'Ready for scanning',
-        color: 'bg-blue-500/10 text-blue-500 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30',
-        description: 'Please present your items to the cashier'
+        color:
+          'bg-blue-500/10 text-blue-500 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30',
+        description: 'Please present your items to the cashier',
       };
     }
     if (paymentMethod && paymentMethod !== 'Not Selected') {
       return {
         label: 'Payment Pending',
-        color: 'bg-amber-500/10 text-amber-500 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30',
-        description: `Please proceed with ${paymentMethod.toUpperCase()}`
+        color:
+          'bg-amber-500/10 text-amber-500 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30',
+        description: `Please proceed with ${paymentMethod.toUpperCase()}`,
       };
     }
     return {
       label: 'Scanning Items',
-      color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30',
-      description: 'Review your items below'
+      color:
+        'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30',
+      description: 'Review your items below',
     };
   };
 
@@ -176,7 +209,11 @@ export default function CustomerDisplay({
       <div className="bg-slate-900 dark:bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between text-slate-400 text-xs font-semibold">
         <div className="flex items-center gap-2">
           {shopDetails?.logo ? (
-            <img src={shopDetails.logo} alt={shopDetails.name} className="h-5 w-5 rounded object-cover" />
+            <img
+              src={shopDetails.logo}
+              alt={shopDetails.name}
+              className="h-5 w-5 rounded object-cover"
+            />
           ) : (
             <Store className="h-4 w-4 text-primary" />
           )}
@@ -199,21 +236,32 @@ export default function CustomerDisplay({
           <div className="flex items-center gap-4">
             {shopDetails?.logo && (
               <div className="w-12 h-12 bg-slate-50 dark:bg-slate-955 rounded-xl flex items-center justify-center border border-slate-100 dark:border-slate-800/80 overflow-hidden shrink-0">
-                <img src={shopDetails.logo} alt={shopDetails.name} className="w-full h-full object-cover" />
+                <img
+                  src={shopDetails.logo}
+                  alt={shopDetails.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
             <div className="space-y-1">
               <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                 Welcome to {shopDetails?.name || 'Our Store'}
-                <Sparkles className="h-5 w-5 text-amber-500 animate-spin animate-pulse" style={{ animationDuration: '6s' }} />
+                <Sparkles
+                  className="h-5 w-5 text-amber-500 animate-spin animate-pulse"
+                  style={{ animationDuration: '6s' }}
+                />
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                 {shopDetails?.address || 'Real-time customer display terminal'}
               </p>
             </div>
           </div>
-          <div className={`px-4 py-2 rounded-xl border font-bold text-xs flex flex-col items-start gap-0.5 ${status.color}`}>
-            <span className="uppercase tracking-wider text-[10px] opacity-75 font-extrabold">Current Status</span>
+          <div
+            className={`px-4 py-2 rounded-xl border font-bold text-xs flex flex-col items-start gap-0.5 ${status.color}`}
+          >
+            <span className="uppercase tracking-wider text-[10px] opacity-75 font-extrabold">
+              Current Status
+            </span>
             <span>{status.label}</span>
           </div>
         </div>
@@ -238,7 +286,9 @@ export default function CustomerDisplay({
                     <div className="w-16 h-16 bg-slate-50 dark:bg-slate-950 rounded-full flex items-center justify-center mx-auto border border-slate-100 dark:border-slate-800/80">
                       <ShoppingCart className="h-8 w-8 text-slate-300 dark:text-slate-700" />
                     </div>
-                    <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">Your shopping cart is empty</h3>
+                    <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">
+                      Your shopping cart is empty
+                    </h3>
                     <p className="text-xs text-slate-400 max-w-xs mx-auto">
                       Scanned items will appear here instantly for your verification.
                     </p>
@@ -252,7 +302,11 @@ export default function CustomerDisplay({
                       >
                         <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-900 flex items-center justify-center shrink-0 text-slate-400 overflow-hidden font-extrabold text-xs">
                           {item.image ? (
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <ShoppingCart className="h-5 w-5 opacity-40" />
                           )}
@@ -273,7 +327,10 @@ export default function CustomerDisplay({
                               <span className="text-slate-400 font-bold">
                                 {formatCurrencyWithConfig(item.price, systemConfig)} each
                               </span>
-                              <Badge variant="outline" className="text-[10px] font-bold border-slate-200 dark:border-slate-800 text-slate-505 py-0 px-1.5">
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] font-bold border-slate-200 dark:border-slate-800 text-slate-505 py-0 px-1.5"
+                              >
                                 {item.category || 'General'}
                               </Badge>
                             </div>
@@ -300,7 +357,6 @@ export default function CustomerDisplay({
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-5">
-                
                 {/* Financial breakdown */}
                 <div className="space-y-3.5 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   <div className="flex justify-between items-center">
@@ -332,7 +388,9 @@ export default function CustomerDisplay({
                   <Separator className="bg-slate-100 dark:bg-slate-800" />
 
                   <div className="bg-primary/5 dark:bg-primary/10 border border-primary/10 p-5 rounded-2xl flex justify-between items-center">
-                    <span className="text-base font-black text-slate-900 dark:text-white">Amount Due</span>
+                    <span className="text-base font-black text-slate-900 dark:text-white">
+                      Amount Due
+                    </span>
                     <span className="text-2xl font-black text-primary">
                       {formatCurrencyWithConfig(total, systemConfig)}
                     </span>
@@ -344,12 +402,15 @@ export default function CustomerDisplay({
                   <div className="space-y-4 pt-2">
                     {paymentMethod === 'momo' ? (
                       <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm text-center space-y-2">
-                        <span className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wider block">Quick Dial Code</span>
+                        <span className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wider block">
+                          Quick Dial Code
+                        </span>
                         <div className="font-mono text-sm font-bold tracking-wider text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 py-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                           {formattedSsd}
                         </div>
                         <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-normal">
-                          Dial the code above to pay {formatCurrencyWithConfig(total, systemConfig)} instantly.
+                          Dial the code above to pay {formatCurrencyWithConfig(total, systemConfig)}{' '}
+                          instantly.
                         </p>
                       </div>
                     ) : (
@@ -400,7 +461,8 @@ export default function CustomerDisplay({
             <div className="flex items-center gap-2 bg-slate-100/50 dark:bg-slate-900/30 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60">
               <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
               <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
-                Your transaction is secure and encrypted. Thank you for shopping with us! Please verify items before making payment.
+                Your transaction is secure and encrypted. Thank you for shopping with us! Please
+                verify items before making payment.
               </p>
             </div>
           </div>

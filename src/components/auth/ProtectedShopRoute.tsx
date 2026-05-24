@@ -63,7 +63,6 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
 
         {/* Glassmorphic card */}
         <div className="relative z-10 w-full max-w-lg bg-background/70 border border-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden">
-
           {/* Inner glow blobs */}
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
             <div className="absolute top-[-20%] right-[-10%] w-56 h-56 bg-primary/20 rounded-full blur-[70px] animate-pulse" />
@@ -84,7 +83,8 @@ const ProtectedShopRoute: React.FC<ProtectedShopRouteProps> = ({ children, fallb
                 {session?.restaurant_id ? 'Restaurant' : 'Shop'} Authentication Required
               </h2>
               <p className="text-sm text-muted-foreground">
-                Select an assigned {session?.restaurant_id ? 'restaurant' : 'shop'} and authenticate with your 2FA code to proceed.
+                Select an assigned {session?.restaurant_id ? 'restaurant' : 'shop'} and authenticate
+                with your 2FA code to proceed.
               </p>
             </div>
           </div>

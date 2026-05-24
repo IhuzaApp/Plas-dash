@@ -31,7 +31,7 @@ import {
   Search,
   Users2,
   ArrowDownToLine,
-  GitBranch
+  GitBranch,
 } from 'lucide-react';
 import {
   ComposedChart,
@@ -43,7 +43,7 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -52,12 +52,12 @@ export default function POSBoard() {
   const { session } = usePrivilege();
   const { color } = useThemeColor();
   const { theme } = useTheme();
-  
+
   const [loading, setLoading] = useState(true);
   const [shopData, setShopData] = useState<any>(null);
   const [kitchenQueue, setKitchenQueue] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [salesTimeframe, setSalesTimeframe] = useState<'day' | 'week' | 'month'>('day');
   const [localPendingCheckouts, setLocalPendingCheckouts] = useState<any[]>([]);
   const [employeeSearch, setEmployeeSearch] = useState('');
@@ -108,11 +108,11 @@ export default function POSBoard() {
       'assistantmanager',
       'cashier',
       'globaladmin',
-      'systemadmin'
+      'systemadmin',
     ];
     const employeePosition = (shopSession?.position || '').toLowerCase().replace(/[^a-z]/g, '');
     const sessionRole = (session?.role || '').toLowerCase().replace(/[^a-z]/g, '');
-    
+
     return allowedRoles.includes(employeePosition) || allowedRoles.includes(sessionRole);
   }, [shopSession?.position, session?.role]);
 
@@ -144,17 +144,13 @@ export default function POSBoard() {
   const relatedBranches = useMemo(() => {
     const activeShopName = shopData?.name || shopSession?.shopName;
     const parentName = shopData?.relatedTo || activeShopName;
-    
+
     if (!parentName) return [];
-    
+
     return branches.filter(b => {
       const bName = b.name || b.RestaurantName?.name || '';
       const bRelatedTo = b.relatedTo || '';
-      return (
-        b.id === shopSession?.shopId ||
-        bName === parentName ||
-        bRelatedTo === parentName
-      );
+      return b.id === shopSession?.shopId || bName === parentName || bRelatedTo === parentName;
     });
   }, [branches, shopData?.relatedTo, shopData?.name, shopSession?.shopId, shopSession?.shopName]);
 
@@ -165,7 +161,7 @@ export default function POSBoard() {
     const adminRoles = ['globaladmin', 'systemadmin', 'storeadministrator'];
     const employeePosition = (shopSession?.position || '').toLowerCase().replace(/[^a-z]/g, '');
     const sessionRole = (session?.role || '').toLowerCase().replace(/[^a-z]/g, '');
-    
+
     return adminRoles.includes(employeePosition) || adminRoles.includes(sessionRole);
   }, [shopSession?.position, session?.role, relatedBranches.length]);
 
@@ -181,25 +177,28 @@ export default function POSBoard() {
       setError(null);
       try {
         const isRestaurant = !!shopSession.isRestaurant;
-        
+
         let targetIds: string[] = [];
         if (selectedBranchId === 'active') {
           targetIds = [shopSession.shopId];
         } else if (selectedBranchId === 'all') {
-          targetIds = relatedBranches.length > 0 ? relatedBranches.map(b => b.id) : [shopSession.shopId];
+          targetIds =
+            relatedBranches.length > 0 ? relatedBranches.map(b => b.id) : [shopSession.shopId];
         } else {
           targetIds = [selectedBranchId];
         }
 
         // Fetch data for all targeted branches in parallel
-        const fetchPromises = targetIds.map(async (id) => {
+        const fetchPromises = targetIds.map(async id => {
           const shopRes = isRestaurant
             ? await apiGet<any>(`/api/queries/restaurants/${id}`).catch(() => null)
             : await apiGet<any>(`/api/queries/shops/${id}`).catch(() => null);
-          
+
           let kQueue: any[] = [];
           if (isRestaurant) {
-            const kitchenRes = await apiGet<any>(`/api/queries/kitchen-queue?restaurantId=${id}`).catch(() => null);
+            const kitchenRes = await apiGet<any>(
+              `/api/queries/kitchen-queue?restaurantId=${id}`
+            ).catch(() => null);
             if (kitchenRes?.success && kitchenRes?.data?.kitchenQueue) {
               kQueue = kitchenRes.data.kitchenQueue;
             }
@@ -207,12 +206,12 @@ export default function POSBoard() {
 
           return {
             shopObj: shopRes?.shop || shopRes?.restaurant,
-            kQueue
+            kQueue,
           };
         });
 
         const results = await Promise.all(fetchPromises);
-        
+
         // Merge datasets from all branches
         const mergedEmployees: any[] = [];
         const mergedCheckouts: any[] = [];
@@ -222,7 +221,7 @@ export default function POSBoard() {
         let firstShopName = '';
         let rootRelatedTo = '';
 
-        results.forEach((res) => {
+        results.forEach(res => {
           if (!res.shopObj) return;
           if (!firstShopName) {
             firstShopName = res.shopObj.name || res.shopObj.RestaurantName?.name || 'Store';
@@ -230,7 +229,7 @@ export default function POSBoard() {
           if (res.shopObj.relatedTo && !rootRelatedTo) {
             rootRelatedTo = res.shopObj.relatedTo;
           }
-          
+
           if (res.shopObj.orgEmployees) {
             res.shopObj.orgEmployees.forEach((emp: any) => {
               if (!mergedEmployees.some(e => e.id === emp.id)) {
@@ -258,7 +257,7 @@ export default function POSBoard() {
           orgEmployees: mergedEmployees,
           shopCheckouts: mergedCheckouts,
           Orders: mergedOrders,
-          restaurant_orders: mergedRestOrders
+          restaurant_orders: mergedRestOrders,
         });
         setKitchenQueue(mergedKQueue);
       } catch (err) {
@@ -270,20 +269,29 @@ export default function POSBoard() {
     };
 
     fetchData();
-  }, [shopSession?.shopId, shopSession?.isRestaurant, isAllowed, selectedBranchId, relatedBranches]);
+  }, [
+    shopSession?.shopId,
+    shopSession?.isRestaurant,
+    isAllowed,
+    selectedBranchId,
+    relatedBranches,
+  ]);
 
   // Waiter & Employee Performance Calculations
   const employeePerformance = useMemo(() => {
     const isRestaurant = !!shopSession?.isRestaurant;
-    
-    const performanceMap: Record<string, {
-      id: string;
-      name: string;
-      position: string;
-      active: boolean;
-      salesCount: number;
-      revenue: number;
-    }> = {};
+
+    const performanceMap: Record<
+      string,
+      {
+        id: string;
+        name: string;
+        position: string;
+        active: boolean;
+        salesCount: number;
+        revenue: number;
+      }
+    > = {};
 
     if (shopData?.orgEmployees) {
       shopData.orgEmployees.forEach((emp: any) => {
@@ -326,28 +334,30 @@ export default function POSBoard() {
 
     const items = list.map((emp, idx) => {
       const avgTxnValue = emp.salesCount > 0 ? emp.revenue / emp.salesCount : 0;
-      
-      const badge = emp.revenue >= 300000 
-        ? 'Top Performer' 
-        : emp.salesCount >= 5 
-          ? 'Highly Efficient' 
-          : emp.active 
-            ? 'Active' 
-            : 'Offline';
 
-      const badgeColor = emp.revenue >= 300000
-        ? 'bg-amber-500/10 text-amber-500 border-amber-500/25'
-        : emp.salesCount >= 5
-          ? 'bg-blue-500/10 text-blue-500 border-blue-500/25'
-          : emp.active
-            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/25'
-            : 'bg-slate-500/10 text-slate-500 border-slate-500/25';
+      const badge =
+        emp.revenue >= 300000
+          ? 'Top Performer'
+          : emp.salesCount >= 5
+            ? 'Highly Efficient'
+            : emp.active
+              ? 'Active'
+              : 'Offline';
+
+      const badgeColor =
+        emp.revenue >= 300000
+          ? 'bg-amber-500/10 text-amber-500 border-amber-500/25'
+          : emp.salesCount >= 5
+            ? 'bg-blue-500/10 text-blue-500 border-blue-500/25'
+            : emp.active
+              ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/25'
+              : 'bg-slate-500/10 text-slate-500 border-slate-500/25';
 
       return {
         ...emp,
         avgTxnValue,
         badge,
-        badgeColor
+        badgeColor,
       };
     });
 
@@ -389,7 +399,7 @@ export default function POSBoard() {
   // Filter kitchen live queue for TODAY's entries
   const todayKitchenQueue = useMemo(() => {
     const todayStr = new Date().toISOString().split('T')[0];
-    
+
     return kitchenQueue.filter(item => {
       try {
         const itemDate = new Date(item.created_at || item.updated_at).toISOString().split('T')[0];
@@ -408,10 +418,15 @@ export default function POSBoard() {
       return todayKitchenQueue.map(item => {
         let dishCount = 0;
         let dishesList = '';
-        
+
         if (Array.isArray(item.dishesOrdered)) {
-          dishCount = item.dishesOrdered.reduce((acc: number, d: any) => acc + (d.quantity || 1), 0);
-          dishesList = item.dishesOrdered.map((d: any) => `${d.quantity}x ${d.name || d.dish_name}`).join(', ');
+          dishCount = item.dishesOrdered.reduce(
+            (acc: number, d: any) => acc + (d.quantity || 1),
+            0
+          );
+          dishesList = item.dishesOrdered
+            .map((d: any) => `${d.quantity}x ${d.name || d.dish_name}`)
+            .join(', ');
         }
 
         const updatedTime = new Date(item.updated_at).getTime();
@@ -424,29 +439,43 @@ export default function POSBoard() {
           count: dishCount,
           elapsed: formatElapsedTime(elapsedMin),
           status: item.status || 'Pending',
-          statusColor: item.status === 'Ready' || item.status === 'Served' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
+          statusColor:
+            item.status === 'Ready' || item.status === 'Served'
+              ? 'bg-emerald-500 text-white'
+              : 'bg-amber-500 text-white',
         };
       });
     } else {
       const orders = shopData?.Orders || [];
       const onlinePending = orders
-        .filter((ord: any) => ord.status === 'pending' || ord.status === 'accepted' || ord.status === 'shopping')
+        .filter(
+          (ord: any) =>
+            ord.status === 'pending' || ord.status === 'accepted' || ord.status === 'shopping'
+        )
         .map((ord: any) => {
-          const itemCount = ord.Order_Items?.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0) || 0;
+          const itemCount =
+            ord.Order_Items?.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0) || 0;
           return {
             id: ord.OrderID || `TK-${ord.id.slice(0, 4).toUpperCase()}`,
             title: ord.orderedBy?.name || 'Online Client',
             description: `Awaiting delivery checkout dispatch`,
             count: itemCount,
-            elapsed: new Date(ord.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            elapsed: new Date(ord.created_at).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
             status: ord.status,
-            statusColor: 'bg-emerald-500 text-white'
+            statusColor: 'bg-emerald-500 text-white',
           };
         });
 
       const localPending = localPendingCheckouts.map((chk: any) => {
-        const itemCount = chk.items?.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0) || 0;
-        const timeDiff = Math.max(0, Math.floor((Date.now() - new Date(chk.timestamp).getTime()) / (60 * 1000)));
+        const itemCount =
+          chk.items?.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0) || 0;
+        const timeDiff = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(chk.timestamp).getTime()) / (60 * 1000))
+        );
         return {
           id: chk.id,
           title: chk.customerName || 'Walk-in Customer',
@@ -454,7 +483,7 @@ export default function POSBoard() {
           count: itemCount,
           elapsed: formatElapsedTime(timeDiff),
           status: 'Terminal Hold',
-          statusColor: 'bg-indigo-500 text-white'
+          statusColor: 'bg-indigo-500 text-white',
         };
       });
 
@@ -475,7 +504,7 @@ export default function POSBoard() {
         if (dateStr) {
           txns.push({
             date: new Date(dateStr),
-            total: parseFloat(ord.total) || 0
+            total: parseFloat(ord.total) || 0,
           });
         }
       });
@@ -486,7 +515,7 @@ export default function POSBoard() {
         if (dateStr) {
           txns.push({
             date: new Date(dateStr),
-            total: parseFloat(chk.total) || 0
+            total: parseFloat(chk.total) || 0,
           });
         }
       });
@@ -502,10 +531,10 @@ export default function POSBoard() {
           dateStr: d.toDateString(),
           name: weekdayNames[d.getDay()],
           Revenue: 0,
-          Clients: 0
+          Clients: 0,
         });
       }
-      
+
       txns.forEach(t => {
         const tDateStr = t.date.toDateString();
         const found = days.find(day => day.dateStr === tDateStr);
@@ -514,7 +543,9 @@ export default function POSBoard() {
           found.Clients += 1;
         }
       });
-      data.push(...days.map(day => ({ name: day.name, Revenue: day.Revenue, Clients: day.Clients })));
+      data.push(
+        ...days.map(day => ({ name: day.name, Revenue: day.Revenue, Clients: day.Clients }))
+      );
     } else if (salesTimeframe === 'week') {
       const weeks: any[] = [];
       const now = Date.now();
@@ -525,10 +556,10 @@ export default function POSBoard() {
           minTime: now - (i + 1) * 7 * 24 * 60 * 60 * 1000,
           maxTime: now - i * 7 * 24 * 60 * 60 * 1000,
           Revenue: 0,
-          Clients: 0
+          Clients: 0,
         });
       }
-      
+
       txns.forEach(t => {
         const tTime = t.date.getTime();
         const found = weeks.find(w => tTime >= w.minTime && tTime < w.maxTime);
@@ -540,7 +571,20 @@ export default function POSBoard() {
       data.push(...weeks.map(w => ({ name: w.name, Revenue: w.Revenue, Clients: w.Clients })));
     } else {
       const monthsList: any[] = [];
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthNames = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       const now = new Date();
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -549,10 +593,10 @@ export default function POSBoard() {
           month: d.getMonth(),
           name: monthNames[d.getMonth()],
           Revenue: 0,
-          Clients: 0
+          Clients: 0,
         });
       }
-      
+
       txns.forEach(t => {
         const tYear = t.date.getFullYear();
         const tMonth = t.date.getMonth();
@@ -577,7 +621,7 @@ export default function POSBoard() {
     return {
       chartData: data,
       peakDay,
-      peakCount
+      peakCount,
     };
   }, [salesTimeframe, shopData, shopSession?.isRestaurant]);
 
@@ -585,14 +629,14 @@ export default function POSBoard() {
   const statsSummary = useMemo(() => {
     const isRestaurant = !!shopSession?.isRestaurant;
     const txnsCount = isRestaurant
-      ? (shopData?.restaurant_orders?.length || 0)
-      : (shopData?.shopCheckouts?.length || 0);
+      ? shopData?.restaurant_orders?.length || 0
+      : shopData?.shopCheckouts?.length || 0;
 
     return {
       totalSalesVal: totalStoreRevenue,
       totalTxns: txnsCount,
       avgTxn: txnsCount > 0 ? totalStoreRevenue / txnsCount : 0,
-      activeStaffCount: employeePerformance.filter(emp => emp.active).length
+      activeStaffCount: employeePerformance.filter(emp => emp.active).length,
     };
   }, [employeePerformance, totalStoreRevenue, shopData, shopSession?.isRestaurant]);
 
@@ -631,11 +675,14 @@ export default function POSBoard() {
           <div className="p-5 rounded-full bg-red-500/10 text-red-500 mb-6 animate-pulse">
             <ShieldAlert className="h-12 w-12" />
           </div>
-          <h2 className="text-2xl font-black text-white tracking-tight mb-3">POS Board Access Denied</h2>
+          <h2 className="text-2xl font-black text-white tracking-tight mb-3">
+            POS Board Access Denied
+          </h2>
           <p className="text-slate-400 text-sm max-w-md leading-relaxed mb-6">
-            The POS Performance Board is restricted to administrators, managers, and cashiers. Please contact your system administrator if you believe this is an error.
+            The POS Performance Board is restricted to administrators, managers, and cashiers.
+            Please contact your system administrator if you believe this is an error.
           </p>
-          <Button 
+          <Button
             onClick={() => window.history.back()}
             className="bg-primary hover:bg-primary/90 text-white font-bold px-6 py-2 rounded-xl transition-all"
           >
@@ -660,9 +707,7 @@ export default function POSBoard() {
           </div>
 
           {/* Branch selector skeleton */}
-          {canSwitchBranches && (
-            <Skeleton className="h-16 w-full rounded-2xl animate-pulse" />
-          )}
+          {canSwitchBranches && <Skeleton className="h-16 w-full rounded-2xl animate-pulse" />}
 
           {/* Spotlight & Metric Cards Skeleton */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -677,9 +722,18 @@ export default function POSBoard() {
                   <Skeleton className="h-16 w-16 rounded-2xl animate-pulse" />
                 </div>
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                  <div className="space-y-1.5"><Skeleton className="h-3 w-16 animate-pulse" /><Skeleton className="h-5 w-20 animate-pulse" /></div>
-                  <div className="space-y-1.5"><Skeleton className="h-3 w-16 animate-pulse" /><Skeleton className="h-5 w-12 animate-pulse" /></div>
-                  <div className="space-y-1.5"><Skeleton className="h-3 w-16 animate-pulse" /><Skeleton className="h-5 w-20 animate-pulse" /></div>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3 w-16 animate-pulse" />
+                    <Skeleton className="h-5 w-20 animate-pulse" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3 w-16 animate-pulse" />
+                    <Skeleton className="h-5 w-12 animate-pulse" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3 w-16 animate-pulse" />
+                    <Skeleton className="h-5 w-20 animate-pulse" />
+                  </div>
                 </div>
                 <Skeleton className="h-2 w-full rounded-full animate-pulse" />
               </div>
@@ -687,7 +741,10 @@ export default function POSBoard() {
 
             <div className="col-span-1 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-card border border-slate-200 dark:border-slate-800 p-5 rounded-2xl h-[110px] flex flex-col justify-between">
+                <div
+                  key={i}
+                  className="bg-card border border-slate-200 dark:border-slate-800 p-5 rounded-2xl h-[110px] flex flex-col justify-between"
+                >
                   <div className="flex justify-between items-start">
                     <Skeleton className="h-3.5 w-24 animate-pulse" />
                     <Skeleton className="h-4.5 w-4.5 rounded animate-pulse" />
@@ -701,11 +758,20 @@ export default function POSBoard() {
           {/* Charts Skeleton */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="col-span-1 lg:col-span-8 bg-card border border-slate-200 dark:border-slate-800 p-6 rounded-2xl h-[330px] flex flex-col justify-between">
-              <div className="flex justify-between items-center"><div className="space-y-2"><Skeleton className="h-4.5 w-48 animate-pulse" /><Skeleton className="h-3.5 w-72 animate-pulse" /></div><Skeleton className="h-8 w-36 rounded-lg animate-pulse" /></div>
+              <div className="flex justify-between items-center">
+                <div className="space-y-2">
+                  <Skeleton className="h-4.5 w-48 animate-pulse" />
+                  <Skeleton className="h-3.5 w-72 animate-pulse" />
+                </div>
+                <Skeleton className="h-8 w-36 rounded-lg animate-pulse" />
+              </div>
               <Skeleton className="h-[220px] w-full rounded-xl animate-pulse" />
             </div>
             <div className="col-span-1 lg:col-span-4 bg-card border border-slate-200 dark:border-slate-800 p-6 rounded-2xl h-[330px] flex flex-col justify-between">
-              <div className="space-y-2"><Skeleton className="h-4.5 w-32 animate-pulse" /><Skeleton className="h-3.5 w-48 animate-pulse" /></div>
+              <div className="space-y-2">
+                <Skeleton className="h-4.5 w-32 animate-pulse" />
+                <Skeleton className="h-3.5 w-48 animate-pulse" />
+              </div>
               <Skeleton className="h-[220px] w-full rounded-xl animate-pulse" />
             </div>
           </div>
@@ -713,18 +779,51 @@ export default function POSBoard() {
           {/* Leaderboard & Queue split skeletons */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="col-span-1 lg:col-span-7 bg-card border border-slate-200 dark:border-slate-800 p-6 rounded-2xl h-[380px] flex flex-col justify-between">
-              <div className="flex justify-between items-center"><Skeleton className="h-5 w-48 animate-pulse" /><Skeleton className="h-9 w-40 rounded-xl animate-pulse" /></div>
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-5 w-48 animate-pulse" />
+                <Skeleton className="h-9 w-40 rounded-xl animate-pulse" />
+              </div>
               <div className="space-y-4 mt-4">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex justify-between items-center"><div className="flex items-center gap-3"><Skeleton className="h-8 w-8 rounded-full animate-pulse" /><div><Skeleton className="h-4 w-28 animate-pulse" /><Skeleton className="h-3 w-16 mt-1 animate-pulse" /></div></div><Skeleton className="h-4 w-12 animate-pulse" /><Skeleton className="h-4 w-16 animate-pulse" /><Skeleton className="h-4 w-16 animate-pulse" /></div>
+                  <div key={i} className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full animate-pulse" />
+                      <div>
+                        <Skeleton className="h-4 w-28 animate-pulse" />
+                        <Skeleton className="h-3 w-16 mt-1 animate-pulse" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-4 w-12 animate-pulse" />
+                    <Skeleton className="h-4 w-16 animate-pulse" />
+                    <Skeleton className="h-4 w-16 animate-pulse" />
+                  </div>
                 ))}
               </div>
             </div>
             <div className="col-span-1 lg:col-span-5 bg-card border border-slate-200 dark:border-slate-800 p-6 rounded-2xl h-[380px] flex flex-col justify-between">
-              <div className="flex justify-between items-center"><Skeleton className="h-5 w-36 animate-pulse" /><Skeleton className="h-5 w-16 rounded animate-pulse" /></div>
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-5 w-36 animate-pulse" />
+                <Skeleton className="h-5 w-16 rounded animate-pulse" />
+              </div>
               <div className="space-y-4 mt-4">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex items-start gap-4 p-3 rounded-xl border border-slate-100 dark:border-slate-800"><Skeleton className="h-10 w-10 rounded-xl animate-pulse" /><div className="flex-1 space-y-2"><div className="flex justify-between"><Skeleton className="h-4 w-24 animate-pulse" /><Skeleton className="h-3.5 w-12 animate-pulse" /></div><Skeleton className="h-3.5 w-full animate-pulse" /><div className="flex justify-between"><Skeleton className="h-4 w-16 animate-pulse" /><Skeleton className="h-4 w-12 animate-pulse" /></div></div></div>
+                  <div
+                    key={i}
+                    className="flex items-start gap-4 p-3 rounded-xl border border-slate-100 dark:border-slate-800"
+                  >
+                    <Skeleton className="h-10 w-10 rounded-xl animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex justify-between">
+                        <Skeleton className="h-4 w-24 animate-pulse" />
+                        <Skeleton className="h-3.5 w-12 animate-pulse" />
+                      </div>
+                      <Skeleton className="h-3.5 w-full animate-pulse" />
+                      <div className="flex justify-between">
+                        <Skeleton className="h-4 w-16 animate-pulse" />
+                        <Skeleton className="h-4 w-12 animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -752,17 +851,19 @@ export default function POSBoard() {
               </div>
               <div>
                 <p className="text-xs font-bold text-foreground">Multi-Branch View Mode</p>
-                <p className="text-[10px] text-muted-foreground">Select a branch below to view metrics or compile all stats combined.</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Select a branch below to view metrics or compile all stats combined.
+                </p>
               </div>
             </div>
             <select
               value={selectedBranchId}
-              onChange={(e) => setSelectedBranchId(e.target.value)}
+              onChange={e => setSelectedBranchId(e.target.value)}
               className="text-xs font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary min-w-[220px]"
             >
               <option value="active">Active Branch ({shopSession?.shopName || 'Current'})</option>
               <option value="all">All Branches (Combined Stats)</option>
-              {relatedBranches.map((b) => (
+              {relatedBranches.map(b => (
                 <option key={b.id} value={b.id}>
                   {b.name || b.RestaurantName?.name || `Branch ${b.id.slice(0, 4)}`}
                 </option>
@@ -785,7 +886,9 @@ export default function POSBoard() {
                       Top Performing Staff
                     </Badge>
                     <h3 className="text-2xl font-black text-foreground mt-2">{topWaiter.name}</h3>
-                    <p className="text-xs text-muted-foreground font-bold capitalize">{topWaiter.position}</p>
+                    <p className="text-xs text-muted-foreground font-bold capitalize">
+                      {topWaiter.position}
+                    </p>
                   </div>
                   <div className="h-16 w-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-3xl font-extrabold text-amber-600 dark:text-amber-500 shadow-lg">
                     {topWaiter.name.charAt(0)}
@@ -794,16 +897,28 @@ export default function POSBoard() {
 
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
                   <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Revenue Share</p>
-                    <p className="text-lg font-black mt-1" style={{ color: color.primary }}>{formatCurrency(topWaiter.revenue)}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Revenue Share
+                    </p>
+                    <p className="text-lg font-black mt-1" style={{ color: color.primary }}>
+                      {formatCurrency(topWaiter.revenue)}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tickets Filled</p>
-                    <p className="text-lg font-black text-foreground mt-1">{topWaiter.salesCount}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Tickets Filled
+                    </p>
+                    <p className="text-lg font-black text-foreground mt-1">
+                      {topWaiter.salesCount}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Avg Ticket</p>
-                    <p className="text-lg font-black text-foreground mt-1">{formatCurrency(topWaiter.avgTxnValue)}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Avg Ticket
+                    </p>
+                    <p className="text-lg font-black text-foreground mt-1">
+                      {formatCurrency(topWaiter.avgTxnValue)}
+                    </p>
                   </div>
                 </div>
 
@@ -812,7 +927,10 @@ export default function POSBoard() {
                     <span className="text-muted-foreground">Monthly Target Progress</span>
                     <span className="text-amber-600 dark:text-amber-500">120%</span>
                   </div>
-                  <Progress value={100} className="h-2 bg-slate-200 dark:bg-slate-800 [&>div]:bg-amber-500" />
+                  <Progress
+                    value={100}
+                    className="h-2 bg-slate-200 dark:bg-slate-800 [&>div]:bg-amber-500"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -823,11 +941,15 @@ export default function POSBoard() {
             <Card className="bg-card border-slate-200 dark:border-slate-800 text-card-foreground shadow-lg hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300">
               <CardContent className="p-5 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total POS Revenue</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Total POS Revenue
+                  </p>
                   <DollarSign className="h-4.5 w-4.5 text-primary animate-pulse" />
                 </div>
                 <div className="mt-4">
-                  <div className="text-2xl font-black tracking-tight text-foreground">{formatCurrency(statsSummary.totalSalesVal)}</div>
+                  <div className="text-2xl font-black tracking-tight text-foreground">
+                    {formatCurrency(statsSummary.totalSalesVal)}
+                  </div>
                   <div className="flex items-center gap-1 text-emerald-500 text-xs font-bold mt-1">
                     <TrendingUp className="h-3 w-3" />
                     <span>+12.4% from yesterday</span>
@@ -839,12 +961,18 @@ export default function POSBoard() {
             <Card className="bg-card border-slate-200 dark:border-slate-800 text-card-foreground shadow-lg hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300">
               <CardContent className="p-5 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Checkouts</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Total Checkouts
+                  </p>
                   <ShoppingBag className="h-4.5 w-4.5 text-primary" />
                 </div>
                 <div className="mt-4">
-                  <div className="text-2xl font-black tracking-tight text-foreground">{statsSummary.totalTxns}</div>
-                  <p className="text-xs text-muted-foreground mt-1.5 font-medium">Completed terminal transactions</p>
+                  <div className="text-2xl font-black tracking-tight text-foreground">
+                    {statsSummary.totalTxns}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1.5 font-medium">
+                    Completed terminal transactions
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -852,12 +980,18 @@ export default function POSBoard() {
             <Card className="bg-card border-slate-200 dark:border-slate-800 text-card-foreground shadow-lg hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300">
               <CardContent className="p-5 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Average Sale Value</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Average Sale Value
+                  </p>
                   <Sparkles className="h-4.5 w-4.5 text-amber-500" />
                 </div>
                 <div className="mt-4">
-                  <div className="text-2xl font-black tracking-tight text-foreground">{formatCurrency(statsSummary.avgTxn)}</div>
-                  <p className="text-xs text-muted-foreground mt-1.5 font-medium">Per checkout ticket value</p>
+                  <div className="text-2xl font-black tracking-tight text-foreground">
+                    {formatCurrency(statsSummary.avgTxn)}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1.5 font-medium">
+                    Per checkout ticket value
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -865,12 +999,17 @@ export default function POSBoard() {
             <Card className="bg-card border-slate-200 dark:border-slate-800 text-card-foreground shadow-lg hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300">
               <CardContent className="p-5 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Staff</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Active Staff
+                  </p>
                   <Users className="h-4.5 w-4.5 text-primary" />
                 </div>
                 <div className="mt-4">
                   <div className="text-2xl font-black tracking-tight text-foreground">
-                    {statsSummary.activeStaffCount} <span className="text-xs text-muted-foreground font-normal">/ {employeePerformance.length}</span>
+                    {statsSummary.activeStaffCount}{' '}
+                    <span className="text-xs text-muted-foreground font-normal">
+                      / {employeePerformance.length}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-muted-foreground text-xs mt-1.5 font-medium">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -888,9 +1027,14 @@ export default function POSBoard() {
           <Card className="col-span-1 lg:col-span-8 bg-card border-slate-200 dark:border-slate-800 text-card-foreground shadow-lg">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 space-y-2 sm:space-y-0">
               <div>
-                <CardTitle className="text-lg font-extrabold tracking-tight text-foreground">Client Traffic & Revenue Trend</CardTitle>
+                <CardTitle className="text-lg font-extrabold tracking-tight text-foreground">
+                  Client Traffic & Revenue Trend
+                </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Tracking active customer tickets vs total POS sales volumes. Peak: <span className="font-bold text-amber-500">{combinedAnalytics.peakDay} ({combinedAnalytics.peakCount} clients)</span>
+                  Tracking active customer tickets vs total POS sales volumes. Peak:{' '}
+                  <span className="font-bold text-amber-500">
+                    {combinedAnalytics.peakDay} ({combinedAnalytics.peakCount} clients)
+                  </span>
                 </CardDescription>
               </div>
               <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 self-start">
@@ -901,8 +1045,8 @@ export default function POSBoard() {
                     size="sm"
                     onClick={() => setSalesTimeframe(tf)}
                     className={`text-xs h-7 px-3 capitalize font-bold ${
-                      salesTimeframe === tf 
-                        ? 'bg-primary text-white hover:bg-primary/95' 
+                      salesTimeframe === tf
+                        ? 'bg-primary text-white hover:bg-primary/95'
                         : 'text-muted-foreground hover:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
@@ -924,30 +1068,38 @@ export default function POSBoard() {
                         <stop offset="95%" stopColor={color.primary} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} vertical={false} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke={chartGridStroke}
+                      vertical={false}
+                    />
                     <XAxis dataKey="name" stroke={chartTextStroke} fontSize={11} tickLine={false} />
-                    <YAxis 
+                    <YAxis
                       yAxisId="left"
-                      stroke={chartTextStroke} 
-                      fontSize={11} 
-                      tickLine={false} 
+                      stroke={chartTextStroke}
+                      fontSize={11}
+                      tickLine={false}
                       axisLine={false}
                       tickFormatter={val => `${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
                     />
-                    <YAxis 
+                    <YAxis
                       yAxisId="right"
                       orientation="right"
-                      stroke={chartTextStroke} 
-                      fontSize={11} 
-                      tickLine={false} 
+                      stroke={chartTextStroke}
+                      fontSize={11}
+                      tickLine={false}
                       axisLine={false}
                       tickFormatter={val => `${val} tix`}
                     />
-                    <RechartsTooltip 
-                      contentStyle={{ backgroundColor: chartTooltipBg, borderColor: chartTooltipBorder, color: chartTooltipText }}
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: chartTooltipBg,
+                        borderColor: chartTooltipBorder,
+                        color: chartTooltipText,
+                      }}
                       formatter={(val, name) => [
-                        name === 'Revenue' ? formatCurrency(val as number) : `${val} Clients`, 
-                        name
+                        name === 'Revenue' ? formatCurrency(val as number) : `${val} Clients`,
+                        name,
                       ]}
                     />
                     <Legend />
@@ -978,8 +1130,12 @@ export default function POSBoard() {
           {/* Waiter/Employee Revenue Contribution chart */}
           <Card className="col-span-1 lg:col-span-4 bg-card border-slate-200 dark:border-slate-800 text-card-foreground shadow-lg">
             <CardHeader>
-              <CardTitle className="text-lg font-extrabold tracking-tight text-foreground">Staff Revenue Share</CardTitle>
-              <CardDescription className="text-muted-foreground">Total revenue generated per employee</CardDescription>
+              <CardTitle className="text-lg font-extrabold tracking-tight text-foreground">
+                Staff Revenue Share
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Total revenue generated per employee
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[250px] w-full">
@@ -988,23 +1144,31 @@ export default function POSBoard() {
                     data={employeePerformance.slice(0, 5)}
                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} vertical={false} />
-                    <XAxis 
-                      dataKey="name" 
-                      stroke={chartTextStroke} 
-                      fontSize={10} 
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke={chartGridStroke}
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      stroke={chartTextStroke}
+                      fontSize={10}
                       tickLine={false}
                       tickFormatter={name => name.split(' ')[0]}
                     />
-                    <YAxis 
-                      stroke={chartTextStroke} 
-                      fontSize={10} 
-                      tickLine={false} 
+                    <YAxis
+                      stroke={chartTextStroke}
+                      fontSize={10}
+                      tickLine={false}
                       axisLine={false}
                       tickFormatter={val => `${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
                     />
                     <RechartsTooltip
-                      contentStyle={{ backgroundColor: chartTooltipBg, borderColor: chartTooltipBorder, color: chartTooltipText }}
+                      contentStyle={{
+                        backgroundColor: chartTooltipBg,
+                        borderColor: chartTooltipBorder,
+                        color: chartTooltipText,
+                      }}
                       formatter={val => [formatCurrency(val as number), 'Revenue']}
                     />
                     <Bar
@@ -1026,8 +1190,12 @@ export default function POSBoard() {
           <Card className="col-span-1 lg:col-span-7 bg-card border-slate-200 dark:border-slate-800 text-card-foreground shadow-lg">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3">
               <div>
-                <CardTitle className="text-lg font-extrabold tracking-tight text-foreground">Waiter & Employee Performance</CardTitle>
-                <CardDescription className="text-muted-foreground">Real-time performance tracking based on sales volumes</CardDescription>
+                <CardTitle className="text-lg font-extrabold tracking-tight text-foreground">
+                  Waiter & Employee Performance
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Real-time performance tracking based on sales volumes
+                </CardDescription>
               </div>
               <div className="relative w-full sm:w-48 shrink-0">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -1052,16 +1220,24 @@ export default function POSBoard() {
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
                     {filteredEmployees.map((emp, idx) => {
-                      const sharePercent = totalStoreRevenue > 0 ? (emp.revenue / totalStoreRevenue) * 100 : 0;
+                      const sharePercent =
+                        totalStoreRevenue > 0 ? (emp.revenue / totalStoreRevenue) * 100 : 0;
                       return (
-                        <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/35 transition-colors group">
+                        <tr
+                          key={emp.id}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/35 transition-colors group"
+                        >
                           <td className="py-3.5 pl-2 flex items-center gap-3">
-                            <div 
+                            <div
                               className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border"
-                              style={{ 
-                                backgroundColor: idx === 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                              style={{
+                                backgroundColor:
+                                  idx === 0
+                                    ? 'rgba(245, 158, 11, 0.15)'
+                                    : 'rgba(59, 130, 246, 0.15)',
                                 color: idx === 0 ? '#f59e0b' : '#3b82f6',
-                                borderColor: idx === 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(59, 130, 246, 0.3)'
+                                borderColor:
+                                  idx === 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(59, 130, 246, 0.3)',
                               }}
                             >
                               {emp.name.charAt(0).toUpperCase()}
@@ -1069,9 +1245,14 @@ export default function POSBoard() {
                             <div>
                               <p className="font-semibold text-foreground flex items-center gap-2">
                                 {emp.name}
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" title="Online"></span>
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"
+                                  title="Online"
+                                ></span>
                               </p>
-                              <p className="text-xs text-muted-foreground font-medium capitalize">{emp.position}</p>
+                              <p className="text-xs text-muted-foreground font-medium capitalize">
+                                {emp.position}
+                              </p>
                             </div>
                           </td>
                           <td className="py-3.5 text-center font-bold text-foreground">
@@ -1080,11 +1261,13 @@ export default function POSBoard() {
                           <td className="py-3.5 text-right text-muted-foreground font-medium">
                             {formatCurrency(emp.avgTxnValue)}
                           </td>
-                          <td 
+                          <td
                             className="py-3.5 text-right pr-2 font-black group-hover:scale-[1.02] transition-transform text-xs"
                             style={{ color: color.primary }}
                           >
-                            <span className="text-foreground text-[10px] font-medium mr-1.5 opacity-60">({formatCurrency(emp.revenue)})</span>
+                            <span className="text-foreground text-[10px] font-medium mr-1.5 opacity-60">
+                              ({formatCurrency(emp.revenue)})
+                            </span>
                             {sharePercent.toFixed(1)}%
                           </td>
                         </tr>
@@ -1109,10 +1292,14 @@ export default function POSBoard() {
               <div className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-lg font-extrabold tracking-tight text-foreground">
-                    {shopSession?.isRestaurant ? 'Kitchen Live Queue' : 'Pending Checkouts & Online Orders'}
+                    {shopSession?.isRestaurant
+                      ? 'Kitchen Live Queue'
+                      : 'Pending Checkouts & Online Orders'}
                   </CardTitle>
                   <CardDescription className="text-muted-foreground">
-                    {shopSession?.isRestaurant ? "Today's active preparation items" : "Active invoices and online deliveries"}
+                    {shopSession?.isRestaurant
+                      ? "Today's active preparation items"
+                      : 'Active invoices and online deliveries'}
                   </CardDescription>
                 </div>
                 <Badge className="bg-primary/10 border-primary/20 text-primary">
@@ -1132,14 +1319,19 @@ export default function POSBoard() {
             <CardContent>
               <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1 scrollbar-thin">
                 {filteredQueue.map((item: any) => (
-                  <div key={item.id} className="p-3.5 rounded-xl bg-slate-55 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-850 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-start gap-4">
+                  <div
+                    key={item.id}
+                    className="p-3.5 rounded-xl bg-slate-55 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-850 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-start gap-4"
+                  >
                     <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-xs text-primary border border-slate-200 dark:border-slate-750 shadow-inner shrink-0">
                       {String(item.id).replace('#', '').replace('TK-', '')}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h4 className="font-bold text-foreground text-xs truncate">{item.title}</h4>
-                        <span className="text-[10px] text-muted-foreground font-bold shrink-0">{item.elapsed}</span>
+                        <span className="text-[10px] text-muted-foreground font-bold shrink-0">
+                          {item.elapsed}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
                         {item.description}
@@ -1148,7 +1340,9 @@ export default function POSBoard() {
                         <Badge className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-muted-foreground text-[10px] font-bold">
                           {item.count} items
                         </Badge>
-                        <Badge className={`${item.statusColor} text-[9px] font-black uppercase px-2 py-0.5 rounded-full`}>
+                        <Badge
+                          className={`${item.statusColor} text-[9px] font-black uppercase px-2 py-0.5 rounded-full`}
+                        >
                           {item.status}
                         </Badge>
                       </div>
@@ -1163,8 +1357,12 @@ export default function POSBoard() {
                     ) : (
                       <ShoppingBag className="h-10 w-10 text-muted-foreground mb-3" />
                     )}
-                    <p className="text-sm font-bold text-muted-foreground">No matching queue items</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Adjust search criteria or check again later.</p>
+                    <p className="text-sm font-bold text-muted-foreground">
+                      No matching queue items
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Adjust search criteria or check again later.
+                    </p>
                   </div>
                 )}
               </div>

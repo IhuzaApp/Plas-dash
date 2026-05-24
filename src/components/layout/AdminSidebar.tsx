@@ -399,7 +399,11 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
   })();
 
   // Hide the sidebar entirely until the user logs into their assigned shop or restaurant
-  if (!isLoggedIntoShop && (session?.shop_id || session?.restaurant_id) && !session?.isProjectUser) {
+  if (
+    !isLoggedIntoShop &&
+    (session?.shop_id || session?.restaurant_id) &&
+    !session?.isProjectUser
+  ) {
     return null;
   }
 
@@ -519,7 +523,7 @@ const AdminSidebar = ({ isSidebarOpen, toggleSidebar }: AdminSidebarProps) => {
               {item.submenu.map((sub: any) => (
                 <button
                   key={sub.path}
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     if (sub.newTab) {
                       window.open(sub.path, '_blank');

@@ -1,10 +1,11 @@
 require('dotenv').config({ path: '.env.local' });
 const { GraphQLClient, gql } = require('graphql-request');
-const endpoint = process.env.NEXT_PUBLIC_HASURA_HTTP_URL || 'https://hasura.plasdash.com/v1/graphql';
+const endpoint =
+  process.env.NEXT_PUBLIC_HASURA_HTTP_URL || 'https://hasura.plasdash.com/v1/graphql';
 const client = new GraphQLClient(endpoint, {
   headers: {
-    'x-hasura-admin-secret': process.env.HASURA_ADMIN_SECRET || ''
-  }
+    'x-hasura-admin-secret': process.env.HASURA_ADMIN_SECRET || '',
+  },
 });
 
 const query = gql`

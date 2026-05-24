@@ -7,10 +7,7 @@ import { gql } from 'graphql-request';
 // We use two mutations: one for retail (Products) and one for restaurant (restaurant_menu)
 const DECREMENT_PRODUCT_STOCK = gql`
   mutation DecrementProductStock($id: uuid!, $qty: Int!) {
-    update_Products_by_pk(
-      pk_columns: { id: $id }
-      _inc: { quantity: $qty }
-    ) {
+    update_Products_by_pk(pk_columns: { id: $id }, _inc: { quantity: $qty }) {
       id
       quantity
     }
@@ -19,10 +16,7 @@ const DECREMENT_PRODUCT_STOCK = gql`
 
 const DECREMENT_MENU_STOCK = gql`
   mutation DecrementMenuStock($id: uuid!, $qty: Int!) {
-    update_restaurant_menu_by_pk(
-      pk_columns: { id: $id }
-      _inc: { quantity: $qty }
-    ) {
+    update_restaurant_menu_by_pk(pk_columns: { id: $id }, _inc: { quantity: $qty }) {
       id
       quantity
     }
@@ -60,16 +54,16 @@ export async function POST(request: Request) {
       try {
         // Handle weighed items where ID might be "uuid_scaleCode"
         const baseId = item.id.split('_')[0];
-        
+
         if (isRestaurant) {
           await hasuraClient.request(DECREMENT_MENU_STOCK, {
             id: baseId,
-            qty: -Math.abs(item.quantity)
+            qty: -Math.abs(item.quantity),
           });
         } else {
           await hasuraClient.request(DECREMENT_PRODUCT_STOCK, {
             id: baseId,
-            qty: -Math.abs(item.quantity)
+            qty: -Math.abs(item.quantity),
           });
         }
       } catch (err) {
@@ -77,7 +71,7 @@ export async function POST(request: Request) {
       }
     });
 
-    // We await them here so the serverless function doesn't die before they complete, 
+    // We await them here so the serverless function doesn't die before they complete,
     // but the frontend isn't blocking on this API call since it runs in the background.
     await Promise.all(updatePromises);
 

@@ -91,16 +91,10 @@ const StaffLogin = () => {
   const { mutateAsync: addEmployeeRole } = useAddEmployeeRole();
 
   const currentBusinessId =
-    shopSession?.shopId ||
-    session?.restaurant_id ||
-    session?.shop_id ||
-    activeBusiness?.id;
+    shopSession?.shopId || session?.restaurant_id || session?.shop_id || activeBusiness?.id;
 
   const currentBusinessName =
-    shopSession?.shopName ||
-    session?.restaurant_name ||
-    session?.shop_name ||
-    activeBusiness?.name;
+    shopSession?.shopName || session?.restaurant_name || session?.shop_name || activeBusiness?.name;
 
   // Dialog & Drawer States
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
@@ -135,10 +129,7 @@ const StaffLogin = () => {
             const s = emp.Shops || emp.Restaurants;
             if (!s) {
               // If employee has no shop/restaurant attached but matches the ID directly
-              return (
-                emp.shop_id === currentBusinessId ||
-                emp.restaurant_id === currentBusinessId
-              );
+              return emp.shop_id === currentBusinessId || emp.restaurant_id === currentBusinessId;
             }
 
             const isSameId = currentBusinessId && s.id === currentBusinessId;
@@ -291,7 +282,9 @@ const StaffLogin = () => {
         password: data.employee.password,
         roleType: data.employee.roleType,
         gender: data.employee.gender || 'other',
-        shop_id: isRestaurant ? (session?.shop_id || '00000000-0000-0000-0000-000000000000') : (currentBusinessId || '00000000-0000-0000-0000-000000000000'),
+        shop_id: isRestaurant
+          ? session?.shop_id || '00000000-0000-0000-0000-000000000000'
+          : currentBusinessId || '00000000-0000-0000-0000-000000000000',
         restaurant_id: isRestaurant ? session?.restaurant_id : null,
       });
 

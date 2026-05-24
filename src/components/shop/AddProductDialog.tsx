@@ -106,10 +106,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const getProductBySku = useGetProductNameBySku();
   const { data: searchProductNamesData, isLoading: isSearchingNames } =
     useSearchProductNames(searchTerm);
-  const { data: searchDishesData, isLoading: isSearchingDishes } = 
-    useDishesByName(searchTerm);
+  const { data: searchDishesData, isLoading: isSearchingDishes } = useDishesByName(searchTerm);
 
-  const searchResultsData = isRestaurant ? searchDishesData?.dishes : searchProductNamesData?.productNames;
+  const searchResultsData = isRestaurant
+    ? searchDishesData?.dishes
+    : searchProductNamesData?.productNames;
   const isSearching = isRestaurant ? isSearchingDishes : isSearchingNames;
 
   // Dynamic form schema based on hideCommission prop
@@ -238,7 +239,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         try {
           let suggestions: any[] = [];
           if (isRestaurant) {
-            const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`);
+            const res = await fetch(
+              `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`
+            );
             const data = await res.json();
             if (data.meals) {
               suggestions = data.meals.map((m: any) => ({
@@ -251,7 +254,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
               }));
             }
           } else {
-            const res = await fetch(`https://dummyjson.com/products/search?q=${encodeURIComponent(searchTerm)}`);
+            const res = await fetch(
+              `https://dummyjson.com/products/search?q=${encodeURIComponent(searchTerm)}`
+            );
             const data = await res.json();
             if (data.products) {
               suggestions = data.products.map((p: any) => ({
@@ -268,7 +273,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
           if (isRestaurant) {
             try {
-              const drinksRes = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`);
+              const drinksRes = await fetch(
+                `https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`
+              );
               const drinksData = await drinksRes.json();
               if (drinksData.drinks) {
                 const drinkSuggestions = drinksData.drinks.map((d: any) => ({
@@ -319,7 +326,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   };
 
   const generateRandomSKU = (name: string) => {
-    const prefix = name.substring(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, 'X').padEnd(3, 'X');
+    const prefix = name
+      .substring(0, 3)
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, 'X')
+      .padEnd(3, 'X');
     const timestamp = Date.now().toString(36).slice(-4).toUpperCase();
     const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `SKU-${prefix}-${timestamp}${randomChars}`;
@@ -340,16 +351,15 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       is_active: values.is_active,
       final_price: values.final_price,
       productName_id: values.productName_id,
-      productNameData:
-        isNewProduct
-          ? {
-              name: values.name!,
-              description: values.description,
-              barcode: values.barcode,
-              sku: finalSku,
-              image: values.image,
-            }
-          : undefined,
+      productNameData: isNewProduct
+        ? {
+            name: values.name!,
+            description: values.description,
+            barcode: values.barcode,
+            sku: finalSku,
+            image: values.image,
+          }
+        : undefined,
     };
 
     onSubmit(submitData);
@@ -405,13 +415,16 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const convertUsdToSystemCurrency = (usdPrice: number, targetCurrency: string) => {
     let rate = 1;
     const currency = targetCurrency.toUpperCase();
-    if (currency === 'RWF') rate = 1350; // Standard USD to RWF rate
+    if (currency === 'RWF')
+      rate = 1350; // Standard USD to RWF rate
     else if (currency === 'EUR') rate = 0.92;
     else if (currency === 'GBP') rate = 0.79;
-    else if (currency === 'KES') rate = 131; // Kenyan Shilling
-    else if (currency === 'UGX') rate = 3800; // Ugandan Shilling
+    else if (currency === 'KES')
+      rate = 131; // Kenyan Shilling
+    else if (currency === 'UGX')
+      rate = 3800; // Ugandan Shilling
     else if (currency === 'TZS') rate = 2500; // Tanzanian Shilling
-    
+
     // For RWF and similar, we want whole numbers. For others, 2 decimal places.
     const converted = usdPrice * rate;
     return rate > 100 ? Math.round(converted) : Number(converted.toFixed(2));
@@ -547,7 +560,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                           field.onChange(e);
                           setSearchTerm(e.target.value || '');
                           setSearchMode('name');
-                          
+
                           if (!e.target.value) {
                             // If they clear the search completely, reset the form state
                             form.setValue('productName_id', undefined);
@@ -608,7 +621,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     <span className="text-sm text-muted-foreground">Searching...</span>
                   </div>
-                ) : (searchResults.length > 0 || externalSuggestions.length > 0 || isSearchingExternal) ? (
+                ) : searchResults.length > 0 ||
+                  externalSuggestions.length > 0 ||
+                  isSearchingExternal ? (
                   <div className="space-y-2">
                     {searchResults.map(product => (
                       <div
@@ -618,7 +633,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                       >
                         <div className="flex items-center space-x-3">
                           {product.image && (
-                            <img src={product.image} alt={product.name} className="w-8 h-8 rounded object-cover" />
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-8 h-8 rounded object-cover"
+                            />
                           )}
                           <div>
                             <div className="font-medium">{product.name}</div>
@@ -633,7 +652,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         </Button>
                       </div>
                     ))}
-                    
+
                     {/* External API Suggestions */}
                     {externalSuggestions.length > 0 && (
                       <>
@@ -648,10 +667,16 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                           >
                             <div className="flex items-center space-x-3">
                               {product.image && (
-                                <img src={product.image} alt={product.name} className="w-8 h-8 rounded object-cover" />
+                                <img
+                                  src={product.image}
+                                  alt={product.name}
+                                  className="w-8 h-8 rounded object-cover"
+                                />
                               )}
                               <div>
-                                <div className="font-medium text-blue-600 dark:text-blue-400">{product.name}</div>
+                                <div className="font-medium text-blue-600 dark:text-blue-400">
+                                  {product.name}
+                                </div>
                                 <div className="text-xs text-muted-foreground truncate max-w-[250px]">
                                   {product.description}
                                 </div>
@@ -669,7 +694,6 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         Loading more suggestions...
                       </div>
                     )}
-
                   </div>
                 ) : (
                   <div className="text-center py-4">
@@ -977,24 +1001,30 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                               <div className="px-3 py-2 text-sm text-muted-foreground text-center italic">
                                 No previous suppliers found
                               </div>
-                            ) : existingSuppliers.filter(s => s.toLowerCase().includes((field.value || '').toLowerCase())).length === 0 ? (
+                            ) : existingSuppliers.filter(s =>
+                                s.toLowerCase().includes((field.value || '').toLowerCase())
+                              ).length === 0 ? (
                               <div className="px-3 py-2 text-sm text-muted-foreground text-center italic">
                                 No matching suppliers
                               </div>
                             ) : (
-                              existingSuppliers.filter(s => s.toLowerCase().includes((field.value || '').toLowerCase())).map((supplier, idx) => (
-                                <div
-                                  key={idx}
-                                  className="px-3 py-2 cursor-pointer hover:bg-muted text-sm"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    field.onChange(supplier);
-                                    setShowSupplierDropdown(false);
-                                  }}
-                                >
-                                  {supplier}
-                                </div>
-                              ))
+                              existingSuppliers
+                                .filter(s =>
+                                  s.toLowerCase().includes((field.value || '').toLowerCase())
+                                )
+                                .map((supplier, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="px-3 py-2 cursor-pointer hover:bg-muted text-sm"
+                                    onMouseDown={e => {
+                                      e.preventDefault();
+                                      field.onChange(supplier);
+                                      setShowSupplierDropdown(false);
+                                    }}
+                                  >
+                                    {supplier}
+                                  </div>
+                                ))
                             )}
                           </div>
                         )}

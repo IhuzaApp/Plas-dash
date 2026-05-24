@@ -178,20 +178,22 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
   const createShopMutation = useMutation({
     mutationFn: async (data: any) => {
       const mutationQuery = isRestaurant ? ADD_RESTAURANT : CREATE_SHOP;
-      const payload = isRestaurant ? {
-        name: data.name,
-        email: `${data.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
-        is_active: data.is_active,
-        lat: data.latitude || "",
-        long: data.longitude || "",
-        location: data.address || "",
-        logo: data.logo || "",
-        phone: data.phone || "",
-        profile: data.image || "",
-        tin: data.tin || "",
-        ussd: data.ssd || "",
-        relatedTo: data.relatedTo
-      } : data;
+      const payload = isRestaurant
+        ? {
+            name: data.name,
+            email: `${data.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
+            is_active: data.is_active,
+            lat: data.latitude || '',
+            long: data.longitude || '',
+            location: data.address || '',
+            logo: data.logo || '',
+            phone: data.phone || '',
+            profile: data.image || '',
+            tin: data.tin || '',
+            ussd: data.ssd || '',
+            relatedTo: data.relatedTo,
+          }
+        : data;
 
       try {
         const result = await hasuraRequest(mutationQuery, payload);
@@ -428,7 +430,8 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
             Add New Branch {isRestaurant ? 'Restaurant' : 'Store'}
           </DialogTitle>
           <DialogDescription>
-            Create a new branch {isRestaurant ? 'restaurant' : 'store'} under {parentShopName}. This branch will be linked to the parent {isRestaurant ? 'restaurant' : 'store'}.
+            Create a new branch {isRestaurant ? 'restaurant' : 'store'} under {parentShopName}. This
+            branch will be linked to the parent {isRestaurant ? 'restaurant' : 'store'}.
           </DialogDescription>
         </DialogHeader>
 
@@ -695,8 +698,12 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
           {/* Status */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium">Branch {isRestaurant ? 'Restaurant' : 'Store'} Status</h3>
-              <p className="text-sm text-muted-foreground">Enable or disable the branch {isRestaurant ? 'restaurant' : 'store'}</p>
+              <h3 className="text-sm font-medium">
+                Branch {isRestaurant ? 'Restaurant' : 'Store'} Status
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Enable or disable the branch {isRestaurant ? 'restaurant' : 'store'}
+              </p>
             </div>
             <Switch
               checked={formData.is_active}
@@ -708,7 +715,10 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createShopMutation.isPending || (!isRestaurant && categoriesLoading)}>
+            <Button
+              type="submit"
+              disabled={createShopMutation.isPending || (!isRestaurant && categoriesLoading)}
+            >
               {createShopMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

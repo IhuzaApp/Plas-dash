@@ -6,10 +6,7 @@ import { gql } from 'graphql-request';
 
 const GET_KITCHEN_QUEUE = gql`
   query GetKitchenQueue($restaurant_id: uuid!) {
-    kitchenQueue(
-      where: { restaurant_id: { _eq: $restaurant_id } },
-      order_by: { updated_at: asc }
-    ) {
+    kitchenQueue(where: { restaurant_id: { _eq: $restaurant_id } }, order_by: { updated_at: asc }) {
       id
       dishesOrdered
       restaurant_id

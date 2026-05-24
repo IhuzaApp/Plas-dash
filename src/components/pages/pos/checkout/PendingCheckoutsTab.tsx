@@ -2,7 +2,16 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle, Trash, RotateCcw, User, Timer, FileText, ShoppingBag } from 'lucide-react';
+import {
+  Clock,
+  CheckCircle,
+  Trash,
+  RotateCcw,
+  User,
+  Timer,
+  FileText,
+  ShoppingBag,
+} from 'lucide-react';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 
@@ -90,7 +99,7 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
           </p>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex-1 p-6">
         {pendingCheckouts.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
@@ -98,15 +107,19 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
               <ShoppingBag className="h-10 w-10 opacity-30" />
             </div>
             <div className="text-center">
-              <p className="font-extrabold text-sm text-slate-600 dark:text-slate-300">No pending checkouts</p>
-              <p className="text-xs mt-1 max-w-[200px] mx-auto">Paused transactions will appear here for you to resume later.</p>
+              <p className="font-extrabold text-sm text-slate-600 dark:text-slate-300">
+                No pending checkouts
+              </p>
+              <p className="text-xs mt-1 max-w-[200px] mx-auto">
+                Paused transactions will appear here for you to resume later.
+              </p>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {pendingCheckouts.map(checkout => (
-              <div 
-                key={checkout.id} 
+              <div
+                key={checkout.id}
                 className="group flex flex-col bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:border-primary/30"
               >
                 {/* Card Header Section */}
@@ -121,7 +134,10 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
                     <div className="flex items-center text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
                       <Clock className="h-3 w-3 mr-1.5 opacity-70" />
                       {new Date(checkout.timestamp).toLocaleString(undefined, {
-                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
                       })}
                     </div>
                   </div>
@@ -154,11 +170,14 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
                   )}
 
                   <div className="flex items-center">
-                    <Badge variant="outline" className={`border-none px-3 py-1.5 text-[10px] uppercase tracking-wider font-extrabold flex items-center gap-1.5 rounded-lg ${
-                      checkout.status === 'pending' 
-                        ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' 
-                        : 'bg-slate-50 text-slate-500 dark:bg-slate-900 dark:text-slate-400'
-                    }`}>
+                    <Badge
+                      variant="outline"
+                      className={`border-none px-3 py-1.5 text-[10px] uppercase tracking-wider font-extrabold flex items-center gap-1.5 rounded-lg ${
+                        checkout.status === 'pending'
+                          ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400'
+                          : 'bg-slate-50 text-slate-500 dark:bg-slate-900 dark:text-slate-400'
+                      }`}
+                    >
                       <Timer className="h-3.5 w-3.5" />
                       {getTimeRemaining(checkout.timestamp)}
                     </Badge>
@@ -167,17 +186,17 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
 
                 {/* Actions Footer */}
                 <div className="p-3 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:flex sm:flex-row gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => onViewDetails(checkout.id)}
                     className="text-[11px] font-bold h-9 w-full sm:flex-1 bg-white dark:bg-slate-950"
                   >
                     View Details
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => onLoadCheckout(checkout.id)}
                     className="text-[11px] font-bold h-9 w-full sm:flex-1 bg-white dark:bg-slate-950 text-blue-600 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-900/50 dark:hover:bg-blue-900/20"
                   >
@@ -209,4 +228,3 @@ export const PendingCheckoutsTab: React.FC<PendingCheckoutsTabProps> = ({
     </Card>
   );
 };
-

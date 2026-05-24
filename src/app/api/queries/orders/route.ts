@@ -189,7 +189,7 @@ export async function GET(req: Request) {
     // Check if the user is a restaurant employee, and route accordingly
     if (!context.isProjectUser && context.restaurant_id) {
       const where = { restaurant_id: { _eq: context.restaurant_id } };
-      
+
       const data = await hasuraClient.request<{
         restaurant_orders: Array<{
           id: string;
@@ -256,7 +256,8 @@ export async function GET(req: Request) {
 
       const orders = (data.restaurant_orders || []).map(o => {
         const itemsCount = o.restaurant_order_items?.length ?? 0;
-        const unitsCount = o.restaurant_order_items?.reduce((s, i) => s + (Number(i.quantity) || 0), 0) ?? 0;
+        const unitsCount =
+          o.restaurant_order_items?.reduce((s, i) => s + (Number(i.quantity) || 0), 0) ?? 0;
         return {
           id: o.id,
           OrderID: o.OrderID != null ? String(o.OrderID) : o.id,

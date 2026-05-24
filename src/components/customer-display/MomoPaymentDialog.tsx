@@ -31,7 +31,7 @@ export default function MomoPaymentDialog({
   const { color: themeColor } = useThemeColor();
   const [copied, setCopied] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
-  
+
   // Clean merchant ID input from any formatting (e.g. *44603#, 44603, or *182*8*1*44603#)
   const cleanMerchantId = (ssd: string) => {
     if (!ssd) return '';
@@ -59,7 +59,7 @@ export default function MomoPaymentDialog({
       const merchantId = cleanMerchantId(shopSsd || '');
       // Format as tel link with URL-encoded hash (%23) to trigger dialer prompt on phone scan
       const dialableCode = `tel:*182*8*1*${merchantId}*${amount}%23`;
-      
+
       // Use the active primary hex color from ThemeColorProvider
       const qrColor = themeColor?.primary || '#0f172a';
       QRCode.toDataURL(dialableCode, {
@@ -91,7 +91,7 @@ export default function MomoPaymentDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => { }}>
+    <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent className="max-w-md rounded-3xl border-0 p-6 shadow-2xl bg-white dark:bg-slate-900">
         <DialogHeader className="pb-2 text-center">
           <div className="mx-auto w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-3">
@@ -115,9 +115,7 @@ export default function MomoPaymentDialog({
             <div className="text-3xl font-black tracking-tight">
               {formatCurrencyWithConfig(total, systemConfig)}
             </div>
-            <div className="text-[10px] font-mono text-white/70 mt-1">
-              Ref: {transactionId}
-            </div>
+            <div className="text-[10px] font-mono text-white/70 mt-1">Ref: {transactionId}</div>
           </div>
 
           {/* QR Code Section */}

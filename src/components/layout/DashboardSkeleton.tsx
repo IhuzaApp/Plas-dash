@@ -11,7 +11,6 @@ import React from 'react';
 const DashboardSkeleton: React.FC = () => {
   return (
     <div className="fixed inset-0 z-[60] flex bg-background animate-in fade-in duration-300">
-
       {/* ── Sidebar skeleton ── */}
       <aside className="w-20 h-screen border-r border-border/40 bg-sidebar flex flex-col shrink-0">
         {/* Logo area */}
@@ -41,7 +40,6 @@ const DashboardSkeleton: React.FC = () => {
 
       {/* ── Main area ── */}
       <div className="flex flex-col flex-1 min-w-0">
-
         {/* Header skeleton */}
         <header className="sticky top-0 z-50 h-16 border-b border-border/40 bg-background/80 backdrop-blur-xl flex items-center px-6 gap-4 shrink-0">
           {/* Hamburger */}
@@ -63,7 +61,6 @@ const DashboardSkeleton: React.FC = () => {
         {/* Content skeleton */}
         <main className="flex-1 p-8 overflow-hidden bg-muted/5">
           <div className="max-w-[1600px] mx-auto w-full space-y-8">
-
             {/* Page title row */}
             <div className="flex items-center justify-between">
               <div className="space-y-2">
@@ -127,7 +124,6 @@ const DashboardSkeleton: React.FC = () => {
                 </div>
               </div>
             </div>
-
           </div>
         </main>
       </div>
@@ -139,7 +135,6 @@ const DashboardSkeleton: React.FC = () => {
           Loading your workspace…
         </span>
       </div>
-
     </div>
   );
 };

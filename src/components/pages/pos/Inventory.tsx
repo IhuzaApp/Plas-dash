@@ -111,14 +111,14 @@ const Inventory = () => {
     data: productsData,
     isLoading: productsLoading,
     refetch: refetchProducts,
-  } = useProductsByShop(!shopSession?.isRestaurant ? (shopSession?.shopId || '') : '');
+  } = useProductsByShop(!shopSession?.isRestaurant ? shopSession?.shopId || '' : '');
 
   // Fetch menus for the current restaurant
   const {
     data: menuData,
     isLoading: menuLoading,
     refetch: refetchMenu,
-  } = useMenuByRestaurant(shopSession?.isRestaurant ? (shopSession?.shopId || '') : '');
+  } = useMenuByRestaurant(shopSession?.isRestaurant ? shopSession?.shopId || '' : '');
 
   const isLoading = productsLoading || menuLoading;
 
@@ -288,7 +288,9 @@ const Inventory = () => {
         return;
       }
 
-      toast.success(shopSession.isRestaurant ? 'Dish added successfully' : 'Product added successfully');
+      toast.success(
+        shopSession.isRestaurant ? 'Dish added successfully' : 'Product added successfully'
+      );
       setIsAddProductOpen(false);
 
       // Refresh the products data without losing shop session
@@ -317,7 +319,9 @@ const Inventory = () => {
 
     // Simulate processing delay
     setTimeout(() => {
-      toast.success(`Successfully imported ${shopSession?.isRestaurant ? 'dishes' : 'products'} from ${file.name}`);
+      toast.success(
+        `Successfully imported ${shopSession?.isRestaurant ? 'dishes' : 'products'} from ${file.name}`
+      );
       setIsImportOpen(false);
     }, 1500);
   };

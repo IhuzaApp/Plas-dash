@@ -3,7 +3,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useShopSession } from '@/contexts/ShopSessionContext';
-import { useRestaurantById, useSystemConfig, useRestaurantOrders, useAssignOrder } from '@/hooks/useHasuraApi';
+import {
+  useRestaurantById,
+  useSystemConfig,
+  useRestaurantOrders,
+  useAssignOrder,
+} from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { apiGet, apiPost } from '@/lib/api';
@@ -46,16 +51,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-
-
 // Mock tables for dine-in tracking
 const TABLES = Array.from({ length: 12 }, (_, i) => ({
   id: `T${i + 1}`,
   number: i + 1,
   capacity: i % 2 === 0 ? 4 : 2,
 }));
-
-
 
 interface CartItem {
   id: string;
@@ -106,8 +107,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
   const { data: systemConfig } = useSystemConfig();
 
   const restaurantId =
-    session?.restaurant_id ||
-    (shopSession?.isRestaurant ? shopSession?.shopId : null);
+    session?.restaurant_id || (shopSession?.isRestaurant ? shopSession?.shopId : null);
 
   const { data: restaurantData, isLoading: restaurantLoading } = useRestaurantById(
     restaurantId || ''
@@ -117,7 +117,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
   const activeServer = activeEmployee;
 
   // Active top tab (matches header)
-  const [activeTab, setActiveTab] = useState<'POS' | 'Orders' | 'Kitchen' | 'Table' | 'Delivery'>('POS');
+  const [activeTab, setActiveTab] = useState<'POS' | 'Orders' | 'Kitchen' | 'Table' | 'Delivery'>(
+    'POS'
+  );
 
   // Fetch online restaurant orders and status update mutation
   const { data: restaurantOrdersData, refetch: refetchRestaurantOrders } = useRestaurantOrders();
@@ -156,7 +158,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
   // Cart & Order Options
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedOrderType, setSelectedOrderType] = useState<'Dine In' | 'Take Away' | 'Delivery' | 'Table'>('Dine In');
+  const [selectedOrderType, setSelectedOrderType] = useState<
+    'Dine In' | 'Take Away' | 'Delivery' | 'Table'
+  >('Dine In');
   const [selectedTable, setSelectedTable] = useState<string>('');
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedWaiter, setSelectedWaiter] = useState<string>('');
@@ -167,9 +171,8 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       try {
         const data = await apiGet<{ orgEmployees: any[] }>('/api/queries/org-employees');
         const allEmployees = data.orgEmployees || [];
-        const filtered = allEmployees.filter(emp => 
-          emp.shop_id === restaurantId || 
-          emp.restaurant_id === restaurantId
+        const filtered = allEmployees.filter(
+          emp => emp.shop_id === restaurantId || emp.restaurant_id === restaurantId
         );
         setEmployees(filtered);
       } catch (e) {
@@ -186,10 +189,16 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
   const [newTableName, setNewTableName] = useState('');
 
   // Interactive items
-  const [editingItemNote, setEditingItemNote] = useState<{ itemId: string; index: number; note: string } | null>(null);
+  const [editingItemNote, setEditingItemNote] = useState<{
+    itemId: string;
+    index: number;
+    note: string;
+  } | null>(null);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'cash' | 'card' | 'momo'>('cash');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'cash' | 'card' | 'momo'>(
+    'cash'
+  );
   const [taxRate, setTaxRate] = useState(18); // Default 18% as screenshot
 
   // Sync state for kitchen tickets & active tables
@@ -208,7 +217,10 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     });
   }, [kitchenTickets, kitchenSearchQuery]);
 
-  const totalKitchenPages = Math.max(1, Math.ceil(filteredKitchenTickets.length / KITCHEN_ITEMS_PER_PAGE));
+  const totalKitchenPages = Math.max(
+    1,
+    Math.ceil(filteredKitchenTickets.length / KITCHEN_ITEMS_PER_PAGE)
+  );
   const paginatedKitchenTickets = useMemo(() => {
     const start = (kitchenCurrentPage - 1) * KITCHEN_ITEMS_PER_PAGE;
     return filteredKitchenTickets.slice(start, start + KITCHEN_ITEMS_PER_PAGE);
@@ -243,25 +255,31 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
     // 2. Subscribe to kitchen tickets for this restaurant
     const ticketsCollectionRef = collection(db, 'kitchen_tickets', restaurantId, 'tickets');
-    const unsubscribe = onSnapshot(ticketsCollectionRef, (snapshot) => {
-      try {
-        const ticketsList: KitchenTicket[] = [];
-        snapshot.forEach((docSnap) => {
-          ticketsList.push(docSnap.data() as KitchenTicket);
-        });
-        // Sort by timestamp ascending (oldest first)
-        ticketsList.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        
-        setKitchenTickets(ticketsList);
-        localStorage.setItem('restaurantKitchenOrders', JSON.stringify(ticketsList));
-        // Trigger local storage sync event
-        window.dispatchEvent(new Event('storage'));
-      } catch (err) {
-        console.error('Error handling tickets snapshot:', err);
+    const unsubscribe = onSnapshot(
+      ticketsCollectionRef,
+      snapshot => {
+        try {
+          const ticketsList: KitchenTicket[] = [];
+          snapshot.forEach(docSnap => {
+            ticketsList.push(docSnap.data() as KitchenTicket);
+          });
+          // Sort by timestamp ascending (oldest first)
+          ticketsList.sort(
+            (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+
+          setKitchenTickets(ticketsList);
+          localStorage.setItem('restaurantKitchenOrders', JSON.stringify(ticketsList));
+          // Trigger local storage sync event
+          window.dispatchEvent(new Event('storage'));
+        } catch (err) {
+          console.error('Error handling tickets snapshot:', err);
+        }
+      },
+      error => {
+        console.error('Error subscribing to kitchen tickets:', error);
       }
-    }, (error) => {
-      console.error('Error subscribing to kitchen tickets:', error);
-    });
+    );
 
     // 3. Listen to local storage changes for active tables updates
     const handleStorageChange = (e: StorageEvent) => {
@@ -305,14 +323,16 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     const dbDishes = (restaurant?.restaurant_dishes || []).map((rd: any) => {
       const category = rd.dishes?.category;
       const ingredients = rd.dishes?.ingredients;
-      
+
       const isVeg = typeof category === 'string' && category.toLowerCase().includes('veg');
-      
+
       let isEgg = false;
       if (typeof ingredients === 'string') {
         isEgg = ingredients.toLowerCase().includes('egg');
       } else if (Array.isArray(ingredients)) {
-        isEgg = ingredients.some((i: any) => typeof i === 'string' && i.toLowerCase().includes('egg'));
+        isEgg = ingredients.some(
+          (i: any) => typeof i === 'string' && i.toLowerCase().includes('egg')
+        );
       }
 
       return {
@@ -320,7 +340,10 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
         name: rd.dishes?.name || rd.ProductNames?.name || 'Unnamed Dish',
         price: parseFloat(rd.price) || 0,
         category: category || 'General',
-        image: rd.image || rd.dishes?.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
+        image:
+          rd.image ||
+          rd.dishes?.image ||
+          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
         description: rd.dishes?.description || '',
         isVeg,
         isEgg,
@@ -367,9 +390,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     const existing = cart.find(item => item.id === dish.id);
     if (existing) {
       setCart(
-        cart.map(item =>
-          item.id === dish.id ? { ...item, quantity: item.quantity + 1 } : item
-        )
+        cart.map(item => (item.id === dish.id ? { ...item, quantity: item.quantity + 1 } : item))
       );
     } else {
       setCart([
@@ -624,15 +645,16 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       // Use order.OrderID or order.id as the token number
       const orderTokenId = order.OrderID != null ? String(order.OrderID) : order.id;
       const tokenNumber = `TK-${orderTokenId}`;
-      
-      const itemsMapped = order.restaurant_order_items?.map((item: any) => ({
-        id: item.id || item.dish_id,
-        name: item.restaurant_dishes?.dishes?.name || 'Unknown Dish',
-        price: parseFloat(item.price || '0'),
-        quantity: item.quantity || 1,
-        size: 'Medium' as const,
-        note: '',
-      })) || [];
+
+      const itemsMapped =
+        order.restaurant_order_items?.map((item: any) => ({
+          id: item.id || item.dish_id,
+          name: item.restaurant_dishes?.dishes?.name || 'Unknown Dish',
+          price: parseFloat(item.price || '0'),
+          quantity: item.quantity || 1,
+          size: 'Medium' as const,
+          note: '',
+        })) || [];
 
       const newTicket: KitchenTicket = {
         id: tokenNumber,
@@ -648,14 +670,16 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       try {
         const ticketPayload = { ...newTicket };
         if (ticketPayload.tableId === undefined) delete ticketPayload.tableId;
-        
+
         if (restaurantId) {
-          await setDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', tokenNumber), ticketPayload);
+          await setDoc(
+            doc(db, 'kitchen_tickets', restaurantId, 'tickets', tokenNumber),
+            ticketPayload
+          );
         }
       } catch (err) {
         console.error('Error syncing online order to Firebase KDS:', err);
       }
-
 
       // Persist to database (kitchenQueue table)
       try {
@@ -709,14 +733,15 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       const tokenNumber = matchedTicket ? matchedTicket.id : 'N/A';
 
       // Map cart items for receipt printing
-      const cartItems: CartItem[] = order.restaurant_order_items?.map((item: any) => ({
-        id: item.id || item.dish_id,
-        name: item.restaurant_dishes?.dishes?.name || 'Unknown Dish',
-        price: parseFloat(item.price || '0'),
-        quantity: item.quantity || 1,
-        size: 'Medium' as const,
-        note: '',
-      })) || [];
+      const cartItems: CartItem[] =
+        order.restaurant_order_items?.map((item: any) => ({
+          id: item.id || item.dish_id,
+          name: item.restaurant_dishes?.dishes?.name || 'Unknown Dish',
+          price: parseFloat(item.price || '0'),
+          quantity: item.quantity || 1,
+          size: 'Medium' as const,
+          note: '',
+        })) || [];
 
       // Print Customer Receipt (shows PAID ONLINE)
       printCustomerReceipt(
@@ -737,15 +762,14 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       }
 
       // Fire and forget stock updates in the background
-      apiPost('/api/update-stock', { items: cartItems, isRestaurant: true })
-        .catch(err => {
-          console.error('Failed to dispatch background stock update:', err);
-          toast({
-            title: 'Stock Sync Failed',
-            description: 'Order collected, but background stock deduction failed.',
-            variant: 'destructive',
-          });
+      apiPost('/api/update-stock', { items: cartItems, isRestaurant: true }).catch(err => {
+        console.error('Failed to dispatch background stock update:', err);
+        toast({
+          title: 'Stock Sync Failed',
+          description: 'Order collected, but background stock deduction failed.',
+          variant: 'destructive',
         });
+      });
 
       toast({
         title: 'Order Collected',
@@ -772,13 +796,16 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       }));
 
     if (newItemsToOrder.length === 0) {
-      toast({ title: 'No New Items', description: 'All items have already been sent to the kitchen.' });
+      toast({
+        title: 'No New Items',
+        description: 'All items have already been sent to the kitchen.',
+      });
       return;
     }
 
     let tableId = selectedTable;
     let tableName = '';
-    
+
     let tokenNumber = '';
     let isUnique = false;
     // Generate a token number that is not currently active on the kitchen board
@@ -797,7 +824,10 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
         tableName = newTableName.trim() || `Table #${Math.floor(Math.random() * 900 + 100)}`;
       } else {
         const existing = activeTables.find(t => t.id === selectedTable);
-        tableName = (existing && existing.name) ? existing.name : `Table #${Math.floor(Math.random() * 900 + 100)}`;
+        tableName =
+          existing && existing.name
+            ? existing.name
+            : `Table #${Math.floor(Math.random() * 900 + 100)}`;
         if (existing && existing.tokenId) {
           tokenNumber = existing.tokenId; // Reuse the existing ticket number!
         }
@@ -809,7 +839,8 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     const newTicket: KitchenTicket = {
       id: tokenNumber,
       orderId,
-      tableId: selectedOrderType === 'Table' || selectedOrderType === 'Dine In' ? tableId : undefined,
+      tableId:
+        selectedOrderType === 'Table' || selectedOrderType === 'Dine In' ? tableId : undefined,
       orderType: selectedOrderType,
       items: newItemsToOrder, // ONLY send the newly added items to the kitchen!
       waiterName: selectedWaiter,
@@ -823,12 +854,14 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       if (ticketPayload.tableId === undefined) delete ticketPayload.tableId;
 
       if (restaurantId) {
-        await setDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', tokenNumber), ticketPayload);
+        await setDoc(
+          doc(db, 'kitchen_tickets', restaurantId, 'tickets', tokenNumber),
+          ticketPayload
+        );
       }
     } catch (err) {
       console.error('Error syncing order to Firebase KDS:', err);
     }
-
 
     // Persist to database (kitchenQueue table)
     try {
@@ -843,9 +876,10 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
         restaurant_id: restaurantId,
         restaurant_order_id: null,
         status: 'Pending',
-        table_number: (selectedOrderType === 'Table' || selectedOrderType === 'Dine In')
-          ? (activeTables.find(t => t.id === tableId)?.name || tableId || '')
-          : '',
+        table_number:
+          selectedOrderType === 'Table' || selectedOrderType === 'Dine In'
+            ? activeTables.find(t => t.id === tableId)?.name || tableId || ''
+            : '',
         token_number: tokenNumber,
         updated_at: new Date().toISOString(),
         waiter_id: activeEmployee?.id || null,
@@ -894,7 +928,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       }
       setActiveTables(updatedTables);
       localStorage.setItem('restaurantActiveTables', JSON.stringify(updatedTables));
-      
+
       setSelectedTable(tableId);
       setIsNewTable(false);
     }
@@ -998,7 +1032,7 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     if (!activeCheckoutTable) return;
 
     const txnId = `TRX-${Date.now().toString().slice(-6)}`;
-    
+
     // Print receipt
     printCustomerReceipt(
       activeCheckoutTable.cart,
@@ -1020,20 +1054,23 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
       apiPost('/api/mutations/update-kitchen-queue', {
         token_number: activeCheckoutTable.tokenId,
         restaurant_id: restaurantId,
-        paid: true
-      }).catch(dbErr => console.error('[Kitchen Queue] Failed to update paid status in DB:', dbErr));
+        paid: true,
+      }).catch(dbErr =>
+        console.error('[Kitchen Queue] Failed to update paid status in DB:', dbErr)
+      );
     }
 
     // Fire and forget stock updates in the background
-    apiPost('/api/update-stock', { items: activeCheckoutTable.cart, isRestaurant: true })
-      .catch(err => {
+    apiPost('/api/update-stock', { items: activeCheckoutTable.cart, isRestaurant: true }).catch(
+      err => {
         console.error('Failed to dispatch background stock update:', err);
         toast({
           title: 'Stock Sync Failed',
           description: 'Payment completed, but background stock deduction failed.',
           variant: 'destructive',
         });
-      });
+      }
+    );
 
     toast({
       title: 'Payment Completed',
@@ -1054,7 +1091,10 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
   };
 
   // Allow POS to manually update kitchen ticket status
-  const updateKitchenTicketStatus = async (ticketId: string, newStatus: 'Pending' | 'Preparing' | 'Ready' | 'Served') => {
+  const updateKitchenTicketStatus = async (
+    ticketId: string,
+    newStatus: 'Pending' | 'Preparing' | 'Ready' | 'Served'
+  ) => {
     if (restaurantId) {
       try {
         await updateDoc(doc(db, 'kitchen_tickets', restaurantId, 'tickets', ticketId), {
@@ -1102,8 +1142,6 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
     });
   };
 
-
-
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Restaurant POS Header Nav */}
@@ -1124,7 +1162,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
             <div>
               <h1 className="font-extrabold text-lg tracking-tight text-slate-800 flex items-center gap-1.5">
                 {restaurant?.name || 'Restaurant'} <span className="text-primary">POS</span>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full font-bold">Restaurant</span>
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full font-bold">
+                  Restaurant
+                </span>
               </h1>
             </div>
           </div>
@@ -1183,15 +1223,18 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
             </button>
           </nav>
 
-
           {/* Quick Access Actions */}
           <div className="flex items-center gap-4">
             <div className="text-right">
               <div className="flex items-center gap-1.5 justify-end">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Session Active</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Session Active
+                </p>
               </div>
-              <p className="text-sm font-black text-slate-800">{activeServer?.fullnames || selectedWaiter}</p>
+              <p className="text-sm font-black text-slate-800">
+                {activeServer?.fullnames || selectedWaiter}
+              </p>
             </div>
             <Button
               variant="outline"
@@ -1212,10 +1255,15 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
           <div className="lg:col-span-8 space-y-6">
             {/* Recent Orders Carousel */}
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3">Recent Kitchen Batches</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3">
+                Recent Kitchen Batches
+              </h2>
               <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-thin">
                 {recentOrders.map((ticket, index) => (
-                  <Card key={ticket.id} className="min-w-[210px] max-w-[210px] shrink-0 border-l-4 border-l-primary shadow-sm">
+                  <Card
+                    key={ticket.id}
+                    className="min-w-[210px] max-w-[210px] shrink-0 border-l-4 border-l-primary shadow-sm"
+                  >
                     <CardContent className="p-3 space-y-1 text-xs">
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-slate-800">{ticket.id}</span>
@@ -1236,7 +1284,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                           ? `Table ${ticket.tableId.replace('T', '')}`
                           : ticket.orderType}
                       </p>
-                      <p className="text-slate-400 font-medium">Waiter: {ticket.waiterName.split(' ')[1]}</p>
+                      <p className="text-slate-400 font-medium">
+                        Waiter: {ticket.waiterName.split(' ')[1]}
+                      </p>
                       <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden mt-1">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
@@ -1252,7 +1302,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                   </Card>
                 ))}
                 {recentOrders.length === 0 && (
-                  <div className="text-xs text-slate-400 py-3">No active kitchen orders placed recently.</div>
+                  <div className="text-xs text-slate-400 py-3">
+                    No active kitchen orders placed recently.
+                  </div>
                 )}
               </div>
             </div>
@@ -1406,7 +1458,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
             {/* Waiter Selection */}
             <div className="mb-4">
-              <label className="text-[10px] font-bold text-slate-400 uppercase">Servant / Waiter</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase">
+                Servant / Waiter
+              </label>
               <div className="relative mt-1">
                 <select
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary appearance-none"
@@ -1425,10 +1479,12 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
             {/* Table or Customer Assignment */}
             <div className="mb-4">
-              {(selectedOrderType === 'Table' || selectedOrderType === 'Dine In') ? (
+              {selectedOrderType === 'Table' || selectedOrderType === 'Dine In' ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Dining Table</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">
+                      Dining Table
+                    </label>
                     <div className="flex gap-1.5">
                       <button
                         type="button"
@@ -1508,7 +1564,11 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                           .filter(t => t.status === 'eating')
                           .map(t => (
                             <option key={t.id} value={t.id}>
-                              {t.name} (Waiter: {t.waiterName?.split(' ')[1] || 'N/A'}) - {formatCurrencyWithConfig(t.cart.reduce((sum, item) => sum + item.price * item.quantity, 0), systemConfig)}
+                              {t.name} (Waiter: {t.waiterName?.split(' ')[1] || 'N/A'}) -{' '}
+                              {formatCurrencyWithConfig(
+                                t.cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+                                systemConfig
+                              )}
                             </option>
                           ))}
                       </select>
@@ -1518,7 +1578,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                 </div>
               ) : (
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase">Customer Name</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">
+                    Customer Name
+                  </label>
                   <Input
                     className="h-8 text-xs font-semibold mt-1 bg-slate-50 focus-visible:ring-primary"
                     value={customerName}
@@ -1534,9 +1596,16 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
               <ScrollArea className="h-full pr-2">
                 <div className="space-y-3">
                   {cart.map((item, idx) => (
-                    <div key={`${item.id}-${idx}`} className="flex gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <div
+                      key={`${item.id}-${idx}`}
+                      className="flex gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100"
+                    >
                       <div className="w-12 h-12 bg-slate-200 rounded-lg overflow-hidden shrink-0">
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex justify-between items-start">
@@ -1581,7 +1650,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                             >
                               <Minus className="h-2.5 w-2.5" />
                             </button>
-                            <span className="text-xs font-extrabold text-slate-800">{item.quantity}</span>
+                            <span className="text-xs font-extrabold text-slate-800">
+                              {item.quantity}
+                            </span>
                             <button
                               onClick={() => updateQuantity(item.id, 1)}
                               className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center font-black hover:bg-slate-300"
@@ -1589,7 +1660,10 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                               <Plus className="h-2.5 w-2.5" />
                             </button>
                           </div>
-                          <button onClick={() => removeItem(item.id)} className="text-slate-400 hover:text-red-500">
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="text-slate-400 hover:text-red-500"
+                          >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -1609,15 +1683,21 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
             <div className="border-t pt-3 space-y-2 text-xs font-semibold text-slate-600">
               <div className="flex justify-between">
                 <span>Sub Total</span>
-                <span className="font-bold text-slate-800">{formatCurrencyWithConfig(getSubtotal(), systemConfig)}</span>
+                <span className="font-bold text-slate-800">
+                  {formatCurrencyWithConfig(getSubtotal(), systemConfig)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Tax ({taxRate}%)</span>
-                <span className="font-bold text-slate-800">{formatCurrencyWithConfig(getTax(), systemConfig)}</span>
+                <span className="font-bold text-slate-800">
+                  {formatCurrencyWithConfig(getTax(), systemConfig)}
+                </span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-slate-800 pt-1.5 border-t">
                 <span>Amount to be Paid</span>
-                <span className="text-primary text-lg">{formatCurrencyWithConfig(getTotal(), systemConfig)}</span>
+                <span className="text-primary text-lg">
+                  {formatCurrencyWithConfig(getTotal(), systemConfig)}
+                </span>
               </div>
             </div>
 
@@ -1638,12 +1718,21 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                       const tbl = activeTables.find(t => t.id === selectedTable);
                       if (tbl && tbl.status === 'eating') {
                         printPreBill(tbl);
-                        toast({ title: 'Pre-Bill Printed', description: `Printed details for ${tbl.name || 'Table'}` });
+                        toast({
+                          title: 'Pre-Bill Printed',
+                          description: `Printed details for ${tbl.name || 'Table'}`,
+                        });
                       } else {
-                        toast({ title: 'Error', description: 'Table is not occupied with active order.' });
+                        toast({
+                          title: 'Error',
+                          description: 'Table is not occupied with active order.',
+                        });
                       }
                     } else {
-                      toast({ title: 'Error', description: 'Pre-bill is only available for tables.' });
+                      toast({
+                        title: 'Error',
+                        description: 'Pre-bill is only available for tables.',
+                      });
                     }
                   }}
                   className="text-xs font-bold border-slate-200 text-slate-700"
@@ -1707,7 +1796,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
               {activeTables
                 .filter(table => table.status === 'eating')
                 .map(table => {
-                  const totalBill = table.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) * (1 + taxRate / 100);
+                  const totalBill =
+                    table.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) *
+                    (1 + taxRate / 100);
                   return (
                     <Card
                       key={table.id}
@@ -1716,18 +1807,30 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                     >
                       <CardContent className="p-4 space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="font-black text-slate-800 text-sm truncate max-w-[100px]">{table.name}</span>
+                          <span className="font-black text-slate-800 text-sm truncate max-w-[100px]">
+                            {table.name}
+                          </span>
                           <Badge className="text-[9px] font-bold uppercase leading-none bg-amber-500 text-white">
                             Occupied
                           </Badge>
                         </div>
                         <div className="space-y-1.5 text-xs text-slate-600">
-                          <p className="font-bold text-slate-800 truncate">Customer: {table.customerName || 'Walk-in'}</p>
-                          <p className="font-semibold text-slate-500">Waiter: {table.waiterName || 'N/A'}</p>
-                          <p className="font-extrabold text-slate-800 pt-1 border-t text-[13px]">
-                            Bill: <span className="text-orange-600">{formatCurrencyWithConfig(totalBill, systemConfig)}</span>
+                          <p className="font-bold text-slate-800 truncate">
+                            Customer: {table.customerName || 'Walk-in'}
                           </p>
-                          <div className="grid grid-cols-2 gap-2 pt-2" onClick={e => e.stopPropagation()}>
+                          <p className="font-semibold text-slate-500">
+                            Waiter: {table.waiterName || 'N/A'}
+                          </p>
+                          <p className="font-extrabold text-slate-800 pt-1 border-t text-[13px]">
+                            Bill:{' '}
+                            <span className="text-orange-600">
+                              {formatCurrencyWithConfig(totalBill, systemConfig)}
+                            </span>
+                          </p>
+                          <div
+                            className="grid grid-cols-2 gap-2 pt-2"
+                            onClick={e => e.stopPropagation()}
+                          >
                             <Button
                               variant="outline"
                               size="sm"
@@ -1754,7 +1857,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                 <div className="col-span-full text-center py-10 bg-slate-50 border border-dashed rounded-2xl p-6 text-slate-400">
                   <Utensils className="h-8 w-8 mx-auto text-slate-300 mb-2" />
                   <p className="text-xs font-bold">No active tables found.</p>
-                  <p className="text-[10px]">Create a new table order in the POS to begin tracking.</p>
+                  <p className="text-[10px]">
+                    Create a new table order in the POS to begin tracking.
+                  </p>
                 </div>
               )}
             </div>
@@ -1794,10 +1899,14 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                     <tr key={ticket.id} className="hover:bg-slate-50/50">
                       <td className="p-4 font-black text-slate-800">{ticket.id}</td>
                       <td className="p-4">
-                        {ticket.tableId ? `Table ${ticket.tableId.replace('T', '')}` : 'Take Away/Delivery'}
+                        {ticket.tableId
+                          ? `Table ${ticket.tableId.replace('T', '')}`
+                          : 'Take Away/Delivery'}
                       </td>
                       <td className="p-4 text-slate-500">{ticket.waiterName}</td>
-                      <td className="p-4 text-slate-400">{new Date(ticket.timestamp).toLocaleTimeString()}</td>
+                      <td className="p-4 text-slate-400">
+                        {new Date(ticket.timestamp).toLocaleTimeString()}
+                      </td>
                       <td className="p-4">
                         <div className="space-y-0.5 max-w-xs">
                           {ticket.items.map((item, idx) => (
@@ -1837,7 +1946,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                   {paginatedKitchenTickets.length === 0 && (
                     <tr>
                       <td colSpan={7} className="p-10 text-center text-slate-400">
-                        {kitchenSearchQuery ? 'No orders match your search.' : 'No orders sent to kitchen yet.'}
+                        {kitchenSearchQuery
+                          ? 'No orders match your search.'
+                          : 'No orders sent to kitchen yet.'}
                       </td>
                     </tr>
                   )}
@@ -1848,8 +1959,11 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                 <div className="flex items-center justify-between p-4 border-t bg-slate-50/50">
                   <div className="text-[10px] font-bold text-slate-500">
                     Showing {(kitchenCurrentPage - 1) * KITCHEN_ITEMS_PER_PAGE + 1} -{' '}
-                    {Math.min(kitchenCurrentPage * KITCHEN_ITEMS_PER_PAGE, filteredKitchenTickets.length)} of{' '}
-                    {filteredKitchenTickets.length} orders
+                    {Math.min(
+                      kitchenCurrentPage * KITCHEN_ITEMS_PER_PAGE,
+                      filteredKitchenTickets.length
+                    )}{' '}
+                    of {filteredKitchenTickets.length} orders
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
@@ -1867,7 +1981,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setKitchenCurrentPage(prev => Math.min(totalKitchenPages, prev + 1))}
+                      onClick={() =>
+                        setKitchenCurrentPage(prev => Math.min(totalKitchenPages, prev + 1))
+                      }
                       disabled={kitchenCurrentPage === totalKitchenPages}
                       className="h-7 w-7 p-0"
                     >
@@ -1904,12 +2020,16 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
             {kitchenTickets
               .filter(t => t.status !== 'Served')
               .map(ticket => (
-                <Card key={ticket.id} className="overflow-hidden border border-slate-200 shadow-sm flex flex-col">
+                <Card
+                  key={ticket.id}
+                  className="overflow-hidden border border-slate-200 shadow-sm flex flex-col"
+                >
                   <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
                     <div>
                       <span className="text-lg font-black">{ticket.id}</span>
                       <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                        {ticket.orderType} {ticket.tableId ? `- Table ${ticket.tableId.replace('T', '')}` : ''}
+                        {ticket.orderType}{' '}
+                        {ticket.tableId ? `- Table ${ticket.tableId.replace('T', '')}` : ''}
                       </p>
                     </div>
                     <Badge className="bg-primary text-white uppercase text-[9px] font-bold">
@@ -1922,7 +2042,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                         <div key={idx} className="flex justify-between border-b pb-1.5">
                           <div>
                             <span className="font-black text-slate-800 mr-2">{item.quantity}x</span>
-                            <span>{item.name} ({item.size})</span>
+                            <span>
+                              {item.name} ({item.size})
+                            </span>
                             {item.note && (
                               <p className="text-[10px] text-amber-600 font-medium italic mt-0.5">
                                 * {item.note}
@@ -1970,7 +2092,10 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                               : tbl
                           );
                           setActiveTables(updatedTbls);
-                          localStorage.setItem('restaurantActiveTables', JSON.stringify(updatedTbls));
+                          localStorage.setItem(
+                            'restaurantActiveTables',
+                            JSON.stringify(updatedTbls)
+                          );
                         }
 
                         // If it's a Delivery order, mark it as delivered/collected on DB and print receipt
@@ -2002,7 +2127,10 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                             console.error('Failed to mark delivery order collected:', err);
                           }
                         } else {
-                          toast({ title: 'Order Served', description: `Order ${ticket.id} cleared.` });
+                          toast({
+                            title: 'Order Served',
+                            description: `Order ${ticket.id} cleared.`,
+                          });
                         }
 
                         // Trigger storage sync event
@@ -2012,7 +2140,6 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                     >
                       {ticket.orderType === 'Delivery' ? 'Collect & Print' : 'Serve / Clear'}
                     </Button>
-
                   </div>
                 </Card>
               ))}
@@ -2033,7 +2160,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
               <h2 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5 text-primary" /> Online & Delivery Orders
               </h2>
-              <p className="text-xs text-slate-500 mt-1">Accept and manage orders placed online by customers</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Accept and manage orders placed online by customers
+              </p>
             </div>
             <Button
               variant="outline"
@@ -2053,16 +2182,25 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                 : 'N/A';
 
               return (
-                <Card key={order.id} className="overflow-hidden border border-slate-200 shadow-sm flex flex-col animate-in fade-in-50 duration-200">
+                <Card
+                  key={order.id}
+                  className="overflow-hidden border border-slate-200 shadow-sm flex flex-col animate-in fade-in-50 duration-200"
+                >
                   {/* Card Header */}
                   <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
                     <div>
-                      <span className="text-sm font-bold font-mono">ORD-{order.id.slice(0, 8).toUpperCase()}</span>
+                      <span className="text-sm font-bold font-mono">
+                        ORD-{order.id.slice(0, 8).toUpperCase()}
+                      </span>
                       <p className="text-[10px] text-slate-400 mt-0.5">{formattedDate}</p>
                     </div>
-                    <Badge className={`uppercase text-[9px] font-bold ${
-                      statusUpper === 'PENDING' ? 'bg-amber-500 text-slate-950' : 'bg-red-500 text-white'
-                    }`}>
+                    <Badge
+                      className={`uppercase text-[9px] font-bold ${
+                        statusUpper === 'PENDING'
+                          ? 'bg-amber-500 text-slate-950'
+                          : 'bg-red-500 text-white'
+                      }`}
+                    >
                       {order.status || 'Pending'}
                     </Badge>
                   </div>
@@ -2072,13 +2210,20 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                     {/* Customer Info */}
                     <div className="space-y-1 text-xs">
                       <p className="font-extrabold text-slate-700">Customer Details:</p>
-                      <p className="text-slate-600"><span className="font-semibold text-slate-700">Name:</span> {order.orderedBy?.name || 'Walk-in Customer'}</p>
+                      <p className="text-slate-600">
+                        <span className="font-semibold text-slate-700">Name:</span>{' '}
+                        {order.orderedBy?.name || 'Walk-in Customer'}
+                      </p>
                       {order.orderedBy?.phone && (
-                        <p className="text-slate-600"><span className="font-semibold text-slate-700">Phone:</span> {order.orderedBy.phone}</p>
+                        <p className="text-slate-600">
+                          <span className="font-semibold text-slate-700">Phone:</span>{' '}
+                          {order.orderedBy.phone}
+                        </p>
                       )}
                       {order.Address && (
                         <p className="text-slate-600">
-                          <span className="font-semibold text-slate-700">Address:</span> {order.Address.street}, {order.Address.city}
+                          <span className="font-semibold text-slate-700">Address:</span>{' '}
+                          {order.Address.street}, {order.Address.city}
                         </p>
                       )}
                     </div>
@@ -2093,7 +2238,12 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
                               <span className="font-bold text-primary mr-1">{item.quantity}x</span>
                               {item.restaurant_dishes?.dishes?.name || 'Unknown Dish'}
                             </span>
-                            <span className="font-bold">{formatCurrencyWithConfig(parseFloat(item.price || '0'), systemConfig)}</span>
+                            <span className="font-bold">
+                              {formatCurrencyWithConfig(
+                                parseFloat(item.price || '0'),
+                                systemConfig
+                              )}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -2101,7 +2251,9 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
 
                     {/* Total billing */}
                     <div className="border-t pt-3 flex justify-between items-center">
-                      <span className="text-xs font-bold text-slate-500 uppercase">Paid Online:</span>
+                      <span className="text-xs font-bold text-slate-500 uppercase">
+                        Paid Online:
+                      </span>
                       <span className="text-lg font-black text-primary">
                         {formatCurrencyWithConfig(parseFloat(order.total || '0'), systemConfig)}
                       </span>
@@ -2130,14 +2282,14 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
         </div>
       )}
 
-
-
       {/* Edit Note Dialog */}
       <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Item Note</DialogTitle>
-            <DialogDescription>Add preparing instructions for the kitchen ticket.</DialogDescription>
+            <DialogDescription>
+              Add preparing instructions for the kitchen ticket.
+            </DialogDescription>
           </DialogHeader>
           <Input
             placeholder="E.g., No onions, extra spicy..."
@@ -2187,19 +2339,37 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span className="font-bold text-slate-800">
-                  {formatCurrencyWithConfig(activeCheckoutTable?.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0, systemConfig)}
+                  {formatCurrencyWithConfig(
+                    activeCheckoutTable?.cart.reduce(
+                      (sum, item) => sum + item.price * item.quantity,
+                      0
+                    ) || 0,
+                    systemConfig
+                  )}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Tax (18%)</span>
                 <span className="font-bold text-slate-800">
-                  {formatCurrencyWithConfig((activeCheckoutTable?.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0) * 0.18, systemConfig)}
+                  {formatCurrencyWithConfig(
+                    (activeCheckoutTable?.cart.reduce(
+                      (sum, item) => sum + item.price * item.quantity,
+                      0
+                    ) || 0) * 0.18,
+                    systemConfig
+                  )}
                 </span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-slate-800 border-t pt-2 mt-2">
                 <span>Total Settle Due</span>
                 <span className="text-primary text-base">
-                  {formatCurrencyWithConfig((activeCheckoutTable?.cart.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0) * 1.18, systemConfig)}
+                  {formatCurrencyWithConfig(
+                    (activeCheckoutTable?.cart.reduce(
+                      (sum, item) => sum + item.price * item.quantity,
+                      0
+                    ) || 0) * 1.18,
+                    systemConfig
+                  )}
                 </span>
               </div>
             </div>
@@ -2208,7 +2378,10 @@ const RestaurantCheckout: React.FC<RestaurantCheckoutProps> = ({ activeEmployee,
             <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={confirmTablePayment} className="bg-primary hover:bg-primary/90 text-white">
+            <Button
+              onClick={confirmTablePayment}
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
               Confirm Payment & Print
             </Button>
           </DialogFooter>

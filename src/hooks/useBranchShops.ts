@@ -361,7 +361,12 @@ export function useBranchShops(): UseBranchShopsReturn {
     enabled: !!currentBusinessId,
   });
 
-  const mainShopList = mainShopData && typeof mainShopData === 'object' ? (isRestaurant ? (mainShopData as any).Restaurants : (mainShopData as any).Shops) : null;
+  const mainShopList =
+    mainShopData && typeof mainShopData === 'object'
+      ? isRestaurant
+        ? (mainShopData as any).Restaurants
+        : (mainShopData as any).Shops
+      : null;
   const mainShop = Array.isArray(mainShopList) ? mainShopList[0] : null;
   const mainBusinessName = mainShop?.name;
   const hasBranch = !!mainShop?.has_branch;
@@ -399,7 +404,12 @@ export function useBranchShops(): UseBranchShopsReturn {
       allShops.push(mainShop);
     }
 
-    const branchList = data && typeof data === 'object' ? (isRestaurant ? (data as any).Restaurants : (data as any).Shops) : null;
+    const branchList =
+      data && typeof data === 'object'
+        ? isRestaurant
+          ? (data as any).Restaurants
+          : (data as any).Shops
+        : null;
     if (hasBranch && Array.isArray(branchList)) {
       allShops.push(...branchList);
     }
@@ -422,7 +432,10 @@ export function useBranchShops(): UseBranchShopsReturn {
         matchingReelOrders.forEach((ro: any) => baseOrderIds.add(ro.id));
 
         const matchingRegularOrders = regularOrdersList.filter((ro: any) => {
-          return (ro.shop_id === shop.id || ro.restaurant_id === shop.id || ro.Shop?.id === shop.id) && !baseOrderIds.has(ro.id);
+          return (
+            (ro.shop_id === shop.id || ro.restaurant_id === shop.id || ro.Shop?.id === shop.id) &&
+            !baseOrderIds.has(ro.id)
+          );
         });
 
         const allCombinedOrders = [...baseOrders, ...matchingReelOrders, ...matchingRegularOrders];
@@ -435,7 +448,14 @@ export function useBranchShops(): UseBranchShopsReturn {
 
         allCombinedOrders.forEach((order: any) => {
           const status = (order.status || '').toLowerCase();
-          if (status === 'pending' || status === 'accepted' || status === 'shopping' || status === 'cancelled' || status === 'canceled') return;
+          if (
+            status === 'pending' ||
+            status === 'accepted' ||
+            status === 'shopping' ||
+            status === 'cancelled' ||
+            status === 'canceled'
+          )
+            return;
 
           const dateStr = order.created_at || order.created_on;
           if (!dateStr) return;
@@ -499,7 +519,19 @@ export function useBranchShops(): UseBranchShopsReturn {
 
       setBranchShops(shops);
     }
-  }, [data, queryLoading, queryError, mainShopData, mainShopLoading, mainShopError, mainShop, isRestaurant, hasBranch, reelOrdersData, regularOrdersData]);
+  }, [
+    data,
+    queryLoading,
+    queryError,
+    mainShopData,
+    mainShopLoading,
+    mainShopError,
+    mainShop,
+    isRestaurant,
+    hasBranch,
+    reelOrdersData,
+    regularOrdersData,
+  ]);
 
   const totalRevenue = branchShops.reduce((sum, shop) => sum + shop.totalRevenue, 0);
   const monthlyRevenue = branchShops.reduce((sum, shop) => sum + shop.monthlyRevenue, 0);

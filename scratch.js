@@ -28,7 +28,7 @@ async function run() {
     const data = await client.request(query);
     const rm = data.__schema.types.find(t => t.name === 'restaurant_menu');
     console.log(JSON.stringify(rm.fields.map(f => f.name)));
-  } catch(e) {
+  } catch (e) {
     console.log('Error');
   }
 }

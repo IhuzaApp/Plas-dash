@@ -205,7 +205,11 @@ const MODULE_DESCRIPTIONS: Record<
     title: 'Shop / Restaurant Dashboard',
     description: 'View shop or restaurant-specific analytics and performance',
     actions: [
-      { key: 'access', label: 'Access Dashboard', description: 'Can access shop/restaurant dashboard' },
+      {
+        key: 'access',
+        label: 'Access Dashboard',
+        description: 'Can access shop/restaurant dashboard',
+      },
       {
         key: 'view_sales_data',
         label: 'View Sales Data',
@@ -671,7 +675,11 @@ const MODULE_DESCRIPTIONS: Record<
       { key: 'access_dashboard', label: 'Dashboard', description: 'Can access main dashboard' },
       { key: 'access_orders', label: 'Orders', description: 'Can access orders management' },
       { key: 'access_shops', label: 'Shops', description: 'Can access shop management' },
-      { key: 'access_restaurants', label: 'Restaurants', description: 'Can access restaurant management' },
+      {
+        key: 'access_restaurants',
+        label: 'Restaurants',
+        description: 'Can access restaurant management',
+      },
       { key: 'access_products', label: 'Products', description: 'Can access product management' },
       { key: 'access_users', label: 'Customers', description: 'Can access customer management' },
       { key: 'access_shoppers', label: 'Shoppers', description: 'Can access shopper management' },

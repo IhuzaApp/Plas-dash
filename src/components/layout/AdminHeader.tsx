@@ -157,7 +157,7 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
 
             <div className="flex items-center gap-3 pl-2">
               {displayUser || shopSession ? (
-                <Link href={displayUser ? "/settings" : "#"}>
+                <Link href={displayUser ? '/settings' : '#'}>
                   <Button
                     variant="ghost"
                     className="p-1 pr-3 rounded-2xl border bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-primary/10 hover:border-primary/20 transition-all"

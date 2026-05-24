@@ -180,7 +180,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
             scaleCode: data.code,
             image: data.image || '',
           });
-          
+
           toast({
             title: 'Weighed Item Added',
             description: `${data.productName} (${data.weight.toFixed(3)} kg) added to cart.`,
@@ -231,7 +231,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
     if (selectedPaymentMethod) {
       const totalAmount = calculateTotal();
       const taxRate = getTaxRate();
-      const tax = totalAmount * taxRate / (1 + taxRate);
+      const tax = (totalAmount * taxRate) / (1 + taxRate);
       const subtotal = totalAmount - tax;
 
       // Console logs showing payment saving details
@@ -283,21 +283,25 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           if (item.scaleCode && shopId) {
             const docRef = doc(db, 'weighed_items', shopId, 'items', item.scaleCode);
             deleteDoc(docRef)
-              .then(() => console.log(`Weighed item code ${item.scaleCode} deleted from Firestore for reuse.`))
-              .catch(err => console.error(`Failed to delete weighed item code ${item.scaleCode}:`, err));
+              .then(() =>
+                console.log(`Weighed item code ${item.scaleCode} deleted from Firestore for reuse.`)
+              )
+              .catch(err =>
+                console.error(`Failed to delete weighed item code ${item.scaleCode}:`, err)
+              );
           }
         });
 
         // Fire and forget stock updates in the background
-        apiPost('/api/update-stock', { items: cart, isRestaurant: false })
-          .catch(err => {
-            console.error('Failed to dispatch background stock update:', err);
-            toast({
-              title: 'Stock Sync Failed',
-              description: 'Checkout succeeded, but background stock deduction failed. Please check inventory levels.',
-              variant: 'destructive',
-            });
+        apiPost('/api/update-stock', { items: cart, isRestaurant: false }).catch(err => {
+          console.error('Failed to dispatch background stock update:', err);
+          toast({
+            title: 'Stock Sync Failed',
+            description:
+              'Checkout succeeded, but background stock deduction failed. Please check inventory levels.',
+            variant: 'destructive',
           });
+        });
 
         // Generate transaction ID using the auto-generated number from database
         const savedCheckout = result.insert_shopCheckouts?.returning?.[0];
@@ -738,7 +742,6 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
         </CardHeader>
         <CardContent className="flex-1 flex flex-col p-6 min-h-0">
           <div className="flex-1 flex flex-col min-h-0 space-y-4">
-            
             {/* Scrollable Cart Items */}
             <div className="flex-1 min-h-0">
               <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2">Cart Items</h4>
@@ -762,7 +765,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex justify-between items-start">
                           <h5 className="font-extrabold text-xs text-slate-800 dark:text-slate-100 truncate pr-1">
@@ -772,7 +775,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                             {formatCurrencyWithConfig(item.price * item.quantity, systemConfig)}
                           </span>
                         </div>
-                        
+
                         <p className="text-[10px] text-slate-400 font-semibold">
                           {formatCurrencyWithConfig(item.price, systemConfig)}
                           {item.measurement_unit && ` / ${item.measurement_unit}`}
@@ -790,7 +793,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                                 >
                                   <Minus className="h-2.5 w-2.5" />
                                 </button>
-                                <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">{item.quantity}</span>
+                                <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
+                                  {item.quantity}
+                                </span>
                                 <button
                                   type="button"
                                   onClick={() => onUpdateQuantity(item.id, 1)}
@@ -806,9 +811,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                               </div>
                             )}
                           </div>
-                          <button 
+                          <button
                             type="button"
-                            onClick={() => onRemoveItem(item.id)} 
+                            onClick={() => onRemoveItem(item.id)}
                             className="text-slate-400 hover:text-red-500 transition-colors"
                           >
                             <Trash className="h-3.5 w-3.5" />
@@ -832,24 +837,23 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
               <div className="flex justify-between">
                 <span>Sub Total (excl. tax)</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">
-                  {formatCurrencyWithConfig(
-                    calculateTotal() / (1 + getTaxRate()),
-                    systemConfig
-                  )}
+                  {formatCurrencyWithConfig(calculateTotal() / (1 + getTaxRate()), systemConfig)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Tax ({Math.round(getTaxRate() * 100)}%)</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">
                   {formatCurrencyWithConfig(
-                    calculateTotal() * getTaxRate() / (1 + getTaxRate()),
+                    (calculateTotal() * getTaxRate()) / (1 + getTaxRate()),
                     systemConfig
                   )}
                 </span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-slate-800 dark:text-slate-100 pt-1.5 border-t border-slate-100 dark:border-slate-900">
                 <span>Amount to be Paid</span>
-                <span className="text-primary text-lg">{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
+                <span className="text-primary text-lg">
+                  {formatCurrencyWithConfig(calculateTotal(), systemConfig)}
+                </span>
               </div>
             </div>
 
@@ -895,7 +899,6 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                 </Button>
               </div>
             </div>
-
           </div>
         </CardContent>
       </Card>
@@ -932,7 +935,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           <div className="space-y-4 pt-2">
             {/* Payment Method Selection */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">Select Payment Method</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                Select Payment Method
+              </label>
               <div className="grid grid-cols-3 gap-3">
                 {/* Cash Method */}
                 <div
@@ -943,7 +948,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                   }`}
                   onClick={() => setSelectedPaymentMethod('cash')}
                 >
-                  <div className={`p-2.5 rounded-full ${selectedPaymentMethod === 'cash' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                  <div
+                    className={`p-2.5 rounded-full ${selectedPaymentMethod === 'cash' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}
+                  >
                     <Banknote className="h-5 w-5" />
                   </div>
                   <div className="text-center">
@@ -961,7 +968,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                   }`}
                   onClick={() => setSelectedPaymentMethod('card')}
                 >
-                  <div className={`p-2.5 rounded-full ${selectedPaymentMethod === 'card' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                  <div
+                    className={`p-2.5 rounded-full ${selectedPaymentMethod === 'card' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}
+                  >
                     <CreditCard className="h-5 w-5" />
                   </div>
                   <div className="text-center">
@@ -979,7 +988,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                   }`}
                   onClick={() => setSelectedPaymentMethod('momo')}
                 >
-                  <div className={`p-2.5 rounded-full ${selectedPaymentMethod === 'momo' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                  <div
+                    className={`p-2.5 rounded-full ${selectedPaymentMethod === 'momo' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}
+                  >
                     <Smartphone className="h-5 w-5" />
                   </div>
                   <div className="text-center">
@@ -999,7 +1010,10 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                     if (isMomoOpenOnDisplay) {
                       // Close MoMo dialog on customer display
                       localStorage.setItem('momoDialogOpen', 'false');
-                      localStorage.setItem('momoDialogState', JSON.stringify({ shouldClose: true }));
+                      localStorage.setItem(
+                        'momoDialogState',
+                        JSON.stringify({ shouldClose: true })
+                      );
                       setIsMomoOpenOnDisplay(false);
 
                       toast({
@@ -1025,14 +1039,14 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                     }
                   }}
                   className={`w-full font-extrabold text-xs shadow-sm flex items-center justify-center gap-2 h-10 rounded-xl border-0 text-white ${
-                    isMomoOpenOnDisplay 
-                      ? 'bg-rose-500 hover:bg-rose-600' 
+                    isMomoOpenOnDisplay
+                      ? 'bg-rose-500 hover:bg-rose-600'
                       : 'bg-primary hover:bg-primary/90'
                   }`}
                 >
                   <Smartphone className="h-4 w-4" />
-                  {isMomoOpenOnDisplay 
-                    ? 'Close MOMO Payment on Customer Display' 
+                  {isMomoOpenOnDisplay
+                    ? 'Close MOMO Payment on Customer Display'
                     : 'Open MOMO Payment on Customer Display'}
                 </Button>
               </div>
@@ -1066,7 +1080,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
 
             {/* Order Summary in Dialog */}
             <div className="border border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-4 space-y-2.5 text-xs font-semibold text-slate-550 dark:text-slate-400">
-              <h4 className="font-bold text-[10px] uppercase text-slate-400 tracking-wide">Order Totals</h4>
+              <h4 className="font-bold text-[10px] uppercase text-slate-400 tracking-wide">
+                Order Totals
+              </h4>
               <div className="space-y-1.5">
                 <div className="flex justify-between">
                   <span>Sub Total (excl. tax)</span>
@@ -1077,7 +1093,10 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
                 <div className="flex justify-between">
                   <span>VAT / Tax ({Math.round(getTaxRate() * 100)}%)</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {formatCurrencyWithConfig(calculateTotal() * getTaxRate() / (1 + getTaxRate()), systemConfig)}
+                    {formatCurrencyWithConfig(
+                      (calculateTotal() * getTaxRate()) / (1 + getTaxRate()),
+                      systemConfig
+                    )}
                   </span>
                 </div>
                 <Separator className="bg-slate-100 dark:bg-slate-800" />

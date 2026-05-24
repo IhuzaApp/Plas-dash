@@ -291,7 +291,9 @@ export default function CheckoutBarcodeScanner({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl">
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
           @keyframes scan-laser {
             0% { top: 15%; opacity: 0.3; }
             50% { top: 85%; opacity: 1; }
@@ -311,7 +313,9 @@ export default function CheckoutBarcodeScanner({
           .quagga-video-container canvas {
             display: none !important;
           }
-        `}} />
+        `,
+          }}
+        />
 
         <DialogHeader className="pb-2 border-b border-slate-100 dark:border-slate-900">
           <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-850 dark:text-slate-100">
@@ -324,7 +328,10 @@ export default function CheckoutBarcodeScanner({
           {/* Camera Selection */}
           {availableCameras.length > 1 && (
             <div className="space-y-1.5">
-              <Label htmlFor="camera-select" className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+              <Label
+                htmlFor="camera-select"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wide"
+              >
                 Select Camera Source
               </Label>
               <Select value={selectedCamera} onValueChange={handleCameraChange}>
@@ -333,7 +340,11 @@ export default function CheckoutBarcodeScanner({
                 </SelectTrigger>
                 <SelectContent className="border border-slate-150 dark:border-slate-800 rounded-xl">
                   {availableCameras.map(camera => (
-                    <SelectItem key={camera.deviceId} value={camera.deviceId} className="font-semibold text-xs py-2 rounded-lg cursor-pointer">
+                    <SelectItem
+                      key={camera.deviceId}
+                      value={camera.deviceId}
+                      className="font-semibold text-xs py-2 rounded-lg cursor-pointer"
+                    >
                       {camera.label || `Camera ${camera.deviceId.slice(0, 8)}...`}
                     </SelectItem>
                   ))}
@@ -370,7 +381,9 @@ export default function CheckoutBarcodeScanner({
                 <div className="absolute inset-0 flex items-center justify-center text-white z-20 bg-slate-950/70 backdrop-blur-sm">
                   <div className="text-center p-6">
                     <Camera className="h-10 w-10 mx-auto mb-2 text-slate-400 animate-pulse" />
-                    <p className="text-xs font-bold text-slate-300">Camera preview will appear here</p>
+                    <p className="text-xs font-bold text-slate-300">
+                      Camera preview will appear here
+                    </p>
                   </div>
                 </div>
               )}
@@ -392,7 +405,12 @@ export default function CheckoutBarcodeScanner({
                 <div className="text-white text-center p-6 rounded-2xl max-w-xs scale-105 transform duration-300">
                   <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/35">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="3"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                   </div>
                   <div className="text-base font-extrabold tracking-tight">Product Found!</div>
@@ -409,13 +427,16 @@ export default function CheckoutBarcodeScanner({
                 <div className="text-white text-center p-6 rounded-2xl max-w-xs scale-105 transform duration-300">
                   <div className="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-red-500/35">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="3"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </div>
                   <div className="text-base font-extrabold tracking-tight">Scanner Interrupted</div>
-                  <div className="text-[11px] text-red-300 mt-2 line-clamp-2">
-                    {scanError}
-                  </div>
+                  <div className="text-[11px] text-red-300 mt-2 line-clamp-2">{scanError}</div>
                 </div>
               </div>
             )}
@@ -430,7 +451,12 @@ export default function CheckoutBarcodeScanner({
                 className="bg-primary hover:bg-primary/90 text-white font-extrabold shadow-md flex items-center justify-center gap-1.5 text-xs px-5 py-2.5 rounded-xl transition-all hover:scale-105"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"
+                  />
                 </svg>
                 Retry Scan
               </Button>

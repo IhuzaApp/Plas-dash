@@ -7,14 +7,7 @@ import { useRestaurantById, useShopById, useAssignOrder } from '@/hooks/useHasur
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { apiGet, apiPost } from '@/lib/api';
-import {
-  Clock,
-  Volume2,
-  VolumeX,
-  Check,
-  UtensilsCrossed,
-  Store,
-} from 'lucide-react';
+import { Clock, Volume2, VolumeX, Check, UtensilsCrossed, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useThemeColor } from '@/components/providers/ThemeColorProvider';
 import ThemeToggle from '@/components/layout/ThemeToggle';
@@ -56,7 +49,7 @@ export default function KitchenDisplay() {
       if (stored) {
         setTickets(JSON.parse(stored));
       }
-    } catch (e) { }
+    } catch (e) {}
   }, []);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentTime, setCurrentTime] = useState('');
@@ -95,7 +88,8 @@ export default function KitchenDisplay() {
   const shop = shopData?.Shops_by_pk;
 
   // Resolve display name and logo from whichever branch is active
-  const businessName = restaurant?.name || shop?.name || session?.shop_name || session?.restaurant_name || '';
+  const businessName =
+    restaurant?.name || shop?.name || session?.shop_name || session?.restaurant_name || '';
   const businessLogo = restaurant?.logo || shop?.logo || shop?.image || null;
 
   // Update clock every second
@@ -117,28 +111,34 @@ export default function KitchenDisplay() {
     if (!activeId) return;
 
     const ticketsCollectionRef = collection(db, 'kitchen_tickets', activeId, 'tickets');
-    const unsubscribe = onSnapshot(ticketsCollectionRef, (snapshot) => {
-      try {
-        const ticketsList: KitchenTicket[] = [];
-        snapshot.forEach((docSnap) => {
-          ticketsList.push(docSnap.data() as KitchenTicket);
-        });
-        ticketsList.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    const unsubscribe = onSnapshot(
+      ticketsCollectionRef,
+      snapshot => {
+        try {
+          const ticketsList: KitchenTicket[] = [];
+          snapshot.forEach(docSnap => {
+            ticketsList.push(docSnap.data() as KitchenTicket);
+          });
+          ticketsList.sort(
+            (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
 
-        if (soundEnabled && ticketsList.length > prevTicketsLength.current) {
-          playAlertSound();
+          if (soundEnabled && ticketsList.length > prevTicketsLength.current) {
+            playAlertSound();
+          }
+          prevTicketsLength.current = ticketsList.length;
+
+          setTickets(ticketsList);
+          localStorage.setItem('restaurantKitchenOrders', JSON.stringify(ticketsList));
+          window.dispatchEvent(new Event('storage'));
+        } catch (e) {
+          console.error('Failed to parse kitchen tickets:', e);
         }
-        prevTicketsLength.current = ticketsList.length;
-
-        setTickets(ticketsList);
-        localStorage.setItem('restaurantKitchenOrders', JSON.stringify(ticketsList));
-        window.dispatchEvent(new Event('storage'));
-      } catch (e) {
-        console.error('Failed to parse kitchen tickets:', e);
+      },
+      error => {
+        console.error('Error subscribing to kitchen tickets in KDS:', error);
       }
-    }, (error) => {
-      console.error('Error subscribing to kitchen tickets in KDS:', error);
-    });
+    );
 
     return () => unsubscribe();
   }, [activeId, soundEnabled]);
@@ -149,7 +149,9 @@ export default function KitchenDisplay() {
 
     const fetchBackup = async () => {
       try {
-        const response = await apiGet<{ kitchenQueue: any[] }>(`/api/queries/kitchen-queue?restaurantId=${activeId}`);
+        const response = await apiGet<{ kitchenQueue: any[] }>(
+          `/api/queries/kitchen-queue?restaurantId=${activeId}`
+        );
         if (response && response.kitchenQueue) {
           const dbTickets: KitchenTicket[] = response.kitchenQueue.map(q => ({
             id: q.token_number,
@@ -175,7 +177,9 @@ export default function KitchenDisplay() {
             });
 
             if (changed) {
-              merged.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+              merged.sort(
+                (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+              );
               localStorage.setItem('restaurantKitchenOrders', JSON.stringify(merged));
               return merged;
             }
@@ -214,7 +218,10 @@ export default function KitchenDisplay() {
     }
   };
 
-  const updateTicketStatus = async (ticketId: string, newStatus: 'Pending' | 'Preparing' | 'Ready' | 'Served') => {
+  const updateTicketStatus = async (
+    ticketId: string,
+    newStatus: 'Pending' | 'Preparing' | 'Ready' | 'Served'
+  ) => {
     if (activeId) {
       try {
         await updateDoc(doc(db, 'kitchen_tickets', activeId, 'tickets', ticketId), {
@@ -268,7 +275,10 @@ export default function KitchenDisplay() {
                 await updateDoc(doc(db, 'kitchen_tickets', activeId, 'tickets', ticket.id), {
                   status: 'Ready',
                 });
-                toast({ title: 'Restored', description: `Token ${ticket.id} moved back to active queue.` });
+                toast({
+                  title: 'Restored',
+                  description: `Token ${ticket.id} moved back to active queue.`,
+                });
               } catch (err) {
                 console.error('Error restoring ticket status:', err);
               }
@@ -324,7 +334,11 @@ export default function KitchenDisplay() {
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={`border-border text-xs font-bold gap-1.5 ${soundEnabled ? 'bg-primary/5 text-primary border-primary/30' : 'text-muted-foreground'}`}
           >
-            {soundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+            {soundEnabled ? (
+              <Volume2 className="h-3.5 w-3.5" />
+            ) : (
+              <VolumeX className="h-3.5 w-3.5" />
+            )}
             Beep: {soundEnabled ? 'ON' : 'OFF'}
           </Button>
 
@@ -344,7 +358,9 @@ export default function KitchenDisplay() {
             const isReady = t.status === 'Ready';
 
             const tableLabel = t.tableId
-              ? t.tableId.startsWith('tbl-') ? `Table #${t.tableId.replace('tbl-', '')}` : t.tableId
+              ? t.tableId.startsWith('tbl-')
+                ? `Table #${t.tableId.replace('tbl-', '')}`
+                : t.tableId
               : null;
 
             return (
@@ -374,23 +390,29 @@ export default function KitchenDisplay() {
                 {/* Card body — single row */}
                 <div className="flex items-center gap-4 px-5 pl-6 py-4">
                   {/* Token Number */}
-                  <span className={`text-4xl font-black tracking-tighter leading-none tabular-nums shrink-0 ${
-                    isReady ? 'text-primary' : 'text-foreground'
-                  }`}>
+                  <span
+                    className={`text-4xl font-black tracking-tighter leading-none tabular-nums shrink-0 ${
+                      isReady ? 'text-primary' : 'text-foreground'
+                    }`}
+                  >
                     {t.id}
                   </span>
 
                   {/* Divider */}
-                  <div className={`h-10 w-px shrink-0 ${isReady ? 'bg-primary/30' : 'bg-border'}`} />
+                  <div
+                    className={`h-10 w-px shrink-0 ${isReady ? 'bg-primary/30' : 'bg-border'}`}
+                  />
 
                   {/* Right info column */}
                   <div className="flex flex-col gap-1 min-w-0">
                     {/* Status badge */}
-                    <span className={`inline-flex items-center gap-1 self-start text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      isReady
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-primary/15 text-primary'
-                    }`}>
+                    <span
+                      className={`inline-flex items-center gap-1 self-start text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                        isReady
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-primary/15 text-primary'
+                      }`}
+                    >
                       {isReady ? '✓ READY' : '⏳ PREPARING'}
                     </span>
 
@@ -402,7 +424,9 @@ export default function KitchenDisplay() {
                       {tableLabel && (
                         <>
                           <span className="text-muted-foreground/40 text-[10px]">•</span>
-                          <span className="text-[10px] font-bold text-muted-foreground">{tableLabel}</span>
+                          <span className="text-[10px] font-bold text-muted-foreground">
+                            {tableLabel}
+                          </span>
                         </>
                       )}
                     </div>
@@ -429,7 +453,9 @@ export default function KitchenDisplay() {
             <div className="col-span-full flex flex-col items-center justify-center py-32 text-center text-muted-foreground">
               <UtensilsCrossed className="h-16 w-16 text-muted-foreground/30 mb-4 animate-pulse" />
               <h2 className="text-lg font-bold">All Orders Served</h2>
-              <p className="text-xs mt-1 text-muted-foreground/80">Waiting for new orders from the POS terminal...</p>
+              <p className="text-xs mt-1 text-muted-foreground/80">
+                Waiting for new orders from the POS terminal...
+              </p>
             </div>
           )}
         </div>

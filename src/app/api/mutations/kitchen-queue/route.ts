@@ -6,27 +6,29 @@ import { gql } from 'graphql-request';
 
 const INSERT_KITCHEN_QUEUE = gql`
   mutation InsertKitchenQueue(
-    $dishesOrdered: jsonb = "",
-    $restaurant_id: uuid = "",
-    $restaurant_order_id: uuid = "",
-    $status: String = "",
-    $table_number: String = "",
-    $token_number: String = "",
-    $updated_at: timestamptz = "",
-    $waiter_id: uuid = "",
+    $dishesOrdered: jsonb = ""
+    $restaurant_id: uuid = ""
+    $restaurant_order_id: uuid = ""
+    $status: String = ""
+    $table_number: String = ""
+    $token_number: String = ""
+    $updated_at: timestamptz = ""
+    $waiter_id: uuid = ""
     $paid: Boolean = false
   ) {
-    insert_kitchenQueue(objects: {
-      dishesOrdered: $dishesOrdered,
-      restaurant_id: $restaurant_id,
-      restaurant_order_id: $restaurant_order_id,
-      status: $status,
-      table_number: $table_number,
-      token_number: $token_number,
-      updated_at: $updated_at,
-      waiter_id: $waiter_id,
-      paid: $paid
-    }) {
+    insert_kitchenQueue(
+      objects: {
+        dishesOrdered: $dishesOrdered
+        restaurant_id: $restaurant_id
+        restaurant_order_id: $restaurant_order_id
+        status: $status
+        table_number: $table_number
+        token_number: $token_number
+        updated_at: $updated_at
+        waiter_id: $waiter_id
+        paid: $paid
+      }
+    ) {
       affected_rows
     }
   }
@@ -34,24 +36,16 @@ const INSERT_KITCHEN_QUEUE = gql`
 
 const UPDATE_KITCHEN_QUEUE = gql`
   mutation UpdateKitchenQueue(
-    $dishesOrdered: jsonb = "",
-    $status: String = "",
-    $token_number: String = "",
-    $restaurant_id: uuid = "",
-    $updated_at: timestamptz = "",
+    $dishesOrdered: jsonb = ""
+    $status: String = ""
+    $token_number: String = ""
+    $restaurant_id: uuid = ""
+    $updated_at: timestamptz = ""
     $paid: Boolean = false
   ) {
     update_kitchenQueue(
-      where: { 
-        token_number: { _eq: $token_number },
-        restaurant_id: { _eq: $restaurant_id }
-      },
-      _set: {
-        dishesOrdered: $dishesOrdered,
-        status: $status,
-        updated_at: $updated_at,
-        paid: $paid
-      }
+      where: { token_number: { _eq: $token_number }, restaurant_id: { _eq: $restaurant_id } }
+      _set: { dishesOrdered: $dishesOrdered, status: $status, updated_at: $updated_at, paid: $paid }
     ) {
       affected_rows
     }
@@ -89,7 +83,10 @@ export async function POST(request: Request) {
     } = body;
 
     if (!restaurant_id || !token_number) {
-      return NextResponse.json({ error: 'Missing required fields: restaurant_id and token_number' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields: restaurant_id and token_number' },
+        { status: 400 }
+      );
     }
 
     if (!hasuraClient) {
@@ -115,7 +112,7 @@ export async function POST(request: Request) {
       token_number: variables.token_number,
       restaurant_id: variables.restaurant_id,
       updated_at: variables.updated_at,
-      paid: variables.paid
+      paid: variables.paid,
     });
 
     if (updateRes?.update_kitchenQueue?.affected_rows > 0) {
