@@ -378,6 +378,21 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     setShowSearchResults(false);
   };
 
+  const convertUsdToSystemCurrency = (usdPrice: number, targetCurrency: string) => {
+    let rate = 1;
+    const currency = targetCurrency.toUpperCase();
+    if (currency === 'RWF') rate = 1350; // Standard USD to RWF rate
+    else if (currency === 'EUR') rate = 0.92;
+    else if (currency === 'GBP') rate = 0.79;
+    else if (currency === 'KES') rate = 131; // Kenyan Shilling
+    else if (currency === 'UGX') rate = 3800; // Ugandan Shilling
+    else if (currency === 'TZS') rate = 2500; // Tanzanian Shilling
+    
+    // For RWF and similar, we want whole numbers. For others, 2 decimal places.
+    const converted = usdPrice * rate;
+    return rate > 100 ? Math.round(converted) : Number(converted.toFixed(2));
+  };
+
   const handleSearchResultSelect = (product: any) => {
     if (product.isExternal) {
       form.setValue('name', product.name);
@@ -385,7 +400,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       form.setValue('category', product.category || '');
       form.setValue('sku', generateRandomSKU(product.name));
       if (product.price) {
-        form.setValue('price', product.price.toString());
+        const convertedPrice = convertUsdToSystemCurrency(Number(product.price), currency);
+        form.setValue('price', convertedPrice.toString());
       }
       if (product.image) {
         setImagePreview(product.image);
