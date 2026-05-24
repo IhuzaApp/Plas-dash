@@ -249,6 +249,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
                 isProjectUser={mfaUser.isProjectUser}
                 twoFactorRequired={mfaUser.twoFactorRequired}
                 smsRequired={mfaUser.smsRequired}
+                businessName={activeBusiness?.name}
+                businessLogo={activeBusiness?.logo}
                 onSuccess={updatedSession => {
                   startLoading();
                   completeLogin(updatedSession, mfaUser.isProjectUser);

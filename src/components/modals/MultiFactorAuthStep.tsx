@@ -31,6 +31,8 @@ interface MultiFactorAuthStepProps {
   smsRequired: boolean;
   onSuccess: (updatedUser: any) => void;
   onCancel: () => void;
+  businessName?: string;
+  businessLogo?: string | null;
 }
 
 const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
@@ -40,6 +42,8 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
   smsRequired,
   onSuccess,
   onCancel,
+  businessName,
+  businessLogo,
 }) => {
   const is2FAActive = !!(user.TwoAuth_enabled || user.multAuthEnabled);
   const isSMSActive = !!user.sms_auth;
@@ -231,14 +235,14 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
               setMethod('2fa');
               setStep(is2FAActive ? 'verify' : 'setup');
             }}
-            className="flex items-center gap-4 p-4 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/50 hover:bg-primary/5 transition-all group text-left"
+            className="flex items-center gap-4 p-4 rounded-2xl border border-border/50 bg-muted/30 hover:border-primary/50 hover:bg-primary/5 transition-all group text-left"
           >
             <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-sm">Authenticator App</h4>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 {is2FAActive ? 'Use Google Authenticator or Authy' : 'Set up mobile authenticator'}
               </p>
             </div>
@@ -252,14 +256,14 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
               setMethod('sms');
               setStep(isSMSActive ? 'verify' : 'setup');
             }}
-            className="flex items-center gap-4 p-4 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/50 hover:bg-primary/5 transition-all group text-left"
+            className="flex items-center gap-4 p-4 rounded-2xl border border-border/50 bg-muted/30 hover:border-primary/50 hover:bg-primary/5 transition-all group text-left"
           >
             <div className="p-3 rounded-xl bg-orange-500/10 text-orange-500 group-hover:scale-110 transition-transform">
               <MessageSquare className="w-6 h-6" />
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-sm">SMS Verification</h4>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 {isSMSActive
                   ? `Receive code on ${phone.replace(/(\d{3})\d+(\d{3})/, '$1***$2')}`
                   : 'Set up phone verification'}
@@ -284,24 +288,24 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
     <div className="space-y-4 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="text-center mb-4">
         <h3 className="font-bold text-lg">Set up {method === '2fa' ? 'Authenticator' : 'SMS'}</h3>
-        <p className="text-sm text-zinc-500">Follow the steps below to secure your account</p>
+        <p className="text-sm text-muted-foreground">Follow the steps below to secure your account</p>
       </div>
 
       {method === '2fa' ? (
         <div className="space-y-4">
           <div className="flex justify-center">
             {qrCodeUrl ? (
-              <div className="p-4 bg-white rounded-2xl border-2 border-zinc-100 shadow-sm">
+              <div className="p-4 bg-white rounded-2xl border border-border/40 shadow-sm">
                 <img src={qrCodeUrl} alt="QR Code" className="w-40 h-40" />
               </div>
             ) : (
-              <div className="w-40 h-40 flex items-center justify-center bg-zinc-100 rounded-2xl animate-pulse">
-                <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+              <div className="w-40 h-40 flex items-center justify-center bg-muted/40 rounded-2xl animate-pulse border border-border/40">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
               </div>
             )}
           </div>
-          <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700">
-            <ol className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-decimal list-inside">
+          <div className="bg-muted/30 p-4 rounded-xl border border-border/40">
+            <ol className="text-xs text-muted-foreground space-y-2 list-decimal list-inside">
               <li>Open your Authenticator app</li>
               <li>Scan the QR code above</li>
               <li>Enter the 6-digit code to verify</li>
@@ -314,16 +318,16 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
       ) : (
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               Phone Number
             </Label>
             <div className="relative group">
-              <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+              <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 placeholder="+250..."
-                className="h-11 pl-11 rounded-xl bg-zinc-50 dark:bg-zinc-800 border-none font-medium"
+                className="h-11 pl-11 rounded-xl bg-muted/30 border-border/50 font-medium"
               />
             </div>
           </div>
@@ -354,7 +358,7 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
           <ShieldCheck className="w-6 h-6" />
         </div>
         <h3 className="font-bold text-lg">Verify your identity</h3>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted-foreground">
           Enter the 6-digit code sent to your {method === '2fa' ? 'Authenticator app' : 'phone'}
         </p>
       </div>
@@ -365,7 +369,7 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
           onChange={e => setCode(e.target.value)}
           maxLength={6}
           placeholder="000000"
-          className="h-14 text-center text-2xl font-black tracking-[0.5em] rounded-2xl bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 focus:border-primary transition-all"
+          className="h-14 text-center text-2xl font-black tracking-[0.5em] rounded-2xl bg-muted/30 border border-border/50 focus:border-primary transition-all"
         />
 
         <Button
@@ -400,6 +404,33 @@ const MultiFactorAuthStep: React.FC<MultiFactorAuthStepProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center">
+      {/* Branded header — matches LoginHeader look */}
+      <div className="flex flex-col items-center gap-3 mb-6 w-full">
+        <div className="p-3 rounded-2xl bg-primary/10 border border-primary/20 shadow-inner">
+          <img
+            src={
+              businessLogo
+                ? businessLogo.startsWith('http') || businessLogo.startsWith('data:')
+                  ? businessLogo
+                  : `data:image/png;base64,${businessLogo}`
+                : '/Assets/logo/Plas Icon.png'
+            }
+            alt={businessName || 'Plas'}
+            className="w-10 h-10 object-contain"
+          />
+        </div>
+        <div className="text-center space-y-0.5">
+          <p className="text-lg font-bold tracking-tight">
+            {businessName || 'Plas'}
+          </p>
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-[0.2em]">
+            Two-Factor Authentication
+          </p>
+        </div>
+        {/* Thin divider */}
+        <div className="w-full h-px bg-border/50 mt-1" />
+      </div>
+
       {step === 'choice' && renderChoice()}
       {step === 'setup' && renderSetup()}
       {step === 'verify' && renderVerify()}
