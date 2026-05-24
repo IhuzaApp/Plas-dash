@@ -276,7 +276,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
   const EmployeeGridCard = ({ emp, isRecent = false }: { emp: Employee; isRecent?: boolean }) => (
     <button
       onClick={() => handleSelectEmployee(emp)}
-      className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-muted/40 dark:bg-slate-800/40 border border-border dark:border-slate-800/60 hover:border-primary/50 hover:bg-accent dark:hover:bg-slate-800/80 transition-all duration-200 group w-full"
+      className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-muted/40 dark:bg-slate-800/40 border border-border dark:border-slate-800/60 hover:border-primary/50 hover:bg-primary dark:hover:bg-slate-800/80 transition-all duration-200 group w-full"
     >
       <div className="relative">
         <EmployeeAvatar emp={emp} size="md" />
@@ -290,8 +290,8 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
         )}
       </div>
       <div className="min-w-0 w-full text-center">
-        <p className="text-xs font-extrabold text-foreground dark:text-slate-200 group-hover:text-primary dark:group-hover:text-white truncate leading-tight">{emp.fullnames}</p>
-        <p className="text-[9px] text-muted-foreground dark:text-slate-500 font-bold uppercase tracking-wider group-hover:text-foreground dark:group-hover:text-slate-400 truncate mt-0.5">
+        <p className="text-xs font-extrabold text-foreground dark:text-slate-200 group-hover:text-white truncate leading-tight">{emp.fullnames}</p>
+        <p className="text-[9px] text-muted-foreground dark:text-slate-500 font-bold uppercase tracking-wider group-hover:text-white/80 truncate mt-0.5">
           {emp.Position || emp.roleType || 'Staff'}
         </p>
       </div>
@@ -302,7 +302,7 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
   const EmployeeRowCard = ({ emp }: { emp: Employee }) => (
     <button
       onClick={() => handleSelectEmployee(emp)}
-      className="flex items-center gap-3 w-full p-3 rounded-2xl bg-muted/40 dark:bg-slate-800/40 border border-border dark:border-slate-800/60 hover:border-primary/50 hover:bg-accent dark:hover:bg-slate-800/80 transition-all duration-200 group text-left"
+      className="flex items-center gap-3 w-full p-3 rounded-2xl bg-muted/40 dark:bg-slate-800/40 border border-border dark:border-slate-800/60 hover:border-primary/50 hover:bg-primary dark:hover:bg-slate-800/80 transition-all duration-200 group text-left"
     >
       <div className="relative shrink-0">
         <EmployeeAvatar emp={emp} size="sm" />
@@ -311,8 +311,8 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-extrabold text-foreground dark:text-slate-200 group-hover:text-primary dark:group-hover:text-white truncate">{emp.fullnames}</p>
-        <p className="text-[9px] text-muted-foreground dark:text-slate-500 font-bold uppercase tracking-wider group-hover:text-foreground dark:group-hover:text-slate-400 truncate">
+        <p className="text-sm font-extrabold text-foreground dark:text-slate-200 group-hover:text-white truncate">{emp.fullnames}</p>
+        <p className="text-[9px] text-muted-foreground dark:text-slate-500 font-bold uppercase tracking-wider group-hover:text-white/80 truncate">
           {emp.Position || emp.roleType || 'Staff'}
         </p>
       </div>
@@ -548,21 +548,21 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
                       type="button"
                       onClick={() => handleKeypadPress(val)}
                       disabled={savingPin}
-                      className="h-13 rounded-2xl bg-muted/60 dark:bg-slate-800/40 border border-border dark:border-slate-800 text-lg font-black hover:bg-accent dark:hover:bg-slate-800 hover:border-primary/50 dark:hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-foreground dark:text-white py-3"
+                      className="h-13 rounded-2xl bg-muted/60 dark:bg-slate-800/40 border border-border dark:border-slate-800 text-lg font-black text-foreground dark:text-white hover:bg-primary hover:border-primary hover:text-white dark:hover:bg-slate-800 dark:hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 py-3"
                     >
                       {val}
                     </button>
                   ))}
                   <button type="button" onClick={() => handleKeypadPress('C')} disabled={savingPin}
-                    className="h-13 rounded-2xl bg-red-600/10 border border-red-500/20 text-red-400 text-sm font-black hover:bg-red-600/20 transition-colors flex items-center justify-center active:scale-95 py-3">
+                    className="h-13 rounded-2xl bg-red-600/10 border border-red-500/20 text-red-500 dark:text-red-400 text-sm font-black hover:bg-red-500 hover:border-red-500 hover:text-white transition-colors flex items-center justify-center active:scale-95 py-3">
                     Clear
                   </button>
                   <button type="button" onClick={() => handleKeypadPress('0')} disabled={savingPin}
-                    className="h-13 rounded-2xl bg-muted/60 dark:bg-slate-800/40 border border-border dark:border-slate-800 text-lg font-black hover:bg-accent dark:hover:bg-slate-800 hover:border-primary/50 dark:hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-foreground dark:text-white py-3">
+                    className="h-13 rounded-2xl bg-muted/60 dark:bg-slate-800/40 border border-border dark:border-slate-800 text-lg font-black text-foreground dark:text-white hover:bg-primary hover:border-primary hover:text-white dark:hover:bg-slate-800 dark:hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 py-3">
                     0
                   </button>
                   <button type="button" onClick={() => handleKeypadPress('B')} disabled={savingPin}
-                    className="h-13 rounded-2xl bg-muted/60 dark:bg-slate-800/40 border border-border dark:border-slate-800 text-base font-black hover:bg-accent dark:hover:bg-slate-800 hover:border-primary/50 dark:hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 text-foreground dark:text-white py-3">
+                    className="h-13 rounded-2xl bg-muted/60 dark:bg-slate-800/40 border border-border dark:border-slate-800 text-base font-black text-foreground dark:text-white hover:bg-primary hover:border-primary hover:text-white dark:hover:bg-slate-800 dark:hover:border-slate-700 transition-colors flex items-center justify-center active:scale-95 py-3">
                     Del
                   </button>
                 </div>
