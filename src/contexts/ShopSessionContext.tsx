@@ -14,6 +14,7 @@ interface ShopSession {
 interface ShopSessionContextType {
   shopSession: ShopSession | null;
   isLoggedIntoShop: boolean;
+  isBusinessLoading: boolean;
   loginToShop: (
     shopId: string,
     shopName: string,
@@ -36,6 +37,7 @@ const SHOP_SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 export function ShopSessionProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const [shopSession, setShopSession] = useState<ShopSession | null>(null);
+  const [isBusinessLoading, setIsBusinessLoading] = useState(true);
   const [activeBusiness, setActiveBusiness] = useState<{
     id: string;
     name: string;
@@ -66,6 +68,8 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
         }
       } catch (e) {
         console.error('Failed to fetch business details');
+      } finally {
+        setIsBusinessLoading(false);
       }
     };
 
@@ -84,8 +88,11 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
 
         if (subdomain && subdomain !== 'www' && subdomain !== 'dash') {
           fetchBusinessDetails(`subdomain=${subdomain}`);
+          return; // fetchBusinessDetails will call setIsBusinessLoading(false) in finally
         }
       }
+      // No business context to fetch — mark loading as complete immediately
+      setIsBusinessLoading(false);
     }
   }, []);
 
@@ -180,6 +187,7 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
   const value: ShopSessionContextType = {
     shopSession,
     isLoggedIntoShop,
+    isBusinessLoading,
     loginToShop,
     logoutFromShop,
     getShopSessionExpiry,

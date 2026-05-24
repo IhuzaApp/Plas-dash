@@ -22,7 +22,7 @@ type LoginFormInputs = {
 };
 
 const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
-  const { activeBusiness } = useShopSession();
+  const { activeBusiness, isBusinessLoading } = useShopSession();
   const form = useForm<LoginFormInputs>({ defaultValues: { identifier: '', password: '' } });
   const [loading, setLoading] = useState(false);
   const [authStep, setAuthStep] = useState<'login' | 'mfa'>('login');
@@ -158,6 +158,60 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
       setSupportLoading(false);
     }
   };
+
+  // Block render until the business context has fully resolved so we always
+  // show the correct shop / restaurant / project-user identity in the header.
+  if (isBusinessLoading) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center overflow-hidden">
+        {/* Ambient gradient blobs */}
+        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse pointer-events-none" />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-primary/8 rounded-full blur-[120px] animate-pulse delay-700 pointer-events-none" />
+
+        {/* Card */}
+        <div className="relative flex flex-col items-center gap-6">
+          {/* Spinner + centered logo */}
+          <div className="relative w-28 h-28 flex items-center justify-center">
+            {/* Spinning ring */}
+            <div className="absolute inset-0 rounded-full border-[3px] border-primary/15 border-t-primary animate-spin" />
+            {/* Second slower ring for depth */}
+            <div className="absolute inset-2 rounded-full border-[2px] border-primary/8 border-b-primary/40 animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
+            {/* Logo — perfectly centered via flex on the wrapper itself */}
+            <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/20 backdrop-blur-sm flex items-center justify-center shadow-lg animate-pulse">
+              <img
+                src="/Assets/logo/Plas Icon.png"
+                alt="Plas"
+                className="w-9 h-9 object-contain"
+              />
+            </div>
+          </div>
+
+          {/* Text */}
+          <div className="text-center space-y-1">
+            <h2 className="text-lg font-black tracking-[0.2em] text-primary uppercase">
+              PLAS
+            </h2>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.35em]">
+              Loading Portal…
+            </p>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-36 h-[2px] rounded-full bg-primary/10 overflow-hidden">
+            <div className="h-full bg-primary/60 rounded-full animate-[loading-bar_1.4s_ease-in-out_infinite]" style={{ width: '40%', animation: 'loadingBar 1.4s ease-in-out infinite' }} />
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes loadingBar {
+            0%   { transform: translateX(-100%); width: 40%; }
+            50%  { width: 60%; }
+            100% { transform: translateX(350%); width: 40%; }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <Dialog open={true}>
