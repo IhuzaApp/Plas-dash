@@ -174,17 +174,9 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
     error: categoriesError,
   } = useCategories();
 
-  console.log('=== ADD BRANCH SHOP DIALOG: CATEGORIES DEBUG ===');
-  console.log('Categories loading:', categoriesLoading);
-  console.log('Categories error:', categoriesError);
-  console.log('Categories data:', categoriesData);
-
   // Create shop mutation
   const createShopMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log('=== ADD BRANCH SHOP DIALOG: MUTATION FUNCTION CALLED ===');
-      console.log('Mutation data:', data);
-
       const mutationQuery = isRestaurant ? ADD_RESTAURANT : CREATE_SHOP;
       const payload = isRestaurant ? {
         name: data.name,
@@ -203,24 +195,12 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
 
       try {
         const result = await hasuraRequest(mutationQuery, payload);
-        console.log('=== ADD BRANCH SHOP DIALOG: MUTATION SUCCESS ===');
-        console.log('Mutation result:', result);
         return result;
       } catch (error: any) {
-        console.error('=== ADD BRANCH SHOP DIALOG: MUTATION ERROR ===');
-        console.error('Mutation error:', error);
-        console.error('Error details:', {
-          message: error?.message,
-          response: error?.response,
-          status: error?.response?.status,
-          data: error?.response?.data,
-        });
         throw error;
       }
     },
     onSuccess: data => {
-      console.log('=== ADD BRANCH SHOP DIALOG: ON SUCCESS CALLED ===');
-      console.log('Success data:', data);
       toast({
         title: 'Success',
         description: 'Branch store created successfully!',
@@ -230,16 +210,10 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
       handleClose();
     },
     onError: (error: any) => {
-      console.error('=== ADD BRANCH SHOP DIALOG: ON ERROR CALLED ===');
-      console.error('Error in onError:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error response:', error?.response);
-
       let errorMessage = 'Failed to create branch store. Please try again.';
 
       if (error?.response?.data?.errors) {
         const graphqlErrors = error.response.data.errors;
-        console.error('GraphQL errors:', graphqlErrors);
         errorMessage = graphqlErrors.map((err: any) => err.message).join(', ');
       } else if (error?.message) {
         errorMessage = error.message;
@@ -269,10 +243,6 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
           [field]: value,
           image: defaultImage,
         }));
-
-        console.log('=== ADD BRANCH SHOP DIALOG: AUTO-ASSIGNED IMAGE ===');
-        console.log('Category:', selectedCategory.name);
-        console.log('Default image:', defaultImage);
       }
     }
   };
@@ -350,12 +320,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('=== ADD BRANCH SHOP DIALOG: SUBMIT STARTED ===');
-    console.log('Form data:', formData);
-    console.log('Image preview exists:', !!imagePreview);
-
     if (!formData.name.trim()) {
-      console.log('=== ADD BRANCH SHOP DIALOG: VALIDATION ERROR - NAME REQUIRED ===');
       toast({
         title: 'Error',
         description: 'Branch store name is required.',
@@ -365,7 +330,6 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
     }
 
     if (!formData.category_id) {
-      console.log('=== ADD BRANCH SHOP DIALOG: VALIDATION ERROR - CATEGORY REQUIRED ===');
       toast({
         title: 'Error',
         description: 'Please select a category.',
@@ -379,21 +343,12 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
       // logo is already in formData.logo from the upload
     };
 
-    console.log('=== ADD BRANCH SHOP DIALOG: SUBMITTING DATA ===');
-    console.log('Submit data:', submitData);
-    console.log('Operating hours type:', typeof submitData.operating_hours);
-    console.log('Operating hours value:', submitData.operating_hours);
-
     try {
       // Try to parse operating hours to ensure it's valid JSON
       if (typeof submitData.operating_hours === 'string') {
         const parsedHours = JSON.parse(submitData.operating_hours);
-        console.log('=== ADD BRANCH SHOP DIALOG: OPERATING HOURS PARSED SUCCESSFULLY ===');
-        console.log('Parsed operating hours:', parsedHours);
       }
     } catch (error) {
-      console.error('=== ADD BRANCH SHOP DIALOG: OPERATING HOURS PARSE ERROR ===');
-      console.error('Error parsing operating hours:', error);
       toast({
         title: 'Error',
         description: 'Invalid operating hours format. Please check the JSON format.',
@@ -419,9 +374,6 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
       is_active: submitData.is_active,
       relatedTo: submitData.relatedTo, // Always required for branch shops
     };
-
-    console.log('=== ADD BRANCH SHOP DIALOG: CLEANED DATA ===');
-    console.log('Cleaned data:', cleanedData);
 
     createShopMutation.mutate(cleanedData as CreateShopMutationData);
   };

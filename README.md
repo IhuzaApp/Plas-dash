@@ -268,6 +268,14 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Pending checkout management (24-hour storage)
   - Real-time customer display screen
 
+- **Weighing Station (`WeighingStation.tsx`)**
+  - **Dynamic Unit Support**: Advanced dual-mode support for both weighed items (`kg`) and quantity-based items (`pcs` for bakeries/cupcakes). Automatically detects `measurement_unit` and adapts the entire interface (labels, precision, and preset buttons).
+  - **Digital Scale Panel**: High-fidelity simulated LED digital weight readout screen featuring smooth `requestAnimationFrame` counting animations during value adjustments.
+  - **Interactive Controls**: Features a responsive slider and fast preset buttons (`0.25 kg`, `1.00 kg`, etc.) alongside a dedicated Numpad Modal for precision touch-screen entry.
+  - **Scale Code Generator**: Creates unique 6-digit redemption codes verified against Firestore (`weighed_items`). Can generate a clean, printable thermal scale label with a Code 39 barcode.
+  - **Tabbed Session Interface**: The UI uses a dense tabbed layout to cleanly separate the active "Weight Simulator" from the real-time "Session History" list, solving flex-overflow issues on smaller POS screens.
+  - **Seamless Redemption**: Cashiers can scan printed scale labels at checkout. The "Redeem" modal supports automated USB Scanner entry—listening for the `Enter` keystroke to instantly redeem and close without extra clicks.
+
 - **POS System-Wide Currency Localization**
   - **Dynamic Formatting**: Replaced all hardcoded currency symbols (`$`) across the entire POS module with the dynamic `formatCurrencyWithConfig` utility.
   - **System Configurations**: Integrated the `useSystemConfig` hook in checkout flows (`RestaurantCheckout.tsx`, `ShopCheckout.tsx`), inventory tables, discount management, and performance charts to read the active store's real currency settings directly from the Hasura database.
