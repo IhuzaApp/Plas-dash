@@ -80,6 +80,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
     multAuthEnabled: boolean;
     userId: string;
     isRestaurant?: boolean;
+    employeeImage?: string;
   } | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
@@ -94,6 +95,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
       multAuthEnabled: shop.multAuthEnabled || false,
       userId: shop.userId || '',
       isRestaurant: shop.isRestaurant || false,
+      employeeImage: shop.employeeImage || '',
     };
     setSelectedShop(selectedShopData);
     setShowAuthModal(true);
@@ -310,6 +312,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
               employeeName: orgEmployee.fullnames,
               userId: orgEmployee.id,
               isRestaurant: isRestaurant,
+              employeeImage: orgEmployee.profile_image || orgEmployee.display_image || orgEmployee.image || '',
             };
             handleShopSelect(shopData);
           }}
@@ -331,6 +334,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
             storedTwoFactorSecrets={orgEmployee?.twoFactorSecrets || null}
             onAuthSuccess={handleAuthSuccess}
             isRestaurant={selectedShop.isRestaurant}
+            employeeImage={selectedShop.employeeImage}
           />
         )}
       </>
@@ -382,6 +386,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
                     employeeName: orgEmployee.fullnames,
                     userId: orgEmployee.id,
                     isRestaurant: isRestaurant,
+                    employeeImage: orgEmployee.profile_image || orgEmployee.display_image || orgEmployee.image || '',
                   };
                   handleShopSelect(shopData);
                 }}
@@ -434,6 +439,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
           storedTwoFactorSecrets={orgEmployee?.twoFactorSecrets || null}
           onAuthSuccess={handleAuthSuccess}
           isRestaurant={selectedShop.isRestaurant}
+          employeeImage={selectedShop.employeeImage}
         />
       )}
     </div>

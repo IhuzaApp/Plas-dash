@@ -117,6 +117,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
         shop_id: null,
         restaurant_id: null,
         orgEmployeeRoles: null,
+        profile_image: session.profile || session.profile_image || session.image || '',
       };
     } else {
       const privileges = normalizeUserPrivileges(session.orgEmployeeRoles);
@@ -134,6 +135,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
         orgEmployeeRoles: session.orgEmployeeRoles,
         isProjectUser: false,
         role: session.roleType,
+        profile_image: session.profile_image || session.image || '',
       };
     }
 

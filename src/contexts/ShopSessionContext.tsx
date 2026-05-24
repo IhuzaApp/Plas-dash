@@ -6,6 +6,7 @@ interface ShopSession {
   shopName: string;
   employeeId: string;
   employeeName: string;
+  employeeImage?: string;
   position: string;
   expiresAt: number;
   isRestaurant?: boolean;
@@ -21,7 +22,8 @@ interface ShopSessionContextType {
     employeeId: string,
     employeeName: string,
     position: string,
-    isRestaurant?: boolean
+    isRestaurant?: boolean,
+    employeeImage?: string
   ) => void;
   logoutFromShop: () => void;
   getShopSessionExpiry: () => number | null;
@@ -144,7 +146,8 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
       employeeId: string,
       employeeName: string,
       position: string,
-      isRestaurant?: boolean
+      isRestaurant?: boolean,
+      employeeImage?: string
     ) => {
       const expiresAt = Date.now() + SHOP_SESSION_DURATION;
       const newShopSession: ShopSession = {
@@ -155,6 +158,7 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
         position,
         expiresAt,
         isRestaurant,
+        employeeImage,
       };
 
       // Save to localStorage (same approach as main session)

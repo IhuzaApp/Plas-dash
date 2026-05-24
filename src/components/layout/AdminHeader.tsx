@@ -34,16 +34,19 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
     (displayUser as any)?.profile_image ||
     (displayUser as any)?.profile_picture ||
     (displayUser as any)?.profile ||
-    (displayUser as any)?.display_image;
+    (displayUser as any)?.display_image ||
+    shopSession?.employeeImage;
   const userName =
     (displayUser as any)?.name ||
     (displayUser as any)?.username ||
     (displayUser as any)?.fullName ||
+    shopSession?.employeeName ||
     'User';
   const userRole =
     (displayUser as any)?.role ||
     (displayUser as any)?.roleType ||
     (displayUser as any)?.display_role ||
+    shopSession?.position ||
     'Admin';
 
   React.useEffect(() => {
@@ -153,8 +156,8 @@ const AdminHeader = ({ toggleSidebar, isSidebarOpen }: AdminHeaderProps) => {
             <ThemeToggle />
 
             <div className="flex items-center gap-3 pl-2">
-              {displayUser ? (
-                <Link href="/settings">
+              {displayUser || shopSession ? (
+                <Link href={displayUser ? "/settings" : "#"}>
                   <Button
                     variant="ghost"
                     className="p-1 pr-3 rounded-2xl border bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-primary/10 hover:border-primary/20 transition-all"

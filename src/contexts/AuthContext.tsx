@@ -17,6 +17,7 @@ export interface SessionData {
   expiresAt?: number;
   isProjectUser?: boolean;
   role: string;
+  profile_image?: string;
 }
 
 export interface AuthContextType {

@@ -1851,6 +1851,7 @@ export const GET_ORG_EMPLOYEE_BY_IDENTITY = `
       multAuthEnabled
       sms_auth
       twoFactorSecrets
+      profile_image
       password
       phone
       restaurant_id

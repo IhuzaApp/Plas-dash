@@ -16,6 +16,7 @@ interface OrgEmployee {
   restaurant_id: string | null;
   multAuthEnabled: boolean;
   twoFactorSecrets?: string | null;
+  profile_image?: string | null;
   Shops: {
     id: string;
     name: string;
@@ -51,6 +52,7 @@ export function useCurrentOrgEmployee() {
         restaurant_id
         multAuthEnabled
         twoFactorSecrets
+        profile_image
         Shops {
           id
           name

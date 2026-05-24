@@ -34,6 +34,7 @@ interface ShopAuthModalProps {
   storedTwoFactorSecrets?: string | null; // Stored secrets from database
   onAuthSuccess?: () => void; // Callback for successful authentication
   isRestaurant?: boolean;
+  employeeImage?: string;
 }
 
 type FormData = {
@@ -55,6 +56,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
   storedTwoFactorSecrets,
   onAuthSuccess,
   isRestaurant,
+  employeeImage,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSetupMode, setIsSetupMode] = useState(!multAuthEnabled);
@@ -232,7 +234,7 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
 
       if (isValidCode) {
         // Success - log into shop
-        loginToShop(shopId, shopName, employeeId, employeeName, position, isRestaurant);
+        loginToShop(shopId, shopName, employeeId, employeeName, position, isRestaurant, employeeImage);
         toast.success(`Successfully logged into ${shopName}`);
         onOpenChange(false);
         form.reset();
