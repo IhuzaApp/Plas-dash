@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePrivilege } from '@/hooks/usePrivilege';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { PrivilegeKey } from '@/types/privileges';
 
 export function PrivilegeDebug() {

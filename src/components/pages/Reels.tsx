@@ -50,7 +50,7 @@ import {
 } from '@/hooks/useHasuraApi';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
 import { toast } from 'sonner';
 import AddReelModal from '@/components/Reels/AddReelModal';
@@ -59,6 +59,7 @@ import ReelsStats from '@/components/Reels/ReelsStats';
 import ReelsAnalytics from '@/components/Reels/ReelsAnalytics';
 import ReelCard from '@/components/Reels/ReelCard';
 import ReelsCommentsModal from '@/components/Reels/ReelsCommentsModal';
+import { deleteVideoFromFirebase } from '@/lib/firebaseStorage';
 
 type PostType = 'restaurant' | 'supermarket' | 'chef';
 
@@ -95,7 +96,7 @@ const Reels = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(12);
   const [selectedReel, setSelectedReel] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
@@ -104,9 +105,13 @@ const Reels = () => {
   const [failedVideos, setFailedVideos] = useState<Set<string>>(new Set());
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [selectedCommentsReel, setSelectedCommentsReel] = useState<any>(null);
+  const [activeFilter, setActiveFilter] = useState<
+    'all' | 'user' | 'restaurant' | 'shop' | 'business'
+  >('all');
 
   const deleteReelMutation = useDeleteReel();
   const deleteCommentMutation = useDeleteReelsComment();
+  const updateReelMutation = useUpdateReel();
 
   // Helper function to format currency
   const formatCurrency = (amount: number) => {
@@ -158,17 +163,31 @@ const Reels = () => {
 
   const handleToggleReelStatus = async (reelId: string, currentStatus: boolean) => {
     try {
+      const reel = reels.find((r: any) => r.id === reelId);
+      if (!reel) {
+        toast.error('Reel not found');
+        return;
+      }
+
       toast.promise(
-        // Use existing update hook if available, otherwise simulate
-        // In this codebase, it seems we use the existing useReels's refetch to update UI after mock success
-        // But the user specifically asked for delete/disable logic.
-        // I will implement the delete action separately.
-        new Promise(resolve => setTimeout(resolve, 1000)),
+        updateReelMutation.mutateAsync({
+          id: reelId,
+          title: reel.title,
+          description: reel.description,
+          video_url: reel.video_url,
+          category: reel.category,
+          type: reel.type,
+          Price: reel.Price,
+          delivery_time: reel.delivery_time,
+          is_active: !currentStatus,
+          shop_id: reel.shop_id,
+          restaurant_id: reel.restaurant_id,
+        }),
         {
           loading: 'Updating reel status...',
           success: () => {
             refetch();
-            return `Reel ${currentStatus ? 'disabled' : 'enabled'}`;
+            return `Reel ${!currentStatus ? 'enabled' : 'disabled'} successfully`;
           },
           error: 'Failed to update reel status',
         }
@@ -186,6 +205,17 @@ const Reels = () => {
     }
 
     try {
+      // Find the reel to get its video_url
+      const reelToDelete = reels.find((r: any) => r.id === reelId);
+
+      // If it's a Firebase URL, delete it from storage
+      if (
+        reelToDelete?.video_url &&
+        reelToDelete.video_url.includes('firebasestorage.googleapis.com')
+      ) {
+        await deleteVideoFromFirebase(reelToDelete.video_url);
+      }
+
       await deleteReelMutation.mutateAsync({ id: reelId });
       toast.success('Reel deleted successfully');
       refetch();
@@ -222,14 +252,30 @@ const Reels = () => {
   const filteredReels = reels
     .filter(reel => {
       const searchLower = searchTerm.toLowerCase();
-      return (
+      const matchesSearch =
         reel.title?.toLowerCase().includes(searchLower) ||
         reel.description?.toLowerCase().includes(searchLower) ||
         reel.category?.toLowerCase().includes(searchLower) ||
         reel.User?.name?.toLowerCase().includes(searchLower) ||
         reel.Restaurant?.name?.toLowerCase().includes(searchLower) ||
-        reel.Shops?.name?.toLowerCase().includes(searchLower)
-      );
+        reel.Shops?.name?.toLowerCase().includes(searchLower) ||
+        reel.BusinessAccount?.business_name?.toLowerCase().includes(searchLower);
+
+      if (!matchesSearch) return false;
+
+      // Apply filter type logic
+      switch (activeFilter) {
+        case 'user':
+          return !!reel.user_id;
+        case 'restaurant':
+          return !!reel.restaurant_id;
+        case 'shop':
+          return !!reel.shop_id;
+        case 'business':
+          return !!reel.business_id;
+        default:
+          return true;
+      }
     })
     .sort((a, b) => {
       // Sort by most recent first (newest to oldest)
@@ -263,18 +309,48 @@ const Reels = () => {
       likes: r.likes,
     }));
 
+  // Analytics Data Processing: Reels by Type (Count)
   const categoryData = reels.reduce((acc: any[], reel) => {
-    const existing = acc.find(item => item.name === reel.category);
-    if (existing) {
-      existing.value += reel.reel_orders.length;
+    let typeName = 'System (Unknown)';
+
+    // Check by ID presence first (more reliable in this schema)
+    if (reel.restaurant_id) {
+      typeName = 'Restaurant';
+    } else if (reel.shop_id) {
+      typeName = 'Shop';
+    } else if (reel.user_id) {
+      // If it has user_id but not shop/restaurant, it's a User reel
+      // unless specifically tagged as business or system
+      if (reel.type === 'business') typeName = 'Business';
+      else if (reel.type === 'chef' || reel.type === 'user') typeName = 'User';
+      else typeName = 'User';
     } else {
-      acc.push({ name: reel.category, value: reel.reel_orders.length });
+      // Fallback to type field
+      if (reel.type === 'restaurant') typeName = 'Restaurant';
+      else if (reel.type === 'supermarket' || reel.type === 'shop') typeName = 'Shop';
+      else if (reel.type === 'business') typeName = 'Business';
+      else if (reel.type === 'chef' || reel.type === 'user') typeName = 'User';
+    }
+
+    const existing = acc.find(item => item.name === typeName);
+    if (existing) {
+      existing.value += 1;
+    } else {
+      acc.push({ name: typeName, value: 1 });
     }
     return acc;
   }, []);
 
+  // Sort category data by value
+  categoryData.sort((a, b) => b.value - a.value);
+
   const ownerData = reels.reduce((acc: any[], reel) => {
-    const ownerName = reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Unknown';
+    const ownerName =
+      reel.User?.name ||
+      reel.Shops?.name ||
+      reel.Restaurant?.name ||
+      reel.BusinessAccount?.business_name ||
+      'System';
     const existing = acc.find(item => item.name === ownerName);
     if (existing) {
       existing.value += reel.reel_orders.length;
@@ -283,6 +359,8 @@ const Reels = () => {
     }
     return acc;
   }, []);
+
+  ownerData.sort((a, b) => b.value - a.value);
 
   if (isLoading) {
     return (
@@ -354,9 +432,48 @@ const Reels = () => {
               }}
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" /> Filter
-          </Button>
+          <div className="flex gap-2 bg-muted p-1 rounded-lg">
+            <Button
+              variant={activeFilter === 'all' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('all')}
+              className="px-3 h-8"
+            >
+              All
+            </Button>
+            <Button
+              variant={activeFilter === 'user' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('user')}
+              className="px-3 h-8"
+            >
+              Users
+            </Button>
+            <Button
+              variant={activeFilter === 'restaurant' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('restaurant')}
+              className="px-3 h-8"
+            >
+              Restaurants
+            </Button>
+            <Button
+              variant={activeFilter === 'shop' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('shop')}
+              className="px-3 h-8"
+            >
+              Shops
+            </Button>
+            <Button
+              variant={activeFilter === 'business' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveFilter('business')}
+              className="px-3 h-8"
+            >
+              Business
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

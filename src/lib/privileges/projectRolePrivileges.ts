@@ -59,6 +59,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'shop_dashboard',
         'financial_overview',
         'pos_terminal',
+        'ai_chat',
 
         // Project Management
         'system_management',
@@ -82,6 +83,11 @@ export const getDefaultProjectPrivilegesForRole = (
         'referrals',
         'plasmarket',
         'restaurants',
+        'reels',
+        'subscriptions',
+        'influencers',
+        'logistics',
+        'pets',
       ];
 
       globalAdminModules.forEach(module => {
@@ -112,6 +118,12 @@ export const getDefaultProjectPrivilegesForRole = (
         'settings',
         'plasmarket',
         'restaurants',
+        'reels',
+        'ai_chat',
+        'subscriptions',
+        'influencers',
+        'logistics',
+        'pets',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -171,7 +183,12 @@ export const getDefaultProjectPrivilegesForRole = (
         'promotions',
         'plasmarket',
         'restaurants',
+        'reels',
         'withdraw_requests',
+        'ai_chat',
+        'influencers',
+        'logistics',
+        'pets',
       ];
       projectManagerModules.forEach(module => {
         if (privileges[module]) {
@@ -226,6 +243,7 @@ export const getDefaultProjectPrivilegesForRole = (
         'tickets',
         'help',
         'restaurants',
+        'reels',
         'withdraw_requests',
       ];
       customerSupportModules.forEach(module => {

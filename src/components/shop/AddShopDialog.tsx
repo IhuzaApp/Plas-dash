@@ -22,9 +22,9 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
 import { CREATE_SHOP } from '@/lib/graphql/mutations';
-import { useCategories } from '@/hooks/useHasuraApi';
+import { useCategories, usePlans } from '@/hooks/useHasuraApi';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Store, Upload, X } from 'lucide-react';
+import { CreditCard, Loader2, Store, Upload, X } from 'lucide-react';
 
 // Utility function to get default image based on category name
 const getDefaultImageForCategory = (categoryName: string): string => {
@@ -101,6 +101,8 @@ interface CreateShopFormData {
   tin: string;
   ssd: string;
   is_active: boolean;
+  plan_id: string;
+  billing_cycle: 'monthly' | 'yearly';
 }
 
 interface CreateShopMutationData {
@@ -120,11 +122,15 @@ interface CreateShopMutationData {
   relatedTo?: string;
 }
 
+import { uploadFileToFirebase } from '@/lib/firebaseStorage';
+
 const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [formData, setFormData] = useState<CreateShopFormData>({
     name: '',
@@ -152,6 +158,8 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
     tin: '',
     ssd: '',
     is_active: true,
+    plan_id: '',
+    billing_cycle: 'monthly',
   });
 
   // Fetch categories
@@ -161,64 +169,8 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
     error: categoriesError,
   } = useCategories();
 
-  // Create shop mutation
-  const createShopMutation = useMutation({
-    mutationFn: async (data: CreateShopMutationData) => {
-      console.log('=== ADD SHOP DIALOG: MUTATION FUNCTION CALLED ===');
-      console.log('Mutation data:', data);
-      console.log('CREATE_SHOP mutation:', CREATE_SHOP);
-
-      try {
-        const result = await hasuraRequest(CREATE_SHOP, data);
-        console.log('=== ADD SHOP DIALOG: MUTATION SUCCESS ===');
-        console.log('Mutation result:', result);
-        return result;
-      } catch (error: any) {
-        console.error('=== ADD SHOP DIALOG: MUTATION ERROR ===');
-        console.error('Mutation error:', error);
-        console.error('Error details:', {
-          message: error?.message,
-          response: error?.response,
-          status: error?.response?.status,
-          data: error?.response?.data,
-        });
-        throw error;
-      }
-    },
-    onSuccess: data => {
-      console.log('=== ADD SHOP DIALOG: ON SUCCESS CALLED ===');
-      console.log('Success data:', data);
-      toast({
-        title: 'Success',
-        description: 'Shop created successfully!',
-      });
-      queryClient.invalidateQueries({ queryKey: ['shops'] });
-      queryClient.invalidateQueries({ queryKey: ['branchShops'] });
-      handleClose();
-    },
-    onError: (error: any) => {
-      console.error('=== ADD SHOP DIALOG: ON ERROR CALLED ===');
-      console.error('Error in onError:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error response:', error?.response);
-
-      let errorMessage = 'Failed to create shop. Please try again.';
-
-      if (error?.response?.data?.errors) {
-        const graphqlErrors = error.response.data.errors;
-        console.error('GraphQL errors:', graphqlErrors);
-        errorMessage = graphqlErrors.map((err: any) => err.message).join(', ');
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
-
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    },
-  });
+  // Fetch plans
+  const { data: plansData, isLoading: plansLoading } = usePlans();
 
   const handleInputChange = (field: keyof CreateShopFormData, value: any) => {
     setFormData(prev => ({
@@ -244,7 +196,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
@@ -257,29 +209,56 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
         return;
       }
 
-      // Validate file size (2MB limit)
-      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      // Validate file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
         toast({
           title: 'Error',
-          description: 'Image file size must be less than 2MB.',
+          description: 'Image file size must be less than 10MB.',
           variant: 'destructive',
         });
         return;
       }
 
       setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setImagePreview(URL.createObjectURL(file));
+
+      try {
+        setIsUploading(true);
+        setUploadProgress(0);
+
+        const url = await uploadFileToFirebase(
+          file,
+          progress => setUploadProgress(progress),
+          'images',
+          undefined,
+          'company images and logos'
+        );
+
+        setFormData(prev => ({ ...prev, logo: url }));
+        setIsUploading(false);
+        toast({
+          title: 'Success',
+          description: 'Logo uploaded successfully!',
+        });
+      } catch (error) {
+        console.error('Upload failed:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to upload logo',
+          variant: 'destructive',
+        });
+        setIsUploading(false);
+        setImageFile(null);
+        setImagePreview(null);
+      }
     }
   };
 
   const handleRemoveLogo = () => {
     setImageFile(null);
     setImagePreview(null);
+    setFormData(prev => ({ ...prev, logo: null }));
     // Clear the file input
     const fileInput = document.getElementById('logo') as HTMLInputElement;
     if (fileInput) {
@@ -316,7 +295,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
 
     const submitData = {
       ...formData,
-      logo: imagePreview,
+      // logo is already in formData.logo from the upload
     };
 
     console.log('=== ADD SHOP DIALOG: SUBMITTING DATA ===');
@@ -342,7 +321,16 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Clean the data to avoid null values for String fields
+    const selectedPlan = plansData?.plans?.find(p => p.id === formData.plan_id);
+    if (!selectedPlan) {
+      toast({
+        title: 'Error',
+        description: 'Please select a subscription plan.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const cleanedData = {
       name: submitData.name,
       description: submitData.description?.trim() || undefined,
@@ -362,8 +350,43 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
     console.log('=== ADD SHOP DIALOG: CLEANED DATA ===');
     console.log('Cleaned data:', cleanedData);
 
-    createShopMutation.mutate(cleanedData as CreateShopMutationData);
+    createShopMutation.mutate({
+      shop: cleanedData,
+      plan: selectedPlan,
+      billing_cycle: formData.billing_cycle,
+    });
   };
+
+  // Update mutation logic to use the new endpoint
+  const createShopMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch('/api/mutations/shops/create-with-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to create shop');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Shop and subscription created successfully!',
+      });
+      queryClient.invalidateQueries({ queryKey: ['api', 'shops'] });
+      handleClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const handleClose = () => {
     setFormData({
@@ -392,9 +415,13 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
       tin: '',
       ssd: '',
       is_active: true,
+      plan_id: '',
+      billing_cycle: 'monthly',
     });
     setImageFile(null);
     setImagePreview(null);
+    setUploadProgress(0);
+    setIsUploading(false);
     // Clear the file input
     const fileInput = document.getElementById('logo') as HTMLInputElement;
     if (fileInput) {
@@ -421,17 +448,24 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
             <div className="flex items-start gap-4">
               <div className="relative">
                 <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Logo preview"
-                      className="h-full w-full object-contain"
-                    />
+                  {imagePreview || formData.logo ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={imagePreview || formData.logo || ''}
+                        alt="Logo preview"
+                        className={`h-full w-full object-contain ${isUploading ? 'opacity-50' : ''}`}
+                      />
+                      {isUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <Store className="h-10 w-10 text-muted-foreground" />
                   )}
                 </div>
-                {imagePreview && (
+                {(imagePreview || formData.logo) && !isUploading && (
                   <Button
                     type="button"
                     variant="destructive"
@@ -445,25 +479,52 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
               <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="space-y-2">
                   <Input
-                    id="logo"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="flex-1"
+                    placeholder="Logo URL..."
+                    value={formData.logo || ''}
+                    onChange={e => handleInputChange('logo', e.target.value)}
+                    disabled={isUploading}
                   />
-                  {imagePreview && (
-                    <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo}>
-                      Remove
-                    </Button>
-                  )}
+                  <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground whitespace-nowrap">
+                        or upload file
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="logo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="flex-1"
+                      disabled={isUploading}
+                    />
+                    {imagePreview && !isUploading && (
+                      <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo}>
+                        Remove
+                      </Button>
+                    )}
+                  </div>
                 </div>
+                {isUploading && (
+                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                    <div
+                      className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                )}
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>• Recommended size: 512x512px</p>
                   <p>• Supported formats: JPG, PNG, GIF, WebP</p>
-                  <p>• Maximum file size: 2MB</p>
-                  {imageFile && (
+                  <p>• Maximum file size: 10MB</p>
+                  {imageFile && !isUploading && (
                     <p className="text-green-600 font-medium">
                       ✓ {imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)}MB)
                     </p>
@@ -472,6 +533,7 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
           </div>
+          {/* rest of the form */}
 
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -513,6 +575,53 @@ const AddShopDialog: React.FC<AddShopDialogProps> = ({ isOpen, onClose }) => {
                   <span className="font-medium">{formData.image.split('/').pop()}</span>
                 </div>
               )}
+            </div>
+          </div>
+
+          <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-4">
+            <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+              <CreditCard className="h-4 w-4" /> Subscription Plan
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="plan">Select Plan *</Label>
+                <Select
+                  value={formData.plan_id}
+                  onValueChange={value => handleInputChange('plan_id', value)}
+                  disabled={plansLoading}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue
+                      placeholder={plansLoading ? 'Loading plans...' : 'Select a plan'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plansData?.plans?.map(plan => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name} -{' '}
+                        {formData.billing_cycle === 'monthly'
+                          ? `RWF ${plan.price_monthly}/mo`
+                          : `RWF ${plan.price_yearly}/yr`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing_cycle">Billing Cycle</Label>
+                <Select
+                  value={formData.billing_cycle}
+                  onValueChange={value => handleInputChange('billing_cycle', value)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select cycle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

@@ -8,6 +8,7 @@ export interface ModuleAction {
 
 export interface ModuleDescription {
   title: string;
+  group: string;
   description: string;
   actions: ModuleAction[];
 }
@@ -19,6 +20,7 @@ export interface ModuleDescription {
 export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   checkout: {
     title: 'Checkout & POS',
+    group: 'Operations',
     description: 'Manage point-of-sale operations and order processing',
     actions: [
       { key: 'access', label: 'Access Checkout', description: 'Can access the checkout page' },
@@ -51,6 +53,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   staff_management: {
     title: 'Staff Management',
+    group: 'Staff & Access',
     description: 'Manage staff accounts and permissions',
     actions: [
       {
@@ -90,6 +93,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   inventory: {
     title: 'Inventory Management',
+    group: 'Inventory & Catalog',
     description: 'Manage product inventory and stock levels',
     actions: [
       { key: 'access', label: 'Access Inventory', description: 'Can access inventory page' },
@@ -118,6 +122,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   transactions: {
     title: 'Transactions',
+    group: 'Finance',
     description: 'View and manage financial transactions',
     actions: [
       { key: 'access', label: 'Access Transactions', description: 'Can access transactions page' },
@@ -140,6 +145,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   discounts: {
     title: 'Discounts & Promotions',
+    group: 'Finance',
     description: 'Manage discount codes and promotional offers',
     actions: [
       { key: 'access', label: 'Access Discounts', description: 'Can access discounts page' },
@@ -169,6 +175,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   company_dashboard: {
     title: 'Company Dashboard',
+    group: 'Dashboards',
     description: 'View company-wide analytics and reports',
     actions: [
       { key: 'access', label: 'Access Dashboard', description: 'Can access company dashboard' },
@@ -189,6 +196,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   shop_dashboard: {
     title: 'Shop Dashboard',
+    group: 'Dashboards',
     description: 'View shop-specific analytics and performance',
     actions: [
       { key: 'access', label: 'Access Dashboard', description: 'Can access shop dashboard' },
@@ -221,6 +229,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   financial_overview: {
     title: 'Financial Overview',
+    group: 'Finance',
     description: 'View and manage financial data and reports',
     actions: [
       {
@@ -253,6 +262,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   pos_terminal: {
     title: 'POS Terminal',
+    group: 'Operations',
     description: 'Point of sale terminal operations',
     actions: [
       { key: 'access', label: 'Access POS Terminal', description: 'Can access POS terminal' },
@@ -271,6 +281,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   products: {
     title: 'Products',
+    group: 'Inventory & Catalog',
     description: 'Manage product catalog and information',
     actions: [
       { key: 'access', label: 'Access Products', description: 'Can access products page' },
@@ -294,6 +305,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   orders: {
     title: 'Orders',
+    group: 'Operations',
     description: 'Manage customer orders and order processing',
     actions: [
       { key: 'access', label: 'Access Orders', description: 'Can access orders page' },
@@ -313,6 +325,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   users: {
     title: 'Users',
+    group: 'Staff & Access',
     description: 'Manage user accounts and customer information',
     actions: [
       { key: 'access', label: 'Access Users', description: 'Can access users page' },
@@ -334,6 +347,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   shops: {
     title: 'Shops',
+    group: 'System',
     description: 'Manage shop locations and settings',
     actions: [
       { key: 'access', label: 'Access Shops', description: 'Can access shops page' },
@@ -355,6 +369,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   shoppers: {
     title: 'Shoppers',
+    group: 'Engagement & CRM',
     description: 'Manage shopper accounts and information',
     actions: [
       { key: 'access', label: 'Access Shoppers', description: 'Can access shoppers page' },
@@ -376,6 +391,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   wallet: {
     title: 'Wallet Operations',
+    group: 'Finance',
     description: 'Manage wallet transactions and balances',
     actions: [
       { key: 'access', label: 'Access Wallet', description: 'Can access wallet page' },
@@ -397,6 +413,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   refunds: {
     title: 'Refunds',
+    group: 'Finance',
     description: 'Manage refund requests and processing',
     actions: [
       { key: 'access', label: 'Access Refunds', description: 'Can access refunds page' },
@@ -418,6 +435,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   tickets: {
     title: 'Tickets',
+    group: 'Engagement & CRM',
     description: 'Manage support tickets and customer service',
     actions: [
       { key: 'access', label: 'Access Tickets', description: 'Can access tickets page' },
@@ -436,6 +454,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   help: {
     title: 'Help Center',
+    group: 'Engagement & CRM',
     description: 'Manage help articles and documentation',
     actions: [
       { key: 'access', label: 'Access Help', description: 'Can access help center' },
@@ -468,6 +487,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   settings: {
     title: 'Settings',
+    group: 'System',
     description: 'Manage system settings and configuration',
     actions: [
       { key: 'access', label: 'Access Settings', description: 'Can access settings page' },
@@ -488,6 +508,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   promotions: {
     title: 'Promotions',
+    group: 'Engagement & CRM',
     description: 'Manage promotional campaigns and offers',
     actions: [
       { key: 'access', label: 'Access Promotions', description: 'Can access promotions page' },
@@ -525,6 +546,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   delivery_settings: {
     title: 'Delivery Settings',
+    group: 'Logistics & Suppliers',
     description: 'Manage delivery zones and settings',
     actions: [
       {
@@ -561,6 +583,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   referrals: {
     title: 'Referrals',
+    group: 'Engagement & CRM',
     description: 'Track and manage user referrals and statistics',
     actions: [
       { key: 'access', label: 'Access Referrals', description: 'Can access referrals page' },
@@ -570,6 +593,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   project_users: {
     title: 'Project Users',
+    group: 'Staff & Access',
     description: 'Manage project-specific user roles and access',
     actions: [
       {
@@ -581,6 +605,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   restaurants: {
     title: 'Restaurants',
+    group: 'System',
     description: 'Manage restaurant listings and menus',
     actions: [
       { key: 'access', label: 'Access Restaurants', description: 'Can access restaurants page' },
@@ -617,13 +642,176 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       },
     ],
   },
+  // Granular Production Modules
+  recipes: {
+    title: 'Recipes',
+    group: 'Inventory & Catalog',
+    description: 'Manage food and product recipes',
+    actions: [
+      { key: 'access', label: 'Access Recipes', description: 'Can access recipes page' },
+      { key: 'view', label: 'View Recipes', description: 'Can view recipe details' },
+      {
+        key: 'manage',
+        label: 'Manage Recipes',
+        description: 'Can create, edit and delete recipes',
+      },
+    ],
+  },
+  production_orders: {
+    title: 'Production Orders',
+    group: 'Inventory & Catalog',
+    description: 'Manage manufacturing and kitchen orders',
+    actions: [
+      { key: 'access', label: 'Access Orders', description: 'Can access production orders' },
+      { key: 'view', label: 'View Orders', description: 'Can view production order status' },
+      { key: 'manage', label: 'Manage Orders', description: 'Can create and fulfill orders' },
+    ],
+  },
+  production_dashboard: {
+    title: 'Production Dashboard',
+    group: 'Dashboards',
+    description: 'Overview of kitchen and production activity',
+    actions: [
+      { key: 'access', label: 'Access Dashboard', description: 'Can access production dashboard' },
+      { key: 'view', label: 'View Analytics', description: 'Can view production metrics' },
+    ],
+  },
+  cost_profit: {
+    title: 'Cost & Profit',
+    group: 'Finance',
+    description: 'Analyze production costs and margins',
+    actions: [
+      { key: 'access', label: 'Access Analytics', description: 'Can access cost & profit data' },
+      { key: 'view', label: 'View Reports', description: 'Can view financial production reports' },
+    ],
+  },
+  simulate_stock: {
+    title: 'Simulate Stock',
+    group: 'Inventory & Catalog',
+    description: 'Run stock deduction and requirement simulations',
+    actions: [
+      { key: 'access', label: 'Access Simulator', description: 'Can access stock simulator' },
+      { key: 'view', label: 'View Results', description: 'Can view simulation outcomes' },
+      { key: 'run', label: 'Run Simulation', description: 'Can execute new simulations' },
+    ],
+  },
+  // Granular Procurement Modules
+  procurement_dashboard: {
+    title: 'Procurement Dashboard',
+    group: 'Dashboards',
+    description: 'Overview of supply chain and purchasing',
+    actions: [
+      { key: 'access', label: 'Access Dashboard', description: 'Can access procurement dashboard' },
+      { key: 'view', label: 'View Metrics', description: 'Can view purchasing analytics' },
+    ],
+  },
+  suppliers: {
+    title: 'Suppliers',
+    group: 'Logistics & Suppliers',
+    description: 'Manage vendors and supplier directories',
+    actions: [
+      { key: 'access', label: 'Access Suppliers', description: 'Can access suppliers page' },
+      { key: 'view', label: 'View Suppliers', description: 'Can view vendor details' },
+      {
+        key: 'manage',
+        label: 'Manage Suppliers',
+        description: 'Can create and edit vendor profiles',
+      },
+    ],
+  },
+  quotations: {
+    title: 'Quotations',
+    group: 'Logistics & Suppliers',
+    description: 'Manage supplier price quotes and bids',
+    actions: [
+      { key: 'access', label: 'Access Quotations', description: 'Can access quotations page' },
+      { key: 'view', label: 'View Quotations', description: 'Can view price quotes' },
+      { key: 'manage', label: 'Manage Quotations', description: 'Can create and compare quotes' },
+    ],
+  },
+  purchase_orders: {
+    title: 'Purchase Orders',
+    group: 'Logistics & Suppliers',
+    description: 'Manage procurement orders and fulfillment',
+    actions: [
+      { key: 'access', label: 'Access POs', description: 'Can access purchase orders' },
+      { key: 'view', label: 'View POs', description: 'Can view order status' },
+      { key: 'manage', label: 'Manage POs', description: 'Can create and approve purchase orders' },
+    ],
+  },
+  // Others
+  reels: {
+    title: 'Reels',
+    group: 'Operations',
+    description: 'Manage short video content and engagement',
+    actions: [
+      { key: 'access', label: 'Access Reels', description: 'Can access reels management' },
+      { key: 'view', label: 'View Reels', description: 'Can view video content' },
+      { key: 'manage', label: 'Manage Content', description: 'Can upload and edit reels' },
+    ],
+  },
+  point_of_sale: {
+    title: 'Point of Sale',
+    group: 'Operations',
+    description: 'Unified point of sale operations',
+    actions: [
+      { key: 'access', label: 'Access POS', description: 'Can access the POS system' },
+      { key: 'park_sale', label: 'Park Sale', description: 'Can put sales on hold' },
+      { key: 'process_sale', label: 'Process Sale', description: 'Can complete transactions' },
+    ],
+  },
   pages: {
-    title: 'Pages',
-    description: 'Manage custom pages and content',
-    actions: [{ key: 'access', label: 'Access Pages', description: 'Can access pages management' }],
+    title: 'Page Access Control',
+    group: 'System',
+    description: 'Control visibility of sidebar menu items and page access',
+    actions: [
+      { key: 'access', label: 'Access Pages Module', description: 'Can access page management' },
+      { key: 'access_dashboard', label: 'Dashboard', description: 'Can access main dashboard' },
+      { key: 'access_orders', label: 'Orders', description: 'Can access orders management' },
+      { key: 'access_shops', label: 'Shops', description: 'Can access shop management' },
+      { key: 'access_products', label: 'Products', description: 'Can access product management' },
+      { key: 'access_users', label: 'Customers', description: 'Can access customer management' },
+      { key: 'access_shoppers', label: 'Shoppers', description: 'Can access shopper management' },
+      {
+        key: 'access_project_users',
+        label: 'Project Users',
+        description: 'Can access staff/project users',
+      },
+      {
+        key: 'access_logistics',
+        label: 'Logistics',
+        description: 'Can access logistics partner management',
+      },
+      { key: 'access_pets', label: 'Pet Vendors', description: 'Can access pet vendor management' },
+      { key: 'access_pos', label: 'POS System', description: 'Can access point of sale sections' },
+      {
+        key: 'access_inventory',
+        label: 'Inventory',
+        description: 'Can access inventory management',
+      },
+      {
+        key: 'access_procurement',
+        label: 'Procurement',
+        description: 'Can access procurement module',
+      },
+      {
+        key: 'access_production',
+        label: 'Production',
+        description: 'Can access production module',
+      },
+      {
+        key: 'access_financial_overview',
+        label: 'Finance',
+        description: 'Can access financial reports',
+      },
+      { key: 'access_wallet', label: 'Wallet', description: 'Can access company wallet' },
+      { key: 'access_tickets', label: 'Support', description: 'Can access support tickets' },
+      { key: 'access_settings', label: 'Settings', description: 'Can access system settings' },
+    ],
   },
   plasmarket: {
     title: 'PlasMarket',
+    group: 'System',
     description: 'Manage the business directory and global marketplace',
     actions: [
       {
@@ -653,8 +841,23 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
       },
     ],
   },
+  influencers: {
+    title: 'Influencers',
+    group: 'Marketing',
+    description: 'Manage influencer profiles, commissions, and earnings',
+    actions: [
+      { key: 'access', label: 'Access Influencers', description: 'Can access influencers page' },
+      { key: 'view_earnings', label: 'View Earnings', description: 'Can view influencer earnings' },
+      {
+        key: 'manage_influencers',
+        label: 'Manage Influencers',
+        description: 'Can create, edit, and delete influencers',
+      },
+    ],
+  },
   withdraw_requests: {
     title: 'Withdraw Requests',
+    group: 'Finance',
     description: 'Manage shopper and business wallet withdraw requests',
     actions: [
       {
@@ -673,6 +876,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   procurement: {
     title: 'Procurement',
+    group: 'Logistics & Suppliers',
     description: 'Manage back-office procurement operations',
     actions: [
       { key: 'access', label: 'Access', description: 'Can access procurement module' },
@@ -709,6 +913,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   production: {
     title: 'Production & Recipes',
+    group: 'Inventory & Catalog',
     description: 'Manage recipes, production orders, and stock simulations',
     actions: [
       { key: 'access', label: 'Access Production', description: 'Can access production module' },
@@ -747,6 +952,7 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
   },
   tax: {
     title: 'Tax & Forecasting',
+    group: 'Finance',
     description: 'Manage tax declarations and forecast tax liabilities',
     actions: [
       { key: 'access', label: 'Access Tax', description: 'Can access tax module' },
@@ -757,6 +963,93 @@ export const MODULE_DESCRIPTIONS: Record<PrivilegeKey, ModuleDescription> = {
         description: 'Can manage tax declarations',
       },
       { key: 'export_reports', label: 'Export Reports', description: 'Can export tax reports' },
+    ],
+  },
+  ai_chat: {
+    title: 'AI Chat',
+    group: 'Engagement & CRM',
+    description: 'Access and utilize the AI assistant for reporting and queries',
+    actions: [
+      { key: 'access', label: 'Access AI Chat', description: 'Can access the AI chat page' },
+      { key: 'use_chat', label: 'Use Chat', description: 'Can send messages to the AI assistant' },
+    ],
+  },
+  subscriptions: {
+    title: 'Subscriptions',
+    group: 'System',
+    description: 'Manage SaaS subscriptions, plans, and feature limits',
+    actions: [
+      {
+        key: 'access',
+        label: 'Access Subscriptions',
+        description: 'Can access the subscriptions module',
+      },
+      {
+        key: 'manage_plans',
+        label: 'Manage Plans',
+        description: 'Can view, create, edit, and delete subscription plans',
+      },
+      {
+        key: 'manage_modules',
+        label: 'Manage Modules',
+        description: 'Can view, create, edit, and delete software modules',
+      },
+      {
+        key: 'assign_plan_modules',
+        label: 'Assign Plan Modules',
+        description: 'Can link modules to subscription plans',
+      },
+      {
+        key: 'manage_shop_subscriptions',
+        label: 'Manage Shop Subscriptions',
+        description: 'Can view and modify active shop subscriptions',
+      },
+    ],
+  },
+  logistics: {
+    title: 'Logistics Partner',
+    group: 'Logistics & Suppliers',
+    description: 'Manage logistics partners, fleet vehicles, and driver assignments',
+    actions: [
+      {
+        key: 'access',
+        label: 'Access Logistics',
+        description: 'Can access logistics partner module',
+      },
+      {
+        key: 'view_accounts',
+        label: 'View Accounts',
+        description: 'Can view logistics partner accounts',
+      },
+      {
+        key: 'manage_vehicles',
+        label: 'Manage Vehicles',
+        description: 'Can manage fleet vehicles',
+      },
+      {
+        key: 'manage_assignments',
+        label: 'Manage Assignments',
+        description: 'Can assign drivers to vehicles',
+      },
+    ],
+  },
+  pets: {
+    title: 'Pet Vendor',
+    group: 'Operations',
+    description: 'Manage pet vendors, inventory, and adoption processes',
+    actions: [
+      { key: 'access', label: 'Access Pets', description: 'Can access pet vendor module' },
+      { key: 'view_vendors', label: 'View Vendors', description: 'Can view pet vendor accounts' },
+      {
+        key: 'manage_pets',
+        label: 'Manage Pets',
+        description: 'Can manage pet listings and inventory',
+      },
+      {
+        key: 'manage_adoptions',
+        label: 'Manage Adoptions',
+        description: 'Can manage pet adoption workflows',
+      },
     ],
   },
 };

@@ -69,16 +69,50 @@ const GET_ALL_REEL_ORDERS = gql`
           longitude
         }
       }
-      Shoppers {
+      shoppers {
         id
-        name
+        full_name
+        phone_number
+      }
+      Wallet_Transactions {
+        amount
+        created_at
+        currency
+        description
+        id
+        mtn_response
+        petAdoptionId
         phone
-        email
-        profile_picture
-        shopper {
-          full_name
-          phone_number
-        }
+        reference_id
+        relate_business_order_id
+        related_order_id
+        related_reel_orderId
+        related_restaurant_order_id
+        status
+        type
+        vehicleBookingsId
+        wallet_id
+      }
+      order_transactions {
+        amount
+        business_order_id
+        created_at
+        currency
+        id
+        mtn_response
+        order_id
+        package_id
+        petAdoptionId
+        phone
+        reel_order_id
+        reference_id
+        restaurant_order_id
+        status
+        type
+        updated_at
+        user_id
+        vehicleBookingsId
+        wallet_id
       }
     }
   }
@@ -179,14 +213,13 @@ export async function GET(req: Request) {
             longitude?: number | null;
           } | null;
         } | null;
-        Shoppers: {
+        shoppers: {
           id: string;
-          name?: string | null;
-          phone?: string | null;
-          email?: string | null;
-          profile_picture?: string | null;
-          shopper?: { full_name?: string; phone_number?: string } | null;
+          full_name?: string | null;
+          phone_number?: string | null;
         } | null;
+        Wallet_Transactions?: Array<any>;
+        order_transactions?: Array<any>;
       }>;
     }>(GET_ALL_REEL_ORDERS, { where });
 
@@ -215,7 +248,16 @@ export async function GET(req: Request) {
       User: o.User,
       Address: o.Address,
       Reel: o.Reel,
-      Shoppers: o.Shoppers,
+      Wallet_Transactions: o.Wallet_Transactions ?? [],
+      order_transactions: o.order_transactions ?? [],
+      shopper: o.shoppers
+        ? {
+            id: o.shoppers.id,
+            name: o.shoppers.full_name || '',
+            phone: o.shoppers.phone_number || '',
+            email: '',
+          }
+        : undefined,
       Shop: o.Reel?.Shops
         ? {
             id: o.Reel.Shops.id,

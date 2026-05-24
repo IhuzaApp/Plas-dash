@@ -109,7 +109,7 @@ export const GET_USERS = `
       profile_picture
       role
       updated_at
-      shopper {
+      shoppers {
         Employment_id
         active
         address
@@ -127,6 +127,133 @@ export const GET_USERS = `
         updated_at
         user_id
       }
+    }
+  }
+`;
+
+export const GET_LOGISTICS_ACCOUNT = `
+  query GetLogisticsAccount($where: logisticsAccount_bool_exp!) {
+    logisticsAccount(where: $where) {
+      user_id
+      updated_on
+      type
+      status
+      proof_address
+      num_of_cars
+      nationalIdOrPassport
+      license
+      id
+      fullname
+      disabled
+      created_at
+      business_cert
+      businessName
+      address
+      RentalVehicles {
+        category
+        created_at
+        disabled
+        drive_provided
+        engine
+        exterior
+        fuel_type
+        id
+        interior
+        location
+        logisticAccount_id
+        main_photo
+        name
+        passenger
+        platNumber
+        price
+        refundable_amount
+        seats
+        status
+        transmission
+        updated_at
+      }
+      User {
+        id
+        name
+        email
+      }
+    }
+  }
+`;
+
+export const GET_PET_VENDOR = `
+  query GetPetVendor($where: pet_vendors_bool_exp!) {
+    pet_vendors(where: $where) {
+      address
+      created_at
+      disabled
+      fullname
+      id
+      nationalIdOrPassport
+      organisationName
+      proof_residency
+      rdb_certificate
+      sherter_permit
+      specialties
+      status
+      updated_at
+      user_id
+      pets {
+        age
+        amount
+        breed
+        color
+        created_at
+        favourite_food
+        free
+        gender
+        id
+        image
+        months
+        name
+        parent_images
+        pet_type
+        quantity
+        quantity_sold
+        story
+        updated_at
+        vaccinated
+        vaccination_cert
+        vaccinations
+        vendor_id
+        video
+        weight
+        petAdoptions {
+          address
+          amount
+          comment
+          created_at
+          customer_id
+          id
+          latitude
+          longitude
+          pet_id
+          phone
+          status
+          updated_at
+        }
+      }
+    }
+  }
+`;
+
+// Dishes queries
+export const GET_DISHES_BY_NAME = `
+  query GetDishesByName($name: String!) {
+    dishes(where: { name: { _ilike: $name } }, limit: 10) {
+      id
+      name
+      description
+      category
+      image
+      ingredients
+      created_at
+      update_at
     }
   }
 `;
@@ -202,6 +329,8 @@ export const GET_PRODUCTS_BY_SHOP = `
       quantity
       measurement_unit
       category
+      supplier
+      image
       created_at
       updated_at
       is_active
@@ -215,6 +344,39 @@ export const GET_PRODUCTS_BY_SHOP = `
         create_at
       }
       Shop {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const GET_MENU_BY_RESTAURANT = `
+  query GetMenuByRestaurant($restaurant_id: uuid!) {
+    restaurant_menu(where: { restaurant_id: { _eq: $restaurant_id } }) {
+      id
+      dish_id
+      restaurant_id
+      price
+      quantity
+      preparingTime
+      discount
+      image
+      created_at
+      updated_at
+      is_active
+      SKU
+      dish {
+        id
+        name
+        description
+        category
+        image
+        ingredients
+        created_at
+        update_at
+      }
+      Restaurant {
         id
         name
       }
@@ -419,13 +581,15 @@ export const GET_ALL_WALLETS = `
       reserved_balance
       available_balance
       last_updated
-      User {
-        id
-        name
-        email
-        phone
-        profile_picture
-        is_active
+      shoppers {
+        User {
+          id
+          name
+          email
+          phone
+          profile_picture
+          is_active
+        }
       }
       Wallet_Transactions {
         id
@@ -487,14 +651,16 @@ export const GET_ALL_WALLET_TRANSACTIONS = `
         available_balance
         reserved_balance
         last_updated
-        User {
-          id
-          name
-          email
-          phone
-          gender
-          profile_picture
-          is_active
+        shoppers {
+          User {
+            id
+            name
+            email
+            phone
+            gender
+            profile_picture
+            is_active
+          }
         }
       }
       Order {
@@ -583,37 +749,46 @@ export const GET_ALL_WALLETS_WITH_TRANSACTIONS = `
           user_id
         }
       }
-      User {
-        shopper {
-          address
-          active
-          full_name
-          collection_comment
-          driving_license
-          drivingLicense_Image
+      shoppers {
+        User {
+          email
           id
-          guarantorPhone
-          guarantorRelationship
-          guarantor
+          is_active
+          name
           phone
-          national_id_photo_front
-          needCollection
-          signature
+          profile_picture
           updated_at
-          transport_mode
-          telegram_id
-          status
-          user_id
-          phone_number
-          profile_photo
           created_at
-          background_check_completed
-          latitude
-          longitude
-          mutual_StatusCertificate
-          national_id
-          national_id_photo_back
+          gender
+          role
         }
+        address
+        active
+        full_name
+        collection_comment
+        driving_license
+        drivingLicense_Image
+        id
+        guarantorPhone
+        guarantorRelationship
+        guarantor
+        phone
+        national_id_photo_front
+        needCollection
+        signature
+        updated_at
+        transport_mode
+        status
+        user_id
+        phone_number
+        profile_photo
+        created_at
+        background_check_completed
+        latitude
+        longitude
+        mutual_StatusCertificate
+        national_id
+        national_id_photo_back
       }
     }
   }
@@ -793,12 +968,25 @@ export const GET_ALL_PENDING_PAYOUTS = `
       updated_on
       user_id
       wallet_id
+      Users {
+        email
+        id
+        is_guest
+        phone
+        name
+        profile_picture
+      }
       Wallets {
         id
         available_balance
         last_updated
         reserved_balance
         shopper_id
+        shoppers {
+          full_name
+          phone_number
+          profile_photo
+        }
         Wallet_Transactions {
           amount
           created_at
@@ -810,16 +998,6 @@ export const GET_ALL_PENDING_PAYOUTS = `
           related_reel_orderId
           related_order_id
           relate_business_order_id
-        }
-        User {
-          email
-          gender
-          id
-          is_guest
-          is_active
-          name
-          phone
-          profile_picture
         }
       }
     }
@@ -1154,7 +1332,6 @@ export const GET_SHOPPERS = `
         updated_at
       }
     }
-    telegram_id
     Revenues {
       amount
       commission_percentage
@@ -1193,6 +1370,7 @@ export const GET_SYSTEM_CONFIG = `
       withDrawCharges
       enableRush
       allowScheduledDeliveries
+      tax
     }
   }
 `;
@@ -1372,7 +1550,6 @@ export const GET_SHOPPER_FULL_DETAILS = `
           updated_at
         }
       }
-      telegram_id
       Revenues {
         amount
         commission_percentage
@@ -1498,13 +1675,13 @@ export const GET_TOP_SHOPPERS = `
   query TopShoppers($start: timestamptz!, $end: timestamptz!) {
     Users(
       where: {
-        shopper: {active: {_eq: true}}
+        shoppers: {active: {_eq: true}}
       }
     ) {
       id
       name
       profile_picture
-      shopper {
+      shoppers {
         id
         active
         status
@@ -1528,59 +1705,10 @@ export const GET_TOP_SHOPPERS = `
   }
 `;
 
+// Promotions queries
 export const GET_PROMOTIONS = `
   query GetPromotions {
     promotions {
-      id
-      name
-      code
-      discount
-      period
-      status
-      usage
-      created_at
-      update_on
-    }
-  }
-`;
-
-export const CREATE_PROMOTION = `
-  mutation CreatePromotion($name: String!, $code: String!, $discount: String!, $period: String!, $usage: String!, $status: String!) {
-    insert_promotions_one(object: {
-      name: $name,
-      code: $code,
-      discount: $discount,
-      period: $period,
-      usage: $usage,
-      status: $status
-    }) {
-      id
-      name
-      code
-      discount
-      period
-      status
-      usage
-      created_at
-      update_on
-    }
-  }
-`;
-
-export const UPDATE_PROMOTION = `
-  mutation UpdatePromotion($id: uuid!, $name: String!, $code: String!, $discount: String!, $period: String!, $usage: String!, $status: String!) {
-    update_promotions_by_pk(
-      pk_columns: { id: $id },
-      _set: {
-        name: $name,
-        code: $code,
-        discount: $discount,
-        period: $period,
-        usage: $usage,
-        status: $status,
-        update_on: "now()"
-      }
-    ) {
       id
       name
       code
@@ -1637,7 +1765,7 @@ export const GET_ALL_REVENUE_DETAILED = `
       shop_id
       shopper_id
       type
-      shopper {
+      shoppers {
         Employment_id
         active
         address
@@ -1651,7 +1779,6 @@ export const GET_ALL_REVENUE_DETAILED = `
         phone_number
         profile_photo
         status
-        telegram_id
         transport_mode
         updated_at
         user_id
@@ -1679,6 +1806,7 @@ export const GET_ORG_EMPLOYEES_BY_SHOP = `
       multAuthEnabled
       password
       phone
+      sms_auth
       restaurant_id
       shop_id
       updated_on
@@ -1721,11 +1849,20 @@ export const GET_ORG_EMPLOYEE_BY_IDENTITY = `
       id
       last_login
       multAuthEnabled
+      sms_auth
+      twoFactorSecrets
+      profile_image
       password
       phone
       restaurant_id
       roleType
       shop_id
+      Shops {
+        name
+      }
+      Restaurants {
+        name
+      }
       updated_on
       online
       twoFactorSecrets
@@ -1756,6 +1893,8 @@ export const GET_PROJECT_USER_BY_IDENTITY = `
       role
       is_active
       TwoAuth_enabled
+      sms_auth
+      twoFactorSecrets
       last_Login
       created_at
       updated_at
@@ -1781,6 +1920,8 @@ export const GET_PROJECT_USER_BY_MEMBERSHIP_ID = `
       role
       is_active
       TwoAuth_enabled
+      sms_auth
+      twoFactorSecrets
       last_Login
       created_at
       updated_at
@@ -1846,7 +1987,7 @@ export const SEARCH_PRODUCT_NAMES = `
           { sku: { _ilike: $searchTerm } }
         ]
       },
-      limit: 10,
+      limit: 30,
       order_by: { name: asc }
     ) {
       id
@@ -1907,17 +2048,10 @@ export const GET_REEL_ORDERS = `
         user_id
         video_url
       }
-      Shoppers {
-        created_at
-        email
-        gender
+      shoppers {
         id
-        is_active
-        name
-        phone
-        profile_picture
-        role
-        updated_at
+        full_name
+        phone_number
       }
       Address {
         city
@@ -1938,22 +2072,125 @@ export const GET_REEL_ORDERS = `
 // Restaurants query
 export const GET_RESTAURANTS = `
   query getRestaurantsDetails {
-    Restaurants {
+    Restaurants(order_by: { name: asc }) {
       created_at
       email
       id
+      is_active
       lat
       location
+      logo
       long
       name
       phone
       profile
-      verified
-      logo
-      is_active
       relatedTo
       tin
       ussd
+      verified
+      rdb_cert
+      reel_usages {
+        business_id
+        id
+        month
+        restaurant_id
+        shop_id
+        upload_count
+        year
+      }
+      merchant_wallet {
+        active
+        balance
+        created_at
+        id
+        restaurant_id
+        shop_id
+        update_at
+      }
+      orgEmployees {
+        Position
+        Address
+        active
+        created_on
+        dob
+        email
+        employeeID
+        fullnames
+        gender
+        id
+        last_login
+        multAuthEnabled
+        online
+        phone
+        restaurant_id
+        roleType
+        shop_id
+        updated_on
+      }
+      merchant_wallets {
+        active
+        balance
+        created_at
+        id
+        restaurant_id
+        shop_id
+        update_at
+      }
+      ai_usages {
+        business_id
+        id
+        month
+        request_count
+        requests_sent
+        restaurant_id
+        shop_id
+        user_id
+        year
+      }
+      shop_subscription {
+        billing_cycle
+        business_id
+        created_at
+        end_date
+        id
+        plan_id
+        restaurant_id
+        shop_id
+        start_date
+        status
+        updated_at
+        subscription_invoices {
+          created_at
+          currency
+          discount_amount
+          due_date
+          id
+          invoice_number
+          is_overdue
+          issued_at
+          paid_at
+          payment_method
+          plan_name
+          plan_price
+          status
+          subtotal_amount
+          tax_amount
+          updated_at
+        }
+        subscription_transactions {
+          amount
+          created_on
+          currency
+          id
+          phone
+          reference_id
+          status
+          subscription_id
+          type
+          update_at
+          user_id
+        }
+      }
     }
   }
 `;
@@ -1999,10 +2236,12 @@ export const GET_REELS = `
       likes
       restaurant_id
       shop_id
+      business_id
       title
       type
       user_id
       video_url
+      is_active
       reel_likes {
         created_at
         id
@@ -2074,6 +2313,13 @@ export const GET_REELS = `
         profile_picture
         role
         updated_at
+      }
+      BusinessAccount: business_account {
+        id
+        business_name
+        business_email
+        business_phone
+        face_image
       }
     }
   }
@@ -2149,7 +2395,7 @@ export const GET_REFERRAL_ORDERS = `
 
 export const GET_ORDER_OFFERS = `
   query GetOrderOffers {
-    order_offers {
+    order_offers(order_by: { offered_at: desc }) {
       business_order_id
       done_on
       expires_at
@@ -2157,48 +2403,32 @@ export const GET_ORDER_OFFERS = `
       offered_at
       order_id
       order_type
+      package_order_id
       reel_order_id
       restaurant_order_id
       round_number
       shopper_id
       status
       updated_at
+      shoppers {
+        id
+        full_name
+        phone_number
+        transport_mode
+        active
+      }
+      restaurantOrder {
+        OrderID
+        status
+        total
+      }
       reelOrders {
         OrderID
-        delivery_note
-        delivery_photo_url
-        delivery_time
-        service_fee
         status
-      }
-      ShopperUser {
-        email
-        shopper {
-          Employment_id
-          active
-          address
-          full_name
-          onboarding_step
-          phone
-          phone_number
-          status
-        }
+        total
       }
       Orders {
         OrderID
-        assigned_at
-        created_at
-        delivery_address_id
-        delivery_fee
-        delivery_notes
-        discount
-        delivery_time
-        pin
-        service_fee
-        shop_id
-        shopper_id
-        status
-        total
         updated_at
       }
       businessProductOrders {
@@ -2244,6 +2474,449 @@ export const GET_ORDER_OFFERS = `
         user_id
         voucher_code
       }
+    }
+  }
+`;
+
+export const GET_ALL_LOGISTICS_ACCOUNTS = `
+  query GetAllLogisticsAccounts {
+    logisticsAccount(order_by: {created_at: desc}) {
+      id
+      fullname
+      businessName
+      type
+      status
+      disabled
+      created_at
+      User {
+        id
+        name
+        email
+      }
+      RentalVehicles {
+        id
+        name
+        platNumber
+        status
+      }
+    }
+  }
+`;
+
+export const GET_ALL_PET_VENDORS = `
+  query GetAllPetVendors {
+    pet_vendors(order_by: {created_at: desc}) {
+      id
+      fullname
+      organisationName
+      address
+      disabled
+      created_at
+      User {
+        id
+        name
+        email
+      }
+      pets {
+        id
+        name
+        breed
+      }
+    }
+  }
+`;
+
+export const GET_PROJECT_USER_BY_ID = `
+  query GetProjectUserById($id: uuid!) {
+    ProjectUsers_by_pk(id: $id) {
+      id
+      MembershipId
+      username
+      email
+      password
+      role
+      is_active
+      TwoAuth_enabled
+      sms_auth
+      twoFactorSecrets
+      last_Login
+      created_at
+      updated_at
+      gender
+      device_details
+      profile
+      privileges
+    }
+  }
+`;
+
+export const GET_ORG_EMPLOYEE_BY_ID = `
+  query GetOrgEmployeeById($id: uuid!) {
+    orgEmployees_by_pk(id: $id) {
+      id
+      fullnames
+      email
+      phone
+      gender
+      roleType
+      active
+      last_login
+      online
+      Address
+      Position
+      shop_id
+      restaurant_id
+      multAuthEnabled
+      twoFactorSecrets
+      sms_auth
+      employeeID
+      profile_image
+    }
+  }
+`;
+
+export const GET_USER_BY_ID_SIMPLE = `
+  query GetUserByIdSimple($id: uuid!) {
+    Users_by_pk(id: $id) {
+      id
+      name
+      email
+      phone
+      gender
+      role
+      profile_picture
+      is_active
+    }
+  }
+`;
+
+export const GET_SUBSCRIPTIONS_ANALYTICS = `
+  query GetSubscriptionsAnalytics {
+    shop_subscriptions {
+      billing_cycle
+      business_id
+      created_at
+      end_date
+      id
+      plan_id
+      restaurant_id
+      shop_id
+      start_date
+      status
+      updated_at
+      Restaurant {
+        created_at
+        email
+        id
+        logo
+        name
+        profile
+      }
+      Shop {
+        id
+        image
+        logo
+        name
+      }
+      business_account {
+        id
+        business_name
+      }
+      plan {
+        name
+        id
+      }
+      subscription_invoices {
+        id
+        reel_usage {
+          business_id
+          id
+          month
+          year
+          business_account {
+            id
+            business_name
+          }
+          Restaurant {
+            id
+            name
+            logo
+          }
+          Shop {
+            id
+            image
+            logo
+            name
+          }
+        }
+        plan_name
+        ai_usage {
+          month
+          restaurant_id
+          requests_sent
+          User {
+            id
+            name
+          }
+          Shop {
+            id
+            image
+            logo
+            name
+          }
+          business_account {
+            id
+            business_name
+          }
+          Restaurant {
+            id
+            logo
+            name
+          }
+        }
+        aiUsage_id
+      }
+    }
+  }
+`;
+
+export const GET_SHOP_SUBSCRIPTIONS = `
+  query GetShopSubscriptions($where: shop_subscriptions_bool_exp!) {
+    shop_subscriptions(where: $where) {
+      billing_cycle
+      business_id
+      created_at
+      end_date
+      id
+      plan_id
+      restaurant_id
+      shop_id
+      start_date
+      status
+      updated_at
+      Shop {
+        address
+        category_id
+        created_at
+        description
+        has_wallet
+        id
+        image
+        is_active
+        latitude
+        logo
+        longitude
+        name
+        operating_hours
+        phone
+        rdb_certificate
+        relatedTo
+        ssd
+        tin
+        updated_at
+        use_wallet
+        merchant_wallet {
+          active
+          balance
+          created_at
+          id
+          restaurant_id
+          shop_id
+          update_at
+        }
+      }
+      Restaurant {
+        created_at
+        email
+        id
+        is_active
+        lat
+        location
+        logo
+        long
+        name
+        operating_hours
+        phone
+        profile
+        rdb_cert
+        relatedTo
+        tin
+        updated_at
+        ussd
+        verified
+        merchant_wallet {
+          active
+          balance
+          created_at
+          id
+          restaurant_id
+          shop_id
+          update_at
+        }
+      }
+      plan {
+        ai_request_limit
+        created_at
+        description
+        id
+        name
+        price_monthly
+        price_yearly
+        reel_limit
+        plan_modules {
+          id
+          plan_id
+          module_id
+          plan {
+            ai_request_limit
+            created_at
+            description
+            id
+            name
+            price_monthly
+            price_yearly
+            reel_limit
+          }
+          module {
+            created_at
+            group_name
+            id
+            name
+            slug
+          }
+        }
+      }
+      subscription_invoices {
+        aiUsage_id
+        created_at
+        currency
+        deleted
+        deleted_at
+        discount_amount
+        due_date
+        id
+        invoice_number
+        is_overdue
+        issued_at
+        paid_at
+        payment_method
+        plan_name
+        plan_price
+        reelUsage_id
+        shopSubscription_id
+        status
+        subtotal_amount
+        tax_amount
+        updated_at
+      }
+      Restaurant {
+        created_at
+        email
+        id
+        is_active
+        lat
+        location
+        logo
+        long
+        name
+        operating_hours
+        phone
+        profile
+        rdb_cert
+        relatedTo
+        tin
+        updated_at
+        ussd
+        verified
+        merchant_wallet {
+          active
+          balance
+          created_at
+          id
+          restaurant_id
+          shop_id
+          update_at
+        }
+      }
+    }
+  }
+`;
+
+export const GET_LATEST_USAGE = `
+  query GetLatestUsage($aiWhere: ai_usage_bool_exp!, $reelWhere: reel_usage_bool_exp!) {
+    ai_usage(
+      where: $aiWhere,
+      order_by: { year: desc, month: desc },
+      limit: 1
+    ) {
+      id
+      month
+      request_count
+      requests_sent
+      year
+    }
+    reel_usage(
+      where: $reelWhere,
+      order_by: { year: desc, month: desc },
+      limit: 1
+    ) {
+      id
+      month
+      upload_count
+      year
+    }
+  }
+`;
+
+export const GET_PAYMENT_METHODS = `
+  query GetPaymentMethods($_eq: uuid = "") {
+    Payment_Methods(where: {shop_id: {_eq: $_eq}}) {
+      CCV
+      create_at
+      id
+      is_default
+      method
+      names
+      number
+      restaurant_id
+      shop_id
+      update_on
+      user_id
+      validity
+      Shop {
+        id
+        phone
+        name
+        rdb_certificate
+      }
+      Restaurant {
+        email
+        id
+        logo
+        name
+      }
+    }
+  }
+`;
+
+export const ADD_PAYMENT_METHOD = `
+  mutation AddPaymentMethod($object: Payment_Methods_insert_input!) {
+    insert_Payment_Methods_one(object: $object) {
+      id
+      method
+      names
+      number
+    }
+  }
+`;
+
+export const UPDATE_PAYMENT_METHOD = `
+  mutation UpdatePaymentMethod($id: uuid!, $set: Payment_Methods_set_input!) {
+    update_Payment_Methods_by_pk(pk_columns: {id: $id}, _set: $set) {
+      id
+      method
+      names
+      number
     }
   }
 `;

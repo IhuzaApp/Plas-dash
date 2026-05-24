@@ -11,6 +11,10 @@ import '@/styles/globals.css';
 import '@/styles/nprogress.css';
 import { useState } from 'react';
 import RootLayout from '@/components/layout/RootLayout';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { SessionProvider } from 'next-auth/react';
+import { GoogleMapProvider } from '@/contexts/GoogleProvider';
+import { ShopSessionProvider } from '@/contexts/ShopSessionContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,6 +26,8 @@ export default function AppRootLayout({ children }: { children: React.ReactNode 
           queries: {
             refetchOnWindowFocus: false,
             retry: 1,
+            staleTime: 5 * 60 * 1000, // 5 minutes
+            gcTime: 24 * 60 * 60 * 1000, // 24 hours
           },
         },
       })
@@ -29,23 +35,35 @@ export default function AppRootLayout({ children }: { children: React.ReactNode 
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <TooltipProvider>
-              <Suspense fallback={null}>
-                <RootLayout>{children}</RootLayout>
-              </Suspense>
-              <Toaster />
-              <Sonner />
-            </TooltipProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
+      <head>
+        <title>Plas Dashboard</title>
+        <link rel="icon" href="/favicon.png" />
+      </head>
+      <body className={inter.className} suppressHydrationWarning>
+        <SessionProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <TooltipProvider>
+                <GoogleMapProvider>
+                  <AuthProvider>
+                    <ShopSessionProvider>
+                      <Suspense fallback={null}>
+                        <RootLayout>{children}</RootLayout>
+                      </Suspense>
+                    </ShopSessionProvider>
+                  </AuthProvider>
+                </GoogleMapProvider>
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </SessionProvider>
       </body>
     </html>
   );

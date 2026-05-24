@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
@@ -26,6 +26,9 @@ const GET_PENDING_ORDER_TOTALS = gql`
       total
       service_fee
       transportation_fee
+    }
+    package_delivery(where: { status: { _nin: ["delivered", "on_the_way", "cancelled"] } }) {
+      delivery_fee
     }
   }
 `;
@@ -64,6 +67,7 @@ export async function GET(req: Request) {
       reel_orders: OrderRow[];
       restaurant_orders: OrderRow[];
       businessProductOrders: OrderRow[];
+      package_delivery: OrderRow[];
     }>(GET_PENDING_ORDER_TOTALS);
 
     const regular = sumFields(data.Orders, 'total', 'delivery_fee', 'service_fee');
@@ -75,12 +79,13 @@ export async function GET(req: Request) {
       'service_fee',
       'transportation_fee'
     );
+    const packages = sumFields(data.package_delivery, 'delivery_fee');
 
-    const total = regular + reel + restaurant + business;
+    const total = regular + reel + restaurant + business + packages;
 
     return NextResponse.json({
       total,
-      breakdown: { regular, reel, restaurant, business },
+      breakdown: { regular, reel, restaurant, business, packages },
     });
   } catch (error) {
     console.error('Error fetching pending order totals:', error);

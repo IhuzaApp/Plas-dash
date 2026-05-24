@@ -1,21 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Card } from '@/components/ui/card';
-import { Search, Filter, Plus, Loader2, RefreshCw, CalendarIcon, X } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { hasuraRequest } from '@/lib/hasura';
-import { CREATE_PROMOTION, UPDATE_PROMOTION } from '@/lib/graphql/queries';
+import { Plus } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
 import {
   Sheet,
@@ -23,113 +11,43 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-  SheetClose,
 } from '@/components/ui/sheet';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { format, addDays } from 'date-fns';
-import { DateRange } from 'react-day-picker';
-import { cn } from '@/lib/utils';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import { useCreatePromotion, useUpdatePromotion } from '@/hooks/useHasuraApi';
+import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
+import { Promotion } from '@/components/promotions/types';
+import {
+  PromotionFormValues,
+  promotionFormSchema,
+  DEFAULT_FORM_VALUES,
+} from '@/components/promotions/schema';
+import { PromotionTable } from '@/components/promotions/PromotionTable';
+import { PromotionForm } from '@/components/promotions/PromotionForm';
+import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { PromotionFilters, PromotionFilterState } from '@/components/promotions/PromotionFilters';
 
-interface Promotion {
-  id: string;
-  name: string;
-  code: string;
-  discount: string;
-  period: string;
-  status: string;
-  usage: string;
-  current_usage?: number;
-  created_at: string;
-  update_on: string;
-}
-
-interface PromotionsResponse {
-  promotions: Promotion[];
-}
-
-const DISCOUNT_OPTIONS = [
-  { value: '5%', label: '5% off' },
-  { value: '10%', label: '10% off' },
-  { value: '15%', label: '15% off' },
-  { value: '20%', label: '20% off' },
-  { value: '25%', label: '25% off' },
-  { value: '30%', label: '30% off' },
-  { value: '40%', label: '40% off' },
-  { value: '50%', label: '50% off' },
-];
-
-const USAGE_LIMIT_OPTIONS = [
-  { value: '5', label: '0/5 uses' },
-  { value: '10', label: '0/10 uses' },
-  { value: '25', label: '0/25 uses' },
-  { value: '50', label: '0/50 uses' },
-  { value: '100', label: '0/100 uses' },
-  { value: '200', label: '0/200 uses' },
-  { value: '500', label: '0/500 uses' },
-  { value: '1000', label: '0/1000 uses' },
-];
-
-const generatePromotionCode = () => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 5; i++) {
-    code += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return code;
+const DEFAULT_FILTERS: PromotionFilterState = {
+  searchQuery: '',
+  fundedBy: 'all',
+  freeDelivery: 'all',
+  promoType: 'all',
 };
-
-const promotionFormSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
-  }),
-  code: z.string().min(4, {
-    message: 'Code must be at least 4 characters.',
-  }),
-  discount: z.string().min(1, {
-    message: 'Discount is required.',
-  }),
-  period: z.string().min(1, {
-    message: 'Period is required.',
-  }),
-  usage: z.string().min(1, {
-    message: 'Usage limit is required.',
-  }),
-  status: z.string().min(1, {
-    message: 'Status is required.',
-  }),
-});
-
-type PromotionFormValues = z.infer<typeof promotionFormSchema>;
 
 const Promotions = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
-  const [date, setDate] = useState<DateRange | undefined>();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<PromotionFilterState>(DEFAULT_FILTERS);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
   const queryClient = useQueryClient();
-  const { hasAction } = usePrivilege();
+  const { hasAction, session } = usePrivilege();
+  const { orgEmployee } = useCurrentOrgEmployee();
+  const createPromotionMutation = useCreatePromotion();
+  const updatePromotionMutation = useUpdatePromotion();
+  const { data: systemConfig } = useSystemConfig();
 
   const { data, isLoading } = useQuery({
     queryKey: ['promotions'],
@@ -137,153 +55,247 @@ const Promotions = () => {
       apiGet<{ promotions: Promotion[] }>('/api/queries/promotions').then(r => r.promotions),
   });
 
+  const { data: influencersData } = useQuery({
+    queryKey: ['influencers'],
+    queryFn: () =>
+      apiGet<{ influencers: any[] }>('/api/queries/influencers').then(r => r.influencers),
+    enabled: !!session?.isProjectUser,
+  });
+
+  const { data: shopsData } = useQuery({
+    queryKey: ['shops'],
+    queryFn: () => apiGet<{ shops: any[] }>('/api/queries/shops').then(r => r.shops),
+    enabled: !!session?.isProjectUser,
+  });
+
+  const { data: restaurantsData } = useQuery({
+    queryKey: ['restaurants'],
+    queryFn: () =>
+      apiGet<{ restaurants: any[] }>('/api/queries/restaurants').then(r => r.restaurants),
+    enabled: !!session?.isProjectUser,
+  });
+
   const filteredPromotions = useMemo(() => {
-    if (!data || !searchQuery.trim()) return data;
+    if (!data) return [];
 
-    const query = searchQuery.toLowerCase().trim();
     return data.filter(promotion => {
-      return (
-        promotion.name.toLowerCase().includes(query) ||
-        promotion.code.toLowerCase().includes(query) ||
-        promotion.status.toLowerCase().includes(query) ||
-        promotion.discount.toLowerCase().includes(query)
-      );
+      // Text search
+      if (filters.searchQuery.trim()) {
+        const q = filters.searchQuery.toLowerCase().trim();
+        const matches =
+          promotion.name.toLowerCase().includes(q) ||
+          promotion.code?.toLowerCase().includes(q) ||
+          promotion.status.toLowerCase().includes(q) ||
+          (promotion.discount_value && promotion.discount_value.toLowerCase().includes(q));
+        if (!matches) return false;
+      }
+
+      // Funded by filter
+      if (filters.fundedBy !== 'all' && promotion.funded_by !== filters.fundedBy) {
+        return false;
+      }
+
+      // Free delivery filter
+      if (filters.freeDelivery === 'yes' && !promotion.free_delivery) return false;
+      if (filters.freeDelivery === 'no' && promotion.free_delivery) return false;
+
+      // Promo type filter
+      if (filters.promoType === 'influencer' && !promotion.influencer_id) return false;
+      if (
+        filters.promoType === 'standard' &&
+        promotion.influencer_id &&
+        promotion.influencer_id !== 'none'
+      )
+        return false;
+
+      return true;
     });
-  }, [data, searchQuery]);
-
-  const createMutation = useMutation({
-    mutationFn: async (values: PromotionFormValues) => {
-      const response = await hasuraRequest(CREATE_PROMOTION, values);
-      return response;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['promotions'] });
-      toast.success('Promotion created successfully');
-      setIsDrawerOpen(false);
-    },
-    onError: error => {
-      toast.error('Failed to create promotion');
-      console.error('Create promotion error:', error);
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async (values: PromotionFormValues & { id: string }) => {
-      const response = await hasuraRequest(UPDATE_PROMOTION, values);
-      return response;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['promotions'] });
-      toast.success('Promotion updated successfully');
-      setIsDrawerOpen(false);
-    },
-    onError: error => {
-      toast.error('Failed to update promotion');
-      console.error('Update promotion error:', error);
-    },
-  });
+  }, [data, filters]);
 
   const form = useForm<PromotionFormValues>({
     resolver: zodResolver(promotionFormSchema),
-    defaultValues: {
-      name: '',
-      code: '',
-      discount: '',
-      period: '',
-      usage: '',
-      status: 'active',
-    },
+    defaultValues: DEFAULT_FORM_VALUES,
   });
 
-  const onSubmit = async (values: PromotionFormValues) => {
-    if (selectedPromotion) {
-      updateMutation.mutate({ ...values, id: selectedPromotion.id });
+  const toggleRow = (id: string) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(id)) {
+      newExpandedRows.delete(id);
     } else {
-      createMutation.mutate(values);
+      newExpandedRows.add(id);
     }
+    setExpandedRows(newExpandedRows);
+  };
+
+  const onSubmit = async (values: PromotionFormValues) => {
+    try {
+      const isInfluencerPromo = values.business_type === 'none';
+
+      const payload: any = {
+        name: values.name,
+        code: isInfluencerPromo ? values.influencer_code : values.code || '',
+        promotion_type: values.promotion_type,
+        applies_to_type: values.applies_to_type,
+        applies_to_id: values.applies_to_id || undefined,
+        start_date: values.start_date.toISOString(),
+        end_date: values.end_date.toISOString(),
+        start_time: values.start_time || undefined,
+        end_time: values.end_time || undefined,
+        min_purchase_amount: values.min_purchase_amount || '',
+        usage_per_customer: values.usage_per_customer ? parseInt(values.usage_per_customer) : 10,
+        usage_limit: values.usage_limit ? parseInt(values.usage_limit) : 10,
+        priority: parseInt(values.priority) || 10,
+        status: values.status,
+        discount_type: values.promotion_type,
+        discount_value: '',
+        buy_quantity: '',
+        restaurant_id: values.business_type === 'restaurant' ? values.business_id : null,
+        shop_id: values.business_type === 'shop' ? values.business_id : null,
+        promotion_scope: values.promotion_scope,
+        customer_discount_percent: values.customer_discount_percent
+          ? parseInt(values.customer_discount_percent)
+          : null,
+
+        // 👤 INFLUENCER — only set when business_type = 'none'
+        influencer_id: isInfluencerPromo
+          ? values.influencer_id === 'none'
+            ? null
+            : values.influencer_id
+          : null,
+        influencer_code: isInfluencerPromo ? values.influencer_code || null : null,
+        commission_type: isInfluencerPromo ? values.commission_type || null : null,
+        commission_value:
+          isInfluencerPromo && values.commission_value ? parseFloat(values.commission_value) : null,
+        commission_cap:
+          isInfluencerPromo && values.commission_cap ? parseFloat(values.commission_cap) : null,
+
+        // 💰 ECONOMICS
+        funded_by: values.funded_by,
+        affects: values.affects,
+        stacking_type: values.stacking_type,
+        max_discount: values.max_discount ? parseFloat(values.max_discount) : null,
+        min_order_value: values.min_order_value ? parseFloat(values.min_order_value) : null,
+
+        // 🚚 DELIVERY
+        free_delivery: values.free_delivery ?? false,
+        delivery_paid_by: values.free_delivery ? values.delivery_paid_by || null : null,
+
+        // 💰 BUDGET — budget_limit only; budget_used is NEVER sent (backend-managed)
+        budget_limit: values.budget_limit ? parseFloat(values.budget_limit) : null,
+      };
+
+      // Influencer-only promotion overrides
+      if (isInfluencerPromo) {
+        payload.promotion_type = 'percentage';
+        payload.applies_to_type = 'entire_store';
+        payload.discount_value = '0';
+        payload.priority = 0;
+      } else {
+        if (values.promotion_type === 'percentage' || values.promotion_type === 'fixed') {
+          payload.discount_value = values.discount_value || '';
+        } else if (values.promotion_type === 'bogo') {
+          payload.buy_quantity = values.buy_quantity || '';
+          payload.discount_value = `Buy ${values.buy_quantity} Get ${values.get_quantity}`;
+        } else {
+          payload.discount_value = values.discount_value || 'Special Offer';
+        }
+      }
+
+      if (selectedPromotion) {
+        await updatePromotionMutation.mutateAsync({
+          id: selectedPromotion.id,
+          ...payload,
+        });
+        toast.success('Promotion updated successfully');
+      } else {
+        await createPromotionMutation.mutateAsync(payload);
+        toast.success('Promotion created successfully');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['promotions'] });
+      setIsDrawerOpen(false);
+      form.reset(DEFAULT_FORM_VALUES);
+      setSelectedPromotion(null);
+    } catch (error) {
+      console.error('Submit error:', error);
+      toast.error('Failed to save promotion');
+    }
+  };
+
+  const handleCreate = () => {
+    setSelectedPromotion(null);
+    const businessId = session?.isProjectUser
+      ? ''
+      : session?.shop_id || orgEmployee?.restaurant_id || '';
+    const businessType = session?.isProjectUser
+      ? 'restaurant'
+      : session?.shop_id
+        ? 'shop'
+        : 'restaurant';
+
+    form.reset({
+      ...DEFAULT_FORM_VALUES,
+      business_id: businessId,
+      business_type: businessType,
+    });
+    setIsDrawerOpen(true);
   };
 
   const handleEdit = (promotion: Promotion) => {
     setSelectedPromotion(promotion);
     form.reset({
       name: promotion.name,
-      code: promotion.code,
-      discount: promotion.discount,
-      period: promotion.period,
-      usage: promotion.usage,
-      status: promotion.status,
+      code: promotion.code || '',
+      promotion_type: promotion.promotion_type as any,
+      discount_value: promotion.discount_value?.toString() || '',
+      buy_quantity: promotion.buy_quantity || '',
+      get_quantity: promotion.discount_value?.toString().includes('Get ')
+        ? promotion.discount_value.toString().split('Get ')[1]
+        : '',
+      applies_to_type: promotion.applies_to_type as any,
+      applies_to_id: promotion.applies_to_id || '',
+      start_date: new Date(promotion.start_date),
+      end_date: new Date(promotion.end_date),
+      start_time: promotion.start_time || '',
+      end_time: promotion.end_time || '',
+      min_purchase_amount: promotion.min_purchase_amount,
+      usage_per_customer: promotion.usage_per_customer?.toString() || '10',
+      usage_limit: promotion.usage_limit?.toString() || '10',
+      priority: promotion.priority.toString(),
+      is_stackable: promotion.is_stackable,
+      status: promotion.status as any,
+      business_type:
+        promotion.restaurant_id || promotion.shop_id
+          ? promotion.restaurant_id
+            ? 'restaurant'
+            : 'shop'
+          : 'none',
+      business_id: promotion.restaurant_id || promotion.shop_id || '',
+      promotion_scope: promotion.promotion_scope || 'all_orders',
+      customer_discount_percent: promotion.customer_discount_percent?.toString() || '',
+
+      // 👤 Influencer
+      influencer_id: promotion.influencer_id || 'none',
+      influencer_code: promotion.influencer_code || '',
+      commission_type: promotion.commission_type ?? 'fixed',
+      commission_value: promotion.commission_value?.toString() || '',
+      commission_cap: promotion.commission_cap?.toString() || '',
+
+      // 💰 Economics — fallback defaults for old promotions
+      funded_by: promotion.funded_by ?? 'platform',
+      affects: promotion.affects ?? 'subtotal',
+      stacking_type: promotion.stacking_type ?? 'exclusive',
+      max_discount: promotion.max_discount?.toString() || '',
+      min_order_value: promotion.min_order_value?.toString() || '',
+
+      // 🚚 Delivery
+      free_delivery: promotion.free_delivery ?? false,
+      delivery_paid_by: promotion.delivery_paid_by ?? undefined,
+
+      // 💰 Budget (budget_used is read-only — never mapped to form)
+      budget_limit: promotion.budget_limit?.toString() || '',
     });
     setIsDrawerOpen(true);
-  };
-
-  const handleCreate = () => {
-    setSelectedPromotion(null);
-    form.reset({
-      name: '',
-      code: '',
-      discount: '',
-      period: '',
-      usage: '',
-      status: 'active',
-    });
-    setIsDrawerOpen(true);
-  };
-
-  const handleGenerateCode = () => {
-    const newCode = generatePromotionCode();
-    form.setValue('code', newCode);
-  };
-
-  const formatUsageDisplay = (usage: string, currentUsage: number = 0) => {
-    return `${currentUsage}/${usage}`;
-  };
-
-  const formatPeriod = (period: string) => {
-    try {
-      const [start, end] = period.split(' to ');
-      return `${format(new Date(start), 'MMMM d, yyyy')} - ${format(new Date(end), 'MMMM d, yyyy')}`;
-    } catch (e) {
-      return period;
-    }
-  };
-
-  const handleDateRangeChange = (newDate: DateRange | undefined) => {
-    setDate(newDate);
-    if (newDate?.from && newDate?.to) {
-      const formattedDate = `${format(newDate.from, 'yyyy-MM-dd')} to ${format(newDate.to, 'yyyy-MM-dd')}`;
-      form.setValue('period', formattedDate);
-    }
-  };
-
-  const handleStatusChange = (value: string) => {
-    form.setValue('status', value);
-
-    if (value === 'active') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Reset time to start of day
-
-      // Get current end date from form or use existing date state
-      let endDate: Date | undefined;
-      if (form.getValues('period')) {
-        const [_, existingEnd] = form.getValues('period').split(' to ');
-        endDate = new Date(existingEnd);
-      } else if (date?.to) {
-        endDate = date.to;
-      }
-
-      // If no end date is set, default to tomorrow
-      if (!endDate) {
-        endDate = addDays(today, 1);
-      }
-
-      const newDateRange = {
-        from: today,
-        to: endDate,
-      };
-      setDate(newDateRange);
-      const formattedDate = `${format(today, 'yyyy-MM-dd')} to ${format(endDate, 'yyyy-MM-dd')}`;
-      form.setValue('period', formattedDate);
-    }
   };
 
   return (
@@ -303,293 +315,38 @@ const Promotions = () => {
       />
 
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search promotions by name, code, status, or discount..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-2 top-2 h-5 w-5 p-0"
-                onClick={() => setSearchQuery('')}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" /> Filter
-          </Button>
-        </div>
+        <PromotionFilters filters={filters} onFiltersChange={setFilters} />
 
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Discount</TableHead>
-                <TableHead>Period</TableHead>
-                <TableHead>Usage</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <div className="flex justify-center items-center">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : filteredPromotions?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Search className="h-8 w-8" />
-                      <p>No promotions found</p>
-                      {searchQuery && <p className="text-sm">Try adjusting your search query</p>}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredPromotions?.map(promotion => (
-                  <TableRow key={promotion.id}>
-                    <TableCell className="font-medium">{promotion.name}</TableCell>
-                    <TableCell>
-                      <span className="font-mono bg-muted px-2 py-1 rounded text-xs">
-                        {promotion.code}
-                      </span>
-                    </TableCell>
-                    <TableCell>{promotion.discount}</TableCell>
-                    <TableCell>{formatPeriod(promotion.period)}</TableCell>
-                    <TableCell>
-                      {formatUsageDisplay(promotion.usage, promotion.current_usage)}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          promotion.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : promotion.status === 'scheduled'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {promotion.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {hasAction('promotions', 'edit_promotions') && (
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(promotion)}>
-                          Edit
-                        </Button>
-                      )}
-                      {hasAction('promotions', 'delete_promotions') && (
-                        <Button variant="ghost" size="sm">
-                          Delete
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </Card>
+        <PromotionTable
+          promotions={filteredPromotions}
+          isLoading={isLoading}
+          expandedRows={expandedRows}
+          onToggleRow={toggleRow}
+          onEdit={handleEdit}
+          isProjectUser={!!session?.isProjectUser}
+          systemConfig={systemConfig}
+        />
       </div>
 
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent className="w-[400px] sm:w-[540px]">
-          <SheetHeader>
+        <SheetContent className="w-[100vw] sm:max-w-xl flex flex-col p-0 h-full">
+          <SheetHeader className="p-6 pb-2 border-b">
             <SheetTitle>{selectedPromotion ? 'Edit Promotion' : 'Create Promotion'}</SheetTitle>
-            <SheetDescription>
-              {selectedPromotion
-                ? 'Update the promotion details below.'
-                : 'Add a new promotion to your store.'}
-            </SheetDescription>
+            <SheetDescription>Set up a new discount or special offer.</SheetDescription>
           </SheetHeader>
-          <div className="py-4">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter promotion name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Code</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input placeholder="Enter promotion code" {...field} />
-                        </FormControl>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={handleGenerateCode}
-                          title="Generate Code"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="discount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select discount percentage" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {DISCOUNT_OPTIONS.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={handleStatusChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="scheduled">Scheduled</SelectItem>
-                          <SelectItem value="expired">Expired</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="period"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Period</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? (
-                                formatPeriod(field.value)
-                              ) : (
-                                <span>Pick a date range</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            initialFocus
-                            mode="range"
-                            defaultMonth={date?.from}
-                            selected={date}
-                            onSelect={handleDateRangeChange}
-                            numberOfMonths={2}
-                            disabled={date => date < new Date()}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="usage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Usage Limit</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select usage limit" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {USAGE_LIMIT_OPTIONS.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex gap-4 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setIsDrawerOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1"
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                  >
-                    {(createMutation.isPending || updateMutation.isPending) && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    {selectedPromotion ? 'Update' : 'Create'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            <PromotionForm
+              form={form}
+              onSubmit={onSubmit}
+              isPending={createPromotionMutation.isPending || updatePromotionMutation.isPending}
+              isProjectUser={!!session?.isProjectUser}
+              influencers={influencersData || []}
+              shops={shopsData || []}
+              restaurants={restaurantsData || []}
+              onCancel={() => setIsDrawerOpen(false)}
+              systemConfig={systemConfig}
+            />
           </div>
         </SheetContent>
       </Sheet>

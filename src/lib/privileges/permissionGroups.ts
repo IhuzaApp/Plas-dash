@@ -200,19 +200,136 @@ export const permissionGroups: PermissionGroup[] = [
     ],
   },
   {
-    title: 'Procurement',
-    module: 'procurement' as PrivilegeKey,
+    title: 'Procurement Dashboard',
+    module: 'procurement_dashboard' as PrivilegeKey,
     permissions: [
-      { key: 'access', label: 'Access Procurement' },
-      { key: 'view_suppliers', label: 'View Suppliers' },
-      { key: 'manage_suppliers', label: 'Manage Suppliers' },
-      { key: 'view_quotations', label: 'View Quotations' },
-      { key: 'manage_quotations', label: 'Manage Quotations' },
-      { key: 'view_purchase_orders', label: 'View Purchase Orders' },
-      { key: 'manage_purchase_orders', label: 'Manage Purchase Orders' },
-      { key: 'view_goods_received', label: 'View Goods Received' },
-      { key: 'manage_goods_received', label: 'Manage Goods Received' },
-      { key: 'view_reports', label: 'View Reports' },
+      { key: 'access', label: 'Access Dashboard' },
+      { key: 'view', label: 'View Metrics' },
+    ],
+  },
+  {
+    title: 'Suppliers',
+    module: 'suppliers' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Suppliers' },
+      { key: 'view', label: 'View Suppliers' },
+      { key: 'manage', label: 'Manage Suppliers' },
+    ],
+  },
+  {
+    title: 'Quotations',
+    module: 'quotations' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Quotations' },
+      { key: 'view', label: 'View Quotations' },
+      { key: 'manage', label: 'Manage Quotations' },
+    ],
+  },
+  {
+    title: 'Purchase Orders',
+    module: 'purchase_orders' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Purchase Orders' },
+      { key: 'view', label: 'View Purchase Orders' },
+      { key: 'manage', label: 'Manage Purchase Orders' },
+    ],
+  },
+  {
+    title: 'Production Dashboard',
+    module: 'production_dashboard' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Dashboard' },
+      { key: 'view', label: 'View Dashboard' },
+    ],
+  },
+  {
+    title: 'Recipes',
+    module: 'recipes' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Recipes' },
+      { key: 'view', label: 'View Recipes' },
+      { key: 'manage', label: 'Manage Recipes' },
+    ],
+  },
+  {
+    title: 'Production Orders',
+    module: 'production_orders' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Orders' },
+      { key: 'view', label: 'View Orders' },
+      { key: 'manage', label: 'Manage Orders' },
+    ],
+  },
+  {
+    title: 'Cost & Profit',
+    module: 'cost_profit' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Analytics' },
+      { key: 'view_cost_profit', label: 'View Cost & Profit' },
+    ],
+  },
+  {
+    title: 'Simulate Stock',
+    module: 'simulate_stock' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Simulator' },
+      { key: 'simulate_stock', label: 'Simulate Stock' },
+    ],
+  },
+  {
+    title: 'Reels',
+    module: 'reels' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Reels' },
+      { key: 'view', label: 'View Reels' },
+      { key: 'manage', label: 'Manage Content' },
+    ],
+  },
+  {
+    title: 'Point of Sale',
+    module: 'point_of_sale' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access POS' },
+      { key: 'park_sale', label: 'Park Sale' },
+      { key: 'process_sale', label: 'Process Sale' },
+    ],
+  },
+  {
+    title: 'Tax',
+    module: 'tax' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Tax' },
+      { key: 'view_dashboard', label: 'View Dashboard' },
+      { key: 'manage_declarations', label: 'Manage Declarations' },
+      { key: 'export_reports', label: 'Export Reports' },
+    ],
+  },
+  {
+    title: 'AI Chat',
+    module: 'ai_chat' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access AI Chat' },
+      { key: 'use_chat', label: 'Use Chat' },
+    ],
+  },
+  {
+    title: 'Subscriptions',
+    module: 'subscriptions' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Subscriptions' },
+      { key: 'manage_plans', label: 'Manage Plans' },
+      { key: 'manage_modules', label: 'Manage Modules' },
+      { key: 'assign_plan_modules', label: 'Assign Plan Modules' },
+      { key: 'manage_shop_subscriptions', label: 'Manage Shop Subscriptions' },
+    ],
+  },
+  {
+    title: 'Influencers',
+    module: 'influencers' as PrivilegeKey,
+    permissions: [
+      { key: 'access', label: 'Access Influencers' },
+      { key: 'view_earnings', label: 'View Earnings' },
+      { key: 'manage_influencers', label: 'Manage Influencers' },
     ],
   },
 ];

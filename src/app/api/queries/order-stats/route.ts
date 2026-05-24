@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
@@ -79,6 +79,27 @@ const GET_ORDER_STATS = gql`
         count
       }
     }
+
+    # Package delivery orders
+    package_delivery_orders_aggregate {
+      aggregate {
+        count
+      }
+    }
+    package_delivery_orders_monthly: package_delivery_orders_aggregate(
+      where: { created_at: { _gte: $month_start } }
+    ) {
+      aggregate {
+        count
+      }
+    }
+    package_delivery_orders_pending: package_delivery_orders_aggregate(
+      where: { status: { _neq: "delivered" } }
+    ) {
+      aggregate {
+        count
+      }
+    }
   }
 `;
 
@@ -123,25 +144,31 @@ export async function GET(req: Request) {
       businessProductOrders_aggregate: { aggregate: { count: number } };
       businessProductOrders_monthly: { aggregate: { count: number } };
       businessProductOrders_pending: { aggregate: { count: number } };
+      package_delivery_orders_aggregate: { aggregate: { count: number } };
+      package_delivery_orders_monthly: { aggregate: { count: number } };
+      package_delivery_orders_pending: { aggregate: { count: number } };
     }>(GET_ORDER_STATS, { month_start });
 
     const totalOrders =
       (data.Orders_aggregate?.aggregate?.count ?? 0) +
       (data.reel_orders_aggregate?.aggregate?.count ?? 0) +
       (data.restaurant_orders_aggregate?.aggregate?.count ?? 0) +
-      (data.businessProductOrders_aggregate?.aggregate?.count ?? 0);
+      (data.businessProductOrders_aggregate?.aggregate?.count ?? 0) +
+      (data.package_delivery_orders_aggregate?.aggregate?.count ?? 0);
 
     const monthlyOrders =
       (data.Orders_monthly?.aggregate?.count ?? 0) +
       (data.reel_orders_monthly?.aggregate?.count ?? 0) +
       (data.restaurant_orders_monthly?.aggregate?.count ?? 0) +
-      (data.businessProductOrders_monthly?.aggregate?.count ?? 0);
+      (data.businessProductOrders_monthly?.aggregate?.count ?? 0) +
+      (data.package_delivery_orders_monthly?.aggregate?.count ?? 0);
 
     const pendingOrders =
       (data.Orders_pending?.aggregate?.count ?? 0) +
       (data.reel_orders_pending?.aggregate?.count ?? 0) +
       (data.restaurant_orders_pending?.aggregate?.count ?? 0) +
-      (data.businessProductOrders_pending?.aggregate?.count ?? 0);
+      (data.businessProductOrders_pending?.aggregate?.count ?? 0) +
+      (data.package_delivery_orders_pending?.aggregate?.count ?? 0);
 
     return NextResponse.json({
       totalOrders,
@@ -152,12 +179,14 @@ export async function GET(req: Request) {
         reel: data.reel_orders_aggregate?.aggregate?.count ?? 0,
         restaurant: data.restaurant_orders_aggregate?.aggregate?.count ?? 0,
         business: data.businessProductOrders_aggregate?.aggregate?.count ?? 0,
+        package: data.package_delivery_orders_aggregate?.aggregate?.count ?? 0,
       },
       monthlyBreakdown: {
         regular: data.Orders_monthly?.aggregate?.count ?? 0,
         reel: data.reel_orders_monthly?.aggregate?.count ?? 0,
         restaurant: data.restaurant_orders_monthly?.aggregate?.count ?? 0,
         business: data.businessProductOrders_monthly?.aggregate?.count ?? 0,
+        package: data.package_delivery_orders_monthly?.aggregate?.count ?? 0,
       },
     });
   } catch (error) {

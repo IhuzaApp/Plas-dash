@@ -4,6 +4,7 @@ export interface MenuPrivilege {
   module: PrivilegeKey;
   action?: string;
   isProjectUser?: boolean;
+  isOrgEmployeeOnly?: boolean;
 }
 
 /**
@@ -13,14 +14,18 @@ export interface MenuPrivilege {
 export const menuPrivileges: Record<string, MenuPrivilege> = {
   Dashboard: { module: 'company_dashboard', isProjectUser: true },
   Orders: { module: 'orders' },
+  Reels: { module: 'reels', isProjectUser: true },
   Plasas: { module: 'shoppers', isProjectUser: true },
   Customers: { module: 'users', isProjectUser: true },
   'Project Users': { module: 'project_users', isProjectUser: true },
+  Logistics: { module: 'logistics', isProjectUser: true },
+  'Pet Vendors': { module: 'pets', isProjectUser: true },
   Shops: { module: 'shops', isProjectUser: true },
   Restaurants: { module: 'restaurants', isProjectUser: true },
   Products: { module: 'products', isProjectUser: true },
-  'Company Dashboard': { module: 'company_dashboard' },
+  'Company Dashboard': { module: 'company_dashboard', isOrgEmployeeOnly: true },
   'Shop Dashboard': { module: 'shop_dashboard' },
+  'Restaurant Dashboard': { module: 'shop_dashboard' },
   Checkout: { module: 'checkout' },
   Inventory: { module: 'inventory' },
   Transactions: { module: 'transactions' },
@@ -37,18 +42,43 @@ export const menuPrivileges: Record<string, MenuPrivilege> = {
   'Help Center': { module: 'help', isProjectUser: true },
   'Delivery Settings': { module: 'delivery_settings', isProjectUser: true },
   Promotions: { module: 'promotions' },
-  'System Settings': { module: 'settings', isProjectUser: true },
   Referrals: { module: 'referrals', isProjectUser: true },
   PlasMarket: { module: 'plasmarket', isProjectUser: true },
   'Withdraw Requests': { module: 'withdraw_requests', isProjectUser: true },
 
   // Procurement
-  'Procurement Dashboard': { module: 'procurement' },
-  Suppliers: { module: 'procurement' },
-  Quotations: { module: 'procurement' },
-  'Purchase Orders': { module: 'procurement' },
+  'Procurement Dashboard': { module: 'procurement_dashboard' },
+  Suppliers: { module: 'suppliers' },
+  Quotations: { module: 'quotations' },
+  'Purchase Orders': { module: 'purchase_orders' },
   'Goods Received': { module: 'procurement' },
-  'Procurement Reports': { module: 'procurement' },
+  'Procurement Reports': { module: 'procurement_dashboard' },
+
+  // Production
+  Recipes: { module: 'recipes' },
+  'Production Orders': { module: 'production_orders' },
+  'Production Dashboard': { module: 'production_dashboard' },
+  'Cost & Profit': { module: 'cost_profit' },
+  'Simulate Stock': { module: 'simulate_stock' },
+
+  // Tax
+  'Tax Dashboard': { module: 'tax' },
+  'Tax Declaration': { module: 'tax' },
+  Forecasting: { module: 'tax' },
+  'Smart Import': { module: 'tax' },
+  'Tax Summary': { module: 'tax' },
+  Optimization: { module: 'tax' },
+  Reports: { module: 'tax' },
+  'Tax Settings': { module: 'tax' },
+  'Account Settings': { module: 'settings' },
+  'AI Chat': { module: 'ai_chat' },
+
+  // Subscriptions (Project Users only)
+  'Manage Plans': { module: 'subscriptions', isProjectUser: true },
+  Modules: { module: 'subscriptions', isProjectUser: true },
+  'Plan Assignments': { module: 'subscriptions', isProjectUser: true },
+  'Subscriptions & Billing': { module: 'subscriptions', isProjectUser: true },
+  Influencers: { module: 'influencers', isProjectUser: true },
 };
 
 /**

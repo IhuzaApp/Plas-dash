@@ -320,6 +320,7 @@ export const convertCustomPermissionsToPrivileges = (
     'pages:access_project_users': { module: 'pages', action: 'access_project_users' },
     'pages:access_orders': { module: 'pages', action: 'access_orders' },
     'pages:access_shops': { module: 'pages', action: 'access_shops' },
+    'pages:access_restaurants': { module: 'pages', action: 'access_restaurants' },
     'pages:access_products': { module: 'pages', action: 'access_products' },
     'pages:access_users': { module: 'pages', action: 'access_users' },
     'pages:access_shoppers': { module: 'pages', action: 'access_shoppers' },

@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+
 import { useProjectPrivilege } from '@/hooks/useProjectPrivilege';
+import { useAuth } from '@/contexts/AuthContext';
 import { ProjectPrivilegeKey } from '@/types/projectPrivileges';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Lock } from 'lucide-react';
@@ -21,10 +23,27 @@ export function ProtectedProjectRoute({
   fallback,
   showAccessDenied = true,
 }: ProtectedProjectRouteProps) {
-  const { hasProjectModuleAccess, hasProjectAction, isProjectUser } = useProjectPrivilege();
+  const {
+    hasProjectModuleAccess,
+    hasProjectAction,
+    isProjectUser: checkIsProjectUser,
+  } = useProjectPrivilege();
+  const { session, isAuthenticated } = useAuth();
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Use session from context if available, fallback to localStorage check
+  const isProjectUser = session?.isProjectUser || checkIsProjectUser();
+
+  if (!isMounted) {
+    return null;
+  }
 
   // Check if user is a project user
-  if (!isProjectUser()) {
+  if (!isProjectUser) {
     return (
       fallback || (
         <div className="flex items-center justify-center min-h-[400px]">

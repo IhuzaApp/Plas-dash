@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
+import ReactPlayer from 'react-player';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +56,44 @@ const ReelCard: React.FC<ReelCardProps> = ({
   onDelete,
   onViewComments,
 }) => {
+  const isYouTubeUrl = (url: string) => url?.includes('youtube.com') || url?.includes('youtu.be');
+  const isImageUrl = (url: string) =>
+    url?.includes('/reels/images/') || url?.match(/\.(jpg|jpeg|png|gif|webp|svg)/i);
+
+  const isYouTube = reel.video_url ? isYouTubeUrl(reel.video_url) : false;
+  const isImage = reel.video_url ? isImageUrl(reel.video_url) : false;
+  const playerRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Sync video playback state with playingVideo prop
+  React.useEffect(() => {
+    if (!videoRef.current || isYouTube || isImage) return;
+
+    const isCurrentPlaying = playingVideo === reel.id;
+
+    if (isCurrentPlaying) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          if (error.name !== 'AbortError') {
+            console.error('Video play error:', error);
+          }
+        });
+      }
+    } else {
+      videoRef.current.pause();
+    }
+  }, [playingVideo, reel.id, isYouTube, isImage]);
+
+  const handleProgress = (state: any) => {
+    if (state.playedSeconds >= 40) {
+      if (playerRef.current) {
+        playerRef.current.seekTo(0);
+        onVideoPause();
+      }
+    }
+  };
+
   return (
     <Card className="overflow-hidden">
       <div className="relative aspect-video bg-black">
@@ -70,8 +109,28 @@ const ReelCard: React.FC<ReelCardProps> = ({
               <p className="text-xs font-medium">Video unavailable</p>
             </div>
           </div>
+        ) : isYouTube ? (
+          <ReactPlayer
+            ref={playerRef}
+            src={reel.video_url}
+            playing={playingVideo === reel.id}
+            muted={mutedVideos.has(reel.id)}
+            controls={false}
+            loop={true}
+            playsInline={true}
+            onPlay={() => onVideoPlay(reel.id)}
+            onPause={onVideoPause}
+            onError={() => onFailedVideo(reel.video_url)}
+            onProgress={handleProgress}
+            width="100%"
+            height="100%"
+            style={{ objectFit: 'cover' }}
+          />
+        ) : isImage ? (
+          <img src={reel.video_url} alt={reel.title} className="w-full h-full object-cover" />
         ) : (
           <video
+            ref={videoRef}
             src={reel.video_url}
             className="w-full h-full object-cover"
             muted={mutedVideos.has(reel.id)}
@@ -89,15 +148,21 @@ const ReelCard: React.FC<ReelCardProps> = ({
               size="icon"
               className="bg-white/20 hover:bg-white/30 text-white"
               onClick={() => {
-                const video = document.querySelector(
-                  `video[src="${reel.video_url}"]`
-                ) as HTMLVideoElement;
-                if (video) {
-                  if (video.paused) {
-                    video.play().catch(err => console.warn('Play error:', err));
+                if (isYouTube) {
+                  if (playingVideo === reel.id) {
+                    onVideoPause();
                   } else {
-                    video.pause();
+                    onVideoPlay(reel.id);
                   }
+                  return;
+                }
+                if (isImage) return;
+
+                // Toggle via callback, useEffect handles the actual DOM play/pause
+                if (playingVideo === reel.id) {
+                  onVideoPause();
+                } else {
+                  onVideoPlay(reel.id);
                 }
               }}
             >
@@ -226,22 +291,33 @@ const ReelCard: React.FC<ReelCardProps> = ({
                     {reel.Restaurant?.name?.charAt(0)}
                   </AvatarFallback>
                 </>
+              ) : reel.BusinessAccount ? (
+                <>
+                  <AvatarImage src={reel.BusinessAccount?.face_image} />
+                  <AvatarFallback className="text-xs">
+                    {reel.BusinessAccount?.business_name?.charAt(0)}
+                  </AvatarFallback>
+                </>
               ) : (
-                <AvatarFallback className="text-xs">?</AvatarFallback>
+                <AvatarFallback className="text-xs">PA</AvatarFallback>
               )}
             </Avatar>
             <span className="font-medium">
-              {reel.User?.name || reel.Shops?.name || reel.Restaurant?.name || 'Unknown Creator'}
+              {reel.User?.name ||
+                reel.Shops?.name ||
+                reel.Restaurant?.name ||
+                reel.BusinessAccount?.business_name ||
+                'Plas Agent'}
             </span>
           </div>
           <span className="text-muted-foreground text-xs">{formatDateTime(reel.created_on)}</span>
         </div>
 
         <div className="space-y-2">
-          {(reel.Restaurant || reel.Shops) && (
+          {(reel.Restaurant || reel.Shops || reel.BusinessAccount) && (
             <div className="text-sm text-muted-foreground">
               <span className="font-medium">Location:</span>{' '}
-              {reel.Restaurant?.name || reel.Shops?.name}
+              {reel.Restaurant?.name || reel.Shops?.name || reel.BusinessAccount?.business_name}
             </div>
           )}
 

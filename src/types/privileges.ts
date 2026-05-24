@@ -34,7 +34,26 @@ export interface UserPrivileges {
   withdraw_requests?: ModulePrivileges;
   procurement?: ModulePrivileges;
   production?: ModulePrivileges;
+  // Granular Production Modules
+  recipes?: ModulePrivileges;
+  production_orders?: ModulePrivileges;
+  production_dashboard?: ModulePrivileges;
+  cost_profit?: ModulePrivileges;
+  simulate_stock?: ModulePrivileges;
+  // Granular Procurement Modules
+  procurement_dashboard?: ModulePrivileges;
+  suppliers?: ModulePrivileges;
+  quotations?: ModulePrivileges;
+  purchase_orders?: ModulePrivileges;
+  // Others from DB
+  reels?: ModulePrivileges;
+  point_of_sale?: ModulePrivileges;
   tax?: ModulePrivileges;
+  ai_chat?: ModulePrivileges;
+  subscriptions?: ModulePrivileges;
+  influencers?: ModulePrivileges;
+  logistics?: ModulePrivileges;
+  pets?: ModulePrivileges;
 }
 
 // Default privilege templates for each module
@@ -291,6 +310,12 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     access_procurement: false,
     access_production: false,
     access_tax: false,
+    access_ai_chat: false,
+    access_subscriptions: false,
+    access_reels: false,
+    access_logistics: false,
+    access_pets: false,
+    access_restaurants: false,
   },
   referrals: {
     access: false,
@@ -332,11 +357,46 @@ export const DEFAULT_PRIVILEGES: UserPrivileges = {
     simulate_stock: false,
     view_cost_profit: false,
   },
+  // Granular Production
+  recipes: { access: false, view: false, manage: false },
+  production_orders: { access: false, view: false, manage: false },
+  production_dashboard: { access: false, view: false },
+  cost_profit: { access: false, view: false },
+  simulate_stock: { access: false, view: false, run: false },
+  // Granular Procurement
+  procurement_dashboard: { access: false, view: false },
+  suppliers: { access: false, view: false, manage: false },
+  quotations: { access: false, view: false, manage: false },
+  purchase_orders: { access: false, view: false, manage: false },
+  // Others
+  reels: { access: false, view: false, manage: false },
+  point_of_sale: { access: false, park_sale: false, process_sale: false },
   tax: {
     access: false,
     view_dashboard: false,
     manage_declarations: false,
     export_reports: false,
+  },
+  ai_chat: {
+    access: false,
+    use_chat: false,
+  },
+  influencers: {
+    access: false,
+    view_earnings: false,
+    manage_influencers: false,
+  },
+  logistics: {
+    access: false,
+    view_accounts: false,
+    manage_vehicles: false,
+    manage_assignments: false,
+  },
+  pets: {
+    access: false,
+    view_vendors: false,
+    manage_pets: false,
+    manage_adoptions: false,
   },
 };
 
@@ -361,13 +421,19 @@ export function hasPrivilege(
       module === 'help' ||
       module === 'plasmarket' ||
       module === 'restaurants' ||
+      module === 'reels' ||
       module === 'withdraw_requests' ||
+      module === 'logistics' ||
+      module === 'pets' ||
       (module === 'pages' &&
         (action === 'access_referrals' ||
           action === 'access_help' ||
           action === 'access_plasmarket' ||
           action === 'access_restaurants' ||
-          action === 'access_withdraw_requests')))
+          action === 'access_reels' ||
+          action === 'access_withdraw_requests' ||
+          action === 'access_logistics' ||
+          action === 'access_pets')))
   ) {
     return true;
   }

@@ -519,9 +519,39 @@ export const UPDATE_ORG_EMPLOYEE_TWO_FACTOR_SECRETS = `
   }
 `;
 
+export const UPDATE_ORG_EMPLOYEE_AUTH_SETTINGS = `
+  mutation UpdateOrgEmployeeAuthSettings($id: uuid!, $twoFactorSecrets: String, $sms_auth: Boolean, $multAuthEnabled: Boolean) {
+    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { 
+      twoFactorSecrets: $twoFactorSecrets, 
+      sms_auth: $sms_auth,
+      multAuthEnabled: $multAuthEnabled
+    }) {
+      id
+      twoFactorSecrets
+      sms_auth
+      multAuthEnabled
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_USER_AUTH_SETTINGS = `
+  mutation UpdateProjectUserAuthSettings($id: uuid!, $twoFactorSecrets: String, $sms_auth: Boolean, $TwoAuth_enabled: Boolean) {
+    update_ProjectUsers_by_pk(pk_columns: { id: $id }, _set: { 
+      twoFactorSecrets: $twoFactorSecrets, 
+      sms_auth: $sms_auth,
+      TwoAuth_enabled: $TwoAuth_enabled
+    }) {
+      id
+      twoFactorSecrets
+      sms_auth
+      TwoAuth_enabled
+    }
+  }
+`;
+
 // Update ProjectUser last login
 export const UPDATE_PROJECT_USER_LAST_LOGIN = `
-  mutation UpdateProjectUserLastLogin($id: uuid!, $lastLogin: timestamptz!) {
+  mutation UpdateProjectUserLastLogin($id: uuid!, $lastLogin: String!) {
     update_ProjectUsers(
       where: { id: { _eq: $id } },
       _set: { last_Login: $lastLogin }
@@ -552,11 +582,13 @@ export const UPDATE_SHOP_SETTINGS = `
     $description: String
     $address: String
     $phone: String
-    $operating_hours: String
+    $operating_hours: json
     $is_active: Boolean
     $logo: String
     $tin: String
     $ssd: String
+    $latitude: String
+    $longitude: String
   ) {
     update_Shops_by_pk(
       pk_columns: { id: $id }
@@ -570,6 +602,8 @@ export const UPDATE_SHOP_SETTINGS = `
         logo: $logo
         tin: $tin
         ssd: $ssd
+        latitude: $latitude
+        longitude: $longitude
         updated_at: "now()"
       }
     ) {
@@ -583,6 +617,8 @@ export const UPDATE_SHOP_SETTINGS = `
       logo
       tin
       ssd
+      latitude
+      longitude
       updated_at
     }
   }
@@ -693,6 +729,7 @@ export const ADD_RESTAURANT = `
     $profile: String = ""
     $tin: String = ""
     $ussd: String = ""
+    $relatedTo: String = ""
   ) {
     insert_Restaurants(
       objects: {
@@ -707,6 +744,7 @@ export const ADD_RESTAURANT = `
         profile: $profile
         tin: $tin
         ussd: $ussd
+        relatedTo: $relatedTo
         verified: true
       }
     ) {
@@ -718,18 +756,51 @@ export const ADD_RESTAURANT = `
 export const UPDATE_RESTAURANT = `
   mutation UpdateRestaurant(
     $id: uuid!
+    $email: String
     $is_active: Boolean
+    $lat: String
+    $location: String
+    $logo: String
+    $long: String
+    $name: String
+    $phone: String
+    $profile: String
+    $relatedTo: String
+    $tin: String
+    $ussd: String
     $verified: Boolean
   ) {
     update_Restaurants_by_pk(
       pk_columns: { id: $id }
       _set: {
+        email: $email
         is_active: $is_active
+        lat: $lat
+        location: $location
+        logo: $logo
+        long: $long
+        name: $name
+        phone: $phone
+        profile: $profile
+        relatedTo: $relatedTo
+        tin: $tin
+        ussd: $ussd
         verified: $verified
       }
     ) {
       id
+      email
       is_active
+      lat
+      location
+      logo
+      long
+      name
+      phone
+      profile
+      relatedTo
+      tin
+      ussd
       verified
     }
   }
@@ -751,6 +822,7 @@ export const ADD_REEL = `
     $user_id: uuid = null
     $video_url: String = ""
     $is_active: Boolean = true
+    $business_id: uuid = null
   ) {
     insert_Reels(
       objects: {
@@ -768,6 +840,7 @@ export const ADD_REEL = `
         user_id: $user_id
         video_url: $video_url
         is_active: $is_active
+        business_id: $business_id
       }
     ) {
       affected_rows
@@ -787,6 +860,9 @@ export const UPDATE_REEL = `
     $type: String = ""
     $video_url: String = ""
     $is_active: Boolean = true
+    $shop_id: uuid = null
+    $restaurant_id: uuid = null
+    $business_id: uuid = null
   ) {
     update_Reels_by_pk(
       pk_columns: { id: $id }
@@ -800,6 +876,9 @@ export const UPDATE_REEL = `
         type: $type
         video_url: $video_url
         is_active: $is_active
+        shop_id: $shop_id
+        restaurant_id: $restaurant_id
+        business_id: $business_id
       }
     ) {
       id
@@ -864,5 +943,329 @@ export const DELETE_ORDER_OFFERS = `
     delete_order_offers(where: $where) {
       affected_rows
     }
+  }
+`;
+
+export const UPDATE_RESTAURANT_DISH = `
+  mutation UpdateRestaurantDish(
+    $id: uuid!,
+    $discount: String = "",
+    $dish_id: uuid = null,
+    $preparingTime: String = "",
+    $price: String = "",
+    $product_id: uuid = null,
+    $promo_type: String = "",
+    $promo: Boolean = false,
+    $is_active: Boolean = false,
+    $quantity: String = "",
+    $image: String = "",
+    $updated_at: timestamptz = "now()"
+  ) {
+    update_restaurant_menu(
+      where: { id: { _eq: $id } },
+      _set: {
+        discount: $discount,
+        dish_id: $dish_id,
+        is_active: $is_active,
+        preparingTime: $preparingTime,
+        price: $price,
+        product_id: $product_id,
+        promo: $promo,
+        promo_type: $promo_type,
+        quantity: $quantity,
+        image: $image,
+        updated_at: $updated_at
+      }
+    ) {
+      affected_rows
+    }
+  }
+`;
+
+// Influencer Mutations
+export const ADD_INFLUENCER = `
+  mutation AddInfluencer(
+    $name: String!
+    $email: String!
+    $phone: String!
+    $status: String = "active"
+    $membershipId: String
+    $description: String
+    $payment_method: String
+    $payment_terms: String
+    $momo_number: String
+    $bank_name: String
+    $bank_account_number: String
+    $bank_account_name: String
+    $contract_start_date: String
+    $contract_end_date: String
+  ) {
+    insert_influencers_one(
+      object: {
+        name: $name
+        email: $email
+        phone: $phone
+        status: $status
+        membershipId: $membershipId
+        description: $description
+        payment_method: $payment_method
+        payment_terms: $payment_terms
+        momo_number: $momo_number
+        bank_name: $bank_name
+        bank_account_number: $bank_account_number
+        bank_account_name: $bank_account_name
+        contract_start_date: $contract_start_date
+        contract_end_date: $contract_end_date
+      }
+    ) {
+      id
+      name
+      membershipId
+    }
+  }
+`;
+
+export const UPDATE_INFLUENCER = `
+  mutation UpdateInfluencer(
+    $id: uuid!
+    $name: String
+    $email: String
+    $phone: String
+    $status: String
+    $membershipId: String
+    $description: String
+    $payment_method: String
+    $payment_terms: String
+    $momo_number: String
+    $bank_name: String
+    $bank_account_number: String
+    $bank_account_name: String
+    $contract_start_date: String
+    $contract_end_date: String
+  ) {
+    update_influencers_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        name: $name
+        email: $email
+        phone: $phone
+        status: $status
+        membershipId: $membershipId
+        description: $description
+        payment_method: $payment_method
+        payment_terms: $payment_terms
+        momo_number: $momo_number
+        bank_name: $bank_name
+        bank_account_number: $bank_account_number
+        bank_account_name: $bank_account_name
+        contract_start_date: $contract_start_date
+        contract_end_date: $contract_end_date
+        updated_at: "now()"
+      }
+    ) {
+      id
+      name
+      status
+    }
+  }
+`;
+
+export const ADD_COMMISSION_RULE = `
+  mutation AddCommissionRule(
+    $influencer_id: uuid!
+    $commission_type: String!
+    $amount: String!
+    $order_threshold: Int
+    $high_value_influencer_bonus: String
+    $high_value_order_threshold: String
+  ) {
+    insert_influencer_commissions_one(
+      object: {
+        influencer_id: $influencer_id
+        commission_type: $commission_type
+        amount: $amount
+        order_threshold: $order_threshold
+        high_value_influencer_bonus: $high_value_influencer_bonus
+        high_value_order_threshold: $high_value_order_threshold
+      }
+    ) {
+      id
+      influencer_id
+      commission_type
+      amount
+    }
+  }
+`;
+
+export const UPDATE_COMMISSION_RULE = `
+  mutation UpdateCommissionRule(
+    $id: uuid!
+    $commission_type: String
+    $amount: String
+    $order_threshold: Int
+    $high_value_influencer_bonus: String
+    $high_value_order_threshold: String
+  ) {
+    update_influencer_commissions_by_pk(
+      pk_columns: { id: $id }
+      _set: {
+        commission_type: $commission_type
+        amount: $amount
+        order_threshold: $order_threshold
+        high_value_influencer_bonus: $high_value_influencer_bonus
+        high_value_order_threshold: $high_value_order_threshold
+      }
+    ) {
+      id
+      commission_type
+      amount
+    }
+  }
+`;
+
+// Order Assignment Mutations
+export const UPDATE_ORDER_SHOPPER = `
+  mutation UpdateOrderShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_Orders_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+export const UPDATE_REEL_ORDER_SHOPPER = `
+  mutation UpdateReelOrderShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_reel_orders_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+export const UPDATE_BUSINESS_ORDER_SHOPPER = `
+  mutation UpdateBusinessOrderShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_businessProductOrders_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+export const UPDATE_RESTAURANT_ORDER_SHOPPER = `
+  mutation UpdateRestaurantOrderShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_restaurant_orders_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+export const UPDATE_PACKAGE_DELIVERY_SHOPPER = `
+  mutation UpdatePackageDeliveryShopper($id: uuid!, $shopper_id: uuid, $status: String!) {
+    update_package_delivery_by_pk(pk_columns: { id: $id }, _set: { shopper_id: $shopper_id, status: $status }) {
+      id
+      shopper_id
+      status
+    }
+  }
+`;
+
+// Order Offering Mutations
+export const CREATE_ORDER_OFFER = `
+  mutation CreateOrderOffer($object: order_offers_insert_input!) {
+    insert_order_offers_one(object: $object) {
+      id
+      status
+      offered_at
+      expires_at
+    }
+  }
+`;
+
+// Partner Assignment Mutations
+export const CREATE_LOGISTICS_ACCOUNT = `
+  mutation CreateLogisticsAccount($object: logisticsAccount_insert_input!) {
+    insert_logisticsAccount_one(object: $object) {
+      id
+      fullname
+      status
+    }
+  }
+`;
+
+export const CREATE_PET_VENDOR = `
+  mutation CreatePetVendor($object: pet_vendors_insert_input!) {
+    insert_pet_vendors_one(object: $object) {
+      id
+      fullname
+      status
+    }
+  }
+`;
+
+export const UPDATE_PET_VENDOR = `
+  mutation UpdatePetVendor($id: uuid!, $disabled: Boolean!, $status: String!, $updated_at: timestamptz!) {
+    update_pet_vendors(
+      where: { id: { _eq: $id } },
+      _set: { disabled: $disabled, status: $status, updated_at: $updated_at }
+    ) {
+      affected_rows
+    }
+  }
+`;
+export const UPDATE_LOGISTICS_ACCOUNT = `
+  mutation UpdateLogisticsAccount($id: uuid!, $disabled: Boolean!, $status: String!, $updated_at: timestamptz!) {
+    update_logisticsAccount(
+      where: { id: { _eq: $id } },
+      _set: { disabled: $disabled, status: $status, updated_at: $updated_at }
+    ) {
+      affected_rows
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_USER_2FA = `
+  mutation UpdateProjectUser2FA($id: uuid!, $enabled: Boolean!) {
+    update_ProjectUsers_by_pk(
+      pk_columns: { id: $id }
+      _set: { TwoAuth_enabled: $enabled }
+    ) {
+      id
+      TwoAuth_enabled
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_USER_PROFILE_IMAGE = `
+  mutation UpdateProjectUserProfileImage($id: uuid!, $profile: String!) {
+    update_ProjectUsers_by_pk(pk_columns: { id: $id }, _set: { profile: $profile }) { id profile }
+  }
+`;
+
+export const UPDATE_USER_PROFILE_IMAGE = `
+  mutation UpdateUserProfileImage($id: uuid!, $profile_picture: String!) {
+    update_Users_by_pk(pk_columns: { id: $id }, _set: { profile_picture: $profile_picture }) { id profile_picture }
+  }
+`;
+
+export const UPDATE_EMPLOYEE_PROFILE_IMAGE = `
+  mutation UpdateEmployeeProfileImage($id: uuid!, $profile_image: String!) {
+    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { profile_image: $profile_image }) { id profile_image }
+  }
+`;
+
+export const DEACTIVATE_PROJECT_USER = `
+  mutation DeactivateProjectUser($id: uuid!) {
+    update_ProjectUsers_by_pk(pk_columns: { id: $id }, _set: { is_active: false }) { id is_active }
+  }
+`;
+
+export const DEACTIVATE_ORG_EMPLOYEE = `
+  mutation DeactivateOrgEmployee($id: uuid!) {
+    update_orgEmployees_by_pk(pk_columns: { id: $id }, _set: { active: false }) { id active }
   }
 `;

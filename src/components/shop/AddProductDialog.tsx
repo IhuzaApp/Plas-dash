@@ -36,6 +36,7 @@ import {
   useGetProductNameByBarcode,
   useGetProductNameBySku,
   useSearchProductNames,
+  useDishesByName,
 } from '@/hooks/useHasuraApi';
 import { Switch } from '@/components/ui/switch';
 import BarcodeScanner from './BarcodeScanner';
@@ -68,6 +69,8 @@ interface AddProductDialogProps {
   shopId?: string;
   isLoading?: boolean;
   hideCommission?: boolean; // New prop to hide commission fields
+  isRestaurant?: boolean; // New prop to handle restaurant dishes
+  existingSuppliers?: string[]; // Prop for auto-completing suppliers
 }
 
 const AddProductDialog: React.FC<AddProductDialogProps> = ({
@@ -77,6 +80,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   shopId,
   isLoading = false,
   hideCommission = false,
+  isRestaurant = false,
+  existingSuppliers = [],
 }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -85,19 +90,28 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [externalSuggestions, setExternalSuggestions] = useState<any[]>([]);
+  const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
 
   const { data: shopsData } = useShops();
   const { data: systemConfig } = useSystemConfig();
-  const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+  const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
   const defaultCommission =
-    systemConfig?.System_configuratioins[0]?.productCommissionPercentage || 0;
+    systemConfig?.System_configuratioins?.[0]?.productCommissionPercentage || 0;
 
   // Hooks for searching by barcode and SKU
   const getProductByBarcode = useGetProductNameByBarcode();
   const getProductBySku = useGetProductNameBySku();
   const { data: searchProductNamesData, isLoading: isSearchingNames } =
     useSearchProductNames(searchTerm);
+  const { data: searchDishesData, isLoading: isSearchingDishes } = useDishesByName(searchTerm);
+
+  const searchResultsData = isRestaurant
+    ? searchDishesData?.dishes
+    : searchProductNamesData?.productNames;
+  const isSearching = isRestaurant ? isSearchingDishes : isSearchingNames;
 
   // Dynamic form schema based on hideCommission prop
   const formSchema = z
@@ -215,14 +229,89 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   // Auto-search as user types
   useEffect(() => {
     if (searchTerm.trim() && searchMode === 'name') {
-      // The useSearchProductNames hook will automatically handle the search
-      setSearchResults(searchProductNamesData?.productNames || []);
+      setSearchResults(searchResultsData || []);
       setShowSearchResults(true);
+
+      // Fetch external suggestions
+      let isMounted = true;
+      const fetchExternal = async () => {
+        setIsSearchingExternal(true);
+        try {
+          let suggestions: any[] = [];
+          if (isRestaurant) {
+            const res = await fetch(
+              `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`
+            );
+            const data = await res.json();
+            if (data.meals) {
+              suggestions = data.meals.map((m: any) => ({
+                id: `ext_meal_${m.idMeal}`,
+                name: m.strMeal,
+                description: m.strInstructions?.substring(0, 100) + '...',
+                category: m.strCategory,
+                image: m.strMealThumb,
+                isExternal: true,
+              }));
+            }
+          } else {
+            const res = await fetch(
+              `https://dummyjson.com/products/search?q=${encodeURIComponent(searchTerm)}`
+            );
+            const data = await res.json();
+            if (data.products) {
+              suggestions = data.products.map((p: any) => ({
+                id: `ext_prod_${p.id}`,
+                name: p.title,
+                description: p.description,
+                category: p.category,
+                image: p.thumbnail,
+                price: p.price,
+                isExternal: true,
+              }));
+            }
+          }
+
+          if (isRestaurant) {
+            try {
+              const drinksRes = await fetch(
+                `https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`
+              );
+              const drinksData = await drinksRes.json();
+              if (drinksData.drinks) {
+                const drinkSuggestions = drinksData.drinks.map((d: any) => ({
+                  id: `ext_drink_${d.idDrink}`,
+                  name: d.strDrink,
+                  description: d.strInstructions?.substring(0, 100) + '...',
+                  category: d.strAlcoholic === 'Alcoholic' ? 'Alcohol' : 'Drinks & Beverages',
+                  image: d.strDrinkThumb,
+                  isExternal: true,
+                }));
+                suggestions = [...suggestions, ...drinkSuggestions];
+              }
+            } catch (drinkErr) {
+              console.error('Error fetching drinks:', drinkErr);
+            }
+          }
+
+          if (isMounted) setExternalSuggestions(suggestions);
+        } catch (e) {
+          console.error('Error fetching external suggestions:', e);
+        } finally {
+          if (isMounted) setIsSearchingExternal(false);
+        }
+      };
+
+      const t = setTimeout(fetchExternal, 500); // debounce external API calls
+      return () => {
+        isMounted = false;
+        clearTimeout(t);
+      };
     } else if (!searchTerm.trim()) {
       setSearchResults([]);
+      setExternalSuggestions([]);
       setShowSearchResults(false);
     }
-  }, [searchTerm, searchMode, searchProductNamesData]);
+  }, [searchTerm, searchMode, searchResultsData, isRestaurant]);
 
   const resetForm = () => {
     form.reset();
@@ -231,11 +320,26 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     setSelectedProductName(null);
     setSearchTerm('');
     setSearchResults([]);
+    setExternalSuggestions([]);
     setShowSearchResults(false);
     setIsBarcodeScannerOpen(false);
   };
 
+  const generateRandomSKU = (name: string) => {
+    const prefix = name
+      .substring(0, 3)
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, 'X')
+      .padEnd(3, 'X');
+    const timestamp = Date.now().toString(36).slice(-4).toUpperCase();
+    const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `SKU-${prefix}-${timestamp}${randomChars}`;
+  };
+
   function handleSubmit(values: FormData) {
+    const isNewProduct = values.name && !values.productName_id;
+    const finalSku = isNewProduct && !values.sku ? generateRandomSKU(values.name || 'PRD') : values.sku;
+
     const submitData: ProductSubmitData = {
       price: values.price,
       quantity: values.quantity,
@@ -247,16 +351,15 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
       is_active: values.is_active,
       final_price: values.final_price,
       productName_id: values.productName_id,
-      productNameData:
-        values.name && !values.productName_id
-          ? {
-              name: values.name,
-              description: values.description,
-              barcode: values.barcode,
-              sku: values.sku,
-              image: values.image,
-            }
-          : undefined,
+      productNameData: isNewProduct
+        ? {
+            name: values.name!,
+            description: values.description,
+            barcode: values.barcode,
+            sku: finalSku,
+            image: values.image,
+          }
+        : undefined,
     };
 
     onSubmit(submitData);
@@ -309,8 +412,49 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
     setShowSearchResults(false);
   };
 
+  const convertUsdToSystemCurrency = (usdPrice: number, targetCurrency: string) => {
+    let rate = 1;
+    const currency = targetCurrency.toUpperCase();
+    if (currency === 'RWF')
+      rate = 1350; // Standard USD to RWF rate
+    else if (currency === 'EUR') rate = 0.92;
+    else if (currency === 'GBP') rate = 0.79;
+    else if (currency === 'KES')
+      rate = 131; // Kenyan Shilling
+    else if (currency === 'UGX')
+      rate = 3800; // Ugandan Shilling
+    else if (currency === 'TZS') rate = 2500; // Tanzanian Shilling
+
+    // For RWF and similar, we want whole numbers. For others, 2 decimal places.
+    const converted = usdPrice * rate;
+    return rate > 100 ? Math.round(converted) : Number(converted.toFixed(2));
+  };
+
   const handleSearchResultSelect = (product: any) => {
-    handleProductNameSelect(product);
+    if (product.isExternal) {
+      form.setValue('name', product.name);
+      form.setValue('description', product.description || '');
+      form.setValue('category', product.category || '');
+      form.setValue('sku', generateRandomSKU(product.name));
+      if (product.price) {
+        const convertedPrice = convertUsdToSystemCurrency(Number(product.price), currency);
+        form.setValue('price', convertedPrice.toString());
+      }
+      if (product.image) {
+        setImagePreview(product.image);
+        form.setValue('image', product.image);
+      }
+      if (product.barcode) {
+        form.setValue('barcode', product.barcode);
+      }
+      setSearchResults([]);
+      setExternalSuggestions([]);
+      setShowSearchResults(false);
+      setSearchTerm(product.name);
+      toast.success(`${isRestaurant ? 'Dish' : 'Product'} details loaded! You can now add it.`);
+    } else {
+      handleProductNameSelect(product);
+    }
   };
 
   const handleBarcodeScanResult = (barcode: string) => {
@@ -363,9 +507,9 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Product</DialogTitle>
+          <DialogTitle>{isRestaurant ? 'Add New Dish' : 'Add New Product'}</DialogTitle>
           <DialogDescription>
             Enter the details of the new inventory item. Click save when you&apos;re done.
           </DialogDescription>
@@ -416,6 +560,29 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                           field.onChange(e);
                           setSearchTerm(e.target.value || '');
                           setSearchMode('name');
+
+                          if (!e.target.value) {
+                            // If they clear the search completely, reset the form state
+                            form.setValue('productName_id', undefined);
+                            form.setValue('description', '');
+                            form.setValue('category', '');
+                            form.setValue('price', '');
+                            form.setValue('image', '');
+                            // Don't clear barcode if they just scanned it!
+                            if (searchMode !== 'barcode') {
+                              form.setValue('sku', undefined);
+                              form.setValue('barcode', undefined);
+                            }
+                            form.setValue('quantity', 0);
+                            form.setValue('measurement_unit', 'item');
+                            setImagePreview(null);
+                            setSelectedProductName(null);
+                          } else if (form.getValues('productName_id')) {
+                            // If they edit the name of a selected local item, clear the ID
+                            // so it saves as a new custom item rather than ignoring the name change
+                            form.setValue('productName_id', undefined);
+                            setSelectedProductName(null);
+                          }
                         }}
                       />
                     </FormControl>
@@ -449,12 +616,14 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
             {/* Search Results */}
             {showSearchResults && (
               <div className="border rounded-md p-2 max-h-40 overflow-y-auto">
-                {isSearchingNames ? (
+                {isSearching ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    <span className="text-sm text-muted-foreground">Searching products...</span>
+                    <span className="text-sm text-muted-foreground">Searching...</span>
                   </div>
-                ) : searchResults.length > 0 ? (
+                ) : searchResults.length > 0 ||
+                  externalSuggestions.length > 0 ||
+                  isSearchingExternal ? (
                   <div className="space-y-2">
                     {searchResults.map(product => (
                       <div
@@ -462,11 +631,20 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
                         onClick={() => handleSearchResultSelect(product)}
                       >
-                        <div>
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {product.barcode && `Barcode: ${product.barcode}`}
-                            {product.sku && `SKU: ${product.sku}`}
+                        <div className="flex items-center space-x-3">
+                          {product.image && (
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-8 h-8 rounded object-cover"
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {product.barcode && `Barcode: ${product.barcode} `}
+                              {product.sku && `SKU: ${product.sku}`}
+                            </div>
                           </div>
                         </div>
                         <Button size="sm" variant="outline">
@@ -474,6 +652,48 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         </Button>
                       </div>
                     ))}
+
+                    {/* External API Suggestions */}
+                    {externalSuggestions.length > 0 && (
+                      <>
+                        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-2 pb-1 border-t mt-2">
+                          Suggestions from web
+                        </div>
+                        {externalSuggestions.map(product => (
+                          <div
+                            key={product.id}
+                            className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
+                            onClick={() => handleSearchResultSelect(product)}
+                          >
+                            <div className="flex items-center space-x-3">
+                              {product.image && (
+                                <img
+                                  src={product.image}
+                                  alt={product.name}
+                                  className="w-8 h-8 rounded object-cover"
+                                />
+                              )}
+                              <div>
+                                <div className="font-medium text-blue-600 dark:text-blue-400">
+                                  {product.name}
+                                </div>
+                                <div className="text-xs text-muted-foreground truncate max-w-[250px]">
+                                  {product.description}
+                                </div>
+                              </div>
+                            </div>
+                            <Button size="sm" variant="outline" className="shrink-0 ml-2">
+                              Use this
+                            </Button>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                    {isSearchingExternal && (
+                      <div className="text-xs text-muted-foreground text-center py-2 animate-pulse">
+                        Loading more suggestions...
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-4">
@@ -486,13 +706,14 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        // Auto-fill the name field with the search term
+                        // Auto-fill the name field with the search term and a new SKU
                         form.setValue('name', searchTerm);
+                        form.setValue('sku', generateRandomSKU(searchTerm));
                         setShowSearchResults(false);
                         toast.info('You can now add this as a new product');
                       }}
                     >
-                      Add as New Product
+                      Add as New {isRestaurant ? 'Dish' : 'Product'}
                     </Button>
                   </div>
                 )}
@@ -508,16 +729,16 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Product Image</FormLabel>
                     <div className="flex items-start gap-4">
-                      <div className="relative">
-                        <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
+                      <div className="relative shrink-0">
+                        <div className="h-40 w-40 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50 transition-all hover:bg-muted/80">
                           {imagePreview ? (
                             <img
                               src={imagePreview}
                               alt="Product preview"
-                              className="h-full w-full object-contain"
+                              className="h-full w-full object-contain bg-white"
                             />
                           ) : (
-                            <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                            <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
                           )}
                         </div>
                         {imagePreview && (
@@ -604,6 +825,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="groceries">Groceries</SelectItem>
+                        <SelectItem value="alcohol">Alcohol</SelectItem>
+                        <SelectItem value="drinks">Drinks & Beverages</SelectItem>
                         <SelectItem value="electronics">Electronics</SelectItem>
                         <SelectItem value="clothing">Clothing</SelectItem>
                         <SelectItem value="home">Home & Garden</SelectItem>
@@ -758,14 +981,54 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 control={form.control}
                 name="supplier"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="relative">
                     <FormLabel>Supplier</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter supplier name..."
-                        {...field}
-                        value={field.value || ''}
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="Enter or select supplier..."
+                          {...field}
+                          value={field.value || ''}
+                          onFocus={() => setShowSupplierDropdown(true)}
+                          onBlur={() => {
+                            // Small delay to allow clicking on an option before blur hides it
+                            setTimeout(() => setShowSupplierDropdown(false), 200);
+                          }}
+                        />
+                        {showSupplierDropdown && (
+                          <div className="absolute z-[9999] top-full mt-1 w-full bg-background border rounded-md shadow-md max-h-48 overflow-y-auto">
+                            {existingSuppliers.length === 0 ? (
+                              <div className="px-3 py-2 text-sm text-muted-foreground text-center italic">
+                                No previous suppliers found
+                              </div>
+                            ) : existingSuppliers.filter(s =>
+                                s.toLowerCase().includes((field.value || '').toLowerCase())
+                              ).length === 0 ? (
+                              <div className="px-3 py-2 text-sm text-muted-foreground text-center italic">
+                                No matching suppliers
+                              </div>
+                            ) : (
+                              existingSuppliers
+                                .filter(s =>
+                                  s.toLowerCase().includes((field.value || '').toLowerCase())
+                                )
+                                .map((supplier, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="px-3 py-2 cursor-pointer hover:bg-muted text-sm"
+                                    onMouseDown={e => {
+                                      e.preventDefault();
+                                      field.onChange(supplier);
+                                      setShowSupplierDropdown(false);
+                                    }}
+                                  >
+                                    {supplier}
+                                  </div>
+                                ))
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

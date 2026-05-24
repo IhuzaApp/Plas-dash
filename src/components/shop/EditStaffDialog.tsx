@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -32,14 +33,23 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { toast } from 'sonner';
 import { OrgEmployee } from '@/hooks/useHasuraApi';
 import {
   UserPrivileges,
   PrivilegeKey,
   getDefaultPrivilegesForRole,
-  permissionGroups,
+  permissionGroups as allPermissionGroups,
 } from '@/lib/privileges';
 import { DEFAULT_PRIVILEGES } from '@/types/privileges';
+import { useShopSubscriptionModules } from '@/hooks/useShopSubscriptionModules';
+import { RoleModulePreview } from '@/components/shop/RoleModulePreview';
 
 const formSchema = z.object({
   fullnames: z.string().min(1, 'Full name is required'),
@@ -66,8 +76,11 @@ const formSchema = z.object({
     'deliveryDriver',
     'securityGuard',
     'maintenanceStaff',
+    'customer',
     'custom',
   ]),
+  multAuthEnabled: z.boolean().default(false),
+  sms_auth: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -88,35 +101,72 @@ export interface EditStaffDialogProps {
     }>;
     privileges: UserPrivileges;
   }) => void;
-  employee: OrgEmployee | null;
+  employee: any;
+  /** Module slugs from the shop's active subscription plan — passed directly to avoid extra API calls */
+  planModuleSlugs?: string[];
+  loading?: boolean;
 }
 
-// Permission display component — identical to AddStaffDialog
-const PermissionDisplay = ({ privileges }: { privileges: UserPrivileges }) => {
+const PermissionDisplay = ({
+  privileges,
+  permissionGroups,
+}: {
+  privileges: UserPrivileges;
+  permissionGroups: any[];
+}) => {
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
-        {permissionGroups.map(group => (
-          <div key={group.title} className="space-y-2">
-            <h4 className="font-medium text-sm">{group.title}</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {group.permissions.map(permission => {
-                const hasAccess = privileges[group.module]?.[permission.key] || false;
-                return (
-                  <div key={permission.key} className="flex items-center gap-2">
-                    <div
-                      className={`w-2 h-2 rounded-full ${hasAccess ? 'bg-green-500' : 'bg-gray-300'}`}
-                    />
-                    <span className="text-xs text-muted-foreground">{permission.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        <Accordion type="multiple" className="w-full">
+          {permissionGroups.map(group => (
+            <AccordionItem key={group.title} value={group.title}>
+              <AccordionTrigger className="text-sm font-medium hover:no-underline py-2">
+                {group.title}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {group.permissions.map((permission: any) => {
+                    const hasAccess =
+                      privileges[group.module as PrivilegeKey]?.[permission.key] || false;
+                    return (
+                      <div key={permission.key} className="flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${hasAccess ? 'bg-green-500' : 'bg-gray-300'}`}
+                        />
+                        <span className="text-xs text-muted-foreground">{permission.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </div>
     </div>
   );
+};
+
+const roleLabel: Record<string, string> = {
+  globalAdmin: 'Global Admin',
+  systemAdmin: 'System Admin',
+  storeAdministrator: 'Store Administrator',
+  storeManager: 'Store Manager',
+  assistantManager: 'Assistant Manager',
+  cashier: 'Cashier',
+  salesAssociate: 'Sales Associate',
+  inventorySpecialist: 'Inventory Specialist',
+  financeManager: 'Finance Manager',
+  accountant: 'Accountant',
+  kitchenManager: 'Kitchen Manager',
+  chef: 'Chef',
+  waiter: 'Waiter',
+  bartender: 'Bartender',
+  deliveryDriver: 'Delivery Driver',
+  securityGuard: 'Security Guard',
+  maintenanceStaff: 'Maintenance Staff',
+  customer: 'Customer',
+  custom: 'Custom Role',
 };
 
 const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
@@ -124,6 +174,8 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
   onOpenChange,
   onSubmit,
   employee,
+  planModuleSlugs,
+  loading,
 }) => {
   const [customPrivileges, setCustomPrivileges] = useState<UserPrivileges>({
     ...DEFAULT_PRIVILEGES,
@@ -153,6 +205,8 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         position: employee.Position || '',
         active: employee.active ?? true,
         roleType: (employee.roleType as any) || 'cashier',
+        multAuthEnabled: employee.multAuthEnabled ?? false,
+        sms_auth: employee.sms_auth ?? false,
       };
       form.reset(formData);
 
@@ -174,6 +228,34 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
       setCustomPrivileges(getDefaultPrivilegesForRole(roleType));
     }
   }, [roleType, open]);
+
+  const shopId = employee?.shop_id as string;
+  const restaurantId = employee?.restaurant_id as string;
+  // Only use hook when planModuleSlugs isn't provided directly
+  const { availableModules: hookModules, isLoading: isLoadingModules } = useShopSubscriptionModules(
+    planModuleSlugs !== undefined ? undefined : shopId,
+    planModuleSlugs !== undefined ? undefined : restaurantId
+  );
+
+  // undefined = subscription data not available; [] = plan has no modules assigned
+  const resolvedModules: string[] | undefined =
+    planModuleSlugs !== undefined
+      ? planModuleSlugs
+      : hookModules.length > 0
+        ? hookModules
+        : undefined;
+
+  const isLoading = planModuleSlugs !== undefined ? false : isLoadingModules;
+
+  const filteredPermissionGroups = React.useMemo(() => {
+    if (isLoading) return [];
+    // Subscription data available — strict filter to subscribed modules only
+    if (resolvedModules !== undefined) {
+      return allPermissionGroups.filter(group => resolvedModules.includes(group.module));
+    }
+    // No subscription data at all — show everything so user isn't blocked
+    return allPermissionGroups;
+  }, [resolvedModules, isLoading]);
 
   function handlePrivilegeToggle(module: PrivilegeKey, action: string) {
     setCustomPrivileges(prev => {
@@ -226,6 +308,9 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
     if (values.position !== employee.Position) changes.Position = values.position;
     if (values.active !== employee.active) changes.active = values.active;
     if (values.roleType !== employee.roleType) changes.roleType = values.roleType;
+    if (values.multAuthEnabled !== employee.multAuthEnabled)
+      changes.multAuthEnabled = values.multAuthEnabled;
+    if (values.sms_auth !== employee.sms_auth) changes.sms_auth = values.sms_auth;
 
     const finalChanges = Object.fromEntries(
       Object.entries(changes).filter(([_, value]) => {
@@ -241,35 +326,45 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
         ? customPrivileges
         : getDefaultPrivilegesForRole(values.roleType);
 
+    // STRICT FILTERING: Only include modules that are in the subscription
+    const strictlyFilteredPrivileges: UserPrivileges = { ...DEFAULT_PRIVILEGES };
+
+    // Always preserve 'pages' group as it's required for routing
+    if (privileges.pages) {
+      strictlyFilteredPrivileges.pages = privileges.pages;
+    }
+
+    // Only copy over modules that are in the subscription. If no subscription data, save all.
+    (resolvedModules ?? Object.keys(privileges)).forEach((modSlug: string) => {
+      const slug = modSlug as PrivilegeKey;
+      if (privileges[slug]) {
+        strictlyFilteredPrivileges[slug] = privileges[slug];
+      }
+    });
+
+    // Handle MFA requirement logic
+    if (values.multAuthEnabled && !employee.multAuthEnabled) {
+      (strictlyFilteredPrivileges as any).twoFactorRequired = true;
+      delete finalChanges.multAuthEnabled;
+    } else if (!values.multAuthEnabled) {
+      (strictlyFilteredPrivileges as any).twoFactorRequired = false;
+    }
+
+    if (values.sms_auth && !employee.sms_auth) {
+      (strictlyFilteredPrivileges as any).smsAuthRequired = true;
+      delete finalChanges.sms_auth;
+    } else if (!values.sms_auth) {
+      (strictlyFilteredPrivileges as any).smsAuthRequired = false;
+    }
+
     onSubmit({
       id: employee.id,
       employee: finalChanges,
-      privileges,
+      privileges: strictlyFilteredPrivileges,
     });
   }
 
   if (!employee) return null;
-
-  const roleLabel: Record<string, string> = {
-    globalAdmin: 'Global Admin',
-    systemAdmin: 'System Admin',
-    storeAdministrator: 'Store Administrator',
-    storeManager: 'Store Manager',
-    assistantManager: 'Assistant Manager',
-    cashier: 'Cashier',
-    salesAssociate: 'Sales Associate',
-    inventorySpecialist: 'Inventory Specialist',
-    financeManager: 'Finance Manager',
-    accountant: 'Accountant',
-    kitchenManager: 'Kitchen Manager',
-    chef: 'Chef',
-    waiter: 'Waiter',
-    bartender: 'Bartender',
-    deliveryDriver: 'Delivery Driver',
-    securityGuard: 'Security Guard',
-    maintenanceStaff: 'Maintenance Staff',
-    custom: 'Custom Role',
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -366,6 +461,38 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                         <div className="space-y-0.5">
                           <FormLabel className="text-base">Active Status</FormLabel>
                           <FormDescription>Enable or disable this staff member</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="multAuthEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Two-Factor Auth</FormLabel>
+                          <FormDescription>Enable app-based 2FA</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="sms_auth"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">SMS Auth</FormLabel>
+                          <FormDescription>Enable SMS-based auth</FormDescription>
                         </div>
                         <FormControl>
                           <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -499,6 +626,14 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                               <span>Basic monitoring access</span>
                             </div>
                           </SelectItem>
+                          <SelectItem value="customer">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="border-sky-400 text-sky-600">
+                                Customer
+                              </Badge>
+                              <span>Read-only access to orders &amp; wallet</span>
+                            </div>
+                          </SelectItem>
                           <SelectItem value="custom">
                             <div className="flex items-center gap-2">
                               <Badge variant="outline">Custom</Badge>
@@ -516,54 +651,96 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
                   )}
                 />
 
-                {/* Permissions section — identical to AddStaffDialog */}
-                {roleType === 'custom' ? (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div>
-                      <h4 className="font-medium mb-3">Select Custom Permissions</h4>
+                {/* Role Module Preview — shows module coverage for preset roles */}
+                {roleType !== 'custom' &&
+                  !isLoadingModules &&
+                  filteredPermissionGroups.length > 0 && (
+                    <RoleModulePreview
+                      privileges={customPrivileges}
+                      filteredPermissionGroups={filteredPermissionGroups}
+                      roleLabel={roleLabel[roleType] ?? roleType}
+                    />
+                  )}
+
+                {/* Unified Permissions Section */}
+                <div className="space-y-4">
+                  <Separator />
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium">
+                        {roleType === 'custom' ? (
+                          'Select Custom Permissions'
+                        ) : (
+                          <>Permissions for {roleLabel[roleType] ?? roleType}</>
+                        )}
+                      </h4>
+                      {isLoadingModules && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+
+                    {isLoadingModules ? (
+                      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-sm text-muted-foreground">
+                          Checking subscription modules...
+                        </p>
+                      </div>
+                    ) : filteredPermissionGroups.length === 0 ? (
+                      <div className="p-8 text-center border rounded-lg bg-muted/20">
+                        <p className="text-sm text-muted-foreground">
+                          No modules available for this shop&apos;s subscription plan.
+                        </p>
+                      </div>
+                    ) : roleType === 'custom' ? (
                       <div className="space-y-4">
                         <div className="grid gap-4">
-                          {permissionGroups.map(group => (
-                            <div key={group.title} className="space-y-2">
-                              <h4 className="font-medium text-sm">{group.title}</h4>
-                              <div className="grid grid-cols-1 gap-2">
-                                {group.permissions.map(permission => (
-                                  <div
-                                    key={permission.key}
-                                    className="flex items-center justify-between p-2 rounded-lg border"
-                                  >
-                                    <span className="text-sm text-muted-foreground">
-                                      {permission.label}
-                                    </span>
-                                    <Switch
-                                      checked={
-                                        customPrivileges[group.module]?.[permission.key] || false
-                                      }
-                                      onCheckedChange={() =>
-                                        handlePrivilegeToggle(group.module, permission.key)
-                                      }
-                                    />
+                          <Accordion type="multiple" className="w-full">
+                            {filteredPermissionGroups.map(group => (
+                              <AccordionItem key={group.title} value={group.title}>
+                                <AccordionTrigger className="text-sm font-medium hover:no-underline py-2">
+                                  {group.title}
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                  <div className="grid grid-cols-1 gap-2 pt-1">
+                                    {group.permissions.map((permission: any) => (
+                                      <div
+                                        key={permission.key}
+                                        className="flex items-center justify-between p-2 rounded-lg border bg-card"
+                                      >
+                                        <span className="text-sm text-muted-foreground">
+                                          {permission.label}
+                                        </span>
+                                        <Switch
+                                          checked={
+                                            customPrivileges[group.module as PrivilegeKey]?.[
+                                              permission.key
+                                            ] || false
+                                          }
+                                          onCheckedChange={() =>
+                                            handlePrivilegeToggle(
+                                              group.module as PrivilegeKey,
+                                              permission.key
+                                            )
+                                          }
+                                        />
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
+                                </AccordionContent>
+                              </AccordionItem>
+                            ))}
+                          </Accordion>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <PermissionDisplay
+                        privileges={customPrivileges}
+                        permissionGroups={filteredPermissionGroups}
+                      />
+                    )}
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <Separator />
-                    <div>
-                      <h4 className="font-medium mb-3">
-                        Permissions for {roleLabel[roleType] ?? roleType}
-                      </h4>
-                      <PermissionDisplay privileges={customPrivileges} />
-                    </div>
-                  </div>
-                )}
+                </div>
               </CardContent>
             </Card>
 
@@ -571,7 +748,16 @@ const EditStaffDialog: React.FC<EditStaffDialogProps> = ({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Update Staff Member</Button>
+              <Button type="submit" disabled={loading || form.formState.isSubmitting}>
+                {loading || form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Staff Member'
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

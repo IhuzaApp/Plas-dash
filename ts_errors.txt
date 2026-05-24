@@ -1,0 +1,26 @@
+src/components/layout/ShopSelector.tsx(316,58): error TS2339: Property 'display_image' does not exist on type 'OrgEmployee'.
+src/components/layout/ShopSelector.tsx(316,87): error TS2339: Property 'image' does not exist on type 'OrgEmployee'.
+src/components/layout/ShopSelector.tsx(392,35): error TS2339: Property 'display_image' does not exist on type 'OrgEmployee'.
+src/components/layout/ShopSelector.tsx(393,35): error TS2339: Property 'image' does not exist on type 'OrgEmployee'.
+src/components/pages/pos/checkout/CartSummaryCard.tsx(332,31): error TS2339: Property 'fullnames' does not exist on type 'never'.
+src/components/pages/pos/checkout/CartSummaryCard.tsx(333,32): error TS2339: Property 'email' does not exist on type 'never'.
+src/components/pages/pos/checkout/CartSummaryCard.tsx(334,31): error TS2339: Property 'Position' does not exist on type 'never'.
+src/components/pages/pos/checkout/CartSummaryCard.tsx(334,53): error TS2339: Property 'roleType' does not exist on type 'never'.
+src/components/pages/pos/checkout/WeighingStation.tsx(878,35): error TS2339: Property 'measurementUnit' does not exist on type 'WeighedItemHistory'.
+src/components/pages/pos/CompanyDashboard.tsx(94,47): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/components/pages/pos/CompanyDashboard.tsx(183,26): error TS2339: Property 'categoryName' does not exist on type 'BranchShop'.
+src/components/pages/pos/CompanyDashboard.tsx(288,40): error TS2339: Property 'categoryName' does not exist on type 'BranchShop'.
+src/components/pages/pos/CompanyDashboard.tsx(322,28): error TS2339: Property 'categoryName' does not exist on type 'BranchShop'.
+src/components/pages/pos/CompanyDashboard.tsx(451,38): error TS2339: Property 'categoryName' does not exist on type 'BranchShop'.
+src/components/pages/pos/CompanyDashboard.tsx(627,25): error TS2339: Property 'categoryName' does not exist on type 'BranchShop'.
+src/components/pages/pos/Inventory.tsx(75,56): error TS2307: Cannot find module '@/lib/api/pos' or its corresponding type declarations.
+src/components/pages/pos/RatingCard.tsx(62,42): error TS2339: Property 'categoryName' does not exist on type '{ address: string | null; description: string | null; image: string | null; logo: string | null; name: string; longitude: number | null; }'.
+src/components/pages/pos/RatingCard.tsx(62,80): error TS2339: Property 'categoryName' does not exist on type '{ address: string | null; description: string | null; image: string | null; logo: string | null; name: string; longitude: number | null; }'.
+src/components/pages/Settings.tsx(281,7): error TS2552: Cannot find name 'currentUserType'. Did you mean 'currentUserId'?
+src/components/pages/Settings.tsx(491,15): error TS18047: 'hasuraClient' is possibly 'null'.
+src/components/pages/Settings.tsx(512,15): error TS18047: 'hasuraClient' is possibly 'null'.
+src/components/pages/Settings.tsx(517,28): error TS18047: 'hasuraClient' is possibly 'null'.
+src/components/shop/AddProductDialog.tsx(341,70): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/hooks/useBranchShops.ts(547,5): error TS2353: Object literal may only specify known properties, and 'mainShop' does not exist in type 'UseBranchShopsReturn'.

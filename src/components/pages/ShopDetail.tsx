@@ -16,23 +16,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Search,
-  Filter,
-  Loader2,
-  Package,
-  User,
+  ArrowLeft,
   Calendar,
   DollarSign,
-  MapPin,
-  Plus,
-  FileUp,
-  Users,
   Edit,
-  Trash2,
-  UserX,
-  Store,
+  FileUp,
+  Filter,
   Image as ImageIcon,
+  Loader2,
+  MapPin,
+  Package,
+  Plus,
+  Power,
+  PowerOff,
+  Search,
+  Settings,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Star,
+  Store,
+  Trash2,
+  TrendingDown,
+  User,
+  Users,
+  UserX,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   useShopById,
   useReelOrders,
@@ -48,6 +59,16 @@ import {
   useDeleteEmployee,
   OrgEmployee,
 } from '@/hooks/useHasuraApi';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { apiGet, apiPost, apiDelete, apiPatch } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { z } from 'zod';
@@ -161,7 +182,18 @@ type ProductFormData = z.infer<typeof productFormSchema>;
 
 const ShopDetail = () => {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id?.toString() || '';
+
+  const handleToggleStatus = async (shopId: string, currentStatus: boolean) => {
+    try {
+      await apiPatch(`/api/mutations/shops/${shopId}`, { is_active: !currentStatus });
+      toast.success(`Shop ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      refetch();
+    } catch (e) {
+      toast.error('Failed to update shop status');
+    }
+  };
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
@@ -180,6 +212,16 @@ const ShopDetail = () => {
 
   const { data, isLoading, isError, error, refetch } = useShopById(id);
   const shop = data?.Shops_by_pk;
+
+  // Extract subscription module slugs directly from the shop query result
+  const planModuleSlugs = useMemo(() => {
+    const sub = (shop as any)?.shop_subscription;
+    if (!sub?.plan?.plan_modules) return undefined;
+    return (sub.plan.plan_modules as { module: { slug: string } }[])
+      .map(pm => pm.module?.slug)
+      .filter(Boolean) as string[];
+  }, [shop]);
+
   const { data: reelOrdersData } = useReelOrders();
   const shopReelOrders = useMemo(() => {
     const list = (reelOrdersData?.reel_orders ?? []) as {
@@ -199,7 +241,7 @@ const ShopDetail = () => {
   const addProductName = useAddProductName();
   const updateProduct = useUpdateProduct();
   const { data: configData } = useSystemConfig();
-  const config = configData?.System_configuratioins[0];
+  const config = configData?.System_configuratioins?.[0];
   const { hasAction } = usePrivilege();
 
   // Staff management hooks
@@ -521,50 +563,129 @@ const ShopDetail = () => {
 
   return (
     <AdminLayout>
-      <PageHeader
-        title={shop.name}
-        description={`${shop.category?.name || 'Uncategorized'} • ${shop.is_active ? 'Active' : 'Inactive'}`}
-        icon={
-          <div className="h-12 w-12 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
-            {shop.logo ? (
-              <img
-                src={shop.logo}
-                alt={`${shop.name} logo`}
-                className="h-full w-full object-contain"
-              />
-            ) : (
-              <Store className="h-6 w-6 text-muted-foreground" />
-            )}
+      {/* Hero Section */}
+      <div className="relative h-80 w-full mb-8 overflow-hidden rounded-2xl shadow-2xl group">
+        {/* Cover Photo */}
+        <div className="absolute inset-0">
+          {/* Go Back Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-6 left-6 z-20 bg-black/20 hover:bg-black/40 text-white border border-white/10 backdrop-blur-md transition-all"
+            asChild
+          >
+            <Link href="/shops">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back
+            </Link>
+          </Button>
+
+          {shop.image ? (
+            <img
+              src={shop.image}
+              alt={shop.name}
+              className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-primary/20 via-primary/10 to-background" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+        </div>
+
+        {/* Hero Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-8 flex flex-col md:flex-row items-end justify-between gap-6">
+          <div className="flex items-end gap-6">
+            <div className="relative group/logo">
+              <div className="h-32 w-32 rounded-2xl border-4 border-background overflow-hidden bg-white shadow-xl backdrop-blur-md transition-transform duration-300 group-hover/logo:scale-105">
+                {shop.logo ? (
+                  <img
+                    src={shop.logo}
+                    alt={shop.name}
+                    className="h-full w-full object-contain p-2"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-muted">
+                    <Store className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mb-2">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-4xl font-bold text-white tracking-tight">{shop.name}</h1>
+                <Badge
+                  className={
+                    shop.is_active
+                      ? 'bg-green-500/20 text-green-400 border-green-500/30 backdrop-blur-md'
+                      : 'bg-gray-500/20 text-gray-400 border-gray-500/30 backdrop-blur-md'
+                  }
+                >
+                  {shop.is_active ? 'Active' : 'Inactive'}
+                </Badge>
+              </div>
+              <div className="text-gray-300 flex items-center gap-2 text-sm">
+                <Badge
+                  variant="outline"
+                  className="text-gray-300 border-gray-300/30 bg-white/5 backdrop-blur-md"
+                >
+                  {shop.category?.name || 'Uncategorized'}
+                </Badge>
+                <span className="text-gray-500">•</span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5" /> {shop.address || 'No address'}
+                </span>
+              </div>
+            </div>
           </div>
-        }
-        actions={
-          <div className="flex gap-2">
+
+          <div className="flex flex-wrap gap-3 mb-2">
+            <Button
+              onClick={() => handleToggleStatus(shop.id, shop.is_active)}
+              variant="outline"
+              className={`border-white/10 backdrop-blur-md transition-all ${
+                shop.is_active
+                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/30'
+                  : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/30'
+              }`}
+            >
+              {shop.is_active ? (
+                <>
+                  <PowerOff className="h-4 w-4 mr-2" /> Deactivate
+                </>
+              ) : (
+                <>
+                  <Power className="h-4 w-4 mr-2" /> Activate
+                </>
+              )}
+            </Button>
+
             {hasAction('products', 'add_products') && (
-              <Button onClick={() => setIsAddProductOpen(true)} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Add Product
-              </Button>
-            )}
-            {hasAction('products', 'import_products') && (
               <Button
-                variant="outline"
-                onClick={() => setIsImportOpen(true)}
-                className="flex items-center gap-2"
+                onClick={() => setIsAddProductOpen(true)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
               >
-                <FileUp className="h-4 w-4" /> Import Products
+                <Plus className="h-4 w-4 mr-2" /> Add Product
               </Button>
             )}
+            <Button
+              variant="outline"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-md"
+            >
+              <Edit className="h-4 w-4 mr-2" /> Edit Shop
+            </Button>
           </div>
-        }
-      />
+        </div>
+      </div>
 
       <div className="space-y-6">
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:w-3/4">
+          <TabsList className="grid grid-cols-2 md:grid-cols-7 lg:w-full">
             <TabsTrigger value="info">Shop Info</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="staff">Staff</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="subscription">Subscription</TabsTrigger>
+            <TabsTrigger value="promotions">Promotions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-4 pt-4">
@@ -1040,6 +1161,216 @@ const ShopDetail = () => {
           <TabsContent value="analytics" className="pt-4">
             <ShopPerformanceCharts shop={shop} reelOrders={shopReelOrders} isLoading={isLoading} />
           </TabsContent>
+          <TabsContent value="subscription" className="space-y-4 pt-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="md:col-span-1 space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Current Plan</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex flex-col items-center justify-center p-6 bg-muted/50 rounded-xl border border-border">
+                      <Badge className="mb-2 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20">
+                        {shop.shop_subscription?.plan?.name || 'No Active Plan'}
+                      </Badge>
+                      <div className="text-3xl font-bold">
+                        {formatCurrency(shop.shop_subscription?.plan?.price_monthly || '0')}
+                        <span className="text-sm text-muted-foreground font-normal"> /mo</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Status</span>
+                        <Badge
+                          variant={
+                            shop.shop_subscription?.status === 'active' ? 'default' : 'secondary'
+                          }
+                          className={
+                            shop.shop_subscription?.status === 'active' ? 'bg-green-500' : ''
+                          }
+                        >
+                          {shop.shop_subscription?.status || 'Unknown'}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Billing Cycle</span>
+                        <span className="capitalize">
+                          {shop.shop_subscription?.billing_cycle || '—'}
+                        </span>
+                      </div>
+                    </div>
+                    <Button className="w-full" variant="outline">
+                      Change Plan
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between py-4">
+                    <CardTitle className="text-base font-semibold">Module Access</CardTitle>
+                    <div className="flex gap-2">
+                      {/* <ManageManualModules shop={shop} onUpdate={() => refetch()} /> */}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4 px-4 pb-4">
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Plan Modules
+                      </h4>
+                      <div className="grid gap-2">
+                        {shop.shop_subscription?.plan?.plan_modules?.length > 0 ? (
+                          shop.shop_subscription.plan.plan_modules.map((pm: any) => (
+                            <div
+                              key={pm.id}
+                              className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10"
+                            >
+                              <ShieldCheck className="h-4 w-4 text-primary" />
+                              <span className="text-sm font-medium">{pm.module?.name}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">
+                            No modules in this plan.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Manual Overrides
+                      </h4>
+                      <div className="grid gap-2">
+                        {/* Note: shop_modules relationship is not yet available in the database schema */}
+                        <p className="text-xs text-muted-foreground italic">
+                          Manual overrides are currently disabled (relationship missing in DB).
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Subscription Invoices</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Invoice #</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {shop.shop_subscription?.subscription_invoices?.length > 0 ? (
+                        shop.shop_subscription.subscription_invoices.map((inv: any) => (
+                          <TableRow key={inv.id}>
+                            <TableCell className="font-mono text-xs">
+                              {inv.invoice_number}
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(inv.created_at), 'MMM dd, yyyy')}
+                            </TableCell>
+                            <TableCell>{formatCurrency(inv.total_amount)}</TableCell>
+                            <TableCell>
+                              <Badge variant={inv.status === 'paid' ? 'default' : 'outline'}>
+                                {inv.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm">
+                                Download
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                            No invoices found.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="promotions" className="space-y-4 pt-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Shop Promotions</CardTitle>
+                <Button size="sm" variant="outline" className="gap-2">
+                  <Plus className="h-4 w-4" /> Create Promotion
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Promotion Name</TableHead>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Budget</TableHead>
+                      <TableHead>Used</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {shop.promotions?.length > 0 ? (
+                      shop.promotions.map((promo: any) => (
+                        <TableRow key={promo.id}>
+                          <TableCell className="font-medium">{promo.name}</TableCell>
+                          <TableCell className="font-mono text-xs">{promo.code || '—'}</TableCell>
+                          <TableCell className="capitalize">{promo.discount_type}</TableCell>
+                          <TableCell>{formatCurrency(promo.budget_limit || '0')}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1 w-24">
+                              <div className="w-full bg-muted rounded-full h-1">
+                                <div
+                                  className="bg-primary h-1 rounded-full"
+                                  style={{
+                                    width: `${Math.min(100, (parseFloat(promo.budget_used || '0') / parseFloat(promo.budget_limit || '1')) * 100)}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className="text-[10px] text-muted-foreground">
+                                {formatCurrency(promo.budget_used || '0')}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={promo.status === 'active' ? 'default' : 'secondary'}>
+                              {promo.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">
+                              Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                          No promotions found for this shop.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -1070,6 +1401,7 @@ const ShopDetail = () => {
         onOpenChange={setIsAddStaffOpen}
         onSubmit={handleAddStaff}
         shopId={id}
+        planModuleSlugs={planModuleSlugs}
       />
 
       <EditStaffDialog
@@ -1077,9 +1409,91 @@ const ShopDetail = () => {
         onOpenChange={setIsEditStaffOpen}
         onSubmit={handleUpdateStaff}
         employee={selectedEmployee}
+        planModuleSlugs={planModuleSlugs}
       />
     </AdminLayout>
   );
 };
 
 export default ShopDetail;
+
+function ManageManualModules({ shop, onUpdate }: { shop: any; onUpdate: () => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const { data: modulesData, isLoading } = useQuery<{ modules: any[] }>({
+    queryKey: ['all-modules'],
+    queryFn: () => apiGet('/api/queries/modules'),
+    enabled: isOpen,
+  });
+
+  const allModules = modulesData?.modules || [];
+  const planModuleIds = new Set(
+    shop.shop_subscription?.plan?.plan_modules?.map((pm: any) => pm.module_id) || []
+  );
+  const manualModuleIds = new Set(shop.shop_modules?.map((sm: any) => sm.module?.id) || []);
+
+  const availableToAssign = allModules.filter(
+    m => !planModuleIds.has(m.id) && !manualModuleIds.has(m.id)
+  );
+
+  const handleAssign = async (moduleId: string) => {
+    try {
+      await apiPost('/api/mutations/shop-modules', {
+        shop_id: shop.id,
+        module_id: moduleId,
+      });
+      toast.success('Module assigned manually');
+      onUpdate();
+    } catch (e) {
+      toast.error('Failed to assign module');
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 gap-2">
+          <Plus className="h-4 w-4" /> Add Module
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Assign Additional Modules</DialogTitle>
+          <DialogDescription>
+            Grant access to features manually, regardless of the current subscription plan.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          {isLoading ? (
+            <div className="flex justify-center p-4">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : availableToAssign.length > 0 ? (
+            <div className="grid gap-2">
+              {availableToAssign.map(mod => (
+                <div
+                  key={mod.id}
+                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold">{mod.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {mod.group_name || 'General'}
+                    </span>
+                  </div>
+                  <Button size="sm" onClick={() => handleAssign(mod.id)}>
+                    Assign
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              <ShieldAlert className="h-10 w-10 mx-auto mb-2 opacity-20" />
+              <p>No additional modules available to assign.</p>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

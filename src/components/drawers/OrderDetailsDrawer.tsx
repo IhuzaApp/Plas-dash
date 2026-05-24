@@ -11,10 +11,42 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Order } from '@/types/order';
-import { useSystemConfig } from '@/hooks/useHasuraApi';
+
+import {
+  useSystemConfig,
+  useShoppers,
+  useAssignOrder,
+  useCreateOrderOffer,
+} from '@/hooks/useHasuraApi';
 import { useOrderPayments } from '@/hooks/useShoppers';
-import { Loader2, Video } from 'lucide-react';
+import { sendNewOrderNotification, sendOrderAssignedNotification } from '@/services/fcmService';
+import {
+  Loader2,
+  Video,
+  UserPlus,
+  Send,
+  Check,
+  X,
+  Phone,
+  MapPin,
+  CreditCard,
+  Receipt,
+  ArrowRightLeft,
+  Search,
+  ClipboardList,
+  Truck,
+  DollarSign,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { WalletTransaction, Refund } from '@/hooks/useShoppers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -22,7 +54,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface UnifiedOrder {
   id: string;
   OrderID: string;
-  type: 'regular' | 'reel' | 'business' | 'restaurant';
+  type: 'regular' | 'reel' | 'business' | 'restaurant' | 'package';
   status: string;
   total: string;
   created_at: string;
@@ -39,8 +71,22 @@ interface UnifiedOrder {
   combined_order_id?: string | null;
   shop_id?: string;
   delivery_notes?: string;
+  delivery_note?: string;
+  comment?: string | null;
   Order_Items?: any[];
+  Wallet_Transactions?: any[];
+  order_transactions?: any[];
+  businessTransactions?: any[];
+  restaurant_order_items?: any[];
+  allProducts?: any[];
+  Reel?: any;
   User?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  orderedBy?: {
     id: string;
     name: string;
     email: string;
@@ -51,93 +97,14 @@ interface UnifiedOrder {
     city: string;
     postal_code: string;
   };
-  shopper?: {
-    id: string;
-    name: string;
-    email?: string;
-    phone: string;
-  };
-  quantity?: number;
-  reel_id?: string;
-  delivery_note?: string;
-  found?: boolean;
-  Reel?: {
-    Price: string;
-    Product: string;
-    category: string;
-    title: string;
-    description: string;
-    video_url: string;
-  };
-  Shoppers?: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-  } | null;
-  orderedBy?: {
-    id: string;
-    name: string;
-    email: string;
-    phone?: string;
-    profile_picture?: string | null;
-    created_at?: string;
-  };
-  allProducts?: any[];
-  units?: string;
-  business_store?: {
-    id: string;
-    name: string;
-    address?: string;
-    image?: string | null;
-    description?: string | null;
-    [key: string]: any;
-  } | null;
-  businessTransactions?: Array<{
-    id: string;
-    action?: string | null;
-    created_at: string;
-    description?: string | null;
-    related_order?: string | null;
-    status: string;
-    type: string;
-    wallet_id: string;
-  }>;
-  Shop?: { id: string; name: string; address?: string; image?: string | null } | null;
-  Restaurant?: {
-    id: string;
-    name: string;
-    logo?: string | null;
-    phone?: string | null;
-    email?: string | null;
-    location?: string | null;
-    [key: string]: any;
-  } | null;
-  restaurant_order_items?: Array<{
-    id: string;
-    quantity: number;
-    price: string;
-    dish_id: string;
-    created_at?: string;
-    order_id?: string;
-    restaurant_dishes?: {
-      dishes?: { name?: string; image?: string; category?: string } | null;
-      price?: string;
-      [key: string]: any;
-    } | null;
-    [key: string]: any;
-  }>;
-  itemsCount?: number;
-  unitsCount?: number;
-  Wallet_Transactions?: Array<{
-    id: string;
-    amount: string;
-    created_at: string;
-    description?: string | null;
-    status: string;
-    type: string;
-    wallet_id: string;
-  }>;
+  Shop?: any;
+  Restaurant?: any;
+  business_store?: any;
+  shopper?: any;
+  receiverName?: string | null;
+  receiverPhone?: string | null;
+  pickupLocation?: string | null;
+  dropoffLocation?: string | null;
 }
 
 interface OrderDetailsDrawerProps {
@@ -146,56 +113,157 @@ interface OrderDetailsDrawerProps {
   onClose: () => void;
 }
 
-// Function to generate a short ID from a UUID or longer ID
-const generateShortId = (id: string) => {
-  if (!id) return 'N/A';
-  // If it's a UUID, take the first 8 characters
-  if (id.includes('-')) {
-    return id.split('-')[0];
-  }
-  // If it's a number, ensure it's at least 4 digits with leading zeros
-  const numId = parseInt(id);
-  if (!isNaN(numId)) {
-    return numId.toString().padStart(4, '0');
-  }
-  // For any other format, take first 8 characters
-  return id.slice(0, 8);
-};
-
 const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, onClose }) => {
-  const { data: paymentData, isLoading: isLoadingPayments } = useOrderPayments(order?.id || '');
+  const { toast } = useToast();
   const { data: systemConfig } = useSystemConfig();
+  const { data: shoppersData } = useShoppers();
+  const assignOrder = useAssignOrder();
+  const createOffer = useCreateOrderOffer();
+  const [selectedShopperId, setSelectedShopperId] = React.useState<string>('');
+  const [isAssigning, setIsAssigning] = React.useState(false);
+
+  const { data: paymentData, isLoading: isLoadingPayments } = useOrderPayments(order?.id || '');
+
+  React.useEffect(() => {
+    if (order?.shopper_id) {
+      setSelectedShopperId(order.shopper_id);
+    } else {
+      setSelectedShopperId('');
+    }
+  }, [order]);
+
+  const generateShortId = (id: string) => {
+    if (!id) return '';
+    return id.split('-')[0].toUpperCase();
+  };
+
+  const handleAssign = async () => {
+    if (!selectedShopperId || !order) return;
+    setIsAssigning(true);
+    try {
+      await assignOrder.mutateAsync({
+        id: order.id,
+        shopper_id: selectedShopperId,
+        status: 'accepted',
+        type: order.type,
+      });
+
+      // Send Notification
+      const shopper = shoppersData?.shoppers?.find((s: any) => s.id === selectedShopperId);
+      if (shopper?.user_id) {
+        await sendOrderAssignedNotification(shopper.user_id, order.id, order.type);
+      }
+
+      toast({
+        title: 'Success',
+        description: `Order assigned to shopper`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to assign order',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleOffer = async () => {
+    if (!selectedShopperId || !order) return;
+    setIsAssigning(true);
+    try {
+      const offerObject: any = {
+        shopper_id: selectedShopperId,
+        order_type: order.type,
+        status: 'pending',
+        offered_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 15 * 60000).toISOString(), // 15 mins expiry
+      };
+
+      // Map order ID based on type
+      if (order.type === 'regular') offerObject.order_id = order.id;
+      else if (order.type === 'reel') offerObject.reel_order_id = order.id;
+      else if (order.type === 'business') offerObject.business_order_id = order.id;
+      else if (order.type === 'restaurant') offerObject.restaurant_order_id = order.id;
+      else if (order.type === 'package') offerObject.order_id = order.id;
+
+      await createOffer.mutateAsync({ object: offerObject });
+
+      // Send Notification
+      const shopper = shoppersData?.shoppers?.find((s: any) => s.id === selectedShopperId);
+      if (shopper?.user_id) {
+        await sendNewOrderNotification(shopper.user_id, order.id, order.type);
+      }
+
+      toast({
+        title: 'Offer Sent',
+        description: `Order offered to shopper`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to send offer',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleUnassign = async () => {
+    if (!order) return;
+    setIsAssigning(true);
+    try {
+      await assignOrder.mutateAsync({
+        id: order.id,
+        shopper_id: null,
+        status: 'pending',
+        type: order.type,
+      });
+      toast({
+        title: 'Success',
+        description: 'Shopper unassigned successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to unassign shopper',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
 
   if (!order) return null;
-  // Restaurant orders: Wallet_Transactions from list API. Business: businessTransactions (different schema, no amount).
-  const walletTransactions = (
-    order.type === 'restaurant' && order.Wallet_Transactions?.length
-      ? order.Wallet_Transactions
-      : paymentData?.Wallet_Transactions || []
-  ) as WalletTransaction[];
-  const businessTransactions = order.type === 'business' ? (order.businessTransactions ?? []) : [];
+
+  // Transactions aggregation
+  const allOrderTransactions = [
+    ...(order.Wallet_Transactions || []),
+    ...(order.order_transactions || []),
+    ...(order.businessTransactions || []),
+    ...(paymentData?.Wallet_Transactions || []),
+  ].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i); // Deduplicate
+
   const refunds = (paymentData?.Refunds || []) as Refund[];
-  const isLoadingPaymentsResolved =
-    (order.type === 'restaurant' && order.Wallet_Transactions) ||
-    (order.type === 'business' && order.businessTransactions)
-      ? false
-      : isLoadingPayments;
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
-    const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
+    const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
     }).format(num);
   };
 
-  const formatDateTime = (dateString: string) => {
+  const formatDateTime = (dateString: string | null | undefined) => {
+    if (!dateString) return '—';
     return format(new Date(dateString), 'MMM d, yyyy HH:mm');
   };
 
   const getStatusColor = (status: string) => {
-    const statusLower = status.toLowerCase();
+    const statusLower = status?.toLowerCase();
     switch (statusLower) {
       case 'delivered':
         return 'bg-green-100 text-green-800';
@@ -215,470 +283,434 @@ const OrderDetailsDrawer: React.FC<OrderDetailsDrawerProps> = ({ order, open, on
   };
 
   const getPaymentStatusColor = (status: string) => {
-    const statusLower = status.toLowerCase();
-    switch (statusLower) {
-      case 'completed':
-      case 'success':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+    const statusLower = status?.toLowerCase();
+    if (statusLower === 'completed' || statusLower === 'success')
+      return 'bg-green-100 text-green-800';
+    if (statusLower === 'pending') return 'bg-yellow-100 text-yellow-800';
+    if (statusLower === 'failed' || statusLower === 'error') return 'bg-red-100 text-red-800';
+    return 'bg-gray-100 text-gray-800';
   };
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-[600px] overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger className="text-primary hover:underline">
-                    Order #{generateShortId(order.OrderID?.toString() || order.id)}
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Full ID: {order.OrderID || order.id}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              {order.type === 'reel' && (
-                <Badge variant="outline">
-                  <Video className="h-3 w-3 mr-1" />
-                  Reel Order
+      <SheetContent className="sm:max-w-[600px] overflow-y-auto p-0">
+        <div className="p-6 pb-0">
+          <SheetHeader className="mb-6">
+            <SheetTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="text-primary hover:underline">
+                      Order #{generateShortId(order.OrderID?.toString() || order.id)}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Full ID: {order.OrderID || order.id}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Badge variant="outline" className="capitalize">
+                  {order.type}
                 </Badge>
-              )}
-            </div>
-            <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
-          </SheetTitle>
-          <SheetDescription>Created on {formatDateTime(order.created_at)}</SheetDescription>
-        </SheetHeader>
-
-        <div className="space-y-6">
-          {/* Customer Information */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">
-              {order.type === 'regular' || order.type === 'business' || order.type === 'restaurant'
-                ? 'Customer Details'
-                : 'Reel Details'}
-            </h3>
-            <Card className="p-4">
-              <div className="flex items-center space-x-4">
-                <Avatar>
-                  <AvatarFallback>
-                    {(order.type === 'regular'
-                      ? order.User?.name
-                      : (order.orderedBy?.name ?? order.Reel?.title)
-                    )
-                      ?.split(' ')
-                      .map((n: string) => n[0])
-                      .join('') ?? '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">
-                    {order.type === 'regular'
-                      ? order.User?.name
-                      : order.type === 'business' || order.type === 'restaurant'
-                        ? order.orderedBy?.name
-                        : order.Reel?.title}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {order.type === 'regular'
-                      ? order.User?.email
-                      : order.type === 'business' || order.type === 'restaurant'
-                        ? order.orderedBy?.email
-                        : order.Reel?.description}
-                  </p>
-                  {(order.type === 'business' || order.type === 'restaurant') &&
-                    order.orderedBy?.phone && (
-                      <p className="text-sm text-muted-foreground">
-                        Phone: {order.orderedBy.phone}
-                      </p>
-                    )}
-                  {order.type === 'restaurant' && order.Restaurant && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Restaurant: {order.Restaurant.name}
-                      {order.Restaurant.phone && ` • ${order.Restaurant.phone}`}
-                    </p>
-                  )}
-                  {order.type === 'reel' && (
-                    <p className="text-sm text-muted-foreground">
-                      Category: {order.Reel?.category} | Price:{' '}
-                      {formatCurrency(order.Reel?.Price || '0')}
-                    </p>
-                  )}
-                </div>
               </div>
-            </Card>
-          </div>
+              <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+            </SheetTitle>
+            <SheetDescription>Created on {formatDateTime(order.created_at)}</SheetDescription>
+          </SheetHeader>
+        </div>
 
-          {/* Shop / Restaurant / Business (merchant info with logo) */}
-          {(order.type === 'regular' && order.Shop) ||
-          (order.type === 'reel' && order.Shop) ||
-          (order.type === 'restaurant' && order.Restaurant) ||
-          (order.type === 'business' && order.business_store) ? (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">
-                {order.type === 'regular' || order.type === 'reel'
-                  ? 'Shop'
-                  : order.type === 'restaurant'
-                    ? 'Restaurant'
-                    : 'Business Store'}
-              </h3>
-              <Card className="p-4">
-                <div className="flex items-center gap-4">
-                  {(order.type === 'regular' && order.Shop?.image) ||
-                  (order.type === 'reel' && order.Shop?.image) ||
-                  (order.type === 'restaurant' && order.Restaurant?.logo) ||
-                  (order.type === 'business' && order.business_store?.image) ? (
-                    <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-muted border">
-                      <img
-                        src={
-                          (order.type === 'regular' && order.Shop?.image) ||
-                          (order.type === 'reel' && order.Shop?.image) ||
-                          (order.type === 'restaurant' && order.Restaurant?.logo) ||
-                          (order.type === 'business' && order.business_store?.image) ||
-                          ''
-                        }
-                        alt={
-                          (order.type === 'regular' && order.Shop?.name) ||
-                          (order.type === 'reel' && order.Shop?.name) ||
-                          (order.type === 'restaurant' && order.Restaurant?.name) ||
-                          (order.type === 'business' && order.business_store?.name) ||
-                          'Merchant'
-                        }
-                        className="w-full h-full object-cover"
-                      />
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-0 sticky top-0 bg-background z-10 px-6 border-b rounded-none">
+            <TabsTrigger value="overview" className="gap-2">
+              <ClipboardList className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="transactions" className="gap-2">
+              <Receipt className="h-4 w-4" />
+              Transactions
+            </TabsTrigger>
+            <TabsTrigger value="assignment" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Assignment
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="p-6">
+            <TabsContent value="overview" className="mt-0 space-y-6">
+              {/* Customer Information */}
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Customer Details
+                </h3>
+                <Card className="p-4 border-2">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                        {(order.type === 'regular'
+                          ? order.User?.name
+                          : order.type === 'package'
+                            ? order.receiverName
+                            : (order.orderedBy?.name ?? order.Reel?.title)
+                        )
+                          ?.split(' ')
+                          .map((n: string) => n[0])
+                          .join('') ?? '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-bold text-lg">
+                        {order.type === 'regular'
+                          ? order.User?.name
+                          : order.type === 'package'
+                            ? order.receiverName
+                            : order.type === 'business' || order.type === 'restaurant'
+                              ? order.orderedBy?.name
+                              : order.Reel?.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {order.type === 'regular'
+                          ? order.User?.email
+                          : order.type === 'package'
+                            ? `Phone: ${order.receiverPhone}`
+                            : order.type === 'business' || order.type === 'restaurant'
+                              ? order.orderedBy?.email
+                              : order.Reel?.description}
+                      </p>
                     </div>
-                  ) : (
-                    <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-muted border flex items-center justify-center text-xl font-semibold text-muted-foreground">
-                      {(order.type === 'regular' && order.Shop?.name?.[0]) ||
-                        (order.type === 'reel' && order.Shop?.name?.[0]) ||
-                        (order.type === 'restaurant' && order.Restaurant?.name?.[0]) ||
-                        (order.type === 'business' && order.business_store?.name?.[0]) ||
-                        '?'}
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium">
-                      {(order.type === 'regular' && order.Shop?.name) ||
-                        (order.type === 'reel' && order.Shop?.name) ||
-                        (order.type === 'restaurant' && order.Restaurant?.name) ||
-                        (order.type === 'business' && order.business_store?.name) ||
-                        '—'}
-                    </p>
-                    {(order.type === 'regular' || order.type === 'reel') && order.Shop?.address && (
-                      <p className="text-sm text-muted-foreground">{order.Shop.address}</p>
-                    )}
-                    {order.type === 'restaurant' && order.Restaurant && (
-                      <>
-                        {order.Restaurant.phone && (
-                          <p className="text-sm text-muted-foreground">
-                            Phone: {order.Restaurant.phone}
-                          </p>
-                        )}
-                        {order.Restaurant.email && (
-                          <p className="text-sm text-muted-foreground">
-                            Email: {order.Restaurant.email}
-                          </p>
-                        )}
-                        {order.Restaurant.location && (
-                          <p className="text-sm text-muted-foreground">
-                            {order.Restaurant.location}
-                          </p>
-                        )}
-                      </>
-                    )}
-                    {order.type === 'business' && order.business_store && (
-                      <>
-                        {order.business_store.address && (
-                          <p className="text-sm text-muted-foreground">
-                            {order.business_store.address}
-                          </p>
-                        )}
-                        {order.business_store.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {order.business_store.description}
-                          </p>
-                        )}
-                      </>
-                    )}
                   </div>
-                </div>
-              </Card>
-            </div>
-          ) : null}
+                </Card>
+              </div>
 
-          {/* Order Items */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">
-              {order.type === 'regular'
-                ? 'Order Items'
-                : order.type === 'restaurant'
-                  ? 'Restaurant Items'
-                  : order.type === 'business'
-                    ? 'Business Items'
-                    : 'Reel Item'}
-            </h3>
-            <Card className="p-4">
-              <div className="space-y-4">
-                {order.type === 'regular' &&
-                  order.Order_Items?.map((item, index) => (
-                    <div key={item.id}>
-                      {index > 0 && <Separator className="my-4" />}
-                      <div className="flex justify-between">
-                        <div>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger className="text-primary hover:underline">
-                                <p className="font-medium">
-                                  Product #{generateShortId(item.product_id)}
-                                </p>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Full Product ID: {item.product_id}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
-                        </div>
-                        <p className="font-medium">{formatCurrency(item.price)}</p>
-                      </div>
-                    </div>
-                  ))}
-                {order.type === 'restaurant' &&
-                  order.restaurant_order_items?.map((item, index) => {
-                    const dishName =
-                      item.restaurant_dishes?.dishes?.name ??
-                      `Dish #${generateShortId(item.dish_id)}`;
-                    return (
-                      <div key={item.id}>
-                        {index > 0 && <Separator className="my-4" />}
-                        <div className="flex justify-between">
+              {/* Items Section */}
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Items
+                </h3>
+                <Card className="p-0 overflow-hidden border-2">
+                  <div className="divide-y">
+                    {order.type === 'regular' &&
+                      order.Order_Items?.map(item => (
+                        <div key={item.id} className="p-4 flex justify-between items-center">
                           <div>
-                            <p className="font-medium">{dishName}</p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="font-medium text-sm">
+                              Product #{generateShortId(item.product_id)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
                               Quantity: {item.quantity}
                             </p>
-                            {item.restaurant_dishes?.dishes?.category && (
-                              <p className="text-xs text-muted-foreground">
-                                {item.restaurant_dishes.dishes.category}
-                              </p>
-                            )}
                           </div>
-                          <p className="font-medium">{formatCurrency(item.price)}</p>
+                          <p className="font-bold text-sm">{formatCurrency(item.price)}</p>
                         </div>
-                      </div>
-                    );
-                  })}
-                {order.type === 'business' &&
-                  (order.allProducts?.length ? (
-                    order.allProducts.map((item: any, index: number) => (
-                      <div key={item?.id ?? index}>
-                        {index > 0 && <Separator className="my-4" />}
-                        <div className="flex justify-between">
+                      ))}
+                    {order.type === 'restaurant' &&
+                      order.restaurant_order_items?.map(item => (
+                        <div key={item.id} className="p-4 flex justify-between items-center">
                           <div>
-                            <p className="font-medium">{item?.name ?? `Item ${index + 1}`}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Quantity: {item?.quantity ?? 1}
+                            <p className="font-medium text-sm">
+                              {item.restaurant_dishes?.dishes?.name || 'Unknown Dish'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Quantity: {item.quantity}
                             </p>
                           </div>
-                          {item?.price != null && (
-                            <p className="font-medium">{formatCurrency(String(item.price))}</p>
-                          )}
+                          <p className="font-bold text-sm">{formatCurrency(item.price)}</p>
+                        </div>
+                      ))}
+                    {order.type === 'business' &&
+                      order.allProducts?.map((item: any, index: number) => (
+                        <div key={index} className="p-4 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-sm">{item.name || 'Business Item'}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Quantity: {item.quantity || 1}
+                            </p>
+                          </div>
+                          <p className="font-bold text-sm">{formatCurrency(item.price || '0')}</p>
+                        </div>
+                      ))}
+                    {order.type === 'reel' && (
+                      <div className="p-4 flex justify-between items-center">
+                        <div>
+                          <p className="font-medium text-sm">{order.Reel?.title}</p>
+                          <p className="text-xs text-muted-foreground">Reel Product</p>
+                        </div>
+                        <p className="font-bold text-sm">
+                          {formatCurrency(order.Reel?.Price || '0')}
+                        </p>
+                      </div>
+                    )}
+                    {order.type === 'package' && (
+                      <div className="p-4">
+                        <p className="text-sm">{order.comment || 'Package delivery'}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 bg-muted/30 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span>{formatCurrency(order.total)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Delivery Fee</span>
+                      <span>{formatCurrency(order.delivery_fee || '0')}</span>
+                    </div>
+                    {order.service_fee && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Service Fee</span>
+                        <span>{formatCurrency(order.service_fee)}</span>
+                      </div>
+                    )}
+                    <Separator className="my-2" />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total</span>
+                      <span className="text-primary">{formatCurrency(order.total)}</span>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Delivery Info */}
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Delivery Info
+                </h3>
+                <Card className="p-4 border-2">
+                  <div className="space-y-4">
+                    <div className="flex gap-3">
+                      <MapPin className="h-5 w-5 text-primary shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold uppercase text-muted-foreground">
+                          Dropoff Address
+                        </p>
+                        <p className="text-sm">
+                          {order.type === 'package'
+                            ? order.dropoffLocation
+                            : order.Address
+                              ? `${order.Address.street}, ${order.Address.city}`
+                              : 'No address provided'}
+                        </p>
+                      </div>
+                    </div>
+                    {order.type === 'package' && order.pickupLocation && (
+                      <div className="flex gap-3">
+                        <Truck className="h-5 w-5 text-primary shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold uppercase text-muted-foreground">
+                            Pickup Address
+                          </p>
+                          <p className="text-sm">{order.pickupLocation}</p>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {order.units ? `${order.units} unit(s)` : 'No items'}
-                    </p>
-                  ))}
-                {order.type === 'reel' && (
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">{order.Reel?.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Quantity: {order.quantity || 1}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Product: {order.Reel?.Product}
-                      </p>
-                    </div>
-                    <p className="font-medium">{formatCurrency(order.Reel?.Price || '0')}</p>
+                    )}
                   </div>
-                )}
+                </Card>
               </div>
-            </Card>
-          </div>
+            </TabsContent>
 
-          {/* Payment Information */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Payment Details</h3>
-            <Card className="p-4">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(order.total)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Delivery Fee</span>
-                  <span>{formatCurrency(order.delivery_fee ?? '0')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Service Fee</span>
-                  <span>{formatCurrency(order.service_fee ?? '0')}</span>
-                </div>
-                {order.discount && order.discount !== '0' && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount</span>
-                    <span>-{formatCurrency(order.discount)}</span>
-                  </div>
-                )}
-                <Separator className="my-2" />
-                <div className="flex justify-between font-bold">
-                  <span>Total</span>
-                  <span>{formatCurrency(order.total)}</span>
-                </div>
-                {order.voucher_code && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Voucher applied: {order.voucher_code}
-                  </p>
-                )}
-
-                {/* Payment Transactions (Wallet for regular/reel/restaurant; businessTransactions for business) */}
-                <div className="mt-4">
-                  <h4 className="font-medium mb-2">Payment Transactions</h4>
-                  {isLoadingPaymentsResolved ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-                    </div>
-                  ) : order.type === 'business' && businessTransactions.length > 0 ? (
-                    <div className="space-y-2">
-                      {businessTransactions.map(
-                        (tx: {
-                          id: string;
-                          type: string;
-                          action?: string | null;
-                          description?: string | null;
-                          created_at: string;
-                          status: string;
-                        }) => (
-                          <div
-                            key={tx.id}
-                            className="flex justify-between items-center text-sm border rounded-md p-2"
-                          >
+            <TabsContent value="transactions" className="mt-0 space-y-6">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Order Transactions
+                </h3>
+                {allOrderTransactions.length > 0 ? (
+                  <div className="space-y-3">
+                    {allOrderTransactions.map(tx => (
+                      <Card key={tx.id} className="p-4 border-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-primary/10 p-2 rounded-lg">
+                              <DollarSign className="h-4 w-4 text-primary" />
+                            </div>
                             <div>
-                              <p className="font-medium">{tx.type || tx.action || 'Transaction'}</p>
-                              {tx.description && (
-                                <p className="text-muted-foreground text-xs">{tx.description}</p>
-                              )}
-                              <p className="text-muted-foreground text-xs">
+                              <p className="font-bold capitalize">
+                                {tx.type || tx.action || 'Transaction'}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground font-mono">
+                                {tx.reference_id || tx.id}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">
                                 {formatDateTime(tx.created_at)}
                               </p>
                             </div>
-                            <Badge className={getPaymentStatusColor(tx.status)}>{tx.status}</Badge>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  ) : walletTransactions.length > 0 ? (
-                    <div className="space-y-2">
-                      {walletTransactions.map((transaction: WalletTransaction) => (
-                        <div
-                          key={transaction.id}
-                          className="flex justify-between items-center text-sm border rounded-md p-2"
-                        >
-                          <div>
-                            <p className="font-medium">{transaction.type || 'Payment'}</p>
-                            <p className="text-muted-foreground">
-                              {formatDateTime(transaction.created_at)}
-                            </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium">{formatCurrency(transaction.amount)}</p>
-                            <Badge className={getPaymentStatusColor(transaction.status)}>
-                              {transaction.status}
+                            <p className="font-bold text-lg">{formatCurrency(tx.amount || '0')}</p>
+                            <Badge
+                              className={`${getPaymentStatusColor(tx.status)} text-[10px] h-5`}
+                            >
+                              {tx.status}
                             </Badge>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No payment transactions found</p>
-                  )}
-                </div>
+                        {tx.description && (
+                          <div className="mt-3 p-2 bg-muted/30 rounded text-xs text-muted-foreground">
+                            {tx.description}
+                          </div>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-8 text-center border-dashed border-2">
+                    <Receipt className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-20" />
+                    <p className="text-sm text-muted-foreground">
+                      No transactions found for this order
+                    </p>
+                  </Card>
+                )}
+              </div>
 
-                {/* Refunds */}
-                {refunds.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="font-medium mb-2">Refunds</h4>
-                    <div className="space-y-2">
-                      {refunds.map((refund: Refund) => (
-                        <div
-                          key={refund.id}
-                          className="flex justify-between items-center text-sm border rounded-md p-2"
-                        >
+              {refunds.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                    Refunds
+                  </h3>
+                  <div className="space-y-3">
+                    {refunds.map(refund => (
+                      <Card key={refund.id} className="p-4 border-2 border-red-100 bg-red-50/10">
+                        <div className="flex justify-between items-start">
                           <div>
-                            <p className="font-medium text-red-600">Refund</p>
-                            <p className="text-muted-foreground">{refund.reason}</p>
-                            <p className="text-muted-foreground">
+                            <p className="font-bold text-red-600">Refund Issued</p>
+                            <p className="text-xs text-muted-foreground">{refund.reason}</p>
+                            <p className="text-[10px] text-muted-foreground">
                               {formatDateTime(refund.created_at)}
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-red-600">
+                            <p className="font-bold text-red-600 text-lg">
                               -{formatCurrency(refund.amount)}
                             </p>
                             <Badge
-                              variant={refund.paid ? 'default' : 'outline'}
+                              variant="outline"
                               className={getPaymentStatusColor(refund.status)}
                             >
-                              {refund.status} {refund.paid ? '(Paid)' : ''}
+                              {refund.status}
                             </Badge>
                           </div>
                         </div>
-                      ))}
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="assignment" className="mt-0 space-y-6">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Shopper Assignment
+                </h3>
+                {order.shopper_id ? (
+                  <Card className="p-4 border-2 border-primary/20 bg-primary/[0.02]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-14 w-14 border-2 border-primary/20">
+                          <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                            {order.shopper?.name
+                              ?.split(' ')
+                              .map((n: string) => n[0])
+                              .join('') || 'S'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-bold text-lg">
+                            {order.shopper?.name || 'Assigned Shopper'}
+                          </p>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {order.shopper?.phone || 'No phone'}
+                          </p>
+                          <Badge
+                            variant="outline"
+                            className="mt-1 bg-green-50 text-green-700 border-green-200"
+                          >
+                            Active Session
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleUnassign}
+                        disabled={isAssigning}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        {isAssigning ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
+                        Unassign
+                      </Button>
                     </div>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    <Card className="p-8 text-center border-dashed border-2">
+                      <UserPlus className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-20" />
+                      <p className="text-sm text-muted-foreground mb-4">No shopper assigned yet</p>
+
+                      <div className="space-y-4 max-w-sm mx-auto">
+                        <div className="text-left">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block ml-1">
+                            Dispatch Selection
+                          </label>
+                          <Select value={selectedShopperId} onValueChange={setSelectedShopperId}>
+                            <SelectTrigger className="w-full h-11 border-2">
+                              <SelectValue placeholder="Search available shoppers..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {shoppersData?.shoppers
+                                ?.filter(s => s.active)
+                                .map(shopper => (
+                                  <SelectItem key={shopper.id} value={shopper.id}>
+                                    <div className="flex flex-col py-1">
+                                      <span className="font-bold">{shopper.full_name}</span>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {shopper.transport_mode || 'Standard'} •{' '}
+                                        {shopper.phone_number}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button
+                            onClick={handleOffer}
+                            disabled={!selectedShopperId || isAssigning}
+                            variant="outline"
+                            className="h-11 border-2 gap-2"
+                          >
+                            {isAssigning ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                            Offer
+                          </Button>
+                          <Button
+                            onClick={handleAssign}
+                            disabled={!selectedShopperId || isAssigning}
+                            className="h-11 gap-2 shadow-lg"
+                          >
+                            {isAssigning ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <UserPlus className="h-4 w-4" />
+                            )}
+                            Assign
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
                   </div>
                 )}
               </div>
-            </Card>
+            </TabsContent>
           </div>
-
-          {/* Delivery Information */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Delivery Information</h3>
-            <Card className="p-4">
-              <div className="space-y-2">
-                <p className="text-sm">
-                  <span className="font-medium">Address: </span>
-                  {order.Address
-                    ? `${order.Address.street}, ${order.Address.city} ${order.Address.postal_code}`
-                    : 'Address not available'}
-                </p>
-                <p className="text-sm">
-                  <span className="font-medium">Delivery Notes: </span>
-                  {order.delivery_notes || order.delivery_note || 'No special instructions'}
-                </p>
-                {order.delivery_time && (
-                  <p className="text-sm">
-                    <span className="font-medium">Delivery Time: </span>
-                    {formatDateTime(order.delivery_time)}
-                  </p>
-                )}
-                <p className="text-sm">
-                  <span className="font-medium">Last Updated: </span>
-                  {formatDateTime(order.updated_at)}
-                </p>
-              </div>
-            </Card>
-          </div>
-        </div>
+        </Tabs>
       </SheetContent>
     </Sheet>
   );

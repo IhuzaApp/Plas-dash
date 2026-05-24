@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
@@ -23,6 +23,8 @@ const ORG_EMPLOYEES_QUERY = gql`
       online
       password
       phone
+      pos_pin
+      profile_image
       restaurant_id
       roleType
       shop_id
@@ -53,6 +55,18 @@ const ORG_EMPLOYEES_QUERY = gql`
         ssd
         tin
         updated_at
+      }
+      Restaurants {
+        id
+        name
+        location
+        phone
+        is_active
+        created_at
+        logo
+        relatedTo
+        tin
+        ussd
       }
     }
   }

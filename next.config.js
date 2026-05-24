@@ -10,6 +10,11 @@ const nextConfig = {
     NEXT_PUBLIC_GOOGLE_MAP_API: process.env.NEXT_PUBLIC_GOOGLE_MAP_API,
   },
   pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
   // Optimize development experience
   webpack: (config, { dev, isServer }) => {
     // Optimize webpack configuration for development

@@ -88,5 +88,15 @@ export const usePageLoading = () => {
     };
   }, [pathname, searchParams]);
 
-  return { isLoading };
+  const startLoading = () => {
+    setIsLoading(true);
+    if (NProgress) NProgress.start();
+  };
+
+  const stopLoading = () => {
+    setIsLoading(false);
+    if (NProgress) NProgress.done();
+  };
+
+  return { isLoading, startLoading, stopLoading };
 };

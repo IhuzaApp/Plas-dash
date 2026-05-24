@@ -1,8 +1,10 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '../lib/hasura';
 import { apiGet } from '../lib/api';
+import { cacheGet, cacheSet } from '../lib/cache';
 import {
   GET_PRODUCTS_BY_SHOP,
+  GET_MENU_BY_RESTAURANT,
   GET_RESTAURANTS,
   GET_REELS,
   GET_ADDRESSES,
@@ -21,6 +23,12 @@ import {
   GET_PRODUCT_NAMES,
   SEARCH_PRODUCT_NAMES,
   GET_ORDER_OFFERS,
+  GET_DISHES_BY_NAME,
+  GET_LOGISTICS_ACCOUNT,
+  GET_PET_VENDOR,
+  GET_ALL_LOGISTICS_ACCOUNTS,
+  GET_ALL_PET_VENDORS,
+  GET_SUBSCRIPTIONS_ANALYTICS,
 } from '../lib/graphql/queries';
 import {
   ADD_CART,
@@ -49,6 +57,17 @@ import {
   DELETE_REEL,
   DELETE_REEL_COMMENT,
   DELETE_ORDER_OFFERS,
+  UPDATE_RESTAURANT_DISH,
+  UPDATE_ORDER_SHOPPER,
+  UPDATE_REEL_ORDER_SHOPPER,
+  UPDATE_BUSINESS_ORDER_SHOPPER,
+  UPDATE_RESTAURANT_ORDER_SHOPPER,
+  UPDATE_PACKAGE_DELIVERY_SHOPPER,
+  CREATE_ORDER_OFFER,
+  CREATE_LOGISTICS_ACCOUNT,
+  CREATE_PET_VENDOR,
+  UPDATE_PET_VENDOR,
+  UPDATE_LOGISTICS_ACCOUNT,
 } from '../lib/graphql/mutations';
 
 // Import types
@@ -63,6 +82,115 @@ import type {
   WalletTransaction,
   Refund,
 } from './useGraphql';
+
+export interface RentalVehicle {
+  category: string;
+  created_at: string;
+  disabled: boolean;
+  drive_provided: boolean;
+  engine: string;
+  exterior: string;
+  fuel_type: string;
+  id: string;
+  interior: string;
+  location: string;
+  logisticAccount_id: string;
+  main_photo: string;
+  name: string;
+  passenger: number;
+  platNumber: string;
+  price: number;
+  refundable_amount: number;
+  seats: number;
+  status: string;
+  transmission: string;
+  updated_at: string;
+}
+
+export interface LogisticsAccount {
+  user_id: string;
+  updated_on: string;
+  type: string;
+  status: string;
+  proof_address: string;
+  num_of_cars: number;
+  nationalIdOrPassport: string;
+  license: string;
+  id: string;
+  fullname: string;
+  disabled: boolean;
+  created_at: string;
+  business_cert: string;
+  businessName: string;
+  address: string;
+  RentalVehicles: RentalVehicle[];
+  User: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface PetAdoption {
+  address: string;
+  amount: number;
+  comment: string;
+  created_at: string;
+  customer_id: string;
+  id: string;
+  latitude: number;
+  longitude: number;
+  pet_id: string;
+  phone: string;
+  status: string;
+  updated_at: string;
+}
+
+export interface Pet {
+  age: string;
+  amount: number;
+  breed: string;
+  color: string;
+  created_at: string;
+  favourite_food: string;
+  free: boolean;
+  gender: string;
+  id: string;
+  image: string;
+  months: number;
+  name: string;
+  parent_images: any;
+  pet_type: string;
+  quantity: number;
+  quantity_sold: number;
+  story: string;
+  updated_at: string;
+  vaccinated: boolean;
+  vaccination_cert: string;
+  vaccinations: string;
+  vendor_id: string;
+  video: string;
+  weight: string;
+  petAdoptions: PetAdoption[];
+}
+
+export interface PetVendor {
+  address: string;
+  created_at: string;
+  disabled: boolean;
+  fullname: string;
+  id: string;
+  nationalIdOrPassport: string;
+  organisationName: string;
+  proof_residency: string;
+  rdb_certificate: string;
+  sherter_permit: string;
+  specialties: string;
+  status: string;
+  updated_at: string;
+  user_id: string;
+  pets: Pet[];
+}
 
 export interface Rating {
   businessProduct_id: string | null;
@@ -94,6 +222,7 @@ export interface Rating {
       logo: string | null;
       name: string;
       longitude: number | null;
+      categoryName?: string;
     } | null;
     delivery_notes: string | null;
     delivery_fee: number;
@@ -168,6 +297,19 @@ interface Shop {
       Product: { name: string };
     }>;
   }>;
+  shop_subscription?: {
+    id: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+    billing_cycle: string;
+    plan: {
+      id: string;
+      name: string;
+      price_monthly: number;
+      price_yearly: number;
+    };
+  } | null;
 }
 
 interface ShopProduct {
@@ -200,7 +342,7 @@ interface ShopDetails extends Shop {
   tin?: string | null;
   ssd?: string | null;
   relatedTo?: string | null;
-  operating_hours: string;
+  operating_hours: string | Record<string, string>;
   latitude: number;
   longitude: number;
   image: string;
@@ -208,6 +350,11 @@ interface ShopDetails extends Shop {
   created_at: string;
   updated_at: string;
   Products: ShopProduct[];
+  promotions: any[];
+  shop_subscription: any | null;
+  shop_modules: any[];
+  reel_usages: any[];
+  merchant_wallet: any | null;
   Orders: Array<{
     id: string;
     OrderID: string;
@@ -346,17 +493,17 @@ interface ReelOrder {
     user_id: string | null;
     video_url: string;
   };
-  Shoppers: {
-    created_at: string;
-    email: string;
-    gender: string;
+  shopper: {
     id: string;
-    is_active: boolean;
     name: string;
     phone: string;
-    profile_picture: string;
-    role: string;
-    updated_at: string;
+    email?: string;
+    created_at?: string;
+    gender?: string;
+    is_active?: boolean;
+    profile_picture?: string;
+    role?: string;
+    updated_at?: string;
   } | null;
   Address: {
     city: string;
@@ -380,29 +527,32 @@ export interface OrderOffer {
   offered_at: string;
   order_id?: string | null;
   order_type: string;
+  package_order_id?: string | null;
   reel_order_id?: string | null;
   restaurant_order_id?: string | null;
   round_number: number;
   shopper_id: string;
   status: string;
   updated_at: string;
+  shoppers?: {
+    full_name: string;
+    phone_number: string;
+    transport_mode?: string;
+    active?: boolean;
+    [key: string]: any;
+  };
+  restaurantOrder?: any;
   reelOrders?: any;
+  Orders?: any;
+  businessProductOrders?: any;
   ShopperUser?: {
     email: string;
     shopper?: {
-      Employment_id: string;
-      active: boolean;
-      address: string;
       full_name: string;
-      onboarding_step: string;
-      phone: string;
       phone_number: string;
-      status: string;
+      [key: string]: any;
     };
   };
-  Orders?: any;
-  businessProductOrders?: any;
-  restaurantOrder?: any;
 }
 
 interface Restaurant {
@@ -420,7 +570,60 @@ interface Restaurant {
   relatedTo: string;
   tin: string;
   ussd: string;
+  rdb_cert: string;
   created_at: string;
+  reel_usages?: Array<{
+    id: string;
+    month: string;
+    year: string;
+    upload_count: number;
+  }>;
+  merchant_wallet?: {
+    id: string;
+    balance: number;
+    active: boolean;
+  };
+  merchant_wallets?: Array<{
+    id: string;
+    balance: number;
+    active: boolean;
+  }>;
+  orgEmployees?: Array<{
+    id: string;
+    fullnames: string;
+    email: string;
+    roleType: string;
+    Position: string;
+  }>;
+  ai_usages?: Array<{
+    id: string;
+    month: string;
+    year: string;
+    request_count: number;
+    requests_sent: number;
+  }>;
+  shop_subscription?: {
+    id: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+    billing_cycle: string;
+    plan_id: string;
+    subscription_invoices?: Array<{
+      id: string;
+      invoice_number: string;
+      status: string;
+      total_amount: string;
+      issued_at: string;
+    }>;
+    subscription_transactions?: Array<{
+      id: string;
+      amount: string;
+      status: string;
+      type: string;
+      created_on: string;
+    }>;
+  } | null;
 }
 
 interface Reel {
@@ -438,9 +641,17 @@ interface Reel {
   is_active: boolean;
   restaurant_id: string | null;
   shop_id: string | null;
+  business_id: string | null;
   user_id: string | null;
   created_on: string;
   Restaurant: Restaurant | null;
+  BusinessAccount: {
+    id: string;
+    business_name: string;
+    business_email: string;
+    business_phone: string;
+    face_image?: string;
+  } | null;
   Shops: {
     id: string;
     name: string;
@@ -494,6 +705,7 @@ export interface SystemConfig {
   enableRush: boolean;
   withDrawCharges: number;
   allowScheduledDeliveries: boolean;
+  tax?: string;
 }
 
 // Type-safe hook for Users (data from API)
@@ -557,6 +769,54 @@ export function useProductsByShop(shopId: string) {
   });
 }
 
+// Type-safe hook for Menu by Restaurant
+export function useMenuByRestaurant(restaurantId: string) {
+  return useQuery<{ restaurant_menu: any[] }, Error>({
+    queryKey: ['menu', 'restaurant', restaurantId],
+    queryFn: () => hasuraRequest(GET_MENU_BY_RESTAURANT, { restaurant_id: restaurantId }),
+    enabled: !!restaurantId,
+  });
+}
+
+export interface PackageDelivery {
+  id: string;
+  comment: string | null;
+  created_at: string;
+  DeliveryCode: string | null;
+  deliveryMethod: string | null;
+  delivery_fee: string | null;
+  distance: string | null;
+  dropoffDetails: string | null;
+  dropoffLocation: string | null;
+  dropoff_latitude: number | null;
+  dropoff_longitude: number | null;
+  package_image: string | null;
+  package_pickup_image: string | null;
+  payment_method: string | null;
+  pickupDetials: string | null;
+  pickupLocation: string | null;
+  pickup_latitude: number | null;
+  pickup_longitude: number | null;
+  receiverName: string | null;
+  receiverPhone: string | null;
+  scheduled: boolean;
+  shopper_id: string | null;
+  status: string;
+  timeAndDate: string | null;
+  updated_at: string;
+  user_id: string;
+  order_transactions?: any[];
+  shopper?: {
+    id: string;
+    full_name: string;
+    phone_number: string;
+    plate_number?: string;
+    transport_mode?: string;
+    profile_photo?: string;
+    [key: string]: any;
+  } | null;
+}
+
 // Type-safe hook for Shops (data from API)
 export function useShops() {
   return useQuery<{ Shops: Shop[] }, Error>({
@@ -565,8 +825,38 @@ export function useShops() {
       const res = await apiGet<{ shops: Shop[] }>('/api/queries/shops');
       return { Shops: res.shops || [] };
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     retry: 2,
     retryDelay: 1000,
+  });
+}
+
+export function usePlans() {
+  return useQuery<{ plans: any[] }, Error>({
+    queryKey: ['api', 'plans'],
+    queryFn: async () => {
+      const res = await apiGet<{ plans: any[] }>('/api/queries/plans');
+      return res;
+    },
+  });
+}
+
+// Type-safe hook for Logistics Account
+export function useLogisticsAccount(where: any) {
+  return useQuery<{ logisticsAccount: LogisticsAccount[] }, Error>({
+    queryKey: ['logistics-account', where],
+    queryFn: () => hasuraRequest(GET_LOGISTICS_ACCOUNT, { where }),
+    enabled: !!where,
+  });
+}
+
+// Type-safe hook for Pet Vendor
+export function usePetVendor(where: any) {
+  return useQuery<{ pet_vendors: PetVendor[] }, Error>({
+    queryKey: ['pet-vendor', where],
+    queryFn: () => hasuraRequest(GET_PET_VENDOR, { where }),
+    enabled: !!where,
   });
 }
 
@@ -586,6 +876,25 @@ export function useOrderOffers() {
   return useQuery<{ order_offers: OrderOffer[] }, Error>({
     queryKey: ['order-offers'],
     queryFn: () => hasuraRequest(GET_ORDER_OFFERS, {}),
+  });
+}
+
+// Type-safe hook for Package Deliveries (data from API)
+export function usePackageDeliveries() {
+  return useQuery<{ packages: PackageDelivery[] }, Error>({
+    queryKey: ['api', 'package-deliveries'],
+    queryFn: async () => {
+      const res = await apiGet<{ packages: PackageDelivery[] }>('/api/queries/package-deliveries');
+      return { packages: res.packages || [] };
+    },
+  });
+}
+
+export function useDishesByName(name: string) {
+  return useQuery<{ dishes: any[] }, Error>({
+    queryKey: ['dishesByName', name],
+    queryFn: () => hasuraRequest(GET_DISHES_BY_NAME, { name: `%${name}%` }),
+    enabled: !!name && name.length > 2,
   });
 }
 
@@ -620,7 +929,19 @@ export function useInvoices() {
 export function useWallets() {
   return useQuery<{ Wallets: Wallet[] }, Error>({
     queryKey: ['wallets'],
-    queryFn: () => hasuraRequest(GET_ALL_WALLETS, {}),
+    queryFn: async () => {
+      const res = await hasuraRequest<{ Wallets: any[] }>(GET_ALL_WALLETS, {});
+      return {
+        Wallets: (res.Wallets || []).map(w => {
+          const shopper = Array.isArray(w.shoppers) ? w.shoppers[0] : w.shoppers;
+          return {
+            ...w,
+            User: shopper?.User || null,
+            shopper: shopper || null,
+          };
+        }),
+      };
+    },
   });
 }
 
@@ -636,7 +957,23 @@ export function useShopperWallet(shopperId: string) {
 export function useWalletTransactions() {
   return useQuery<{ Wallet_Transactions: WalletTransaction[] }, Error>({
     queryKey: ['wallet-transactions'],
-    queryFn: () => hasuraRequest(GET_ALL_WALLET_TRANSACTIONS, {}),
+    queryFn: async () => {
+      const res = await hasuraRequest<{ Wallet_Transactions: any[] }>(
+        GET_ALL_WALLET_TRANSACTIONS,
+        {}
+      );
+      return {
+        Wallet_Transactions: (res.Wallet_Transactions || []).map(tx => {
+          const wallet = tx.Wallet;
+          if (wallet) {
+            const shopper = Array.isArray(wallet.shoppers) ? wallet.shoppers[0] : wallet.shoppers;
+            wallet.User = shopper?.User || null;
+            wallet.shopper = shopper || null;
+          }
+          return tx;
+        }),
+      };
+    },
   });
 }
 
@@ -1018,7 +1355,7 @@ export function useSearchProductNames(searchTerm: string) {
   });
 }
 
-// Admin: all reel orders (from API route; includes User, Address, Reel, Shoppers, Shop)
+// Admin: all reel orders (from API route; includes User, Address, Reel, shopper, Shop)
 export function useReelOrders() {
   return useQuery<{ reel_orders: ReelOrder[] }, Error>({
     queryKey: ['api', 'all-reel-orders'],
@@ -1055,7 +1392,7 @@ export function useRestaurantOrders() {
 export function useRestaurants() {
   return useQuery<{ Restaurants: Restaurant[] }, Error>({
     queryKey: ['restaurants'],
-    queryFn: () => hasuraRequest(GET_RESTAURANTS, {}),
+    queryFn: () => hasuraRequest<{ Restaurants: Restaurant[] }>(GET_RESTAURANTS, {}),
   });
 }
 
@@ -1064,6 +1401,17 @@ export function useReels(where?: any) {
   return useQuery<{ Reels: Reel[] }, Error>({
     queryKey: ['reels', where],
     queryFn: () => hasuraRequest(GET_REELS, where ? { where } : {}),
+  });
+}
+
+// Type-safe hook for Business Accounts (data from API)
+export function useBusinessAccounts() {
+  return useQuery<{ business_accounts: any[] }, Error>({
+    queryKey: ['api', 'business-accounts'],
+    queryFn: async () => {
+      const res = await apiGet<{ business_accounts: any[] }>('/api/queries/business-accounts');
+      return { business_accounts: res.business_accounts || [] };
+    },
   });
 }
 
@@ -1096,11 +1444,90 @@ export function useUpdateRestaurant() {
     Error,
     {
       id: string;
+      email?: string;
       is_active?: boolean;
+      lat?: string;
+      location?: string;
+      logo?: string;
+      long?: string;
+      name?: string;
+      phone?: string;
+      profile?: string;
+      relatedTo?: string;
+      tin?: string;
+      ussd?: string;
       verified?: boolean;
     }
   >({
-    mutationFn: variables => hasuraRequest(UPDATE_RESTAURANT, variables),
+    mutationFn: variables => {
+      const { id, ...updateData } = variables;
+
+      const setFields: string[] = [];
+      const varDefinitions = [`$id: uuid!`];
+      const hasuraVariables: any = { id };
+
+      const fieldsMapping: Record<string, string> = {
+        email: 'String',
+        is_active: 'Boolean',
+        lat: 'String',
+        location: 'String',
+        logo: 'String',
+        long: 'String',
+        name: 'String',
+        phone: 'String',
+        profile: 'String',
+        relatedTo: 'String',
+        tin: 'String',
+        ussd: 'String',
+        verified: 'Boolean',
+      };
+
+      Object.entries(updateData).forEach(([key, value]) => {
+        if (value !== undefined && fieldsMapping[key]) {
+          setFields.push(`${key}: $${key}`);
+          varDefinitions.push(`$${key}: ${fieldsMapping[key]}`);
+          hasuraVariables[key] = value;
+        }
+      });
+
+      const mutation = `
+        mutation UpdateRestaurant(${varDefinitions.join(', ')}) {
+          update_Restaurants_by_pk(
+            pk_columns: { id: $id },
+            _set: { ${setFields.join(', ')} }
+          ) {
+            id
+            email
+            is_active
+            lat
+            location
+            logo
+            long
+            name
+            phone
+            profile
+            relatedTo
+            tin
+            ussd
+            verified
+          }
+        }
+      `;
+
+      return hasuraRequest(mutation, hasuraVariables);
+    },
+  });
+}
+
+// Type-safe hook for Restaurant details (fetched via API)
+export function useRestaurantById(id: string) {
+  return useQuery<{ Restaurants_by_pk: any }, Error>({
+    queryKey: ['api', 'restaurant', id],
+    queryFn: async () => {
+      const res = await apiGet<{ restaurant: any }>(`/api/queries/restaurants/${id}`);
+      return { Restaurants_by_pk: res.restaurant };
+    },
+    enabled: !!id,
   });
 }
 
@@ -1121,6 +1548,7 @@ export function useAddReel() {
       likes?: string;
       restaurant_id?: string | null;
       shop_id?: string | null;
+      business_id?: string | null;
       user_id: string | null;
       is_active?: boolean;
     }
@@ -1157,6 +1585,9 @@ export function useUpdateReel() {
       Product?: any;
       delivery_time: string;
       is_active: boolean;
+      shop_id?: string | null;
+      restaurant_id?: string | null;
+      business_id?: string | null;
     }
   >({
     mutationFn: variables => hasuraRequest(UPDATE_REEL, variables),
@@ -1181,6 +1612,8 @@ export interface OrgEmployee {
   dob: string;
   gender: string;
   multAuthEnabled: boolean;
+  sms_auth: boolean;
+  twoFactorSecrets: string | null;
   orgEmployeeRoles: OrgEmployeeRole[];
   Shops: {
     id: string;
@@ -1205,10 +1638,13 @@ export interface ProjectUser {
   role: string;
   is_active: boolean;
   TwoAuth_enabled: boolean;
+  sms_auth: boolean;
+  twoFactorSecrets: string | null;
   last_Login: string | null;
   created_at: string;
   updated_at: string;
   gender: string | null;
+  phone: string | null;
   device_details: string | null;
   profile: string | null;
   privileges: any; // JSON object for project user privileges
@@ -1332,6 +1768,7 @@ export function useAddEmployee() {
       password: string;
       roleType: string;
       shop_id: string;
+      restaurant_id?: string | null;
       dob?: string;
       gender?: string;
     }
@@ -1425,6 +1862,8 @@ export function useProjectUsers() {
             profile
             role
             username
+            phone
+            sms_auth
             updated_at
           }
         }
@@ -1500,6 +1939,8 @@ export function useUpdateProjectUser() {
       role?: string;
       is_active?: boolean;
       TwoAuth_enabled?: boolean;
+      sms_auth?: boolean;
+      twoFactorSecrets?: string | null;
       gender?: string;
       device_details?: string;
       profile?: string;
@@ -1522,6 +1963,9 @@ export function useUpdateProjectUser() {
       if (updateData.is_active !== undefined) setObject.is_active = updateData.is_active;
       if (updateData.TwoAuth_enabled !== undefined)
         setObject.TwoAuth_enabled = updateData.TwoAuth_enabled;
+      if (updateData.sms_auth !== undefined) setObject.sms_auth = updateData.sms_auth;
+      if (updateData.twoFactorSecrets !== undefined)
+        setObject.twoFactorSecrets = updateData.twoFactorSecrets;
       if (updateData.gender !== undefined) setObject.gender = updateData.gender;
       if (updateData.device_details !== undefined)
         setObject.device_details = updateData.device_details;
@@ -1554,5 +1998,422 @@ export function useDeleteReel() {
 export function useDeleteReelsComment() {
   return useMutation<{ delete_Reels_comments_by_pk: { id: string } }, Error, { id: string }>({
     mutationFn: variables => hasuraRequest(DELETE_REEL_COMMENT, variables),
+  });
+}
+
+export function useUpdateRestaurantDish() {
+  return useMutation<
+    { update_restaurant_menu: { affected_rows: number } },
+    Error,
+    {
+      id: string;
+      discount?: string;
+      dish_id?: string;
+      preparingTime?: string;
+      price?: string;
+      product_id?: string;
+      promo_type?: string;
+      promo?: boolean;
+      is_active?: boolean;
+      quantity?: string;
+      image?: string;
+      updated_at?: string;
+    }
+  >({
+    mutationFn: async variables => {
+      const response = await fetch('/api/mutations/update-restaurant-dish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update restaurant dish');
+      }
+
+      return response.json();
+    },
+  });
+}
+
+export function useCreateDish() {
+  return useMutation<
+    { insert_dishes_one: { id: string } },
+    Error,
+    {
+      name: string;
+      description?: string;
+      category?: string;
+      image?: string;
+    }
+  >({
+    mutationFn: async variables => {
+      const response = await fetch('/api/mutations/create-dish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create base dish');
+      }
+
+      return response.json();
+    },
+  });
+}
+
+export function useAddDishToMenu() {
+  return useMutation<
+    { insert_restaurant_menu_one: { id: string } },
+    Error,
+    {
+      restaurant_id: string;
+      dish_id?: string | null;
+      price: string;
+      discount?: string;
+      quantity?: string;
+      preparingTime?: string;
+      is_active?: boolean;
+      promo?: boolean;
+      promo_type?: string;
+      image?: string;
+      product_id?: string;
+      SKU?: string;
+    }
+  >({
+    mutationFn: async variables => {
+      const response = await fetch('/api/mutations/add-dish-to-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add dish to menu');
+      }
+
+      return response.json();
+    },
+  });
+}
+
+export function useCreatePromotion() {
+  return useMutation<
+    { insert_promotions: { affected_rows: number } },
+    Error,
+    {
+      applies_to_type?: string;
+      buy_quantity?: string;
+      code?: string;
+      discount_type?: string;
+      discount_value?: string;
+      end_date?: string;
+      end_time?: string;
+      min_purchase_amount?: string;
+      name: string;
+      priority?: number;
+      promotion_type: string;
+      restaurant_id?: string;
+      start_date?: string;
+      start_time?: string;
+      status?: string;
+      update_on?: string;
+      usage_limit?: number;
+      usage_per_customer?: number;
+      applies_to_id?: string;
+      shop_id?: string | null;
+      promotion_scope?: string;
+      customer_discount_percent?: number;
+      influencer_id?: string;
+      influencer_code?: string;
+      earning_per_order?: number;
+    }
+  >({
+    mutationFn: async variables => {
+      const response = await fetch('/api/mutations/add-promotion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create promotion');
+      }
+
+      return response.json();
+    },
+  });
+}
+
+export const useUpdatePromotion = () => {
+  return useMutation<
+    any,
+    Error,
+    {
+      id: string;
+      name?: string;
+      code?: string;
+      promotion_type?: string;
+      applies_to_type?: string;
+      applies_to_id?: string;
+      start_date?: string;
+      end_date?: string;
+      start_time?: string;
+      end_time?: string;
+      min_purchase_amount?: string;
+      usage_per_customer?: number;
+      usage_limit?: number;
+      priority?: number;
+      status?: string;
+      discount_type?: string;
+      discount_value?: string;
+      buy_quantity?: string;
+      shop_id?: string | null;
+      promotion_scope?: string;
+      customer_discount_percent?: number;
+      influencer_id?: string;
+      influencer_code?: string;
+      earning_per_order?: number;
+    }
+  >({
+    mutationFn: async variables => {
+      const response = await fetch('/api/mutations/update-promotion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ variables }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update promotion');
+      }
+
+      return response.json();
+    },
+  });
+};
+
+// Influencer Mutation Hooks
+export function useAddInfluencer() {
+  return useMutation<any, Error, any>({
+    mutationFn: async variables => {
+      const response = await fetch('/api/mutations/add-influencer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add influencer');
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useUpdateInfluencer() {
+  return useMutation<any, Error, any>({
+    mutationFn: async variables => {
+      const response = await fetch('/api/mutations/update-influencer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update influencer');
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useAddCommissionRule() {
+  return useMutation<any, Error, any>({
+    mutationFn: async variables => {
+      const response = await fetch('/api/mutations/add-commission-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add commission rule');
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useUpdateCommissionRule() {
+  return useMutation<any, Error, any>({
+    mutationFn: async variables => {
+      const response = await fetch('/api/mutations/update-commission-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variables }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update commission rule');
+      }
+      return response.json();
+    },
+  });
+}
+
+export function useAssignOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    any,
+    Error,
+    {
+      id: string;
+      shopper_id: string | null;
+      status: string;
+      type: 'regular' | 'reel' | 'business' | 'restaurant' | 'package';
+    }
+  >({
+    mutationFn: ({ id, shopper_id, status, type }) => {
+      let mutation;
+      switch (type) {
+        case 'regular':
+          mutation = UPDATE_ORDER_SHOPPER;
+          break;
+        case 'reel':
+          mutation = UPDATE_REEL_ORDER_SHOPPER;
+          break;
+        case 'business':
+          mutation = UPDATE_BUSINESS_ORDER_SHOPPER;
+          break;
+        case 'restaurant':
+          mutation = UPDATE_RESTAURANT_ORDER_SHOPPER;
+          break;
+        case 'package':
+          mutation = UPDATE_PACKAGE_DELIVERY_SHOPPER;
+          break;
+        default:
+          throw new Error('Invalid order type');
+      }
+      return hasuraRequest(mutation, { id, shopper_id, status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['api', 'orders'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'reel-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'business-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'restaurant-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'package-deliveries'] });
+      queryClient.invalidateQueries({ queryKey: ['api', 'shopper-detail'] });
+    },
+  });
+}
+
+export function useCreateOrderOffer() {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ insert_order_offers_one: { id: string } }, Error, { object: any }>({
+    mutationFn: variables => hasuraRequest(CREATE_ORDER_OFFER, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order-offers'] });
+    },
+  });
+}
+
+export function useCreateLogisticsAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: { object: any }) => hasuraRequest(CREATE_LOGISTICS_ACCOUNT, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['logistics-account'] });
+    },
+  });
+}
+
+export function useCreatePetVendor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: { object: any }) => hasuraRequest(CREATE_PET_VENDOR, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pet-vendor'] });
+    },
+  });
+}
+
+export function useUpdatePetVendor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: {
+      id: string;
+      disabled: boolean;
+      status: string;
+      updated_at: string;
+    }) => hasuraRequest(UPDATE_PET_VENDOR, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pet-vendor'] });
+      queryClient.invalidateQueries({ queryKey: ['pet-vendors'] });
+    },
+  });
+}
+
+export function useLogisticsAccounts() {
+  return useQuery<{ logisticsAccount: LogisticsAccount[] }, Error>({
+    queryKey: ['logistics-accounts'],
+    queryFn: async () => {
+      const res = await hasuraRequest<{ logisticsAccount: LogisticsAccount[] }>(
+        GET_ALL_LOGISTICS_ACCOUNTS
+      );
+      cacheSet('logistics_accounts', res);
+      return res;
+    },
+    initialData: () =>
+      cacheGet<{ logisticsAccount: LogisticsAccount[] }>('logistics_accounts') || undefined,
+  });
+}
+
+export function usePetVendors() {
+  return useQuery<{ pet_vendors: PetVendor[] }, Error>({
+    queryKey: ['pet-vendors'],
+    queryFn: async () => {
+      const res = await hasuraRequest<{ pet_vendors: PetVendor[] }>(GET_ALL_PET_VENDORS);
+      cacheSet('pet_vendors', res);
+      return res;
+    },
+    initialData: () => cacheGet<{ pet_vendors: PetVendor[] }>('pet_vendors') || undefined,
+  });
+}
+
+export function useUpdateLogisticsAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: {
+      id: string;
+      disabled: boolean;
+      status: string;
+      updated_at: string;
+    }) => hasuraRequest(UPDATE_LOGISTICS_ACCOUNT, variables),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['logistics-account'] });
+      queryClient.invalidateQueries({ queryKey: ['logistics-accounts'] });
+    },
+  });
+}
+
+export function useSubscriptionsAnalytics() {
+  return useQuery({
+    queryKey: ['subscriptions-analytics'],
+    queryFn: async () => {
+      const data = await hasuraRequest<any>(GET_SUBSCRIPTIONS_ANALYTICS, {});
+      return data.shop_subscriptions || [];
+    },
   });
 }

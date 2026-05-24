@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { usePrivilege } from '@/hooks/usePrivilege';
 import { GET_SHOP_BY_ID_FOR_SETTINGS } from '@/lib/graphql/queries';
 import { hasuraRequest } from '@/lib/hasura';

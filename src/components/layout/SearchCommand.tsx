@@ -12,147 +12,57 @@ import {
 } from '@/components/ui/command';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { hasuraRequest } from '@/lib/hasura';
+import { useAuth } from '@/contexts/AuthContext';
+import { hasPrivilege } from '@/types/privileges';
+import { usePrivilege } from '@/hooks/usePrivilege';
 import {
-  Users,
-  ShoppingBag,
+  Users as UsersIcon,
   Store,
   Package,
-  MessageSquare,
   Search,
   Loader2,
-  User,
-  Receipt,
+  User as UserIcon,
   AlertCircle,
+  Truck,
+  LayoutDashboard,
+  Settings,
+  HelpCircle,
+  Video,
+  Building2,
+  Car,
+  Tag,
+  X,
+  CreditCard,
+  Wallet,
+  FileText,
+  Activity,
+  ShoppingBag,
+  Coins,
+  ShieldCheck,
+  Receipt,
+  MessageSquare,
 } from 'lucide-react';
 import { DialogTitle, DialogDescription } from '@/components/ui/dialog';
-
-// Import existing queries
-import { GET_USERS, GET_PRODUCTS, GET_SHOPS } from '@/lib/graphql/queries';
-
-const SEARCH_QUERY = `
-  query GlobalSearch($searchTerm: String!) {
-    Users(
-      where: {
-        _or: [
-          { name: { _ilike: $searchTerm } },
-          { email: { _ilike: $searchTerm } },
-          { phone: { _ilike: $searchTerm } }
-        ]
-      },
-      limit: 10,
-      order_by: { name: asc }
-    ) {
-      id
-      name
-      email
-      phone
-      role
-      profile_picture
-      is_active
-      created_at
-    }
-    Products(
-      where: {
-        _or: [
-          { ProductName: { name: { _ilike: $searchTerm } } },
-          { ProductName: { description: { _ilike: $searchTerm } } }
-        ]
-      },
-      limit: 5,
-      order_by: { ProductName: { name: asc } }
-    ) {
-      id
-      price
-      quantity
-      measurement_unit
-      ProductName {
-        id
-        name
-        description
-      image
-      }
-      Shop {
-        id
-        name
-        category_id
-      }
-    }
-    Shops(
-      where: {
-        _or: [
-          { name: { _ilike: $searchTerm } },
-          { description: { _ilike: $searchTerm } },
-          { address: { _ilike: $searchTerm } }
-        ]
-      },
-      limit: 5,
-      order_by: { name: asc }
-    ) {
-      id
-      name
-      description
-      address
-      operating_hours
-      image
-      category: Category {
-        id
-        name
-      }
-      Products_aggregate {
-        aggregate {
-          count
-        }
-      }
-    }
-  }
-`;
+import { Badge } from '@/components/ui/badge';
+import { LogisticsAccountModal } from '@/components/modals/LogisticsAccountModal';
+import { PetVendorModal } from '@/components/modals/PetVendorModal';
 
 interface SearchResult {
-  Users: Array<{
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    role?: string;
-    profile_picture?: string;
-    is_active: boolean;
-    created_at: string;
-  }>;
-  Products: Array<{
-    id: string;
-    price: string;
-    quantity: number;
-    measurement_unit: string;
-    ProductName: {
-      id: string;
-      name: string;
-      description: string;
-      image?: string;
-    };
-    Shop: {
-      id: string;
-      name: string;
-      category_id: string;
-    };
-  }>;
-  Shops: Array<{
-    id: string;
-    name: string;
-    description: string;
-    address: string;
-    operating_hours: string;
-    image?: string;
-    category: {
-      id: string;
-      name: string;
-    };
-    Products_aggregate: {
-      aggregate: {
-        count: number;
-      };
-    };
-  }>;
+  Users: any[];
+  shoppers: any[];
+  ProjectUsers: any[];
+  Orders: any[];
+  reel_orders: any[];
+  businessProductOrders: any[];
+  package_delivery: any[];
+  restaurant_orders: any[];
+  Shops: any[];
+  Restaurants: any[];
+  pet_vendors: any[];
+  logisticsAccount: any[];
+  business_stores: any[];
+  vehicles: any[];
+  orgEmployees: any[];
 }
 
 interface SearchCommandProps {
@@ -160,282 +70,550 @@ interface SearchCommandProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const navigationItems = [
-  {
-    title: 'Dashboard',
-    icon: Search,
-    path: '/',
-  },
-  {
-    title: 'Orders',
-    icon: Package,
-    path: '/orders',
-  },
-  {
-    title: 'Products',
-    icon: ShoppingBag,
-    path: '/products',
-  },
-  {
-    title: 'Shops',
-    icon: Store,
-    path: '/shops',
-  },
-  {
-    title: 'Users',
-    icon: Users,
-    path: '/users',
-    searchTerms: ['users', 'customers', 'shoppers', 'people', 'accounts'],
-  },
-  {
-    title: 'Tickets',
-    icon: MessageSquare,
-    path: '/tickets',
-  },
-  {
-    title: 'Refunds',
-    icon: Receipt,
-    path: '/refunds',
-  },
+const COMMAND_MAP: Record<string, string> = {
+  '/user': 'user',
+  '/users': 'user',
+  '/customer': 'user',
+  '/customers': 'user',
+  '/shopper': 'shopper',
+  '/shoppers': 'shopper',
+  '/plasa': 'shopper',
+  '/courier': 'shopper',
+  '/order': 'order',
+  '/orders': 'order',
+  '/pkg': 'order',
+  '/package': 'order',
+  '/delivery': 'order',
+  '/shop': 'shop',
+  '/shops': 'shop',
+  '/store': 'shop',
+  '/stores': 'shop',
+  '/business': 'shop',
+  '/vendor': 'shop',
+  '/restaurant': 'restaurant',
+  '/restaurants': 'restaurant',
+  '/staff': 'staff',
+  '/employee': 'staff',
+  '/employees': 'staff',
+  '/vehicle': 'vehicle',
+  '/vehicles': 'vehicle',
+  '/admin': 'admin',
+  '/project': 'admin',
+  '/projectUser': 'admin',
+  '/projectUsers': 'admin',
+  '/project user': 'admin',
+};
+
+const ALL_MODULES = [
+  { title: 'Dashboard', icon: LayoutDashboard, path: '/', module: 'dashboard' },
+  { title: 'Orders', icon: Package, path: '/orders', module: 'orders' },
+  { title: 'Plasa Shoppers', icon: Truck, path: '/shoppers', module: 'shoppers' },
+  { title: 'Customers', icon: UsersIcon, path: '/users', module: 'users' },
+  { title: 'Project Admins', icon: ShieldCheck, path: '/project-users', module: 'project_users' },
+  { title: 'Shops & Stores', icon: Store, path: '/shops', module: 'shops' },
+  { title: 'Restaurants', icon: Building2, path: '/restaurants', module: 'restaurants' },
+  { title: 'Reels Management', icon: Video, path: '/reels', module: 'reels' },
+  { title: 'Products', icon: ShoppingBag, path: '/products', module: 'products' },
+  { title: 'POS Checkout', icon: CreditCard, path: '/pos/checkout', module: 'checkout' },
+  { title: 'Inventory', icon: ShoppingBag, path: '/pos/inventory', module: 'inventory' },
+  { title: 'Staff Management', icon: UsersIcon, path: '/pos/staff', module: 'staff' },
+  { title: 'Company Wallet', icon: Wallet, path: '/company-wallet', module: 'wallet' },
+  { title: 'Withdraw Requests', icon: Coins, path: '/withdraw-requests', module: 'finance' },
+  { title: 'Refund Claims', icon: Receipt, path: '/refunds', module: 'refunds' },
+  { title: 'Support Tickets', icon: MessageSquare, path: '/tickets', module: 'tickets' },
+  { title: 'Tax & Compliance', icon: FileText, path: '/tax', module: 'tax' },
+  { title: 'Account Settings', icon: Settings, path: '/settings', module: 'settings' },
 ];
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps) {
   const router = useRouter();
+  const { session } = useAuth();
+  const { hasModuleAccess } = usePrivilege();
   const [searchValue, setSearchValue] = React.useState('');
+  const [activeScope, setActiveScope] = React.useState<string | null>(null);
 
-  const filteredNavigationItems = React.useMemo(() => {
-    if (!searchValue) return navigationItems;
-    return navigationItems.filter(
-      item =>
-        item.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-        item.searchTerms?.some(term => term.includes(searchValue.toLowerCase()))
-    );
-  }, [searchValue]);
+  // Modal states
+  const [logisticsId, setLogisticsId] = React.useState<string | null>(null);
+  const [petVendorId, setPetVendorId] = React.useState<string | null>(null);
+  const [isLogisticsModalOpen, setIsLogisticsModalOpen] = React.useState(false);
+  const [isPetVendorModalOpen, setIsPetVendorModalOpen] = React.useState(false);
 
-  const { data, isLoading } = useQuery<SearchResult | null, Error>({
-    queryKey: ['global-search', searchValue],
-    queryFn: async () => {
-      if (!searchValue || searchValue.length < 2) return null;
-
-      const searchPattern = `%${searchValue.trim().toLowerCase()}%`;
-      console.log('Search value:', searchValue);
-      console.log('Search pattern:', searchPattern);
-
-      try {
-        const response = await hasuraRequest<SearchResult>(SEARCH_QUERY, {
-          searchTerm: searchPattern,
-        });
-        console.log('Raw response:', response);
-
-        // Return the response directly since hasuraRequest already returns the data
-        return {
-          Users: response?.Users || [],
-          Products: response?.Products || [],
-          Shops: response?.Shops || [],
-        };
-      } catch (error) {
-        console.error('Search error:', error);
-        // Return empty results instead of undefined on error
-        return {
-          Users: [],
-          Products: [],
-          Shops: [],
-        };
-      }
-    },
-    enabled: searchValue.length >= 2,
-    retry: 1,
-  });
-
-  // Add debug logging for the data
-  React.useEffect(() => {
-    if (data) {
-      console.log('Processed search results:', data);
-    }
-  }, [data]);
-
-  React.useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        onOpenChange(true);
-      }
-    };
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
-  }, [onOpenChange]);
-
-  const handleSelect = (path: string, userId?: string) => {
-    if (userId) {
-      // For users, navigate to users page and highlight the user
-      router.push('/users');
-      // Use a small delay to ensure the page has loaded before trying to highlight
-      setTimeout(() => {
-        const userRow = document.getElementById(`user-${userId}`);
-        if (userRow) {
-          userRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Add multiple classes for the highlight effect
-          userRow.classList.add('bg-green-100', 'transition-all', 'duration-1000');
-
-          // Find and click the View Profile button
-          const viewProfileButton = userRow.querySelector('button');
-          if (viewProfileButton) {
-            viewProfileButton.click();
-          }
-
-          // Remove highlight after a few seconds
-          setTimeout(() => {
-            userRow.classList.remove('bg-green-100');
-          }, 3000);
-        }
-      }, 100);
-    } else {
-      // For other items, just navigate
-      router.push(path);
-    }
-    onOpenChange(false);
-    setSearchValue('');
+  const handleOpenLogistics = (id: string) => {
+    setLogisticsId(id);
+    setIsLogisticsModalOpen(true);
+    onOpenChange(false); // Close the search command
   };
 
-  const runCommand = React.useCallback(
-    (command: () => unknown) => {
-      onOpenChange(false);
-      command();
+  const handleOpenPetVendor = (id: string) => {
+    setPetVendorId(id);
+    setIsPetVendorModalOpen(true);
+    onOpenChange(false); // Close the search command
+  };
+
+  const handleInputChange = (val: string) => {
+    const trimmed = val.trim().toLowerCase();
+
+    // Check if user just typed a command and a space
+    if (val.endsWith(' ')) {
+      const cmd = trimmed;
+      if (COMMAND_MAP[cmd]) {
+        setActiveScope(COMMAND_MAP[cmd]);
+        setSearchValue('');
+        return;
+      }
+    }
+
+    setSearchValue(val);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // If Backspace on empty input, clear active scope
+    if (e.key === 'Backspace' && !searchValue && activeScope) {
+      setActiveScope(null);
+      e.preventDefault();
+    }
+
+    // If Enter on a command (like /user), lock the scope
+    if (e.key === 'Enter' && searchValue.startsWith('/')) {
+      const cmd = searchValue.trim().toLowerCase();
+      if (COMMAND_MAP[cmd]) {
+        setActiveScope(COMMAND_MAP[cmd]);
+        setSearchValue('');
+        e.preventDefault();
+      }
+    }
+  };
+
+  const { data, isLoading } = useQuery<SearchResult | null>({
+    queryKey: ['global-search', searchValue, activeScope],
+    queryFn: async () => {
+      if (!searchValue && !activeScope) return null;
+      if (searchValue.length < 2 && !activeScope) return null;
+
+      try {
+        const url = new URL('/api/search', window.location.origin);
+        if (searchValue) url.searchParams.append('q', searchValue.trim());
+        if (activeScope) url.searchParams.append('scope', activeScope);
+
+        const response = await fetch(url.toString());
+        if (!response.ok) throw new Error('Search failed');
+        const data = await response.json();
+        return data.results;
+      } catch (error) {
+        console.error('Search error:', error);
+        return null;
+      }
     },
-    [onOpenChange]
-  );
+    enabled: searchValue.length >= 2 || !!activeScope,
+    debounceTime: 300,
+  } as any);
+
+  const handleSelect = (path: string) => {
+    router.push(path);
+    onOpenChange(false);
+    setSearchValue('');
+    setActiveScope(null);
+  };
+
+  const accessibleModules = React.useMemo(() => {
+    if (!session) return [];
+    return ALL_MODULES.filter(item => {
+      if (item.module === 'dashboard' || item.module === 'settings') return true;
+      return hasPrivilege(session.privileges, item.module as any, 'access', session.role);
+    });
+  }, [session]);
+
+  const filteredModules = React.useMemo(() => {
+    if (!searchValue) return accessibleModules;
+    return accessibleModules.filter(item =>
+      item.title.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  }, [accessibleModules, searchValue]);
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog open={open} onOpenChange={onOpenChange} className="max-w-5xl">
       <DialogTitle className="sr-only">Search</DialogTitle>
-      <DialogDescription className="sr-only">
-        Search across users, products, shops, and more
-      </DialogDescription>
+      <DialogDescription className="sr-only">Use /commands then Enter to filter</DialogDescription>
 
-      <CommandInput
-        placeholder="Search users, products, shops..."
-        value={searchValue}
-        onValueChange={setSearchValue}
-      />
-      <CommandList>
+      <div className="flex items-center border-b px-3 h-14" onKeyDown={handleKeyDown}>
+        <Search className="mr-3 h-5 w-5 shrink-0 opacity-50" />
+        {activeScope && (
+          <Badge
+            variant="secondary"
+            className="mr-2 h-7 gap-1 px-3 animate-in fade-in zoom-in duration-200 bg-primary/10 text-primary border-primary/20"
+          >
+            <Tag className="h-3.5 w-3.5" />
+            <span className="capitalize font-bold text-xs">{activeScope}</span>
+            <X
+              className="h-3.5 w-3.5 cursor-pointer hover:text-destructive transition-colors ml-1"
+              onClick={() => setActiveScope(null)}
+            />
+          </Badge>
+        )}
+        <CommandInput
+          placeholder={
+            activeScope
+              ? `Search in ${activeScope}...`
+              : 'Type /shoppers [Enter] or /users [Enter]...'
+          }
+          value={searchValue}
+          onValueChange={handleInputChange}
+          className="border-none focus:ring-0 text-base flex-1"
+        />
+      </div>
+
+      <CommandList className="max-h-[60vh]">
         <CommandEmpty>
           {isLoading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
-              <AlertCircle className="mr-2 h-4 w-4" />
-              No results found
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+              <AlertCircle className="mb-3 h-8 w-8 opacity-20" />
+              <p className="text-sm font-medium">No matches found</p>
             </div>
           )}
         </CommandEmpty>
 
-        {/* Quick Navigation */}
-        <CommandGroup heading="Quick Navigation">
-          {filteredNavigationItems.map(item => (
-            <CommandItem
-              key={item.path}
-              value={item.title}
-              onSelect={() => handleSelect(item.path)}
-            >
-              <item.icon className="mr-2 h-4 w-4" />
-              {item.title}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        {/* Users */}
-        {data?.Users && data.Users.length > 0 && (
-          <CommandGroup heading="Users">
-            {data.Users.map(user => (
-              <CommandItem
-                key={user.id}
-                value={`${user.name} ${user.email}`}
-                onSelect={() => handleSelect('/users', user.id)}
-              >
-                <User className="mr-2 h-4 w-4" />
-                <div className="flex flex-col">
-                  <span className="font-medium">{user.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {user.email} • {user.role || 'User'}
+        {/* Modules Grid - Hide when a scope is active to focus on results */}
+        {!activeScope && (
+          <CommandGroup heading={searchValue ? 'Matching Modules' : 'Accessible Modules'}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1 p-2">
+              {filteredModules.map(item => (
+                <CommandItem
+                  key={item.path}
+                  onSelect={() => handleSelect(item.path)}
+                  className="cursor-pointer flex items-center p-3 rounded-xl hover:bg-primary/5 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center mr-3 group-hover:bg-primary/10 transition-colors">
+                    <item.icon className="h-4 w-4 group-hover:text-primary transition-colors" />
+                  </div>
+                  <span className="font-medium group-hover:text-primary transition-colors">
+                    {item.title}
                   </span>
-                </div>
-              </CommandItem>
-            ))}
+                </CommandItem>
+              ))}
+            </div>
           </CommandGroup>
         )}
 
-        {/* Products */}
-        {data?.Products && data.Products.length > 0 && (
-          <CommandGroup heading="Products">
-            {data.Products.map(product => (
-              <CommandItem
-                key={product.id}
-                value={product.ProductName.name}
-                onSelect={() => handleSelect(`/products/${product.id}`)}
-              >
-                <ShoppingBag className="mr-2 h-4 w-4" />
-                <div className="flex flex-col">
-                  <span>{product.ProductName.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {product.Shop.name} • {product.measurement_unit}: {product.quantity} • $
-                    {product.price}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+        {(searchValue.length >= 2 || activeScope) && data && (
+          <>
+            <CommandSeparator />
+
+            {(data.Users?.length > 0 ||
+              data.shoppers?.length > 0 ||
+              data.ProjectUsers?.length > 0 ||
+              data.orgEmployees?.length > 0) && (
+              <CommandGroup heading="People & Accounts">
+                {data.Users?.map(item => (
+                  <CommandItem
+                    key={`user-${item.id}`}
+                    value={`user ${item.name} ${item.email}`}
+                    onSelect={() => handleSelect(`/users?q=${encodeURIComponent(item.name || '')}`)}
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <UserIcon className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.name}</span>
+                      <span className="text-[10px] text-white/90 uppercase">
+                        {item.email} • Customer
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.shoppers?.map(item => (
+                  <CommandItem
+                    key={`shopper-${item.id}`}
+                    value={`shopper ${item.full_name} ${item.Employment_id}`}
+                    onSelect={() =>
+                      handleSelect(`/shoppers?q=${encodeURIComponent(item.full_name || '')}`)
+                    }
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <Truck className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.full_name}</span>
+                      <span className="text-[10px] text-white/90 uppercase">
+                        {item.Employment_id} • Plasa
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.ProjectUsers?.map(item => (
+                  <CommandItem
+                    key={`admin-${item.id}`}
+                    value={`admin project user ${item.username} ${item.email}`}
+                    onSelect={() =>
+                      handleSelect(`/project-users?q=${encodeURIComponent(item.username || '')}`)
+                    }
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <ShieldCheck className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.username}</span>
+                      <span className="text-[10px] text-white/90 uppercase">
+                        {item.email} • Project Admin
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.orgEmployees?.map(item => (
+                  <CommandItem
+                    key={`staff-${item.id}`}
+                    value={`staff employee ${item.fullnames} ${item.employeeID}`}
+                    onSelect={() =>
+                      handleSelect(`/pos/staff?q=${encodeURIComponent(item.fullnames || '')}`)
+                    }
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <UsersIcon className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.fullnames}</span>
+                      <span className="text-[10px] text-white/90 uppercase">
+                        ID: {item.employeeID} • Staff
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            {(data.Orders?.length > 0 ||
+              data.reel_orders?.length > 0 ||
+              data.package_delivery?.length > 0 ||
+              data.restaurant_orders?.length > 0 ||
+              data.businessProductOrders?.length > 0) && (
+              <CommandGroup heading="Orders & Deliveries">
+                {data.Orders?.map(item => (
+                  <CommandItem
+                    key={`order-${item.id}`}
+                    value={`order ${item.OrderID} ${item.pin} ${item.status}`}
+                    onSelect={() => handleSelect(`/orders?q=${item.OrderID}`)}
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <Package className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white">Order #{item.OrderID}</span>
+                        {item.pin && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-4 border-white/40 text-white bg-white/10"
+                          >
+                            PIN: {item.pin}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-white/90 uppercase">
+                        {item.status || 'Pending'} • {item.total || 0} RWF
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.restaurant_orders?.map(item => (
+                  <CommandItem
+                    key={`rest-order-${item.id}`}
+                    value={`restaurant order ${item.OrderID} ${item.pin} ${item.status}`}
+                    onSelect={() => handleSelect(`/restaurants?q=${item.OrderID}`)}
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <ShoppingBag className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white">Rest. Order #{item.OrderID}</span>
+                        {item.pin && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-4 border-white/40 text-white bg-white/10"
+                          >
+                            PIN: {item.pin}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-white/90 uppercase">
+                        {item.status || 'Pending'} • Restaurant
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.businessProductOrders?.map(item => (
+                  <CommandItem
+                    key={`biz-order-${item.id}`}
+                    value={`business order ${item.OrderID} ${item.pin} ${item.status}`}
+                    onSelect={() => handleSelect(`/pos/inventory?q=${item.OrderID}`)}
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <Building2 className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white">Biz Order #{item.OrderID}</span>
+                        {item.pin && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-4 border-white/40 text-white bg-white/10"
+                          >
+                            PIN: {item.pin}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-white/90 uppercase">
+                        {item.status || 'Pending'} • Business
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.reel_orders?.map(item => (
+                  <CommandItem
+                    key={`reel-order-${item.id}`}
+                    value={`reel order ${item.OrderID} ${item.pin} ${item.status}`}
+                    onSelect={() => handleSelect(`/reels?q=${item.OrderID}`)}
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <Video className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">Reel Order #{item.OrderID}</span>
+                      <span className="text-[10px] text-white/90 uppercase">
+                        {item.status || 'Active'} • Reel
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.package_delivery?.map(item => (
+                  <CommandItem
+                    key={`pkg-${item.id}`}
+                    value={`package delivery ${item.DeliveryCode} ${item.status}`}
+                    onSelect={() => handleSelect(`/orders?q=${item.DeliveryCode}`)}
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <Truck className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">Package: {item.DeliveryCode}</span>
+                      <span className="text-[10px] text-white/90 uppercase">
+                        {item.status || 'In Transit'} • Delivery
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            {(data.Shops?.length > 0 || data.Restaurants?.length > 0) && (
+              <CommandGroup heading="Vendors & Stores">
+                {data.Shops?.map(item => (
+                  <CommandItem
+                    key={`shop-${item.id}`}
+                    value={`shop store ${item.name}`}
+                    onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.name || '')}`)}
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <Store className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.name}</span>
+                      <span className="text-[10px] text-white/90 uppercase">Verified Shop</span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.Restaurants?.map(item => (
+                  <CommandItem
+                    key={`restaurant-${item.id}`}
+                    value={`restaurant food ${item.name}`}
+                    onSelect={() =>
+                      handleSelect(`/restaurants?q=${encodeURIComponent(item.name || '')}`)
+                    }
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <Building2 className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.name}</span>
+                      <span className="text-[10px] text-white/90 uppercase">Restaurant</span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {data.business_stores?.map(item => (
+                  <CommandItem
+                    key={`biz-store-${item.id}`}
+                    value={`business store account ${item.name}`}
+                    onSelect={() => handleSelect(`/shops?q=${encodeURIComponent(item.name || '')}`)}
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <Building2 className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">{item.name}</span>
+                      <span className="text-[10px] text-white/90 uppercase">Business Account</span>
+                    </div>
+                  </CommandItem>
+                ))}
+                {hasModuleAccess('logistics') &&
+                  data.logisticsAccount?.map(item => (
+                    <CommandItem
+                      key={`logistics-${item.id}`}
+                      value={`logistics account ${item.fullname}`}
+                      onSelect={() => handleOpenLogistics(item.id)}
+                      className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                    >
+                      <Truck className="mr-3 h-5 w-5 text-white" />
+                      <div className="flex flex-col">
+                        <span className="font-bold text-white">{item.fullname}</span>
+                        <span className="text-[10px] text-white/90 uppercase">
+                          Logistics Partner
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                {hasModuleAccess('pets') &&
+                  data.pet_vendors?.map(item => (
+                    <CommandItem
+                      key={`pet-${item.id}`}
+                      value={`pet vendor vendor ${item.fullname}`}
+                      onSelect={() => handleOpenPetVendor(item.id)}
+                      className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                    >
+                      <Tag className="mr-3 h-5 w-5 text-white" />
+                      <div className="flex flex-col">
+                        <span className="font-bold text-white">{item.fullname}</span>
+                        <span className="text-[10px] text-white/90 uppercase">Pet Vendor</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+              </CommandGroup>
+            )}
+
+            {data.vehicles?.length > 0 && (
+              <CommandGroup heading="Assets & Vehicles">
+                {data.vehicles?.map(item => (
+                  <CommandItem
+                    key={`vehicle-${item.id}`}
+                    value={`vehicle plate car ${item.plate_number}`}
+                    onSelect={() =>
+                      handleSelect(`/shoppers?q=${encodeURIComponent(item.plate_number || '')}`)
+                    }
+                    className="cursor-pointer h-16 mb-1 bg-primary hover:bg-primary/90 aria-selected:bg-primary/90 rounded-lg"
+                  >
+                    <Car className="mr-3 h-5 w-5 text-white" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-white">Plate: {item.plate_number}</span>
+                      <span className="text-[10px] text-white/90 uppercase">Shopper Vehicle</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </>
         )}
-
-        {/* Shops */}
-        {data?.Shops && data.Shops.length > 0 && (
-          <CommandGroup heading="Shops">
-            {data.Shops.map(shop => (
-              <CommandItem
-                key={shop.id}
-                value={shop.name}
-                onSelect={() => handleSelect(`/shops/${shop.id}`)}
-              >
-                <Store className="mr-2 h-4 w-4" />
-                <div className="flex flex-col">
-                  <span>{shop.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {shop.category.name} • {shop.Products_aggregate.aggregate.count} products
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {shop.address} • {shop.operating_hours}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        )}
-
-        <CommandSeparator />
-
-        <CommandGroup heading="Suggestions">
-          <CommandItem onSelect={() => runCommand(() => router.push('/orders'))}>
-            Orders
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push('/shoppers'))}>
-            Shoppers
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push('/users'))}>Users</CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push('/shops'))}>Shops</CommandItem>
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        <CommandGroup heading="Settings">
-          <CommandItem onSelect={() => runCommand(() => router.push('/settings'))}>
-            Settings
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push('/help'))}>Help</CommandItem>
-        </CommandGroup>
       </CommandList>
+
+      <LogisticsAccountModal
+        open={isLogisticsModalOpen}
+        onOpenChange={setIsLogisticsModalOpen}
+        accountId={logisticsId || undefined}
+      />
+      <PetVendorModal
+        open={isPetVendorModalOpen}
+        onOpenChange={setIsPetVendorModalOpen}
+        vendorId={petVendorId || undefined}
+      />
     </CommandDialog>
   );
 }

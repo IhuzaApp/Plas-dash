@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface OrgEmployee {
   id: string;
@@ -16,13 +16,21 @@ interface OrgEmployee {
   restaurant_id: string | null;
   multAuthEnabled: boolean;
   twoFactorSecrets?: string | null;
+  profile_image?: string | null;
   Shops: {
     id: string;
     name: string;
     address: string;
     phone: string;
     is_active: boolean;
-  };
+  } | null;
+  Restaurants: {
+    id: string;
+    name: string;
+    location: string;
+    phone: string;
+    is_active: boolean;
+  } | null;
 }
 
 export function useCurrentOrgEmployee() {
@@ -44,10 +52,18 @@ export function useCurrentOrgEmployee() {
         restaurant_id
         multAuthEnabled
         twoFactorSecrets
+        profile_image
         Shops {
           id
           name
           address
+          phone
+          is_active
+        }
+        Restaurants {
+          id
+          name
+          location
           phone
           is_active
         }

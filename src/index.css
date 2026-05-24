@@ -14,97 +14,97 @@
     --popover: 0 0% 100%;
     --popover-foreground: 140 5% 12%;
 
-    /* Green primary */
-    --primary: 122 39% 49%;
+    /* Premium Dark Green primary */
+    --primary: 142 76% 17%;
     --primary-foreground: 0 0% 100%;
 
     /* Light green secondary */
-    --secondary: 88 50% 53%;
-    --secondary-foreground: 140 5% 12%;
+    --secondary: 142 72% 29%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 100 10% 96%;
-    --muted-foreground: 142 5% 40%;
+    --muted: 142 20% 96%;
+    --muted-foreground: 142 10% 40%;
 
-    /* Darker green accent */
-    --accent: 132 58% 33%;
+    /* Richer green accent */
+    --accent: 142 76% 22%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 140 5% 90%;
-    --input: 140 5% 90%;
-    --ring: 122 39% 49%;
+    --border: 142 20% 90%;
+    --input: 142 20% 90%;
+    --ring: 142 76% 17%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    /* Chart colors: green, blue, red, yellow, orange */
-    --chart-1: 122 39% 49%;
-    --chart-2: 217 91% 60%;
-    --chart-3: 0 72% 51%;
-    --chart-4: 45 93% 47%;
-    --chart-5: 25 95% 53%;
+    /* Chart colors: green shades */
+    --chart-1: 142 76% 17%;
+    --chart-2: 142 72% 29%;
+    --chart-3: 142 60% 45%;
+    --chart-4: 142 50% 60%;
+    --chart-5: 142 40% 75%;
 
-    /* Sidebar light theme */
-    --sidebar-background: 122 39% 95%;
-    --sidebar-foreground: 140 5% 12%;
-    --sidebar-primary: 122 39% 49%;
+    /* Sidebar - Premium Dark Design */
+    --sidebar-background: 142 76% 12%;
+    --sidebar-foreground: 142 20% 98%;
+    --sidebar-primary: 142 72% 29%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 122 39% 90%;
-    --sidebar-accent-foreground: 140 5% 12%;
-    --sidebar-border: 122 39% 85%;
-    --sidebar-ring: 122 39% 49%;
+    --sidebar-accent: 142 76% 18%;
+    --sidebar-accent-foreground: 142 20% 98%;
+    --sidebar-border: 142 76% 15%;
+    --sidebar-ring: 142 72% 29%;
   }
 
   .dark {
-    /* Dark theme (dark with green accents) */
-    --background: 140 5% 12%;
+    /* Dark theme (deep charcoal with emerald accents) */
+    --background: 142 30% 6%;
     --foreground: 0 0% 98%;
 
-    --card: 140 5% 16%;
+    --card: 142 30% 8%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 140 5% 12%;
+    --popover: 142 30% 6%;
     --popover-foreground: 0 0% 98%;
 
-    /* Green primary, slightly adjusted for dark mode */
-    --primary: 122 39% 49%;
+    /* Emerald primary for dark mode */
+    --primary: 142 72% 29%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary green for dark mode */
-    --secondary: 88 50% 33%;
+    --secondary: 142 60% 18%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 140 5% 22%;
-    --muted-foreground: 140 5% 70%;
+    --muted: 142 30% 12%;
+    --muted-foreground: 142 10% 70%;
 
     /* Accent green for dark */
-    --accent: 132 58% 33%;
+    --accent: 142 72% 35%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 140 5% 25%;
-    --input: 140 5% 25%;
-    --ring: 122 39% 39%;
+    --border: 142 30% 15%;
+    --input: 142 30% 15%;
+    --ring: 142 72% 29%;
 
-    /* Chart colors (dark): bright green, blue, red, yellow, orange for visibility */
-    --chart-1: 142 52% 58%;
-    --chart-2: 217 85% 68%;
-    --chart-3: 0 78% 62%;
-    --chart-4: 48 96% 58%;
-    --chart-5: 28 95% 62%;
+    /* Chart colors (dark) */
+    --chart-1: 142 72% 35%;
+    --chart-2: 142 60% 45%;
+    --chart-3: 142 50% 55%;
+    --chart-4: 142 40% 65%;
+    --chart-5: 142 30% 75%;
 
-    /* Sidebar dark theme */
-    --sidebar-background: 140 5% 12%;
+    /* Sidebar dark theme - even deeper green */
+    --sidebar-background: 142 40% 4%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 122 39% 49%;
+    --sidebar-primary: 142 72% 29%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 140 5% 20%;
+    --sidebar-accent: 142 30% 10%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 140 5% 25%;
-    --sidebar-ring: 122 39% 49%;
+    --sidebar-border: 142 30% 12%;
+    --sidebar-ring: 142 72% 29%;
   }
 }
 

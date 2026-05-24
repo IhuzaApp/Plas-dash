@@ -33,12 +33,20 @@ import { useToast } from '@/hooks/use-toast';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
 import { apiGet, apiPost } from '@/lib/api';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { Scale } from 'lucide-react';
 
 interface CartItem {
   id: string;
   name: string;
   price: number;
   quantity: number;
+  description?: string;
+  measurement_unit?: string;
+  image?: string;
+  isWeighed?: boolean;
+  scaleCode?: string;
 }
 
 interface CartSummaryCardProps {
@@ -52,6 +60,7 @@ interface CartSummaryCardProps {
     address: string;
     phone?: string;
     email?: string;
+    ssd?: string;
   };
   currentUser?: {
     id: string; // Add user ID
@@ -60,6 +69,7 @@ interface CartSummaryCardProps {
     role: string;
   };
   shopId?: string;
+  onRedeemScaleCode?: (weighedItem: any) => void;
 }
 
 export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
@@ -71,6 +81,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   shopDetails,
   currentUser,
   shopId,
+  onRedeemScaleCode,
 }) => {
   const [isOrderSummaryCollapsed, setIsOrderSummaryCollapsed] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -79,6 +90,22 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     'card' | 'cash' | 'momo' | null
   >(null);
+  const [isMomoOpenOnDisplay, setIsMomoOpenOnDisplay] = useState(false);
+
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      const open = localStorage.getItem('momoDialogOpen') === 'true';
+      setIsMomoOpenOnDisplay(open);
+    };
+    handleStorageChange();
+    window.addEventListener('storage', handleStorageChange);
+    // Set up a short interval as fallback for immediate local updates
+    const interval = setInterval(handleStorageChange, 1000);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
   const [needsTIN, setNeedsTIN] = useState(false);
   const [tinNumber, setTinNumber] = useState('');
   const [lastPaymentDetails, setLastPaymentDetails] = useState<{
@@ -120,8 +147,74 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
   });
   const { data: systemConfig } = useSystemConfig();
 
+  const [scaleCodeInput, setScaleCodeInput] = useState('');
+  const [loadingScaleCode, setLoadingScaleCode] = useState(false);
+  const [isScaleModalOpen, setIsScaleModalOpen] = useState(false);
+
+  const handleRedeemScaleCode = async () => {
+    if (scaleCodeInput.length !== 6 || !shopId) return;
+    setLoadingScaleCode(true);
+    try {
+      const docRef = doc(db, 'weighed_items', shopId, 'items', scaleCodeInput);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.status === 'redeemed') {
+          toast({
+            title: 'Code already redeemed',
+            description: `This code (${scaleCodeInput}) was already processed.`,
+            variant: 'destructive',
+          });
+          setLoadingScaleCode(false);
+          return;
+        }
+
+        if (onRedeemScaleCode) {
+          onRedeemScaleCode({
+            id: `${data.productId}_${data.code}`,
+            productId: data.productId,
+            name: `${data.productName} (Scale #${data.code})`,
+            price: data.price,
+            weight: data.weight,
+            scaleCode: data.code,
+            image: data.image || '',
+          });
+
+          toast({
+            title: 'Weighed Item Added',
+            description: `${data.productName} (${data.weight.toFixed(3)} kg) added to cart.`,
+          });
+          setScaleCodeInput('');
+          setIsScaleModalOpen(false);
+        }
+      } else {
+        toast({
+          title: 'Code not found',
+          description: `No active weighed item found for code ${scaleCodeInput}.`,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error redeeming scale code:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to redeem scale code. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingScaleCode(false);
+    }
+  };
+
   const calculateTotal = () => {
     return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  };
+
+  const getTaxRate = () => {
+    const taxStr = systemConfig?.System_configuratioins?.[0]?.tax;
+    if (taxStr === undefined || taxStr === null) return 0.08;
+    return parseFloat(taxStr) / 100;
   };
 
   const handleConfirmPayment = async () => {
@@ -136,9 +229,10 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
     }
 
     if (selectedPaymentMethod) {
-      const subtotal = calculateTotal();
-      const tax = subtotal * 0.08;
-      const totalAmount = subtotal + tax;
+      const totalAmount = calculateTotal();
+      const taxRate = getTaxRate();
+      const tax = (totalAmount * taxRate) / (1 + taxRate);
+      const subtotal = totalAmount - tax;
 
       // Console logs showing payment saving details
       const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
@@ -183,6 +277,32 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
         const result = await checkoutMutation.mutateAsync(checkoutData);
         console.log('Checkout saved successfully:', result);
 
+        // Delete any weighed items from Firestore in the background to prevent double redemption
+        const weighedItems = cart.filter(item => item.isWeighed && item.scaleCode);
+        weighedItems.forEach(item => {
+          if (item.scaleCode && shopId) {
+            const docRef = doc(db, 'weighed_items', shopId, 'items', item.scaleCode);
+            deleteDoc(docRef)
+              .then(() =>
+                console.log(`Weighed item code ${item.scaleCode} deleted from Firestore for reuse.`)
+              )
+              .catch(err =>
+                console.error(`Failed to delete weighed item code ${item.scaleCode}:`, err)
+              );
+          }
+        });
+
+        // Fire and forget stock updates in the background
+        apiPost('/api/update-stock', { items: cart, isRestaurant: false }).catch(err => {
+          console.error('Failed to dispatch background stock update:', err);
+          toast({
+            title: 'Stock Sync Failed',
+            description:
+              'Checkout succeeded, but background stock deduction failed. Please check inventory levels.',
+            variant: 'destructive',
+          });
+        });
+
         // Generate transaction ID using the auto-generated number from database
         const savedCheckout = result.insert_shopCheckouts?.returning?.[0];
         const autoGeneratedNumber = savedCheckout?.number;
@@ -196,22 +316,9 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           console.log('Generated Transaction ID:', transactionId);
           console.log('Auto-generated number from DB:', autoGeneratedNumber);
 
-          // Fetch employee details from API
-          let employee = null;
-          try {
-            const employeeResult = await apiGet<{
-              orgEmployee: {
-                fullnames?: string;
-                email?: string;
-                Position?: string;
-                roleType?: string;
-              } | null;
-            }>(`/api/queries/org-employee-by-id?id=${encodeURIComponent(currentUser?.id || '')}`);
-            employee = employeeResult.orgEmployee;
-            console.log('Employee data from DB:', employee);
-          } catch (error) {
-            console.error('Error fetching employee data:', error);
-          }
+          // Employee details are already passed via props (currentUser), so we can skip the blocking API call
+          // to make checkout extremely fast.
+          const employee: any = null;
 
           // Save payment details for logging and print confirmation
           const paymentDetails = {
@@ -277,11 +384,11 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           title: 'Payment Successful',
           description: 'Payment has been processed and saved to database.',
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error saving checkout:', error);
         toast({
           title: 'Payment Error',
-          description: 'Failed to save payment to database. Please try again.',
+          description: error?.message || 'Failed to save payment to database. Please try again.',
           variant: 'destructive',
         });
       }
@@ -305,102 +412,259 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
     console.log('Printing timestamp:', new Date().toISOString());
 
     // Create print content
+    // Create print content
     const printContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <title>Receipt - ${lastPaymentDetails?.transactionId}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-          .receipt { max-width: 300px; margin: 0 auto; }
-          .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-          .company-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-          .company-address { font-size: 12px; color: #666; margin-bottom: 5px; }
-          .transaction-id { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
-          .items { margin-bottom: 20px; }
-          .item { display: flex; justify-content: space-between; margin-bottom: 5px; }
-          .item-name { flex: 1; }
-          .item-price { text-align: right; }
-          .totals { border-top: 1px solid #000; padding-top: 10px; }
-          .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-          .payment-info { margin-top: 20px; border-top: 1px solid #000; padding-top: 10px; }
-          .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+          @page {
+            size: 80mm auto;
+            margin: 0;
+          }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 15px;
+            width: 80mm;
+            box-sizing: border-box;
+          }
+          .receipt {
+            width: 100%;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 15px;
+          }
+          .company-name {
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+          }
+          .company-address, .company-phone {
+            font-size: 10px;
+            color: #333;
+            margin-bottom: 2px;
+          }
+          .separator {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+          }
+          .title {
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 8px 0;
+            text-transform: uppercase;
+          }
+          .meta-info {
+            font-size: 10px;
+            margin-bottom: 10px;
+          }
+          .meta-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+          }
+          .table-header {
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            font-size: 10px;
+          }
+          .items {
+            margin-bottom: 10px;
+          }
+          .item-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 6px;
+          }
+          .item-main {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+          }
+          .item-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #444;
+            padding-left: 10px;
+          }
+          .totals {
+            margin-top: 10px;
+            font-size: 11px;
+          }
+          .totals-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+          }
+          .grand-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: bold;
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
+            padding: 6px 0;
+            margin: 6px 0;
+          }
+          .payment-method {
+            font-size: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 9px;
+            line-height: 1.5;
+          }
+          .barcode-placeholder {
+            text-align: center;
+            margin-top: 15px;
+            letter-spacing: 4px;
+            font-size: 10px;
+          }
+          .barcode-lines {
+            width: 150px;
+            height: 30px;
+            border-left: 1px solid #000;
+            border-right: 1px solid #000;
+            margin: 4px auto;
+            background: repeating-linear-gradient(
+              90deg,
+              #000,
+              #000 2px,
+              #fff 2px,
+              #fff 4px,
+              #000 4px,
+              #000 5px,
+              #fff 5px,
+              #fff 8px
+            );
+          }
           @media print {
-            body { margin: 0; }
-            .receipt { max-width: none; }
+            body {
+              padding: 0;
+              margin: 0;
+            }
           }
         </style>
       </head>
       <body>
         <div class="receipt">
           <div class="header">
-            <div class="company-name">${lastPaymentDetails?.shopDetails?.name || 'Company Name'}</div>
-            <div class="company-address">${lastPaymentDetails?.shopDetails?.address || 'Company Address'}</div>
-            <div class="company-address">${lastPaymentDetails?.shopDetails?.phone || 'Phone'}</div>
+            <div class="company-name">${lastPaymentDetails?.shopDetails?.name || 'SUPERMARKET'}</div>
+            <div class="company-address">${lastPaymentDetails?.shopDetails?.address || ''}</div>
+            <div class="company-phone">TEL: ${lastPaymentDetails?.shopDetails?.phone || ''}</div>
+            ${lastPaymentDetails?.shopDetails?.email ? `<div class="company-phone">EMAIL: ${lastPaymentDetails.shopDetails.email}</div>` : ''}
           </div>
-          
-          <div class="transaction-id">
-            Transaction ID: ${lastPaymentDetails?.transactionId || 'N/A'}
+
+          <div class="separator"></div>
+          <div class="title">Sales Receipt</div>
+          <div class="separator"></div>
+
+          <div class="meta-info">
+            <div class="meta-row">
+              <span>Receipt ID:</span>
+              <span style="font-weight: bold;">${lastPaymentDetails?.transactionId || 'N/A'}</span>
+            </div>
+            <div class="meta-row">
+              <span>Cashier:</span>
+              <span>${lastPaymentDetails?.processedBy?.name || 'N/A'}</span>
+            </div>
+            <div class="meta-row">
+              <span>Date:</span>
+              <span>${new Date(lastPaymentDetails?.timestamp || Date.now()).toLocaleString()}</span>
+            </div>
           </div>
-          
+
+          <div class="table-header">
+            <span style="width: 50%;">ITEM</span>
+            <span style="width: 15%; text-align: center;">QTY</span>
+            <span style="width: 35%; text-align: right;">TOTAL</span>
+          </div>
+
           <div class="items">
             ${
               lastPaymentDetails?.items
                 ?.map(
                   item => `
-              <div class="item">
-                <span class="item-name">${item.name} x${item.quantity}</span>
-                <span class="item-price">${formatCurrencyWithConfig(item.price * item.quantity, systemConfig)}</span>
+              <div class="item-row">
+                <div class="item-main">
+                  <span style="width: 50%;">${item.name}</span>
+                  <span style="width: 15%; text-align: center;">${item.isWeighed ? item.quantity.toFixed(3) + ' kg' : item.quantity}</span>
+                  <span style="width: 35%; text-align: right;">${formatCurrencyWithConfig(item.price * item.quantity, systemConfig)}</span>
+                </div>
+                <div class="item-details">
+                  <span>(${formatCurrencyWithConfig(item.price, systemConfig)} ${item.isWeighed ? 'per kg' : 'each'})</span>
+                </div>
               </div>
             `
                 )
                 .join('') || ''
             }
           </div>
-          
+
+          <div class="separator"></div>
+
           <div class="totals">
-            <div class="total-row">
+            <div class="totals-row">
               <span>Subtotal:</span>
-              <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) / 1.08, systemConfig)}</span>
+              <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) / (1 + getTaxRate()), systemConfig)}</span>
             </div>
-            <div class="total-row">
-              <span>Tax (8%):</span>
-              <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) - (lastPaymentDetails?.amount || 0) / 1.08, systemConfig)}</span>
+            <div class="totals-row">
+              <span>VAT / Tax (${Math.round(getTaxRate() * 100)}%):</span>
+              <span>${formatCurrencyWithConfig((lastPaymentDetails?.amount || 0) - (lastPaymentDetails?.amount || 0) / (1 + getTaxRate()), systemConfig)}</span>
             </div>
-            <div class="total-row" style="font-weight: bold; font-size: 16px;">
-              <span>Total:</span>
+            <div class="grand-total">
+              <span>TOTAL DUE:</span>
               <span>${formatCurrencyWithConfig(lastPaymentDetails?.amount || 0, systemConfig)}</span>
             </div>
           </div>
-          
-          <div class="payment-info">
-            <div class="total-row">
+
+          <div class="payment-method">
+            <div class="meta-row">
               <span>Payment Method:</span>
               <span>${lastPaymentDetails?.paymentMethod?.toUpperCase() || 'N/A'}</span>
             </div>
             ${
               lastPaymentDetails?.tinNumber
                 ? `
-              <div class="total-row">
+              <div class="meta-row" style="margin-top: 3px;">
                 <span>TIN Number:</span>
                 <span>${lastPaymentDetails.tinNumber}</span>
               </div>
             `
                 : ''
             }
-            <div class="total-row">
-              <span>Processed By:</span>
-              <span>${lastPaymentDetails?.processedBy?.name || 'N/A'}</span>
-            </div>
-            <div class="total-row">
-              <span>Date:</span>
-              <span>${new Date(lastPaymentDetails?.timestamp || Date.now()).toLocaleString()}</span>
-            </div>
           </div>
-          
+
+          <div class="separator"></div>
+
+          <div class="barcode-placeholder">
+            <div class="barcode-lines"></div>
+            <div>${lastPaymentDetails?.transactionId || ''}</div>
+          </div>
+
           <div class="footer">
-            Thank you for your purchase!<br>
-            Please keep this receipt for your records.
+            Thank you for shopping at ${lastPaymentDetails?.shopDetails?.name || 'our store'}!<br>
+            Please check and verify all items before leaving.<br>
+            Exchange allowed within 7 days with original receipt.<br>
+            Have a wonderful day!
           </div>
         </div>
       </body>
@@ -459,125 +723,181 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
 
   return (
     <>
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>Cart & Summary</CardTitle>
+      <Card className="lg:col-span-2 flex flex-col h-[780px] bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl">
+        <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-900 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Cart & Summary
+          </CardTitle>
+          {shopId && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsScaleModalOpen(true)}
+              className="h-7 text-[10px] font-bold border-primary/40 text-primary hover:bg-primary/5 px-2.5"
+            >
+              Redeem Scale Code
+            </Button>
+          )}
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium mb-2">Cart Items</h3>
-              <ScrollArea className="h-[300px]">
-                <div className="space-y-2">
+        <CardContent className="flex-1 flex flex-col p-6 min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 space-y-4">
+            {/* Scrollable Cart Items */}
+            <div className="flex-1 min-h-0">
+              <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2">Cart Items</h4>
+              <ScrollArea className="h-[310px] pr-2">
+                <div className="space-y-3">
                   {cart.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between p-2 bg-accent/20 rounded-lg"
+                      className="flex gap-3 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80"
                     >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrencyWithConfig(item.price, systemConfig)} × {item.quantity}
-                        </p>
+                      <div className="w-12 h-12 bg-slate-200 dark:bg-slate-950 rounded-lg overflow-hidden shrink-0">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-slate-150 dark:bg-slate-900 flex items-center justify-center text-slate-400">
+                            <ShoppingBag className="h-5 w-5" />
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onUpdateQuantity(item.id, -1)}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-6 text-center text-sm">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onUpdateQuantity(item.id, 1)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => onRemoveItem(item.id)}
-                        >
-                          <Trash className="h-3 w-3" />
-                        </Button>
+
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex justify-between items-start">
+                          <h5 className="font-extrabold text-xs text-slate-800 dark:text-slate-100 truncate pr-1">
+                            {item.name}
+                          </h5>
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                            {formatCurrencyWithConfig(item.price * item.quantity, systemConfig)}
+                          </span>
+                        </div>
+
+                        <p className="text-[10px] text-slate-400 font-semibold">
+                          {formatCurrencyWithConfig(item.price, systemConfig)}
+                          {item.measurement_unit && ` / ${item.measurement_unit}`}
+                        </p>
+
+                        {/* Quantity change & Remove row */}
+                        <div className="flex justify-between items-center pt-1.5 border-t border-slate-100 dark:border-slate-800/50">
+                          <div className="flex items-center gap-2">
+                            {!item.isWeighed ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdateQuantity(item.id, -1)}
+                                  className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black hover:bg-slate-350 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                >
+                                  <Minus className="h-2.5 w-2.5" />
+                                </button>
+                                <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => onUpdateQuantity(item.id, 1)}
+                                  className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-black hover:bg-slate-350 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                >
+                                  <Plus className="h-2.5 w-2.5" />
+                                </button>
+                              </>
+                            ) : (
+                              <div className="flex items-center gap-1 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-foreground px-2 py-0.5 rounded-full font-bold text-[9px]">
+                                <Scale className="h-2.5 w-2.5" />
+                                Weighed: {item.quantity.toFixed(3)} kg
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => onRemoveItem(item.id)}
+                            className="text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
                   {cart.length === 0 && (
-                    <div className="p-4 text-center text-muted-foreground">
-                      <ShoppingBag className="mx-auto h-6 w-6 mb-1 opacity-50" />
-                      <p className="text-sm">Cart is empty</p>
+                    <div className="text-center py-16 text-xs text-slate-400">
+                      <ShoppingBag className="mx-auto h-8 w-8 mb-2 opacity-30" />
+                      Cart is empty. Select products to begin.
                     </div>
                   )}
                 </div>
               </ScrollArea>
             </div>
 
-            {/* Customer Display Button */}
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                onClick={openCustomerDisplay}
-                className="w-full"
-                disabled={cart.length === 0}
-              >
-                <Monitor className="mr-2 h-4 w-4" />
-                Show Customer Display
-              </Button>
-            </div>
-            <Separator />
-            <div>
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => setIsOrderSummaryCollapsed(!isOrderSummaryCollapsed)}
-              >
-                <h3 className="font-medium">Order Summary</h3>
-                {isOrderSummaryCollapsed ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                )}
+            {/* Financial summary */}
+            <div className="border-t border-slate-100 dark:border-slate-900 pt-3 space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <div className="flex justify-between">
+                <span>Sub Total (excl. tax)</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {formatCurrencyWithConfig(calculateTotal() / (1 + getTaxRate()), systemConfig)}
+                </span>
               </div>
-              <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${isOrderSummaryCollapsed ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'}`}
-              >
-                <div className="space-y-2 text-sm pt-2">
-                  <div className="flex justify-between">
-                    <span>Items ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
-                    <span>{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax</span>
-                    <span>{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between font-bold text-base">
-                    <span>Total</span>
-                    <span>{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
-                  </div>
-                </div>
+              <div className="flex justify-between">
+                <span>Tax ({Math.round(getTaxRate() * 100)}%)</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {formatCurrencyWithConfig(
+                    (calculateTotal() * getTaxRate()) / (1 + getTaxRate()),
+                    systemConfig
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm font-extrabold text-slate-800 dark:text-slate-100 pt-1.5 border-t border-slate-100 dark:border-slate-900">
+                <span>Amount to be Paid</span>
+                <span className="text-primary text-lg">
+                  {formatCurrencyWithConfig(calculateTotal(), systemConfig)}
+                </span>
               </div>
             </div>
-            <div className="space-y-2">
+
+            {/* Actions Grid */}
+            <div className="mt-4 space-y-2">
               <Button
-                className="w-full"
+                type="button"
                 onClick={() => setIsPaymentDialogOpen(true)}
+                className="w-full bg-primary hover:bg-primary/90 text-white font-extrabold shadow-md flex items-center justify-center gap-2 h-11"
                 disabled={cart.length === 0 || checkoutMutation.isPending}
               >
                 {checkoutMutation.isPending ? 'Processing...' : 'Confirm Payment'}
               </Button>
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={onSaveToPending}
-                disabled={cart.length === 0}
-              >
-                <Clock className="mr-2 h-4 w-4" /> Save for Later
-              </Button>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={openCustomerDisplay}
+                  disabled={cart.length === 0}
+                  className="text-xs font-bold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 h-9"
+                >
+                  <Monitor className="h-3.5 w-3.5 mr-1" /> Display
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onSaveToPending}
+                  disabled={cart.length === 0}
+                  className="text-xs font-bold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 h-9"
+                >
+                  <Clock className="h-3.5 w-3.5 mr-1" /> Hold
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    cart.forEach(item => onRemoveItem(item.id));
+                  }}
+                  disabled={cart.length === 0}
+                  className="text-xs font-bold border-slate-200 dark:border-slate-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 h-9"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -601,204 +921,224 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Payment Method</DialogTitle>
-            <DialogDescription>
-              Select your preferred payment method and complete the transaction.
+        <DialogContent className="sm:max-w-lg rounded-2xl border-0 p-6">
+          <DialogHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-800 dark:text-slate-100">
+              <Banknote className="h-5 w-5 text-primary animate-pulse" />
+              Complete Payment
+            </DialogTitle>
+            <DialogDescription className="text-xs font-semibold text-slate-400">
+              Choose your preferred payment method and click confirm to complete checkout.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2">
             {/* Payment Method Selection */}
             <div className="space-y-2">
-              <h4 className="font-medium">Select Payment Method</h4>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                Select Payment Method
+              </label>
               <div className="grid grid-cols-3 gap-3">
+                {/* Cash Method */}
                 <div
-                  className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+                  className={`relative cursor-pointer rounded-2xl border-2 p-4 transition-all hover:shadow-sm flex flex-col items-center justify-center gap-2 ${
                     selectedPaymentMethod === 'cash'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-slate-100 dark:border-slate-850/80 text-slate-500 hover:border-slate-200 dark:hover:border-slate-800'
                   }`}
                   onClick={() => setSelectedPaymentMethod('cash')}
                 >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div
-                      className={`p-3 rounded-full ${
-                        selectedPaymentMethod === 'cash' ? 'bg-primary/10' : 'bg-muted'
-                      }`}
-                    >
-                      <Banknote className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium">Cash</p>
-                      <p className="text-xs text-muted-foreground">Physical payment</p>
-                    </div>
+                  <div
+                    className={`p-2.5 rounded-full ${selectedPaymentMethod === 'cash' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}
+                  >
+                    <Banknote className="h-5 w-5" />
                   </div>
-                  {selectedPaymentMethod === 'cash' && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-center">
+                    <p className="text-xs font-extrabold">Cash</p>
+                    <p className="text-[10px] opacity-75 font-medium mt-0.5">Physical Cash</p>
+                  </div>
                 </div>
 
+                {/* Card Method */}
                 <div
-                  className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+                  className={`relative cursor-pointer rounded-2xl border-2 p-4 transition-all hover:shadow-sm flex flex-col items-center justify-center gap-2 ${
                     selectedPaymentMethod === 'card'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-slate-100 dark:border-slate-850/80 text-slate-505 hover:border-slate-200 dark:hover:border-slate-800'
                   }`}
                   onClick={() => setSelectedPaymentMethod('card')}
                 >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div
-                      className={`p-3 rounded-full ${
-                        selectedPaymentMethod === 'card' ? 'bg-primary/10' : 'bg-muted'
-                      }`}
-                    >
-                      <CreditCard className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium">Card</p>
-                      <p className="text-xs text-muted-foreground">Credit/Debit card</p>
-                    </div>
+                  <div
+                    className={`p-2.5 rounded-full ${selectedPaymentMethod === 'card' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}
+                  >
+                    <CreditCard className="h-5 w-5" />
                   </div>
-                  {selectedPaymentMethod === 'card' && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-center">
+                    <p className="text-xs font-extrabold">Card</p>
+                    <p className="text-[10px] opacity-75 font-medium mt-0.5">Credit/Debit</p>
+                  </div>
                 </div>
 
+                {/* MOMO Method */}
                 <div
-                  className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+                  className={`relative cursor-pointer rounded-2xl border-2 p-4 transition-all hover:shadow-sm flex flex-col items-center justify-center gap-2 ${
                     selectedPaymentMethod === 'momo'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-slate-100 dark:border-slate-850/80 text-slate-500 hover:border-slate-200 dark:hover:border-slate-800'
                   }`}
                   onClick={() => setSelectedPaymentMethod('momo')}
                 >
-                  <div className="flex flex-col items-center space-y-2">
-                    <div
-                      className={`p-3 rounded-full ${
-                        selectedPaymentMethod === 'momo' ? 'bg-primary/10' : 'bg-muted'
-                      }`}
-                    >
-                      <Smartphone className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium">MOMO</p>
-                      <p className="text-xs text-muted-foreground">Mobile money</p>
-                    </div>
+                  <div
+                    className={`p-2.5 rounded-full ${selectedPaymentMethod === 'momo' ? 'bg-primary/10' : 'bg-slate-100 dark:bg-slate-800'}`}
+                  >
+                    <Smartphone className="h-5 w-5" />
                   </div>
-                  {selectedPaymentMethod === 'momo' && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-center">
+                    <p className="text-xs font-extrabold">MOMO</p>
+                    <p className="text-[10px] opacity-75 font-medium mt-0.5">Mobile Money</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* MOMO Payment Button */}
-            {selectedPaymentMethod === 'momo' && (
-              <div className="space-y-2">
+            {selectedPaymentMethod === 'momo' && shopDetails?.ssd && (
+              <div className="pt-1">
                 <Button
+                  type="button"
                   onClick={() => {
-                    // Update localStorage to trigger MOMO dialog in customer display
-                    const paymentInfo = {
-                      paymentMethod: selectedPaymentMethod,
-                      discount: 0,
-                    };
-                    localStorage.setItem('customerDisplayPayment', JSON.stringify(paymentInfo));
+                    if (isMomoOpenOnDisplay) {
+                      // Close MoMo dialog on customer display
+                      localStorage.setItem('momoDialogOpen', 'false');
+                      localStorage.setItem(
+                        'momoDialogState',
+                        JSON.stringify({ shouldClose: true })
+                      );
+                      setIsMomoOpenOnDisplay(false);
 
-                    console.log('=== OPENING MOMO DIALOG ON CUSTOMER DISPLAY ===');
-                    console.log('Updated localStorage with:', paymentInfo);
+                      toast({
+                        title: 'MOMO Payment Closed',
+                        description: 'MOMO payment dialog closed on customer display screen.',
+                      });
+                    } else {
+                      // Update localStorage to trigger MOMO dialog in customer display
+                      const paymentInfo = {
+                        paymentMethod: selectedPaymentMethod,
+                        discount: 0,
+                        momoTrigger: Date.now(),
+                      };
+                      localStorage.setItem('customerDisplayPayment', JSON.stringify(paymentInfo));
+                      localStorage.setItem('momoDialogOpen', 'true');
+                      localStorage.removeItem('momoDialogState');
+                      setIsMomoOpenOnDisplay(true);
 
-                    toast({
-                      title: 'MOMO Payment',
-                      description: 'MOMO payment dialog opened on customer display screen.',
-                    });
+                      toast({
+                        title: 'MOMO Payment',
+                        description: 'MOMO payment dialog opened on customer display screen.',
+                      });
+                    }
                   }}
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className={`w-full font-extrabold text-xs shadow-sm flex items-center justify-center gap-2 h-10 rounded-xl border-0 text-white ${
+                    isMomoOpenOnDisplay
+                      ? 'bg-rose-500 hover:bg-rose-600'
+                      : 'bg-primary hover:bg-primary/90'
+                  }`}
                 >
-                  <Smartphone className="mr-2 h-4 w-4" />
-                  Open MOMO Payment on Customer Display
+                  <Smartphone className="h-4 w-4" />
+                  {isMomoOpenOnDisplay
+                    ? 'Close MOMO Payment on Customer Display'
+                    : 'Open MOMO Payment on Customer Display'}
                 </Button>
               </div>
             )}
 
             {/* TIN Number Section */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-slate-800/80 space-y-3">
+              <div className="flex items-center space-x-2.5">
                 <Checkbox
                   id="include-tin"
                   checked={needsTIN}
                   onCheckedChange={checked => setNeedsTIN(checked === true)}
+                  className="rounded-md border-slate-300 dark:border-slate-800"
                 />
                 <label
                   htmlFor="include-tin"
-                  className="text-sm font-medium leading-none cursor-pointer"
+                  className="text-xs font-bold leading-none cursor-pointer text-slate-600 dark:text-slate-350"
                 >
-                  Include TIN Number
+                  Include Customer TIN Number
                 </label>
               </div>
               {needsTIN && (
                 <Input
-                  placeholder="Enter TIN Number"
+                  placeholder="Enter Customer TIN Number"
                   value={tinNumber}
                   onChange={e => setTinNumber(e.target.value)}
-                  className="text-sm"
+                  className="text-xs h-9 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl"
                 />
               )}
             </div>
 
             {/* Order Summary in Dialog */}
-            <div className="border rounded-lg p-3 bg-muted/20">
-              <h4 className="font-medium mb-2">Order Summary</h4>
-              <div className="space-y-1 text-sm">
+            <div className="border border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-4 space-y-2.5 text-xs font-semibold text-slate-550 dark:text-slate-400">
+              <h4 className="font-bold text-[10px] uppercase text-slate-400 tracking-wide">
+                Order Totals
+              </h4>
+              <div className="space-y-1.5">
                 <div className="flex justify-between">
-                  <span>Items ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
-                  <span>{formatCurrencyWithConfig(calculateTotal(), systemConfig)}</span>
+                  <span>Sub Total (excl. tax)</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {formatCurrencyWithConfig(calculateTotal() / (1 + getTaxRate()), systemConfig)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Tax (8%)</span>
-                  <span>{formatCurrencyWithConfig(calculateTotal() * 0.08, systemConfig)}</span>
+                  <span>VAT / Tax ({Math.round(getTaxRate() * 100)}%)</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {formatCurrencyWithConfig(
+                      (calculateTotal() * getTaxRate()) / (1 + getTaxRate()),
+                      systemConfig
+                    )}
+                  </span>
                 </div>
-                <Separator />
-                <div className="flex justify-between font-bold">
-                  <span>Total</span>
-                  <span>{formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}</span>
+                <Separator className="bg-slate-100 dark:bg-slate-800" />
+                <div className="flex justify-between text-sm font-extrabold text-slate-850 dark:text-slate-150">
+                  <span>Total Amount Due</span>
+                  <span className="text-primary font-black">
+                    {formatCurrencyWithConfig(calculateTotal(), systemConfig)}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPaymentDialogOpen(false)}
+              className="text-xs font-bold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 h-10 rounded-xl"
+            >
               Cancel
             </Button>
             <Button
+              type="button"
+              variant="outline"
+              onClick={handlePrintInvoice}
+              className="text-xs font-bold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 h-10 rounded-xl flex items-center justify-center gap-1.5"
+            >
+              <Printer className="h-4 w-4 text-slate-500" />
+              Print Invoice
+            </Button>
+            <Button
+              type="button"
               onClick={handleConfirmPayment}
               disabled={
                 !selectedPaymentMethod ||
                 (needsTIN && !tinNumber.trim()) ||
                 checkoutMutation.isPending
               }
+              className="bg-primary hover:bg-primary/90 text-white font-extrabold shadow-md text-xs px-5 h-10 rounded-xl flex-1 flex items-center justify-center gap-1.5"
             >
-              {checkoutMutation.isPending
-                ? 'Processing...'
-                : `Pay ${formatCurrencyWithConfig(calculateTotal() * 1.08, systemConfig)}`}
-            </Button>
-            <Button variant="secondary" onClick={handlePrintInvoice}>
-              <Printer className="mr-2 h-4 w-4" />
-              Print Invoice
+              {checkoutMutation.isPending ? 'Processing...' : 'Confirm & Pay'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -809,7 +1149,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle className="h-5 w-5 text-primary" />
               Payment Successful!
             </DialogTitle>
             <DialogDescription>
@@ -818,7 +1158,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
           </DialogHeader>
 
           {lastPaymentDetails && (
-            <div className="border rounded-lg p-3 bg-green-50">
+            <div className="border rounded-lg p-3 bg-primary/10 border-primary/20">
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Payment Method:</span>
@@ -872,6 +1212,46 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
             <Button onClick={handlePrintInvoice}>
               <Printer className="mr-2 h-4 w-4" />
               Print Invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Redeem Scale Code Modal */}
+      <Dialog open={isScaleModalOpen} onOpenChange={setIsScaleModalOpen}>
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle>Redeem Scale Code</DialogTitle>
+            <DialogDescription>
+              Enter the 6-digit code printed from the weighing station.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2 space-y-4">
+            <Input
+              placeholder="Enter 6-digit code"
+              value={scaleCodeInput}
+              onChange={e => setScaleCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && scaleCodeInput.length === 6 && !loadingScaleCode) {
+                  e.preventDefault();
+                  handleRedeemScaleCode();
+                }
+              }}
+              className="h-12 text-lg font-mono font-black tracking-[0.3em] text-center"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsScaleModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleRedeemScaleCode}
+              disabled={scaleCodeInput.length !== 6 || loadingScaleCode}
+              className="bg-primary hover:bg-primary/90 text-white font-bold"
+            >
+              {loadingScaleCode ? 'Redeeming...' : 'Redeem Code'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -67,11 +67,15 @@ import {
   useUpdateProductName,
   useAddProduct,
   useAddProductName,
+  useMenuByRestaurant,
+  useCreateDish,
+  useAddDishToMenu,
 } from '@/hooks/useHasuraApi';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import { InventoryTable } from '@/components/shop/InventoryTable';
 import { useShopSession } from '@/contexts/ShopSessionContext';
 
-interface InventoryItem {
+export interface InventoryItem {
   id: string;
   productName_id?: string;
   name: string;
@@ -83,6 +87,8 @@ interface InventoryItem {
   description?: string;
   measurement_unit?: string;
   sku?: string;
+  supplier?: string;
+  image?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -96,13 +102,24 @@ const Inventory = () => {
   const updateProductName = useUpdateProductName();
   const addProduct = useAddProduct();
   const addProductName = useAddProductName();
+  const addDish = useCreateDish();
+  const addDishToMenu = useAddDishToMenu();
 
   // Fetch products for the current shop
   const {
     data: productsData,
     isLoading: productsLoading,
     refetch: refetchProducts,
-  } = useProductsByShop(shopSession?.shopId || '');
+  } = useProductsByShop(!shopSession?.isRestaurant ? shopSession?.shopId || '' : '');
+
+  // Fetch menus for the current restaurant
+  const {
+    data: menuData,
+    isLoading: menuLoading,
+    refetch: refetchMenu,
+  } = useMenuByRestaurant(shopSession?.isRestaurant ? shopSession?.shopId || '' : '');
+
+  const isLoading = productsLoading || menuLoading;
 
   // Transform API data to match our interface
   const transformProductsToInventoryItems = (products: any[]): InventoryItem[] => {
@@ -117,10 +134,32 @@ const Inventory = () => {
       status: getStockStatus(parseInt(product.quantity) || 0),
       description: product.ProductName?.description || '',
       measurement_unit: product.measurement_unit || 'unit',
-      sku: product.ProductName?.sku || '',
+      sku: product.sku || product.ProductName?.sku || '',
+      supplier: product.supplier || '',
+      image: product.image || product.ProductName?.image || '',
       is_active: product.is_active || false,
       created_at: product.created_at || new Date().toISOString(),
       updated_at: product.updated_at || new Date().toISOString(),
+    }));
+  };
+
+  const transformMenuToInventoryItems = (menus: any[]): InventoryItem[] => {
+    return menus.map(menu => ({
+      id: menu.id,
+      productName_id: menu.dish_id,
+      name: menu.dish?.name || 'Unknown Dish',
+      barcode: menu.SKU || '',
+      category: menu.dish?.category || 'Uncategorized',
+      price: parseFloat(menu.price) || 0,
+      stock: parseInt(menu.quantity) || 0,
+      status: getStockStatus(parseInt(menu.quantity) || 0),
+      description: menu.dish?.description || '',
+      measurement_unit: 'item',
+      sku: menu.SKU || '',
+      image: menu.image || menu.dish?.image || '',
+      is_active: menu.is_active || false,
+      created_at: menu.created_at || new Date().toISOString(),
+      updated_at: menu.updated_at || new Date().toISOString(),
     }));
   };
 
@@ -134,11 +173,14 @@ const Inventory = () => {
 
   // Update items when products data changes
   React.useEffect(() => {
-    if (productsData?.Products) {
+    if (!shopSession?.isRestaurant && productsData?.Products) {
       const transformedItems = transformProductsToInventoryItems(productsData.Products);
       setItems(transformedItems);
+    } else if (shopSession?.isRestaurant && menuData?.restaurant_menu) {
+      const transformedItems = transformMenuToInventoryItems(menuData.restaurant_menu);
+      setItems(transformedItems);
     }
-  }, [productsData]);
+  }, [productsData, menuData, shopSession?.isRestaurant]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState<string | undefined>(undefined);
@@ -146,6 +188,7 @@ const Inventory = () => {
 
   // Dialog states
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [isSubmittingProduct, setIsSubmittingProduct] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
 
   // Edit dialog states
@@ -172,54 +215,70 @@ const Inventory = () => {
     );
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'in-stock':
-        return <Badge className="bg-green-500">In Stock</Badge>;
-      case 'low-stock':
-        return <Badge className="bg-yellow-500">Low Stock</Badge>;
-      case 'out-of-stock':
-        return <Badge className="bg-red-500">Out of Stock</Badge>;
-      default:
-        return null;
-    }
-  };
-
   const categories = Array.from(
     new Set(items.map(item => item.category).filter(Boolean))
   ) as string[];
 
+  const existingSuppliers = Array.from(
+    new Set(items.map(item => item.supplier).filter(Boolean))
+  ) as string[];
+
   const handleAddProduct = async (formData: any) => {
     try {
+      setIsSubmittingProduct(true);
       // Validate that we have a valid shop session
       if (!shopSession?.shopId) {
         toast.error('No shop session found. Please log into a shop first.');
+        setIsSubmittingProduct(false);
         return;
       }
 
       let productNameId = formData.productName_id;
 
-      // If we don't have a productName_id but have productNameData, create the product name first
-      if (!productNameId && formData.productNameData) {
-        const productNameResult = await addProductName.mutateAsync(formData.productNameData);
-        productNameId = productNameResult.insert_productNames_one.id;
+      if (shopSession.isRestaurant) {
+        // If we don't have a productNameId but have data, create the dish first
+        if (!productNameId && formData.productNameData) {
+          const dishResult = await addDish.mutateAsync({
+            name: formData.productNameData.name,
+            description: formData.productNameData.description,
+            category: formData.category,
+            image: formData.productNameData.image,
+          });
+          productNameId = dishResult.insert_dishes_one.id;
+        }
+
+        // Now add dish to restaurant menu
+        await addDishToMenu.mutateAsync({
+          restaurant_id: shopSession.shopId,
+          dish_id: productNameId,
+          price: formData.price.toString(),
+          quantity: formData.quantity?.toString() || '0',
+          is_active: formData.is_active,
+          SKU: formData.productNameData?.barcode || formData.productNameData?.sku || '',
+        });
+      } else {
+        // If we don't have a productName_id but have productNameData, create the product name first
+        if (!productNameId && formData.productNameData) {
+          const productNameResult = await addProductName.mutateAsync(formData.productNameData);
+          productNameId = productNameResult.insert_productNames_one.id;
+        }
+
+        // Now create the product with the productName_id
+        const productData = {
+          productName_id: productNameId,
+          price: formData.price,
+          quantity: formData.quantity,
+          measurement_unit: formData.measurement_unit,
+          shop_id: shopSession.shopId, // Use the current shop session ID
+          category: formData.category,
+          reorder_point: formData.reorder_point,
+          supplier: formData.supplier,
+          is_active: formData.is_active,
+          final_price: formData.final_price || formData.price, // Use price as fallback if final_price is not set
+        };
+
+        await addProduct.mutateAsync(productData);
       }
-
-      // Now create the product with the productName_id
-      const productData = {
-        productName_id: productNameId,
-        price: formData.price,
-        quantity: formData.quantity,
-        measurement_unit: formData.measurement_unit,
-        shop_id: shopSession.shopId, // Use the current shop session ID
-        category: formData.category,
-        reorder_point: formData.reorder_point,
-        supplier: formData.supplier,
-        is_active: formData.is_active,
-        final_price: formData.final_price || formData.price, // Use price as fallback if final_price is not set
-      };
-
-      await addProduct.mutateAsync(productData);
 
       // Verify shop session is still valid after mutation
       if (!shopSession?.shopId) {
@@ -228,31 +287,40 @@ const Inventory = () => {
         return;
       }
 
-      toast.success('Product added successfully');
+      toast.success(
+        shopSession.isRestaurant ? 'Dish added successfully' : 'Product added successfully'
+      );
       setIsAddProductOpen(false);
 
       // Refresh the products data without losing shop session
-
-      await refetchProducts();
+      if (shopSession.isRestaurant) {
+        await refetchMenu();
+      } else {
+        await refetchProducts();
+      }
     } catch (error) {
       console.error('Error adding product:', error);
-      console.error('Error details:', {
-        error,
-        shopSession: shopSession
-          ? { shopId: shopSession.shopId, shopName: shopSession.shopName }
-          : null,
-        formData,
-      });
       toast.error('Failed to add product. Please try again.');
+    } finally {
+      setIsSubmittingProduct(false);
     }
   };
 
   const handleImportFile = (file: File) => {
-    // In a real application, this would process the Excel/CSV file
+    // In a real application, this would process the Excel/CSV file using PapaParse or SheetJS
+    // 1. Parse the file rows into an array of objects
+    // 2. Map over the rows and do lookups on ProductName or Dish tables
+    // 3. For any product/dish we don't have:
+    //    a) Flag them in a review UI step, OR
+    //    b) Automatically insert them into `productNames` or `dishes` table.
+    // 4. Once we have all productName_id or dish_id values, bulk insert into `products` or `restaurant_menu`
+    //    using shopSession.shopId as the shop_id/restaurant_id
 
     // Simulate processing delay
     setTimeout(() => {
-      toast.success(`Successfully imported products from ${file.name}`);
+      toast.success(
+        `Successfully imported ${shopSession?.isRestaurant ? 'dishes' : 'products'} from ${file.name}`
+      );
       setIsImportOpen(false);
     }, 1500);
   };
@@ -331,7 +399,7 @@ const Inventory = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -343,7 +411,7 @@ const Inventory = () => {
   const { hasAction } = usePrivilege();
 
   // Show loading state while fetching products
-  if (productsLoading) {
+  if (isLoading) {
     return (
       <AdminLayout>
         <PageHeader
@@ -458,64 +526,14 @@ const Inventory = () => {
             </div>
           </div>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product Name</TableHead>
-                  <TableHead>Barcode</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-right">Stock</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.length > 0 ? (
-                  filteredItems.map(item => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell className="font-mono text-sm">{item.barcode || '-'}</TableCell>
-                      <TableCell>{item.category || 'Uncategorized'}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                      <TableCell className="text-right">{item.stock}</TableCell>
-                      <TableCell>{getStatusBadge(item.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          {hasAction('inventory', 'edit_products') && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditDialog(item)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {hasAction('inventory', 'delete_products') && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive"
-                              onClick={() => openDeleteDialog(item.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      No items found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <InventoryTable
+            items={filteredItems}
+            onEdit={openEditDialog}
+            onDelete={openDeleteDialog}
+            hasEditAction={hasAction('inventory', 'edit_products')}
+            hasDeleteAction={hasAction('inventory', 'delete_products')}
+            formatCurrency={formatCurrency}
+          />
         </CardContent>
       </Card>
 
@@ -607,8 +625,11 @@ const Inventory = () => {
         open={isAddProductOpen}
         onOpenChange={setIsAddProductOpen}
         onSubmit={handleAddProduct}
+        isLoading={isSubmittingProduct}
         shopId={shopSession?.shopId}
         hideCommission={true}
+        isRestaurant={shopSession?.isRestaurant}
+        existingSuppliers={existingSuppliers}
       />
 
       {/* Import Products Dialog */}
@@ -660,7 +681,7 @@ const Inventory = () => {
 
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="price" className="text-right">
-                Price ($)
+                Price ({systemConfig?.System_configuratioins?.[0]?.currency || 'RWF'})
               </label>
               <Input
                 id="price"

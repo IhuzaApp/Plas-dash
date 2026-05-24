@@ -202,10 +202,14 @@ const MODULE_DESCRIPTIONS: Record<
     ],
   },
   shop_dashboard: {
-    title: 'Shop Dashboard',
-    description: 'View shop-specific analytics and performance',
+    title: 'Shop / Restaurant Dashboard',
+    description: 'View shop or restaurant-specific analytics and performance',
     actions: [
-      { key: 'access', label: 'Access Shop Dashboard', description: 'Can access shop dashboard' },
+      {
+        key: 'access',
+        label: 'Access Dashboard',
+        description: 'Can access shop/restaurant dashboard',
+      },
       {
         key: 'view_sales_data',
         label: 'View Sales Data',
@@ -219,7 +223,7 @@ const MODULE_DESCRIPTIONS: Record<
       {
         key: 'view_shop_performance',
         label: 'View Performance',
-        description: 'Can view shop performance',
+        description: 'Can view shop/restaurant performance',
       },
       {
         key: 'view_staff_performance',
@@ -417,7 +421,7 @@ const MODULE_DESCRIPTIONS: Record<
     ],
   },
   settings: {
-    title: 'System Settings',
+    title: 'Account Settings',
     description: 'Manage system configuration and preferences',
     actions: [
       { key: 'access', label: 'Access Settings', description: 'Can access settings page' },
@@ -664,9 +668,57 @@ const MODULE_DESCRIPTIONS: Record<
     ],
   },
   pages: {
-    title: 'Pages',
-    description: 'Manage custom pages',
-    actions: [{ key: 'access', label: 'Access', description: 'Can access pages' }],
+    title: 'Page Access Control',
+    description: 'Control visibility of sidebar menu items and page access',
+    actions: [
+      { key: 'access', label: 'Access Pages Module', description: 'Can access page management' },
+      { key: 'access_dashboard', label: 'Dashboard', description: 'Can access main dashboard' },
+      { key: 'access_orders', label: 'Orders', description: 'Can access orders management' },
+      { key: 'access_shops', label: 'Shops', description: 'Can access shop management' },
+      {
+        key: 'access_restaurants',
+        label: 'Restaurants',
+        description: 'Can access restaurant management',
+      },
+      { key: 'access_products', label: 'Products', description: 'Can access product management' },
+      { key: 'access_users', label: 'Customers', description: 'Can access customer management' },
+      { key: 'access_shoppers', label: 'Shoppers', description: 'Can access shopper management' },
+      {
+        key: 'access_project_users',
+        label: 'Project Users',
+        description: 'Can access staff/project users',
+      },
+      {
+        key: 'access_logistics',
+        label: 'Logistics',
+        description: 'Can access logistics partner management',
+      },
+      { key: 'access_pets', label: 'Pet Vendors', description: 'Can access pet vendor management' },
+      { key: 'access_pos', label: 'POS System', description: 'Can access point of sale sections' },
+      {
+        key: 'access_inventory',
+        label: 'Inventory',
+        description: 'Can access inventory management',
+      },
+      {
+        key: 'access_procurement',
+        label: 'Procurement',
+        description: 'Can access procurement module',
+      },
+      {
+        key: 'access_production',
+        label: 'Production',
+        description: 'Can access production module',
+      },
+      {
+        key: 'access_financial_overview',
+        label: 'Finance',
+        description: 'Can access financial reports',
+      },
+      { key: 'access_wallet', label: 'Wallet', description: 'Can access company wallet' },
+      { key: 'access_tickets', label: 'Support', description: 'Can access support tickets' },
+      { key: 'access_settings', label: 'Settings', description: 'Can access system settings' },
+    ],
   },
   plasmarket: {
     title: 'PlasMarket',
@@ -799,6 +851,178 @@ const MODULE_DESCRIPTIONS: Record<
         description: 'Can manage tax declarations',
       },
       { key: 'export_reports', label: 'Export Reports', description: 'Can export tax reports' },
+    ],
+  },
+  ai_chat: {
+    title: 'AI Chat',
+    description: 'Access and utilize the AI assistant for reporting and queries',
+    actions: [
+      { key: 'access', label: 'Access AI Chat', description: 'Can access the AI chat page' },
+      { key: 'use_chat', label: 'Use Chat', description: 'Can send messages to the AI assistant' },
+    ],
+  },
+  recipes: {
+    title: 'Recipes Management',
+    description: 'Manage production recipes and ingredients',
+    actions: [
+      { key: 'access', label: 'Access Recipes', description: 'Can access recipes page' },
+      { key: 'view', label: 'View Recipes', description: 'Can view recipe details' },
+      { key: 'manage', label: 'Manage Recipes', description: 'Can create and edit recipes' },
+    ],
+  },
+  production_orders: {
+    title: 'Production Orders',
+    description: 'Manage and track production work orders',
+    actions: [
+      { key: 'access', label: 'Access Orders', description: 'Can access production orders' },
+      { key: 'view', label: 'View Orders', description: 'Can view production order details' },
+      {
+        key: 'manage',
+        label: 'Manage Orders',
+        description: 'Can create and edit production orders',
+      },
+    ],
+  },
+  production_dashboard: {
+    title: 'Production Dashboard',
+    description: 'Overview of production analytics and status',
+    actions: [
+      { key: 'access', label: 'Access Dashboard', description: 'Can access production dashboard' },
+      { key: 'view', label: 'View Analytics', description: 'Can view production metrics' },
+    ],
+  },
+  cost_profit: {
+    title: 'Cost & Profit Analysis',
+    description: 'Analyze production costs and profit margins',
+    actions: [
+      { key: 'access', label: 'Access Analysis', description: 'Can access cost/profit data' },
+      { key: 'view', label: 'View Reports', description: 'Can view cost and profit reports' },
+    ],
+  },
+  simulate_stock: {
+    title: 'Stock Simulation',
+    description: 'Run simulations for stock requirements',
+    actions: [
+      { key: 'access', label: 'Access Simulation', description: 'Can access stock simulator' },
+      { key: 'view', label: 'View Results', description: 'Can view simulation outcomes' },
+      { key: 'run', label: 'Run Simulation', description: 'Can execute new simulations' },
+    ],
+  },
+  procurement_dashboard: {
+    title: 'Procurement Dashboard',
+    description: 'Overview of procurement activities and suppliers',
+    actions: [
+      { key: 'access', label: 'Access Dashboard', description: 'Can access procurement dashboard' },
+      { key: 'view', label: 'View Analytics', description: 'Can view procurement metrics' },
+    ],
+  },
+  suppliers: {
+    title: 'Supplier Management',
+    description: 'Manage vendor and supplier information',
+    actions: [
+      { key: 'access', label: 'Access Suppliers', description: 'Can access supplier list' },
+      { key: 'view', label: 'View Suppliers', description: 'Can view supplier details' },
+      { key: 'manage', label: 'Manage Suppliers', description: 'Can create and edit suppliers' },
+    ],
+  },
+  quotations: {
+    title: 'Quotations & RFQs',
+    description: 'Manage requests for quotations and vendor responses',
+    actions: [
+      { key: 'access', label: 'Access Quotations', description: 'Can access quotations' },
+      { key: 'view', label: 'View Quotations', description: 'Can view quotation details' },
+      { key: 'manage', label: 'Manage Quotations', description: 'Can create and edit RFQs' },
+    ],
+  },
+  purchase_orders: {
+    title: 'Purchase Orders',
+    description: 'Manage and track vendor purchase orders',
+    actions: [
+      { key: 'access', label: 'Access POs', description: 'Can access purchase orders' },
+      { key: 'view', label: 'View POs', description: 'Can view purchase order details' },
+      { key: 'manage', label: 'Manage POs', description: 'Can create and edit POs' },
+    ],
+  },
+  reels: {
+    title: 'Reels Management',
+    description: 'Manage short-form video content and reels',
+    actions: [
+      { key: 'access', label: 'Access Reels', description: 'Can access reels management' },
+      { key: 'view', label: 'View Reels', description: 'Can view reel analytics' },
+      { key: 'manage', label: 'Manage Reels', description: 'Can upload and edit reels' },
+    ],
+  },
+  point_of_sale: {
+    title: 'Point of Sale (Legacy)',
+    description: 'Legacy POS system terminal access',
+    actions: [
+      { key: 'access', label: 'Access POS', description: 'Can access legacy POS system' },
+      { key: 'park_sale', label: 'Park Sale', description: 'Can park sales' },
+      { key: 'process_sale', label: 'Process Sale', description: 'Can process sales' },
+    ],
+  },
+  subscriptions: {
+    title: 'Subscriptions',
+    description: 'Manage user plans and subscriptions',
+    actions: [
+      { key: 'access', label: 'Access Subscriptions', description: 'Can access subscriptions' },
+    ],
+  },
+  influencers: {
+    title: 'Influencer Management',
+    description: 'Manage influencers and their earnings',
+    actions: [
+      { key: 'access', label: 'Access Influencers', description: 'Can access influencers' },
+      { key: 'view_earnings', label: 'View Earnings', description: 'Can view influencer earnings' },
+      {
+        key: 'manage_influencers',
+        label: 'Manage Influencers',
+        description: 'Can manage influencer profiles',
+      },
+    ],
+  },
+  logistics: {
+    title: 'Logistics Partner',
+    description: 'Manage logistics partners, fleet vehicles, and driver assignments',
+    actions: [
+      {
+        key: 'access',
+        label: 'Access Logistics',
+        description: 'Can access logistics partner module',
+      },
+      {
+        key: 'view_accounts',
+        label: 'View Accounts',
+        description: 'Can view logistics partner accounts',
+      },
+      {
+        key: 'manage_vehicles',
+        label: 'Manage Vehicles',
+        description: 'Can manage fleet vehicles',
+      },
+      {
+        key: 'manage_assignments',
+        label: 'Manage Assignments',
+        description: 'Can assign drivers to vehicles',
+      },
+    ],
+  },
+  pets: {
+    title: 'Pet Vendor',
+    description: 'Manage pet vendors, inventory, and adoption processes',
+    actions: [
+      { key: 'access', label: 'Access Pets', description: 'Can access pet vendor module' },
+      { key: 'view_vendors', label: 'View Vendors', description: 'Can view pet vendor accounts' },
+      {
+        key: 'manage_pets',
+        label: 'Manage Pets',
+        description: 'Can manage pet listings and inventory',
+      },
+      {
+        key: 'manage_adoptions',
+        label: 'Manage Adoptions',
+        description: 'Can manage pet adoption workflows',
+      },
     ],
   },
 };

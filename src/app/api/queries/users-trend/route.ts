@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
@@ -13,9 +13,6 @@ const GET_USERS_FOR_TREND = gql`
       created_at
       role
       is_guest
-      shopper {
-        active
-      }
     }
   }
 `;
@@ -116,10 +113,7 @@ export async function GET(req: Request) {
         u => u.is_guest && new Date(u.created_at) <= bucketEnd
       ).length;
       const customers = users.filter(
-        u =>
-          (u.role?.toLowerCase() ?? '') === 'user' &&
-          new Date(u.created_at) <= bucketEnd &&
-          u.shopper?.active !== true
+        u => (u.role?.toLowerCase() ?? '') === 'user' && new Date(u.created_at) <= bucketEnd
       ).length;
 
       const activeIds = new Set<string>();

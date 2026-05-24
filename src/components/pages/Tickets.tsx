@@ -366,7 +366,7 @@ const Tickets: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="bg-blue-50 text-blue-600 hover:bg-blue-100"
+                              className="text-primary border-primary/20 hover:bg-primary/5"
                             >
                               Accept {ticket.type === 'support' ? 'Ticket' : 'Issue'}
                             </Button>
@@ -389,7 +389,7 @@ const Tickets: React.FC = () => {
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleAcceptTicket(ticket)}
-                                className="bg-blue-600 hover:bg-blue-700"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                 disabled={isUpdating}
                               >
                                 {isUpdating ? 'Accepting...' : 'Accept'}

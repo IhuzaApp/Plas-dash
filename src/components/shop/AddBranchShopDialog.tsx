@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hasuraRequest } from '@/lib/hasura';
-import { CREATE_SHOP } from '@/lib/graphql/mutations';
+import { CREATE_SHOP, ADD_RESTAURANT } from '@/lib/graphql/mutations';
 import { useCategories } from '@/hooks/useHasuraApi';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Store, Upload, X } from 'lucide-react';
@@ -80,6 +80,7 @@ interface AddBranchShopDialogProps {
   isOpen: boolean;
   onClose: () => void;
   parentShopName: string;
+  isRestaurant?: boolean;
 }
 
 interface Category {
@@ -122,15 +123,20 @@ interface CreateShopMutationData {
   relatedTo?: string; // Optional for branch shops
 }
 
+import { uploadFileToFirebase } from '@/lib/firebaseStorage';
+
 const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
   isOpen,
   onClose,
   parentShopName,
+  isRestaurant,
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [formData, setFormData] = useState<CreateBranchShopFormData>({
     name: '',
@@ -168,38 +174,35 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
     error: categoriesError,
   } = useCategories();
 
-  console.log('=== ADD BRANCH SHOP DIALOG: CATEGORIES DEBUG ===');
-  console.log('Categories loading:', categoriesLoading);
-  console.log('Categories error:', categoriesError);
-  console.log('Categories data:', categoriesData);
-
   // Create shop mutation
   const createShopMutation = useMutation({
-    mutationFn: async (data: CreateShopMutationData) => {
-      console.log('=== ADD BRANCH SHOP DIALOG: MUTATION FUNCTION CALLED ===');
-      console.log('Mutation data:', data);
-      console.log('CREATE_SHOP mutation:', CREATE_SHOP);
+    mutationFn: async (data: any) => {
+      const mutationQuery = isRestaurant ? ADD_RESTAURANT : CREATE_SHOP;
+      const payload = isRestaurant
+        ? {
+            name: data.name,
+            email: `${data.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
+            is_active: data.is_active,
+            lat: data.latitude || '',
+            long: data.longitude || '',
+            location: data.address || '',
+            logo: data.logo || '',
+            phone: data.phone || '',
+            profile: data.image || '',
+            tin: data.tin || '',
+            ussd: data.ssd || '',
+            relatedTo: data.relatedTo,
+          }
+        : data;
 
       try {
-        const result = await hasuraRequest(CREATE_SHOP, data);
-        console.log('=== ADD BRANCH SHOP DIALOG: MUTATION SUCCESS ===');
-        console.log('Mutation result:', result);
+        const result = await hasuraRequest(mutationQuery, payload);
         return result;
       } catch (error: any) {
-        console.error('=== ADD BRANCH SHOP DIALOG: MUTATION ERROR ===');
-        console.error('Mutation error:', error);
-        console.error('Error details:', {
-          message: error?.message,
-          response: error?.response,
-          status: error?.response?.status,
-          data: error?.response?.data,
-        });
         throw error;
       }
     },
     onSuccess: data => {
-      console.log('=== ADD BRANCH SHOP DIALOG: ON SUCCESS CALLED ===');
-      console.log('Success data:', data);
       toast({
         title: 'Success',
         description: 'Branch store created successfully!',
@@ -209,16 +212,10 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
       handleClose();
     },
     onError: (error: any) => {
-      console.error('=== ADD BRANCH SHOP DIALOG: ON ERROR CALLED ===');
-      console.error('Error in onError:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error response:', error?.response);
-
       let errorMessage = 'Failed to create branch store. Please try again.';
 
       if (error?.response?.data?.errors) {
         const graphqlErrors = error.response.data.errors;
-        console.error('GraphQL errors:', graphqlErrors);
         errorMessage = graphqlErrors.map((err: any) => err.message).join(', ');
       } else if (error?.message) {
         errorMessage = error.message;
@@ -248,15 +245,11 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
           [field]: value,
           image: defaultImage,
         }));
-
-        console.log('=== ADD BRANCH SHOP DIALOG: AUTO-ASSIGNED IMAGE ===');
-        console.log('Category:', selectedCategory.name);
-        console.log('Default image:', defaultImage);
       }
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
@@ -269,29 +262,56 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
         return;
       }
 
-      // Validate file size (2MB limit)
-      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      // Validate file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
         toast({
           title: 'Error',
-          description: 'Image file size must be less than 2MB.',
+          description: 'Image file size must be less than 10MB.',
           variant: 'destructive',
         });
         return;
       }
 
       setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setImagePreview(URL.createObjectURL(file));
+
+      try {
+        setIsUploading(true);
+        setUploadProgress(0);
+
+        const url = await uploadFileToFirebase(
+          file,
+          progress => setUploadProgress(progress),
+          'images',
+          undefined,
+          'company images and logos'
+        );
+
+        setFormData(prev => ({ ...prev, logo: url }));
+        setIsUploading(false);
+        toast({
+          title: 'Success',
+          description: 'Logo uploaded successfully!',
+        });
+      } catch (error) {
+        console.error('Upload failed:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to upload logo',
+          variant: 'destructive',
+        });
+        setIsUploading(false);
+        setImageFile(null);
+        setImagePreview(null);
+      }
     }
   };
 
   const handleRemoveLogo = () => {
     setImageFile(null);
     setImagePreview(null);
+    setFormData(prev => ({ ...prev, logo: null }));
     // Clear the file input
     const fileInput = document.getElementById('logo') as HTMLInputElement;
     if (fileInput) {
@@ -302,12 +322,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('=== ADD BRANCH SHOP DIALOG: SUBMIT STARTED ===');
-    console.log('Form data:', formData);
-    console.log('Image preview exists:', !!imagePreview);
-
     if (!formData.name.trim()) {
-      console.log('=== ADD BRANCH SHOP DIALOG: VALIDATION ERROR - NAME REQUIRED ===');
       toast({
         title: 'Error',
         description: 'Branch store name is required.',
@@ -317,7 +332,6 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
     }
 
     if (!formData.category_id) {
-      console.log('=== ADD BRANCH SHOP DIALOG: VALIDATION ERROR - CATEGORY REQUIRED ===');
       toast({
         title: 'Error',
         description: 'Please select a category.',
@@ -328,24 +342,15 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
 
     const submitData = {
       ...formData,
-      logo: imagePreview,
+      // logo is already in formData.logo from the upload
     };
-
-    console.log('=== ADD BRANCH SHOP DIALOG: SUBMITTING DATA ===');
-    console.log('Submit data:', submitData);
-    console.log('Operating hours type:', typeof submitData.operating_hours);
-    console.log('Operating hours value:', submitData.operating_hours);
 
     try {
       // Try to parse operating hours to ensure it's valid JSON
       if (typeof submitData.operating_hours === 'string') {
         const parsedHours = JSON.parse(submitData.operating_hours);
-        console.log('=== ADD BRANCH SHOP DIALOG: OPERATING HOURS PARSED SUCCESSFULLY ===');
-        console.log('Parsed operating hours:', parsedHours);
       }
     } catch (error) {
-      console.error('=== ADD BRANCH SHOP DIALOG: OPERATING HOURS PARSE ERROR ===');
-      console.error('Error parsing operating hours:', error);
       toast({
         title: 'Error',
         description: 'Invalid operating hours format. Please check the JSON format.',
@@ -371,9 +376,6 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
       is_active: submitData.is_active,
       relatedTo: submitData.relatedTo, // Always required for branch shops
     };
-
-    console.log('=== ADD BRANCH SHOP DIALOG: CLEANED DATA ===');
-    console.log('Cleaned data:', cleanedData);
 
     createShopMutation.mutate(cleanedData as CreateShopMutationData);
   };
@@ -409,6 +411,8 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
     });
     setImageFile(null);
     setImagePreview(null);
+    setUploadProgress(0);
+    setIsUploading(false);
     // Clear the file input
     const fileInput = document.getElementById('logo') as HTMLInputElement;
     if (fileInput) {
@@ -423,11 +427,11 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store className="h-5 w-5" />
-            Add New Branch Store
+            Add New Branch {isRestaurant ? 'Restaurant' : 'Store'}
           </DialogTitle>
           <DialogDescription>
-            Create a new branch store under {parentShopName}. This branch will be linked to the
-            parent store.
+            Create a new branch {isRestaurant ? 'restaurant' : 'store'} under {parentShopName}. This
+            branch will be linked to the parent {isRestaurant ? 'restaurant' : 'store'}.
           </DialogDescription>
         </DialogHeader>
 
@@ -443,21 +447,28 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
 
           {/* Shop Logo */}
           <div className="space-y-4">
-            <Label>Branch Store Logo</Label>
+            <Label>Branch {isRestaurant ? 'Restaurant' : 'Store'} Logo</Label>
             <div className="flex items-start gap-4">
               <div className="relative">
                 <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Logo preview"
-                      className="h-full w-full object-contain"
-                    />
+                  {imagePreview || formData.logo ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={imagePreview || formData.logo || ''}
+                        alt="Logo preview"
+                        className={`h-full w-full object-contain ${isUploading ? 'opacity-50' : ''}`}
+                      />
+                      {isUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <Store className="h-10 w-10 text-muted-foreground" />
                   )}
                 </div>
-                {imagePreview && (
+                {(imagePreview || formData.logo) && !isUploading && (
                   <Button
                     type="button"
                     variant="destructive"
@@ -471,25 +482,52 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
                 )}
               </div>
               <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="space-y-2">
                   <Input
-                    id="logo"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="flex-1"
+                    placeholder="Logo URL..."
+                    value={formData.logo || ''}
+                    onChange={e => handleInputChange('logo', e.target.value)}
+                    disabled={isUploading}
                   />
-                  {imagePreview && (
-                    <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo}>
-                      Remove
-                    </Button>
-                  )}
+                  <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground whitespace-nowrap">
+                        or upload file
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="logo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="flex-1"
+                      disabled={isUploading}
+                    />
+                    {imagePreview && !isUploading && (
+                      <Button type="button" variant="outline" size="sm" onClick={handleRemoveLogo}>
+                        Remove
+                      </Button>
+                    )}
+                  </div>
                 </div>
+                {isUploading && (
+                  <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+                    <div
+                      className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                )}
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>• Recommended size: 512x512px</p>
                   <p>• Supported formats: JPG, PNG, GIF, WebP</p>
-                  <p>• Maximum file size: 2MB</p>
-                  {imageFile && (
+                  <p>• Maximum file size: 10MB</p>
+                  {imageFile && !isUploading && (
                     <p className="text-green-600 font-medium">
                       ✓ {imageFile.name} ({(imageFile.size / 1024 / 1024).toFixed(2)}MB)
                     </p>
@@ -502,17 +540,17 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Branch Store Name *</Label>
+              <Label htmlFor="name">Branch {isRestaurant ? 'Restaurant' : 'Store'} Name *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={e => handleInputChange('name', e.target.value)}
-                placeholder="Enter branch store name"
+                placeholder={`Enter branch ${isRestaurant ? 'restaurant' : 'store'} name`}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
+              <Label htmlFor="category">Category {isRestaurant ? '' : '*'}</Label>
               <Select
                 value={formData.category_id}
                 onValueChange={value => handleInputChange('category_id', value)}
@@ -548,7 +586,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
               id="description"
               value={formData.description}
               onChange={e => handleInputChange('description', e.target.value)}
-              placeholder="Enter branch store description"
+              placeholder={`Enter branch ${isRestaurant ? 'restaurant' : 'store'} description`}
               rows={3}
             />
           </div>
@@ -570,7 +608,7 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
                 id="address"
                 value={formData.address}
                 onChange={e => handleInputChange('address', e.target.value)}
-                placeholder="Enter branch store address"
+                placeholder={`Enter branch ${isRestaurant ? 'restaurant' : 'store'} address`}
               />
             </div>
           </div>
@@ -660,8 +698,12 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
           {/* Status */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium">Branch Store Status</h3>
-              <p className="text-sm text-muted-foreground">Enable or disable the branch store</p>
+              <h3 className="text-sm font-medium">
+                Branch {isRestaurant ? 'Restaurant' : 'Store'} Status
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Enable or disable the branch {isRestaurant ? 'restaurant' : 'store'}
+              </p>
             </div>
             <Switch
               checked={formData.is_active}
@@ -673,14 +715,17 @@ const AddBranchShopDialog: React.FC<AddBranchShopDialogProps> = ({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createShopMutation.isPending || categoriesLoading}>
+            <Button
+              type="submit"
+              disabled={createShopMutation.isPending || (!isRestaurant && categoriesLoading)}
+            >
               {createShopMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating Branch...
                 </>
               ) : (
-                'Create Branch Store'
+                `Create Branch ${isRestaurant ? 'Restaurant' : 'Store'}`
               )}
             </Button>
           </DialogFooter>

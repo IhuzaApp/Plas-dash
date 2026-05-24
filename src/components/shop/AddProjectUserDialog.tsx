@@ -142,6 +142,7 @@ const formSchema = z
     role: z.enum(PROJECT_ROLE_TYPES),
     is_active: z.boolean().default(true),
     TwoAuth_enabled: z.boolean().default(false),
+    sms_auth: z.boolean().default(false),
     gender: z.string().optional(),
   })
   .refine(
@@ -219,6 +220,7 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
       role: 'customerSupport',
       is_active: true,
       TwoAuth_enabled: false,
+      sms_auth: false,
       gender: '',
     },
   });
@@ -399,8 +401,16 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
     try {
       setIsLoading(true);
 
-      // Generate privileges based on the selected role
-      const privileges = getDefaultProjectPrivilegesForRole(data.role);
+      // Use the user-customized privileges state (includes any manual UI changes)
+      // Fall back to role defaults only if privileges state is somehow null
+      const finalPrivileges = privileges || getDefaultProjectPrivilegesForRole(data.role);
+
+      // Add 2FA/SMS requirement to privileges if toggled
+      const updatedPrivileges = {
+        ...finalPrivileges,
+        twoFactorRequired: data.TwoAuth_enabled,
+        smsAuthRequired: data.sms_auth,
+      };
 
       // Prepare the mutation data
       const mutationData = {
@@ -409,14 +419,15 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
         password: await hashPassword(data.password),
         role: data.role,
         is_active: data.is_active,
-        TwoAuth_enabled: data.TwoAuth_enabled,
-        gender: data.gender || '', // Use empty string for optional field
-        device_details: '', // Use empty string for optional field
-        profile: profileImage || '', // Include profile image
-        privileges: privileges || getDefaultProjectPrivilegesForRole(data.role),
+        TwoAuth_enabled: false, // Don't enable until setup is complete
+        sms_auth: false, // Don't enable until setup is complete
+        gender: data.gender || '',
+        device_details: '',
+        profile: profileImage || '',
+        privileges: updatedPrivileges,
       };
 
-      // Call the mutation
+      // Call the mutation (only once)
       await addProjectUserMutation.mutateAsync(mutationData);
 
       // Store user info for success dialog (use original password, not hashed)
@@ -425,6 +436,23 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
         email: data.email,
         password: data.password, // Store original password for display
       });
+
+      // If 2FA is enabled (requirement added), send the setup email via API
+      if (data.TwoAuth_enabled) {
+        fetch('/api/emails/send-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'enabled',
+            to: data.email,
+            customerName: data.username,
+          }),
+        })
+          .then(res => {
+            if (!res.ok) console.error('Failed to send 2FA email: Server returned error');
+          })
+          .catch(err => console.error('Failed to send 2FA email:', err));
+      }
 
       // Show success dialog instead of closing immediately
       setShowSuccessDialog(true);
@@ -851,6 +879,24 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                           Global System Admin
                         </div>
                       </SelectItem>
+                      <SelectItem value="support">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Support (Shops, Tickets, Shoppers, PlasMarket)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="sales">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Sales (Finance Modules)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="manager">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Manager (Users &amp; Staff Mgmt)
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   {form.formState.errors.role && (
@@ -902,6 +948,18 @@ const AddProjectUserDialog: React.FC<AddProjectUserDialogProps> = ({
                     id="TwoAuth_enabled"
                     checked={form.watch('TwoAuth_enabled')}
                     onCheckedChange={checked => form.setValue('TwoAuth_enabled', checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="sms_auth">SMS Authentication</Label>
+                    <p className="text-sm text-muted-foreground">Enable SMS-based authentication</p>
+                  </div>
+                  <Switch
+                    id="sms_auth"
+                    checked={form.watch('sms_auth')}
+                    onCheckedChange={checked => form.setValue('sms_auth', checked)}
                   />
                 </div>
               </div>

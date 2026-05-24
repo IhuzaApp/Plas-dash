@@ -51,6 +51,9 @@ import { toast } from 'sonner';
 import { UserPrivileges } from '@/types/privileges';
 import { convertCustomPermissionsToPrivileges } from '@/lib/privileges/privilegeConverters';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
+import { useShopSession } from '@/contexts/ShopSessionContext';
+import { useAddEmployee, useAddEmployeeRole } from '@/hooks/useHasuraApi';
 
 interface StaffMember {
   id: string;
@@ -69,15 +72,29 @@ interface StaffMember {
   Address?: string;
   Position?: string;
   fullnames?: string;
-  Shops?: { name: string };
+  Shops?: { name: string; relatedTo?: string | null };
+  Restaurants?: { name: string; relatedTo?: string | null };
 }
 
 const StaffLogin = () => {
+  const { session } = useAuth();
+  const { shopSession, activeBusiness } = useShopSession();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmittingAdd, setIsSubmittingAdd] = useState(false);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  const { mutateAsync: addEmployee } = useAddEmployee();
+  const { mutateAsync: addEmployeeRole } = useAddEmployeeRole();
+
+  const currentBusinessId =
+    shopSession?.shopId || session?.restaurant_id || session?.shop_id || activeBusiness?.id;
+
+  const currentBusinessName =
+    shopSession?.shopName || session?.restaurant_name || session?.shop_name || activeBusiness?.name;
 
   // Dialog & Drawer States
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
@@ -92,7 +109,40 @@ const StaffLogin = () => {
         setIsLoading(true);
         const data = await apiGet<{ orgEmployees: any[] }>('/api/queries/org-employees');
 
-        const mappedStaff: StaffMember[] = data.orgEmployees.map(emp => {
+        let filteredEmployees = data.orgEmployees;
+
+        if (currentBusinessId || currentBusinessName) {
+          // Find the store object for the current business to get its relatedTo field
+          let currentStoreObj: any = null;
+          for (const emp of data.orgEmployees) {
+            const s = emp.Shops || emp.Restaurants;
+            if (s && (s.id === currentBusinessId || s.name === currentBusinessName)) {
+              currentStoreObj = s;
+              break;
+            }
+          }
+
+          const mainName = currentStoreObj?.name || currentBusinessName;
+          const mainRelatedTo = currentStoreObj?.relatedTo;
+
+          filteredEmployees = data.orgEmployees.filter(emp => {
+            const s = emp.Shops || emp.Restaurants;
+            if (!s) {
+              // If employee has no shop/restaurant attached but matches the ID directly
+              return emp.shop_id === currentBusinessId || emp.restaurant_id === currentBusinessId;
+            }
+
+            const isSameId = currentBusinessId && s.id === currentBusinessId;
+            const isSameName = mainName && s.name === mainName;
+            const isChildBranch = mainName && s.relatedTo === mainName;
+            const isParentBranch = mainRelatedTo && s.name === mainRelatedTo;
+            const isSiblingBranch = mainRelatedTo && s.relatedTo === mainRelatedTo;
+
+            return isSameId || isSameName || isChildBranch || isParentBranch || isSiblingBranch;
+          });
+        }
+
+        const mappedStaff: StaffMember[] = filteredEmployees.map(emp => {
           const rawPrivs = emp.orgEmployeeRoles?.[0]?.privillages;
           let mappedPrivs = rawPrivs;
 
@@ -117,7 +167,7 @@ const StaffLogin = () => {
             name: emp.fullnames || 'N/A',
             position: emp.Position || emp.roleType || 'Staff',
             email: emp.email,
-            store: emp.Shops?.name || 'Central Store',
+            store: emp.Shops?.name || emp.Restaurants?.name || 'Central Store',
             status: emp.active ? 'active' : 'inactive',
             lastLogin: emp.last_login ? new Date(emp.last_login) : null,
             privileges: mappedPrivs,
@@ -134,7 +184,7 @@ const StaffLogin = () => {
     };
 
     fetchStaff();
-  }, []);
+  }, [session, shopSession, activeBusiness]);
 
   const handleResetPassword = async (newPassword: string) => {
     if (!selectedStaff) return;
@@ -193,6 +243,7 @@ const StaffLogin = () => {
 
   const handleUpdateStaff = async (data: { id: string; employee: any; privileges: any }) => {
     if (!selectedStaff) return;
+    setIsSubmittingEdit(true);
     try {
       await apiPost('/api/mutations/update-employee', {
         id: data.id,
@@ -213,13 +264,61 @@ const StaffLogin = () => {
       console.error('Error updating staff:', err);
       toast.error(err.message || 'Failed to update staff');
       throw err;
+    } finally {
+      setIsSubmittingEdit(false);
     }
   };
 
-  // Placeholder onSubmit handler
-  const handleAddStaff = (data: any) => {
-    // TODO: Implement actual add staff logic (API call, etc.)
-    setIsAddStaffOpen(false);
+  const handleAddStaff = async (data: any) => {
+    setIsSubmittingAdd(true);
+    try {
+      const isRestaurant = !!session?.restaurant_id;
+      const res = await addEmployee({
+        fullnames: data.employee.fullnames,
+        email: data.employee.email,
+        phone: data.employee.phone,
+        Address: data.employee.Address,
+        Position: data.employee.Position,
+        password: data.employee.password,
+        roleType: data.employee.roleType,
+        gender: data.employee.gender || 'other',
+        shop_id: isRestaurant
+          ? session?.shop_id || '00000000-0000-0000-0000-000000000000'
+          : currentBusinessId || '00000000-0000-0000-0000-000000000000',
+        restaurant_id: isRestaurant ? session?.restaurant_id : null,
+      });
+
+      if (res?.insert_orgEmployees?.returning?.[0]) {
+        const newEmp = res.insert_orgEmployees.returning[0];
+        await addEmployeeRole({
+          orgEmployeeID: newEmp.id,
+          privillages: data.privileges,
+        });
+
+        setStaff(prev => [
+          {
+            ...newEmp,
+            id: newEmp.id,
+            name: newEmp.fullnames || 'N/A',
+            position: newEmp.Position || newEmp.roleType || 'Staff',
+            email: newEmp.email,
+            store: newEmp.Shops?.name || currentBusinessName || 'Central Store',
+            status: newEmp.active ? 'active' : 'inactive',
+            lastLogin: null,
+            privileges: data.privileges,
+          },
+          ...prev,
+        ]);
+      }
+
+      toast.success('Staff member successfully added');
+      setIsAddStaffOpen(false);
+    } catch (err: any) {
+      console.error('Error adding staff:', err);
+      toast.error(err.message || 'Failed to add staff member');
+    } finally {
+      setIsSubmittingAdd(false);
+    }
   };
 
   const filteredStaff = staff.filter(
@@ -404,7 +503,8 @@ const StaffLogin = () => {
         open={isAddStaffOpen}
         onOpenChange={setIsAddStaffOpen}
         onSubmit={handleAddStaff}
-        shopId={''} // TODO: Pass correct shopId if needed
+        shopId={currentBusinessId || ''}
+        loading={isSubmittingAdd}
       />
 
       <StaffDetailDrawer open={isDetailOpen} onOpenChange={setIsDetailOpen} staff={selectedStaff} />
@@ -420,6 +520,7 @@ const StaffLogin = () => {
         open={isEditStaffOpen}
         onOpenChange={setIsEditStaffOpen}
         onSubmit={handleUpdateStaff}
+        loading={isSubmittingEdit}
         employee={
           selectedStaff
             ? {

@@ -84,32 +84,47 @@ const GET_ALL_BUSINESS_ORDERS = gql`
           status
         }
       }
-      shopper {
+      shoppers {
         id
-        shopper {
-          full_name
-          Employment_id
-          Police_Clearance_Cert
-          active
-          address
-          driving_license
-          drivingLicense_Image
-          guarantor
-          guarantorPhone
-          latitude
-          longitude
-          phone
-          phone_number
-          status
-        }
+        full_name
+        Employment_id
+        Police_Clearance_Cert
+        active
+        address
+        driving_license
+        drivingLicense_Image
+        guarantor
+        guarantorPhone
+        latitude
+        longitude
+        phone
+        phone_number
+        status
         updated_at
-        vehicle {
-          model
-          photo
-          plate_number
-          update_on
-          user_id
-        }
+        plate_number
+        transport_mode
+        updated_at
+      }
+      order_transactions {
+        amount
+        business_order_id
+        created_at
+        currency
+        id
+        mtn_response
+        order_id
+        package_id
+        petAdoptionId
+        phone
+        reel_order_id
+        reference_id
+        restaurant_order_id
+        status
+        type
+        updated_at
+        user_id
+        vehicleBookingsId
+        wallet_id
       }
     }
   }
@@ -193,26 +208,41 @@ export async function GET(req: Request) {
           created_at?: string;
           business_account?: any;
         } | null;
-        shopper: {
+        shoppers: {
           id: string;
-          name?: string;
+          full_name?: string;
+          phone_number?: string;
           phone?: string;
-          email?: string;
+          address?: string;
+          status?: string;
+          Employment_id?: string;
+          Police_Clearance_Cert?: string;
+          active?: boolean;
+          driving_license?: string;
+          drivingLicense_Image?: string;
+          guarantor?: string;
+          guarantorPhone?: string;
+          latitude?: number;
+          longitude?: number;
+          plate_number?: string;
+          transport_mode?: string;
           updated_at?: string;
-          shopper?: {
-            full_name?: string;
-            phone_number?: string;
-            phone?: string;
-            address?: string;
-            status?: string;
-          } | null;
-          vehicle?: any;
         } | null;
+        order_transactions?: Array<{
+          amount: number;
+          business_order_id?: string;
+          created_at: string;
+          currency: string;
+          id: string;
+          status: string;
+          type: string;
+          user_id: string;
+          wallet_id: string;
+        }>;
       }>;
     }>(GET_ALL_BUSINESS_ORDERS, { where });
 
     const orders = (data.businessProductOrders || []).map(o => {
-      const nested = o.shopper?.shopper;
       return {
         id: o.id,
         OrderID: o.OrderID ?? o.id,
@@ -237,12 +267,13 @@ export async function GET(req: Request) {
         transportation_fee: o.transportation_fee ?? null,
         service_fee: o.service_fee ?? null,
         businessTransactions: o.businessTransactions ?? [],
-        shopper: o.shopper
+        order_transactions: o.order_transactions ?? [],
+        shopper: o.shoppers
           ? {
-              id: o.shopper.id,
-              name: (o.shopper as any).name ?? nested?.full_name ?? '',
-              phone: (o.shopper as any).phone ?? nested?.phone_number ?? nested?.phone ?? '',
-              email: (o.shopper as any).email ?? '',
+              id: o.shoppers.id,
+              name: o.shoppers.full_name ?? '',
+              phone: o.shoppers.phone_number ?? o.shoppers.phone ?? '',
+              email: '',
             }
           : undefined,
       };

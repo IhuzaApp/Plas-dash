@@ -24,7 +24,22 @@ import {
   BarChart3,
   ClipboardList,
   LayoutGrid,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Receipt,
+  Settings,
+  Columns,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useOrders,
@@ -33,12 +48,16 @@ import {
   useRestaurantOrders,
   useSystemConfig,
   useOrderOffers,
+  usePackageDeliveries,
 } from '@/hooks/useHasuraApi';
+import PackageOrderRow from '@/components/Orders/PackageOrderRow';
 import OrderOffersTable from '@/components/Orders/OrderOffersTable';
+import ManualDispatchCenter from '@/components/Orders/ManualDispatchCenter';
 import OrderOffersAnalytics from '@/components/Orders/OrderOffersAnalytics';
 import SingleOrderRow from '@/components/Orders/SingleOrderRow';
 import GroupedOrderRow from '@/components/Orders/GroupedOrderRow';
 import CombinedOrdersTable from '@/components/Orders/CombinedOrdersTable';
+import TransactionsTable from '@/components/Orders/TransactionsTable';
 import { format, differenceInMinutes, formatDistanceToNow } from 'date-fns';
 import Pagination from '@/components/ui/pagination';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -66,7 +85,7 @@ const generateShortId = (id: string) => {
 interface UnifiedOrder {
   id: string;
   OrderID: string;
-  type: 'regular' | 'reel' | 'business' | 'restaurant';
+  type: 'regular' | 'reel' | 'business' | 'restaurant' | 'package';
   status: string;
   total: string;
   created_at: string;
@@ -115,12 +134,7 @@ interface UnifiedOrder {
     description: string;
     video_url: string;
   };
-  Shoppers?: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-  } | null;
+  // Removed redundant Shoppers field in favor of shopper field above
   // Business order
   orderedBy?: {
     id: string;
@@ -197,6 +211,18 @@ interface UnifiedOrder {
     related_restaurant_order_id?: string | null;
     relate_business_order_id?: string | null;
   }>;
+  // Package delivery
+  DeliveryCode?: string | null;
+  deliveryMethod?: string | null;
+  dropoffLocation?: string | null;
+  pickupLocation?: string | null;
+  receiverName?: string | null;
+  receiverPhone?: string | null;
+  comment?: string | null;
+  timeAndDate?: string | null;
+  package_image?: string | null;
+  package_pickup_image?: string | null;
+  order_transactions?: any[];
 }
 
 const Orders = () => {
@@ -206,11 +232,14 @@ const Orders = () => {
   const { data: restaurantOrdersData } = useRestaurantOrders();
   const { data: systemConfig } = useSystemConfig();
   const { data: offersData, isLoading: isOffersLoading } = useOrderOffers();
+  const { data: packageData, isLoading: isPackagesLoading } = usePackageDeliveries();
   const orders = data?.Orders || [];
   const reelOrderItems: any[] = reelOrders?.reel_orders || [];
   const businessOrderItems: any[] = businessOrdersData?.orders || [];
   const restaurantOrderItems: any[] = restaurantOrdersData?.orders || [];
   const [searchTerm, setSearchTerm] = useState('');
+  const [combinedSearchTerm, setCombinedSearchTerm] = useState('');
+  const [packagesSearchTerm, setPackagesSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'delayed' | 'delivered' | 'pending' | 'shopping' | 'on_the_way'
   >('all');
@@ -220,6 +249,49 @@ const Orders = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGroupedView, setIsGroupedView] = useState(false);
   const [tick, setTick] = useState(0);
+
+  // Column visibility logic
+  const ALL_COLUMNS = [
+    { id: 'id', label: 'Order ID', default: true },
+    { id: 'customer', label: 'Customer', default: true },
+    { id: 'status', label: 'Status', default: true },
+    { id: 'items', label: 'Items', default: true },
+    { id: 'total', label: 'Total', default: true },
+    { id: 'combined_id', label: 'Combined ID', default: false },
+    { id: 'delivery_fee', label: 'Delivery Fee', default: false },
+    { id: 'service_fee', label: 'Service Fee', default: false },
+    { id: 'expected_delivery', label: 'Expected Delivery', default: true },
+    { id: 'created', label: 'Created', default: false },
+    { id: 'updated', label: 'Last Updated', default: false },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('orders_column_visibility');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse saved columns', e);
+        }
+      }
+    }
+    const initial: Record<string, boolean> = {};
+    ALL_COLUMNS.forEach(col => (initial[col.id] = col.default));
+    return initial;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('orders_column_visibility', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
+
+  const toggleColumn = (columnId: string) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [columnId]: !prev[columnId],
+    }));
+  };
+
   const { hasAction, session } = usePrivilege();
   const isProjectUser = session?.isProjectUser;
 
@@ -235,6 +307,8 @@ const Orders = () => {
       ...order,
       type: 'regular' as const,
       OrderID: order.OrderID || order.id,
+      Wallet_Transactions: (order as any).Wallet_Transactions || [],
+      order_transactions: (order as any).order_transactions || [],
     }));
 
     const reelOrdersMapped: UnifiedOrder[] = reelOrderItems.map((reelOrder: any) => ({
@@ -261,10 +335,12 @@ const Orders = () => {
       delivery_note: reelOrder.delivery_note,
       found: reelOrder.found,
       Reel: reelOrder.Reel,
-      Shoppers: reelOrder.Shoppers,
+      shopper: reelOrder.shopper,
       Address: reelOrder.Address,
       User: reelOrder.User,
       Shop: reelOrder.Shop,
+      Wallet_Transactions: reelOrder.Wallet_Transactions || [],
+      order_transactions: reelOrder.order_transactions || [],
     }));
 
     const businessOrdersMapped: UnifiedOrder[] = businessOrderItems.map((o: any) => ({
@@ -281,7 +357,8 @@ const Orders = () => {
       allProducts: o.allProducts,
       units: o.units,
       business_store: o.business_store,
-      businessTransactions: o.businessTransactions,
+      businessTransactions: o.businessTransactions || [],
+      order_transactions: o.order_transactions || [],
       shopper: o.shopper,
       delivery_time: o.delivery_time ?? o.delivered_time ?? null,
       delivery_fee: o.transportation_fee,
@@ -317,7 +394,23 @@ const Orders = () => {
       combined_order_id: o.combined_order_id,
       assigned_at: o.assigned_at,
       delivery_photo_url: o.delivery_photo_url,
-      Wallet_Transactions: o.Wallet_Transactions,
+      Wallet_Transactions: o.Wallet_Transactions || [],
+      order_transactions: o.order_transactions || [],
+    }));
+
+    const packageOrdersMapped: UnifiedOrder[] = (packageData?.packages || []).map((pkg: any) => ({
+      ...pkg,
+      OrderID: pkg.DeliveryCode || pkg.id,
+      type: 'package' as const,
+      total: pkg.delivery_fee || '0',
+      shopper: pkg.shopper
+        ? {
+            id: pkg.shopper.id || pkg.shopper.user_id,
+            name: pkg.shopper.full_name,
+            phone: pkg.shopper.phone_number || pkg.shopper.phone,
+            email: pkg.shopper.email,
+          }
+        : undefined,
     }));
 
     return [
@@ -325,8 +418,9 @@ const Orders = () => {
       ...reelOrdersMapped,
       ...businessOrdersMapped,
       ...restaurantOrdersMapped,
+      ...packageOrdersMapped,
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [orders, reelOrderItems, businessOrderItems, restaurantOrderItems]);
+  }, [orders, reelOrderItems, businessOrderItems, restaurantOrderItems, packageData]);
 
   const combinedOrdersGroups = useMemo(() => {
     const groups: Record<string, UnifiedOrder[]> = {};
@@ -343,15 +437,45 @@ const Orders = () => {
     const filteredGroups: Record<string, UnifiedOrder[]> = {};
     Object.entries(groups).forEach(([id, groupOrders]) => {
       if (groupOrders.length > 1) {
-        filteredGroups[id] = groupOrders;
+        if (combinedSearchTerm) {
+          const term = combinedSearchTerm.toLowerCase();
+          const shopperName = groupOrders.find(o => o.shopper)?.shopper?.name?.toLowerCase() || '';
+          const orderIds = groupOrders
+            .map(o => (o.OrderID || o.id).toString().toLowerCase())
+            .join(' ');
+
+          if (
+            id.toLowerCase().includes(term) ||
+            shopperName.includes(term) ||
+            orderIds.includes(term)
+          ) {
+            filteredGroups[id] = groupOrders;
+          }
+        } else {
+          filteredGroups[id] = groupOrders;
+        }
       }
     });
     return filteredGroups;
-  }, [allOrders]);
+  }, [allOrders, combinedSearchTerm]);
+
+  const filteredPackages = useMemo(() => {
+    const packages = packageData?.packages || [];
+    if (!packagesSearchTerm) return packages;
+
+    const term = packagesSearchTerm.toLowerCase();
+    return packages.filter(
+      (pkg: any) =>
+        (pkg.DeliveryCode || pkg.id).toString().toLowerCase().includes(term) ||
+        (pkg.receiver_name || '').toLowerCase().includes(term) ||
+        (pkg.shopper?.full_name || '').toLowerCase().includes(term) ||
+        (pkg.status || '').toLowerCase().includes(term)
+    );
+  }, [packageData, packagesSearchTerm]);
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
-    const currency = systemConfig?.System_configuratioins[0]?.currency || 'USD';
+    const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'USD';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -643,46 +767,143 @@ const Orders = () => {
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{allOrders.length}</div>
-            <p className="text-muted-foreground">Total Orders</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{pendingOrders.length}</div>
-            <p className="text-muted-foreground">Pending Orders</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{inProgressOrders.length}</div>
-            <p className="text-muted-foreground">In Progress</p>
-          </CardContent>
-        </Card>
-        <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20">
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-orange-700 dark:text-orange-400">
-              {delayedOrders.length}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-primary/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Total Orders
+                </p>
+                <h3 className="text-3xl font-bold">{allOrders.length}</h3>
+              </div>
+              <div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ClipboardList className="h-6 w-6 text-primary" />
+              </div>
             </div>
-            <p className="text-muted-foreground">Delayed Orders</p>
-          </CardContent>
-        </Card>
-        <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-700 dark:text-green-400">
-              {deliveredOrders.length}
+            <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-green-500" />
+                Across all categories
+              </span>
             </div>
-            <p className="text-muted-foreground">Delivered</p>
           </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-primary/20" />
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue.toString())}</div>
-            <p className="text-muted-foreground">Total Sales</p>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-blue-500/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Pending Dispatch
+                </p>
+                <h3 className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                  {pendingOrders.length}
+                </h3>
+              </div>
+              <div className="h-12 w-12 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Clock className="h-6 w-6 text-blue-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1 italic">Awaiting shopper assignment</span>
+            </div>
           </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-blue-500/20" />
+        </Card>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-indigo-500/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  In Progress
+                </p>
+                <h3 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                  {inProgressOrders.length}
+                </h3>
+              </div>
+              <div className="h-12 w-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ShoppingBag className="h-6 w-6 text-indigo-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1 italic">
+                Actively being shopped or delivered
+              </span>
+            </div>
+          </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-indigo-500/20" />
+        </Card>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-red-500/20 bg-red-50/10 dark:bg-red-950/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1 text-red-600 dark:text-red-400">
+                  Delayed Alerts
+                </p>
+                <h3 className="text-3xl font-bold text-red-600 dark:text-red-400">
+                  {delayedOrders.length}
+                </h3>
+              </div>
+              <div className="h-12 w-12 bg-red-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <AlertCircle className="h-6 w-6 text-red-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-red-500/70 font-medium">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Action required immediately
+              </span>
+            </div>
+          </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-red-500/40" />
+        </Card>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-green-500/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Delivered Today
+                </p>
+                <h3 className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  {deliveredOrders.length}
+                </h3>
+              </div>
+              <div className="h-12 w-12 bg-green-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CheckCircle2 className="h-6 w-6 text-green-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1 italic">Successfully completed orders</span>
+            </div>
+          </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-green-500/20" />
+        </Card>
+
+        <Card className="relative overflow-hidden group transition-all hover:shadow-md border-emerald-500/20 bg-emerald-50/10">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Total Sales
+                </p>
+                <h3 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(totalRevenue.toString())}
+                </h3>
+              </div>
+              <div className="h-12 w-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <DollarSign className="h-6 w-6 text-emerald-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-[10px] text-emerald-600/70 font-semibold uppercase tracking-widest">
+              Live Revenue
+            </div>
+          </CardContent>
+          <div className="absolute bottom-0 left-0 h-1 w-full bg-emerald-500/40" />
         </Card>
       </div>
 
@@ -702,9 +923,21 @@ const Orders = () => {
                 <ShoppingBag className="h-4 w-4" />
                 Combined Orders
               </TabsTrigger>
+              <TabsTrigger value="packages" className="flex items-center gap-2">
+                <LayoutGrid className="h-4 w-4" />
+                Packages
+              </TabsTrigger>
+              <TabsTrigger value="transactions" className="flex items-center gap-2">
+                <Receipt className="h-4 w-4" />
+                Transactions
+              </TabsTrigger>
             </>
           )}
         </TabsList>
+
+        <TabsContent value="transactions" className="space-y-4">
+          <TransactionsTable orders={allOrders} formatCurrency={formatCurrency} />
+        </TabsContent>
 
         <TabsContent value="all" className="space-y-4">
           <div className="flex flex-col gap-4">
@@ -724,8 +957,8 @@ const Orders = () => {
             </div>
 
             {/* Status filter tabs */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground mr-1">Filter:</span>
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+              <span className="text-sm font-medium text-muted-foreground shrink-0">Filter:</span>
               {[
                 { value: 'all' as const, label: 'All', count: undefined as number | undefined },
                 { value: 'delayed' as const, label: 'Delayed', count: delayedOrders.length },
@@ -757,6 +990,28 @@ const Orders = () => {
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Columns className="h-4 w-4" />
+                    Columns
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {ALL_COLUMNS.map(col => (
+                    <DropdownMenuCheckboxItem
+                      key={col.id}
+                      checked={visibleColumns[col.id]}
+                      onCheckedChange={() => toggleColumn(col.id)}
+                    >
+                      {col.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant={isGroupedView ? 'default' : 'outline'}
                 size="sm"
@@ -769,67 +1024,81 @@ const Orders = () => {
             </div>
           </div>
 
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Combined ID</TableHead>
-                  <TableHead>Delivery Fee</TableHead>
-                  <TableHead>Service Fee</TableHead>
-                  <TableHead>Expected delivery</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Last Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentDisplayItems.length === 0 ? (
+          <Card className="border-2 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
-                      No orders found.
-                    </TableCell>
+                    {visibleColumns.id && <TableHead className="font-bold">Order ID</TableHead>}
+                    {visibleColumns.customer && (
+                      <TableHead className="font-bold">Customer</TableHead>
+                    )}
+                    {visibleColumns.status && <TableHead className="font-bold">Status</TableHead>}
+                    {visibleColumns.items && <TableHead className="font-bold">Items</TableHead>}
+                    {visibleColumns.total && <TableHead className="font-bold">Total</TableHead>}
+                    {visibleColumns.combined_id && (
+                      <TableHead className="font-bold">Combined ID</TableHead>
+                    )}
+                    {visibleColumns.delivery_fee && (
+                      <TableHead className="font-bold">Del. Fee</TableHead>
+                    )}
+                    {visibleColumns.service_fee && (
+                      <TableHead className="font-bold">Svc. Fee</TableHead>
+                    )}
+                    {visibleColumns.expected_delivery && (
+                      <TableHead className="font-bold">Expected</TableHead>
+                    )}
+                    {visibleColumns.created && <TableHead className="font-bold">Created</TableHead>}
+                    {visibleColumns.updated && <TableHead className="font-bold">Updated</TableHead>}
+                    <TableHead className="text-right font-bold">Actions</TableHead>
                   </TableRow>
-                ) : (
-                  currentDisplayItems.map(item => {
-                    if (item.type === 'single') {
-                      return (
-                        <SingleOrderRow
-                          key={item.order.id}
-                          order={item.order}
-                          warnings={getOrderWarnings(item.order)}
-                          getStatusColor={getStatusColor}
-                          generateShortId={generateShortId}
-                          formatCurrency={formatCurrency}
-                          formatDateTime={formatDateTime}
-                          getDeliveryCountdown={getDeliveryCountdown}
-                          handleCallShopper={handleCallShopper}
-                          handleViewDetails={handleViewDetails}
-                        />
-                      );
-                    } else {
-                      return (
-                        <GroupedOrderRow
-                          key={item.combinedId}
-                          item={item}
-                          getOrderWarnings={getOrderWarnings}
-                          getStatusColor={getStatusColor}
-                          generateShortId={generateShortId}
-                          formatCurrency={formatCurrency}
-                          getDeliveryCountdown={getDeliveryCountdown}
-                          handleCallShopper={handleCallShopper}
-                          handleViewDetails={handleViewDetails}
-                        />
-                      );
-                    }
-                  })
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {currentDisplayItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
+                        No orders found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    currentDisplayItems.map(item => {
+                      if (item.type === 'single') {
+                        return (
+                          <SingleOrderRow
+                            key={item.order.id}
+                            order={item.order}
+                            warnings={getOrderWarnings(item.order)}
+                            getStatusColor={getStatusColor}
+                            generateShortId={generateShortId}
+                            formatCurrency={formatCurrency}
+                            formatDateTime={formatDateTime}
+                            getDeliveryCountdown={getDeliveryCountdown}
+                            handleCallShopper={handleCallShopper}
+                            handleViewDetails={handleViewDetails}
+                            visibleColumns={visibleColumns}
+                          />
+                        );
+                      } else {
+                        return (
+                          <GroupedOrderRow
+                            key={item.combinedId}
+                            item={item}
+                            getOrderWarnings={getOrderWarnings}
+                            getStatusColor={getStatusColor}
+                            generateShortId={generateShortId}
+                            formatCurrency={formatCurrency}
+                            getDeliveryCountdown={getDeliveryCountdown}
+                            handleCallShopper={handleCallShopper}
+                            handleViewDetails={handleViewDetails}
+                            visibleColumns={visibleColumns}
+                          />
+                        );
+                      }
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -846,7 +1115,9 @@ const Orders = () => {
 
         {isProjectUser && (
           <>
-            <TabsContent value="offers" className="space-y-4">
+            <TabsContent value="offers" className="space-y-6">
+              <ManualDispatchCenter allOrders={allOrders} offers={offersData?.order_offers || []} />
+
               <Tabs defaultValue="analytics" className="w-full">
                 <TabsList className="grid w-64 grid-cols-2 mb-4">
                   <TabsTrigger value="analytics" className="flex items-center gap-2">
@@ -873,6 +1144,15 @@ const Orders = () => {
             </TabsContent>
 
             <TabsContent value="combined" className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Combined ID, Order ID, or Shopper..."
+                  className="pl-8"
+                  value={combinedSearchTerm}
+                  onChange={e => setCombinedSearchTerm(e.target.value)}
+                />
+              </div>
               <CombinedOrdersTable
                 combinedOrdersGroups={combinedOrdersGroups}
                 getOrderWarnings={getOrderWarnings}
@@ -882,7 +1162,81 @@ const Orders = () => {
                 getDeliveryCountdown={getDeliveryCountdown}
                 handleCallShopper={handleCallShopper}
                 handleViewDetails={handleViewDetails}
+                visibleColumns={visibleColumns}
               />
+            </TabsContent>
+
+            <TabsContent value="packages" className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by Package ID, Receiver, or Shopper..."
+                  className="pl-8"
+                  value={packagesSearchTerm}
+                  onChange={e => setPackagesSearchTerm(e.target.value)}
+                />
+              </div>
+              <Card className="border-2 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        <TableHead className="font-bold">Package ID</TableHead>
+                        <TableHead className="font-bold">Receiver</TableHead>
+                        <TableHead className="font-bold">Status</TableHead>
+                        <TableHead className="font-bold">Route</TableHead>
+                        <TableHead className="font-bold">Fee</TableHead>
+                        <TableHead className="font-bold">Shopper</TableHead>
+                        <TableHead className="font-bold">Scheduled</TableHead>
+                        <TableHead className="font-bold">Created</TableHead>
+                        <TableHead className="text-right font-bold">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isPackagesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="h-24 text-center">
+                            <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                          </TableCell>
+                        </TableRow>
+                      ) : filteredPackages.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                            {packagesSearchTerm
+                              ? 'No packages match your search.'
+                              : 'No package deliveries found.'}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredPackages.map((pkg: any) => (
+                          <PackageOrderRow
+                            key={pkg.id}
+                            pkg={pkg}
+                            onViewDetails={() => {
+                              const unifiedPkg: UnifiedOrder = {
+                                ...pkg,
+                                OrderID: pkg.DeliveryCode || pkg.id,
+                                type: 'package',
+                                total: pkg.delivery_fee || '0',
+                                shopper: pkg.shopper
+                                  ? {
+                                      id: pkg.shopper.id || pkg.shopper.user_id,
+                                      name: pkg.shopper.full_name,
+                                      phone: pkg.shopper.phone_number || pkg.shopper.phone,
+                                      email: pkg.shopper.email,
+                                    }
+                                  : undefined,
+                              };
+                              handleViewDetails(unifiedPkg);
+                            }}
+                            formatCurrency={formatCurrency}
+                          />
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
             </TabsContent>
           </>
         )}

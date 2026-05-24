@@ -95,7 +95,11 @@ interface Props {
   open: boolean;
   onClose: () => void;
   item: RequestItem | null;
-  session: { TwoAuth_enabled?: boolean; email?: string } | null;
+  session: {
+    TwoAuth_enabled?: boolean;
+    email?: string;
+    privileges?: { twoFactorRequired?: boolean };
+  } | null;
   onSuccess: () => void;
 }
 
@@ -132,7 +136,10 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
   const isWithdraw = item?.kind === 'withdraw';
   const isPayout = item?.kind === 'payout';
 
-  const isBusiness = isWithdraw && !!(item as WithdrawRequestData).business_id;
+  const isBusiness =
+    isWithdraw &&
+    !!(item as WithdrawRequestData).business_id &&
+    (item as WithdrawRequestData).business_id !== '00000000-0000-0000-0000-000000000000';
   const amount = parseFloat(item?.amount ?? '0');
   const fee = isBusiness ? (amount * withdrawChargesPct) / 100 : 0;
   const netPayout = amount - fee;
@@ -142,7 +149,7 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
   let walletBalance = 0;
 
   if (isWithdraw) {
-    const wd = item as WithdrawRequestData;
+    const wd = item as any;
     name = isBusiness
       ? (wd.business_accounts?.business_name ?? 'Business')
       : (wd.shoppers?.full_name ?? 'Unknown Shopper');
@@ -152,11 +159,14 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
       '—';
     walletBalance = isBusiness
       ? parseFloat(wd.business_wallets?.amount ?? '0')
-      : parseFloat(wd.shoppers?.User?.Wallets?.[0]?.available_balance ?? '0');
+      : parseFloat(wd.Wallets?.available_balance ?? '0');
   } else if (isPayout) {
-    const po = item as PayoutData;
-    name = po.Wallets?.User?.name ?? 'Unknown User';
-    phone = po.Wallets?.User?.phone ?? '—';
+    const po = item as any;
+    const shopper = po.shopper;
+    const user = po.User;
+
+    name = shopper?.full_name || user?.name || 'Unknown User';
+    phone = shopper?.phone_number || user?.phone || '—';
     walletBalance = parseFloat(po.Wallets?.available_balance ?? '0');
   }
 
@@ -197,22 +207,56 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
 
   // ── Proceed from review ───────────────────────────────────────────────────
   const handleProceedFromReview = () => {
-    if (!session?.TwoAuth_enabled) {
+    const is2FAEnabled = session?.TwoAuth_enabled;
+    const is2FARequired = session?.privileges?.twoFactorRequired;
+
+    if (is2FAEnabled) {
+      handleSendOtp();
+    } else if (is2FARequired) {
       setStep('twofa');
     } else {
-      handleSendOtp();
+      // Not enabled and not required, skip to approval
+      handleApprove();
     }
   };
 
-  // ── Send OTP (simulated) ──────────────────────────────────────────────────
-  const handleSendOtp = () => {
+  // ── Send OTP ──────────────────────────────────────────────────
+  const handleSendOtp = async () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(code);
     setStep('otp');
-    toast.info(`OTP code: ${code}`, {
-      description: 'In production this would be sent via SMS to your registered number.',
-      duration: 60000,
-    });
+
+    if (session?.email) {
+      try {
+        const response = await fetch('/api/emails/send-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'code',
+            to: session.email,
+            customerName: session.email.split('@')[0],
+            code: code,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to send email');
+
+        toast.success('Verification code sent to your email');
+      } catch (error) {
+        console.error('Failed to send verification email:', error);
+        toast.error('Failed to send verification email. Please try again.');
+        // Still show the toast with code in dev mode for convenience if it fails
+        toast.info(`OTP code (Dev Mode): ${code}`, {
+          description: 'Email sending failed, but here is your code for testing.',
+          duration: 10000,
+        });
+      }
+    } else {
+      toast.info(`OTP code: ${code}`, {
+        description: 'In production this would be sent via SMS to your registered number.',
+        duration: 60000,
+      });
+    }
   };
 
   // ── Verify OTP ────────────────────────────────────────────────────────────
@@ -252,7 +296,10 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
   if (!item) return null;
 
   const insufficient = walletBalance < amount;
-  const typeLabel = isPayout ? 'Payout' : isBusiness ? 'Business Withdrawal' : 'Shopper Withdrawal';
+  let typeLabel = isPayout ? 'Payout' : isBusiness ? 'Business Withdrawal' : 'Personal Withdrawal';
+  if (isBusiness && (item as any).business_accounts?.account_type === 'personal') {
+    typeLabel = 'Personal Business Withdrawal';
+  }
 
   return (
     <Dialog open={open} onOpenChange={open => !open && handleClose()}>
@@ -270,12 +317,23 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
             <div className="space-y-4 py-2">
               {/* Requester card */}
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  {isBusiness ? (
-                    <Building2 className="h-5 w-5 text-primary" />
-                  ) : (
-                    <User className="h-5 w-5 text-primary" />
-                  )}
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden border">
+                  {(() => {
+                    const po = item as any;
+                    const wd = item as any;
+                    const img = isPayout
+                      ? po.shopper?.profile_photo || po.User?.profile_picture
+                      : isBusiness
+                        ? null
+                        : wd.shoppers?.profile_photo;
+
+                    if (img) return <img src={img} alt="" className="h-full w-full object-cover" />;
+                    return isBusiness ? (
+                      <Building2 className="h-6 w-6 text-primary" />
+                    ) : (
+                      <User className="h-6 w-6 text-primary" />
+                    );
+                  })()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold truncate">{name}</div>
@@ -493,7 +551,7 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
                 Back
               </Button>
               <Button
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-primary hover:bg-primary/90"
                 onClick={handleConfirmApprove}
                 disabled={loading}
               >
@@ -513,3 +571,6 @@ const WithdrawRequestApprovalDialog = ({ open, onClose, item, session, onSuccess
 };
 
 export default WithdrawRequestApprovalDialog;
+function handleApprove() {
+  throw new Error('Function not implemented.');
+}

@@ -39,7 +39,7 @@ import {
 } from '@/components/shop/ProductNameFormDialog';
 import { ImportProductNamesDialog } from '@/components/shop/ImportProductNamesDialog';
 import { usePrivilege } from '@/hooks/usePrivilege';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 
 const PRODUCT_PLACEHOLDER = '/placeholder.svg';
@@ -93,7 +93,7 @@ const Products = () => {
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
-    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,

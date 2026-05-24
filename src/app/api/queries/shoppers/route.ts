@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
@@ -9,38 +9,47 @@ const GET_SHOPPERS = gql`
   query getShopperInformation {
     shoppers(order_by: { created_at: desc }) {
       Employment_id
+      Police_Clearance_Cert
+      SignaturePad
+      active
       address
       background_check_completed
+      collection_comment
+      courier
       created_at
-      driving_license
-      full_name
-      id
-      national_id
-      onboarding_step
-      phone_number
-      profile_photo
-      status
-      transport_mode
-      updated_at
+      dob
+      drivingLicense_Image
+      verification_metadata
       user_id
-      active
+      updated_at
+      transport_mode
+      status
+      signature
+      proofOfResidency
+      profile_photo
+      plate_number
+      phone_number
       phone
+      onboarding_step
       needCollection
       national_id_photo_front
       national_id_photo_back
+      national_id
       mutual_status
+      id
+      guarantorRelationship
+      latitude
       longitude
       mutual_StatusCertificate
-      latitude
-      proofOfResidency
-      signature
-      telegram_id
-      drivingLicense_Image
-      collection_comment
-      guarantor
       guarantorPhone
-      guarantorRelationship
-      Police_Clearance_Cert
+      guarantor
+      full_name
+      driving_license
+      driving_license_back
+      driving_license_front
+      email
+      face_liveness_images
+      face_verified
       User {
         gender
       }
@@ -53,38 +62,47 @@ const GET_SHOPPER_BY_USER_ID = gql`
   query GetShoppersByUser_id($user_id: uuid!) {
     shoppers(where: { user_id: { _eq: $user_id } }) {
       Employment_id
+      Police_Clearance_Cert
+      SignaturePad
+      active
       address
       background_check_completed
+      collection_comment
+      courier
       created_at
-      driving_license
-      full_name
-      id
-      national_id
-      onboarding_step
-      phone_number
-      profile_photo
-      status
-      transport_mode
-      updated_at
+      dob
+      drivingLicense_Image
+      verification_metadata
       user_id
-      active
+      updated_at
+      transport_mode
+      status
+      signature
+      proofOfResidency
+      profile_photo
+      plate_number
+      phone_number
       phone
+      onboarding_step
       needCollection
       national_id_photo_front
       national_id_photo_back
+      national_id
       mutual_status
+      id
+      guarantorRelationship
+      latitude
       longitude
       mutual_StatusCertificate
-      latitude
-      proofOfResidency
-      signature
-      telegram_id
-      drivingLicense_Image
-      collection_comment
-      guarantor
       guarantorPhone
-      guarantorRelationship
-      Police_Clearance_Cert
+      guarantor
+      full_name
+      driving_license
+      driving_license_back
+      driving_license_front
+      email
+      face_liveness_images
+      face_verified
       User {
         id
         email
@@ -112,6 +130,8 @@ const GET_SHOPPER_BY_USER_ID = gql`
           shopper_id
           updated_at
           businessProduct_id
+          vehicleBookingsId
+          package_id
         }
         tickets {
           created_on
@@ -124,6 +144,9 @@ const GET_SHOPPER_BY_USER_ID = gql`
           update_on
           user_id
           category
+          projectUser_id
+          employee_id
+          description
         }
         Invoices {
           Proof
@@ -141,6 +164,7 @@ const GET_SHOPPER_BY_USER_ID = gql`
           subtotal
           tax
           total_amount
+          restarurant_order_id
         }
         Delivery_Issues {
           created_at
@@ -152,6 +176,37 @@ const GET_SHOPPER_BY_USER_ID = gql`
           shopper_id
           status
           updated_at
+          reel_order_id
+          package_id
+          package_delivery {
+            DeliveryCode
+            comment
+            deliveryMethod
+            delivery_fee
+            dropoffDetails
+            distance
+            dropoffLocation
+            dropoff_latitude
+            dropoff_longitude
+            id
+            package_image
+            package_pickup_image
+            payment_method
+            pickupDetials
+            pickupLocation
+            pickup_latitude
+            pickup_longitude
+            receiverName
+            scheduled
+            receiverPhone
+            shopper_id
+            status
+            timeAndDate
+            updated_at
+            user_id
+          }
+          code
+          business_order_id
         }
         Payment_Methods {
           CCV
@@ -165,25 +220,234 @@ const GET_SHOPPER_BY_USER_ID = gql`
           user_id
           validity
         }
-        Wallets {
-          available_balance
+        is_guest
+      }
+      Wallets {
+        available_balance
+        id
+        last_updated
+        reserved_balance
+        shopper_id
+        Wallet_Transactions {
           id
-          last_updated
-          reserved_balance
-          shopper_id
-          Wallet_Transactions {
-            id
-            amount
-            type
+          amount
+          type
+          status
+          created_at
+          related_order_id
+          Order {
+            OrderID
             status
-            created_at
-            related_order_id
-            Order {
-              OrderID
-              status
-            }
           }
         }
+      }
+      order_offers {
+        business_order_id
+        done_on
+        expires_at
+        id
+        offered_at
+        order_id
+        order_type
+        package_order_id
+        reel_order_id
+        restaurant_order_id
+        round_number
+        shopper_id
+        status
+        updated_at
+        reelOrders {
+          OrderID
+          id
+          delivery_time
+          discount
+          discount_breakdown
+          found
+          payment_method
+          pin
+          quantity
+          reel_id
+          service_fee
+          shopper_id
+          status
+          total
+          updated_at
+          user_id
+          voucher_code
+          created_at
+          delivery_address_id
+          delivery_fee
+          delivery_note
+          delivery_photo_url
+          applied_promotions
+          assigned_at
+          combined_order_id
+          User {
+            email
+            gender
+            phone
+          }
+        }
+      }
+      businessProductOrders {
+        OrderID
+        id
+        allProducts
+        combined_order_id
+        comment
+        created_at
+        delivered_time
+        deliveryAddress
+        delivery_proof
+        latitude
+        longitude
+        pin
+        ordered_by
+        orderedBy {
+          gender
+          email
+          id
+          is_active
+          is_guest
+          created_at
+          name
+          phone
+          profile_picture
+        }
+        status
+        store_id
+        timeRange
+        total
+        transportation_fee
+        units
+        service_fee
+        shopper_id
+      }
+      Orders {
+        OrderID
+        id
+        pin
+        service_fee
+        shop_id
+        shopper_id
+        status
+        updated_at
+        total
+        user_id
+        voucher_code
+        delivery_photo_url
+        delivery_time
+        discount
+        discount_breakdown
+        combined_order_id
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_notes
+        assigned_at
+        applied_promotions
+      }
+      package_deliveries {
+        DeliveryCode
+        comment
+        distance
+        id
+        user_id
+        updated_at
+        package_image
+        package_pickup_image
+        payment_method
+        pickupDetials
+        pickupLocation
+        pickup_latitude
+        pickup_longitude
+        receiverName
+        receiverPhone
+        scheduled
+        shopper_id
+        status
+        timeAndDate
+        dropoffDetails
+        dropoffLocation
+        dropoff_latitude
+        dropoff_longitude
+        deliveryMethod
+        delivery_fee
+        created_at
+      }
+      payment_requests {
+        id
+        order_id
+        amount
+        agent_approved_id
+        created_at
+        shop_id
+        shopper_id
+        status
+        transactionCode
+        updated_on
+      }
+      reel_orders {
+        OrderID
+        id
+        pin
+        payment_method
+        quantity
+        reel_id
+        service_fee
+        shopper_id
+        status
+        total
+        updated_at
+        user_id
+        voucher_code
+        found
+        discount_breakdown
+        discount
+        applied_promotions
+        assigned_at
+        combined_order_id
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_note
+        delivery_photo_url
+        delivery_time
+      }
+      restaurant_orders {
+        OrderID
+        id
+        assigned_at
+        combined_order_id
+        created_at
+        delivery_address_id
+        delivery_fee
+        delivery_notes
+        delivery_photo_url
+        delivery_time
+        discount
+        found
+        pin
+        restaurant_id
+        shopper_id
+        status
+        total
+        updated_at
+        user_id
+        voucher_code
+      }
+      withDraweRequests {
+        businessWallet_id
+        amount
+        business_id
+        created_at
+        id
+        phoneNumber
+        shopperWallet_id
+        shopper_id
+        status
+        update_at
+        verification_image
       }
       Revenues {
         amount
@@ -476,7 +740,7 @@ export async function GET(request: Request) {
         // Fallback to nested Revenues if root Revenue query fails (e.g. different schema)
         revenues = shopper.Revenues || [];
       }
-      const wallet = shopper.User?.Wallets?.[0];
+      const wallet = shopper.Wallets?.[0];
       const ratings = shopper.User?.Ratings || [];
 
       const pendingWithdrawAmount = withdrawRequests

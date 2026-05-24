@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import CustomerDisplay from '@/components/customer-display/CustomerDisplay';
 import MomoPaymentDialog from '@/components/customer-display/MomoPaymentDialog';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
 
 interface CartItem {
   id: string;
@@ -19,6 +20,8 @@ interface CustomerDisplayData {
     address: string;
     phone?: string;
     email?: string;
+    logo?: string;
+    ssd?: string;
   };
   timestamp: string;
   paymentMethod?: string;
@@ -26,6 +29,14 @@ interface CustomerDisplayData {
 }
 
 export default function CustomerDisplayPage() {
+  const { data: systemConfig } = useSystemConfig();
+
+  const getTaxRate = () => {
+    const taxStr = systemConfig?.System_configuratioins?.[0]?.tax;
+    if (taxStr === undefined || taxStr === null) return 0.08;
+    return parseFloat(taxStr) / 100;
+  };
+
   const [displayData, setDisplayData] = useState<CustomerDisplayData>({
     cart: [],
     shopDetails: {
@@ -33,6 +44,8 @@ export default function CustomerDisplayPage() {
       address: 'Shop Address',
       phone: 'Phone',
       email: 'Email',
+      logo: '',
+      ssd: '',
     },
     timestamp: new Date().toISOString(),
     paymentMethod: 'pending',
@@ -41,6 +54,8 @@ export default function CustomerDisplayPage() {
 
   const [isMomoPaymentDialogOpen, setIsMomoPaymentDialogOpen] = useState(false);
   const [previousPaymentMethod, setPreviousPaymentMethod] = useState<string>('pending');
+  const [lastMomoTrigger, setLastMomoTrigger] = useState<number>(0);
+  const [posSessionActive, setPosSessionActive] = useState<boolean>(true);
 
   // Function to manually open MOMO dialog
   const openMomoDialog = () => {
@@ -67,15 +82,20 @@ export default function CustomerDisplayPage() {
       const shopData = localStorage.getItem('customerDisplayShop');
       const paymentData = localStorage.getItem('customerDisplayPayment');
       const momoDialogState = localStorage.getItem('momoDialogState');
+      const sessionActive = localStorage.getItem('posSessionActive');
+
+      // Sync active state
+      setPosSessionActive(sessionActive !== 'false');
 
       if (cartData) {
         const cart = JSON.parse(cartData);
         const shopDetails = shopData ? JSON.parse(shopData) : displayData.shopDetails;
         const paymentInfo = paymentData
           ? JSON.parse(paymentData)
-          : { paymentMethod: 'pending', discount: 0 };
+          : { paymentMethod: 'pending', discount: 0, momoTrigger: 0 };
 
         const newPaymentMethod = paymentInfo.paymentMethod;
+        const currentMomoTrigger = paymentInfo.momoTrigger || 0;
 
         setDisplayData({
           cart,
@@ -85,9 +105,23 @@ export default function CustomerDisplayPage() {
           discount: paymentInfo.discount || 0,
         });
 
-        // Check if payment method changed to MOMO and show dialog
-        if (newPaymentMethod === 'momo' && previousPaymentMethod !== 'momo') {
+        // Check if payment method changed to MOMO or the explicit trigger was activated
+        const isNewMomoMethod = newPaymentMethod === 'momo' && previousPaymentMethod !== 'momo';
+        const isExplicitTrigger =
+          newPaymentMethod === 'momo' &&
+          currentMomoTrigger !== 0 &&
+          currentMomoTrigger !== lastMomoTrigger;
+
+        if (isNewMomoMethod || isExplicitTrigger) {
           setIsMomoPaymentDialogOpen(true);
+          if (currentMomoTrigger !== 0) {
+            setLastMomoTrigger(currentMomoTrigger);
+          }
+        }
+
+        // Close if cashier switched payment method away from MOMO
+        if (newPaymentMethod !== 'momo' && isMomoPaymentDialogOpen) {
+          setIsMomoPaymentDialogOpen(false);
         }
 
         // Update previous payment method
@@ -95,12 +129,20 @@ export default function CustomerDisplayPage() {
       }
 
       // Check MOMO dialog state from localStorage
+      const momoOpen = localStorage.getItem('momoDialogOpen');
+      if (momoOpen === 'false' && isMomoPaymentDialogOpen) {
+        setIsMomoPaymentDialogOpen(false);
+      } else if (momoOpen === 'true' && !isMomoPaymentDialogOpen) {
+        setIsMomoPaymentDialogOpen(true);
+      }
+
       if (momoDialogState) {
         try {
           const dialogState = JSON.parse(momoDialogState);
           if (dialogState.shouldClose && isMomoPaymentDialogOpen) {
             setIsMomoPaymentDialogOpen(false);
             localStorage.removeItem('momoDialogState');
+            localStorage.setItem('momoDialogOpen', 'false');
           }
         } catch (error) {
           console.error('Error parsing momoDialogState:', error);
@@ -182,7 +224,7 @@ export default function CustomerDisplayPage() {
   const calculateTax = () => {
     const subtotal = calculateSubtotal();
     const discountAmount = calculateDiscountAmount();
-    return (subtotal - discountAmount) * 0.08;
+    return (subtotal - discountAmount) * getTaxRate();
   };
 
   const calculateTotal = () => {
@@ -207,20 +249,27 @@ export default function CustomerDisplayPage() {
         total={total}
         discount={displayData.discount || 0}
         paymentMethod={displayData.paymentMethod || 'pending'}
+        shopDetails={displayData.shopDetails}
+        posSessionActive={posSessionActive}
       />
 
       {/* MOMO Payment Dialog */}
-      <MomoPaymentDialog
-        isOpen={isMomoPaymentDialogOpen}
-        onClose={() => {
-          setIsMomoPaymentDialogOpen(false);
-        }}
-        onPaymentConfirmed={() => {
-          setIsMomoPaymentDialogOpen(false);
-        }}
-        total={total}
-        transactionId={'TXN-' + Date.now().toString().slice(-6)}
-      />
+      {posSessionActive && (
+        <MomoPaymentDialog
+          isOpen={isMomoPaymentDialogOpen}
+          onClose={() => {
+            setIsMomoPaymentDialogOpen(false);
+            localStorage.setItem('momoDialogOpen', 'false');
+          }}
+          onPaymentConfirmed={() => {
+            setIsMomoPaymentDialogOpen(false);
+            localStorage.setItem('momoDialogOpen', 'false');
+          }}
+          total={total}
+          transactionId={'TXN-' + Date.now().toString().slice(-6)}
+          shopSsd={displayData.shopDetails?.ssd}
+        />
+      )}
     </>
   );
 }

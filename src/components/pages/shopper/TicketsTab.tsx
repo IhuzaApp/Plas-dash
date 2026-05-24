@@ -45,6 +45,7 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
             <TableRow>
               <TableHead>Ticket #</TableHead>
               <TableHead>Subject</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
@@ -57,6 +58,9 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
                 <TableRow key={ticket.id}>
                   <TableCell className="font-medium">#{ticket.ticket_num}</TableCell>
                   <TableCell>{ticket.subject}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">
+                    {ticket.description || 'N/A'}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       className={
@@ -87,7 +91,7 @@ const TicketsTab: React.FC<TicketsTabProps> = ({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   {totalTickets === 0 ? 'No tickets found' : 'Loading tickets...'}
                 </TableCell>
               </TableRow>

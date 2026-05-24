@@ -21,6 +21,7 @@ import { usePageAccess } from '@/hooks/usePageAccess';
 import AddProjectUserDialog from '@/components/shop/AddProjectUserDialog';
 import EditProjectUserDialog from '@/components/shop/EditProjectUserDialog';
 import DeleteProjectUserDialog from '@/components/shop/DeleteProjectUserDialog';
+import ProjectUserDetailsDrawer from '@/components/drawers/ProjectUserDetailsDrawer';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ const ProjectUsers = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ProjectUser | null>(null);
   const [profileImageModal, setProfileImageModal] = useState<{
     isOpen: boolean;
@@ -93,6 +95,11 @@ const ProjectUsers = () => {
     } else {
       toast.error('You do not have permission to delete project users');
     }
+  };
+
+  const handleViewDetails = (user: ProjectUser) => {
+    setSelectedUser(user);
+    setIsDetailsDrawerOpen(true);
   };
 
   const handleAddSuccess = () => {
@@ -186,16 +193,15 @@ const ProjectUsers = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Two-Factor</TableHead>
+                  <TableHead>Security</TableHead>
                   <TableHead>Last Login</TableHead>
-                  <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currentUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <div className="flex flex-col items-center space-y-2">
                         <User className="h-8 w-8 text-muted-foreground" />
                         <p className="text-muted-foreground">No project users found</p>
@@ -209,13 +215,17 @@ const ProjectUsers = () => {
                   </TableRow>
                 ) : (
                   currentUsers.map(user => (
-                    <TableRow key={user.id}>
+                    <TableRow
+                      key={user.id}
+                      className="cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors"
+                      onClick={() => handleViewDetails(user)}
+                    >
                       <TableCell>
                         {user.profile ? (
                           <div className="relative group">
                             <img
                               src={
-                                user.profile.startsWith('data:')
+                                user.profile.startsWith('data:') || user.profile.startsWith('http')
                                   ? user.profile
                                   : `data:image/jpeg;base64,${user.profile}`
                               }
@@ -266,9 +276,54 @@ const ProjectUsers = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.TwoAuth_enabled ? 'default' : 'outline'}>
-                          {user.TwoAuth_enabled ? 'Enabled' : 'Disabled'}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          {/* App-based 2FA Status */}
+                          {user.TwoAuth_enabled ? (
+                            <Badge
+                              variant="default"
+                              className="text-[10px] bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200"
+                            >
+                              2FA Enabled
+                            </Badge>
+                          ) : user.privileges?.twoFactorRequired ? (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse"
+                            >
+                              2FA Setup Required
+                            </Badge>
+                          ) : null}
+
+                          {/* SMS Auth Status */}
+                          {user.sms_auth ? (
+                            <Badge
+                              variant="default"
+                              className="text-[10px] bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200"
+                            >
+                              SMS Enabled
+                            </Badge>
+                          ) : user.privileges?.smsAuthRequired ? (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200 animate-pulse"
+                            >
+                              SMS Setup Required
+                            </Badge>
+                          ) : null}
+
+                          {/* No Auth enabled or required */}
+                          {!user.TwoAuth_enabled &&
+                            !user.sms_auth &&
+                            !user.privileges?.twoFactorRequired &&
+                            !user.privileges?.smsAuthRequired && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] text-muted-foreground"
+                              >
+                                Standard
+                              </Badge>
+                            )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {user.last_Login ? (
@@ -277,8 +332,7 @@ const ProjectUsers = () => {
                           <span className="text-muted-foreground">Never</span>
                         )}
                       </TableCell>
-                      <TableCell>{format(new Date(user.created_at), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end space-x-2">
                           {hasAction('project_users', 'edit_project_users') && (
                             <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
@@ -352,6 +406,11 @@ const ProjectUsers = () => {
         user={selectedUser}
         onSuccess={handleDeleteSuccess}
       />
+      <ProjectUserDetailsDrawer
+        open={isDetailsDrawerOpen}
+        onOpenChange={setIsDetailsDrawerOpen}
+        user={selectedUser}
+      />
 
       {/* Profile Image Modal */}
       <Dialog
@@ -368,7 +427,8 @@ const ProjectUsers = () => {
           <div className="flex justify-center">
             <img
               src={
-                profileImageModal.image.startsWith('data:')
+                profileImageModal.image.startsWith('data:') ||
+                profileImageModal.image.startsWith('http')
                   ? profileImageModal.image
                   : `data:image/jpeg;base64,${profileImageModal.image}`
               }

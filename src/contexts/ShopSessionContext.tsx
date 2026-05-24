@@ -1,28 +1,34 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ShopSession {
   shopId: string;
   shopName: string;
   employeeId: string;
   employeeName: string;
+  employeeImage?: string;
   position: string;
   expiresAt: number;
+  isRestaurant?: boolean;
 }
 
 interface ShopSessionContextType {
   shopSession: ShopSession | null;
   isLoggedIntoShop: boolean;
+  isBusinessLoading: boolean;
   loginToShop: (
     shopId: string,
     shopName: string,
     employeeId: string,
     employeeName: string,
-    position: string
+    position: string,
+    isRestaurant?: boolean,
+    employeeImage?: string
   ) => void;
   logoutFromShop: () => void;
   getShopSessionExpiry: () => number | null;
   debugSession: () => void;
+  activeBusiness: { id: string; name: string; type: string; logo?: string | null } | null;
 }
 
 const ShopSessionContext = createContext<ShopSessionContextType | undefined>(undefined);
@@ -33,6 +39,64 @@ const SHOP_SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 export function ShopSessionProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const [shopSession, setShopSession] = useState<ShopSession | null>(null);
+  const [isBusinessLoading, setIsBusinessLoading] = useState(true);
+  const [activeBusiness, setActiveBusiness] = useState<{
+    id: string;
+    name: string;
+    type: string;
+    logo?: string | null;
+  } | null>(null);
+
+  // Detect business context from cookie or hostname
+  useEffect(() => {
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+      return null;
+    };
+
+    const fetchBusinessDetails = async (params: string) => {
+      try {
+        const response = await fetch(`/api/business/lookup?${params}`);
+        if (response.ok) {
+          const business = await response.json();
+          setActiveBusiness({
+            id: business.id,
+            name: business.name,
+            type: business.type,
+            logo: business.logo,
+          });
+        }
+      } catch (e) {
+        console.error('Failed to fetch business details');
+      } finally {
+        setIsBusinessLoading(false);
+      }
+    };
+
+    const businessId = getCookie('business-id');
+    if (businessId) {
+      fetchBusinessDetails(`id=${businessId}`);
+    } else {
+      // Fallback: extract subdomain from hostname if cookie is missing
+      const hostname = window.location.hostname;
+      const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'plas.rw';
+
+      if (!['localhost', 'dash.' + rootDomain, rootDomain].includes(hostname)) {
+        let subdomain = '';
+        if (hostname.endsWith('.' + rootDomain)) subdomain = hostname.replace('.' + rootDomain, '');
+        else if (hostname.endsWith('.lvh.me')) subdomain = hostname.replace('.lvh.me', '');
+
+        if (subdomain && subdomain !== 'www' && subdomain !== 'dash') {
+          fetchBusinessDetails(`subdomain=${subdomain}`);
+          return; // fetchBusinessDetails will call setIsBusinessLoading(false) in finally
+        }
+      }
+      // No business context to fetch — mark loading as complete immediately
+      setIsBusinessLoading(false);
+    }
+  }, []);
 
   // Load shop session from localStorage on mount (same approach as main session)
   useEffect(() => {
@@ -81,7 +145,9 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
       shopName: string,
       employeeId: string,
       employeeName: string,
-      position: string
+      position: string,
+      isRestaurant?: boolean,
+      employeeImage?: string
     ) => {
       const expiresAt = Date.now() + SHOP_SESSION_DURATION;
       const newShopSession: ShopSession = {
@@ -91,6 +157,8 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
         employeeName,
         position,
         expiresAt,
+        isRestaurant,
+        employeeImage,
       };
 
       // Save to localStorage (same approach as main session)
@@ -123,10 +191,12 @@ export function ShopSessionProvider({ children }: { children: React.ReactNode })
   const value: ShopSessionContextType = {
     shopSession,
     isLoggedIntoShop,
+    isBusinessLoading,
     loginToShop,
     logoutFromShop,
     getShopSessionExpiry,
     debugSession,
+    activeBusiness,
   };
 
   return <ShopSessionContext.Provider value={value}>{children}</ShopSessionContext.Provider>;

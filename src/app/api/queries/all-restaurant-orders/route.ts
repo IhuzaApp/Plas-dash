@@ -96,33 +96,24 @@ const GET_ALL_RESTAURANT_ORDERS = gql`
           }
         }
       }
-      shopper {
+      shoppers {
         id
-        name
-        shopper {
-          full_name
-          phone_number
-          Employment_id
-          Police_Clearance_Cert
-          active
-          address
-          drivingLicense_Image
-          driving_license
-          guarantorPhone
-          guarantor
-          phone
-          signature
-          profile_photo
-          updated_at
-        }
+        full_name
+        phone_number
+        Employment_id
+        Police_Clearance_Cert
+        active
+        address
+        drivingLicense_Image
+        driving_license
+        guarantorPhone
+        guarantor
+        phone
+        signature
+        profile_photo
+        plate_number
+        transport_mode
         updated_at
-        vehicle {
-          model
-          photo
-          plate_number
-          type
-          id
-        }
       }
       discount
       found
@@ -142,6 +133,27 @@ const GET_ALL_RESTAURANT_ORDERS = gql`
         related_restaurant_order_id
         status
         type
+        wallet_id
+      }
+      order_transactions {
+        amount
+        business_order_id
+        created_at
+        currency
+        id
+        mtn_response
+        order_id
+        package_id
+        petAdoptionId
+        phone
+        reel_order_id
+        reference_id
+        restaurant_order_id
+        status
+        type
+        updated_at
+        user_id
+        vehicleBookingsId
         wallet_id
       }
     }
@@ -277,34 +289,26 @@ export async function GET(req: Request) {
           aggregate: { count: number } | null;
         };
         restaurant_order_items: RestaurantOrderItem[];
-        shopper: {
+        shoppers: {
           id: string;
-          name?: string;
+          full_name?: string;
+          phone_number?: string;
           updated_at?: string;
-          shopper?: {
-            full_name?: string;
-            phone_number?: string;
-            Employment_id?: string;
-            Police_Clearance_Cert?: string;
-            active?: boolean;
-            address?: string;
-            drivingLicense_Image?: string;
-            driving_license?: string;
-            guarantorPhone?: string;
-            guarantor?: string;
-            phone?: string;
-            signature?: string;
-            profile_photo?: string;
-            updated_at?: string;
-          } | null;
-          vehicle?: {
-            model?: string;
-            photo?: string;
-            plate_number?: string;
-            type?: string;
-            id?: string;
-          } | null;
+          Employment_id?: string;
+          Police_Clearance_Cert?: string;
+          active?: boolean;
+          address?: string;
+          drivingLicense_Image?: string;
+          driving_license?: string;
+          guarantorPhone?: string;
+          guarantor?: string;
+          phone?: string;
+          signature?: string;
+          profile_photo?: string;
+          plate_number?: string;
+          transport_mode?: string;
         } | null;
+        order_transactions?: Array<any>;
       }>;
     }>(GET_ALL_RESTAURANT_ORDERS, { where });
 
@@ -336,6 +340,7 @@ export async function GET(req: Request) {
         delivery_photo_url: o.delivery_photo_url ?? undefined,
         voucher_code: o.voucher_code ?? undefined,
         Wallet_Transactions: o.Wallet_Transactions ?? [],
+        order_transactions: o.order_transactions ?? [],
         orderedBy: o.orderedBy,
         Address: o.Address,
         Restaurant: o.Restaurant,
@@ -344,15 +349,17 @@ export async function GET(req: Request) {
         unitsCount,
         shopper_id: o.shopper_id,
         shopper:
-          o.shopper != null
+          o.shoppers != null
             ? {
-                id: o.shopper.id,
-                name: o.shopper.name ?? o.shopper.shopper?.full_name ?? '',
-                phone: o.shopper.shopper?.phone_number ?? o.shopper.shopper?.phone ?? '',
+                id: o.shoppers.id,
+                name: o.shoppers.full_name ?? '',
+                phone: o.shoppers.phone_number ?? o.shoppers.phone ?? '',
                 email: '',
-                shopper: o.shopper.shopper,
-                vehicle: o.shopper.vehicle,
-                updated_at: o.shopper.updated_at,
+                shopper: o.shoppers,
+                vehicle: o.shoppers.plate_number
+                  ? { plate_number: o.shoppers.plate_number }
+                  : undefined,
+                updated_at: o.shoppers.updated_at,
               }
             : undefined,
       };

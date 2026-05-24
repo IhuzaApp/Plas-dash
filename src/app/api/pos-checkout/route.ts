@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
@@ -38,7 +38,16 @@ const INSERT_SHOP_CHECKOUT = gql`
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!(session as any)?.user?.id) {
+  let userId = (session as any)?.user?.id;
+
+  if (!userId) {
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      userId = authHeader.substring(7);
+    }
+  }
+
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

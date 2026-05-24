@@ -33,6 +33,8 @@ interface ShopAuthModalProps {
   userId: string; // This should be the UUID from the orgEmployees table
   storedTwoFactorSecrets?: string | null; // Stored secrets from database
   onAuthSuccess?: () => void; // Callback for successful authentication
+  isRestaurant?: boolean;
+  employeeImage?: string;
 }
 
 type FormData = {
@@ -53,6 +55,8 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
   userId,
   storedTwoFactorSecrets,
   onAuthSuccess,
+  isRestaurant,
+  employeeImage,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSetupMode, setIsSetupMode] = useState(!multAuthEnabled);
@@ -230,7 +234,15 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
 
       if (isValidCode) {
         // Success - log into shop
-        loginToShop(shopId, shopName, employeeId, employeeName, position);
+        loginToShop(
+          shopId,
+          shopName,
+          employeeId,
+          employeeName,
+          position,
+          isRestaurant,
+          employeeImage
+        );
         toast.success(`Successfully logged into ${shopName}`);
         onOpenChange(false);
         form.reset();
@@ -392,11 +404,11 @@ const ShopAuthModal: React.FC<ShopAuthModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store className="h-5 w-5" />
-            {isSetupMode ? '2FA Setup Required' : 'Shop Authentication'}
+            {isSetupMode ? '2FA Setup Required' : `${shopName} Authentication`}
           </DialogTitle>
           <DialogDescription>
             {isSetupMode
-              ? 'You need to set up two-factor authentication before accessing shop features.'
+              ? 'You need to set up two-factor authentication before accessing business features.'
               : `Enter your 2FA code to access ${shopName}`}
           </DialogDescription>
         </DialogHeader>

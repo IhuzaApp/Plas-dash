@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
@@ -32,6 +32,7 @@ const GET_ORG_EMPLOYEE = gql`
 export async function getUserContext(req: Request): Promise<UserContext | null> {
   const session = await getServerSession(authOptions);
   let userId = (session as any)?.user?.id;
+  const sessionRole = (session as any)?.user?.role;
 
   if (!userId) {
     const authHeader = req.headers.get('authorization');
@@ -45,7 +46,25 @@ export async function getUserContext(req: Request): Promise<UserContext | null> 
   try {
     if (!hasuraClient) return null;
 
-    // 1. Check if user is a ProjectUser (Admin/Superuser)
+    // 0. Fallback: Check NextAuth session role or isProjectUser flag for status
+    const isProjectUserFlag = (session as any)?.user?.isProjectUser;
+
+    if (
+      isProjectUserFlag === true ||
+      sessionRole === 'admin' ||
+      sessionRole === 'projectAdmin' ||
+      sessionRole === 'project_user' ||
+      sessionRole === 'super_admin'
+    ) {
+      return {
+        userId,
+        isProjectUser: true,
+        shop_id: null,
+        restaurant_id: null,
+      };
+    }
+
+    // 1. Check if user is in ProjectUsers metadata table
     const projectUserData = await hasuraClient.request<{ ProjectUsers_by_pk: any }>(
       GET_PROJECT_USER,
       { id: userId }

@@ -67,6 +67,37 @@ query GetShops {
         reviewed_at
         shopper_id
         updated_at
+        customer_id
+        created_at
+        businessProduct_id
+        delivery_experience
+        Order {
+          OrderID
+          assigned_at
+          delivery_notes
+          delivery_fee
+          delivery_address_id
+          created_at
+          combined_order_id
+          delivery_time
+          discount
+          delivery_photo_url
+          pin
+          id
+          shopper_id
+        }
+        User {
+          created_at
+          email
+          gender
+          is_guest
+          is_active
+          name
+          phone
+          profile_picture
+          role
+          updated_at
+        }
       }
       Address {
         city
@@ -88,15 +119,12 @@ query GetShops {
         product_id
         quantity
         Product {
-          barcode
           category
           created_at
-          description
           id
           image
           is_active
           measurement_unit
-          name
           price
           quantity
           reorder_point
@@ -104,6 +132,33 @@ query GetShops {
           sku
           supplier
           updated_at
+          final_price
+          productName_id
+          ProductName {
+            barcode
+            create_at
+            description
+            id
+            image
+            name
+            sku
+            restaurant_menus {
+              SKU
+              created_at
+              discount
+              dish_id
+              id
+              is_active
+              preparingTime
+              price
+              product_id
+              promo
+              promo_type
+              quantity
+              restaurant_id
+              updated_at
+            }
+          }
         }
         Order {
           combined_order_id
@@ -114,7 +169,6 @@ query GetShops {
           delivery_photo_url
           delivery_time
           discount
-          found
           id
           service_fee
           shop_id
@@ -125,6 +179,59 @@ query GetShops {
           user_id
           voucher_code
         }
+      }
+      Invoices {
+        Proof
+        created_at
+        customer_id
+        delivery_fee
+        discount
+        id
+        invoice_items
+        invoice_number
+        order_id
+        reel_order_id
+        restarurant_order_id
+        service_fee
+        status
+        subtotal
+        tax
+        total_amount
+        reel_order {
+          OrderID
+          assigned_at
+          combined_order_id
+          created_at
+          delivery_fee
+          delivery_note
+          delivery_address_id
+          delivery_photo_url
+          delivery_time
+          discount
+          found
+          id
+          quantity
+          reel_id
+          service_fee
+          shopper_id
+          status
+          total
+          updated_at
+          user_id
+          voucher_code
+          pin
+        }
+      }
+      Delivery_Issues {
+        created_at
+        description
+        id
+        issue_type
+        priority
+        order_id
+        shopper_id
+        status
+        updated_at
       }
     }
   }

@@ -10,8 +10,13 @@ import TicketsTab from './TicketsTab';
 import DeliveryIssuesTab from './DeliveryIssuesTab';
 import InvoicesTab from './InvoicesTab';
 import RevenuesTab from './RevenuesTab';
+import VerificationTab from './VerificationTab';
+import ActivityTab from './ActivityTab';
 
 interface ShopperTabsProps {
+  // Verification tab
+  detailedShopper: any;
+
   // Wallet tab
   wallet: any;
   totalEarnings: number;
@@ -41,7 +46,6 @@ interface ShopperTabsProps {
   totalRatings: number;
   setRatingsPage: (page: number) => void;
   calculateAverageRating: (ratings: any[]) => string;
-  detailedShopper: any;
 
   // Tickets tab
   paginatedTickets: any[];
@@ -119,8 +123,10 @@ const ShopperTabs: React.FC<ShopperTabsProps> = ({
 }) => {
   return (
     <Tabs defaultValue="wallet" className="space-y-4">
-      <TabsList className="grid w-full grid-cols-8">
+      <TabsList className="grid w-full grid-cols-10">
         <TabsTrigger value="wallet">Wallet</TabsTrigger>
+        <TabsTrigger value="verification">Verification</TabsTrigger>
+        <TabsTrigger value="activity">Activity</TabsTrigger>
         <TabsTrigger value="orders">Orders</TabsTrigger>
         <TabsTrigger value="transactions">Transactions</TabsTrigger>
         <TabsTrigger value="ratings">Ratings</TabsTrigger>
@@ -129,6 +135,16 @@ const ShopperTabs: React.FC<ShopperTabsProps> = ({
         <TabsTrigger value="invoices">Invoices</TabsTrigger>
         <TabsTrigger value="revenues">Revenues</TabsTrigger>
       </TabsList>
+
+      {/* Verification Tab */}
+      <TabsContent value="verification">
+        <VerificationTab shopper={detailedShopper} />
+      </TabsContent>
+
+      {/* Activity Tab */}
+      <TabsContent value="activity">
+        <ActivityTab shopper={detailedShopper} formatCurrency={formatCurrency} />
+      </TabsContent>
 
       {/* Wallet Tab */}
       <TabsContent value="wallet">

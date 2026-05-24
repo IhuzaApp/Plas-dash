@@ -32,7 +32,7 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
-    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -198,7 +198,7 @@ const ProcessPayoutDrawer = ({ children }: ProcessPayoutDrawerProps) => {
                             </Button>
                             <Button
                               size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white h-8"
+                              className="bg-primary hover:bg-primary/90 text-white h-8"
                               disabled={busy}
                               onClick={() => handleAction(req.id, 'approved')}
                             >

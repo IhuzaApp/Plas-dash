@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
 const MAX_DELIVERY_TIME_MINUTES = 90;
 
-const GET_DELIVERED_ORDERS = gql`
-  query GetDeliveredOrders($start: timestamptz!, $end: timestamptz!) {
+const GET_ALL_DELIVERED_ORDERS = gql`
+  query GetAllDeliveredOrders($start: timestamptz!, $end: timestamptz!) {
     Orders(
       where: {
         status: { _eq: "delivered" }
@@ -21,11 +21,6 @@ const GET_DELIVERED_ORDERS = gql`
       delivery_fee
       service_fee
     }
-  }
-`;
-
-const GET_DELIVERED_REEL_ORDERS = gql`
-  query GetDeliveredReelOrders($start: timestamptz!, $end: timestamptz!) {
     reel_orders(
       where: {
         status: { _eq: "delivered" }
@@ -39,11 +34,6 @@ const GET_DELIVERED_REEL_ORDERS = gql`
       delivery_fee
       service_fee
     }
-  }
-`;
-
-const GET_DELIVERED_RESTAURANT_ORDERS = gql`
-  query GetDeliveredRestaurantOrders($start: timestamptz!, $end: timestamptz!) {
     restaurant_orders(
       where: {
         status: { _eq: "delivered" }
@@ -56,11 +46,6 @@ const GET_DELIVERED_RESTAURANT_ORDERS = gql`
       updated_at
       delivery_fee
     }
-  }
-`;
-
-const GET_DELIVERED_BUSINESS_ORDERS = gql`
-  query GetDeliveredBusinessOrders($start: timestamptz!, $end: timestamptz!) {
     businessProductOrders(
       where: {
         status: { _eq: "delivered" }
@@ -73,6 +58,18 @@ const GET_DELIVERED_BUSINESS_ORDERS = gql`
       delivered_time
       transportation_fee
       service_fee
+    }
+    package_delivery(
+      where: {
+        status: { _eq: "delivered" }
+        created_at: { _gte: $start, _lte: $end }
+        shopper_id: { _is_null: false }
+      }
+    ) {
+      shopper_id
+      created_at
+      updated_at
+      delivery_fee
     }
   }
 `;
@@ -138,23 +135,19 @@ export async function GET(request: Request) {
 
     const vars = { start, end };
 
-    const [ordersRes, reelRes, restaurantRes, businessRes] = await Promise.all([
-      hasuraClient.request<{ Orders: OrderRow[] }>(GET_DELIVERED_ORDERS, vars),
-      hasuraClient.request<{ reel_orders: OrderRow[] }>(GET_DELIVERED_REEL_ORDERS, vars),
-      hasuraClient.request<{ restaurant_orders: OrderRow[] }>(
-        GET_DELIVERED_RESTAURANT_ORDERS,
-        vars
-      ),
-      hasuraClient.request<{ businessProductOrders: OrderRow[] }>(
-        GET_DELIVERED_BUSINESS_ORDERS,
-        vars
-      ),
-    ]);
+    const data = await hasuraClient.request<{
+      Orders: OrderRow[];
+      reel_orders: OrderRow[];
+      restaurant_orders: OrderRow[];
+      businessProductOrders: OrderRow[];
+      package_delivery: OrderRow[];
+    }>(GET_ALL_DELIVERED_ORDERS, vars);
 
-    const orders = ordersRes.Orders || [];
-    const reelOrders = reelRes.reel_orders || [];
-    const restaurantOrders = restaurantRes.restaurant_orders || [];
-    const businessOrdersRaw = businessRes.businessProductOrders || [];
+    const orders = data.Orders || [];
+    const reelOrders = data.reel_orders || [];
+    const restaurantOrders = data.restaurant_orders || [];
+    const packageOrders = data.package_delivery || [];
+    const businessOrdersRaw = data.businessProductOrders || [];
     const businessOrders = businessOrdersRaw.map(
       (
         o: OrderRow & {
@@ -191,6 +184,7 @@ export async function GET(request: Request) {
     add(reelOrders);
     add(restaurantOrders);
     add(businessOrders);
+    add(packageOrders);
 
     const shopperIds = Object.keys(byShopper);
     if (shopperIds.length === 0) {

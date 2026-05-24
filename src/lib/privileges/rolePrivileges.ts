@@ -52,6 +52,9 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'procurement',
         'production',
         'tax',
+        'reels',
+        'ai_chat',
+        'subscriptions',
       ];
       systemAdminModules.forEach(module => {
         if (privileges[module]) {
@@ -124,6 +127,8 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'production',
         'tax',
         'help',
+        'reels',
+        'ai_chat',
       ];
       storeManagerModules.forEach(module => {
         if (privileges[module]) {
@@ -175,6 +180,7 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
         'wallet',
         'refunds',
         'tickets',
+        'reels',
       ];
       assistantManagerModules.forEach(module => {
         if (privileges[module]) {
@@ -560,6 +566,31 @@ export const getDefaultPrivilegesForRole = (roleType: string): UserPrivileges =>
           privileges[module]!.access = true;
           Object.keys(privileges[module]!).forEach(action => {
             if (action === 'access' || action.includes('view')) {
+              privileges[module]![action] = true;
+            } else {
+              privileges[module]![action] = false;
+            }
+          });
+        }
+      });
+      break;
+    }
+
+    case 'customer': {
+      // Customers: read-only access to their orders, wallet and basic shop info
+      const customerModules: PrivilegeKey[] = [
+        'orders',
+        'wallet',
+        'checkout',
+        'shoppers',
+        'shop_dashboard',
+      ];
+      customerModules.forEach(module => {
+        if (privileges[module]) {
+          privileges[module]!.access = true;
+          Object.keys(privileges[module]!).forEach(action => {
+            // Only allow view-level actions
+            if (action === 'access' || action.includes('view') || action.includes('view_balance')) {
               privileges[module]![action] = true;
             } else {
               privileges[module]![action] = false;

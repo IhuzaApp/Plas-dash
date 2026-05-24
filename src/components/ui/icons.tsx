@@ -4,9 +4,13 @@ import {
   Users,
   Wallet,
   Headphones,
+  CreditCard,
   TrendingUp,
   Shield,
   Database,
+  Calculator,
+  Factory,
+  ShoppingCart,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -18,7 +22,11 @@ export const Icons = {
   Users,
   Wallet,
   Headphones,
+  CreditCard,
   TrendingUp,
   Shield,
   Database,
+  Calculator,
+  Factory,
+  ShoppingCart,
 } as const;

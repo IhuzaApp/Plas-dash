@@ -2,6 +2,122 @@
 
 A modern, feature-rich dashboard for managing delivery operations, point of sale, and financial transactions.
 
+### 💳 Subscription & Billing System
+
+- **Unified Management**
+  - Independent subscription assignment for **Shops**, **Restaurants**, and **Business Accounts**.
+  - Automated `end_date` calculation based on billing cycles (Monthly/Yearly).
+- **Billing Dashboard**
+  - **Real-time Statistics**: Summary metrics for Active, Due (14d), Overdue, and Inactive accounts.
+  - **Tabbed Interface**: Separate views for general management and focused renewal monitoring.
+  - **Real-time Search**: Instant filtering by entity name, ID, or plan type.
+- **Background Automation**
+  - Secure API endpoint (`/api/subscriptions/automate-status`) for scheduled status updates.
+  - Automated transitions: `active` → `due_soon` (14 days before) → `on_hold` (3 days after) → `expired` (30 days after).
+
+### 🧾 Tax Management
+
+- **Compliance & Reporting**
+  - Automated **Monthly Tax Summaries** and detailed VAT/Sales tax reports.
+  - Support for tax data import/export for regulatory filings.
+- **Advanced Tools**
+  - **Tax Forecasting**: Revenue-driven tax liability predictions.
+  - **Optimization**: Tools to ensure correct rate mapping and identify potential savings.
+
+### 🏭 POS Production & Recipe Management
+
+- **Manufacturing Workflow**
+  - **Recipe Builder (BOM)**: Define constituent materials and quantities for finished products.
+  - **Cost/Profit Analysis**: Real-time margin tracking based on ingredient cost fluctuations.
+- **Inventory Integration**
+  - **Automated Stock Deduction**: Deducts raw materials instantly upon production order completion.
+  - **Deduction Simulator**: Pre-production validation of ingredient availability.
+
+### 📦 Procurement System
+
+- **Supplier Relations**
+  - **Supplier Directory**: Centralized management of vendor profiles and performance.
+  - **RFQ Workspace**: Formal workflow for Request for Quotations and vendor analysis.
+- **Order Lifecycle**
+  - **Purchase Orders (PO)**: Standardized document generation and tracking.
+  - **Goods Received (GRN)**: Integrated receiving flow that auto-updates inventory stock.
+
+### 🛡️ Access Control & Subscriptions
+
+- **Subscription-Gated Privileges**
+  - **Plan Modules**: A shop's capabilities are strictly governed by its active subscription `plan`. The `plan_modules` relationship dictates which system features (e.g., POS, Inventory, AI Chat) the shop can access.
+  - **Staff Assignment Safeguard**: When creating or editing staff roles, the system visually maps available privileges against the shop's subscription plan. Users are prevented from being granted rights to modules not included in the shop's current plan.
+  - **Strict Filtering**: Regardless of whether a preset role (e.g., `storeManager`, `cashier`) or a `custom` role is selected, the final privileges saved to the database are strictly filtered against the overlapping module list. Non-subscribed modules are purged at the API submission layer to guarantee compliance.
+- **Module Descriptions & UX**
+  - **Centralized Dictionary**: The `@/lib/privileges/moduleDescriptions.ts` file acts as the single source of truth for all human-readable module definitions, grouping (e.g., 'Operations', 'Dashboards'), and granular actions (e.g., 'Delete Orders', 'Apply Discount').
+  - **Visual Feedback**: The interface renders actionable toggles and read-only badge previews (the `RoleModulePreview` component) natively mapped to these descriptions, grouping privileges organically by their functional domain.
+
+### 🔐 Multi-Factor Authentication (MFA)
+
+- **Dual-Method Support**
+  - **Authenticator App (TOTP)**: Secure, offline code generation compatible with Google Authenticator, Authy, and Microsoft Authenticator.
+  - **SMS OTP (Pindo)**: Direct mobile verification via high-priority SMS delivery through the Pindo gateway.
+- **Intelligent Choice Workflow**
+  - **Dynamic Detection**: The login system automatically identifies which MFA methods a user has configured or which are required by their role.
+  - **Choice Screen**: For users with multiple active methods, a premium selection interface is presented to choose their preferred verification path.
+  - **Auto-Dispatch**: When SMS is selected, the system automatically triggers the OTP dispatch to the user's registered phone number, eliminating redundant clicks.
+- **Security Auditing & Management**
+  - **Administrative Drawer**: A detailed right-side drawer for **Project Users** provides instant visibility into MFA status (Authenticator vs SMS), last login timestamps, and verified device fingerprints.
+  - **Permission Visibility**: Real-time visualization of module-specific permissions (e.g., POS, Inventory, AI Chat) in a clean 2-column grid.
+  - **Audit Logs**: Integrated tracking of "Onboarding Date" and "Last Identity Access" for comprehensive security monitoring.
+- **Production Hardening**
+  - **Strict Type Safety**: All MFA and SMS dispatch flows are hardened with comprehensive TypeScript interfaces and defensive null checks (e.g., `hasuraClient` validation) to prevent runtime crashes during authentication.
+  - **Atomic Database Updates**: Database updates for MFA state (e.g., `TwoAuth_enabled`, `sms_auth`) use atomic Hasura mutations with immediate state synchronization to the client session.
+  - **Resilient Error Handling**: Enhanced error boundaries and toast notifications for SMS delivery failures and invalid TOTP codes, ensuring a smooth user recovery path.
+
+### 🏪 Shop & Subscription Management
+
+- **Automated Onboarding**
+  - **One-Click Setup**: When creating a new shop, the system automatically initializes its entire subscription lifecycle, including Plan assignment, initial AI/Reel usage limits, and the first billing invoice.
+  - **Plan-Driven Limits**: Usage quotas for AI requests and video Reels are dynamically assigned based on the selected marketplace plan at the moment of creation.
+- **Manual Module Overrides**
+  - **Granular Control**: Admins can manually assign or remove specific feature modules (e.g., Inventory, POS, Analytics) for any individual shop, regardless of their base subscription plan.
+  - **Visual Management**: Dedicated "Manual Overrides" section in the Shop Details dashboard with categorized module toggles and real-time status indicators.
+- **Activation Safeguards**
+  - **Subscription Validation**: A shop cannot be activated in the marketplace unless it has an `active` subscription.
+  - **Smart Alerts**: Interactive UI popups prevent accidental activation of non-paying partners, ensuring financial compliance before a shop goes live.
+- **Performance Optimized UI**
+  - **Client-Side Caching**: Shops list uses `useQuery` with advanced caching (`staleTime: 5m`) to ensure near-instantaneous page transitions.
+  - **Payload Optimization**: GraphQL queries are optimized to fetch only essential data for the list view, with heavy details (like full order histories) loaded only on demand.
+
+### 🌐 Subdomain Multi-Tenant Architecture
+
+- **Subdomain Routing (`middleware.ts`)**
+  - **Production Mapping**: Supports `*.plas.rw`. The system automatically identifies the tenant based on the subdomain (e.g., `shopname.plas.rw`) and normalizes it to a `business-id`.
+  - **Platform Admin**: The central `dash.plas.rw` domain is reserved for **Project Users** (Platform Admins) and is isolated from business-specific data.
+  - **Automatic Redirection**: Employees attempting to log in on the main platform domain are automatically identified and redirected to their specific shop's subdomain.
+- **Local Development (`lvh.me`)**
+  - **Zero-Config Subdomains**: Standardized on `*.lvh.me:3000` for local development. This allows testing dynamic subdomains without manually editing `/etc/hosts`.
+  - **Incognito & Security**: Cookies are configured with `domain: .lvh.me` and `sameSite: lax` to ensure session persistence across subdomains and compatibility with Chrome's Incognito restrictions.
+- **Tenant Validation**
+  - **Lookup API**: A high-performance Edge-compatible API (`/api/business/lookup`) verifies tenants and sets an `x-business-id` header and a secure `business-id` cookie.
+  - **Invalid Tenant Protection**: Requests to unregistered subdomains are automatically caught by the middleware and rewritten to a custom `/not-found` experience.
+
+### 🔐 Authentication & Context Layer
+
+- **Modular Auth Architecture**
+  - **Standalone AuthContext**: Authentication state is entirely decoupled from the UI layer. The `AuthProvider` handles token persistence, session expiration (8-hour window), and global auth state.
+  - **Prioritized Login Flow**: The system uses an "Admin-First" lookup strategy. Project Users are identified immediately, skipping unnecessary business-table queries.
+- **Role-Based Redirection**
+  - **Employee Landing**: After a successful login on a subdomain, employees with `globalAdmin` or `storeAdministrator` roles are automatically routed to the `/pos/company-dashboard`.
+  - **POS Entry**: Standard employees land on the `/pos/checkout` page, optimized for immediate operational access.
+- **Dual-Business Architecture (Shops & Restaurants)**
+  - **Interchangeable Session Context**: The `AuthContext` and `LoginModal` natively capture both `shop_id` and `restaurant_id` upon authentication. The platform dynamically routes employees based on their assigned business entity.
+  - **Unified Employee Hook**: The `useCurrentOrgEmployee` hook fetches both `Shops` and `Restaurants` relationships from Hasura simultaneously, allowing the application to instantly identify whether an employee belongs to a retail store or a restaurant.
+  - **Smart Business Selector**: The `ShopSelector` component dynamically detects the active business type, automatically adjusting UI elements (e.g., displaying `Utensils` icon and "Select Restaurant" labels for restaurant staff, or `Store` icon and "Select Shop" for retail staff).
+  - **Dynamic 2FA Verification**: The `ShopAuthModal` adapts its security headers and verification prompts to match the active business name (`${shopName} Authentication`), providing a seamless 2FA experience across both business models without duplicating component logic.
+  - **Unified Sidebar Navigation (`AdminSidebar.tsx`)**: The sidebar layout guards and item visibility filters have been extended to support restaurant sessions. The logic checks for the presence of either `shop_id` or `restaurant_id` (`showShopGuardedItems`) to unlock relevant operational modules. Additionally, the dashboard link title dynamically updates between `Shop Dashboard` and `Restaurant Dashboard` based on `shopSession.isRestaurant`.
+  - **Business-Agnostic Route Protection (`ProtectedShopRoute.tsx`)**: Refactored the route guard mechanism to verify `hasAssignedBusiness` (`shop_id` or `restaurant_id`). It dynamically renders tailored headers ("Restaurant Authentication Required") and descriptions on the 2FA screen if the user is logging into a restaurant business.
+  - **RBAC & Privilege Management (`usePrivilege.ts`, `PrivilegeManager.tsx`)**: The privilege engine (`usePrivilege`) has been unified, updating `isSuperUser` to check for either `shops` or `restaurants` admin configurations. A granular `access_restaurants` control toggle has been introduced under `DEFAULT_PRIVILEGES` and `PrivilegeManager` for fine-grained page-access control.
+- **Security Isolation**
+  - **Domain Strictness**: Project Users are strictly blocked from logging into business subdomains to prevent data contamination.
+  - **Generic Error Handling**: Failed logins use sanitized error messages ("User not found in the organizations") to prevent user enumeration and account discovery.
+
 ## Features
 
 ### 📊 Real-time Analytics Dashboard
@@ -30,6 +146,27 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Order assignment to plasas
   - Delivery time estimation
   - Customer communication tools
+
+### 📈 Enhanced Order Operations & Financial Visibility
+
+#### 1. Centralized Financial Tracking
+
+- **Unified Transaction Layer**: Integrated `order_transactions` and `Wallet_Transactions` into a single global interface (`UnifiedOrder`).
+- **Global Transactions Dashboard**: A dedicated view to track all financial movements (Revenue, Wallet Credits, Refunds) across Regular, Business, Reel, and Restaurant orders in one place.
+- **Real-time Reconciliation**: Live status monitoring of payment gateway responses (e.g., MTN MOMO) integrated directly into the order details.
+
+#### 2. Shopper fleet & Notifications
+
+- **Smart Dispatching**: Manual and automated order assignment to shoppers with real-time fleet availability checks.
+- **Firebase/FCM Integration**: Production-ready notification system that triggers instant alerts to shopper mobile devices upon order offer or assignment.
+- **Notification Persistence**: Firestore-backed notification history for shoppers to track their assignment logs.
+
+#### 3. Advanced Admin UI (Table 2.0)
+
+- **Dynamic Column Management**: User-configured column visibility with `localStorage` persistence. Admins can customize their view and the system remembers it.
+- **Horizontal Table Scrolling**: Optimized for data-heavy views; the table scrolls independently of the page layout, ensuring stability on all screen sizes.
+- **Quick-Copy ID System**: Hover-to-copy functionality for all Order IDs, Package IDs, and Combined Batch IDs for rapid support and tracking.
+- **Universal Search**: Integrated real-time search across all operational tabs (Individual, Grouped, Combined, Packages, and Offers).
 
 ### 💰 Financial Management
 
@@ -60,7 +197,40 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Performance-based earnings (0.75% commission)
   - Detailed analytics for referrers
 
+### 🤖 AI Chat & Assistant
+
+- **AI Chat**
+  - Real-time AI chat interface for data querying and reporting
+  - Role-based Access Control (RBAC) integration for secure access
+  - Custom module privileges (`ai_chat`) configurable per user role
+  - Context-aware global floating chat button access
+
+### 📱 Reels Content Management
+
+- **Cloud-Native Storage**
+  - **Firebase Integration**: Replaced legacy base64 database storage with Firebase Storage for high-performance video and image hosting.
+  - **Automatic Cleanup**: Integrated lifecycle management that deletes Firebase assets when reels are removed from the database.
+- **Smart Content Processing**
+  - **Intelligent Compression**: Client-side video re-encoding (H.264/AAC, 720p) for files >30MB to ensure fast uploads and smooth mobile playback.
+  - **Hard Limits**: Enforced 100MB upload ceiling to maintain browser stability and performance.
+  - **Broad Compatibility**: Robust video loading logic supporting all major browsers (Chrome, Safari, Firefox).
+- **Flexible Content Types**
+  - **Dual Mode**: Support for both direct file uploads and YouTube URL integration.
+  - **Multimedia**: Seamless support for both short-form video and high-quality image reels.
+- **Entity-Based Association**
+  - **Granular Ownership**: Reels can be specifically assigned to **Shops**, **Restaurants**, or **Business Accounts**.
+  - **Entity Association**: Attach content to Shops, Restaurants, or **Business Accounts** with intelligent ownership resolution.
+- **Advanced Content Controls**
+  - **Filtering**: Tabbed navigation to filter content by source (User, Restaurant, Shop, Business).
+  - **Upload Management**: Real-time progress tracking with the ability to cancel ongoing uploads.
+  - **Status Toggling**: Instant active/inactive state management for content moderation.
+
 ### 🏪 Point of Sale (POS)
+
+- **Dual-Business Inventory Management**
+  - **Unified Interface**: The POS inventory interface seamlessly supports both standard retail Shops and Restaurant businesses without redundant logic.
+  - **Context-Aware Handling**: Dynamically fetches and manages either standard retail `products` or `restaurant_menu` items based on the active session context (`isRestaurant`).
+  - **Smart Item Creation**: When manually adding or importing inventory, if a product/dish doesn't already exist, the system automatically creates the underlying record in the master `productNames` or `dishes` table. It then seamlessly assigns the newly generated ID to the shop's specific inventory or restaurant's menu to ensure a smooth, uninterrupted workflow.
 
 - **Company Dashboard**
   - Multi-store performance tracking
@@ -74,6 +244,26 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Staff performance metrics
   - Category-wise sales analysis
 
+- **POS Performance Board (`POSBoard.tsx`)**
+  - **Role-Based Access Guard**: Restricts page access to authorized personnel (e.g. `storeadministrator`, `storemanager`, `assistantmanager`, `cashier`, `globaladmin`, `systemadmin`). Unauthorized access displays a clean, user-friendly "Access Denied" barrier.
+  - **Multi-Tenant Branch Switcher**: Administrators (`globaladmin`, `systemadmin`, `storeadministrator`) can toggle between their active branch, specific sibling branches, or view cumulative analytics across "All Branches".
+  - **UUID Relationship Mapping**: Resolves parent-child hierarchies using the store's `relatedTo` field. Ensures that managers can only access and aggregate data for sibling branches belonging to the same parent store/restaurant business group.
+  - **Dynamic Parallel Data Fetching**: Fetches and aggregates employee logs, sales checkouts, retail orders, restaurant orders, and live kitchen queues in parallel when switching branch context.
+  - **Top Waiter Spotlight**: Highlights the highest-grossing staff member using a rich themed gradient (`bg-gradient-to-br from-primary/5 via-card to-primary/15`), high-contrast text, and gold borders.
+  - **Client Traffic & Revenue Composed Chart**: Renders a dual-axis composed chart:
+    - **Sales Revenue** plotted as an Area layout filled with the active brand primary color.
+    - **Client/Ticket Volume** plotted as a Bar layout displaying client throughput per timeframe.
+    - Automatically calculates and lists the peak customer volume day.
+  - **Live stats**: Computes cumulative POS revenue, total transaction counts, average ticket sizes, and active staff counts.
+  - **Waiter & Employee Performance Leaderboard**: Tracks staff sales quantity, average ticket size, and total sales revenue contribution. Shows their percentage share of cumulative revenue rather than absolute values to protect wage details.
+  - **Today-Only Kitchen Queue Filter**: Displays live kitchen orders updated on the current calendar day. Automatically falls back to today's simulated tickets if no active live records are retrieved.
+  - **Inline Search Filters**: Real-time text search inputs filter both the Waiter Leaderboard and the Kitchen Live Queue independently.
+  - **Themed Layouts**: Reads colors dynamically from `ThemeColorProvider` to style charts, and adapts lines, grid borders, and tooltips automatically to dark and light modes.
+  - **Dashboard Skeleton Loader**: Renders a pulsing layout of cards, statistic gauges, chart containers, and tables during the initial loading phase.
+
+- **POS Login Lock Screen (`POSLoginScreen.tsx`)**
+  - **Loading Skeleton Grid**: Replaced the default spinner with an 8-slot employee profile card skeleton grid. Each item details avatar circles and name placeholders to prevent page layout shifting during data loading.
+
 - **POS Checkout System**
   - Real-time cart management
   - Product search by SKU/barcode
@@ -83,20 +273,42 @@ A modern, feature-rich dashboard for managing delivery operations, point of sale
   - Pending checkout management (24-hour storage)
   - Real-time customer display screen
 
-- **Customer Display Screen**
-  - Second screen functionality for customer visibility
-  - Real-time order updates via localStorage synchronization
-  - Professional 2-column layout (Order Details + Transaction Details)
-  - Currency formatting based on system configuration
-  - Responsive design optimized for device displays
-  - MOMO payment integration with QR code scanning
+- **Weighing Station (`WeighingStation.tsx`)**
+  - **Dynamic Unit Support**: Advanced dual-mode support for both weighed items (`kg`) and quantity-based items (`pcs` for bakeries/cupcakes). Automatically detects `measurement_unit` and adapts the entire interface (labels, precision, and preset buttons).
+  - **Digital Scale Panel**: High-fidelity simulated LED digital weight readout screen featuring smooth `requestAnimationFrame` counting animations during value adjustments.
+  - **Interactive Controls**: Features a responsive slider and fast preset buttons (`0.25 kg`, `1.00 kg`, etc.) alongside a dedicated Numpad Modal for precision touch-screen entry.
+  - **Scale Code Generator**: Creates unique 6-digit redemption codes verified against Firestore (`weighed_items`). Can generate a clean, printable thermal scale label with a Code 39 barcode.
+  - **Tabbed Session Interface**: The UI uses a dense tabbed layout to cleanly separate the active "Weight Simulator" from the real-time "Session History" list, solving flex-overflow issues on smaller POS screens.
+  - **Seamless Redemption**: Cashiers can scan printed scale labels at checkout. The "Redeem" modal supports automated USB Scanner entry—listening for the `Enter` keystroke to instantly redeem and close without extra clicks.
 
-- **MOMO Payment Integration**
-  - USSD code generation for mobile money payments
-  - QR code generation with tel: protocol for direct dialing
-  - Customer display popup for payment instructions
-  - Real-time payment status updates
-  - Professional black and white design theme
+- **POS System-Wide Currency Localization**
+  - **Dynamic Formatting**: Replaced all hardcoded currency symbols (`$`) across the entire POS module with the dynamic `formatCurrencyWithConfig` utility.
+  - **System Configurations**: Integrated the `useSystemConfig` hook in checkout flows (`RestaurantCheckout.tsx`, `ShopCheckout.tsx`), inventory tables, discount management, and performance charts to read the active store's real currency settings directly from the Hasura database.
+  - **Receipts & Invoices**: Ensures all KOTs (Kitchen Order Tickets), pre-bills, and customer receipts print with the correct multi-tenant currency standard without duplicating prefixes.
+
+- **Kitchen Tickets & Queue Enhancements**
+  - **Live Table Status**: Enhanced the "Clients Still Eating" tracking interface for restaurants to manage ongoing orders before settlement.
+  - **Kitchen Search & Pagination**: Added client-side real-time search filtering (by token number, table, waiter, or status) and 10-item pagination to the Kitchen Tickets Queue (`RestaurantCheckout.tsx`) for performance and ease of use under high load.
+  - **Smart Token Generation**: Upgraded order ticketing to use unique sequential identifiers (e.g., `#TK-123`). Prevented duplicate tokens from mixing in the kitchen and ensured new tokens are only generated for distinct, unpaid orders.
+  - **Incremental Order Dispatch**: Modified the POS logic to ensure that if a waiter adds new items to a ticket that has already been sent to the kitchen (or served), _only the newly added items_ are dispatched to the kitchen. This prevents the kitchen from recreating items that were already prepared.
+  - **Database Synchronization**: Fully connected the Kitchen Queue UI to the Hasura database. Action buttons now trigger GraphQL mutations (`update_kitchenQueue`) to persist the ticket status in real-time, ensuring seamless communication between the POS frontend and the dedicated Kitchen Display Screen.
+
+- **Customer Display Screen**
+  - **Second-Screen Sync**: Real-time order cart state, discount values, and checkout details synchronized via `localStorage` triggers.
+  - **Premium Theme System**: Integrated with `ThemeColorProvider` to align layouts dynamically with the custom shop brand colors.
+  - **MOMO Quick Dial Display**: Automatically pulls the custom merchant USSD code configured in the `Shops` database. If empty, the dialog falls back to the standard dynamic Plasa merchant code (`*182*8*1*${merchantId}*${amount}#`).
+  - **QR Code Visibility Guard**: The QR code is kept hidden on the primary customer display screen, showing up only inside the dedicated Momo payment modal to keep the layout clean.
+  - **Theme-Aware Styling**: The customer display and dialog match the brand colors and support dark/light theme shifts.
+
+- **MOMO Payment Integration & Cashier Sync**
+  - **Cashier Control Toggle**: The cashier/POS checkout screen features a smart toggle button to open or close the MOMO dialog on the Customer Display.
+  - **Cross-Window Sync**: Utilizes a synchronized `momoDialogOpen` `localStorage` listener and storage events to instantly align both windows when either side triggers an open or close action.
+  - **Presence Check**: The "Open MOMO Payment on Customer Display" button only renders if a merchant SSD is configured, preventing confusion for shops without mobile money configured.
+  - **Dialable QR Code**: Generates a dynamic QR code embedded with the `tel:` protocol containing URL-encoded USSD dial instructions to allow customers scanning the screen to dial directly on their phones.
+
+- **Dynamic System Tax Calculations**
+  - **Config-Driven Calculations**: Tax is computed using the dynamic `tax` value fetched from the Hasura system configuration database query (`GET_SYSTEM_CONFIG`), completely deprecating the hardcoded 8% rate.
+  - **End-to-End Alignment**: Dynamic tax rates are implemented across POS Checkout screens (`ShopCheckout`), Cart Summary layouts (`CartSummaryCard`), printed receipts, and POS Transaction views (`Transactions.tsx`).
 
 ### 📱 **Real Barcode & QR Code Scanning System**
 
@@ -1985,16 +2197,6 @@ const { hasProjectAction } = useProjectPrivilege();
 
 ---
 
-**For more details, see:**
-
-- `src/types/projectPrivileges.ts`
-- `src/lib/privileges/projectRolePrivileges.ts`
-- `src/components/pages/ProjectUsers.tsx`
-- `src/app/project-users/page.tsx`
-- `src/graphql/ProjectUsers.graphql`
-
----
-
 ## 📊 Complete Privilege & Role System Summary
 
 ### **🎯 System Overview**
@@ -2125,8 +2327,9 @@ The Plas Dashboard implements a **dual privilege system** with complete separati
 1. **Login**: User authenticates with credentials
 2. **Role Detection**: System determines user type (store staff vs project user)
 3. **Privilege Loading**: Loads appropriate privilege system
-4. **Session Creation**: Creates user session with privileges
-5. **Access Control**: Enforces privileges throughout the application
+   4.- **Entity Association**: Attach content to Shops, Restaurants, or **Business Accounts** with intelligent ownership resolution.
+
+- **Advanced Controls**: Fine-grained is_active toggles and content-type specific behaviors (Shopping vs. Recipe).
 
 ---
 
@@ -2867,3 +3070,109 @@ This comprehensive documentation covers all aspects of the Reels component, from
   - Tracking the cost of production and margin realization.
 - **Role-Based Protection**
   - Protected routes requiring 'inventory' privilege on a specific shop.
+
+---
+
+## 🏢 Multi-Branch Architecture & Analytics Engine
+
+The Plas Dashboard features a state-of-the-art **Multi-Branch Operations & Analytics Engine** designed to unify multi-channel sales data, enforce subscription-based branch limits, and deliver stunning executive insights across both retail shops and restaurant chains.
+
+```mermaid
+graph TD
+    subgraph Subscription Gating
+        Plan[Subscription Plan] -->|num_of_branch| Gate[Add Branch UI Gate]
+        CurrentBranches[Existing Branches] --> Gate
+        Gate -->|Limit Exceeded| Toast[Sonner Alert]
+        Gate -->|Within Limit| Modal[Open Branch Modal]
+    end
+
+    subgraph Multi-Channel Order Engine
+        RegOrders[Regular Orders] --> Dedup[Deduplication Set]
+        RestOrders[Restaurant Orders] --> Dedup
+        ReelOrders[Reel Orders] --> Dedup
+        Dedup --> Branch[Branch Performance Object]
+        Branch --> TotRev[Total Revenue]
+        Branch --> TotOrd[Total Orders]
+        Branch --> Perf[Performance %]
+    end
+
+    subgraph Themed UI Layer
+        Theme[ThemeColorProvider] --> Charts[Recharts: Pie & Bar]
+        TotRev --> CompanyDash[Company Dashboard]
+        TotOrd --> CompanyDash
+        Charts --> CompanyDash
+        Charts --> ShopDash[Shop Dashboard]
+    end
+```
+
+### 🏛️ 1. Multi-Branch Architecture & Gating (`src/app/pos/company-dashboard`)
+
+#### **`has_branch` Data Isolation**
+
+- **Single-Location Optimization**: The system inspects the `has_branch` boolean attribute on the primary business account (`Shops` or `Restaurants`). If `false`, secondary branch queries are entirely bypassed at the GraphQL layer. E.g., this prevents unnecessary database lookups, enhances client-side query performance, and guarantees strict data isolation for single-location businesses.
+- **Dynamic Branch Expansion**: When `has_branch` is `true`, the `useBranchShops` hook automatically fetches all child branches related to the parent business (`relatedTo` attribute), structuring them into a unified operational tree.
+
+#### **Subscription Limit Enforcement (`num_of_branch`)**
+
+- **Plan-Aware Quotas**: Subscription queries (`shop-subscriptions/route.ts`) actively fetch the `num_of_branch` limit defined in the company's active marketplace plan.
+- **Client-Side Capacity Checking**: The `CompanyDashboard` utilizes the `useShopSubscriptionModules` hook to evaluate active subscription tiers against the current branch count.
+- **Action Gating & Toast Alerts**: The "Add Branch" action button is dynamically gated:
+  - If `num_of_branch` is `0` (e.g., basic tier), the button is completely hidden from the UI.
+  - If the user attempts to add a branch that exceeds their allowed quota, a premium `sonner` toast notification alerts them to upgrade their subscription plan, preventing unauthorized branch creation before any database mutation occurs.
+
+### 🔄 2. Multi-Channel Revenue & Order Aggregation (`useBranchShops.ts`)
+
+To resolve historical revenue discrepancies and provide true executive visibility, the data layer implements a unified aggregation engine across all sales channels:
+
+#### **Unified Order Engine**
+
+- **Regular Retail Orders (`Orders`)**: Standard POS and e-commerce checkouts for supermarket locations.
+- **Restaurant Orders (`restaurant_orders`)**: Table-side, delivery, and pickup orders containing specific dish relationships and kitchen status flows.
+- **Video Marketplace Orders (`reel_orders`)**: Sales originating from shoppable video reels and promotional feeds.
+
+#### **Deduplication Strategy**
+
+```typescript
+// useBranchShops.ts - Order deduplication and aggregation
+const baseOrders = shop.Orders || [];
+const baseOrderIds = new Set(baseOrders.map((o: any) => o.id));
+
+const matchingReelOrders = reelOrdersList.filter((ro: any) => {
+  const reelShopId = ro.Reel?.shop_id || ro.Reel?.restaurant_id || ro.Shops?.[0]?.id;
+  return reelShopId === shop.id && !baseOrderIds.has(ro.id);
+});
+matchingReelOrders.forEach((ro: any) => baseOrderIds.add(ro.id));
+
+const matchingRegularOrders = regularOrdersList.filter((ro: any) => {
+  return (
+    (ro.shop_id === shop.id || ro.restaurant_id === shop.id || ro.Shop?.id === shop.id) &&
+    !baseOrderIds.has(ro.id)
+  );
+});
+
+const allCombinedOrders = [...baseOrders, ...matchingReelOrders, ...matchingRegularOrders];
+```
+
+#### **Historical Revenue Alignment**
+
+- **Discrepancy Resolution**: Previously, branch order counts reflected all-time history while revenue defaulted strictly to the current calendar month, causing active branches to display `Orders: 1, Revenue: RWF 0`.
+- **Metric Parity**: The `storePerformance` mapping now aligns `shop.totalRevenue` directly with `shop.totalOrders`. E.g., if a branch has accumulated orders from previous months or years, the total financial value is perfectly preserved and reflected in the Branch Store list and Performance calculation (`(totalRevenue / target) * 100`).
+
+### 🎨 3. Advanced UI Aesthetics & Theming (`src/app/pos/shop-dashboard` & `src/app/pos/company-dashboard`)
+
+The dashboard interfaces have been overhauled to meet premium, enterprise-grade design standards:
+
+#### **`ThemeColorProvider` Integration**
+
+- **Curated HSL Palettes**: Recharts visual containers (`PieChart` for Top Selling Products, `BarChart` for Branch Stock Health & Distribution) dynamically consume HSL color tokens injected by the global `ThemeColorProvider`.
+- **Harmonious Visuals**: Eliminates generic primary colors in favor of sleek, brand-aligned palettes that adapt flawlessly across light and dark modes.
+
+#### **Layout Density Optimization**
+
+- **Executive Vertical Rhythm**: Replaced loose flex containers (`justify-between`) with structured vertical rhythms (`justify-start space-y-3`), eliminating awkward whitespace gaps around charts and inventory alert cards.
+- **Responsive Container Scaling**: All charts are wrapped in `ResponsiveContainer` components with strict `max-height` constraints (`h-48`, `h-64`) to ensure compact, high-density presentation on desktop displays without clipping legends or labels.
+
+#### **Entity-Aware Analytics**
+
+- **Shop vs Restaurant Detection**: The dashboard dynamically adapts its analytics cards depending on the active business entity.
+- **Contextual Insights**: For restaurants, "Top Selling Products" maps directly to kitchen dishes and order items, whereas retail shops display inventory products and SKU performance, providing a fully customized executive experience.

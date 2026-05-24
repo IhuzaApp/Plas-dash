@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { hasuraClient } from '@/lib/hasuraClient';
 import { gql } from 'graphql-request';
 
@@ -37,7 +37,32 @@ const GET_SHOPS = gql`
           count
         }
       }
-      Orders(order_by: { created_at: desc }, limit: 50) {
+      promotions {
+        id
+        name
+        code
+        status
+        discount_type
+        discount_value
+        start_date
+        end_date
+        budget_limit
+        budget_used
+      }
+      shop_subscription {
+        id
+        status
+        start_date
+        end_date
+        billing_cycle
+        plan {
+          id
+          name
+          price_monthly
+          price_yearly
+        }
+      }
+      Orders(order_by: { created_at: desc }, limit: 10) {
         id
         OrderID
         status

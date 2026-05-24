@@ -194,7 +194,10 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
         <>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className="bg-red-50 text-red-600 hover:bg-red-100">
+              <Button
+                variant="outline"
+                className="text-destructive border-destructive/20 hover:bg-destructive/5"
+              >
                 Reject Application
               </Button>
             </AlertDialogTrigger>
@@ -208,7 +211,7 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleReject} className="bg-red-600">
+                <AlertDialogAction onClick={handleReject} variant="destructive">
                   Reject Application
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -217,7 +220,9 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700">Approve Application</Button>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                Approve Application
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -229,7 +234,10 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleApprove} className="bg-green-600">
+                <AlertDialogAction
+                  onClick={handleApprove}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
                   Approve Application
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -240,13 +248,13 @@ const ShopperActions: React.FC<ShopperActionsProps> = ({
       {shopper?.status === 'approved' && hasAction('shoppers', 'edit_shoppers') && (
         <Button
           variant="outline"
-          className="bg-red-50 text-red-600 hover:bg-red-100"
+          className="text-destructive border-destructive/20 hover:bg-destructive/5"
           onClick={() => handleReject()}
         >
           Suspend Account
         </Button>
       )}
-      {hasAction('shoppers', 'send_message') && <Button>Send Message</Button>}
+      {hasAction('shoppers', 'send_message') && <Button variant="default">Send Message</Button>}
     </div>
   );
 };

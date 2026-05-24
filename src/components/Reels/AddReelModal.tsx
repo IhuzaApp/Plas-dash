@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import ReactPlayer from 'react-player';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,15 +23,19 @@ import {
   FileVideo,
   ToggleLeft,
   ToggleRight,
+  Edit,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAddReel } from '@/hooks/useHasuraApi';
-import { useAuth } from '@/components/layout/RootLayout';
+import { useAddReel, useShops, useRestaurants, useBusinessAccounts } from '@/hooks/useHasuraApi';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentOrgEmployee } from '@/hooks/useCurrentOrgEmployee';
+import { uploadFileToFirebase } from '@/lib/firebaseStorage';
+import { compressVideo } from '@/lib/videoCompression';
+import { UploadTask } from 'firebase/storage';
 
-type PostType = 'restaurant' | 'supermarket' | 'chef';
+type PostType = 'restaurant' | 'shop' | 'business' | 'user' | 'system';
 
-// Category types for video handling
+// Categories for reference, but no longer strict bounds for upload types
 const YOUTUBE_CATEGORIES = ['tutorial', 'recipe', 'cooking'];
 const UPLOAD_CATEGORIES = ['shopping', 'organic', 'food', 'delivery'];
 
@@ -42,9 +47,23 @@ interface AddReelModalProps {
 
 const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSuccess }) => {
   const addReelMutation = useAddReel();
+  const { data: shopsData, isLoading: isLoadingShops } = useShops();
+  const { data: restaurantsData, isLoading: isLoadingRestaurants } = useRestaurants();
+  const { data: businessesData, isLoading: isLoadingBusinesses } = useBusinessAccounts();
   const { session } = useAuth();
   const { orgEmployee } = useCurrentOrgEmployee();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTaskRef = useRef<UploadTask | null>(null);
+
+  const handleCancelUpload = React.useCallback(() => {
+    if (uploadTaskRef.current) {
+      uploadTaskRef.current.cancel();
+      uploadTaskRef.current = null;
+      setIsUploading(false);
+      setUploadProgress(0);
+      toast.info('Upload cancelled');
+    }
+  }, []);
 
   // Form state for adding reels
   const [formData, setFormData] = useState({
@@ -57,80 +76,107 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
     delivery_time: '',
     shop_id: '',
     restaurant_id: '',
+    business_id: '',
     is_active: true,
   });
 
   // Upload state
-  const [uploadedVideo, setUploadedVideo] = useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [videoSource, setVideoSource] = useState<'upload' | 'youtube'>('upload');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [youtubePreviewUrl, setYoutubePreviewUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
-  // Check if category allows YouTube URLs
+  // Determine if user can manually assign shops/restaurants (e.g. they are an admin/agent)
+  const isAgent = !session?.shop_id && !orgEmployee?.restaurant_id;
+
+  // Helper function to check category types
   const isYouTubeCategory = (category: string) => {
     return YOUTUBE_CATEGORIES.includes(category.toLowerCase());
   };
 
-  // Check if category requires video upload
   const isUploadCategory = (category: string) => {
     return UPLOAD_CATEGORIES.includes(category.toLowerCase());
   };
 
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Check file type
-      if (!file.type.startsWith('video/')) {
-        toast.error('Please select a valid video file');
+      if (!file.type.startsWith('video/') && !file.type.startsWith('image/')) {
+        toast.error('Please select a valid video or image file');
         return;
       }
 
-      // Check file size (max 50MB for base64 storage)
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error('Video file size must be less than 50MB for database storage');
+      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(
+          `File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum limit is 100MB.`
+        );
         return;
       }
 
-      setUploadedVideo(file);
-      setIsUploading(true);
+      setUploadedFile(file);
+      setFilePreview(URL.createObjectURL(file));
 
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setVideoPreview(previewUrl);
+      // Handle upload
+      const startUpload = async (fileToUpload: File | Blob) => {
+        setIsUploading(true);
+        setUploadProgress(0);
 
-      // Start base64 conversion progress
-      setUploadProgress(0);
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(interval);
-            return 90;
+        const folder = file.type.startsWith('image/') ? 'images' : 'videos';
+
+        uploadFileToFirebase(
+          fileToUpload as File,
+          progress => {
+            setUploadProgress(progress);
+          },
+          folder,
+          task => {
+            uploadTaskRef.current = task;
           }
-          return prev + Math.random() * 10; // Simulate conversion progress
-        });
-      }, 200);
+        )
+          .then(url => {
+            setFormData(prev => ({ ...prev, video_url: url }));
+            setIsUploading(false);
+            toast.success(
+              `${file.type.startsWith('image/') ? 'Image' : 'Video'} uploaded successfully!`
+            );
+          })
+          .catch(error => {
+            setIsUploading(false);
+            toast.error('Failed to upload file');
+            removeUploadedFile();
+          });
+      };
 
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onload = () => {
-        clearInterval(interval);
-        setUploadProgress(100);
-        setIsUploading(false);
-        toast.success('Video processed successfully!');
-      };
-      reader.onerror = () => {
-        clearInterval(interval);
-        setIsUploading(false);
-        toast.error('Failed to process video');
-        removeUploadedVideo();
-      };
-      reader.readAsDataURL(file);
+      console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+
+      // Only compress videos if they are large
+      if (file.type.startsWith('video/') && file.size > 30 * 1024 * 1024) {
+        setIsCompressing(true);
+        toast.info('Compressing video to reduce size...', { duration: 5000 });
+
+        compressVideo(file)
+          .then(compressedFile => {
+            setIsCompressing(false);
+            startUpload(compressedFile);
+          })
+          .catch(error => {
+            console.error('Compression failed:', error);
+            setIsCompressing(false);
+            startUpload(file);
+          });
+      } else {
+        startUpload(file);
+      }
     }
   };
 
-  const removeUploadedVideo = () => {
-    setUploadedVideo(null);
-    setVideoPreview(null);
+  const removeUploadedFile = () => {
+    setUploadedFile(null);
+    setFilePreview(null);
     setUploadProgress(0);
     setIsUploading(false);
     if (fileInputRef.current) {
@@ -138,55 +184,34 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
     }
   };
 
-  const uploadVideoToServer = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          // Store the base64 video data directly in the database
-          resolve(reader.result);
-        } else {
-          reject(new Error('Failed to convert video to base64'));
-        }
-      };
-
-      reader.onerror = () => reject(new Error('Failed to read video file'));
-
-      // Convert video to base64
-      reader.readAsDataURL(file);
-    });
-  };
+  // Removed uploadVideoToServer as it is replaced by uploadVideoToFirebase
 
   const handleAddReel = async () => {
     try {
       let videoUrl = formData.video_url;
 
-      // Validate based on category
-      if (isYouTubeCategory(formData.category)) {
+      // Transform short URLs on save
+      if (videoUrl && videoUrl.includes('/shorts/')) {
+        videoUrl = videoUrl.replace('/shorts/', '/watch?v=');
+      }
+
+      // Validate based on the selected video source
+      if (videoSource === 'youtube') {
         if (!videoUrl || (!videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be'))) {
-          toast.error(
-            'Please provide a valid YouTube URL for tutorial, recipe, or cooking categories'
-          );
+          toast.error('Please provide a valid YouTube URL');
           return;
         }
-      } else if (isUploadCategory(formData.category)) {
-        if (!uploadedVideo && !videoUrl) {
-          toast.error('Please upload a video file for this category');
+      } else if (videoSource === 'upload') {
+        if (!uploadedFile && !videoUrl) {
+          toast.error('Please upload a file or provide a URL');
           return;
         }
       }
 
-      // If there's an uploaded video, convert it to base64
-      if (uploadedVideo) {
-        setUploadProgress(90);
-        try {
-          videoUrl = await uploadVideoToServer(uploadedVideo);
-          setUploadProgress(100);
-        } catch (error) {
-          toast.error('Failed to process video file');
-          return;
-        }
+      // If there's an uploaded file, the URL should already be in formData.video_url from handleFileUpload
+      if (uploadedFile && !formData.video_url) {
+        toast.error('Please wait for the file to finish uploading');
+        return;
       }
 
       if (!videoUrl) {
@@ -211,24 +236,31 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
         Price: formData.Price || '0',
         delivery_time: formData.delivery_time || '',
         user_id: null, // Set to null by default for shop/restaurant users
+        business_id: null,
         likes: '0',
         is_active: formData.is_active,
       };
 
-      // Set shop_id or restaurant_id based on the current user's context
-      if (currentUser.shop_id) {
-        mutationVariables.shop_id = currentUser.shop_id;
+      // Set shop_id or restaurant_id based on manual selection (if agent) or current user's context
+      if (isAgent) {
+        mutationVariables.shop_id = formData.shop_id || null;
+        mutationVariables.restaurant_id = formData.restaurant_id || null;
+        mutationVariables.business_id = formData.business_id || null;
+      } else {
+        mutationVariables.shop_id = currentUser.shop_id || null;
+        mutationVariables.restaurant_id = currentUser.restaurant_id || null;
+        mutationVariables.business_id = null;
       }
 
-      if (currentUser.restaurant_id) {
-        mutationVariables.restaurant_id = currentUser.restaurant_id;
-      }
-
-      // Only set user_id if we have a valid UUID and no shop/restaurant context
-      if (currentUser.user_id && !currentUser.shop_id && !currentUser.restaurant_id) {
+      // Only set user_id if we have a valid UUID and no shop/resturarant context and the user is NOT a project user
+      if (
+        currentUser.user_id &&
+        !mutationVariables.shop_id &&
+        !mutationVariables.restaurant_id &&
+        !session?.isProjectUser
+      ) {
         mutationVariables.user_id = currentUser.user_id;
       }
-
       // Validate required fields
       if (!mutationVariables.title || !mutationVariables.video_url || !mutationVariables.category) {
         toast.error('Please fill in all required fields (title, video, category)');
@@ -258,10 +290,12 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
       delivery_time: '',
       shop_id: '',
       restaurant_id: '',
+      business_id: '',
       is_active: true,
     });
-    setUploadedVideo(null);
-    setVideoPreview(null);
+    setUploadedFile(null);
+    setFilePreview(null);
+    setYoutubePreviewUrl(null);
     setUploadProgress(0);
     setIsUploading(false);
     if (fileInputRef.current) {
@@ -271,7 +305,10 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+      <SheetContent
+        side="right"
+        className="w-[90vw] !max-w-[1000px] sm:w-[600px] md:w-[800px] lg:w-[1000px] overflow-y-auto"
+      >
         <SheetHeader>
           <SheetTitle>Add New Reel</SheetTitle>
           <p className="text-sm text-muted-foreground">
@@ -311,8 +348,10 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="restaurant">Restaurant</SelectItem>
-                <SelectItem value="supermarket">Supermarket</SelectItem>
-                <SelectItem value="chef">Chef</SelectItem>
+                <SelectItem value="shop">Shop</SelectItem>
+                <SelectItem value="business">Business</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="system">System</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -338,65 +377,197 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
             </Select>
           </div>
 
-          {/* YouTube URL Input - Only for tutorial, recipe, cooking */}
-          {isYouTubeCategory(formData.category) && (
-            <div>
-              <Label htmlFor="video_url" className="flex items-center gap-2">
-                <Youtube className="h-4 w-4 text-red-500" />
-                YouTube URL
-              </Label>
-              <Input
-                id="video_url"
-                value={formData.video_url}
-                onChange={e => setFormData({ ...formData, video_url: e.target.value })}
-                placeholder="https://www.youtube.com/watch?v=..."
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Only YouTube URLs are allowed for {formData.category} category
-              </p>
+          {isAgent && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="shop_id">Assign to Shop</Label>
+                <Select
+                  value={formData.shop_id}
+                  onValueChange={value =>
+                    setFormData({ ...formData, shop_id: value, restaurant_id: '', business_id: '' })
+                  }
+                >
+                  <SelectTrigger id="shop_id">
+                    <SelectValue placeholder={isLoadingShops ? 'Loading...' : 'Select Shop'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {shopsData?.Shops?.map((shop: any) => (
+                      <SelectItem key={shop.id} value={shop.id}>
+                        {shop.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="restaurant_id">Assign to Restaurant</Label>
+                <Select
+                  value={formData.restaurant_id}
+                  onValueChange={value =>
+                    setFormData({ ...formData, restaurant_id: value, shop_id: '', business_id: '' })
+                  }
+                >
+                  <SelectTrigger id="restaurant_id">
+                    <SelectValue
+                      placeholder={isLoadingRestaurants ? 'Loading...' : 'Select Restaurant'}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {restaurantsData?.Restaurants.map(r => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="business_id">Assign to Business Account (Optional)</Label>
+                <Select
+                  value={formData.business_id || 'none'}
+                  onValueChange={value =>
+                    setFormData(prev => ({
+                      ...prev,
+                      business_id: value === 'none' ? '' : value,
+                      shop_id: '', // Mutual exclusion
+                      restaurant_id: '', // Mutual exclusion
+                    }))
+                  }
+                >
+                  <SelectTrigger id="business_id">
+                    <SelectValue placeholder="Select a business..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {businessesData?.business_accounts.map(b => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.business_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 
-          {/* Video Upload - Only for shopping, organic, food, delivery */}
-          {isUploadCategory(formData.category) && (
+          {/* Video Source Selection */}
+          <div>
+            <Label className="mb-2 block text-sm font-medium">Video Source</Label>
+            <div className="flex gap-4">
+              <Button
+                type="button"
+                variant={videoSource === 'upload' ? 'default' : 'outline'}
+                onClick={() => setVideoSource('upload')}
+                className="flex-1"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Upload File or URL
+              </Button>
+              <Button
+                type="button"
+                variant={videoSource === 'youtube' ? 'default' : 'outline'}
+                onClick={() => setVideoSource('youtube')}
+                className="flex-1"
+              >
+                <Youtube className="mr-2 h-4 w-4" />
+                YouTube URL
+              </Button>
+            </div>
+          </div>
+
+          {/* YouTube URL Input */}
+          {videoSource === 'youtube' && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="video_url" className="flex items-center gap-2 mb-2">
+                  <Youtube className="h-4 w-4 text-red-500" />
+                  YouTube URL
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="video_url"
+                    value={formData.video_url}
+                    onChange={e => {
+                      setFormData({ ...formData, video_url: e.target.value });
+                      if (!e.target.value) setYoutubePreviewUrl(null);
+                    }}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      let url = formData.video_url;
+                      if (url && url.includes('/shorts/')) {
+                        url = url.replace('/shorts/', '/watch?v=');
+                      }
+                      setYoutubePreviewUrl(url);
+                    }}
+                  >
+                    Pull Video
+                  </Button>
+                </div>
+              </div>
+
+              {youtubePreviewUrl &&
+                (youtubePreviewUrl.includes('youtube.com') ||
+                  youtubePreviewUrl.includes('youtu.be')) && (
+                  <div className="border rounded-lg bg-black overflow-hidden relative aspect-video mt-4">
+                    <ReactPlayer src={youtubePreviewUrl} width="100%" height="100%" controls />
+                  </div>
+                )}
+            </div>
+          )}
+
+          {/* File Upload input */}
+          {videoSource === 'upload' && (
             <div>
               <Label className="flex items-center gap-2">
-                <FileVideo className="h-4 w-4 text-blue-500" />
-                Upload Video
+                <Upload className="h-4 w-4 text-blue-500" />
+                Upload Video or Image
               </Label>
               <div className="mt-2">
-                {!uploadedVideo ? (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-                    <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Click to upload video</p>
-                    <p className="text-xs text-gray-500">MP4, MOV, AVI up to 50MB</p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="mt-2"
-                    >
-                      Choose File
-                    </Button>
+                {!uploadedFile ? (
+                  <div className="space-y-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                      <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600 mb-2">Click to upload video or image</p>
+                      <p className="text-xs text-gray-500">MP4, PNG, JPG up to 100MB</p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="video/*,image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="mt-2"
+                      >
+                        Choose File
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="border rounded-lg p-4 bg-gray-50">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Video className="h-4 w-4 text-green-500" />
-                        <span className="text-sm font-medium">{uploadedVideo.name}</span>
+                        {uploadedFile.type.startsWith('image/') ? (
+                          <Edit className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Video className="h-4 w-4 text-green-500" />
+                        )}
+                        <span className="text-sm font-medium">{uploadedFile.name}</span>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={removeUploadedVideo}
+                        onClick={removeUploadedFile}
                         disabled={isUploading}
                       >
                         <X className="h-4 w-4" />
@@ -405,30 +576,52 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
 
                     {/* Upload Progress */}
                     {uploadProgress > 0 && (
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
+                      <div className="space-y-2 mb-3">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        {isUploading && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelUpload}
+                            className="w-full text-xs h-7"
+                          >
+                            <X className="mr-1 h-3 w-3" />
+                            Cancel Upload
+                          </Button>
+                        )}
                       </div>
                     )}
 
-                    {/* Video Preview - TikTok-like experience */}
-                    {videoPreview ? (
+                    {/* Preview */}
+                    {filePreview ? (
                       <div className="relative">
-                        <video
-                          src={videoPreview}
-                          className="w-full h-48 object-cover rounded-lg"
-                          controls
-                          autoPlay
-                          muted
-                          loop
-                        />
+                        {uploadedFile.type.startsWith('image/') ? (
+                          <img
+                            src={filePreview}
+                            alt="Preview"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                        ) : (
+                          <video
+                            src={filePreview}
+                            className="w-full h-48 object-cover rounded-lg"
+                            controls
+                            autoPlay
+                            muted
+                            loop
+                          />
+                        )}
                         {isUploading && (
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
                             <div className="text-center text-white">
                               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                              <p className="text-sm">Processing video...</p>
+                              <p className="text-sm">Processing file...</p>
                             </div>
                           </div>
                         )}
@@ -437,12 +630,12 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
                       <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
                         <img
                           src="/placeholder.svg"
-                          alt="No video"
+                          alt="No file"
                           className="w-full h-full object-cover opacity-50"
                         />
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
                           <Video className="h-10 w-10 mb-2 opacity-20" />
-                          <p className="text-xs font-medium">Wait for video preview...</p>
+                          <p className="text-xs font-medium">Wait for preview...</p>
                         </div>
                       </div>
                     )}
@@ -452,39 +645,28 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
             </div>
           )}
 
-          {/* Regular URL Input - For other categories */}
-          {!isYouTubeCategory(formData.category) && !isUploadCategory(formData.category) && (
-            <div>
-              <Label htmlFor="video_url">Video URL</Label>
-              <Input
-                id="video_url"
-                value={formData.video_url}
-                onChange={e => setFormData({ ...formData, video_url: e.target.value })}
-                placeholder="Enter video URL"
-              />
+          {formData.category?.toLowerCase() !== 'recipe' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  value={formData.Price}
+                  onChange={e => setFormData({ ...formData, Price: e.target.value })}
+                  placeholder="Enter price"
+                />
+              </div>
+              <div>
+                <Label htmlFor="delivery_time">Delivery Time</Label>
+                <Input
+                  id="delivery_time"
+                  value={formData.delivery_time}
+                  onChange={e => setFormData({ ...formData, delivery_time: e.target.value })}
+                  placeholder="e.g., 30-45 min"
+                />
+              </div>
             </div>
           )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="price">Price</Label>
-              <Input
-                id="price"
-                value={formData.Price}
-                onChange={e => setFormData({ ...formData, Price: e.target.value })}
-                placeholder="Enter price"
-              />
-            </div>
-            <div>
-              <Label htmlFor="delivery_time">Delivery Time</Label>
-              <Input
-                id="delivery_time"
-                value={formData.delivery_time}
-                onChange={e => setFormData({ ...formData, delivery_time: e.target.value })}
-                placeholder="e.g., 30-45 min"
-              />
-            </div>
-          </div>
 
           <div className="flex items-center justify-between">
             <Label htmlFor="is_active" className="text-sm font-medium">
@@ -517,11 +699,13 @@ const AddReelModal: React.FC<AddReelModalProps> = ({ open, onOpenChange, onSucce
           <div className="flex gap-2 pt-4">
             <Button
               onClick={handleAddReel}
-              disabled={addReelMutation.isPending || isUploading}
+              disabled={addReelMutation.isPending || isUploading || isCompressing}
               className="flex-1"
             >
-              {addReelMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Add Reel
+              {addReelMutation.isPending || isCompressing ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {isCompressing ? 'Compressing...' : 'Add Reel'}
             </Button>
             <Button
               variant="outline"

@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { usePrivilege } from '@/hooks/usePrivilege';
+import { useSystemConfig } from '@/hooks/useHasuraApi';
+import { formatCurrencyWithConfig } from '@/lib/utils';
 
 interface Discount {
   id: string;
@@ -30,6 +32,7 @@ interface Discount {
 
 const Discounts = () => {
   const { hasAction } = usePrivilege();
+  const { data: systemConfig } = useSystemConfig();
   const discounts: Discount[] = [
     {
       id: '1',
@@ -53,7 +56,7 @@ const Discounts = () => {
     },
     {
       id: '3',
-      name: '$5 Off',
+      name: 'Fixed Amount Off',
       code: 'SAVE5',
       type: 'fixed',
       value: 5,
@@ -98,7 +101,7 @@ const Discounts = () => {
       case 'percentage':
         return `${discount.value}%`;
       case 'fixed':
-        return `$${discount.value.toFixed(2)}`;
+        return formatCurrencyWithConfig(discount.value, systemConfig);
       case 'bogo':
         return 'Buy 1 Get 1';
       default:

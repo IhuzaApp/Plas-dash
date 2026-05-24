@@ -660,7 +660,7 @@ const Wallets = () => {
 
   const formatCurrency = (amount: string) => {
     const num = parseFloat(amount);
-    const currency = systemConfig?.System_configuratioins[0]?.currency || 'RWF';
+    const currency = systemConfig?.System_configuratioins?.[0]?.currency || 'RWF';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -679,14 +679,6 @@ const Wallets = () => {
       if (status === 'completed' || status === 'delivered') {
         const deliveryFee = parseFloat(order.delivery_fee || '0');
         const serviceFee = parseFloat(order.service_fee || '0');
-        console.log('Order fees:', {
-          orderId: order.id,
-          shopperId: order.shopper_id,
-          deliveryFee,
-          serviceFee,
-          status: order.status,
-          total: deliveryFee + serviceFee,
-        });
         return total + deliveryFee + serviceFee;
       }
       return total;
@@ -770,12 +762,6 @@ const Wallets = () => {
                       if (!user) return null;
 
                       const allOrders = (walletsData as any)?.Orders || [];
-
-                      console.log('Processing wallet:', {
-                        userId: user.id,
-                        shopperId: wallet.shopper_id,
-                        orders: allOrders,
-                      });
 
                       const totalEarnings = calculateTotalEarnings(allOrders, wallet.shopper_id);
                       const pendingPayment = calculatePendingPayment(

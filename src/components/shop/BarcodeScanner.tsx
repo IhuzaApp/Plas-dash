@@ -22,6 +22,16 @@ declare global {
   }
 }
 
+const safeStopQuagga = () => {
+  if (window.Quagga) {
+    try {
+      window.Quagga.stop();
+    } catch (e) {
+      console.warn('Quagga stop error safely caught:', e);
+    }
+  }
+};
+
 interface BarcodeScannerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -70,9 +80,7 @@ export default function BarcodeScanner({
     }
 
     return () => {
-      if (window.Quagga) {
-        window.Quagga.stop();
-      }
+      safeStopQuagga();
     };
   }, [open]);
 
@@ -163,7 +171,7 @@ export default function BarcodeScanner({
                 console.log('Scan timeout reached');
                 setScanError('Scanning timeout. Please try again or enter manually.');
                 setIsScanning(false);
-                window.Quagga.stop();
+                safeStopQuagga();
               }
             }, 30000);
           }
@@ -182,7 +190,7 @@ export default function BarcodeScanner({
           setHasScanned(true);
 
           // Stop Quagga
-          window.Quagga.stop();
+          safeStopQuagga();
 
           // Play success sound
           playScanSound();
@@ -214,9 +222,7 @@ export default function BarcodeScanner({
   );
 
   const stopScanning = useCallback(() => {
-    if (window.Quagga) {
-      window.Quagga.stop();
-    }
+    safeStopQuagga();
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
     }
@@ -266,9 +272,7 @@ export default function BarcodeScanner({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (window.Quagga) {
-        window.Quagga.stop();
-      }
+      safeStopQuagga();
       if (scanTimeoutRef.current) {
         clearTimeout(scanTimeoutRef.current);
       }
