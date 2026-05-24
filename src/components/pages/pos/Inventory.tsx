@@ -98,6 +98,7 @@ const Inventory = () => {
   const updateProduct = useUpdateProduct();
   const updateProductName = useUpdateProductName();
   const addProduct = useAddProduct();
+  const addProductName = useAddProductName();
   const addDish = useCreateDish();
   const addDishToMenu = useAddDishToMenu();
 
