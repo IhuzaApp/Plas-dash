@@ -189,6 +189,7 @@ const Inventory = () => {
 
   // Dialog states
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [isSubmittingProduct, setIsSubmittingProduct] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
 
   // Edit dialog states
@@ -225,9 +226,11 @@ const Inventory = () => {
 
   const handleAddProduct = async (formData: any) => {
     try {
+      setIsSubmittingProduct(true);
       // Validate that we have a valid shop session
       if (!shopSession?.shopId) {
         toast.error('No shop session found. Please log into a shop first.');
+        setIsSubmittingProduct(false);
         return;
       }
 
@@ -296,14 +299,9 @@ const Inventory = () => {
       }
     } catch (error) {
       console.error('Error adding product:', error);
-      console.error('Error details:', {
-        error,
-        shopSession: shopSession
-          ? { shopId: shopSession.shopId, shopName: shopSession.shopName }
-          : null,
-        formData,
-      });
       toast.error('Failed to add product. Please try again.');
+    } finally {
+      setIsSubmittingProduct(false);
     }
   };
 
@@ -624,6 +622,7 @@ const Inventory = () => {
         open={isAddProductOpen}
         onOpenChange={setIsAddProductOpen}
         onSubmit={handleAddProduct}
+        isLoading={isSubmittingProduct}
         shopId={shopSession?.shopId}
         hideCommission={true}
         isRestaurant={shopSession?.isRestaurant}

@@ -266,23 +266,24 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
             }
           }
 
-          // Always fetch drinks/alcohol for both retail and restaurants
-          try {
-            const drinksRes = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`);
-            const drinksData = await drinksRes.json();
-            if (drinksData.drinks) {
-              const drinkSuggestions = drinksData.drinks.map((d: any) => ({
-                id: `ext_drink_${d.idDrink}`,
-                name: d.strDrink,
-                description: d.strInstructions?.substring(0, 100) + '...',
-                category: d.strAlcoholic === 'Alcoholic' ? 'Alcohol' : 'Drinks & Beverages',
-                image: d.strDrinkThumb,
-                isExternal: true,
-              }));
-              suggestions = [...suggestions, ...drinkSuggestions];
+          if (isRestaurant) {
+            try {
+              const drinksRes = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`);
+              const drinksData = await drinksRes.json();
+              if (drinksData.drinks) {
+                const drinkSuggestions = drinksData.drinks.map((d: any) => ({
+                  id: `ext_drink_${d.idDrink}`,
+                  name: d.strDrink,
+                  description: d.strInstructions?.substring(0, 100) + '...',
+                  category: d.strAlcoholic === 'Alcoholic' ? 'Alcohol' : 'Drinks & Beverages',
+                  image: d.strDrinkThumb,
+                  isExternal: true,
+                }));
+                suggestions = [...suggestions, ...drinkSuggestions];
+              }
+            } catch (drinkErr) {
+              console.error('Error fetching drinks:', drinkErr);
             }
-          } catch (drinkErr) {
-            console.error('Error fetching drinks:', drinkErr);
           }
 
           if (isMounted) setExternalSuggestions(suggestions);
@@ -493,7 +494,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isRestaurant ? 'Add New Dish' : 'Add New Product'}</DialogTitle>
           <DialogDescription>
@@ -554,8 +555,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                             form.setValue('category', '');
                             form.setValue('price', '');
                             form.setValue('image', '');
-                            form.setValue('sku', undefined);
-                            form.setValue('barcode', undefined);
+                            // Don't clear barcode if they just scanned it!
+                            if (searchMode !== 'barcode') {
+                              form.setValue('sku', undefined);
+                              form.setValue('barcode', undefined);
+                            }
                             form.setValue('quantity', 0);
                             form.setValue('measurement_unit', 'item');
                             setImagePreview(null);
@@ -701,16 +705,16 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   <FormItem>
                     <FormLabel>Product Image</FormLabel>
                     <div className="flex items-start gap-4">
-                      <div className="relative">
-                        <div className="h-24 w-24 rounded-md border border-border flex items-center justify-center overflow-hidden bg-muted">
+                      <div className="relative shrink-0">
+                        <div className="h-40 w-40 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50 transition-all hover:bg-muted/80">
                           {imagePreview ? (
                             <img
                               src={imagePreview}
                               alt="Product preview"
-                              className="h-full w-full object-contain"
+                              className="h-full w-full object-contain bg-white"
                             />
                           ) : (
-                            <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                            <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
                           )}
                         </div>
                         {imagePreview && (
