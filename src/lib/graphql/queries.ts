@@ -329,6 +329,8 @@ export const GET_PRODUCTS_BY_SHOP = `
       quantity
       measurement_unit
       category
+      supplier
+      image
       created_at
       updated_at
       is_active
@@ -359,6 +361,7 @@ export const GET_MENU_BY_RESTAURANT = `
       quantity
       preparingTime
       discount
+      image
       created_at
       updated_at
       is_active

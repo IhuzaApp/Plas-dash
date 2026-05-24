@@ -87,6 +87,7 @@ interface InventoryItem {
   measurement_unit?: string;
   sku?: string;
   supplier?: string;
+  image?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -132,8 +133,9 @@ const Inventory = () => {
       status: getStockStatus(parseInt(product.quantity) || 0),
       description: product.ProductName?.description || '',
       measurement_unit: product.measurement_unit || 'unit',
-      sku: product.ProductName?.sku || '',
+      sku: product.sku || product.ProductName?.sku || '',
       supplier: product.supplier || '',
+      image: product.image || product.ProductName?.image || '',
       is_active: product.is_active || false,
       created_at: product.created_at || new Date().toISOString(),
       updated_at: product.updated_at || new Date().toISOString(),
@@ -153,6 +155,7 @@ const Inventory = () => {
       description: menu.dish?.description || '',
       measurement_unit: 'item',
       sku: menu.SKU || '',
+      image: menu.image || menu.dish?.image || '',
       is_active: menu.is_active || false,
       created_at: menu.created_at || new Date().toISOString(),
       updated_at: menu.updated_at || new Date().toISOString(),
@@ -200,6 +203,15 @@ const Inventory = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset page to 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, category, stockStatus]);
+
   const filteredItems = items.filter(item => {
     return (
       (searchTerm === '' ||
@@ -209,6 +221,12 @@ const Inventory = () => {
       (stockStatus === undefined || stockStatus === 'all' || item.status === stockStatus)
     );
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -537,9 +555,10 @@ const Inventory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product Name</TableHead>
-                  <TableHead>Barcode</TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Barcode / SKU</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Supplier</TableHead>
                   <TableHead className="text-right">Price</TableHead>
                   <TableHead className="text-right">Stock</TableHead>
                   <TableHead>Status</TableHead>
@@ -547,21 +566,46 @@ const Inventory = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredItems.length > 0 ? (
-                  filteredItems.map(item => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell className="font-mono text-sm">{item.barcode || '-'}</TableCell>
-                      <TableCell>{item.category || 'Uncategorized'}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                      <TableCell className="text-right">{item.stock}</TableCell>
+                {paginatedItems.length > 0 ? (
+                  paginatedItems.map(item => (
+                    <TableRow key={item.id} className="group hover:bg-muted/50 transition-colors">
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          {item.image ? (
+                            <img src={item.image} alt={item.name} className="w-10 h-10 rounded-md object-cover border shadow-sm" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center shrink-0 border shadow-sm">
+                              <ShoppingBag className="w-5 h-5 text-muted-foreground/50" />
+                            </div>
+                          )}
+                          <span className="font-semibold text-foreground whitespace-nowrap">{item.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs whitespace-nowrap">
+                        <div className="flex flex-col gap-0.5">
+                          {item.barcode && <span className="bg-muted px-1.5 py-0.5 rounded-sm w-fit">{item.barcode}</span>}
+                          {item.sku && <span className="text-muted-foreground">{item.sku}</span>}
+                          {!item.barcode && !item.sku && '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-normal bg-background">
+                          {item.category || 'Uncategorized'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium">{item.supplier || '-'}</span>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(item.price)}</TableCell>
+                      <TableCell className="text-right font-medium">{item.stock}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
+                        <div className="flex justify-end space-x-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           {hasAction('inventory', 'edit_products') && (
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="icon"
+                              className="h-8 w-8 hover:bg-primary hover:text-primary-foreground"
                               onClick={() => openEditDialog(item)}
                             >
                               <Edit className="h-4 w-4" />
@@ -569,9 +613,9 @@ const Inventory = () => {
                           )}
                           {hasAction('inventory', 'delete_products') && (
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="icon"
-                              className="text-destructive"
+                              className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground text-destructive"
                               onClick={() => openDeleteDialog(item.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -591,6 +635,33 @@ const Inventory = () => {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {filteredItems.length > itemsPerPage && (
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing <span className="font-medium text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-foreground">{Math.min(currentPage * itemsPerPage, filteredItems.length)}</span> of <span className="font-medium text-foreground">{filteredItems.length}</span> entries
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
