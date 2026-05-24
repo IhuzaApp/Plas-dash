@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useSystemConfig } from '@/hooks/useHasuraApi';
 import { formatCurrencyWithConfig } from '@/lib/utils';
@@ -22,7 +23,12 @@ import {
   Sparkles,
   UtensilsCrossed,
   Beef,
-  Apple
+  Apple,
+  AlertTriangle,
+  XCircle,
+  Tag,
+  Keyboard,
+  Plus
 } from 'lucide-react';
 import { Product } from '@/hooks/useGraphql';
 
@@ -109,6 +115,39 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showNumpad, setShowNumpad] = useState(false);
   const [numpadBuffer, setNumpadBuffer] = useState('');
+
+  // Stock status badge — no quantity numbers, just status label
+  const getStockBadge = (product: Product) => {
+    const qty = product.quantity;
+    const isPromo = !!(product as any).on_promotion || !!(product as any).promotion_price;
+
+    if (qty !== undefined && qty <= 0) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wide bg-red-500 text-white">
+          <XCircle className="h-2.5 w-2.5" /> Out of Stock
+        </span>
+      );
+    }
+    if (qty !== undefined && qty <= 5) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wide bg-amber-400 text-white">
+          <AlertTriangle className="h-2.5 w-2.5" /> Low Stock
+        </span>
+      );
+    }
+    if (isPromo) {
+      return (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wide bg-emerald-500 text-white">
+          <Tag className="h-2.5 w-2.5" /> Promotion
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wide bg-emerald-500 text-white">
+        <CheckCircle className="h-2.5 w-2.5" /> In Stock
+      </span>
+    );
+  };
 
   // Filter unique categories
   const categories = useMemo(() => {
@@ -292,12 +331,14 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
 
   // Presets and Adjusters
   const adjustWeight = (amount: number) => {
+    const isKg = selectedProduct ? (selectedProduct.measurement_unit || '').toLowerCase().includes('kg') : true;
     const current = parseFloat(weightInput) || 0;
-    setWeightInput(Math.max(0, current + amount).toFixed(3));
+    setWeightInput(Math.max(0, current + amount).toFixed(isKg ? 3 : 0));
   };
 
   const setWeightPreset = (preset: number) => {
-    setWeightInput(preset.toFixed(3));
+    const isKg = selectedProduct ? (selectedProduct.measurement_unit || '').toLowerCase().includes('kg') : true;
+    setWeightInput(preset.toFixed(isKg ? 3 : 0));
   };
 
   // Helper for Category Icons
@@ -389,6 +430,39 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
   const pricePerKg = selectedProduct ? parseFloat(selectedProduct.price || '0') : 0;
   const currentWeight = parseFloat(weightInput) || 0;
   const calculatedTotal = pricePerKg * currentWeight;
+  const isKgItem = selectedProduct ? (selectedProduct.measurement_unit || '').toLowerCase().includes('kg') : true;
+
+  // Animation state for LED Screen
+  const [displayValue, setDisplayValue] = useState(0);
+  const displayValueRef = useRef(0);
+
+  useEffect(() => {
+    displayValueRef.current = displayValue;
+  }, [displayValue]);
+
+  useEffect(() => {
+    let frameId: number;
+    const startValue = displayValueRef.current;
+    const startTime = performance.now();
+    const duration = 200; // ms to animate changes
+    
+    const animate = (time: number) => {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      const current = startValue + (currentWeight - startValue) * progress;
+      setDisplayValue(current);
+      
+      if (progress < 1) {
+        frameId = requestAnimationFrame(animate);
+      } else {
+        setDisplayValue(currentWeight);
+      }
+    };
+    
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
+  }, [currentWeight]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -396,32 +470,28 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
       {/* Left: Product Selector */}
       <Card className="lg:col-span-3 border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md shadow-lg flex flex-col h-[740px]">
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
               <CardTitle className="text-xl font-extrabold flex items-center gap-2">
                 <Scale className="h-5 w-5 text-primary" />
-                Weighing Station Catalogue
+                Station Catalogue
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-1">
-                Select a product to weigh from the departments below
+                Select a product to weigh or set quantity
               </p>
             </div>
-            <button
+            <Button
               type="button"
               disabled={!selectedProduct}
               onClick={() => {
-                setNumpadBuffer(weightInput !== '0.000' ? weightInput : '');
+                setNumpadBuffer(weightInput !== '0.000' && weightInput !== '0' ? weightInput : '');
                 setShowNumpad(true);
               }}
-              className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-extrabold text-sm shadow-md shadow-primary/20 hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all"
-              title="Open numeric keyboard to enter weight"
+              className="shrink-0 font-extrabold shadow-md gap-2 shadow-primary/20 bg-primary hover:bg-primary/90 text-white transition-all active:scale-95 px-4"
             >
-              <span className="text-base leading-none">⌨</span>
-              <span className="leading-tight text-left">
-                Enter<br />
-                <span className="text-[10px] font-bold opacity-80">Weight (kg)</span>
-              </span>
-            </button>
+              <Keyboard className="h-4 w-4" />
+              Add Weight / Qty
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col min-h-0 space-y-4">
@@ -463,7 +533,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
           {/* Products Grid */}
           <ScrollArea className="flex-1 pr-2">
             {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {filteredProducts.map(product => {
                   const isSelected = selectedProduct?.id === product.id;
                   const isKg = (product.measurement_unit || '').toLowerCase().includes('kg');
@@ -477,7 +547,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                           : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-350 dark:hover:border-slate-700'
                       }`}
                     >
-                      {/* Product image with fallback icon */}
+                      {/* Product image with fallback icon + badges */}
                       <div className="relative w-full h-20 mb-2 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-950 flex items-center justify-center shrink-0">
                         {product.ProductName?.image ? (
                           <img
@@ -492,6 +562,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                             }}
                           />
                         ) : null}
+                        {/* SVG icon fallback */}
                         <div
                           className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-slate-600"
                           style={{ display: product.ProductName?.image ? 'none' : 'flex' }}
@@ -501,32 +572,24 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                             <span className="text-[8px] font-bold uppercase tracking-wider">No Image</span>
                           </div>
                         </div>
+                        {/* Category badge top-left */}
+                        <Badge className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-white border-none font-bold text-[9px] uppercase">
+                          {product.category || 'Dept.'}
+                        </Badge>
+                        {/* Stock badge bottom-right */}
+                        <div className="absolute bottom-2 right-2">
+                          {getStockBadge(product)}
+                        </div>
                       </div>
 
                       <div>
-                        <div className="flex justify-between items-start gap-1">
-                          <p className="font-extrabold text-xs text-slate-800 dark:text-slate-100 line-clamp-2">
-                            {product.ProductName?.name || 'Unknown Item'}
-                          </p>
-                          {isKg ? (
-                            <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/25 border-none font-bold text-[8px] px-1 shrink-0 h-4">
-                              KG Unit
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 border-none font-bold text-[8px] px-1 shrink-0 h-4">
-                              {product.measurement_unit || 'Unit'}
-                            </Badge>
-                          )}
-                        </div>
-                        {product.ProductName?.sku && (
-                          <p className="text-[9px] font-mono text-slate-400 mt-1">
-                            SKU: {product.ProductName.sku}
-                          </p>
-                        )}
+                        <p className="font-extrabold text-xs text-slate-800 dark:text-slate-100 line-clamp-2">
+                          {product.ProductName?.name || 'Unknown Item'}
+                        </p>
                       </div>
                       
                       <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2 mt-2">
-                        <span className="text-[10px] text-slate-400 uppercase font-bold">Price / {product.measurement_unit || 'kg'}</span>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold">Per {product.measurement_unit || 'kg'}</span>
                         <span className="font-black text-xs text-primary">
                           {formatCurrencyWithConfig(parseFloat(product.price || '0'), systemConfig)}
                         </span>
@@ -547,16 +610,26 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
       </Card>
 
       {/* Right: Scale Panel & Label Generator */}
-      <div className="lg:col-span-2 space-y-6 flex flex-col h-[740px]">
-        
-        {/* Weighing Scale simulator */}
-        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-lg flex-1 flex flex-col justify-between">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Scale className="h-4 w-4" />
-              Weight Simulator Panel
-            </CardTitle>
-          </CardHeader>
+      <div className="lg:col-span-2 flex flex-col h-[740px]">
+        <Tabs defaultValue="simulator" className="flex-1 flex flex-col min-h-0">
+          <TabsList className="grid w-full grid-cols-2 mb-4 shrink-0">
+            <TabsTrigger value="simulator" className="text-xs font-bold uppercase tracking-wider">
+              Simulator
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs font-bold uppercase tracking-wider">
+              History
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="simulator" className="flex-1 mt-0 data-[state=active]:flex flex-col min-h-0">
+            {/* Weighing Scale simulator */}
+            <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-lg flex-1 flex flex-col justify-between">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Scale className="h-4 w-4" />
+                  Weight Simulator Panel
+                </CardTitle>
+              </CardHeader>
           
           <CardContent className="space-y-4 flex-1 flex flex-col justify-between">
             <div className="space-y-4">
@@ -564,7 +637,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
               {/* Product Info Indicator */}
               <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-150 dark:border-slate-800">
                 <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider mb-1">
-                  Weighing Target Item
+                  {isKgItem ? 'Weighing Target Item' : 'Quantity Target Item'}
                 </span>
                 {selectedProduct ? (
                   <div className="flex justify-between items-center">
@@ -573,7 +646,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                         {selectedProduct.ProductName?.name}
                       </h4>
                       <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                        Base Price: {formatCurrencyWithConfig(pricePerKg, systemConfig)} / {selectedProduct.measurement_unit || 'kg'}
+                        Base Price: {formatCurrencyWithConfig(pricePerKg, systemConfig)} / {selectedProduct.measurement_unit || (isKgItem ? 'kg' : 'Unit')}
                       </p>
                     </div>
                     {/* Product thumbnail with icon fallback */}
@@ -610,28 +683,28 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
               {/* Digital LED Screen display */}
               <div className="bg-slate-950 text-emerald-400 font-mono text-5xl py-6 px-4 rounded-xl border border-slate-800 text-center shadow-inner tracking-widest relative overflow-hidden">
                 <div className="absolute top-2 left-3 text-[9px] text-emerald-600 uppercase font-bold font-sans">
-                  Digital Scale Ready
+                  {isKgItem ? 'Digital Scale Ready' : 'Quantity Entry'}
                 </div>
                 <div className="absolute top-2 right-3 text-[9px] text-emerald-600 uppercase font-bold font-sans">
-                  NET WEIGHT
+                  {isKgItem ? 'NET WEIGHT' : 'QUANTITY'}
                 </div>
-                {currentWeight.toFixed(3)}{' '}
-                <span className="text-2xl text-emerald-600 font-sans">kg</span>
+                {isKgItem ? displayValue.toFixed(3) : Math.floor(displayValue)}{' '}
+                <span className="text-2xl text-emerald-600 font-sans">{isKgItem ? 'kg' : selectedProduct?.measurement_unit || 'pcs'}</span>
               </div>
 
               {/* Simulation weight inputs */}
               <div className="space-y-3 pt-2">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-500">
-                  <span>Adjust Weight (Simulator slider)</span>
+                  <span>{isKgItem ? 'Adjust Weight (Slider)' : 'Adjust Quantity (Slider)'}</span>
                   <span className="font-mono text-slate-700 dark:text-slate-300">
-                    {currentWeight.toFixed(3)} kg
+                    {isKgItem ? currentWeight.toFixed(3) + ' kg' : Math.floor(currentWeight) + ' pcs'}
                   </span>
                 </div>
                 <input
                   type="range"
-                  min="0.000"
-                  max="10.000"
-                  step="0.005"
+                  min="0"
+                  max={isKgItem ? "10.000" : "50"}
+                  step={isKgItem ? "0.005" : "1"}
                   value={weightInput}
                   disabled={!selectedProduct}
                   onChange={e => setWeightInput(e.target.value)}
@@ -640,7 +713,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
 
                 {/* Preset weight selectors */}
                 <div className="grid grid-cols-5 gap-1.5">
-                  {[0.25, 0.5, 1.0, 1.5, 2.5].map(preset => (
+                  {(isKgItem ? [0.25, 0.5, 1.0, 1.5, 2.5] : [1, 5, 10, 15, 20]).map(preset => (
                     <Button
                       key={preset}
                       type="button"
@@ -650,7 +723,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                       onClick={() => setWeightPreset(preset)}
                       className="text-[10px] font-bold py-1 h-7 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                     >
-                      {preset.toFixed(2)} kg
+                      {isKgItem ? preset.toFixed(2) + ' kg' : preset}
                     </Button>
                   ))}
                 </div>
@@ -662,25 +735,25 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                     variant="outline"
                     size="sm"
                     disabled={!selectedProduct}
-                    onClick={() => adjustWeight(-0.1)}
+                    onClick={() => adjustWeight(isKgItem ? -0.1 : -1)}
                     className="h-8 text-[11px] font-bold"
                   >
-                    -100g
+                    {isKgItem ? '-100g' : '-1'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     disabled={!selectedProduct}
-                    onClick={() => adjustWeight(0.1)}
+                    onClick={() => adjustWeight(isKgItem ? 0.1 : 1)}
                     className="h-8 text-[11px] font-bold"
                   >
-                    +100g
+                    {isKgItem ? '+100g' : '+1'}
                   </Button>
                   <div className="flex-1 relative">
                     <Input
                       type="number"
-                      step="0.001"
+                      step={isKgItem ? "0.001" : "1"}
                       min="0"
                       disabled={!selectedProduct}
                       value={weightInput}
@@ -688,7 +761,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                       className="h-8 text-xs text-center font-bold font-mono pl-4 pr-7"
                     />
                     <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                      kg
+                      {isKgItem ? 'kg' : 'pcs'}
                     </span>
                   </div>
                   <Button
@@ -696,24 +769,11 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                     variant="outline"
                     size="icon"
                     disabled={!selectedProduct}
-                    onClick={() => setWeightInput('0.000')}
+                    onClick={() => setWeightInput(isKgItem ? '0.000' : '0')}
                     className="h-8 w-8 hover:bg-slate-50 dark:hover:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-700"
                     title="Reset Scale"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={!selectedProduct}
-                    onClick={() => {
-                      setNumpadBuffer(weightInput !== '0.000' ? weightInput : '');
-                      setShowNumpad(true);
-                    }}
-                    className="h-8 px-2 text-[10px] font-bold border-primary/40 text-primary hover:bg-primary/5 whitespace-nowrap"
-                    title="Open numeric keyboard"
-                  >
-                    ⌨ Enter Weight
                   </Button>
                 </div>
               </div>
@@ -748,9 +808,11 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
             </div>
           </CardContent>
         </Card>
+        </TabsContent>
 
+        <TabsContent value="history" className="flex-1 mt-0 data-[state=active]:flex flex-col min-h-0">
         {/* History of generated labels */}
-        <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md shadow-md h-[250px] flex flex-col">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md shadow-md flex-1 flex flex-col">
           <CardHeader className="py-2.5 border-b border-slate-100 dark:border-slate-900 shrink-0">
             <CardTitle className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
@@ -758,7 +820,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden p-2">
-            <ScrollArea className="h-[190px] pr-2">
+            <ScrollArea className="h-full pr-2">
               <div className="space-y-2">
                 {recentCodes.map(item => (
                   <div
@@ -772,7 +834,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                         </span>
                         <Badge className={`text-[8px] font-bold border-none py-0 px-1.5 h-4 flex items-center ${
                           item.status === 'pending'
-                            ? 'bg-emerald-500/10 text-emerald-500 animate-pulse'
+                            ? 'bg-primary/10 text-primary animate-pulse'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
                         }`}>
                           {item.status === 'pending' ? 'Active' : 'Redeemed'}
@@ -782,7 +844,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
                         {item.productName}
                       </h5>
                       <p className="text-[9px] text-slate-400 font-medium">
-                        {item.weight.toFixed(3)} kg • {formatCurrencyWithConfig(item.totalPrice, systemConfig)}
+                        {item.measurementUnit?.toLowerCase().includes('kg') ? `${item.weight.toFixed(3)} kg` : `${item.weight} pcs`} • {formatCurrencyWithConfig(item.totalPrice, systemConfig)}
                       </p>
                     </div>
 
@@ -807,6 +869,8 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
             </ScrollArea>
           </CardContent>
         </Card>
+        </TabsContent>
+        </Tabs>
       </div>
 
       {/* Numeric Keypad Modal for touchscreen weight entry */}
@@ -815,12 +879,12 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
           <div className="bg-white dark:bg-slate-950 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-xs animate-in fade-in zoom-in-95 duration-150">
             <div className="p-5 pb-4">
               <h3 className="text-sm font-extrabold text-slate-700 dark:text-slate-200 text-center mb-1 uppercase tracking-wider">
-                Enter Weight (kg)
+                {isKgItem ? 'Enter Weight (kg)' : 'Enter Quantity'}
               </h3>
 
               {/* Weight display */}
               <div className="bg-slate-950 text-emerald-400 font-mono text-4xl py-5 px-4 rounded-xl text-center tracking-widest mb-4 border border-slate-800 relative">
-                <span className="absolute top-2 left-3 text-[9px] text-emerald-700 font-bold uppercase font-sans">KG</span>
+                <span className="absolute top-2 left-3 text-[9px] text-emerald-700 font-bold uppercase font-sans">{isKgItem ? 'KG' : 'QTY'}</span>
                 {numpadBuffer || '0'}
               </div>
 
@@ -887,7 +951,7 @@ export const WeighingStation: React.FC<WeighingStationProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <Card className="w-full max-w-sm border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl rounded-2xl animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="pb-3 text-center border-b border-slate-100 dark:border-slate-900">
-              <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-500 mb-2">
+              <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 dark:bg-primary/20 text-primary mb-2">
                 <CheckCircle className="h-6 w-6" />
               </div>
               <CardTitle className="text-lg font-black text-slate-850 dark:text-slate-100">
