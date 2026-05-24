@@ -70,6 +70,7 @@ interface AddProductDialogProps {
   isLoading?: boolean;
   hideCommission?: boolean; // New prop to hide commission fields
   isRestaurant?: boolean; // New prop to handle restaurant dishes
+  existingSuppliers?: string[]; // Prop for auto-completing suppliers
 }
 
 const AddProductDialog: React.FC<AddProductDialogProps> = ({
@@ -80,6 +81,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   isLoading = false,
   hideCommission = false,
   isRestaurant = false,
+  existingSuppliers = [],
 }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -91,6 +93,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
   const [externalSuggestions, setExternalSuggestions] = useState<any[]>([]);
   const [isSearchingExternal, setIsSearchingExternal] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
 
   const { data: shopsData } = useShops();
   const { data: systemConfig } = useSystemConfig();
@@ -925,14 +928,48 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 control={form.control}
                 name="supplier"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="relative">
                     <FormLabel>Supplier</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter supplier name..."
-                        {...field}
-                        value={field.value || ''}
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="Enter or select supplier..."
+                          {...field}
+                          value={field.value || ''}
+                          onFocus={() => setShowSupplierDropdown(true)}
+                          onBlur={() => {
+                            // Small delay to allow clicking on an option before blur hides it
+                            setTimeout(() => setShowSupplierDropdown(false), 200);
+                          }}
+                        />
+                        {showSupplierDropdown && (
+                          <div className="absolute z-[9999] top-full mt-1 w-full bg-background border rounded-md shadow-md max-h-48 overflow-y-auto">
+                            {existingSuppliers.length === 0 ? (
+                              <div className="px-3 py-2 text-sm text-muted-foreground text-center italic">
+                                No previous suppliers found
+                              </div>
+                            ) : existingSuppliers.filter(s => s.toLowerCase().includes((field.value || '').toLowerCase())).length === 0 ? (
+                              <div className="px-3 py-2 text-sm text-muted-foreground text-center italic">
+                                No matching suppliers
+                              </div>
+                            ) : (
+                              existingSuppliers.filter(s => s.toLowerCase().includes((field.value || '').toLowerCase())).map((supplier, idx) => (
+                                <div
+                                  key={idx}
+                                  className="px-3 py-2 cursor-pointer hover:bg-muted text-sm"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    field.onChange(supplier);
+                                    setShowSupplierDropdown(false);
+                                  }}
+                                >
+                                  {supplier}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

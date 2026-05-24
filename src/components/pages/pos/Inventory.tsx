@@ -86,6 +86,7 @@ interface InventoryItem {
   description?: string;
   measurement_unit?: string;
   sku?: string;
+  supplier?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -132,6 +133,7 @@ const Inventory = () => {
       description: product.ProductName?.description || '',
       measurement_unit: product.measurement_unit || 'unit',
       sku: product.ProductName?.sku || '',
+      supplier: product.supplier || '',
       is_active: product.is_active || false,
       created_at: product.created_at || new Date().toISOString(),
       updated_at: product.updated_at || new Date().toISOString(),
@@ -223,6 +225,10 @@ const Inventory = () => {
 
   const categories = Array.from(
     new Set(items.map(item => item.category).filter(Boolean))
+  ) as string[];
+
+  const existingSuppliers = Array.from(
+    new Set(items.map(item => item.supplier).filter(Boolean))
   ) as string[];
 
   const handleAddProduct = async (formData: any) => {
@@ -679,6 +685,7 @@ const Inventory = () => {
         shopId={shopSession?.shopId}
         hideCommission={true}
         isRestaurant={shopSession?.isRestaurant}
+        existingSuppliers={existingSuppliers}
       />
 
       {/* Import Products Dialog */}
