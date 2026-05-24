@@ -94,6 +94,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
         <meta key="description" name="description" content="Plas Admin Dashboard" />
         <link key="favicon" rel="icon" href="/favicon.png" />
+        {/* Preload the hero image so it is ready before the login / loading screens mount */}
+        <link
+          key="preload-hero"
+          rel="preload"
+          as="image"
+          href="/Assets/plas-agents-hero.png"
+          fetchPriority="high"
+        />
       </Head>
       <LoadingProvider>
         <div className="min-h-screen bg-background relative selection:bg-primary/20 selection:text-primary">

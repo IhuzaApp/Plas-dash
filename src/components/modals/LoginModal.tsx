@@ -163,50 +163,56 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
   // show the correct shop / restaurant / project-user identity in the header.
   if (isBusinessLoading) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center overflow-hidden">
-        {/* Ambient gradient blobs */}
-        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse pointer-events-none" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-primary/8 rounded-full blur-[120px] animate-pulse delay-700 pointer-events-none" />
+      <div className="fixed inset-0 z-[9999] overflow-hidden">
+        {/* Full-bleed hero background */}
+        <img
+          src="/Assets/plas-agents-hero.png"
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Dark gradient overlay so spinner is readable */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-black/60 to-black/40" />
 
-        {/* Card */}
-        <div className="relative flex flex-col items-center gap-6">
-          {/* Spinner + centered logo */}
+        {/* Spinner + logo centered over the image */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-7">
+          {/* Spinner ring with logo perfectly centered */}
           <div className="relative w-28 h-28 flex items-center justify-center">
-            {/* Spinning ring */}
-            <div className="absolute inset-0 rounded-full border-[3px] border-primary/15 border-t-primary animate-spin" />
-            {/* Second slower ring for depth */}
-            <div className="absolute inset-2 rounded-full border-[2px] border-primary/8 border-b-primary/40 animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
-            {/* Logo — perfectly centered via flex on the wrapper itself */}
-            <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/20 backdrop-blur-sm flex items-center justify-center shadow-lg animate-pulse">
-              <img
-                src="/Assets/logo/Plas Icon.png"
-                alt="Plas"
-                className="w-9 h-9 object-contain"
-              />
+            <div className="absolute inset-0 rounded-full border-[3px] border-white/15 border-t-primary animate-spin" />
+            <div
+              className="absolute inset-2 rounded-full border-[2px] border-white/8 border-b-primary/60 animate-spin"
+              style={{ animationDuration: '2s', animationDirection: 'reverse' }}
+            />
+            <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center shadow-2xl">
+              <img src="/Assets/logo/Plas Icon.png" alt="Plas" className="w-9 h-9 object-contain" />
             </div>
           </div>
 
           {/* Text */}
-          <div className="text-center space-y-1">
-            <h2 className="text-lg font-black tracking-[0.2em] text-primary uppercase">
+          <div className="text-center space-y-1.5">
+            <h2 className="text-xl font-black tracking-[0.25em] text-white uppercase drop-shadow">
               PLAS
             </h2>
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.35em]">
+            <p className="text-[10px] font-semibold text-white/70 uppercase tracking-[0.4em]">
               Loading Portal…
             </p>
           </div>
 
-          {/* Progress bar */}
-          <div className="w-36 h-[2px] rounded-full bg-primary/10 overflow-hidden">
-            <div className="h-full bg-primary/60 rounded-full animate-[loading-bar_1.4s_ease-in-out_infinite]" style={{ width: '40%', animation: 'loadingBar 1.4s ease-in-out infinite' }} />
+          {/* Slim animated progress bar */}
+          <div className="w-40 h-[2px] rounded-full bg-white/15 overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full"
+              style={{ animation: 'plasLoadingBar 1.5s ease-in-out infinite' }}
+            />
           </div>
         </div>
 
         <style>{`
-          @keyframes loadingBar {
-            0%   { transform: translateX(-100%); width: 40%; }
-            50%  { width: 60%; }
-            100% { transform: translateX(350%); width: 40%; }
+          @keyframes plasLoadingBar {
+            0%   { width: 0%;   transform: translateX(0%); }
+            50%  { width: 55%;  }
+            100% { width: 0%;   transform: translateX(800%); }
           }
         `}</style>
       </div>
@@ -214,57 +220,72 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
   }
 
   return (
-    <Dialog open={true}>
-      <DialogContent
-        className={cn(
-          'sm:max-w-[440px] p-8 border-none bg-background/80 backdrop-blur-2xl shadow-2xl rounded-[2rem] overflow-hidden transition-all duration-500',
-          authStep === 'mfa' ? 'sm:max-w-[480px]' : ''
-        )}
-        onPointerDownOutside={e => e.preventDefault()}
-        onEscapeKeyDown={e => e.preventDefault()}
-      >
-        <div className="relative z-10">
-          {authStep === 'mfa' ? (
-            <MultiFactorAuthStep
-              user={mfaUser.session}
-              isProjectUser={mfaUser.isProjectUser}
-              twoFactorRequired={mfaUser.twoFactorRequired}
-              smsRequired={mfaUser.smsRequired}
-              onSuccess={updatedSession => {
-                startLoading();
-                completeLogin(updatedSession, mfaUser.isProjectUser);
-              }}
-              onCancel={() => setAuthStep('login')}
-            />
-          ) : (
-            <>
-              <LoginHeader
-                businessName={activeBusiness?.name}
-                businessLogo={activeBusiness?.logo}
-              />
+    <>
+      {/* Full-screen hero backdrop that sits behind the dialog */}
+      <div className="fixed inset-0 z-40 overflow-hidden">
+        <img
+          src="/Assets/plas-agents-hero.png"
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/55 to-black/35 backdrop-blur-[2px]" />
+      </div>
 
-              {!showHelp ? <LoginForm form={form} onSubmit={onSubmit} loading={loading} /> : null}
-
-              <LoginSupport
-                showHelp={showHelp}
-                setShowHelp={setShowHelp}
-                supportData={supportData}
-                setSupportData={setSupportData}
-                onSubmitSupport={handleSubmitSupport}
-                loading={supportLoading}
-                success={supportSuccess}
-                error={supportError}
-              />
-            </>
+      <Dialog open={true}>
+        <DialogContent
+          className={cn(
+            'sm:max-w-[440px] p-8 border border-white/10 bg-background/75 backdrop-blur-2xl shadow-2xl rounded-[2rem] overflow-hidden transition-all duration-500 z-50',
+            authStep === 'mfa' ? 'sm:max-w-[480px]' : ''
           )}
-        </div>
+          onPointerDownOutside={e => e.preventDefault()}
+          onEscapeKeyDown={e => e.preventDefault()}
+        >
+          <div className="relative z-10">
+            {authStep === 'mfa' ? (
+              <MultiFactorAuthStep
+                user={mfaUser.session}
+                isProjectUser={mfaUser.isProjectUser}
+                twoFactorRequired={mfaUser.twoFactorRequired}
+                smsRequired={mfaUser.smsRequired}
+                onSuccess={updatedSession => {
+                  startLoading();
+                  completeLogin(updatedSession, mfaUser.isProjectUser);
+                }}
+                onCancel={() => setAuthStep('login')}
+              />
+            ) : (
+              <>
+                <LoginHeader
+                  businessName={activeBusiness?.name}
+                  businessLogo={activeBusiness?.logo}
+                />
 
-        <div className="absolute top-0 left-0 w-full h-full -z-10 pointer-events-none opacity-20">
-          <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-primary/20 rounded-full blur-[80px] animate-pulse" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-primary/10 rounded-full blur-[80px] animate-pulse delay-700" />
-        </div>
-      </DialogContent>
-    </Dialog>
+                {!showHelp ? <LoginForm form={form} onSubmit={onSubmit} loading={loading} /> : null}
+
+                <LoginSupport
+                  showHelp={showHelp}
+                  setShowHelp={setShowHelp}
+                  supportData={supportData}
+                  setSupportData={setSupportData}
+                  onSubmitSupport={handleSubmitSupport}
+                  loading={supportLoading}
+                  success={supportSuccess}
+                  error={supportError}
+                />
+              </>
+            )}
+          </div>
+
+          {/* Subtle inner glow blobs */}
+          <div className="absolute top-0 left-0 w-full h-full -z-10 pointer-events-none">
+            <div className="absolute top-[-10%] right-[-10%] w-56 h-56 bg-primary/20 rounded-full blur-[70px] animate-pulse" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-56 h-56 bg-primary/10 rounded-full blur-[70px] animate-pulse delay-700" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

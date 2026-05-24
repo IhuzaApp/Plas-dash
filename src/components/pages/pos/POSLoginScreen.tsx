@@ -321,12 +321,19 @@ const POSLoginScreen: React.FC<POSLoginScreenProps> = ({ onLogin }) => {
 
   /* ─────────── Render ─────────── */
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground dark:bg-slate-950 dark:text-white font-sans overflow-hidden">
-      {/* Theme-colored background blobs */}
-      <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-primary/10 blur-[120px]" />
-      <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[120px]" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center text-foreground dark:text-white font-sans overflow-hidden">
+      {/* Full-bleed hero image background */}
+      <img
+        src="/Assets/plas-agents-hero.png"
+        alt=""
+        fetchPriority="high"
+        decoding="async"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Dark gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/65 to-black/45 backdrop-blur-[2px]" />
 
-      <div className="w-full max-w-2xl p-7 bg-card/95 dark:bg-slate-900/70 border border-border dark:border-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col items-center relative z-10">
+      <div className="w-full max-w-2xl p-7 bg-background/70 dark:bg-slate-900/60 border border-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl flex flex-col items-center relative z-10">
 
         {/* ── Business identity header ── */}
         <div className="flex flex-col items-center mb-6">
