@@ -11,6 +11,7 @@ import { ThemeColorProvider } from '@/components/providers/ThemeColorProvider';
 import { useShopSession } from '@/contexts/ShopSessionContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { normalizeSubdomain } from '@/lib/utils';
+import DashboardSkeleton from './DashboardSkeleton';
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -37,10 +38,16 @@ export default function RootLayout({ children }: RootLayoutProps) {
   const router = useRouter();
   const { activeBusiness } = useShopSession();
   const { session, isAuthenticated, isInitializing, login } = useAuth();
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
 
   const pageTitle = activeBusiness
     ? `${getPageTitle(pathname).split(' | ')[0]} | ${activeBusiness.name}`
     : getPageTitle(pathname);
+
+  // Clear redirecting flag whenever the pathname actually changes
+  React.useEffect(() => {
+    setIsRedirecting(false);
+  }, [pathname]);
 
   React.useEffect(() => {
     if (isAuthenticated && session && pathname) {
@@ -60,6 +67,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
               if (businessName) {
                 const subdomain = normalizeSubdomain(businessName);
                 const domain = hostname === 'localhost' ? 'lvh.me:3000' : 'plas.rw';
+                setIsRedirecting(true);
                 window.location.href = `${window.location.protocol}//${subdomain}.${domain}${pathname}`;
                 return;
               }
@@ -81,6 +89,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           redirectPath = recommendedPage?.path || '/';
         }
         if (redirectPath !== pathname) {
+          setIsRedirecting(true);
           router.push(redirectPath);
         }
       }
@@ -106,6 +115,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <LoadingProvider>
         <div className="min-h-screen bg-background relative selection:bg-primary/20 selection:text-primary">
           <React.Suspense fallback={null}>{children}</React.Suspense>
+
+          {/* Dashboard skeleton: covers the page while a post-login redirect is pending */}
+          {isAuthenticated && isRedirecting && <DashboardSkeleton />}
+
           {!isAuthenticated && !pathname?.startsWith('/tax') && !isInitializing && (
             <div className="fixed inset-0 z-40 bg-white/30 dark:bg-black/30 backdrop-blur-md pointer-events-none" />
           )}
