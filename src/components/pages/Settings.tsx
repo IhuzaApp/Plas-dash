@@ -262,12 +262,14 @@ const Settings = () => {
 
   const handleToggle2FA = async (enabled: boolean) => {
     let currentUserId = user?.id;
+    let currentUserType = user?.type;
     if (!currentUserId && typeof window !== 'undefined') {
       const localSession = localStorage.getItem('orgEmployeeSession');
       if (localSession) {
         try {
           const parsed = JSON.parse(localSession);
           currentUserId = parsed.id;
+          currentUserType = parsed.isProjectUser ? 'project_user' : 'employee';
         } catch (e) {}
       }
     }
@@ -471,6 +473,8 @@ const Settings = () => {
   };
 
   const handleSavePayoutMethod = async () => {
+    if (!hasuraClient) return;
+    
     if (!payoutForm.names || !payoutForm.number) {
       toast.error('Please fill in the required fields');
       return;

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useReelOrders, useOrders } from '@/hooks/useHasuraApi';
 
 interface BranchShop {
+  categoryName: any;
   id: string;
   name: string;
   description: string;
@@ -30,6 +31,8 @@ interface BranchShop {
 }
 
 interface UseBranchShopsReturn {
+  mainShop: any;
+  hasBranch: boolean;
   branchShops: BranchShop[];
   isLoading: boolean;
   error: string | null;
@@ -480,9 +483,9 @@ export function useBranchShops(): UseBranchShopsReturn {
         const averageRating =
           ratings.length > 0
             ? ratings.reduce(
-                (sum: number, rating: any) => sum + parseFloat(rating.rating || '0'),
-                0
-              ) / ratings.length
+              (sum: number, rating: any) => sum + parseFloat(rating.rating || '0'),
+              0
+            ) / ratings.length
             : 0;
 
         const target = 50000;

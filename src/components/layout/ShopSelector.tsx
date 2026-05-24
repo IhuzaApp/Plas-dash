@@ -313,7 +313,7 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
               userId: orgEmployee.id,
               isRestaurant: isRestaurant,
               employeeImage:
-                orgEmployee.profile_image || orgEmployee.display_image || orgEmployee.image || '',
+                orgEmployee.profile_image || (orgEmployee as any).display_image || (orgEmployee as any).image || '',
             };
             handleShopSelect(shopData);
           }}
@@ -389,8 +389,8 @@ const ShopSelector: React.FC<ShopSelectorProps> = ({ isSidebarOpen, variant = 's
                     isRestaurant: isRestaurant,
                     employeeImage:
                       orgEmployee.profile_image ||
-                      orgEmployee.display_image ||
-                      orgEmployee.image ||
+                      (orgEmployee as any).display_image ||
+                      (orgEmployee as any).image ||
                       '',
                   };
                   handleShopSelect(shopData);

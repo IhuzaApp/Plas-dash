@@ -91,7 +91,10 @@ const CompanyDashboard = () => {
     averagePerformance,
   } = useBranchShops();
 
-  const { plan } = useShopSubscriptionModules(session?.shop_id, session?.restaurant_id);
+  const { plan } = useShopSubscriptionModules(
+    session?.shop_id || undefined,
+    session?.restaurant_id || undefined
+  );
   const allowedBranches = plan?.num_of_branch || 0;
   const currentBranchCount = branchShops.length > 0 ? branchShops.length - 1 : 0;
 

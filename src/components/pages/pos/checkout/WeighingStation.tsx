@@ -47,6 +47,7 @@ interface WeighedItemHistory {
   totalPrice: number;
   timestamp: string;
   status: 'pending' | 'redeemed';
+  measurementUnit?: string;
 }
 
 const CODE39_PATTERNS: Record<string, string> = {

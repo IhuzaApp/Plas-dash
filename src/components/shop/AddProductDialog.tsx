@@ -338,7 +338,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
   function handleSubmit(values: FormData) {
     const isNewProduct = values.name && !values.productName_id;
-    const finalSku = isNewProduct && !values.sku ? generateRandomSKU(values.name) : values.sku;
+    const finalSku = isNewProduct && !values.sku ? generateRandomSKU(values.name || 'PRD') : values.sku;
 
     const submitData: ProductSubmitData = {
       price: values.price,

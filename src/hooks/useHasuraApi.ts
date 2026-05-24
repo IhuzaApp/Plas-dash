@@ -222,6 +222,7 @@ export interface Rating {
       logo: string | null;
       name: string;
       longitude: number | null;
+      categoryName?: string;
     } | null;
     delivery_notes: string | null;
     delivery_fee: number;

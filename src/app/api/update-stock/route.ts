@@ -39,7 +39,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (!hasuraClient) {
+    const client = hasuraClient;
+    if (!client) {
       throw new Error('Hasura client is not initialized');
     }
 
@@ -56,12 +57,12 @@ export async function POST(request: Request) {
         const baseId = item.id.split('_')[0];
 
         if (isRestaurant) {
-          await hasuraClient.request(DECREMENT_MENU_STOCK, {
+          await client.request(DECREMENT_MENU_STOCK, {
             id: baseId,
             qty: -Math.abs(item.quantity),
           });
         } else {
-          await hasuraClient.request(DECREMENT_PRODUCT_STOCK, {
+          await client.request(DECREMENT_PRODUCT_STOCK, {
             id: baseId,
             qty: -Math.abs(item.quantity),
           });

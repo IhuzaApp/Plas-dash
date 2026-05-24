@@ -72,7 +72,6 @@ import {
   useAddDishToMenu,
 } from '@/hooks/useHasuraApi';
 import { usePrivilege } from '@/hooks/usePrivilege';
-import { useSearchProductNames, useDishesByName } from '@/lib/api/pos';
 import { InventoryTable } from '@/components/shop/InventoryTable';
 import { useShopSession } from '@/contexts/ShopSessionContext';
 

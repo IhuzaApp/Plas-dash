@@ -318,7 +318,7 @@ export const CartSummaryCard: React.FC<CartSummaryCardProps> = ({
 
           // Employee details are already passed via props (currentUser), so we can skip the blocking API call
           // to make checkout extremely fast.
-          const employee = null;
+          const employee: any = null;
 
           // Save payment details for logging and print confirmation
           const paymentDetails = {
