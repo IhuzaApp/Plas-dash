@@ -58,14 +58,17 @@ export async function POST(request: Request) {
     // Execute updates asynchronously to not block the frontend response
     const updatePromises = items.map(async (item: any) => {
       try {
+        // Handle weighed items where ID might be "uuid_scaleCode"
+        const baseId = item.id.split('_')[0];
+        
         if (isRestaurant) {
           await hasuraClient.request(DECREMENT_MENU_STOCK, {
-            id: item.id,
+            id: baseId,
             qty: -Math.abs(item.quantity)
           });
         } else {
           await hasuraClient.request(DECREMENT_PRODUCT_STOCK, {
-            id: item.id,
+            id: baseId,
             qty: -Math.abs(item.quantity)
           });
         }
