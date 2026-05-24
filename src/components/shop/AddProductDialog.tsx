@@ -586,11 +586,16 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                         className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
                         onClick={() => handleSearchResultSelect(product)}
                       >
-                        <div>
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {product.barcode && `Barcode: ${product.barcode}`}
-                            {product.sku && `SKU: ${product.sku}`}
+                        <div className="flex items-center space-x-3">
+                          {product.image && (
+                            <img src={product.image} alt={product.name} className="w-8 h-8 rounded object-cover" />
+                          )}
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {product.barcode && `Barcode: ${product.barcode} `}
+                              {product.sku && `SKU: ${product.sku}`}
+                            </div>
                           </div>
                         </div>
                         <Button size="sm" variant="outline">
